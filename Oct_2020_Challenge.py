@@ -2864,6 +2864,33 @@ class Solution(object):
         
         return dfs(cache,n)
 
+class Solution(object):
+    def winnerSquareGame(self, n):
+        """
+        :type n: int
+        :rtype: bool
+        """
+        '''
+        bottom up DP solution for finding the state of the game
+        if you ever get to state where there is only 0 stones, youuve lost
+        so if you can get to this state from anothe state you're winning
+        if we can somehow get to a false (losing state for BOB) from nth state, then we are
+        in a winning position!
+        0   1   2   3   4   5
+        F   T   F   T   T   F
+        '''
+        dp = [False for _ in range(n+1)]
+        
+        for i in range(1,n+1):
+            stones = 1
+            while stones**2 <= i:
+                if not dp[i - stones**2]: #if we go back from our state and see that its false we can win!
+                    dp[i] = True
+                    break
+                stones += 1
+        return dp[-1]
+        
+
 
 ###########################
 #Champagne Tower 10/26/2020
@@ -3061,5 +3088,474 @@ class Solution(object):
         #if we've gotten to the tail witoutht finding a cycle
         if not fast.next or not fast.next.next:
             return False
+
+
+############################################
+# Search in a Sorted Array of Unknown Size 10/27/2020
+############################################
+# """
+# This is ArrayReader's API interface.
+# You should not implement it, or speculate about its implementation LOL!
+# """
+#class ArrayReader(object):
+#    def get(self, index):
+#        """
+#        :type index: int
+#        :rtype int
+#        """
+
+class Solution(object):
+    def search(self, reader, target):
+        """
+        :type reader: ArrayReader
+        :type target: int
+        :rtype: int
+        """
+        if reader.get(0) == target:
+            return 0
+        
+        #search conditions
+        l,r = 0,1
+        while reader.get(r) < target:
+            l = r
+            r <<= 1 #same as multiplying by 2
+            
+        #binary search
+        while l <= r:
+            mid = l + ((r-l) >> 1)
+            num = reader.get(mid)
+            
+            if num == target:
+                return mid
+            elif num > target:
+                r = mid -1
+            else:
+                l = mid + 1
+        return -1
+
+
+#############################
+# Summary Ranges
+#############################
+class Solution(object):
+    def summaryRanges(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[str]
+        """
+        '''
+        increment by one from the min to max, 
+        if there is jump close the interval, and move the pointer to the next
+        use a deque!
+        
+        '''
+        if not nums:
+            return []
+        
+        q = collections.deque(nums)
+        
+        start = q[0]
+        results = []
+        temp = []
+        while q:
+            if q[0] == start:
+                temp.append(q.popleft())
+            elif q[0] != start:
+                results.append(temp)
+                temp = []
+            start += 1
+
+                
+        #pass the results one last time and create the strings
+        
+                
+        print q
+
+
+class Solution(object):
+    def summaryRanges(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[str]
+        """
+        '''
+        compare the current number with the next one, if the current numerber is no the previouse number+1, we have jumped
+        also check if the range has more than one number, if not then just add the single
+        
+        
+        '''
+        if not nums:
+            return []
+        
+        results = []
+        curmax = nums[0]
+        curmin = nums[0]
+        
+        for i in range(1,len(nums)):
+            if nums[i] == nums[i-1] + 1:
+                curmax = nums[i]
+            #we need to add
+            else:
+                if curmax != curmin:
+                    results.append(str(curmin)+"->"+str(curmax))
+                else:
+                    results.append(str(curmin))
+                #reset
+                curmin = nums[i]
+                curmax = nums[i]
+        
+        #add the last ones
+        if curmax != curmin:
+            results.append(str(curmin)+"->"+str(curmax))
+        else:
+            results.append(str(curmin)) 
+        
+        return results
+
+
+#######################################
+# Maximize Distance to Closest Person
+#######################################
+#so close!
+class Solution(object):
+    def maxDistToClosest(self, seats):
+        """
+        :type seats: List[int]
+        :rtype: int
+        """
+        '''
+        [1,0,0,0,1,0,1]
+        when i encounter a zero use two pointers going left and right
+        go left as far as can until i hit a one
+        go right as far as i can
+        '''
+        dist_array = [0]*len(seats)
+        
+        for i in range(0,len(seats)):
+            if seats[i] == 0:
+                left,right = i,i
+                while seats[left] != 0 or seats[right] != 0:
+                    left -= 1
+                    right += 1
+                dist_array[i] = min(left,right)
+        print dist_array
+        
+
+
+class Solution(object):
+    def maxDistToClosest(self, seats):
+        """
+        :type seats: List[int]
+        :rtype: int
+        """
+        '''
+        left left[i] be the distance from seat to the closest person on the left
+        and right[i] similar if to the right
+        thus the answer for each i will min(left[i],right[i])
+        to construct left[i] notice it is either left[i-1] + 1 if the sat is empty or 0 if it full
+        '''
+        N = len(seats)
+        left,right = [N]*N,[N]*N
+        
+        #dp extra array
+        for i in range(N):
+            if seats[i] == 1:
+                left[i] = 0
+            elif i > 0:
+                left[i] = left[i-1] + 1
+                
+        #now for the right
+        for i in range(N-1,-1,-1):
+            if seats[i] == 1:
+                right[i] = 0
+            elif i < N-1:
+                right[i] = right[i+1] + 1
+                
+        #now i want the max for the min at each seat in the array
+        output = float('-inf')
+        
+        for i in range(N):
+            output = max(min(left[i],right[i]),output)
+        
+        return output
+
+
+class Solution(object):
+    def maxDistToClosest(self, seats):
+        """
+        :type seats: List[int]
+        :rtype: int
+        """
+        '''
+        another way
+        two dp arrays first pass left, then pass from right
+        but when going from right, take the min from the left
+        hold max dis in a variable
+        dis = 0
+        [1,0,0,0,1,0,1]
+        [0,1,2,3,0,1,0] left to right
+        [0,1,2,1,0,1,0] right to left
+        
+        but if 
+        [0,0,0,0,1,0,1]
+        [1,2,3,4,0,1,0]
+        [1,2,2,1,0,1,0]
+        
+        keep boolean variable to keep track of when to update
+        
+        '''
+        N = len(seats)
+        dp = [0]*N
+        dis = -1 #start with negtative distance marking when we have seen a seated seat
+        
+        for i in range(N):
+            if not seats[i] and dis != -1:
+                dis += 1
+                dp[i] = dis
+            else:
+                dis = 0
+        
+        #from the right
+        dis = -1
+        for i in range(N-1,-1,-1):
+            if not seats[i] and dis != -1:
+                dis += 1
+                #in the case we havent touched our dp
+                if dp[i] == 0:
+                    dp[i] = dis
+                else:
+                    dp[i] = min(dp[i],dis)
+            else:
+                dis = 0
+        
+        return max(dp)
+
+
+class Solution(object):
+    def maxDistToClosest(self, seats):
+        """
+        :type seats: List[int]
+        :rtype: int
+        """
+        '''
+        O(N) greedy solution
+        '''
+        N = len(seats)
+        start = -1
+        maxgap = 0
+        
+        for i in range(N):
+            if seats[i] == 1:
+                if start == -1:
+                    maxgap = i
+                else:
+                    maxgap = max(maxgap,(i-start)//2)
+                start = i
+                
+        maxgap = max(maxgap,N-1-start)
+        
+        return maxgap
+        
+###########################################
+# Number of Longest Increasing Subsequence
+###########################################
+#all possible subsequences derivation
+class Solution(object):
+    def findNumberOfLIS(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        recursive
+        use backtracking
+        invoke for each lenght possibility
+        rec function will use
+        '''
+        subseqs = []
+        def backtrack(arr,index,build):
+            if index == len(arr):
+                if len(build) != 0:
+                    subseqs.append(build)
+            else:
+                backtrack(arr,index+1,build)
+                backtrack(arr,index+1,build+[arr[index]])
+        
+        for i in range(0,len(nums)):
+            backtrack(nums[i:],0,[])
+        print subseqs
+
+#nice try, good review on geneating subsets
+class Solution(object):
+    def findNumberOfLIS(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        recursive
+        use backtracking
+        invoke for each lenght possibility
+        rec function will use
+        '''
+        if len(set(nums)) == 1:
+            return len(nums)
+        subseqs = []
+        def backtrack(arr,index,build):
+            if index == len(arr):
+                if len(build) != 0:
+                    if len(build) > 1:
+                        #check increasing
+                        temp = []
+                        for a,b in zip(build[:-1],build[1:]):
+                            temp.append(b-a)
+                        if -1 in temp:
+                            return
+                        else:
+                            subseqs.append(build)
+            else:
+                #subsequence not including the current idx element
+                backtrack(arr,index+1,build)
+                #subsequence inlcluding the current element at the index
+                backtrack(arr,index+1,build+[arr[index]])
+                
+        
+        for i in range(0,len(nums)):
+            backtrack(nums[i:],0,[])
+        counts = {}
+        for s in subseqs:
+            if len(s) in counts:
+                counts[len(s)] += 1
+            else:
+                counts[len(s)] = 1
+        
+        maxlength = float('-inf')
+        for k,v in counts.items():
+            maxlength = max(maxlength,k)
+        return counts[maxlength]
+
+class Solution(object):
+    def findNumberOfLIS(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        [1,3,5,4,7]
+        [1,2,3,3,4] LS
+        [1,1,1,1,1] count
+        
+        to find the frequency of the longest increasing sequence i need:
+            how long the longest increasing subsequence is
+            the occurence of each length
+        
+        store dp[i] the length of longest increasing subsequence at nums[i] (up to)
+        cnt[i] the freq of the longest increasing subsequence
+        if dp[i] < dp[j] + 1, then we have found a longer sequence and dp[i] needs to be updated
+        and cnt[i] = count[j]
+        if dp[i] == dp[j] + 1, eamnding dp[j] + 1 is one way to reaching the longest increase sequence to i, incremt bount by cnt[j]
+        sum up cnt of all longest 
+        '''
+        
+        if not nums:
+            return 0
+        
+        N = len(nums)
+        lengths = [1]*N
+        counts = [1]*N
+        m = 0 #for storing length of max increasing subsequence
+        
+        for i in range(N):
+            for j in range(i):
+                if nums[j] < nums[i]: #increasing 
+                    #check, length at i
+                    if lengths[i] < lengths[j] + 1:
+                        lengths[i] = lengths[j] + 1
+                        counts[i] = counts[j]
+                    elif lengths[i] == lengths[j] + 1:
+                        counts[i] += counts[j]
+            
+            #update max length
+            m = max(m,lengths[i])
+                        
+        return sum(c for l,c in zip(lengths,counts) if l == m)
+        
+
+##############################
+#Recover Binary Search Tree
+##############################
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def recoverTree(self, root):
+        """
+        :type root: TreeNode
+        :rtype: None Do not return anything, modify root in-place instead.
+        """
+        '''
+        recall that an inroder traversal of a BST results in ascneding array
+        since at least two of the nodes are swapped, we can find which two nodes are swapped using the folloinwg:
+        traverse the array in order
+        if the i + 1 element is greater than i, allocate it
+        if second occurent break
+        
+        construct the inorder traveral
+        find the two swapped nodes
+        traverse the tree again inorder chaing x to y and and the y to x
+        '''
+        def inorder(node):
+            return inorder(node.left) + [node.val] + inorder(node.right) if node else []
+        
+        def find_two_swapped(nums):
+            N = len(nums)
+            x = y = -1
+            for i in range(N-1):
+                if nums[i+1] < nums[i]:
+                    y = nums[i+1]
+                    if x == -1:
+                        x = nums[i]
+                    else:
+                        break
+            return x,y
+        
+        def recover(node,count):
+            if node:
+                if node.val == x or node.val == y:
+                    node.val = y if node.val == x else x
+                    count -= 1
+                    if count == 0:
+                        return
+                recover(node.left,count)
+                recover(node.right,count)
+        
+        nums = inorder(root)
+        x,y = find_two_swapped(nums)
+        recover(root,2)
+
+####
+#another way
+
+class Solution(object):
+	def recoverTree(self,root):
+		self.temp = []
+
+		def dfs(node):
+			if not node:
+				return
+
+			dfs(node.left)
+			self.temp.append(node.val)
+			dfs(node.right)
+
+		dfs(root)
+
+		srt = sorted(n.val for n in self.temp)
+
+		for i in range(len(srt)):
+			self.temp[i].val = srt[i]
 
 
