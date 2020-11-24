@@ -1276,3 +1276,1307 @@ class Solution(object):
                 else:
                     A[i][j] = 1
         return A
+
+
+#####################
+# Two Sum Less than K
+#####################
+class Solution(object):
+    def twoSumLessThanK(self, A, K):
+        """
+        :type A: List[int]
+        :type K: int
+        :rtype: int
+        """
+        '''
+        [34,23,1,24,75,33,54,8]
+        after sotring
+        [1, 8, 23, 24, 33, 34, 54, 75]
+        1
+        '''
+        result = -1
+        A.sort()
+        
+        lo, hi = 0,len(A)-1
+        while lo < hi:
+            if (A[lo] + A[hi]) < K:
+                result = max(result, A[lo]+A[hi])
+                lo += 1
+            else:
+                hi -= 1
+        
+        return result
+
+
+class Solution(object):
+    def twoSumLessThanK(self, A, K):
+        """
+        :type A: List[int]
+        :type K: int
+        :rtype: int
+        """
+        '''
+        [34,23,1,24,75,33,54,8]
+        after sotring
+        [1, 8, 23, 24, 33, 34, 54, 75]
+        1
+        '''
+        result = -1
+        A.sort()
+        
+        for i in range(0,len(A)):
+            lo = i + 1
+            hi = len(A) - 1
+            while lo <= hi:
+                mid = lo + (hi - lo) //2
+                if A[i] + A[mid] >= K:
+                    hi = mid -1
+                else:
+                    lo = mid + 1
+                    result = max(result, A[i]+A[mid])
+        return result
+                
+
+#######################
+# Valid Square
+#######################
+#105 of 244
+class Solution(object):
+    def validSquare(self, p1, p2, p3, p4):
+        """
+        :type p1: List[int]
+        :type p2: List[int]
+        :type p3: List[int]
+        :type p4: List[int]
+        :rtype: bool
+        """
+        '''
+        its a sqaure of a pair of points are equal at x and y
+        and the distance between all points are the same
+        finding matching x, get dis apart
+        check of dist apart is same dist for matching y
+        '''
+        matching_x = []
+        matching_y = []
+        points = deque([p1, p2, p3, p4])
+        
+        count = 0
+        while count < 4:
+            count += 1
+            cand = points.popleft()
+            for p in points:
+                if cand[0] == p[0]:
+                    matching_x.append(cand)
+                    matching_x.append(p)
+                if cand[1] == p[1]:
+                    matching_y.append(cand)
+                    matching_y.append(p)
+        if not matching_x or not matching_y:
+            return False
+
+
+        return matching_x[0][1]-matching_x[1][1] == matching_y[0][0]-matching_y[1][0]
+
+#after sorting the points
+class Solution(object):
+    def validSquare(self, p1, p2, p3, p4):
+        """
+        :type p1: List[int]
+        :type p2: List[int]
+        :type p3: List[int]
+        :type p4: List[int]
+        :rtype: bool
+        """
+        '''
+        we can sort the points by the x axis,
+        once we do this, we know the points are in clockwise order from the bottom left of the square
+        p1  p3
+        
+        p0  p2
+        we can then check:
+        p1p2, p2p4, p4p3,p3p1 for equality
+        and p2p3 == p1p4
+        '''
+        def dist(a,b):
+            return ((b[1]-a[1])**2 + (b[0]-a[0])**2)
+        
+        points = [p1,p2,p3,p4]
+        points.sort()
+        
+        return dist(points[0],points[1]) != 0 and dist(points[0],points[1]) == dist(points[1],points[3]) and dist(points[1],points[3]) == dist(points[3],points[2]) and dist(points[3],points[2]) == dist(points[2],points[0]) and dist(points[0],points[3]) == dist(points[1],points[2])
+
+
+########################
+# Permutations II
+#######################
+class Solution(object):
+    def permuteUnique(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[List[int]]
+        """
+        '''
+        standard backtracking approach
+        recurse, and add builds to container outside of function call
+        they want unique ones so use hash set, remember to make into a tuple
+        '''
+        results = set()
+        N = len(nums)
+        def rec_build(nums,build):
+            #base case
+            if len(build) == N:
+                if tuple(build) not in results:
+                    results.add(tuple(build))
+                else:
+                    return
+            for i in range(len(nums)):
+                rec_build(nums[:i]+nums[i+1:],build+[nums[i]])
+                
+        rec_build(nums,[])
+        return results
+
+class Solution(object):
+    def permuteUnique(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[List[int]]
+        """
+        '''
+        https://leetcode.com/problems/permutations-ii/solution/
+        the same thing goes with the previous permulation problem
+        recall backtracking
+            general algo for finding all (or some) solutions to some problems with constraints
+            constaint satisfations problems
+            it incremntally builds candidates and abandons candidates when the path does not meet the constraint
+        lets start with [1,1,2]
+        only two choises [1,2]
+        each has two choise[1,2] or [1,1]
+        a key insight to avoid generating any redundant permutation is that at each step rather than viewing each number as a candidate, we consider each unique number as the true candidate
+        original problem [1,1,2] three potential candidates
+        but really only [1,2]
+        '''
+        results = []
+        
+        def rec_build(build,counts):
+            #when your counts is empty we've made a valid permutation
+            if not counts:
+                results.append(build)
+                return
+            #recurse
+            
+            for num in counts.keys():
+                #use up on occurence of the candidate
+                if counts[num] == 1:
+                    del counts[num]
+                else:
+                    counts[num] -= 1
+                rec_build(build + [num],counts)
+                #backtrack
+                counts[num] += 1
+        
+        rec_build([],Counter(nums))
+        return results
+
+#########################################
+#167. Two Sum II - Input array is sorted
+#########################################
+class Solution(object):
+    def twoSum(self, numbers, target):
+        """
+        :type numbers: List[int]
+        :type target: int
+        :rtype: List[int]
+        """
+        lo = 0
+        hi = len(numbers) -  1
+        while lo < hi:
+            if numbers[lo] + numbers[hi] > target:
+                hi -= 1
+            elif numbers[lo] + numbers[hi] < target:
+                lo += 1
+            elif numbers[lo] + numbers[hi] == target:
+                return lo+1,hi+1
+
+##############################################
+# Populating Next Right Pointers in Each Node
+##############################################
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val=0, left=None, right=None, next=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+"""
+
+class Solution(object):
+    def connect(self, root):
+        """
+        :type root: Node
+        :rtype: Node
+        """
+        '''
+        recursive call, first input is the node we are at, second input is the one we are connecting to
+        if you notice every nodes right pointer is pointer to the left of a parent node!
+        https://leetcode.com/problems/populating-next-right-pointers-in-each-node/discuss/690375/Python-2-Solutions-with-Explanation-and-comments
+        '''
+        def dfs(node):
+            if not node:
+                return
+            #if the node can descen right and has a next
+            if node.right and node.next:
+                node.right.next = node.next.left
+            #only a left
+            if node.left:
+                node.left.next = node.right
+            dfs(node.right)
+            dfs(node.left)
+        dfs(root)
+        return root
+
+#level order bfs
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val=0, left=None, right=None, next=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+"""
+
+class Solution(object):
+    def connect(self, root):
+        """
+        :type root: Node
+        :rtype: Node
+        """
+        '''
+        instead of doing this recursively, use level order BFS
+        add in the current node, then check to see if we can assign its next pointer to the first element in the que
+        
+        '''
+        if not root:
+            return root
+        q = deque([root])
+        while q:
+            size = len(q)
+            for i in range(size):
+                current = q.popleft()
+                #check that we are only making the current's next immedialty next to the head of the q
+                #so not at the end
+                if i < size -1:
+                    current.next = q[0]
+                if current.left:
+                    q.append(current.left)
+                if current.right:
+                    q.append(current.right)
+        return root
+
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val=0, left=None, right=None, next=None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+"""
+
+class Solution(object):
+    def connect(self, root):
+        """
+        :type root: Node
+        :rtype: Node
+        """
+        '''
+        using previously established pointers
+        there are two kinds of connecitons we need to make
+        between nodes of teh same parent
+        parent.left.next = parent.right
+        and from two different partents, which is not as trivial
+        we only descend to N+1 after we have finisehd making connections at N
+        since we have access to all hte nodes at a particular level via the next pointers, we can use these next pointers to establish the connections for the next levle or the level containing children
+        '''
+        #edge case
+        if not root:
+            return root
+        
+        #give refrence to the head
+        leftmost = root
+        
+        #stay in a level until we are down
+        while leftmost.left:
+            #start the 'linked list'
+            head = leftmost
+            while head:
+                #first connection
+                head.left.next = head.right
+                #second connection
+                if head.next:
+                    head.right.next = head.next.left
+                #advance into the connection
+                head = head.next
+            #reassign start of level pointers and descend into the next level
+            leftmost = leftmost.left
+        return root
+
+#####################
+#Poor Pigs
+#####################
+class Solution(object):
+    def poorPigs(self, buckets, minutesToDie, minutesToTest):
+        """
+        :type buckets: int
+        :type minutesToDie: int
+        :type minutesToTest: int
+        :rtype: int
+        """
+        '''
+        for only one pig
+        say for example we take the ratio:
+        minTest/minDie  = 0
+        this means we have no time to test at constat minDie
+        and so the states are only alive for the pig
+        now take minTest/minDie = 1
+        for this pigs its alive or dead
+        now take minTst / minDie = 2
+        now the pig can have three states :
+        alive, dead after first, dead after second
+        so the number of available seats for the pig is
+        states = minTest / minDie + 1
+        now one pig could test at most two buckets (alive if not p, dead if p)
+        thats two states
+        and so two pigs have 4 states
+        2^x, where x is the number of buckets
+        so then the problem gets reduces to find x such that states^x >= bukets
+        x = log_states(buckets)
+        or x >= log(buckets) / log(states)
+        '''
+        states = minutesToTest // minutesToDie + 1
+        return int(math.ceil(math.log(buckets) / math.log(states)))
+
+
+class Solution(object):
+    def poorPigs(self, buckets, minutesToDie, minutesToTest):
+        """
+        :type buckets: int
+        :type minutesToDie: int
+        :type minutesToTest: int
+        :rtype: int
+        """
+        '''
+        https://www.youtube.com/watch?v=_JcO3fqoG2M&ab_channel=AnishMalla
+        we notice that if we have minutesTest/ minDie = 60/15 = 4 +1 ***for the +1 case
+        it takes one pig (across a row)
+        two pigs across row and col
+        3 pigs
+        25 < 3 pigs < 125
+        we keep adding pigs such that ((minTest / minDIe) + 1)**pigs < buckets
+        '''
+        pigs = 0
+        while (int(minutesToTest/minutesToDie)+1)**pigs < buckets:
+            pigs += 1
+        return pigs
+
+
+###############
+#Range Sum BST
+##############
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def rangeSumBST(self, root, low, high):
+        """
+        :type root: TreeNode
+        :type low: int
+        :type high: int
+        :rtype: int
+        """
+        '''
+        dfs along the tree to touch each node
+        at node check lo hi constraints and add to sum outside of recursive call
+        return the sum
+        '''
+        self.sum = 0
+        
+        def dfs(node):
+            if not node:
+                return
+            if low <= node.val <= high:
+                self.sum+= node.val
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
+        return self.sum
+                
+
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def rangeSumBST(self, root, low, high):
+        """
+        :type root: TreeNode
+        :type low: int
+        :type high: int
+        :rtype: int
+        """
+        '''
+        faster appraoch
+        dfs along the tree to touch each node
+        at node check lo hi constraints and add to sum outside of recursive call
+        return the sum
+        in this call you would never be smaller than the low or greater than the high
+        think in terms of exploring possible values in the left and right subtrees
+        '''
+        self.sum = 0
+
+        def dfs(node):
+            if not node:
+                return
+            if low <= node.val <= high:
+                self.sum+= node.val
+            if node.val > low:
+                dfs(node.left)
+            if node.val < high:
+                dfs(node.right)
+
+        dfs(root)
+        return self.sum
+
+#iterative bfs
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def rangeSumBST(self, root, low, high):
+        """
+        :type root: TreeNode
+        :type low: int
+        :type high: int
+        :rtype: int
+        """
+        '''
+        interative approach uisng stack
+        '''
+        result = 0
+        stack = [root]
+        while stack:
+            node = stack.pop()
+            if node:
+                if low <= node.val <= high:
+                    result += node.val
+                if node.val > low:
+                    stack.append(node.left)
+                if node.val < high:
+                    stack.append(node.right)
+        return result
+
+############################
+#Longest Mountain in Array
+############################
+#fuck this problem...
+class Solution(object):
+    def longestMountain(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        what if i took the first difference array
+        a mountain is defined as increasing up to a point and then decreasing
+        there should be only one flip, the second flip is the start of the next mountain
+        keep in mind that we only want ones that have length 3
+        it should only change from positive to negative once
+        '''
+        N = len(A)
+        dp = [0]*N
+        for i in range(1,N-1):
+            if A[i] > A[i+1]:
+                dp[i] = -1
+            elif A[i] < A[i+1]:
+                dp[i] = 1
+            else:
+                dp[i] = 0
+        #now i can go across my dp array and increment my counter at the first occurnece of 1
+        #allow for a change of -1
+        #terminate the counter
+        mountains = []
+        count = 0
+        increasing = True
+        for i in range()
+
+#well this problem wasn't as bad as i thought..
+class Solution(object):
+    def longestMountain(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        we can define a peak as an element at i that is greater than i-1 and i+1
+        find peak and use two pointers
+        move left is decreasing and right if decreasing, they should both be decreasing from each side
+        of the peak
+        '''
+        results = 0
+        N = len(A)
+        
+        for i in range(1,N-1):
+            #search for peak
+            if A[i-1] < A[i] > A[i+1]:
+                #split points
+                l,r = i,i
+                #check left side
+                while l > 0 and A[l] > A[l-1]:
+                    l -= 1
+                #move right
+                while r +1 < N and A[r+1] < A[r]: #watch for the bounds condition on the right pointer
+                    r += 1
+                #update
+                results = max(results, r-l+1)
+        
+        return results
+
+###################
+#MMirror Reflection
+###################
+class Solution(object):
+    def mirrorReflection(self, p, q):
+        """
+        :type p: int
+        :type q: int
+        :rtype: int
+        """
+        '''
+        even q will hit 2
+        but q needs to be odd
+        but in the case where q is larger, draw out extra room
+        as long a q is odd, it will hit 0 or 1 at least draw diagram
+        we have p*m == q*n
+        if n is even it must reach receptor 2
+        if n is odd, either 0 or 1, based on the number of q's
+        we simulate gcd
+        
+        '''
+        #look up gcd trick
+        m = n = 1
+        while p*m != q*n:
+            #m will always be greater then n, since p is greater than q
+            #increment n
+            n += 1
+            #adjust m
+            m = q*n // p #note we will eventually get an answer
+        
+        if n % 2 == 0:
+            return 2
+        elif m % 2 != 0:
+            return 1
+        else:
+            return 0
+
+
+######################
+# Merge Intervals
+######################
+class Solution(object):
+    def merge(self, intervals):
+        """
+        :type intervals: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        sort in the starting intervals
+        and then just keep updating the last added interval
+        '''
+        intervals.sort(key=lambda x: x[0])
+        output = [intervals[0]]
+        for start,end in intervals[1:]:
+            if start > output[-1][1]: #insert
+                output.append([start,end])
+            elif end > output[-1][1]: #update
+                output[-1][1] = end
+        return output
+
+###########################
+# Subtreee of Another Tree
+###########################
+#close on this one, but still shaky on the implementation
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isSubtree(self, s, t):
+        """
+        :type s: TreeNode
+        :type t: TreeNode
+        :rtype: bool
+        """
+        '''
+        descend tree s in any order traversal until we find the node that matches the root of t
+        keep traversing at that point in the same traversal as s
+        return true once done
+        if not return false
+        '''
+        def dfs(root1,root2):
+            if not root1:
+                return
+            if root1.val == root2.val:
+                #when i found the matching node recurse
+                dfs(root1.left,root2.left)
+                dfs(root1.right,root2.right)
+                return True
+            dfs(root1.left,root2) and dfs(root1.right,root2)
+            return True
+        
+        dfs(s,t)
+
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isSubtree(self, s, t):
+        """
+        :type s: TreeNode
+        :type t: TreeNode
+        :rtype: bool
+        """
+        def dfs(tree,subtree):
+            if tree == None and subtree == None:
+                return True
+            if tree == None or subtree == None:
+                #not the same
+                return False
+            #recurse
+            if tree.val == subtree.val:
+                return dfs(tree.left,subtree.left) and dfs(tree.right, subtree.right)
+        
+        #edgecases
+        if s == None:
+            return False
+        elif dfs(s,t):
+            return True
+        else:
+            return dfs(s.left,t) or dfs(s.right,t)
+
+
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isSubtree(self, s, t):
+        """
+        :type s: TreeNode
+        :type t: TreeNode
+        :rtype: bool
+        """
+        '''
+        this is kind of a wierd dfs question
+        we recurse on two nodes
+        but we also have to recurse on the node in the main tree
+        '''
+        def dfs(node):
+            #inner function to recurse again
+            def same(n1,n2):
+                if not n1 and not n2:
+                    return True
+                if not n1 or not n2 or n1.val!= n2.val:
+                    return False
+                return same(n1.left,n2.left) and same(n1.right, n2.right)
+            if not node:
+                return False
+            if node.val == t.val and same(node,t):
+                return True
+            return dfs(node.left) or dfs(node.right)
+        
+        return dfs(s)
+
+
+#####################
+#Decode String
+#####################
+#pretty good
+class Solution(object):
+    def decodeString(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        i need to detect the inner brackets first before evaluating
+        it could be nested. but how?
+        i can use two pointers
+        first on detects opening bracket the other detects closing bracket
+        '''
+        decoded = ""
+        N = len(s)
+        i,j = 0,0
+        while i < N and j < N:
+            #i detects opening, j is closing
+            while s[i] != '[':
+                i += 1
+            j = i
+            while s[j] != ']':
+                j += 1
+            #take the coeffcient
+            string = int(s[i-1])*s[i+1:j]
+            decoded += string
+            i = j
+            i += 1
+            j += 1
+        return decoded
+
+#almost, but remember the coef can b greater than 9
+class Solution(object):
+    def decodeString(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        well i knew we had to use a stack
+        the idea is to keep passing over the string pushing each char o the stack until it is not a closing bracket
+        one we encounter closing bracket we need to decode
+        there are two cases we need to worry about
+            1. current chart is not a closing bracket, push on to stack
+            2. char is a clsoing bracket
+        start decpdomg the last traversed string by popping the string and number from the top of the stack
+        pop from stack until the next char is not an opening bracke and append
+        pop opening bracket from stack
+        pop from stack until next char is a digit and build the number using k
+        
+        '''
+        stack = []
+        for i in range(0,len(s)):
+            #when closing bracket decode the stack up to previous opening
+            if s[i] == ']':
+                decoded_string = ''
+                #keep popping as until opening
+                while stack[-1] != '[':
+                    decoded_string += stack.pop()
+                #last opening [
+                stack.pop()
+                coef = stack.pop()
+                decoded_string *= int(coef)
+                #push back in reverse order
+                for j in range(len(decoded_string)-1,-1,-1):
+                    stack.append(decoded_string[j])
+            else:
+                stack.append(s[i])
+        output = ''
+        while stack:
+            output += stack.pop()
+        return output[::-1]
+
+class Solution(object):
+    def decodeString(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        well i knew we had to use a stack
+        the idea is to keep passing over the string pushing each char o the stack until it is not a closing bracket
+        one we encounter closing bracket we need to decode
+        there are two cases we need to worry about
+            1. current chart is not a closing bracket, push on to stack
+            2. char is a clsoing bracket
+        start decpdomg the last traversed string by popping the string and number from the top of the stack
+        pop from stack until the next char is not an opening bracke and append
+        pop opening bracket from stack
+        pop from stack until next char is a digit and build the number using k
+        
+        '''
+        stack = []
+        for i in range(0,len(s)):
+            #when closing bracket decode the stack up to previous opening
+            if s[i] == ']':
+                decoded_string = ''
+                #keep popping as until opening
+                while stack[-1] != '[':
+                    decoded_string += stack.pop()
+                #last opening [
+                stack.pop()
+                #in the case the coef is greater than 9
+                base = 1
+                k = 0
+                while stack and ord('0') <= ord(stack[-1]) <= ord('9'):
+                    #increment k
+                    k = k + int(stack.pop())*base
+                    base *= 10
+                decoded_string *= int(k)
+                #push back in reverse order
+                for j in range(len(decoded_string)-1,-1,-1):
+                    stack.append(decoded_string[j])
+            else:
+                stack.append(s[i])
+        output = ''
+        while stack:
+            output += stack.pop()
+        return output[::-1]
+
+####################
+# Third Maximum Number
+###################
+#close
+class Solution(object):
+    def thirdMax(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        sliding window of three and keep each three orders
+        sort the sliding window
+        '''
+        if len(nums) < 3:
+            return max(nums)
+        N = len(nums)
+        candidates = nums[:3]
+        candidates.sort(reverse=True)
+
+        for i in range(3,N-3):
+            candidates[0] = max(candidates[0],nums[i])
+            candidates[1] = max(candidates[1],nums[i+1])
+            candidates[2] = max(candidates[2],nums[i+2])
+        
+        return candidates[-1]
+        
+
+class Solution(object):
+    def thirdMax(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        remove the maxs and just return max after drpppp
+        '''
+        nums = set(nums)
+        first_max = max(nums)
+        
+        if len(nums) < 3:
+            return first_max
+        
+        
+        nums.remove(first_max)
+        second_max = max(nums)
+        nums.remove(second_max)
+        return max(nums)
+
+class Solution(object):
+    def thirdMax(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        keep track of max seen set, when past three remove the min
+        then just return the min of the max set
+        '''
+        maxes = set()
+        for num in nums:
+            maxes.add(num)
+            if len(maxes) > 3:
+                maxes.remove(min(maxes))
+                
+        if len(maxes) == 3:
+            return min(maxes)
+        
+        return max(maxes)
+        
+
+##########################3#######
+#Search In Rotated Sorted Array II
+###################################
+class Solution(object):
+    def search(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        from the first problem:
+        you need to find the pivot point you will find that nums[i] > nums[i+1]
+        this wouldn't be the case if the array was unpivoted and sorted
+        
+        '''
+        if not nums: 
+            return False
+        if len(nums)==1: 
+            return nums[0]==target 
+        if nums[0]==target or nums[-1]==target: 
+            return True 
+        if nums[0]==nums[-1]: 
+            return target in nums 
+        
+        #double binary search
+        #first binary serach
+        l,r = 0, len(nums) - 1
+        
+        while l < r:
+            mid = l + (r-l) // 2
+            if nums[mid] > nums[r]:
+                l = mid + 1
+            else:
+                r = mid - 1 #not minus 1
+                
+        start = l
+        l = 0
+        r = len(nums)-1
+        
+        #now check where to search
+        if (target >= nums[start] and target <= nums[r]):
+            l = start
+        else:
+            r = start
+        #second binary search
+        while l <= r:
+            mid = l + (r-l) // 2
+            if nums[mid] == target:
+                return True
+            elif nums[mid] < target:
+                l = mid+1
+            else:
+                r = mid - 1
+        return False
+
+
+ #FROM KC
+ class Solution(object):
+    def search(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        https://www.youtube.com/watch?v=WkihvY2rJjc&t=119s&ab_channel=KnowledgeCenter
+        '''
+        l,r = 0, len(nums)-1
+        while l <= r:
+            mid = l + (r-l)//2
+            #check if target
+            if nums[mid] == target:
+                return True
+            #when l == mid, and r == mid we cant tell, keep decrementing l and r
+            if (nums[l]==nums[mid]) and (nums[r]==nums[mid]):
+                l += 1
+                r -= 1
+            #two special cases
+            elif nums[l] <= nums[mid]: #actually increasing
+                if (nums[l] <= target) and (nums[mid] > target):
+                    #reject other half
+                    r = mid - 1
+                else:
+                    l = mid + 1
+            else:
+                if (nums[mid] < target) and (nums[r] >= target):
+                    l = mid + 1
+                else:
+                    r = mid - 1
+        return False
+
+######################################
+#Numbers At Most N givine Digit Set
+#######################################
+#recurison doesn't really work here 
+class Solution(object):
+    def atMostNGivenDigitSet(self, digits, n):
+        """
+        :type digits: List[str]
+        :type n: int
+        :rtype: int
+        """
+        '''
+        brute force
+        recursive function to build up a digit
+        check if casting to int is less than n
+        if so, append to results outside of call
+        '''
+        results = []
+        def rec_build(build, digits,n):
+            if build == "":
+                return
+            if int(build) < n:
+                results.append(build)
+            for i in range(0,len(digits)):
+                rec_build(build+digits[i], digits[:i]+digits[i+1:],n)
+            print build
+        rec_build("",digits,n)
+
+
+class Solution(object):
+    def atMostNGivenDigitSet(self, digits, n):
+        """
+        :type digits: List[str]
+        :type n: int
+        :rtype: int
+        """
+        '''
+        this was a hard problem, but its better seeing how its done than skipping it
+        first call a pos int X valid if X <= N
+        only ocnsists of digits form D
+        if N has K digits, we can only write a vliad number if little k digits such that k < K
+        then there are (len(digits))^k possible numbers we could write 
+        note the recusrive solution is harder 
+        DP!
+        for samplex N = 2345, K = 4
+        and D is the set 1-9
+            if the first digit we write is less than the first digit of N then we could write any numbers after for a totla of (len(D))^K-1 valid numbers from the prefix
+            in our example we could take 1111 to 1999
+            
+            if the first digit we write is the same, then we need the next figit equal or lower
+            if we start with 2, the nex digit needs to be <= 3
+            we can't write a larger digit because if we started with 3, then the number is too big
+        
+        algo:
+        let dp[i] be the number of ways to write a valid number N 
+        for example if N = 2345, then dp[0] would be the number of vlad numbers at most 2345, dp[1] would be the ones up to 345, dp[2] 45, dp[3] 5
+        
+        WLOG, dp[i] = (number of d in D with d < S[i])*((D.length(**K-i-1))) if S[i] in D
+        uhhhhh!??!?!
+        '''
+        #convert digits into a string
+        S = str(n)
+        K = len(S)
+        dp = [0]*K + [1]
+        
+        #allocate dp array, recall dp[i] is the totla number of valid integers of N was N[i:]
+        for i in range(K-1,-1,-1):
+            for d in digits:
+                if int(d) < int(S[i]):
+                    dp[i] += len(digits)**(K-i-1)
+                elif int(d) == int(S[i]):
+                    dp[i] += dp[i+1]
+        
+        return dp[0] + sum(len(digits)**i for i in range(1,K))
+        
+
+#########################
+#Unique Morse Code Words
+#########################
+class Solution(object):
+    def uniqueMorseRepresentations(self, words):
+        """
+        :type words: List[str]
+        :rtype: int
+        """
+        '''
+        convert each word in words to its morse
+        set the morse
+        get the length
+        '''
+        morse = [".-","-...","-.-.","-..",".","..-.","--.","....","..",".---","-.-",".-..","--","-.","---",".--.","--.-",".-.","...","-","..-","...-",".--","-..-","-.--","--.."]
+        #a-z indexed from 0 to 25
+        #off set with ord(a)
+        decoded = []
+        for w in words:
+            temp = ""
+            for char in w:
+                symbol = morse[ord(char) - ord('a')]
+                temp += symbol
+            decoded.append(temp)
+        return len(set(decoded))
+
+#########################################################
+#  Longest Substring with At Most Two Distinct Characters
+#########################################################
+class Solution(object):
+    def lengthOfLongestSubstringTwoDistinct(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        brute force
+        n squared would be to check all possible substrings
+        update max length under contstraint len(set(substring)) == 2
+        TLE obvie
+        '''
+        if len(s) < 3:
+            return len(s)
+        max_length = float('-inf')
+        for i in range(0,len(s)):
+            for j in range(i,len(s)):
+                substring = s[i:j+1]
+                if len(set(substring)) <= 2:
+                    max_length = max(max_length,len(substring))
+        return max_length
+
+#LC solution
+class Solution(object):
+    def lengthOfLongestSubstringTwoDistinct(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        two pointer apporach, left and right
+        keep advancing right to examine each char
+        for the left, only advance once we have more than two unq letters in our hash
+        move it up the +1 from the least recently seen char
+        difference of left and right +1 with max update
+        '''
+        n = len(s)
+        if n < 3:
+            return n
+        
+        l,r = 0,0
+        mapp = defaultdict()
+        max_length = 2
+        
+        while r < n:
+            #add char to mapp 
+            mapp[s[r]] = r
+            #move up
+            r += 1
+            
+            #now check constraint
+            if len(mapp) == 3:
+                #find the last rececntly seen
+                last_seen_idx = min(mapp.values())
+                #remove from maap
+                del mapp[s[last_seen_idx]]
+                #move up left
+                l = last_seen_idx + 1
+            #update
+            max_length = max(max_length, r-l)
+            
+        return max_length
+
+
+#############################
+# House Robber III 23Nov2020
+#############################
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def rob(self, root):
+        """
+        :type root: TreeNode
+        :rtype: int
+        """
+        '''
+        go through this carefully
+        since the problem asks us to find out the maximum amount the their can 
+        get starting form this noe
+        dfs(node):
+            if not node:
+                retun -
+            else:
+                two choices, rob this node or not?
+                if not rob:
+                    helper(node.left) + helper(node.right)
+                if rob:
+                    return node.val
+                    #but now we cannot take from the left or right
+                    #so we need to touch the nodes siblings to see if we could get more
+                    
+        the best practice is touch only its children, WE FUCKING RECURSE AGAIN FROM THE CHILDREN
+        the ideal situation is to make node.left and node. right handle grandchildren
+        how? we can let them know wheter we robbed this node or not by passing this information as input
+            two choices? rob or not
+            rob = node.val + helper(node.left, parent_robbed = True) + helper(node.right parent_robbed = True)
+            not_rob = helper(node.left, parent_robbed=False) + helper(node.right, parent_robbed=False)
+            return max(rob, not_rob)
+        another problem is that helper is called too many times, in fact FOUR TIMES at one invocation
+        also note then when we call helper(node.left, True) and helper(node.right, False), helper(node.left.left, False) is called....I DONT GET WHY?!?!
+        ohhhh now i do
+        so we can combine them
+        we return the results of helper(node.left,True) and helper(node.left, False) as one single return call in an array
+        left = helper(node.left)
+        right = helper(node.right)
+        some calculation...
+        return [max_if_rob, max_if_not_rob]
+        
+        #algo,
+        use a helper function which received a node as input and returns a two element array, where the first element representes the max amount of money they theif can rob if starting form this node without robbing this node,
+        the second eleemtn represents the max amount of money the theif can rob if starte fromt his node and robbing this node
+    
+        '''
+        def dfs(node):
+            #first element money theif gets starting from this node and robbing
+            #second element, starting form this and not robbing
+            if not node:
+                return [0,0]
+            left = dfs(node.left)
+            right = dfs(node.right)
+            #now we decide we we rob this node or nor
+            #if we rob, we cannot rob its children
+            rob = node.val + left[1] + right[1]
+            #else we choose to take from children or not
+            not_rob = max(left) + max(right)
+            return [rob, not_rob]
+        return max(dfs(root))
+
+
+#https://www.youtube.com/watch?v=mSzz_bZUVCQ&ab_channel=AnishMalla
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def rob(self, root):
+        """
+        :type root: TreeNode
+        :rtype: int
+        """
+        stolen = {}
+        not_stolen = {}
+        def dfs(node,parent_stolen):
+            #parent_stolen keeps track of whether or not we can steal or notsteal its children
+            if not node:
+                return 0
+            if parent_stolen:
+                #if stealing
+                #only optein is to not steal the current node we are at
+                if node in stolen:
+                    return stolen[node]
+                result =  dfs(node.left,False) + dfs(node.right,False) 
+                stolen[node] = result
+                return result
+            else:
+                #if not stealing
+                #given a choise b/tsteam and not stealing
+                #condition for stealing at current node
+                if node in not_stolen:
+                    return not_stolen[node]
+                steal = node.val + dfs(node.left,True) + dfs(node.right, True)
+                #not stealing
+                not_steal = dfs(node.left, False) + dfs(node.right, False)
+                result = max(steal,not_steal)
+                not_stolen[node] = result
+                return result
+        return dfs(root,False)
+
+            
