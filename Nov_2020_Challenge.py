@@ -2579,4 +2579,762 @@ class Solution(object):
                 return result
         return dfs(root,False)
 
+######################
+# Basic calculator II
+########################
+#welll it workds
+class Solution(object):
+    def calculate(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        because of nested functions we need to use a stack
+        but we need to remembed order of opreations
+        *  and / get precedence over + and -
+        do nothing in space
+        there are no () tahnk go
+        dump into stack taking care of * and / first going right ot left
+        then just pass over the stack left to right doing normal evals with + and -
+        first pass to trim white spaces
+        '''
+        #edge cases
+        ops = set(["+", "-", "*", "/"])
+        count_ops = 0
+        for i in range(len(s)):
+            if s[i] in ops:
+                count_ops += 1
+        if count_ops == 0:
+            return int(s)
+        N = len(s)
+        #take care of white spaces first
+        i = 0
+        trimmed_s = ""
+        while i < N:
+            if s[i] == ' ':
+                pass
+                i += 1
+            else:
+                trimmed_s += s[i]
+                i += 1
+        #now lets make sure we get the whole int and individual operations, dump into list ['122','+']
+        #i can use the two pointer method to mark the start and beg of my number
+        temp  = []
+        l,r = 0,0
+        while r < len(trimmed_s):
+            if trimmed_s[l] in ops:
+                temp.append(trimmed_s[l])
+                l += 1
+                r += 1
+            while r  < len(trimmed_s) and ord('0') <= ord(trimmed_s[r]) <= ord('9'):
+                r += 1
+            temp.append(trimmed_s[l:r])
+            l = r
+
+        # now do * / and make sure to get the ints
+        N = len(temp)
+        stack = []
+        i = 0
+        while i < N:
+            if temp[i] == '*':
+                stack.append(str(int(stack.pop())*int(temp[i+1])))
+                i += 2
+            elif temp[i] == "/":
+                stack.append(str(int(stack.pop())/int(temp[i+1])))
+                i += 2
+            else:
+                stack.append(temp[i])
+                i += 1
+
+        #now take care of addition and substracton by passing the stack
+        result = int(stack[0])
+        N = len(stack)
+        i = 1
+        while i < N:
+            if stack[i] == "+":
+                result += int(stack[i+1])
+                i += 2
+            elif stack[i] == "-":
+                result -= int(stack[i+1])
+                i += 2
+        return result
+
+
+class Solution(object):
+    def calculate(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        note we can treat subtraction as adding a negative
+        take care of multiple ans divide first
+        scane the input string fomr left ot righ and eal expressions based:
+        store three variabils 
+        currnet var
+        current op
+        and currnet chat
+        '''
+        if not s:
+            return 0
+        stack = []
+        curr_num = 0
+        curr_op = "+" 
+        
+        all_ops = {"+","-","*","/"}
+        nums = set(str(x) for x in range(10))
+        
+        for i in range(len(s)):
+            char = s[i]
             
+            if char in nums:
+                curr_num = curr_num*10 + int(char) #cool trick
+            if char in all_ops or i == len(s)-1:
+                if curr_op == "+":
+                    stack.append(curr_num)
+                elif curr_op == "-":
+                    stack.append(-curr_num)
+                elif curr_op == "*":
+                    #carry out
+                    stack[-1] *= curr_num
+                elif curr_op == "/":
+                    #note at the end of the loop we have yet to execute * or /
+                    #we still need to carry that ou
+                    stack[-1] =  round(stack[-1] / curr_num)
+                
+                curr_num = 0
+                curr_op = char
+        
+        return int(sum(stack))
+
+###################################
+# Smallest Integer Divisible by K
+###################################
+class Solution(object):
+    def smallestRepunitDivByK(self, K):
+        """
+        :type K: int
+        :rtype: int
+        """
+        '''
+        keep generating 1 11 11 1111 111
+        stop when remainer by K is zero
+        '''
+        if K % 2 == 0 or K % 5 == 0:
+            return -1
+        candidate = 1
+        while candidate % K != 0:
+            candidate = candidate*10 + 1
+            
+        if candidate % K == 0:
+            return len(str(candidate))
+        else:
+            return -1
+            
+
+class Solution(object):
+    def smallestRepunitDivByK(self, K):
+        """
+        :type K: int
+        :rtype: int
+        """
+        '''
+        do to interger overflow we need to use the remainder
+        the while loop will only terminate if a solution exists
+        so we need to keep track of seen remainders
+        if we see it again, we have encounter a cycle
+        '''
+        remainder = 1
+        length_N = 1
+        seen = set()
+        
+        while remainder  % K != 0: #cant go into K
+            N = remainder*10 + 1
+            #new remainder
+            remainder = N%K
+            length_N += 1
+            
+            if remainder in seen:
+                return -1
+            else:
+                seen.add(remainder)
+                
+        return length_N
+
+class Solution(object):
+    def smallestRepunitDivByK(self, K):
+        """
+        :type K: int
+        :rtype: int
+        """
+        '''
+        do to interger overflow we need to use the remainder
+        the while loop will only terminate if a solution exists
+        so we need to keep track of seen remainders
+        if we see it again, we have encounter a cycle
+        
+        using th pigeonhole principle
+        recall that the numbe rof possible values or eaminder is in range 0,K-1
+        in fact it is K (try a few numbers to see that this is true)
+        as a result the while loop should only continue K times
+        otherwise the reamidners reperat
+        if N exists, the while loop must return length_N in the first K loops
+        '''
+        reaminder = 0
+        for L in range(1,K+1):
+            reaminder = (reaminder*10 + 1) % K
+            if reaminder == 0:
+                return L
+            
+        return -1
+
+###########################################################
+# Longest Substring with At Least K Repeating Characters
+#############################################################
+class Solution(object):
+    def longestSubstring(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: int
+        """
+        '''
+        brute force would be to generate all subtrings counter it and check each char constaint
+        if satified update the length
+        TLE ovbiee
+        
+        '''
+        max_length = 0
+        N = len(s)
+        for i in range(N):
+            for j in range(i,N):
+                count = Counter(s[i:j+1])
+                #now we need to check that all elements count is >= k
+                #just check the min
+                if min(count.values()) >= k:
+                    max_length = max(max_length, len(s[i:j+1]))
+        return max_length
+                
+#recursively
+class Solution(object):
+    def longestSubstring(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: int
+        """
+        #usind divide and conquer
+        #we can write a function
+        #longest(start,end) = max(longest(start,mid),longest(mid,end))
+        #we find the split position mid which is the first invalid char
+        #which would be the char whose count is < k
+        def rec_split(s,k):
+            if len(s) == 0 or k > len(s):
+                #when to terminae the callt
+                return 0
+            
+            count = Counter(s)
+            sub1 = ""
+            sub2 = ""
+            
+            for i,char in enumerate(s):
+                if count[char] < k:
+                    #invalid char
+                    sub1 = rec_split(s[:i],k)
+                    sub2 = rec_split(s[i+1:],k)
+                    break
+            else:
+                return len(s)
+            
+            return max(sub1,sub2)
+        
+        return rec_split(s,k)
+
+class Solution(object):
+    def longestSubstring(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: int
+        """
+        '''
+        i can begin by counting up the char occurences
+        we divide the string into regions that only contain valid char counts (i.e counts >= k)
+        since inclding those counts would yeild an invalid string
+        this is just anothe recursive solution
+        '''
+        def rec_build(s,k):
+            N = len(s)
+            if N == 0 or N < k:
+                return 0
+            if k <= 1:
+                return N
+            
+            counts = Counter(s)
+            l = 0
+            while l < N and counts[s[l]] >= k:
+                l += 1
+            if l >= N-1: #got to the end
+                return l
+            
+            s1 = rec_build(s[0:l],k)
+            #if there are still parts of the string with char counts < k
+            while l < N and counts[s[l]] < k:
+                l += 1
+            if l < N:
+                s2 = rec_build(s[l:],k)
+            else:
+                #if we have gotten to the end, there is nothing
+                s2 = 0
+            
+            return max(s1,s2)
+        
+        return rec_build(s,k)
+
+############################
+#Partition Equal subset sum
+############################
+#close but it wont work for all cases
+class Solution(object):
+    def canPartition(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        similar to building all subsets but build one subset, and keep track of the complement subset
+        then at each iteration check if sums of subset and comp subset match
+        
+        '''
+        N = len(nums)
+        chosen_idxs = []
+        not_chosen = []
+        def build_subset(start,temp):
+            chosen_idxs.append(temp)
+            not_chosen.append([foo for foo in list(range(N)) if foo not in temp])
+            for i in range(start,len(nums)):
+                build_subset(i+1, temp+[i])
+        build_subset(0,[])
+        
+        #now only start at the first one
+        N = len(chosen_idxs)
+        for i in range(1,N):
+            subset = []
+            comp = []
+            for idx in chosen_idxs[i]:
+                subset.append(nums[idx])
+            for idx in not_chosen[i]:
+                comp.append(nums[idx])
+            if sum(subset) == sum(comp):
+                return True
+        
+        return False
+
+#official LC< TLE Again
+class Solution(object):
+    def canPartition(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        note that the sum of the whole array must be even in order for us to split it up
+        we find a subset in na ray where the sum must be equal to the subset
+        ehaustively build them up
+        assume there is an array nums of size n
+        and we heave to find if there exists a subset with total sum = sumsetsum
+        two cases at element x:
+            1. x is part of the the subset, at which subsetsum = subsetsum - x
+            2. x i not in the subset, so we take teh previous sum without x
+        def dfs function that finds if a subset can equal that sum
+        dfs(subsetsum,n) = dfs(subsetsum - nums[n],n-1) or dfs(subsetsum,n-1)
+        review knapsacking
+        this gets TLE
+        '''
+        def dfs(nums,n,subsetsum):
+            if subsetsum == 0:
+                return True
+            if n == 0 or subsetsum < 0:
+                return False
+            return dfs(nums,n-1,subsetsum - nums[n-1]) or dfs(nums,n-1,subsetsum)
+        
+        totalsum = sum(nums)
+        if totalsum  % 2 != 0:
+            return False
+        subsetsum = totalsum / 2
+        N = len(nums)
+        
+        #now find the subset sum
+        return dfs(nums,N-1,subsetsum)
+
+
+class Solution(object):
+    def canPartition(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        of course we can add memoization to the dfs calls
+        but how?
+        we can create a 2d boolean memo, that has dimensions len(nums) + 1 by subsetsum + 1
+        we then look at the memo to check our result
+        '''
+        def dfs(nums,n,subsetsum,memo):
+            if subsetsum == 0:
+                return True
+            if n == 0 or subsetsum < 0:
+                return False
+            if memo[n][subsetsum] is not None:
+                return memo[n][subsetsum]
+            
+            result = dfs(nums,n-1,subsetsum - nums[n-1],memo) or dfs(nums,n-1,subsetsum,memo)
+            memo[n][subsetsum] = result
+            return result
+        totalsum = sum(nums)
+        if totalsum % 2 != 0:
+            return False
+        subsetsum = totalsum / 2
+        N = len(nums)
+        memo = [[None]*(subsetsum + 1) for _ in range(N+1)]
+        
+        return dfs(nums, N-1, subsetsum, memo)
+
+class Solution(object):
+    def canPartition(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        another IDDFS approach
+        this is a variant of the knapsacking problem
+        from the recursino tree we go left when we take element x as part of the subset
+        but decrement the target
+        we go right when we do not include element x as part of the subset
+        add set of targets, why?
+        if we have descned a path that includes a target, it means we haven't fired true for our dfs
+        so we end the call there
+        
+        '''
+        self.cache = set()
+        def dfs(target, nums):
+            if target < 0:
+                return False
+            if target == 0:
+                return True
+            if target in self.cache:
+                return False
+            self.cache.add(target)
+            
+            for i,n in enumerate(nums):
+                if dfs(target - n, nums[i+1:]) or dfs(target, nums[i+1:]):
+                    return True
+            
+            return False
+        
+        subsetsum = sum(nums) 
+        if subsetsum % 2 != 0:
+            return False
+        
+        return dfs(subsetsum/2,nums)
+            
+##########################
+#Sliding Maximum Window
+###########################
+#TLE, im not sure why this is a hard one
+class Solution(object):
+    def maxSlidingWindow(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: List[int]
+        """
+        '''
+        i dont get why this is hard?
+        just keep moving the sliding window until you can't
+        add the max to a list, and return the list
+        '''
+        N = len(nums)
+        maxes = []
+        for i in range(N-k+1):
+            maxes.append(max(nums[i:k+i]))
+            
+        return maxes
+        
+
+class Solution(object):
+    def maxSlidingWindow(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: List[int]
+        """
+        '''
+        LC article sucks
+        https://leetcode.com/problems/sliding-window-maximum/discuss/237611/Simplest-O(n)-Python-Solution-with-Explanation
+        1. maintain deque of indexes which store the largest nums we've seen so far - the len of deq will never be greater tjna k
+        2. we need to keep sanity of the deque
+            the deque should never point to elements smaller than the current one (pop em off)
+            deque should enver point to elements outside the bounds of our window
+        3. keep furnishing from the front of the deque - it happens that the max will always be from the front
+        
+        '''
+        d = deque()
+        results = []
+        for i,v in enumerate(nums):
+            #top of the stack must always be greater than the current eleemtn
+            while d and nums[d[-1]] < v:
+                d.pop()
+            #q up the index
+            d.append(i)
+            #if the index it outside k
+            if d[0] == i - k:
+                d.popleft()
+            #we are always appending after i >= k
+            if i >= k - 1:
+                results.append(nums[d[0]])
+        return results
+        
+
+###################
+#Jump Game III
+###################
+class Solution(object):
+    def canReach(self, arr, start):
+        """
+        :type arr: List[int]
+        :type start: int
+        :rtype: bool
+        """
+        '''
+        from the hint, i can think of this using BFS, whic means graph
+        each index is connected to another index by end edge, the edge is i +arr[i] or i - arr[i]
+        if a path exists to the zero val, i should be able to traverse the graph
+        algo
+            add node to q, and mark if we have visited
+            than checkits paths
+        '''
+        N = len(arr)
+        visited = set() #mark with index
+        q = [start]
+        
+        while q:
+            node = q.pop(0)
+            if arr[node] == 0:
+                return True
+            if node in visited:
+                continue
+            
+            for i in [node + arr[node],node - arr[node]]:
+                if 0 <= i < N:
+                    q.append(i)
+                    
+            visited.add(node)
+            
+        return False
+
+#############################
+#Maximum Average Subarray II
+############################
+class Solution(object):
+    def findMaxAverage(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: float
+        """
+        '''
+        the naive way would be to find all sub arrays, average them, and update a max
+        number of posisble windows is len(nums) - k + 1
+        TLE obvie
+        '''
+        N = len(nums)
+        averages = [float(sum(nums))/float(N)]
+        for window_size in range(k,N):
+            for i in range(N-window_size+1):
+                averages.append(float(sum(nums[i:i+window_size])) / window_size)
+                
+        return max(averages)
+
+class Solution(object):
+    def findMaxAverage(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: float
+        """
+        '''
+        https://leetcode.com/problems/maximum-average-subarray-ii/solution/
+        we know the average must lie beteween min an max, but we need subarray with at least k eleetns
+        we can use binary search to find an array with at least k elements that is greater than the mid value we got using binary seach
+        thus we can see that if after subtracting the mid numbers from the elements in our candidate array, with moe than k - 1 elments, withinnums, if the sum of elements of this reduced subarray is greater than 0, we can achieve an average value greater than mid!
+        the trick is that for array elements a,b,c
+        we can write (a + b + c) / 3 >= mid
+        (a-mid) + (b - mid) + (c- mind) >= 0
+        if sum candidata elements after mid subtracting is of length >=k and >=0
+        we can achieve thid mid
+        otherwise if the sum is less then 0, we cant use this mid
+        so we need a smaller one, which is just binary search
+        in order to determing is such a subaray exits ina linear manner
+        we keep on adding nums[i] - mid to the sum tilt he ith element until we get at least k elements
+        when sum becomes >= 0 we can directly determine that we can increase the avg beyond mid
+        otherwise we continue making additions to sum for elements beoung the kth element
+        if we know the cum sum up to indices i and j, say sum_i and sum_j, respectively we can determine the sum of the subarray between these indices as sumj - sumi
+        instead of checking all possible vluaes of sum- we can just conisder the min cum cum up to the index j-k
+        this is because if the required condition can't be satisfied with the min sumi it can enver be stafied with  alrge vale
+        To fulfil this, we make use of a prevprev variable which again stores the cumulative sums but, its current index(for cumulative sum) lies behind the current index for sumsum at an offset of kk units. 
+        '''
+        def check(nums,mid,k):
+            #check if we have valid subarray
+            prev = 0
+            min_sum = 0
+            total = sum(nums[i] - mid for i in range(k))
+            if total >= 0:
+                return True
+            #now check
+            for i in range(k,len(nums)):
+                total += nums[i] - mid
+                prev += nums[i-k] - mid
+                min_sum = min(min_sum,prev)
+                if total > min_sum:
+                    return True
+            return False
+        
+        #binary search away
+        max_val = max(nums)
+        min_val = min(nums)
+        error = float('inf')
+        prev_mid = max_val
+        while  error > 0.00001:
+            mid = float((max_val + min_val)) / float(2)
+            if check(nums,mid,k):
+                #can have a potential higher average
+                min_val = mid
+            else:
+                max_val = mid
+            #update error
+            error = abs(prev_mid-mid)
+            prev_mid = mid
+        return min_val
+
+######################
+#The Skyline Problem
+######################
+class Solution(object):
+    def getSkyline(self, buildings):
+        """
+        :type buildings: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        https://www.youtube.com/watch?v=GSBLe8cKu0s&t=724s&ab_channel=TusharRoy-CodingMadeSimple
+        similar to merge intervals
+        iterate over the points, move point up to edge of building
+        at start and at end of buildings
+        move from left to right enctouner start of building
+        push height of building into heap
+        if max changes, there is an overlap
+        if at end, remove building from heap
+        sort points on x, edge cases are if xs are the same
+        furnish out y from max of heap
+        edge cases
+        
+        when starts of two or more buildings is same, look for builidng with higher height
+        when ends of two or more buildings are the same, look at lower height first
+        when end is start of next building, only start, endstart,end
+        use heap q
+        '''
+        #create building points array
+        #three element 0 for start 1 for end
+        building_points = []
+        for start,end,height in buildings:
+            building_points.append([start,height,0])
+            building_points.append([end,height,1])
+        #sort, recall the edge cases for sorting
+        #sort on start, if starts are same, give precendence if building demarcation is start of builiding
+        #negate height, to take the higher buildin first
+        #
+        building_points.sort(key = lambda x:(x[0],x[2],-x[1] if x[2] == 0 else [1]))
+        results = []
+        q_heights = [0] #init with 0
+        heapify(q_heights)
+        for b in building_points:
+            #unpack
+            index,height,event_type = b
+            if event_type == 0: #start
+                if height > -q_heights[0]:
+                    results.append([index,height])
+                heappush(q_heights,-height)
+            else:
+                #end
+                heappop(q_heights)
+                if height > -q_heights[0]:
+                    results.append([index,-q_heights[0]])
+        
+        return results
+
+class Solution(object):
+    def getSkyline(self, buildings):
+        """
+        :type buildings: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        https://leetcode.com/problems/the-skyline-problem/discuss/954585/Python-O(n-log-n)-solution-using-heap-explained
+        Notes:
+        1. Keep a so called active set, to what buildings we currently have in given point
+        2. We need to quickly determine the highest builiding os far, so use a heap
+        and perform lazy deletions
+        
+        Algo:
+        1. For each building, put two tuples of info, left corner first marked by -1, then concat with right corner, 1
+        2. Now we need to sort, which is where the edge cases come in. sort by x. if euqal sor tem by height multiplied by -1, we want taller buildings first
+        3. load a dummy element into out heap and set
+        4. go through oints, if we meeet the beginning of some building, add to active set, if end, remove from active set
+        5. if we meet the left corner of a building and it is also height than we alread met so far, that is h > heap[0][0]. then we add this element to ans. we also add (-h.ind) to ouy heap (min heap)
+        6. If we meet right corner of building and it is less than highest current building, we do nothing with our heap: (actually, what we need to do is to say, that current building is not active any more and we already did this). 
+        7. Finally, if h == -heap[0][0], it means, that we need to pop some element from our heap. How many? Here we have our lazy updates: we look if building is active or not and if it is not, we remove and continue, until we have highest building which is active
+        8. Finally, if new point we want to add has different height from what we have as the last element of our ans, we add new point to ans: [x, -heap[0][0]]: note, that we add point with height after we removed all inactive elements from heap
+    
+        '''
+        #create new points, left marked with -1, right with 1
+        #give reference to ith building with index
+        points = []
+        for i,(l,r,h) in enumerate(buildings):
+            points.append((l,h,-1,i))
+            points.append((r,h,1,i))
+        #sort by x, then taller building in front
+        points.sort(key = lambda x: (x[0],x[1]*x[2]))
+        #init, heap is our heights with (height, index)
+        heap_heights  = [(0,-1)]
+        visited_buildings = set([-1])
+        results = []
+        
+        for x,h,lr,ind in points:
+            #start of building
+            if lr == -1:
+                visited_buildings.add(ind)
+            else:
+                visited_buildings.remove(ind)
+            #print visited_buildings
+            
+            #start
+            if lr == -1:
+                if h > heap_heights[0][0]:
+                    #include in answer
+                    results.append([x,h])
+                #max update
+                heappush(heap_heights,(-h,ind))
+            #at the end instead
+            else:
+                if h == heap_heights[0][0]: #the same
+                    #we keep removing from our heap
+                    while heap and heap[0][1] not in visited_buildings:
+                        heappop(heap)
+                #for the last building
+                if -heap_heights[0][0] != results[-1][1]:
+                    results.append([x,-heap_heights[0][0]])
+        return results
+        
