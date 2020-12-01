@@ -4,7 +4,7 @@ Just a code dump for all the monthly Leet code solutions.
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-November 2020
+December 2020
 
 Completed:
 * May 2020
@@ -13,3 +13,4 @@ Completed:
 * Aug 2020
 * Sep 2020
 * Oct 2020
+* Dec 2020
