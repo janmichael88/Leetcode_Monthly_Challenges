@@ -13,4 +13,3 @@ Completed:
 * Aug 2020
 * Sep 2020
 * Oct 2020
-* Dec 2020
