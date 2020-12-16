@@ -692,5 +692,190 @@ class Solution(object):
             
         return matrix
             
+#####################################################
+# Pairs of Songs With Total Durations Divisible by 60
+#####################################################
+#TLE Obvie
+class Solution(object):
+    def numPairsDivisibleBy60(self, time):
+        """
+        :type time: List[int]
+        :rtype: int
+        """
+        '''
+        brute force would be to check all pairs and that their sum is divisble by 60
+        then incrment a count do this first
+        '''
+        count = 0
+        for i in range(0,len(time)):
+            for j in range(i,len(time)-1):
+                if (time[i] + time[j+1]) % 60 == 0:
+                    count += 1
+        return count
+
+class Solution(object):
+    def numPairsDivisibleBy60(self, time):
+        """
+        :type time: List[int]
+        :rtype: int
+        """
+        '''
+        we can write (a+b) % k = ((a % k) + (b % k)) % k
+        in our case we have
+        ((a % 60) + (b % 60)) % 60 = 0
+        which means a % 60, b % 60, a % 60 + b % 60 = 60
+        we pass through the array and for each element a, we want to know the number of elements b such that b % 60 = 0 if a %60 =0
+        and
+        b % 60 = 60 - a %60 if a % 60 does not equal 0
+        there are 60 ways two songs could have length % 60 == 0
+        a % 60 and b % 60 == 0
+        a % 60 = 1 and b % 60 = 59
+        ...
+        a % 60 = 59 and b % 60 = 1
+        we create a hash map holding the counts of the % 60 for each song (which is in range [0,59]) incremeting their count
+        each time we hit an element we also check for the complements which is just 60 - elemtn % 60 indexing back into the array, and we incrment the count
+        if elemnt % 0 = 0, and reaminder[0] tot eh result else add remainder[60 - t % 60]
+        and also update the reaminders after upating count
+        '''
+        remainders = collections.defaultdict(int)
+        count = 0
+        for t in time:
+            #if t is divisible by 60
+            if t % 60 == 0:
+                count += remainders[0]
+            #now check the number of complements 60 - t % 60
+            else: #similar to dp
+                count += remainders[60 - t % 60]
+            #update reaminder
+            remainders[t % 60] += 1
+        return count
+
+####################
+#Missing Ranges
+####################
+class Solution(object):
+    def findMissingRanges(self, nums, lower, upper):
+        """
+        :type nums: List[int]
+        :type lower: int
+        :type upper: int
+        :rtype: List[str]
+        """
+        '''
+        we are looking for nums in the range lower to upper that do not exsist in nums
+        if we have the array
+        [1,2,4,10,12] and limits (-1,-15)
+        the result will be
+        [-1->0,3,5->9,11,13->15]
+        not that if two adjacent numbers in the nums array differ by one we don't include them
+        if they differ by two, well just just take nums[i]
+        if greater than 2, we take nums[i+1]- and nums[i+2] - 1
+        we also need to affix the lower and upper limits to out nums array
+        '''
+        #add lower and upper bounds for edge cases
+        nums = [lower-1] + nums + [upper+1]
+        ranges = []
+        #start from index 1 bease we need to compare differcne
+        for i in range(0,len(nums)-1):
+            #if nums[i+1] - nums[i] == 2, take nums[i]-1
+            if nums[i+1] - nums[i] == 2:
+                ranges.append(str(nums[i]+1))
+            elif nums[i+1] - nums[i] > 2:
+                ranges.append(str(nums[i]+1)+"->"+str(nums[i+1]-1))
+        
+        return ranges
+
+##############################
+#Binary Search Tree Iterator
+#############################
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class BSTIterator(object):
+
+    def __init__(self, root):
+        """
+        :type root: TreeNode
+        """
+        '''
+        easy case first, we traverse the root in order adding an array
+        then we manipluate a pointer to go to next and has next
+        '''
+        self.nodes = []
+        self.pointer = -1
+        def dfs(root):
+            if not root:
+                return
+            dfs(root.left)
+            self.nodes.append(root.val)
+            dfs(root.right)
+        dfs(root)
+
+    def next(self):
+        """
+        :rtype: int
+        """
+        '''
+        i need to move a pointer iteratively
+        '''
+        self.pointer += 1
+        return self.nodes[self.pointer]
 
 
+    def hasNext(self):
+        """
+        :rtype: bool
+        """
+        '''
+        and then check 'inorder' which is just left, nope,right
+        '''
+        return self.pointer  < len(self.nodes) - 1
+
+class BSTIterator(object):
+    '''
+    we can simulate recursion using a stack, this would allow for control during regular recursino
+    init an empty stack which wil be used to similar.
+    in the usual recursive call we would invoke once then go left, node, right
+    the inital state will keep descending left until it hits a leaf
+    for a given node root, the next smallest element will always be the left most element in tree
+    the fist time next function is made the smalles element of the BST has to be returns
+    the next smalest node wold be sitting at the top of the stack
+    the best case when visiting a node would be if there were no childre
+    if a node has a right childe, we dont need for the left because we've already done that going in order
+    '''
+
+    def __init__(self, root):
+        """
+        :type root: TreeNode
+        """
+        self.root = root
+        self.stack = []
+        
+
+    def next(self):
+        """
+        :rtype: int
+        """
+        #instead of creaitng a function to call invoke here
+        #we want to keep going left until we can't, but as we go left
+        while self.root:
+            self.stack.append(self.root)
+            self.root = self.root.left
+        top = self.stack.pop()
+        #return this value after traversung
+        result = top.val
+        #now the we have gotten the next, move right for the next call
+        self.root = top.right
+        return result
+        
+
+    def hasNext(self):
+        """
+        :rtype: bool
+        """
+        #if there is nothing else to pop we should be done
+        #
+        return len(self.stack) > 0 or self.root != None
