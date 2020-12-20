@@ -879,3 +879,1139 @@ class BSTIterator(object):
         #if there is nothing else to pop we should be done
         #
         return len(self.stack) > 0 or self.root != None
+
+
+#with creating another method
+class BSTIterator(object):
+    '''
+    we can simulate recursion using a stack, this would allow for control during regular recursino
+    init an empty stack which wil be used to similar.
+    in the usual recursive call we would invoke once then go left, node, right
+    the inital state will keep descending left until it hits a leaf
+    for a given node root, the next smallest element will always be the left most element in tree
+    the fist time next function is made the smalles element of the BST has to be returns
+    the next smalest node wold be sitting at the top of the stack
+    the best case when visiting a node would be if there were no childre
+    if a node has a right childe, we dont need for the left because we've already done that going in order
+    '''
+
+    def __init__(self, root):
+        """
+        :type root: TreeNode
+        """
+        #create instance var, since i'm not creatin a method function for inorder traverse
+        self.root = root
+        #stack init
+        self.stack = []
+        #get initla state
+        while self.root:
+            self.stack.append(self.root)
+            self.root = self.root.left
+        
+
+    def next(self):
+        """
+        :rtype: int
+        """
+        #the next node to return would always be at the top of the stack
+        #but we need to maintain the inariant if the node has a right childe
+        top = self.stack.pop()
+        if top.right:
+            while top.right:
+                self.stack.append(top.right)
+                top.right = top.right.left
+        return top.val
+
+    def hasNext(self):
+        """
+        :rtype: bool
+        """
+        #if there is nothing else to pop we should be done
+        #
+        return len(self.stack) > 0
+
+
+#joust a review for iterative inroder traversale of BST
+stack = []
+while True:
+    if root:
+        stack.append(root)
+        root = root.left
+    else:
+        if not stack:
+            break
+        root = stack.pop()
+        print(root.val)
+        root = root.right
+
+#########################
+#Valid Mountain Array
+##########################
+#close but maybe thinking too hard?
+class Solution(object):
+    def validMountainArray(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: bool
+        """
+        '''
+        traverse the array finding the peak,
+        then use two pointers from the peak to make sure boths sides are strictly increasing
+        both pointers should reach the end with out a pleatua
+        '''
+        N = len(arr)
+        for i in range(1,N-1):
+            #peak
+            if arr[i-1] < arr[i] < arr[i+1]:
+                l,r = i,i
+                while l > 0 and r < N-1:
+                    #keep checking
+                    if arr[l-1] < arr[l]:
+                        l -= 1
+                    if arr[r+1] > arr[r]:
+                        r += 1
+                #check ends
+                if l == 0 and r == N-1:
+                    return True
+                else:
+                    return False
+                return True
+        
+        return False
+
+class Solution(object):
+    def validMountainArray(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: bool
+        """
+        '''
+        we can walk along the array strictly increasing
+        if we get the point where we are no longer increasing, check that the peack is not at the end
+        then walk down and return whether or not we got to the end
+        '''
+        N = len(arr)
+        i = 0
+        while i+1 < N and arr[i+1] > arr[i]:
+            i += 1
+        #until we can't
+        if i == 0 or i == N-1:
+            return False
+        #walk down
+        while i+1 < N and arr[i+1] < arr[i]:
+            i += 1
+        return i == N-1
+
+
+###########################################
+#Remove Duplicates from Sorted Array II
+###########################################
+#since popping from an array is O(N), the worst case for this would be N^2
+class Solution(object):
+    def removeDuplicates(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        elements should only appear at most twice
+        go through the array and check that i + 1 is i if not delete it
+        keep track of a counter and last seen number
+        while loop but update N upon deletion
+        '''
+        count = 1
+        i = 1
+        while i < len(nums):
+            #when adjacenet elements are the same incrment counter
+            if nums[i] == nums[i-1]:
+                count += 1
+                #same but greater than 2, pop it off
+                if count > 2:
+                    del nums[i]
+                    i -= 1
+            #reset counter, not that we've popped them all off
+            else:
+                count = 1
+            #we always advane our i
+            i += 1
+
+class Solution(object):
+    def removeDuplicates(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        we can just overwrite unwanted duplicates
+        we define two pointers i and k
+        i goes across the array one at atime and j keeps track of the next location in the array that needs to be overwrited
+        keep a count var that tracks the count of a particular element in the array, min count is always 1
+        start a 1 
+        if we find the the current element is the same as the previous we increment count
+        if count exceeds 2, then we have a dplicate, move our i and not j
+        if count less than 2 we cna move thelement from i to j
+        if nums[i] != nums[i-1] then we have a new element, reset count to 1 and move j
+        then j would have just advance all the way up to the last unwanted duplicate
+        at which point we just return j
+        
+        in summary
+        i pointer passes through the array
+        when we get to a duplicate, we keep passsing the dupliate until a new elmenet
+        once we get to the new element, we assing nums[i] to nums[j]
+        then move our j!
+        '''
+        j = 1
+        count = 1
+        for i in range(1,len(nums)):
+            if nums[i] == nums[i-1]:
+                count += 1
+            else:
+                count = 1
+            #no duplicates, we just copy over, this won't hit until i finds a new occurence
+            #at which point we can update nums[j] to nums[i]
+            if count <= 2:
+                nums[j] = nums[i]
+                j += 1
+                
+        return j
+            
+        return len(nums)
+            
+
+#he first problem class Solution(object):
+    def removeDuplicates(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        another way
+        keep a lenght pointer and only update (i.e increament 1 when we pass all unwatned duplicates)
+        '''
+        length = 0
+        for i in range(len(nums)):
+            if i == 0 or nums[i-1] != nums[i]:
+                nums[length] = nums[i]
+                length += 1
+        return length
+        
+
+class Solution(object):
+    def removeDuplicates(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        another way would be to just use a while loop with a single pointer
+        and just keep popping the next i + 2 element if it is the same as i
+        '''
+        i = 0
+        while i + 2 < len(nums):
+            if nums[i] == nums[i+2]:
+                nums.pop(i+2)
+            else:
+                i += 1
+        return len(nums)
+        
+###############################################
+#  Smallest Subtree with all the Deepest Nodes
+##############################################
+#so closeeee :(
+#note thie could be rewritten to get the max depth recursively
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def subtreeWithAllDeepest(self, root):
+        """
+        :type root: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        the deepest node will by the parent node of the deepest leaf
+        level order BFS, but give reference to the parent node
+        no dfs might be better
+        we examine from a node, and if its child nodes are leaves possible candidate
+
+        '''
+        levels = []
+        def dfs(parent,node, level):
+            if not node:
+                return 
+            if not node.left and not node.right:
+                levels.append((parent,level))
+            parent = node
+            dfs(parent, node.left, level+1)
+            dfs(parent, node.right, level+1)
+        dfs(root,root,0)
+        #now just return the nodes with the deepest level
+        max_level = 0
+        for p,l in levels:
+            max_level = max(max_level,l)
+        ans = None
+        for p,l in levels:
+            if l == max_level:
+                ans = p
+                break
+        return ans
+
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def subtreeWithAllDeepest(self, root):
+        """
+        :type root: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        similar to my idea before, use hash the node with its level
+        then dfs one more time on the hashmap
+        tje first phase it ot idneity the nodes of tree that are depest
+        sing annoatoin:
+            if the node in question has max deppth, thats it
+            botht he left and right child oa node have deepst desendant, answer is the parent
+            otherwise if some child has an even deeper descendant, than the answer is that child
+            otherise no answer
+        algo:
+            first dfs to a hash annotating the node
+            second dfs, dfs again on the tree referencing the node in ht hassh
+        '''
+        depths = {}
+        def dfs(node,level):
+            if not node:
+                return
+            depths[node] = level
+            dfs(node.left,level+1)
+            dfs(node.right,level+1)
+            
+        dfs(root,0)
+        max_depth = max(depths.itervalues())
+        
+        #now find the node with the maxdepth
+        def dfs_answer(node):
+            if not node:
+                return
+            if depths[node] == max_depth:
+                return node
+            #recurse for each subtree
+            left = dfs_answer(node.left)
+            right = dfs_answer(node.right)
+            if left and right:
+                return node
+            else:
+                return left or right
+        return dfs_answer(root)
+
+########################
+#Burst Balloons
+########################
+class Solution(object):
+    def maxCoins(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        at first glance we can think of this recursively, 
+        we examine every possibilty of order for popping ballons, 
+        since we pop one balloon every time we get N*(N-1)*(N-2)...1
+        which is just N! time
+        we can cache the set of existing balloons, since each balloon can be burst or not we we are incurtring extra time creatin a set of balloons each time
+        which is still a worse case 2^N
+        1. Divide a and conqure
+        for every balloon we pop we can treat it is solving a problem for the left and right sides
+        nums[:i] and nums[i+1:]
+        and to find the optimal solution we check every optimal solution after bursting each balloon
+        since we will find the optimal solution for every range in nums, we we burst every ballong in every range to find the optimal solutions we have N^2 times N N^3
+        however if we try to divide our problem in the order where we burst ballons first, we run into adjaceny issues
+        we can start in reverse order of how they were popped
+        each time we add a ballon we can divide and conquer on its left and right sides
+        https://leetcode.com/problems/burst-balloons/discuss/519207/python-solutions-with-visualized-explanations
+        given the array
+        [3,1,5,8]
+        we can add 1 ballons at the head and tail (for edge cases if we pop the beginning and dn)
+        [1,3,1,5,8,1]
+        so here N= 6
+        we define cache of matrix N*N, where dp[i][j] is ht emax contains gained by bursting ballongs from i to j
+        no the question degenerates, finding dp[1][4]
+        assume we popping the last ballong k, in our range i to j
+        we define pointers:
+            left = nums[i-1]
+            right = nums[i+1]
+            dp[i][j] = dp[i][k-1] + left *nums[k] + right + dp[k+1,j]
+        we then recurse for each popped baloon in range of i to j and reference the dp array
+        '''
+        #append ones to head and tail
+        nums = [1] + nums + [1]
+        N = len(nums)
+        #dp[i][j] max coins we get by bursting i to j
+        dp = [[0]*N for _ in range(N)]
+        
+        def get_max(i,j):
+            #memory
+            if dp[i][j]:
+                return dp[i][j]
+            #gone past the last index
+            elif i > j: 
+                return dp[i][j]
+            #get the amx coins
+            max_coins = 0
+            #loop through j+1 - i positions
+            for k in range(i,j+1):
+                left = nums[i-1]
+                right = nums[j+1]
+                coins_k_max = get_max(i,k-1) + left*nums[k]*right + get_max(k+1,j)
+                max_coins = max(max_coins,coins_k_max)
+            #put into memeory
+            dp[i][j] = max_coins
+            return dp[i][j]
+        #invoke for all possible i to j
+        get_max(1,N-2)
+        #we want to get the max coins possible from i to j, this is just the frist row and N-2
+        return dp[1][N-2]
+
+#########################
+#Palindrmo Partitioning
+#########################
+#well this was dumb...
+class Solution(object):
+    def partition(self, s):
+        """
+        :type s: str
+        :rtype: List[List[str]]
+        """
+        '''
+        brute force, generate all substrings for all ranges and check is valid palindrome
+        for len(3)
+        3 + 2 + 1 substrings
+        (16(16+1) / 2)
+        O(272*3)
+        '''
+        def check(string):
+            
+        N = len(s)
+        #all posible ranges
+        for size in range(0,N):
+            subs = []
+            for i in range(0,len(s)-size):
+                subs.append(s[i:i+size+1])
+            #now check each sub reads as a palindrome
+            for s in subs:
+
+class Solution(object):
+    def partition(self, s):
+        """
+        :type s: str
+        :rtype: List[List[str]]
+        """
+        '''
+        first step, generate all possible substrings
+        subtring decompisition recursively
+        after generating all decompositoins, determing if each substring can be a palindrome
+        if all possible subtrings are such, add them to results
+        '''
+        #first generate function for determin palindrome
+        def palindrome(string):
+            N = len(string)
+            start,end = 0,N-1
+            while start <=end:
+                if string[start] != string[end]:
+                    return False
+                start += 1
+                end -= 1
+            return True
+        
+        #second generate all possible substrings
+        self.subs = []
+        def rec_build(start_idx,path):
+            #base case is when start_inx gets to the length of s
+            if start_idx >= len(s):
+                self.subs.append(path)
+            
+            #now recurse for on each length but move up start index
+            for size in range(len(s)-start_idx):
+                #check for palindrome
+                if palindrome(s[start_idx:start_idx+size+1]):
+                    #id palindrome, recurse on the otherside but not before adding the current substring
+                    rec_build(start_idx+size+1,path+[s[start_idx:start_idx+size+1]])
+        
+        rec_build(0,[])
+        return self.subs
+
+class Solution(object):
+    def partition(self, s):
+        """
+        :type s: str
+        :rtype: List[List[str]]
+        """
+        '''
+        top down with memoziaton
+        
+        '''
+        #special case
+        if len(s) == 0:
+            return []
+        
+        #function to check if string is palindrom
+        def palindrome(string):
+            start,end = 0,len(string)-1
+            while start <= end:
+                if string[start] != string[end]:
+                    return False
+                start += 1
+                end -= 1
+            return True
+        
+        #recursive function with memo, we hash the string to all possible substrings
+        memo = {}
+        def dfs(string):
+            if string in memo:
+                return memo[string]
+            
+            results = [] #for each string add its substring
+            for i in range(len(string)):
+                if palindrome(string[:i+1]):
+                    #once we get to the end of the string we need to terminate
+                    if i == len(string) - 1:
+                        results.append([string[:i+1]])
+                    #otherwise recurse on the other side
+                    else:
+                        subs = dfs(string[i+1:])
+                        for s in subs:
+                            results.append([string[:i+1]] + s)
+            #dump into memo
+            memo[string] = results
+            return results
+        
+        return dfs(s)
+
+###############################
+#Squares of a Sorted Array
+###############################
+class Solution(object):
+    def sortedSquares(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[int]
+        """
+        '''
+        well just square each number then sort increasingly
+        '''
+        return sorted([num**2 for num in nums])
+
+class Solution(object):
+    def sortedSquares(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: List[int]
+        """
+        '''
+        we can use a two pointer approach and fill the array backwards
+        taking the sqaure of the bigger absolution value of the L or R pointers
+        '''
+        N = len(nums)
+        results = [0]*N
+        l,r = 0, N-1
+        for i in range(N-1,-1,-1):
+            #compare left and right of numes
+            if abs(nums[l]) > abs(nums[r]):
+                square = nums[l]
+                l += 1
+            else:
+                #take right
+                square = nums[r]
+                r -= 1
+            results[i] = square*square
+        return results
+            
+#####################
+#Plus One Linked List
+#####################
+#hacky way, but i got it
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def plusOne(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        traverse the entire linked list, concat each node.val, conver to int, add 1, recreate the number using a linked list
+        '''
+        number = ""
+        while head:
+            number += str(head.val)
+            head = head.next
+        #add 1
+        number = str(int(number)+1)
+        #create new linked list
+        dummy = ListNode()
+        temp = dummy
+        for char in number[:-1]:
+            temp.val = char
+            temp.next = ListNode()
+            temp = temp.next
+        temp.val = number[-1]
+        return dummy
+
+class Solution(object):
+    def plusOne(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        if we have a case such as 1->2->3
+        we just go all the way to right most digit this is not a 9 and a one to it
+        1->2->4
+        but if we have a 9 we need to carry over
+        1->2->9
+        1->3->0
+        we can keep a sentinnel node holding a 0 value for edge cases if they are all nines and we gain a diigit
+        if the sentinel node isnt zero, return sentinel, otherise return sentinenl.next
+        algo:
+            1. init setninel node as ListNode(0)
+            2. find right most digit not euqal ot nine
+            3. increase that node by 1
+            4. set all following nices to zero
+            5. return seninel node if 1
+        '''
+        #sentinely head
+        dummy = ListNode(0) #to control for edge cases
+        dummy.next = head
+        not_nine = dummy
+        
+        #find right most not nine digit
+        while head:
+            if head.val != 9:
+                not_nine = head
+            head = head.next
+        
+        #add 1 to the not nine digit, should be pointing to digit that is not 9
+        not_nine.val += 1
+        #move to next, since it should be 0
+        not_nine = not_nine.next
+        
+        #flip 9's to zeros, if there weren't any intermediate 9's this would neve execute
+        #and the fist non_none should have been the only node upped 1
+        while not_nine:
+            not_nine.val = 0
+            not_nine = not_nine.next
+        
+        #return dummy if a value, else return next
+        if dummy.val:
+            return dummy
+        else:
+            return dummy.next
+        
+#############################
+#Validate Binary Search Tree
+#############################
+#so close, 57/77. i think it needs to hold for all cases, ie we need ranges for max and min
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isValidBST(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        recall that a BST has the propery that from a node, its left is less than the current node
+        and its right is greater than the node
+        we can recurse on each node checking left and right
+        if not, return false and stop
+        '''
+        def dfs(node):
+            if not node:
+                return
+            if not node.left and not node.right:
+                return True
+            if node.left and node.right:
+                return node.left.val < node.val and node.right.val > node.val
+            if node.left and not node.right:
+                return node.left.val < node.val
+            if node.right and not node.left:
+                return node.right.val > node.val
+            dfs(node.left)
+            dfs(node.right)
+            
+        return dfs(root)
+
+#recursive with ranges
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isValidBST(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        recursively checking from each node will not work, since a BST has the propery tat all nodes in the left substree are 
+        we need to carry over the lower and upper limits everytime we descend left or rigth
+        '''
+        def dfs(node, low=float('-inf'), high=float('inf')):
+            if not node:
+                return True
+            #the node we are examining must be in range, if not false
+            if node.val <= low or node.val >= high:
+                return False
+            #recurse left and right but change rnages
+            left  = dfs(node.left, low=low,high=node.val)
+            right = dfs(node.right,low=node.val, high=high)
+            return left and right
+        return dfs(root)
+
+#iterative with ranges
+class Solution(object):
+    def isValidBST(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        iterative solution with ranges
+        '''
+        if not root:
+            return True
+        stack = [(root,float('-inf'),float('inf'))]
+        
+        while stack:
+            current, low, high = stack.pop()
+            #if a node is null we need to keep checking
+            if not current:
+                continue
+            if current.val <= low or current.val >=high:
+                return False
+            
+            stack.append((current.left,low,current.val ))
+            stack.append((current.right,current.val,high))
+        return True
+
+#recursive in order
+class Solution(object):
+    def isValidBST(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        recursive inorder traversal, we process each node and check that it is greater than the lower limit, if this is true, update limit to node, and process the next inordr node
+        '''
+        self.low = float('-inf')
+        
+        def dfs(node):
+            if not node:
+                return True
+            #we check left, and if we can't return false
+            if not dfs(node.left):
+                return False
+            if node.val <= self.low:
+                return False
+            self.low = node.val
+            return dfs(node.right)
+        
+        return dfs(root)
+        
+
+#iterative in order, keep in back pocket like recursive pre,in,post
+ stack = []
+        lower = float('-inf')
+        while stack or root:
+            while root:
+                stack.append(root)
+                root = root.left
+            root = stack.pop()
+            print(root.val)
+            root = root.right
+
+class Solution(object):
+    def isValidBST(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        iterative inorder traverse
+        two while loops, first one need soemting in stack or a root
+        while wehave a root we keep going left
+        '''
+        stack = []
+        lower = float('-inf')
+        while stack or root:
+            while root:
+                stack.append(root)
+                root = root.left
+            root = stack.pop()
+            if root.val <= lower:
+                return False
+            lower = root.val
+            root = root.right
+        return True
+        
+########################
+# 4Sum II
+###################
+class Solution(object):
+    def fourSumCount(self, A, B, C, D):
+        """
+        :type A: List[int]
+        :type B: List[int]
+        :type C: List[int]
+        :type D: List[int]
+        :rtype: int
+        """
+        '''
+        well i can just brute force across all lengths
+        '''
+        count = 0
+        N = len(A)
+        
+        for i in range(N):
+            for j in range(N):
+                for k in range(N):
+                    for l in range(N):
+                        if A[i] + B[j] + C[k] + D[l] == 0:
+                            count += 1
+        return count
+
+class Solution(object):
+    def fourSumCount(self, A, B, C, D):
+        """
+        :type A: List[int]
+        :type B: List[int]
+        :type C: List[int]
+        :type D: List[int]
+        :rtype: int
+        """
+        '''
+        brute force would be enumerating all combindatins
+        a better approach would be to use three next loops and find sum a + b + c and then seach for its complement d == -(a+b+c) in the fourth array
+        *note we need to track the frequency of each element in the fourth arrays (because reated complements increase the count) - hash to store counts
+        we also notic that a + b == -(c+d)
+        for we count sums of elements a + b using hash
+        then enumerate elemnets from this and fourht searching for their complements
+        '''
+        count = 0
+        mapp = {}
+        #store counts of first two sumes
+        for a in A:
+            for b in B:
+                if (a+b) in mapp.keys():
+                    mapp[a+b] += 1
+                else:
+                    mapp[a+b] = 1
+        #now find complements -(c+d in map)
+        for c in C:
+            for d in D:
+                if -(c+d) in mapp.keys():
+                    count += mapp[-(c+d)]
+        return count
+        
+#nnote the use of .get in this sitatuion
+        cnt = 0
+        m = {}
+        for a in A:
+            for b in B:
+                m[a + b] = m.get(a + b, 0) + 1
+        for c in C:
+            for d in D:
+                cnt += m.get(-(c + d), 0)
+        return cnt
+
+#the general solution done recursivelu
+class Solution(object):
+    def fourSumCount(self, A, B, C, D):
+        """
+        :type A: List[int]
+        :type B: List[int]
+        :type C: List[int]
+        :type D: List[int]
+        :rtype: int
+        """
+        '''
+        we can generalize this for k/sum 
+        where time would be O(num arrays / 2)
+        using recursions
+        we can finds for the first i/2 lists
+        then recurse again finding the next i/2 lists, but this time counting the complements in the hash
+        '''
+        mapp = {}
+        def addtohash(lists,i,summ):
+            #pass in list of lists, stop after i//2
+            if i == len(lists) // 2:
+                mapp[summ] = mapp.get(summ,0) + 1
+            else:
+                for num in lists[i]:
+                    #back tracking like, on to next array caruing over sum
+                    addtohash(lists,i+1,summ + num)
+        def getcomps(lists,i,comp):
+            if i == len(lists):
+                return mapp.get(comp,0)
+            count = 0
+            for num in lists[i]:
+                count += getcomps(lists,i+1, comp - num)
+            
+            return count
+        
+        addtohash([A,B,C,D],0,0)
+        return getcomps([A,B,C,D],len([A,B,C,D]) // 2,0)
+
+
+##################
+#Increasing Triplet Subsequence
+###################
+#55/61 nened to take care of special cases where adjacent elemtns are not incerasing
+class Solution(object):
+    def increasingTriplet(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        sliding window of size 3 would work but only for consevtuive indexes
+        try it and see of we can get all of them
+        '''
+        for i in range(len(nums)-2):
+            window = nums[i:i+3]
+            if window[0] < window[1] < window[2]:
+                return True
+        
+        return False
+
+#well i tried...
+class Solution(object):
+    def increasingTriplet(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        i can use three pointers
+        each start at the first element
+        when i approach a case where first < second keep them there and advance second and third
+        keep moving second and third until i find a triplet
+        '''
+        N = len(nums)
+        first, second, third = 0,1,2
+        while first < N and second < N and third < N:
+            #always check triples
+            if nums[first] < nums[second] < nums[third]:
+                return True
+            if first < N and second < N:
+                while nums[second] <= nums[first]:
+                    first += 1
+                    second += 1
+                third = second + 1
+            if second < N and third < N:
+                while nums[third] <= nums[second]:
+                    third += 1
+        
+        #final check
+        if nums[first] < nums[second] < nums[third]:
+            return True
+        else:
+            return False
+        
+
+class Solution(object):
+    def increasingTriplet(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        we can do this in one pass
+        we just need to find numbers in increasing order
+        we assign two numbers first and second both to inf
+        traverse the array and if n <= first update first to n
+        else if n <= second update second to n
+        else return True
+        if nums is in descending order we would always update first, and the loop would enver terminrate return False
+        in ascending order first and second get updated with the next number being grearter than both so return True
+        we're always looking for the next smallest first and second numbers
+        there is a special case we need to think about
+        [1,2,0,3]
+        first = 1
+        second = 2
+        first = 0
+        here we would return true
+        becasue there exists another number before second number which is bigger than the last update first num but smalled than second num
+        '''
+        first, second = float('inf'),float('inf')
+        for n in nums:
+            if n <= first:
+                first = n
+            elif n <= second:
+                second = n
+            else:
+                return True
+        False
+
+#trying to stored the indices, but i think we need to use recursion
+first, second = float('inf'),float('inf')
+first_idx,second_idx,third_idx = 0,0,0
+triplets = []
+for i,n in enumerate(nums):
+    if first_idx < second_idx < third_idx:
+        triplets.append([first_idx,second_idx,third_idx])
+    if n <= first:
+        first = n
+        first_idx = i
+    elif n <= second:
+        second = n
+        second_idx = i
+    else:
+        third_idx = i
+print triplets
+
+#generatinte combinations
+#i cant figure out how to get triplets, but for now just review geerationg combnindatio
+#and permutations
+class Solution(object):
+    def increasingTriplet(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: bool
+        """
+        '''
+        using recursion to generate indices of valid triplets
+        '''
+        triplets = []
+        
+        def rec_build(nums, build):
+            if len(build) == 3:
+                triplets.append(build)
+            for i in range(len(nums)):
+                rec_build(nums[i+1:],build+[nums[i]])
+        rec_build(nums,[])        
+        print triplets
+
+#permuations of ength 3
+#keep this in back pocket, both cmobindatins and permuations
+#try to figure out how to get certain length permutations
+#figure out rcursion
+#perm([a,b,c,d]) = perm([a] + perm[b,c,d])...
+def permutation(s):
+   if len(s) == 1:
+     return [s]
+
+   perm_list = [] # resulting list
+   for i,a in enumerate(s):
+     remaining_elements = [x for j,x in enumerate(s) if i != j]
+     z = permutation(remaining_elements) # permutations of sublist
+
+     for t in z:
+        perm_list.append([a] + t)
+
+   return perm_list
+   print(permutation(['cat','dog','bunny']))
+
+##################
+#Cherry Pickup II
+###################
+class Solution(object):
+    def cherryPickup(self, grid):
+        """
+        :type grid: List[List[int]]
+        :rtype: int
+        """
+        '''
+        well this was a hard problem
+        we can only move in three drections
+        reaching bottom row means they are done, cannot move left and right staying at teh same row, always moving down
+        we need to move both robots at the same time!
+        keeping track both states of two robots is too much, we need to reduce the states
+        we can deinfe the DP state as (row1,col1,row2,col2)
+        if we move them synchronsly, then we get row1=row2
+        so we get our dp states as (row,col1,col2)
+        we can define dp(row,col1,col2) as the max cherries we can pick if robot1 stars at row,col2 and robot 2 starts at row,col2
+        bases cases are that both roboots start at bottom line
+        we need to add the maximum cherries robots can pick in the future
+        we have 9 possible movments from a sinlge dp state 3*3 (look at link)
+        https://leetcode.com/problems/cherry-pickup-ii/solution/
+        (left down,left down), (left down, down), (left down, right down).. etc
+        the max cherries would be max(dp(all 9 states))
+        algo:
+            define dp function taking in 3 arguments our of our state (row,col1,col2)
+            dp function returns max cherries if robot1 starts at row,col1 and robot 2 starts at row, col2
+            collect cherry at (row,col1) and (row, col2) do not doubkle count at col1 == col2
+            if we do not reach the last row, add max cherries that can be picked in the future
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        cache = {}
+        
+        def dfs(row,col1,col2):
+            #retrieving from memory
+            if (row,col1,col2) in cache:
+                return cache[(row,col1,col2)]
+            #boundary check
+            if col1 < 0 or col1 >= cols or col2 < 0 or col2 >= cols:
+                return float('-inf') #becase we are taking max
+            #current cell
+            result = 0
+            result += grid[row][col1]
+            #don't double count if they get to the ssame col
+            if col1 != col2:
+                result += grid[row][col2]
+            #recurse as long as we are not in the final row
+            if row != rows -1:
+                #dfs from all 9 states
+                #stor possible cherry picks ups from all 9 directions
+                temp = []
+                for c1 in [col1,col1+1,col1-1]:
+                    for c2 in [col2,col2+1,col2-1]:
+                        temp.append(dfs(row+1,c1,c2))
+                #take the max from all of these
+                result += max(temp)
+            #put back into memeory
+            cache[(row,col1,col2)] = result
+            return result
+        
+        return dfs(0,0,cols-1)
+
+#bottom up solutioon
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        m = len(grid)
+        n = len(grid[0])
+        dp = [[[0]*n for _ in range(n)] for __ in range(m)]
+
+        for row in reversed(range(m)):
+            for col1 in range(n):
+                for col2 in range(n):
+                    result = 0
+                    # current cell
+                    result += grid[row][col1]
+                    if col1 != col2:
+                        result += grid[row][col2]
+                    # transition
+                    if row != m-1:
+                        result += max(dp[row+1][new_col1][new_col2]
+                                      for new_col1 in [col1, col1+1, col1-1]
+                                      for new_col2 in [col2, col2+1, col2-1]
+                                      if 0 <= new_col1 < n and 0 <= new_col2 < n)
+                    dp[row][col1][col2] = result
+        return dp[0][0][n-1]
