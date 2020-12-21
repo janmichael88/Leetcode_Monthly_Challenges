@@ -2015,3 +2015,63 @@ class Solution:
                                       if 0 <= new_col1 < n and 0 <= new_col2 < n)
                     dp[row][col1][col2] = result
         return dp[0][0][n-1]
+
+##########################
+#Decoded String at Index
+#########################
+#TLE, that weird edge case 'aaa345325454'
+class Solution(object):
+    def decodeAtIndex(self, S, K):
+        """
+        :type S: str
+        :type K: int
+        :rtype: str
+        """
+        decoded = ""
+        N = len(S)
+        for i in range(N):
+            if ord('2') <= ord(S[i]) <= ord('9'):
+                #get the digit
+                d = int(S[i]) - 1
+                to_add = decoded*d
+                decoded += to_add
+            else:
+                decoded += S[i]
+        return decoded[K-1]
+
+#this one is tricky!
+class Solution(object):
+    def decodeAtIndex(self, S, K):
+        """
+        :type S: str
+        :type K: int
+        :rtype: str
+        """
+        '''
+        imageine if we have a string that repeats it selft
+        appleappleapple
+        the Kth index char will always be K %len(string) becaust it repeats itselft
+        first find the length of the decoded string
+        hi2bob3
+        ((2*2)+3)*7
+        hihibobhihibobhihibob
+        we then work backars keeping the track of the size
+        if we ecntouner a digit, we need to divide the size by that (rmember we multipled in the begiing)
+        and if not  just reduce the size
+        '''
+        size = 0
+        for i,ch in enumerate(S):
+            if ch.isdigit():
+                size *= int(ch)
+            else:
+                size += 1
+        K -= 1 #zero indexing
+        #now go backwards
+        for j in range(i,-1,-1):
+            if S[j].isdigit():
+                size //= int(S[j])
+                K %= size
+            elif size == K + 1:
+                return S[j]
+            else: 
+                size -= 1
