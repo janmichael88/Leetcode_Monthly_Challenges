@@ -2058,6 +2058,8 @@ class Solution(object):
         we then work backars keeping the track of the size
         if we ecntouner a digit, we need to divide the size by that (rmember we multipled in the begiing)
         and if not  just reduce the size
+        #whenever the decoded string is just a string repeated d times we return K % size
+        #whenever the decoded string would equal some word repeated d times, we can reduce K tp K % size
         '''
         size = 0
         for i,ch in enumerate(S):
@@ -2075,3 +2077,1080 @@ class Solution(object):
                 return S[j]
             else: 
                 size -= 1
+
+###################
+#Smallest Range II
+###################
+#close one
+class Solution(object):
+    def smallestRangeII(self, A, K):
+        """
+        :type A: List[int]
+        :type K: int
+        :rtype: int
+        """
+        '''
+        might be helpful to look at the solution fo Smallest Range I
+        if we have A[i] < A[j], we dont need to consider when A[i] goes down
+        while A[j] goes up 
+        this is because the interval (A[i] + K, A[j]-K) is a subset of the interval (A[i]-K, A[j]+K)
+        this means it is never worse to choose (up,down) instead (down,up)
+        we ca prove this claim that one interval is a subset of another by showing that both A[i] + K and A[j] - K are between A[i] - K and A[j] + k
+        for a sorted array A, say A[i] is the largest that i goes up
+        then A[0] + K, A[i] + K, A[i+1] - K, A[len(A)-1] - K are the only candidates for calculathe the answer
+        
+        '''
+        A.sort()
+        #sort to get the initial answer
+        curr_min, curr_max = A[0], A[-1]
+        curr_result = curr_max - curr_min #minimuze this
+        for i in range(len(A)-1):
+            curr_min = min(curr_min,A[i]-K,A[i]+K)
+            curr_max = max(curr_max, A[i+1]-K, A[i+1]+K)
+            curr_result = min(curr_result, curr_max-curr_min)
+        return curr_result
+
+class Solution(object):
+    def smallestRangeII(self, A, K):
+        """
+        :type A: List[int]
+        :type K: int
+        :rtype: int
+        """
+        '''
+        might be helpful to look at the solution fo Smallest Range I
+        if we have A[i] < A[j], we dont need to consider when A[i] goes down
+        while A[j] goes up 
+        this is because the interval (A[i] + K, A[j]-K) is a subset of the interval (A[i]-K, A[j]+K)
+        this means it is never worse to choose (up,down) instead (down,up)
+        we ca prove this claim that one interval is a subset of another by showing that both A[i] + K and A[j] - K are between A[i] - K and A[j] + k
+        for a sorted array A, say A[i] is the largest that i goes up
+        then A[0] + K, A[i] + K, A[i+1] - K, A[len(A)-1] - K are the only candidates for calculathe the answer
+        #why is it -2k?
+        suppose that array A i sorted and we have i < j and A[i] < A[j]
+        to minimuze the difference between A[i] and A[j] we need to increment A[i] by K and decrement A[j] by k so min becomes A[i] - K and max becomes A[j] + K
+        taking the difference we have A[j] - K - (A[i] + K) = A[j] - A[i] - 2K
+        https://leetcode.com/problems/smallest-range-ii/discuss/980294/Python-O(n-log-n)-solution-explained 
+        '''
+        #sort
+        A.sort()
+        N = len(A)
+        result = float('inf') #minimize this
+        #pass the array and for each element examine its candidates
+        #it can either be the min, the max - 2*k, the ith element, or the i+1 element -2*k
+        #find the min and max for each candidate in the range and update the min result
+        for i in range(N-1):
+            candidates = [A[0], A[-1]-2*K, A[i], A[i+1]-2*K]
+            result = min(result, max(candidates)-min(candidates))
+        
+        return min(result, A[-1]-A[0])
+
+#another way of thinking about it
+def smallestRangeII(self, A, K):
+        A.sort()
+        res = A[-1] - A[0]
+        for i in range(len(A) - 1):
+            big = max(A[-1], A[i] + 2 * K)
+            small = min(A[i + 1], A[0] + 2 * K)
+            res = min(res, big - small)
+        return res
+
+#better explanation
+#https://leetcode.com/problems/smallest-range-ii/discuss/173495/Actual-explanation-for-people-who-don't-understand-(I-hope)
+#given a sorted Array we pass through it
+#we assume that A[i] is the max, for this to be true we must also assert that A[-1] - K is less than A[i]
+#we take the max
+#to find the min, we assume that A[i+1] is smaller than A[i] so we subrtarct K
+#in doing so, we assert that A[0] is no longer the min so we add K
+#then we just update the result  
+class Solution:
+    def smallestRangeII(self, A, K):
+        """
+        :type A: List[int]
+        :type K: int
+        :rtype: int
+        """
+        A.sort()
+        first, last = A[0], A[-1]
+        res = last - first
+        for i in range(len(A) - 1):
+            maxi = max(A[i] + K, last - K)
+            mini = min(first + K, A[i + 1] - K)
+            res = min(res, maxi - mini)
+        return res
+
+
+#######################
+#Balanced Binary Tree
+#######################
+#so close! 203/228
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def isBalanced(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        a balanced binary tree is a tree in which every substree does not differ by a height more than 1
+        the problem then becomes get the heights for the left and right subtrees
+        '''
+        if not root:
+            return True
+        #function to get height, i could always implement bfs
+        def dfs_height(node):
+            if not node:
+                return 0
+            left = dfs_height(node.left)
+            right = dfs_height(node.right)
+            return max(left,right) + 1
+        
+        #now apply heigh functino for each node
+        def dfs_main(node):
+            if not node:
+                return -1
+            if abs(dfs_height(node.left) - dfs_height(node.right)) >1:
+                return False
+            else:
+                return True
+            dfs_main(node.left)
+            dfs_main(node.right)
+
+            
+        return dfs_main(root)
+            
+
+#wooohoo
+class Solution(object):
+    def isBalanced(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        a balanced binary tree is a tree in which every substree does not differ by a height more than 1
+        the problem then becomes get the heights for the left and right subtrees
+        #nlogn because we call dfs_main on each node, and height is called lonN times
+        '''
+        if not root:
+            return True
+        #function to get height, i could always implement bfs
+        def dfs_height(node):
+            if not node:
+                return 0 #can be -1 too and would still work
+            left = dfs_height(node.left)
+            right = dfs_height(node.right)
+            return max(left,right) + 1
+        
+        #now apply heigh functino for each node
+        def dfs_main(node):
+            if not node:
+                return True
+            #now check heights are within 1
+            if abs(dfs_height(node.left) - dfs_height(node.right)) <2:
+                #now we must check that subtrees are also balanced, this is the kicker
+                #notice how in this call we nest within an if block
+                #not just the usual dfs after the elif blocks
+                if dfs_main(node.left) and dfs_main(node.right):
+                    return True
+                else:
+                    return False
+        return dfs_main(root)
+#with cachine
+class Solution(object):
+    def isBalanced(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        '''
+        #cacahing height results into memory
+        a balanced binary tree is a tree in which every substree does not differ by a height more than 1
+        the problem then becomes get the heights for the left and right subtrees
+        
+        '''
+        if not root:
+            return True
+        self.cache= {}
+        #function to get height, i could always implement bfs
+        def dfs_height(node):
+            if not node:
+                return 0
+            if node in self.cache:
+                return self.cache[node]
+            left = dfs_height(node.left)
+            right = dfs_height(node.right)
+            result = max(left,right) + 1
+            #put into cache
+            self.cache[node] = result
+            return result
+        
+        #now apply heigh functino for each node
+        def dfs_main(node):
+            if not node:
+                return True
+            #now check heights are within 1
+            if abs(dfs_height(node.left) - dfs_height(node.right)) <2:
+                #now we must check that subtrees are also balanced, this is the kicker
+                #notice how in this call we nest within an if block
+                #not just the usual dfs after the elif blocks
+                if dfs_main(node.left) and dfs_main(node.right):
+                    return True
+                else:
+                    return False
+            
+        return dfs_main(root)
+            
+#optimize O(N)
+class Solution(object):
+    def isBalanced(self, root):
+        """
+        :type root: TreeNode
+        :rtype: bool
+        """
+        #in the first approach, we performed redundanct caclculations in calling the ehgiht functions
+        #instead of top down we go bottom up
+        #we can remove redundcany by first recursino on the children of curr node
+        #and then use their computer height to determing whether node current node is balanced
+        #Check if the child subtrees are balanced. If they are, use their heights to determine if the current subtree is balanced as well as to calculate the current subtree's height.
+        def helper(node):
+            #base case, empty tree with node is balance
+            if not node:
+                return True,0
+            #check subtrees to see if they are balanced
+            left,left_height = helper(node.left)
+            if not left:
+                return False,0
+            right,right_height = helper(node.right)
+            if not right:
+                return False, 0
+            #if subtrees are balanced, check if the current tree is balance
+            if abs(left_height - right_height) < 2:
+                return [True, 1+max(left_height,right_height)]
+            else:
+                return [False,1+max(left_height,right_height)]
+                
+        return helper(root)[0]
+
+###########################################
+#Find Nearesrest Right Node in Binary Tree
+###########################################
+
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def findNearestRightNode(self, root, u):
+        """
+        :type root: TreeNode
+        :type u: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        using two Queues
+        one for the current level, and one for the next level
+        the idea is to pop the nodes one by one from the current level and push their children on the the next q level
+        algo:
+            while nextlevel q is not empty:
+                initiatine curr = next
+                and empty next
+            while curr level is not empty
+                pop node from q
+                if node is u return next node if thehre is one,else null
+                add children
+        '''
+        if not root:
+            return []
+        next_level = deque([root])
+        while next_level:
+            #for not set current to next and make a new next
+            current_level = next_level
+            #new next
+            next_level = deque()
+            #while we have a current
+            while current_level:
+                node = current_level.popleft()
+                if node == u:
+                    if current_level:
+                        #we need to get the next node if there is something in the q
+                        return current_level.popleft()
+                    else:
+                        return None
+                #else ad
+                if node.left:
+                    next_level.append(node.left)
+                if node.right:
+                    next_level.append(node.right)
+
+class Solution(object):
+    def findNearestRightNode(self, root, u):
+        """
+        :type root: TreeNode
+        :type u: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        BFS but keep track of the length of the q
+        move through the q
+        and keep track of i
+        the node is the right most if i == len(q) - 1
+        '''
+        if not root:
+            return None
+        q = deque([root])
+        while q:
+            size = len(q)
+            for i in range(size):
+                node = q.popleft()
+                if node == u:
+                    if i == size - 1:
+                        return None
+                    else:
+                        return q.popleft()
+                if node.left:
+                    q.append(node.left)
+                if node.right:
+                    q.append(node.right)
+
+#########################
+#Next Geater Element III
+#########################
+#sooooo close
+#the approach is right, but needs tweaking
+class Solution(object):
+    def nextGreaterElement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        the next greater digit is just going to one more the smalest 10s place
+        all i need is for that place to be increament by at least 1
+        if i can't try the 10's place
+        '''
+        str_n = list(str(n))
+        N = len(str_n)
+        digit = 0
+        while digit < N:
+            #scan the sring the find the next greatest digit
+            for i in range(N):
+                if int(str_n[i]) > int(str_n[digit]):
+                    #found my i
+                    break
+            if i != digit:
+                #swap
+                str_n[i], str_n[digit] = str_n[digit], str_n[i]
+                #join and get the number
+                number = int("".join(str_n)) 
+                return number if number > n else -1
+            
+            else:
+                digit +=1
+        
+        return -1
+
+class Solution(object):
+    def nextGreaterElement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        https://leetcode.com/problems/next-greater-element-iii/discuss/983076/Python-O(m)-solution-explained
+        lets start with an example :
+        say we are given n = 234157641
+        can we get a larger digit starting with 2, yes
+        how about 23, yes
+        234, yes
+        2341,yes,
+        23415...no
+        the last part 7641 is decresing, so we cannot make a lrger digit
+        algo:
+            start from the end and look for an increasing pattern in this cases 7641
+            if it happens that al the numbers in n have in increase patter, we cant do it (54321) cant be done
+            no we need to find the first digit in out ending which is less or euql to digits[i-1]
+            in our example we have 57641, we can replace 5 with 6! 67541
+            finally weed need to revesre the last figits
+            61457, we reverse because we want the smallest sequence after we have swppaed our found digit (remember the sequence is increasing)
+            
+        '''
+        digits = list(str(n))
+        #start from end
+        i = len(digits) - 1
+        #find the idx starting increasing sequence
+        while i - 1 > 0 and digits[i] <= digits[i-1]:
+            i -= 1
+        
+        #if we've gone through the sequence can't be done
+        if i == 0:
+            return -1
+        #mark start of decreasing
+        j = i
+        #go until we get a larger digit than the one a j
+        while j + 1 < len(digits) and digits[j+1] > digits[i-1]:
+            j += 1
+        #now swap
+        digits[i-1],digits[j] = digits[j],digits[i-1]
+        #flip
+        digits[i:] = digits[i:][::-1]
+        result = int(''.join(digits))
+        #edge case if results is too big
+        return result if result < 1<<31 else -1
+
+######################
+#Swap Nodes in Pairs
+######################
+#close on3 43/55
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def swapPairs(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        if head == None:
+            return head
+
+        i = 0
+        dummy = head
+        temp = dummy #return dummy
+        while temp.next:
+            #swap every other
+            if temp.val:
+                if i % 2 == 0:
+                    current_val = temp.val
+                    temp.val = temp.next.val
+                    temp.next.val = current_val
+            temp = temp.next
+            i += 1
+        
+        return dummy
+
+class Solution(object):
+    def swapPairs(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        good illustration
+        https://leetcode.com/explore/featured/card/december-leetcoding-challenge/572/week-4-december-22nd-december-28th/3579/
+        allocate a dummy and set dummy.next to head
+        moveing point cur set to dumm
+        while moving pointer has a next and a next next
+            first pointer co curr.next
+            second pointer to curr.next.next
+            swap cur next with sec
+            and first next to sec next
+            move back
+            advance cur
+        '''
+        #edge case
+        if not head or not head.next:
+            return head
+        dummy = ListNode(0)
+        dummy.next = head #return dummy.next
+        curr = dummy
+        while curr.next and curr.next.next:
+            #reference first ands econd
+            first = curr.next
+            second = curr.next.next
+            #swap
+            curr.next = second
+            first.next = second.next
+            second.next = first
+            #advance two
+            curr = curr.next.next
+        return dummy.next
+
+    class Solution(object):
+    def swapPairs(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        recursion
+        reach the end of the linked lists in steps of two 
+        in every function call we take out tow nodes which would be swappaed
+        and the remaining node inthe next rec call
+        we can do this recursively because a sublist is still part of the linked list
+        algo:
+            start the recursion with head of node
+            every call is responsible for swapping a pair of nodes
+            next rec is made by calling the functioniwth the head of next pair o dnoes
+            once we get the pointer to the remaining swapped list from the recursion call
+            we can swap the first ands econd node
+            the nodes in the current recursive call and then return the pointer to the secondNode since it will be the new head after swapping.
+            we are really swapping the last two first and the we back track
+        '''
+        if not head or not head.next:
+            return head
+        #give reference to the nodes
+        first = head
+        second = head.next
+        
+        #swap and recurse
+        # Swapping
+        first.next  = self.swapPairs(second.next)
+        second.next = first
+
+        # Now the head is the second node
+        return second
+
+####################
+#Diagnoal Traverse
+###################
+class Solution(object):
+    def findDiagonalOrder(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: List[int]
+        """
+        '''
+        (0,0), (0,1), (1,0), (2,0) (1,1),(0,2),(1,2),(2,1),(2,2)
+        ether going diag up or diag down
+        start diag up
+        imagine the problem where we just went down a diagnoal
+        from the starting point it would just
+        [row+1,col-1]
+        we ssimply need to reverse the odd numbered diagnoalds before we add the elemnts ot the final results array
+        algo:
+            init result array
+            we would have an outer loop that will go over each of the diagonals one by one
+            inner looping going along a diagonola (keep iterating until one of indices goes out of bounds)
+            
+        '''
+        if not matrix or not matrix[0]:
+            return []
+        
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        results = []
+        temp = [] #store current diag elemetns
+        
+        #heads of each temp array will be all elements in first row and last column
+        #so we loop for each of them
+        for head in range(rows+cols+1):
+            temp = []
+            #establish starts of diagonsgls
+            if head < cols:
+                r = 0
+            else:
+                r = head - cols + 1
+            
+            if head < cols:
+                c = head
+            else:
+                c = cols - 1
+            
+            while r < rows and c >= 0:
+                temp.append(matrix[r][c])
+                r+= 1
+                c -= 1
+            
+            if head % 2 == 0: #reverse
+                results += temp[::-1]
+            else:
+                results += temp
+        
+        return results
+        
+class Solution(object):
+    def findDiagonalOrder(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: List[int]
+        """
+        '''
+        a propety about a matrix is that elements lying on the same diagnoal shar the same sum
+        i can traverse the matrix and dump the summed indices into a hash mapped to alist
+        we then go through the hash in order of diagnolas and for every even one reverse it
+        '''
+        if not matrix or not matrix[0]:
+            return []
+        mapp = {}
+        results = []
+        rows = len(matrix)
+        cols = len(matrix[0])
+        for r in range(rows):
+            for c in range(cols):
+                if r + c not in mapp:
+                    mapp[r+c]= [matrix[r][c]]
+                else:
+                    mapp[r+c].append(matrix[r][c])
+        #now build the results
+        for k,v in mapp.items():
+            if k % 2 == 0:
+                results += mapp[k][::-1]
+            else:
+                results += mapp[k]
+        return results
+                
+        
+##################
+#Decode Ways
+##################
+#well good review on subsequence patitionsing
+class Solution(object):
+    def numDecodings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        this is a recursion, which means we can do top down with a memo
+        similar to subsequence decomposition
+        partitioning to get sub sequences
+        '''
+        self.ways = 0
+        def rec_build(start_idx,build):
+            if start_idx >= len(s):
+                #check that each is between 1 and 26
+                for num in build:
+                    if int(num) <= 0 or int(num) > 26:
+                        return
+                self.ways += 1
+            for size in range(len(s)-start_idx):
+                rec_build(start_idx+size+1,build+[s[start_idx:start_idx+size+1]])
+        rec_build(0,[])
+        return self.ways
+
+class Solution(object):
+    def numDecodings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        at any one time we need to consinder taking one digit or two digits
+        from the recursion tree, we only do a function call when we have a valid mapping from either usone one digit or two
+        we can take care of overlapping subproblems using a cache
+        if there was just a single didgit decode, then there is only one choice to make at teach step
+        at any given time for a string, we enter a recursion only after successfuly decoding two digits to a single char
+        if a given path leads to the end of the string, this means we could have succefully decoded the string
+        algo:
+            enter recursion with starting index 0 (move through using this pointer)
+            terminate the case, we check for the end of the string, and return 1 for valid way
+            every time we enter a recursion for a subg string we terminate of the digit is a zero (it won't add to the number of ways)
+            we can add the result to a memo for the substrin we are on and return the answer
+            If the result is already in memo we return the result. Otherwise the number of ways for the given string is determined by making a recursive call to the function with index + 1 for next substring string and index + 2 after checking for valid 2-digit decode. The result is also stored in memo with key as current index, for saving for future overlapping subproblems.
+        '''
+        memo = {}
+        def rec_build(start_idx,s):
+            #base case, moved pointer to end, valid way
+            if start_idx == len(s):
+                return 1
+            if start_idx == len(s) - 1:
+                return 1
+            #at any point a char is zero, we cant do anything
+            if s[start_idx] == '0':
+                return 0
+            
+            #memo retrieval
+            if start_idx in memo:
+                return memo[start_idx]
+            
+            #keep carrying the answer so long a the digits are less thenn 26
+            if int(s[start_idx:start_idx+2]) <= 26:
+                result = rec_build(start_idx+1,s) + rec_build(start_idx +2,s)
+            else:
+                result = 0
+            memo[start_idx] = result
+            return result
+        if not s:
+            return 0
+        if s == 0:
+            return 0
+        
+        return rec_build(0,s)
+
+#not as inutitive
+class Solution(object):
+    def numDecodings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        the dp solution is not as intutive
+        we allocate a 1d dp array, and read the cell as the number of ways decoding string s from 0 to i-1
+        we must initialize the first two positions (for the cases where we look back two)
+        it follows that the general rule us ust dp[i] = dp[i-1] + dp[i-2]
+        algo:
+            if the string is empty or null return 0
+            init dp[0] = 1; to allow us to at least look back 2
+            if the first cha is zero, then we can't decode it so that becomes 0, otherwie 1
+            iteratore the dpp start at 2 (index into sting using i -1)
+            now we chech if a vlaid single digit decode is possible, this just means looking at index[s-1] is non zero
+            f the valid single digit decoding is possible then we add dp[i-1] to dp[i]. Since all the ways up to (i-1)-th character now lead up to i-th character too.
+            We check if valid two digit decode is possible. This means the substring s[i-2]s[i-1] is between 10 to 26. If the valid two digit decoding is possible then we add dp[i-2] to dp[i].
+        '''
+        if not s:
+            return 0
+        dp = [0]*(len(s)+1)
+        
+        #init the first two spots
+        dp[0]  = 1
+        if s[0] == '0':
+            dp[1] = 0
+        else:
+            dp[1] = 1
+        
+        #go into the second cell of the dp (i-1)
+        for i in range(2,len(dp)):
+            if s[i-1] != '0':
+                dp[i] += dp[i-1]
+            if 10 <= int(s[i-2:i]) <= 26:
+                dp[i] += dp[i-2]
+        return dp[-1]
+
+################
+#Jump Game IV
+################
+#omg my first hard problem pretty much solved in 15 mins!
+#21 of 28 sooooo close, job job though!
+class Solution(object):
+    def minJumps(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        treat as a graph problem
+        i can build a graph of n nodes, and from nth node list indices to where i can go from
+        then start bfs fomr node 0 and keep a distance, answer is the distance when i get to the n-1 node
+        '''
+        N = len(arr)
+        adj = defaultdict(list)
+        for i in range(N):
+            for j in range(0,N):
+                if arr[j] == arr[i] and j !=i:
+                    adj[i].append(j)
+            if i == 0:
+                adj[i].append(i+1)
+            elif i == N-1:
+                adj[i].append(i-1)
+            else:
+                adj[i].append(i+1)
+                adj[i].append(i-1)
+        #man that sucked, now bfs from node 0
+        visited = set()
+        q = deque([(0,0)])
+        while q:
+            current, distance = q.popleft()
+            if current == N-1:
+                return distance
+            if current not in visited:
+                for neigh in adj[current]:
+                    q.append((neigh,distance+1))
+            visited.add(current)
+
+
+class Solution(object):
+    def minJumps(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        bfs problem with a twist
+        create deafult dict the usal way 
+        consider three types of neighbors from n -> n+1 and n-2 and n+p where arr[n] == arr[n+p] and p != 0
+        keep a visited set
+        but also keep a visitedgroups set
+        imagine we have arr = [1, 1, 1, 1, 1, 1, 1, 1, 1, 2]
+         Then first time we see 1, we visit all other 1. Second time we see 1, we do not need to check its neibors of type 3, we already know that we visited them. Without this optimization time complexity can be potentially O(n^2).
+         Consider we have [a,b,b,b,b,b,b,b,b,b,b,b,c]
+
+If we are at the first b (of index 1) we can either get to a or to any other b including the last b in a single step.
+
+If we are at the last b then we can either get to c or to any other b including the first b in a single step.
+
+Additionally we notice that it is always sub-optimal to move to any b that is between the first b and the last b.
+
+So instead we can create a new array that looks like [a,b,b,c] and run BFS on that, meaning for any array containing n consecutive elements we only keep the first and last occurrences of this element.
+        we do bfs for each of the nodes neighbors check type and 2 and if we did not visit of this type we can check for type 3
+        #note, making the adj list with type 3 neighbors caused the TLE
+        '''
+        #make adj in the following way: num:index
+        N = len(arr)
+        adj = defaultdict(list)
+        for i,num in enumerate(arr):
+            adj[num].append(i)
+        
+        q = deque([(0,0)])
+        visited_nodes = set()
+        visited_groups = set() #this is  set of visited values
+        
+        while q:
+            current, distance = q.popleft()
+            if current == N-1:
+                return distance
+            
+            #now check neigbors + and - currnet node
+            for neigh in [current+1,current - 1]:
+                #remember neigh must be in bounds
+                if 0 <= neigh < N and neigh not in visited_nodes:
+                    visited_nodes.add(neigh)
+                    q.append((neigh, distance + 1))
+            
+            #now we must check for type 3 neighbors matching value
+            if arr[current] not in visited_groups: #if we havent seen this value
+                for neigh in adj[arr[current]]:
+                    #find the value
+                    if neigh not in visited_nodes:
+                        visited_nodes.add(neigh)
+                        q.append((neigh, distance+ 1))
+                visited_groups.add(arr[current])
+
+################
+#Reach a Number
+###############
+#i cant figure out how to start the recursion
+class Solution(object):
+    def reachNumber(self, target):
+        """
+        :type target: int
+        :rtype: int
+        """
+        '''
+        starting at zero
+        we can only go in n steps at the nth step either left or right
+        brute force would be to examine all left right step combindations until i get the target
+        think recursino tree, i can either take -n or +n steps
+        '''
+        def rec_step(current,steps,target):
+            if current + steps == target or current - steps == target:
+                return steps
+            else:
+                print current
+                rec_step(current+steps,steps+1, target)
+                rec_step(current-steps,steps+1,target)
+        
+        return rec_step(0,1,target)
+
+
+class Solution(object):
+    def reachNumber(self, target):
+        """
+        :type target: int
+        :rtype: int
+        """
+        '''
+        starting at zero
+        we can only go in n steps at the nth step either left or right
+        brute force would be to examine all left right step combindations until i get the target
+        think recursino tree, i can either take -n or +n steps
+        the targets will always by the nth sum of
+        sum_{i=1}^i=N x_{n}
+        if we pass the same we can get that passed sum only of it is divisble by 2
+        https://leetcode.com/problems/reach-a-number/discuss/990901/%22Python%22-easy-explanation-blackboard
+        but before that we must show that the min steps for target is the same as abs(target)
+        examine the target 5
+        which is just 0 + 1 + 2 + 3
+        i could have easily just gotten to -5 buy reverse
+        0 -1 -2 -3
+        you can always add a 1 if you are behind -4+5-6+7-8+9 = 3
+        '''
+        step, summ = 0,0
+        #keep going until our sum either goes past our target or is the target
+        target = abs(target)
+        while summ < target:
+            summ += step
+            step += 1
+        #get the different between where we are at now and target, the goal is to get rid fo the different to reach target
+        #for the ith move, it we switch the right move to the left, the change in sum whill b 2*i
+        while (summ - target) % 2 != 0:
+            summ += step
+            step += 1
+        
+        return step - 1
+
+#better explanation
+#https://leetcode.com/problems/reach-a-number/discuss/188999/Throw-Out-All-Fucking-Explanations-This-is-nice-explanation-(c%2B%2B)-I-think-.......
+class Solution(object):
+    def reachNumber(self, target):
+        """
+        :type target: int
+        :rtype: int
+        """
+        target = abs(target)
+        step = 0
+        summ = 0
+        while True:
+            step += 1
+            summ += step
+            if summ == target:
+                return step
+            elif summ > target and (summ - target) % 2 == 0:
+                return step
+
+
+#############################################
+# Pseudo-Palindromic Paths in a Binary Tree
+############################################
+#woooooooo
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def pseudoPalindromicPaths (self, root):
+        """
+        :type root: TreeNode
+        :rtype: int
+        """
+        '''
+        well the naive way would be to enumerate all possible paths, and check if each path is a permutation of itself (just count it)
+        if it is it is psueo palindromic
+        well hint 1 one helps
+        keep track if freqeunce counts of chars
+        '''
+        self.temp = []
+        self.ways = 0
+        
+        def paths(node,path):
+            if not node:
+                return
+            if not node.left and not node.right:
+                self.temp.append(path+[node.val])
+            paths(node.left,path+[node.val]) #rember for paths you need to pass it along this took a long time to get
+            paths(node.right,path+[node.val])
+ 
+        paths(root,[])
+        #now get freq counts for each path and observer that at most digit has odd frequencey
+        for path in self.temp:
+            count = Counter(path)
+            odds = 0
+            for k,v in count.items():
+                if v % 2 != 0:
+                    odds += 1
+            if odds == 1 or odds == 0:
+                self.ways += 1
+                
+        return self.ways
+
+class Solution(object):
+    def pseudoPalindromicPaths (self, root):
+        """
+        :type root: TreeNode
+        :rtype: int
+        """
+        '''
+        i've done the recursive all paths traversal,
+        now lets try the iterative but we compute freq counts on the fly using bitsh shifts
+        path will be defind a binary type with slots 1 to 9
+        if at most one bit is set, it must be a power of two
+        XOR of zero and a bit results in that bit
+        XOR of two equal bits (even if they are zeros) results in z ero
+        hence, one could see that a bit in a path only if it appears an odd number of times
+        #we can compute the occurneces of each digit in the correspdong bit by:
+        path = path ^ (1 << node.val)
+        now to ensure that at most one digit it must be a power of two
+        this could be done by turning off the right most bit
+        path & path - 1
+        so in general if its a leaf we can check at most one digit having an odd frequence
+        if path & (path -1) == 0:
+        count += 1
+        '''
+        count = 0
+        stack = [(root,0)]
+        while stack:
+            node,path = stack.pop()
+            if node:
+                #compute occruecne of each digit
+                path = path ^ (1 << node.val)
+                #now we check if leaf
+                if not node.left and not node.right:
+                    #check path contains at most one digit having odd freq
+                    if path & (path -1) == 0:
+                        count +=1
+                else:
+                    stack.append((node.left,path))
+                    stack.append((node.right,path))
+                    
+        return count
+        
+###########################################################
+# Longest Substring with At Most K Distinct Characters
+############################################################
+#TLE 139/141
+class Solution(object):
+    def lengthOfLongestSubstringKDistinct(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: int
+        """
+        '''
+        well the brute force would be to examin all possible lengths from range(2,len(s))
+        and check that the lenght of the set made is less than = k
+        '''
+        #special cases
+        n = len(s)
+        if n * k == 0:
+            return 0
+        max_length = float('-inf')
+        for size in range(1,len(s)+1):
+            for i in range(0,len(s)-size+1):
+                substring =  s[i:i+size]
+                if len(set(substring)) <= k:
+                    max_length = max(max_length,len(substring))
+        
+        return max_length
+
+class Solution(object):
+    def lengthOfLongestSubstringKDistinct(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: int
+        """
+        '''
+        similar to longest substring with 2
+        sliding windwo with hash
+        two poitners
+        hahse is char:index
+        we update our hash whenver we exceed k+1 items and move the leftmost character
+        we update in our hash the indices
+        '''
+        #edge cases
+        N = len(s)
+        if N*k == 0:
+            return 0
+        
+        l,r = 0,0
+        mapp = defaultdict()
+        #in mapp most recent entry is right most char
+        max_len = 1
+        while r < N:
+            mapp[s[r]] = r
+            r += 1
+            
+            if len(mapp) >= k + 1:
+                #delete the last recently seen
+                last_seen_idx = min(mapp.values())
+                del mapp[s[last_seen_idx]]
+                #move l past it
+                l = last_seen_idx + 1
+            
+            #always update
+            max_len = max(max_len, r-l)
+        
+        return max_len
