@@ -3079,6 +3079,7 @@ class Solution(object):
                 #now we check if leaf
                 if not node.left and not node.right:
                     #check path contains at most one digit having odd freq
+                    #or jsut check path must be poer of two
                     if path & (path -1) == 0:
                         count +=1
                 else:
@@ -3087,6 +3088,18 @@ class Solution(object):
                     
         return count
         
+#iterative all root to leaf paths
+        paths = []
+        stack = [(root,[])]
+        while stack:
+            node,path = stack.pop()
+            if node:
+                if not node.left and not node.right:
+                    paths.append(path+[node.val])
+                else:
+                    stack.append((node.left,path+[node.val]))
+                    stack.append((node.right,path+[node.val]))
+        print paths
 ###########################################################
 # Longest Substring with At Most K Distinct Characters
 ############################################################
@@ -3154,3 +3167,326 @@ class Solution(object):
             max_len = max(max_len, r-l)
         
         return max_len
+
+#using ordered dict
+class Solution(object):
+    def lengthOfLongestSubstringKDistinct(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: int
+        """
+        '''
+        using a hasmap does not give us access to the first or last hasehd key value pair
+        however there is a structure called an orderdict (recall finding the min in a hash of size k is O(K))
+        using orderded dict:
+            return 0 if the string is empty of k is equal to zero
+            set boht pointer to beinggin l,r = 0,0 and maxlength = 0
+            while right is less than N
+            if s[r] is already in ordered dict, delete it to ensure the first key in hash is left most
+            add the current s[r] and move right
+            if ordered duct contains k+1 remove letmost O(1) instead O(N)
+        '''
+        N = len(s)
+        if k == 0 or N == 0:
+            return 0
+        l,r = 0,0
+        mapp = OrderedDict()
+        max_len = 1
+        while r < N:
+            char = s[r]
+            #if char is already in mapp, delted to ensure that right most element is the last added in
+            #and that left most if first added in
+            if char in mapp:
+                del mapp[char]
+            mapp[char] = r
+            r += 1
+            
+            #when we go over k
+            if len(mapp) == k + 1:
+                #delete left most, this is 0(1)
+                _,del_idx = mapp.popitem(last= False)
+                #move left
+                l = del_idx + 1
+            #alwyas update
+            max_len = max(max_len, r-l)
+        
+        return max_len
+
+###############
+#Game of Life
+##############
+#cheeky but works
+class Solution(object):
+    def gameOfLife(self, board):
+        """
+        :type board: List[List[int]]
+        :rtype: None Do not return anything, modify board in-place instead.
+        """
+        '''
+        i would need to make a copy of the boar firs, then it becomese asier
+        you just check each i,j on the conditions, and mutate the board
+        but watch for boundaires
+        i could make a helper function to act on the board
+        make a results board and mutate that N squared must be ok because the dimensions are not more than 25
+        
+        '''
+        results = copy.deepcopy(board) #mutate this but apply rules to board
+        directions = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,-1),(1,-1),(-1,1)]
+        rows = len(board)
+        cols = len(board[0])
+        
+        #helper
+        def helper(cell):
+            i,j = cell
+            #if cell is 1
+            if board[i][j] == 1:
+                ones = 0
+                zeros = 0
+                for dirr in directions:
+                    new_i,new_j = i + dirr[0], j + dirr[1]
+                    #bouandary check
+                    if 0 <= new_i < rows and 0 <= new_j < cols:
+                        if board[new_i][new_j] == 1:
+                            ones += 1
+                        else:
+                            zeros += 1
+                #rules
+                if ones < 2:
+                    return 0
+                elif ones == 2 or ones == 3:
+                    return 1
+                else:
+                    return 0
+            #now if cell is 0
+            if board[i][j] == 0:
+                ones = 0
+                zeros = 0
+                for dirr in directions:
+                    new_i,new_j = i + dirr[0], j + dirr[1]
+                    #bouandary check
+                    if 0 <= new_i < rows and 0 <= new_j < cols:
+                        if board[new_i][new_j] == 1:
+                            ones += 1
+                        else:
+                            zeros += 1
+                if ones == 3:
+                    return 1
+                else:
+                    return 0
+        for i in range(rows):
+            for j in range(cols):
+                res = helper((i,j))
+                results[i][j] = res
+        
+        #one more passt to reassign
+        for i in range(rows):
+            for j in range(cols):
+                board[i][j] = results[i][j]
+
+
+class Solution(object):
+    def gameOfLife(self, board):
+        """
+        :type board: List[List[int]]
+        :rtype: None Do not return anything, modify board in-place instead.
+        """
+        '''
+        O(1) space, in place, and elif block consolidation
+        realy just two if states for rule 1, rule 2, rule 3
+        if element == 0 and live neighbors < 2 and live_neighbors > 3, its a zero else 1
+        we can solve the problem in places by using a dummy cell value to signify previous state of the cell along with the new changed value
+        example, if the cell was originally 1 but become zero after the rile, we can mark it -1; negative means dead, but was oringinally 1
+        also if the value of the cell was 0, but became 1, then we make it a two, + indicats the change
+        algo:
+            1. iterate acoress the board one by one
+            2. update rules now:
+                rule 1: any live cell with < 2 neighors dies, the cell becomes - 1
+                rule 2: any live cell with == 2 or == 3 live, live on so no change
+                rule 3: anye live cell iwth >3 dies, to its - 1
+                rule 4: andy dead cell with == 3 lives becomes 2
+            3. apply new rules
+            4. one more pass to convert -1 and 2 to live(1) and dead
+        '''
+        directions = [(1,0),(-1,0),(0,1),(0,-1),(1,1),(-1,-1),(1,-1),(-1,1)]
+        rows = len(board)
+        cols = len(board[0])
+        for i in range(rows):
+            for j in range(cols):
+                #count live
+                live = 0
+                for dirr in directions:
+                    new_i,new_j = i + dirr[0], j + dirr[1]
+                    #bouandary check
+                    if 0 <= new_i < rows and 0 <= new_j < cols:
+                        if abs(board[new_i][new_j]) == 1: #remember it used to be alive
+                            live += 1
+                #new rule update
+                #live cell and <2 >3 neighbors
+                if board[i][j] == 1 and (live <2 or live >3):
+                    board[i][j] = -1 #alive now dead
+                if board[i][j] == 0 and live == 3:
+                    board[i][j] = 2 #dead now alive
+        
+        #second pass to decode board
+        for i in range(rows):
+            for j in range(cols):
+                if board[i][j] > 0:
+                    board[i][j] = 1
+                else:
+                    board[i][j] = 0
+
+class Solution(object):
+    def gameOfLife(self, board):
+        """
+        :type board: List[List[int]]
+        :rtype: None Do not return anything, modify board in-place instead.
+        """
+        '''
+        on the infinite board follow up
+        we would have sparse matrix, so it might be better to store the locations if 1s
+        #revisits this
+        https://leetcode.com/problems/game-of-life/discuss/73217/Infinite-board-solution/201780
+        '''
+        #store live
+        lives = set()
+        for i,row in enumerate(board):
+            for j,live in enumerate(row):
+                if live:
+                    lives.add((i,j))
+        #init counter
+        #just counting up all the neighbord cooridantes of live cell cooridantes
+        counts = []
+        for i,j in lives:
+            for I in range(i-1,i+1):
+                for J in range(j-1,j+1):
+                    if I != i or J != J:
+                        counts.append((I,J))
+        counts = Counter(counts)
+        
+        #now store locations if counts == 2 or counts == 2 and also in lives
+        results = set()
+        for ij in counts:
+            if counts[ij] == 3 or counts[ij] == 2 and ij in lives:
+                results.add(ij)
+        
+        for i, row in enumerate(board):
+            for j in range(len(row)):
+                row[j] = int((i, j) in lives)
+
+##################################
+#Largest Rectangle in Histogram   
+###################################
+#O(N^3)
+class Solution(object):
+    def largestRectangleArea(self, heights):
+        """
+        :type heights: List[int]
+        :rtype: int
+        """
+        '''
+        go through all approaches
+        brute force
+        we can can consider all possible sequence of rectangles and just take the max area
+        '''
+        max_area = 0
+        N = len(heights)
+        for i in range(N):
+            for j in range(N):
+                #first find the minimu
+                min_height = float('inf')
+                for k in range(i,j+1):
+                    min_height = min(min_height,heights[k])
+                    #print min_height
+                #update afer finding min
+                max_area = max(max_area,min_height*(j-i+1))
+        return max_area
+
+#O(N^2)
+class Solution(object):
+    def largestRectangleArea(self, heights):
+        """
+        :type heights: List[int]
+        :rtype: int
+        """
+        '''
+        better brute force
+        we can do one slight modification in the previous approach to optimize it some height
+        insgtead of taking every possible pair of itnervals when findint the bar of min height lying between them every time, 
+        we can fint eh bar of the minheight for current pair by using the minimum height of the previous bar
+        min_height = min(min_height, heights(j))
+        so keep track if the minimum found, and update i
+        '''
+        N = len(heights)
+        max_area = 0
+        for i in range(N):
+            min_height = float('inf')
+            for j in range(i,N):
+                min_height = min(min_height,heights[j])
+                #udate max
+                max_area = max(max_area, min_height*(j-i+1))
+        return max_area
+
+#first two are standard approaches   
+#O(NlogN)
+
+class Solution(object):
+    def largestRectangleArea(self, heights):
+        """
+        :type heights: List[int]
+        :rtype: int
+        """
+        '''
+        we can perform a divide and conquer strategy 
+        we note three things about the rectangle with max area:
+            1. it will be the maximum of the widest possible rectangle with height euqal to the height of the shortest bar
+            2. the largest rectangle will be confined to the left of the shortest bar (sub problem)
+            3. the largest rectanble will be confined the right of the shortest bar (sub problem again)
+        and it is the max of all three of these conditions
+        '''
+        memo = {}
+        def calc_area(heights,start,end):
+            if (start,end) in memo:
+                return memo[start_end]
+            if start > end:
+                return 0
+            min_idx = start
+            for i in range(start,end+1):
+                if heights[min_idx] > heights[i]:
+                    min_idx = i
+            
+            shortest_bar = heights[min_idx]*(end-start+1)
+            largest_left = calc_area(heights,start,min_idx-1)
+            largest_right = calc_area(heights, min_idx+1,end)
+            result = max(shortest_bar, largest_left,largest_right)
+            memo[start,end] = result
+            return result
+        
+        return calc_area(heights,0,len(heights)-1)
+
+#O(N) using a stack 
+#watch video
+class Solution(object):
+    def largestRectangleArea(self, heights):
+        """
+        :type heights: List[int]
+        :rtype: int
+        """
+        #using stack
+        stack = [-1]
+        N = len(heights)
+        max_area = 0
+        for i in range(N):
+            while stack[-1] != -1 and heights[stack[-1]] >= heights[i]:
+                current_height = heights[stack.pop()]
+                current_width = i - stack[-1] - 1
+                max_area = max(max_area,current_height*current_width)
+            stack.append(i)
+            
+        #remaining elements
+        while stack[-1] != -1:
+            current_height = heights[stack.pop()]
+            current_width = N - stack[-1] - 1
+            max_area = max(max_area, current_height*current_width)
+            
+        return max_area       
