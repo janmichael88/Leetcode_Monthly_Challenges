@@ -148,3 +148,65 @@ class Solution(object):
             if odds > 1:
                 return False
         return True
+
+####################################################################
+#Find a Corresponding Node of a Binary Tree in a Clone of That Tree
+####################################################################
+#reucrsive
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution(object):
+    def getTargetCopy(self, original, cloned, target):
+        """
+        :type original: TreeNode
+        :type cloned: TreeNode
+        :type target: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        we need another pointer as mover through original
+        move original until it machtes target but also move through cloned
+        stack might be better
+        '''
+        
+        def dfs(org,clnd,target):
+            if not org:
+                return
+            if org.val == target.val:
+                self.ans = clnd
+            dfs(org.left,clnd.left,target)
+            dfs(org.right,clnd.right,target)
+        
+        dfs(original,cloned,target)
+        return self.ans
+
+class Solution(object):
+    def getTargetCopy(self, original, cloned, target):
+        """
+        :type original: TreeNode
+        :type cloned: TreeNode
+        :type target: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        we need another pointer as mover through original
+        move original until it machtes target but also move through cloned
+        stack might be better
+        '''
+        
+        def dfs(org,clnd,target):
+            if not org:
+                return
+            if org.val == target.val:
+                return clnd
+            left = dfs(org.left,clnd.left,target)
+            right = dfs(org.right,clnd.right,target)
+            return left or right
+
+        
+        return dfs(original,cloned,target)
