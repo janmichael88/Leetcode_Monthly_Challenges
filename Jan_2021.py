@@ -149,6 +149,31 @@ class Solution(object):
                 return False
         return True
 
+class Solution(object):
+    def canPermutePalindrome(self, s):
+        """
+        :type s: str
+        :rtype: bool
+        """
+        #single pass hash
+        #init count of evens to zero
+        #once we update our hashp, we also check is the current count is even
+        #its even, we we decreement our count, but increase otherwise
+        mapp = {}
+        N = len(s)
+        odds = 0
+        for i in range(N):
+            if s[i] in mapp:
+                mapp[s[i]] += 1
+            else:
+                mapp[s[i]] = 1
+            
+            if mapp[s[i]] % 2 == 0:
+                odds -= 1
+            else:
+                odds += 1
+        return odds <= 1
+
 ####################################################################
 #Find a Corresponding Node of a Binary Tree in a Clone of That Tree
 ####################################################################
@@ -210,3 +235,250 @@ class Solution(object):
 
         
         return dfs(original,cloned,target)
+
+#iterative with stack
+class Solution(object):
+    def getTargetCopy(self, original, cloned, target):
+        """
+        :type original: TreeNode
+        :type cloned: TreeNode
+        :type target: TreeNode
+        :rtype: TreeNode
+        """
+        '''
+        iterative solution with stack
+        '''
+        #we traverse both trees so we need to stacks
+        stack_org, stack_clnd = [],[]
+        #we need to give reference to our pointers
+        node_org, node_clnd = original,cloned
+        
+        while stack_org or node_clnd:
+            #alwasy go all the way left before visiting node
+            while node_org:
+                stack_org.append(node_org)
+                stack_clnd.append(node_clnd)
+                
+                #dont forget to move
+                node_org = node_org.left
+                node_clnd = node_clnd.left
+            #now we pop
+            node_org = stack_org.pop()
+            node_clnd = stack_clnd.pop()
+            
+            if node_org is target:
+                return node_clnd
+            
+            #if we can't statisfy, we go right
+            node_org = node_org.right
+            node_clnd = node_clnd.right
+
+########################
+#Beautiful Arrangement
+########################
+#aye yai yai
+#TLE THOUGH
+class Solution(object):
+    def countArrangement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        condtions for a beatiful arrangment
+            1. nums[i] % i == 0 
+            or
+            2. i % nums[i] == 0
+        well we could recursively generate all permutations and check if the arrangment is beautiful
+        then increment a count and return the count
+        
+    
+        '''
+        nums = list(range(1,n+1))
+        def build_perms(items):
+            if len(items) == 1:
+                return [items]
+            permutations = []
+            for i,a in enumerate(items):
+                #get the remaining
+                remaining = [num for j,num in enumerate(items) if i != j]
+                #recurse
+                perm = build_perms(remaining)
+                for p in perm:
+                    permutations.append([a]+p)
+            return permutations
+        perms = build_perms(nums)
+        ways = 0
+        for p in perms:
+            valid = 0
+            for i in range(len(p)):
+                if p[i] % (i+1) == 0 or (i+1) % p[i] == 0:
+                    valid += 1
+                else:
+                    break
+            if valid == len(p):
+                ways += 1
+        return ways
+
+#just an aside, creating perms but repeats
+        def swap(nums,a,b):
+            temp = nums[a]
+            nums[a] = nums[b]
+            nums[b] = temp
+            
+        perms = []
+        def permute(nums, idx):
+            if idx == len(nums) - 1:
+                return
+            for i in range(len(nums)):
+                swap(nums,i,idx)
+                permute(nums,idx+1)
+                permuted = []
+                for n in nums:
+                    permuted.append(n)
+                perms.append(permuted)
+                swap(nums,i,idx)
+        permute(list(range(1,n+1)),0)
+        #print set((tuple(foo) for foo in perms))
+        print perms
+
+class Solution(object):
+    def countArrangement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        let's walk through all three solutions to understand how to permute a string
+        we can define a function permute(nums, curr_idx)
+        the function taktes the index of the current element then it swapss with every other element in the array lying to the right
+        once swapping has been done it makes another cal to permute, but we advance the index
+        '''
+        self.count = 0
+        nums = list(range(1,n+1))
+        def swap(nums,a,b):
+            temp = nums[a]
+            nums[a] = nums[b]
+            nums[b] = temp
+            
+        perms = []
+        def permute(nums, idx):
+            if idx == len(nums) - 1:
+                #check the perm for arrangement conditions
+                for i in range(1,len(nums)+1):
+                    if nums[i-1] % i != 0 and nums[i-1] != 0:
+                        break
+                if i == len(nums) + 1:
+                    self.count += 1
+                else:
+                    return
+            for j in range(len(nums)):
+                swap(nums,j,idx)
+                permute(nums,idx+1)
+                swap(nums,j,idx)
+        permute(nums,0)
+        return self.count
+
+class Solution(object):
+    def countArrangement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        https://leetcode.com/problems/beautiful-arrangement/discuss/1000324/Python-Permutation-Solution
+        the conditions are that either the number at index+1 is divisble by index +1
+        or index+1 is disvisble by that number
+        algo:
+            1. generate the array of numbers that will be used to create perms (1 to N inclusive)
+            2. iterate through all element in the list and compare to to i, which i 1 to avoid the index + 1 thing
+            3. of the nmber is divisible by i or i divisible by the number, we can continute with the permuation, otherwise abandon
+            4. if our i has move al the way through our nums list (i.e i == len(nums)+1) we made a valid result
+            
+        '''
+        self.res = 0
+        nums = [i for i in range(1, n+1)]
+        
+        def perm_check(nums,i):
+            #start i off at 1
+            if i == n + 1:
+                self.res += 1
+                return
+            
+            for j,num in enumerate(nums):
+                if num % i == 0 or i % num == 0:
+                    perm_check(nums[:j]+nums[j+1:],i+1)
+        
+        perm_check(nums,1)
+        return self.res
+
+#this one deson't seem to work,but its the right approach
+class Solution(object):
+    def countArrangement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        let's walk through all three solutions to understand how to permute a string
+        we can define a function permute(nums, curr_idx)
+        the function taktes the index of the current element then it swapss with every other element in the array lying to the right
+        once swapping has been done it makes another cal to permute, but we advance the index
+        '''
+        self.count = 0
+        nums = list(range(1,n+1))
+        def swap(nums,a,b):
+            temp = nums[a]
+            nums[a] = nums[b]
+            nums[b] = temp
+            
+        perms = []
+        def permute(nums, idx):
+            if idx == len(nums)-1:
+                #check the perm for arrangement conditions
+                for i in range(1,len(nums)+1):
+                    if nums[i-1] % i != 0 or nums[i-1] % i != 0:
+                        break
+                if i == len(nums)-1:
+                    self.count += 1
+            return
+            for j in range(len(nums)):
+                swap(nums,j,idx)
+                permute(nums,idx+1)
+                swap(nums,j,idx)
+        permute(nums,0)
+        return self.count
+
+#with pruning using boolean array
+
+class Solution(object):
+    def countArrangement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        back tracking variant, pruning search sapce
+        we try to create all the permutations of numbers from 1 to N
+        we can fix one number at a particular position and check for the divisibility criteria
+        but we need to keep track of the numbers which have laready eeb consider easlier
+        we can make use of visitied boolean array of size N
+        here visited[i] refers to the ith number being already placed/not placed
+        
+        '''
+        self.count = 0
+        visited = [False]*(n+1)
+        
+        def calculate(n, pos):
+            if pos > n: #meaning we have used all numbers and since we are pruning, it must be a path
+                self.count += 1
+            
+            for i in range(1,n+1):
+                if (visited[i] == False) and (pos % i == 0 or i % pos == 0 ):
+                    visited[i] = True
+                    calculate(n,pos+1)
+                    #clear it again
+                    visited[i] = False
+        calculate(n,1)
+        return self.count
+            
