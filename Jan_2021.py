@@ -477,8 +477,82 @@ class Solution(object):
                 if (visited[i] == False) and (pos % i == 0 or i % pos == 0 ):
                     visited[i] = True
                     calculate(n,pos+1)
-                    #clear it again
+                    #clear it again because we need to backtrack
                     visited[i] = False
         calculate(n,1)
         return self.count
+#adding a memo
+class Solution(object):
+    def countArrangement(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        back tracking variant, pruning search sapce
+        we try to create all the permutations of numbers from 1 to N
+        we can fix one number at a particular position and check for the divisibility criteria
+        but we need to keep track of the numbers which have laready eeb consider easlier
+        we can make use of visitied boolean array of size N
+        here visited[i] refers to the ith number being already placed/not placed
+        #adding memoization
+        '''
+        visited = [False]*(n+1) # i need to pass this in now
+        
+        memo = {}
+        
+        def calculate(n, pos):
+            if pos > n: #meaning we have used all numbers and since we are pruning, it must be a path
+                return 1
+            #retrieve
+            if tuple(visited) in memo:
+                return memo[tuple(visited)]
+            valid = 0
+            for i in range(1,n+1):
+                if (visited[i] == False) and (pos % i == 0 or i % pos == 0 ):
+                    visited[i] = True
+                    valid += calculate(n,pos+1)
+                    #clear it again
+                    visited[i] = False
+            #put back in memory
+            memo[tuple(visited)] = valid
+            return valid
+        
+        return calculate(n,1)
+            
+#######################
+#Merge Twi Sorted Lists
+#######################
+class Solution(object):
+    def mergeTwoLists(self, l1, l2):
+        """
+        :type l1: ListNode
+        :type l2: ListNode
+        :rtype: ListNode
+        """
+        '''
+        create dummy node and have to pointers move to each one
+        keep adding to dummy.next the minimum of the two pointers
+        '''
+        dummy = ListNode() #return dummy.next
+        d_ptr = dummy
+        first = l1
+        second = l2
+        
+        
+        while first and second:
+            #take first if small
+            if first.val <= second.val:
+                d_ptr.next = first
+                first = first.next
+            else:
+                d_ptr.next = second
+                second = second.next
+            d_ptr = d_ptr.next
+                
+        while second:
+            d_ptr.next = second
+            second = second.next
+        
+        return dummy.next
             
