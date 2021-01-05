@@ -521,7 +521,7 @@ class Solution(object):
         return calculate(n,1)
             
 #######################
-#Merge Twi Sorted Lists
+#Merge Two Sorted Lists
 #######################
 class Solution(object):
     def mergeTwoLists(self, l1, l2):
@@ -555,4 +555,156 @@ class Solution(object):
             second = second.next
         
         return dummy.next
+
+class Solution(object):
+    def mergeTwoLists(self, l1, l2):
+        """
+        :type l1: ListNode
+        :type l2: ListNode
+        :rtype: ListNode
+        """
+        dummy = ListNode()
+        curr = dummy
+        while l1 and l2:
+            if l1.val <= l2.val:
+                curr.next = l1
+                l1 = l1.next
+            else:
+                curr.next = l2
+                l2 = l2.next
+            curr = curr.next
             
+        if l1:
+            curr.next = l1
+        if l2:
+            curr.next = l2
+        return dummy.next
+
+
+#####Recursive approach
+class Solution(object):
+    def mergeTwoLists(self, l1, l2):
+        """
+        :type l1: ListNode
+        :type l2: ListNode
+        :rtype: ListNode
+        """
+        '''
+        we can define a recursive relation ship for the two lists
+        when list1[0] < list2[0] we can recurse and add the list1[0]:
+            list1[0] + merge(list[1:],list2)
+        otherwise take list2's current element
+            list2[0] + merge(list[1],list2[1:])
+        now we have to model the recurrsnece using a function
+        if either l1 or l2 is null, there is no need for a emrge, so we simply return the non-null list
+        otherwise, we determine which is l1 of l2 has the smaller head and recurse on the enxt value
+        
+        '''
+        if l1 is None:
+            return l2
+        elif l2 is None:
+            return l1
+        elif l1.val < l2.val:
+            l1.next = self.mergeTwoLists(l1.next,l2)
+            return l1
+        else:
+            l2.next = self.mergeTwoLists(l1,l2.next)
+            return l2
+            
+##########################################
+# Remove Duplicates from Sorted List II
+##########################################
+#naive way
+class Solution(object):
+    def deleteDuplicates(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        while we are at it, lets do this naively
+        get all the items and create new list such that there are no duplicates ones then rebuild
+        '''
+        items = []
+        cur = head
+        while cur:
+            items.append(cur.val)
+            cur = cur.next
+        
+        counts = Counter(items)
+        valid = [k for k,v in counts.items() if v == 1]
+        
+        dummy = ListNode()
+        cur = dummy
+        for i in valid:
+            cur.next = ListNode(i)
+            cur = cur.next
+        return dummy.next
+
+#close one
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def deleteDuplicates(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        naive way would be to just traverse the whole thing, clear duplicates and make a new node
+        two pointers, one stays at current and we keep advancing our next so long it does not match the current
+        once it doen't match, connect
+        while loop invariant?
+            so long as there is a next or next is not null
+        '''
+        dummy = ListNode()
+        d_ptr = dummy
+        curr = head
+        nextt = head.next
+        while nextt:
+            if curr.val != nextt.val:
+                d_ptr.next = curr
+                d_ptr = d_ptr.next
+            curr = curr.next
+            nextt = nextt.next
+        
+        return dummy.next
+#damn, i couldn not figure out the logic on this onee....
+class Solution(object):
+    def deleteDuplicates(self, head):
+        """
+        :type head: ListNode
+        :rtype: ListNode
+        """
+        '''
+        naive way would be to just traverse the whole thing, clear duplicates and make a new node
+        two pointers, one stays at current and we keep advancing our next so long it does not match the current
+        once it doen't match, connect
+        while loop invariant?
+            so long as there is a next or next is not null
+        '''
+        dummy = ListNode()
+        dummy.next = head
+        
+        prev = dummy
+        #we need to keep check for the existence of a node and its next
+        while head:
+            if head.next and head.val == head.next.val: #we need to make sure there is next node to check
+                #we need to keep moving up 
+                #we need to make sure there is a head because of the danling null pointer
+                #if head.next exists, then head surely exsists
+                while head.next and head.val == head.next.val:
+                    #move up
+                    head = head.next
+                #we connect
+                prev.next = head.next
+            else:
+                #if we didnt have to delte move the prev
+                prev = prev.next
+            #always move the head
+            head = head.next
+        
+        return dummy.next
