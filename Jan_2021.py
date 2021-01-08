@@ -641,37 +641,7 @@ class Solution(object):
             cur = cur.next
         return dummy.next
 
-#close one
-# Definition for singly-linked list.
-# class ListNode(object):
-#     def __init__(self, val=0, next=None):
-#         self.val = val
-#         self.next = next
-class Solution(object):
-    def deleteDuplicates(self, head):
-        """
-        :type head: ListNode
-        :rtype: ListNode
-        """
-        '''
-        naive way would be to just traverse the whole thing, clear duplicates and make a new node
-        two pointers, one stays at current and we keep advancing our next so long it does not match the current
-        once it doen't match, connect
-        while loop invariant?
-            so long as there is a next or next is not null
-        '''
-        dummy = ListNode()
-        d_ptr = dummy
-        curr = head
-        nextt = head.next
-        while nextt:
-            if curr.val != nextt.val:
-                d_ptr.next = curr
-                d_ptr = d_ptr.next
-            curr = curr.next
-            nextt = nextt.next
-        
-        return dummy.next
+
 #damn, i couldn not figure out the logic on this onee....
 class Solution(object):
     def deleteDuplicates(self, head):
@@ -687,7 +657,7 @@ class Solution(object):
             so long as there is a next or next is not null
         '''
         dummy = ListNode()
-        dummy.next = head
+        #dummy.next = head
         
         prev = dummy
         #we need to keep check for the existence of a node and its next
@@ -703,8 +673,259 @@ class Solution(object):
                 prev.next = head.next
             else:
                 #if we didnt have to delte move the prev
+                prev.next = head
                 prev = prev.next
             #always move the head
             head = head.next
         
         return dummy.next
+
+################
+# Kth Missing Positive Number
+########################
+#well it works
+class Solution(object):
+    def findKthPositive(self, arr, k):
+        """
+        :type arr: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        this might be bad, but i could start off with all possible numbers in range 1 to 1000
+        and remove each one as i pass the array
+        then convert to a list and reeturn k
+        '''
+        possible = set(tuple(range(1,20010)))
+        for num in arr:
+            possible.remove(num)
+        possible = list(possible)
+        if k < len(possible):
+            return possible[k-1]
+
+class Solution(object):
+    def findKthPositive(self, arr, k):
+        """
+        :type arr: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        we can solve the problem in O(N) time and O(1) space
+        the number of missing eleemnts in the array, since its in range(1,wtv)
+        would be arr[i+1] - arr[i] - 1
+        algo:
+            check if the kth missing number is less than the first element of the array, if it is return k
+            decrease k by the number of positive intergers which are missing before the array starts: k -= arr[0]-1
+            traverse the array
+                at each step, compute the number of misssing positive integers in between i+1'th and  ith elements
+                compare k to the curMissing
+                if k <= cur missing then the nmber to reutrn is in between i+1 and i'th and return arr[i]+k
+                otherwise decrese k by currMissing
+        
+            if we've passed the array, it means the missing is afte the last element
+            so return arr[-1] + k
+            
+        '''
+        #edge case, when k is smaller than the first element, well just return k
+        if k <= arr[0]-1:
+            return k
+        #now it must lie in the array, so we can decrement k by the first eleemnt
+        k -= arr[0] - 1
+        for i in range(len(arr)-1):
+            #find num missing
+            num_missing = arr[i+1] - arr[i] -1
+            if k <= num_missing:
+                return arr[i] + k
+            else:
+                k -= num_missing
+        #now the kth missing lies beyond the array
+        return arr[-1] + k
+        
+#another way
+#https://leetcode.com/problems/kth-missing-positive-number/discuss/1004535/Python-Two-solutions-O(n)-and-O(log-n)-explained
+class Solution(object):
+    def findKthPositive(self, arr, k):
+        """
+        :type arr: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        from the hint, keep track of the number of positves if missed
+        keep a set of all numbers in the array
+        and we check all numbers in range(1,k+len(arr)+1)
+        everytime a number is not in our set, we decrement k 1
+        only then hwen k is zero we return the number
+        '''
+        nums = set(arr)
+        for missing in range(1,k+len(arr)+1):
+            if missing not in nums:
+                k -= 1
+            if k == 0:
+                return missing
+
+#binary search
+class Solution(object):
+    def findKthPositive(self, arr, k):
+        """
+        :type arr: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        https://www.youtube.com/watch?v=Nfu-ubvJaZ0&ab_channel=AnishMalla
+        we can use binary search because the array is strictly increasing
+        ex 
+        [2,3,4,7,11]
+        if we have a regaulr array with no missing numbers
+        [1,2,3,4,5]
+        to do binary search we can ask, at a certain number, how many are missing to the left of it 
+        or rather at an index how many are missing to the left of it
+        num[idx] - 1 is num missing
+        if there were no missing numbers, the number at the indx would be idx + 1
+        and the number it is supposed to be is num[idx] - 1
+        [2,3,4,7,11]
+        [1,2,3,4,5]
+        [1,1,1,3,6] #number missing to the left
+        binary search to look for smallest number missing greater than k
+        just return l pointer + k
+        arr[left] - legntharray  - 1
+        '''
+        #edge case
+        if k < arr[0]:
+            return k
+        l,r = 0,len(arr) - 1
+        while l <= r:
+            mid = l + (r-l) //2
+            #if the number of positive intergers whic are missing before arr[mid] < k
+            # we move up
+            if arr[mid] - (mid + 1) < k:
+                l = mid + 1
+            else:
+                r = mid - 1 #notice how go one less than the mid, because it can't be at the mid
+            #at the end of the loop l = r +1 and the kth missing is ine between arr[r] and ar[l]
+            #the number of integerts missing before arr[r] is arr[r] - r - 1
+            #and so the number to return is 
+            #arr[r] + k - (arr[r] - r - 1) = l + k
+        return arr[r] + k - (arr[r] - r - 1) #or just l - k
+
+
+class Solution(object):
+    def findKthPositive(self, arr, k):
+        """
+        :type arr: List[int]
+        :type k: int
+        :rtype: int
+        """
+        skipped = 0 #the skipped idx
+        i,j = 0,1 #all skipped numbers
+        N = len(arr)
+        
+        while i < N:
+            if arr[i] != j:
+                skipped += 1
+                if skipped == k:
+                    return j
+                j += 1
+            else:
+                i += 1
+                j += 1
+            
+        #if i've gone beyong at the difference of k and skipped to the end of the array
+        return arr[-1] + (k-skipped)
+
+#################################################
+#Longest Substring Without Repeating Characters
+################################################
+class Solution(object):
+    def lengthOfLongestSubstring(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        they really should just call it a contiguous array
+        use two pointers
+        and hashmap marking the last recently seen char
+        keep updating the length so long as the set i
+        '''
+        #edge case
+        if not s:
+            return 0
+        mapp = set()
+        N = len(s)
+        l,r = 0,0
+        max_length = 0
+        while l < N and r < N:
+            #first move right to get a bigger length
+            if s[l] not in mapp:
+                mapp.add(s[l])
+                l += 1
+                #update to get max_length
+                max_length = max(max_length,l-r)
+            else:
+                #keep advanving r but remove
+                mapp.remove(s[r])
+                r += 1
+        
+        return max_length
+
+#worst case it is O(2N), because we may have to move l and r once every time for a lenth N
+
+
+#brute force
+class Solution(object):
+    def lengthOfLongestSubstring(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        lets just go over brute force for some extra practice
+        we can examine all substrings and check tha they do not contain duplicates
+        '''
+        max_len = 0
+        N = len(s)
+        for i in range(N):
+            for j in range(i+1,N+1):
+                if len(s[i:j]) == len(set(s[i:j])):
+                    #update
+                    max_len = max(max_len,len(s[i:j]))
+        return max_len
+                    
+
+#O(N)
+class Solution(object):
+    def lengthOfLongestSubstring(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        O(2N) solution keeps moving left and right pointers
+        we hash char to and index and just move it pas the last recently seen
+        set our left pointer to 0 and pass through s
+        whenver we've seen s[r] we have to move l to the most reent 
+        then update our max and then update our s[r] index
+        '''
+        N = len(s)
+        max_length = 0
+        
+        mapp = {}
+        
+        left,right = 0,0
+        while right < N:
+            if s[right] not in mapp:
+                mapp[s[right]] = right
+            else:
+                #move left to the last recently seen s[right]
+                left = max(mapp[s[right]],left)
+
+            
+            max_length = max(max_length, right - left+1)
+            #update mapp
+            mapp[s[right]] = right +1
+            right += 1
+        
+        return max_length
