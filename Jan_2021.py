@@ -859,14 +859,14 @@ class Solution(object):
         max_length = 0
         while l < N and r < N:
             #first move right to get a bigger length
-            if s[l] not in mapp:
+            if s[r] not in mapp:
                 mapp.add(s[l])
-                l += 1
+                r += 1
                 #update to get max_length
-                max_length = max(max_length,l-r)
+                max_length = max(max_length,r-l)
             else:
                 #keep advanving r but remove
-                mapp.remove(s[r])
+                mapp.remove(s[l])
                 r += 1
         
         return max_length
@@ -929,3 +929,733 @@ class Solution(object):
             right += 1
         
         return max_length
+
+######################
+#Check if Two Strin Arrays are equivalent
+######################
+class Solution(object):
+    def arrayStringsAreEqual(self, word1, word2):
+        """
+        :type word1: List[str]
+        :type word2: List[str]
+        :rtype: bool
+        """
+        '''
+        uhhhhh?? just join all strings and see if they are euqal
+        '''
+        word1 = "".join(word1)
+        word2 = "".join(word2)
+        return word1 == word2
+        
+
+class Solution(object):
+    def arrayStringsAreEqual(self, word1, word2):
+        """
+        :type word1: List[str]
+        :type word2: List[str]
+        :rtype: bool
+        """
+        '''
+        O(1) space
+        we can just maniputlate pointers and adnvae through both word1s at the same time
+        '''
+        i,j = 0,0
+        ith_word, jth_word = 0,0
+        while ith_word < len(word1) and jth_word < len(word2):
+            char1 = word1[ith_word][i]
+            char2 = word2[jth_word][j]
+            
+            if char1 != char2:
+                return False
+            #advane pointers
+            i += 1
+            j += 1
+            
+            #we need to check if we have gone
+            if i >= len(word1[ith_word]):
+                #reset
+                ith_word += 1
+                i = 0
+            
+            if j >= len(word2[jth_word]):
+                #reset
+                jth_word += 1
+                j = 0
+        
+        #final check, we check that we have pushed i and j pointers to the end
+        return (ith_word == len(word1)) and (jth_word == len(word2))
+
+###########################
+#Find Root of N-Ary Tree
+###########################
+#it was a good attempt lol
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children if children is not None else []
+"""
+
+class Solution(object):
+    def findRoot(self, tree):
+        """
+        :type tree: List['Node']
+        :rtype: 'Node'
+        """
+        '''
+        we do not need to build the tree
+        we just need to find the node that is the root!
+        could i not just find the node with the smallest node.val and just reutn that?
+        '''
+
+        node_vals = []
+        for node in tree:
+            node_vals.append(node.val)
+        #find index of mid
+        mini = float('inf')
+        mini_idx = 0
+        for i,val in enumerate(node_vals):
+            if val < mini:
+                mini = val
+                mini_idx = i
+        return tree[mini_idx]
+            
+
+##########################
+#Find Root of N-ary Tree
+##########################
+#bad way but works lol
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children if children is not None else []
+"""
+
+class Solution(object):
+    def findRoot(self, tree):
+        """
+        :type tree: List['Node']
+        :rtype: 'Node'
+        """
+        '''
+        we do not need to build the tree
+        we just need to find the node that is the root!
+        could i not just find the node with the smallest node.val and just reutn that?
+        the value to return must be in the array tree
+        from the hint, the root as an indegree 0, meaning there are no nodes going to it,
+        but only from it
+        BFS!
+        for each node in three, count up the number of edges TO IT!
+        the one with zero is the root
+        
+        '''
+        '''
+        bad way
+        '''
+        all_children = set()
+        for node in tree:
+            if node.children:
+                for child in node.children:
+                    all_children.add(child.val)
+        
+        for node in tree:
+            if node.val not in all_children:
+                return node
+        
+class Solution(object):
+    def findRoot(self, tree):
+        """
+        :type tree: List['Node']
+        :rtype: 'Node'
+        """
+        '''
+        we can solve this problem in constance space and linear time
+        recall, that if we visit all the nodes and all the child nodes, then the root node would be the only node that we visit once and only once, the rest would be visited twice
+        we can say this
+        given a list of numbers where some of the numbers appear twice, find the number that appears only once
+        the idea is to use a variable (lets call it value_sum) to keep track of the sum of node values
+        example. look at the array [4,3,5,3,4]
+        we cad pass the one time by adding nums we havent seen, and if we have seen that num, deduct it
+        more specifically, we add the value of each node to valu_sum and we decut the value of each child node from value_sum
+        at the end, the valu_sum wold be the value of the root node
+        the rational is that the valaues of non-root nodes are cancelled out during the above additoin and dection operations (the value of a non root node is added onces as aprent not but never deducted)
+        in order for this to work, all values must be unieu
+        '''
+        val_sum = 0
+        for node in tree:
+            val_sum += node.val
+            for child in node.children:
+                val_sum -= child.val
+        
+        for node in tree:
+            if node.val == val_sum:
+                return node
+
+
+#####################
+#Word Ladder
+#####################
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        """
+        :type beginWord: str
+        :type endWord: str
+        :type wordList: List[str]
+        :rtype: int
+        """
+        '''
+        the idea would be to treat this like a graph problem, each node is only possible if it exsits in wordlist
+        an edge only exsists if we can change a letter to the word and the word being the the dictinoary
+        it will be an undirected and unwiehgted graph (each edge is 1)
+        the problem then becomes a shortes path problem
+        we need to preprocess each word
+        EX : hot can be *ot, h*t, ho*
+        allowing us to find the next node one letter away
+        if we didn't, we would have to iterate over the entire words list and find words that differ by oneletter
+        while doing BFS, we have to find the adjacent nodes for
+        mapp transformations of each each word to a dict
+        algo:
+            1. pre process each word in wordlist showing each of the nodes possible from the word
+            2. save these intermediate stes in a dict with key as the intermediate word and value as the list of wrds which have the same intermediate word
+            3. push tuple containing the beginWord and 1 in a q. 1 represesent the number of edges
+            4. use dictionary as visited set
+            5. while q, get elemtns from q
+            6. Find all generic transformations of the current_word and find out if any of these transformations is also a transformation of other words
+            7. List of words from all aomcdict are all the words which have a common intermaeidate. Thesenew sets of words will be the adjacent nodes from current word
+            7. for each word in the list, add the word and level + 1
+            
+        '''
+        #edge case, check that being adn wen din word list
+        if endWord not in set(wordList) or not endWord or not beginWord:
+            return 0
+        
+        #all words are of the same length
+        L = len(beginWord)
+        
+        #init dict to hold combinations of words that can be formed, from any given word by chaing one letter at time
+        all_combinations = defaultdict(list)
+        #get all possible nodes for each word in wordList
+        for word in wordList:
+            for i in range(L):
+                #key is the generic word after swapping out the ith char
+                #value is the list of words
+                all_combinations[word[:i]+"*"+word[i+1:]].append(word)
+        #print all_combinations
+        
+        #BFS
+        q = deque([(beginWord,1)])
+        #visited set
+        visited_words = set()
+        while q:
+            current_word, length = q.popleft()
+            for i in range(L):
+                #generate generic word
+                generic_word = current_word[:i]+"*"+current_word[i+1:]
+                #find words with with next generic stat
+                for word in all_combinations[generic_word]:
+                    #condiiton met
+                    if word == endWord:
+                        return length + 1
+                    if word not in visited_words:
+                        visited_words.add(word)
+                        q.append((word, length+1))
+                
+                #after looking at all the next words, insert the new genric word
+                all_combinations[generic_word] = []
+                
+        return 0
+
+#T:E
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        """
+        :type beginWord: str
+        :type endWord: str
+        :type wordList: List[str]
+        :rtype: int
+        """
+        '''
+        brute force
+        we can examine each single char diff for each word and create an adjacent list from that
+        before doing that we need to see if we need to see if we can get to that word from the current word
+        then just do BFS until we reach the end word
+        '''
+        def one_away(w1,w2):
+            if w1 == w2:
+                return False
+            diff = 0
+            for i in range(len(w1)): # they are both the same
+                if w1[i] != w2[i]:
+                    diff += 1
+            return diff == 1
+        
+        #build adjaceny list
+        adj = defaultdict(list)
+        for w1 in [beginWord]+wordList:
+            for w2 in [beginWord]+wordList:
+                if one_away(w1,w2):
+                    adj[w1].append(w2)
+        
+        #now we can just bfs the normal way
+        q = deque([(beginWord,0)])
+        #visited set
+        visited = set()
+        while q:
+            word, level = q.popleft()
+            if word == endWord:
+                return level + 1
+            if word not in visited:
+                visited.add(word)
+                for nextt in adj[word]:
+                    if nextt not in visited:
+                        q.append((nextt,level+1))
+                        
+        return 0
+
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        """
+        :type beginWord: str
+        :type endWord: str
+        :type wordList: List[str]
+        :rtype: int
+        """
+        '''
+        nuilding the adj list is M*M*N, this is bad
+        insted of compared each char for each word against each word
+        change one letter at a time and check if its a possible word
+        '''
+        possible_words = set([beginWord]+wordList)
+        adj = defaultdict(list)
+        for word in [beginWord]+wordList:
+            for i in range(len(word)):
+                for ch in range(ord('a'),ord('z')+1):
+                    transformed = word[:i]+chr(ch)+word[i+1:]
+                    if transformed in possible_words and transformed != word:
+                        adj[word].append(transformed)
+        #now we can just bfs the normal way
+        q = deque([(beginWord,0)])
+        #visited set
+        visited = set()
+        while q:
+            word, level = q.popleft()
+            if word == endWord:
+                return level + 1
+            if word not in visited:
+                visited.add(word)
+                for nextt in adj[word]:
+                    if nextt not in visited:
+                        q.append((nextt,level+1))
+                        
+        return 0
+
+#bidrectional BFS
+class Solution(object):
+    def ladderLength(self, beginWord, endWord, wordList):
+        """
+        :type beginWord: str
+        :type endWord: str
+        :type wordList: List[str]
+        :rtype: int
+        """
+        '''
+        instead of doing BFS from only the start, we BFS from the end at the same time
+        wherever we hit, the lenght if just sum of both final levels from the beginning and end
+        #it all depends on the branching factor, but for the most part it would half the time
+        algo:
+            1. BFS from two sides
+            2. we now need to visited dicts to keep track of nodes visited from the start and the beginning
+            3. if we ever find a node/word which is in the visited dictionary of the parallel search, we terminate our serch since we have found the meeting point of this bidiretional serach
+            4. the termination condition is finding a word which has already been seen by the parallel search
+            5. and the size of the transformation sequence would just be the summ of the lvels
+        '''
+        from collections import defaultdict
+class Solution(object):
+    def __init__(self):
+        self.length = 0
+        # Dictionary to hold combination of words that can be formed,
+        # from any given word. By changing one letter at a time.
+        self.all_combo_dict = defaultdict(list)
+
+    def visitWordNode(self, queue, visited, others_visited):
+        current_word, level = queue.popleft()
+        for i in range(self.length):
+            # Intermediate words for current word
+            intermediate_word = current_word[:i] + "*" + current_word[i+1:]
+
+            # Next states are all the words which share the same intermediate state.
+            for word in self.all_combo_dict[intermediate_word]:
+                # If the intermediate state/word has already been visited from the
+                # other parallel traversal this means we have found the answer.
+                if word in others_visited:
+                    return level + others_visited[word]
+                if word not in visited:
+                    # Save the level as the value of the dictionary, to save number of hops.
+                    visited[word] = level + 1
+                    queue.append((word, level + 1))
+        return None
+
+    def ladderLength(self, beginWord, endWord, wordList):
+        """
+        :type beginWord: str
+        :type endWord: str
+        :type wordList: List[str]
+        :rtype: int
+        """
+
+        if endWord not in wordList or not endWord or not beginWord or not wordList:
+            return 0
+
+        # Since all words are of same length.
+        self.length = len(beginWord)
+
+        for word in wordList:
+            for i in range(self.length):
+                # Key is the generic word
+                # Value is a list of words which have the same intermediate generic word.
+                self.all_combo_dict[word[:i] + "*" + word[i+1:]].append(word)
+
+
+        # Queues for birdirectional BFS
+        queue_begin = collections.deque([(beginWord, 1)]) # BFS starting from beginWord
+        queue_end = collections.deque([(endWord, 1)]) # BFS starting from endWord
+
+        # Visited to make sure we don't repeat processing same word
+        visited_begin = {beginWord: 1}
+        visited_end = {endWord: 1}
+        ans = None
+
+        # We do a birdirectional search starting one pointer from begin
+        # word and one pointer from end word. Hopping one by one.
+        while queue_begin and queue_end:
+
+            # One hop from begin word
+            ans = self.visitWordNode(queue_begin, visited_begin, visited_end)
+            if ans:
+                return ans
+            # One hop from end word
+            ans = self.visitWordNode(queue_end, visited_end, visited_begin)
+            if ans:
+                return ans
+
+        return 0
+
+##############################
+#Create Sorted Array through Instructions
+##############################
+#TLE 50/65
+class Solution(object):
+    def createSortedArray(self, instructions):
+        """
+        :type instructions: List[int]
+        :rtype: int
+        """
+        '''
+        brute force
+        keep insterting into nums and update the min every time
+        conditions
+        The number of elements currently in nums that are strictly less than instructions[i].
+        The number of elements currently in nums that are strictly greater than instructions[i].
+        '''
+        nums = [] #this really does not need to be sorted right now
+        cost = 0
+        for i in range(len(instructions)):
+            candidate = instructions[i]
+            less_than = 0
+            greater_than = 0
+            for num in nums:
+                if num > candidate:
+                    greater_than += 1
+                if num < candidate:
+                    less_than += 1
+                else:
+                    continue
+            #push candidate
+            nums.append(candidate)
+            #update cost
+            cost += min(less_than,greater_than)
+        
+        return cost
+
+#https://leetcode.com/articles/a-recursive-approach-to-segment-trees-range-sum-queries-lazy-propagation/
+tree = []
+array = []
+def build_segment_tree(array, tree_idx, lo,hi):
+    #takes in array and builds out tree
+    if lo == hi:
+        tree[tree_idx] = array[lo] #push left pointer into a leaf
+        #this is the base condiiton 
+        return
+        mid = lo + (hi - lo) // 2
+        #build left side
+        build_segment_tree(array,2*tree_idx + 1, lo, mid)
+        #build right
+        build_segment_tree(array,2*tree_idx+2,mid+1,hi)
+
+
+class Solution(object):
+    def createSortedArray(self, instructions):
+        """
+        :type instructions: List[int]
+        :rtype: int
+        """
+        '''
+        basic way is just use empty array in nums
+        binary search in binary nums and check where it is in nums
+        check left and right side to get the cost, becaue there could be duplicates
+        we can use a sortedlist, which is just a container that allows for seraching and insterting in LogN time
+        
+        '''
+        from sortedcontainers import SortedList
+        #insert/search log n, find where to insert
+        
+        #bisectleft and right, what is index number to insert into from the left and right
+        #find the min update cost
+        
+        #add function
+        
+        s = SortedList()
+        
+        cost = 0
+        for i in instructions:
+            cost_left = s.bisect_left(i)
+            cost_right = len(s) - s.bisect_right(i)
+            cost += min(cost_left,cost_right)
+            #update conatiner with i
+            s.add(i)
+            
+        return cost % (10**9 + 7)
+
+####################
+#Merge Sorte Array
+####################
+#close one again, god dammit
+#well this works, but only for legnths >= 3
+class Solution(object):
+    def merge(self, nums1, m, nums2, n):
+        """
+        :type nums1: List[int]
+        :type m: int
+        :type nums2: List[int]
+        :type n: int
+        :rtype: None Do not return anything, modify nums1 in-place instead.
+        """
+
+        
+        ptr1 = 0
+        ptr2 = 0
+        
+        while ptr1 < m:
+            if nums2[ptr2] <= nums1[ptr1]:
+                #insert and shift
+                remaining = nums1[ptr1+1:]
+                #insert
+                nums1[ptr1+1] = nums2[ptr2]
+                #insert remaining
+                nums1[ptr1+2:] = remaining[:-1]
+                #move on to the next element
+                ptr2 += 1
+            else:
+                ptr1 += 1
+        
+        #remaining elements
+        nums1[ptr1+1:] = nums2[ptr2:]
+
+
+#better solution
+class Solution(object):
+    def merge(self, nums1, m, nums2, n):
+        """
+        :type nums1: List[int]
+        :type m: int
+        :type nums2: List[int]
+        :type n: int
+        :rtype: None Do not return anything, modify nums1 in-place instead.
+        """
+        #O(m+n) but using up M space
+        #make copy of nums1
+        nums1_copy = nums1[:m]
+        #clear nums1
+        nums1[:] = []
+        
+        #two pointers
+        p1,p2 = 0,0
+        while p1 < m and p2 < n:
+            if nums1_copy[p1] < nums2[p2]:
+                nums1.append(nums1_copy[p1])
+                p1 += 1
+            else:
+                nums1.append(nums2[p2])
+                p2 += 1
+        
+        #if there are remaining elments
+        #rmember either m or n should have gone through all the way
+        if p1 < m:
+            #extend nums1
+            nums1[p1+p2:] = nums1_copy[p1:]
+        if p2 < n:
+            nums1[p1+p2:] = nums2[p2:]
+
+#two pointer O(m+n) and O(1) space
+class Solution(object):
+    def merge(self, nums1, m, nums2, n):
+        """
+        :type nums1: List[int]
+        :type m: int
+        :type nums2: List[int]
+        :type n: int
+        :rtype: None Do not return anything, modify nums1 in-place instead.
+        """
+        '''
+        since the arrays are sorted in increasing order and we know that the remaining elements are to be added to the right, we start right!
+        set p1 and p2 pointing to final non zero elements in arrays
+        then we just add into the arra the larger of the two pointers and go backward
+        
+        '''
+        #two pointers into arrays
+        p1 = m - 1
+        p2 = n - 1
+        #set pointer for nums1
+        p = m + n - 1
+        
+        #while there are elements to compare
+        while p1 >= 0 and p2 >=0:
+            if nums1[p1] < nums2[p2]:
+                nums1[p] = nums2[p2]
+                #move p2 down
+                p2 -= 1
+            else:
+                nums1[p] = nums1[p1]
+                p1 -= 1
+            p -= 1
+            
+        #add remaining elements from num2
+        nums1[:p2+1] =nums2[:p2+1]
+
+#https://www.youtube.com/watch?v=Mm9C9M8-BBA&t=1s&ab_channel=AnishMalla
+class Solution(object):
+    def merge(self, nums1, m, nums2, n):
+        """
+        :type nums1: List[int]
+        :type m: int
+        :type nums2: List[int]
+        :type n: int
+        :rtype: None Do not return anything, modify nums1 in-place instead.
+        """
+        '''
+        we can start from the right and go backwards
+        we take the greaer the of the two nmbers and add to the right most poistions in nums1
+        then we just move our pointers
+        we can access the right most just by calling m+n-1
+        whenver we make a decision we decrement form the pointer in our array
+        #special case
+        if m is zero, we have to take from nums2
+        
+        '''
+        while m > 0 and n > 0:
+            if nums1[m-1] > nums2[n-1]:
+                nums1[m+n-1] = nums1[m-1]
+                m -= 1
+            else:
+                nums1[m+n-1] = nums2[n-1]
+                n -= 1
+        
+        #edge case, when we have nothing in m, and we need take all elements from nums2
+        while n > 0:
+            nums1[m+n-1] = nums2[n-1]
+            n -= 1
+
+#################
+#Add Two Numbers
+#################
+#not the prettiest but it works
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def addTwoNumbers(self, l1, l2):
+        """
+        :type l1: ListNode
+        :type l2: ListNode
+        :rtype: ListNode
+        """
+        '''
+        well the naive way would be to traverse both linked lists concating along the way
+        recast as int then add then return
+        lets do this for now, warm up
+        
+        '''
+        num1 = ""
+        while l1:
+            num1 += str(l1.val)
+            l1 = l1.next
+            
+        num2 = ""
+        while l2:
+            num2 += str(l2.val)
+            l2 = l2.next
+        #reverse
+        result = str(int(num1[::-1]) + int(num2[::-1]))[::-1]
+        #build
+        temp = ListNode()
+        dummy = temp
+        for i,num in enumerate(result):
+            dummy.val = int(num)
+            if i == len(result) - 1:
+                dummy.next = None
+                dummy = dummy.next
+            else:
+                dummy.next = ListNode()
+                dummy = dummy.next
+                
+        return temp
+
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def addTwoNumbers(self, l1, l2):
+        """
+        :type l1: ListNode
+        :type l2: ListNode
+        :rtype: ListNode
+        """
+        '''
+        this is just textbook addition but i have the numbers reversed
+        i can implement carry and dump them into a new list node object
+        special cases
+        when 1 is longe than the other, but this invaraint is held with this implementation
+        when 1 list is null, again still held with or
+        
+        '''
+        dummy = ListNode()
+        temp = dummy #move through dummy, return dummy
+        carry = 0
+        while l1 or l2:
+            #get nums
+            num1 = l1.val if l1 else 0
+            num2 = l2.val if l2 else 0
+            #get the summ including carry
+            summ = num1 + num2 + carry
+            #mod 10 it
+            digit = summ % 10
+            #increment carry
+            carry = summ // 10
+            temp.next = ListNode(digit)
+            temp = temp.next
+            l1 = l1.next if l1 else None
+            l2 = l2.next if l2 else None
+            
+        #the finel carry
+        if carry > 0:
+            temp.next = ListNode(carry)
+        
+        return dummy.next
+            
