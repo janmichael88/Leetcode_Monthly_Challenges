@@ -1559,4 +1559,268 @@ this becomes our hash
             old = cur.next
         return dummy.next
 
+##############
+#Valid Anagram
+##############
+class Solution(object):
+    def isAnagram(self, s, t):
+        """
+        :type s: str
+        :type t: str
+        :rtype: bool
+        """
+        '''
+        just compare hash of counts
+        '''
+        return Counter(s) == Counter(t)
+
+###############################################
+#  Number of Steps to Reduce a Number to Zero
+#############################################
+class Solution(object):
+    def numberOfSteps (self, num):
+        """
+        :type num: int
+        :rtype: int
+        """
+        '''
+        from the hint, it just say simulate
+        rules:
+         1. if num % 2 == 0, divide by two
+         2. else subtract 1
+        '''
         
+        steps = 0
+        
+        while num > 0:
+            if num % 2 == 0:
+                num //= 2
+            else:
+                num -= 1
+            print num
+            steps += 1
+            
+        return steps
+
+class Solution(object):
+    def numberOfSteps (self, num):
+        """
+        :type num: int
+        :rtype: int
+        """
+        '''
+        a follow up, notice that when when we divide the number by two we just shift the bits right by 1
+        and when we subtract 1, we just pop it of
+        so the number of steps to reduct it to zero would be just the length of the binary number plus the number of ones
+        i can get the length of the number in binary with floor(log2(num))
+        how to get ones?
+        
+        '''
+       	if num == 0:
+            return 0
+        import math 
+        def get_ones(num):
+            ones = 0
+            while num > 0:
+                ones += num & 1
+                num = num >> 1
+            return ones
+        return int(math.floor(math.log(num,2))) + get_ones(num) 
+
+#####################################
+#Shortest Path in Binary Matrix
+##################################
+#closeeee 55/84
+class Solution(object):
+    def shortestPathBinaryMatrix(self, grid):
+        """
+        :type grid: List[List[int]]
+        :rtype: int
+        """
+        '''
+        hint says BFS
+        each cell is a node with an edge of 1
+        BFS from start to end and return the path length
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = [(i,j) for i in (-1,0,1) for j in (-1,0,1) if (i,i)]
+        
+        end = (rows-1,cols-1)
+        
+        visited = set()
+        
+        q = deque([(0,0,1)])
+        
+        if grid[0][0] != 0:
+            return -1
+        
+        while q:
+            x,y,distance = q.popleft()
+            if (x,y) == end:
+                return distance
+            #mark as visited
+            visited.add((x,y))
+            
+            for dx,dy in dirrs:
+                new_x = x + dx
+                new_y = y + dy
+                #check bounds
+                if new_x >= 0 and new_x < rows and new_y >= 0 and new_y < cols:
+                    #check if zero and not visited
+                    if grid[new_x][new_y] == 0 and not (new_x,new_y) in visited:
+                        q.append((new_x,new_y,distance + 1))
+        
+        return -1
+
+#####so i gues i need to learn A*
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+        
+        #helper function to yeild neirhgbors of a cells
+        def get_neighbors(row,col):
+            for dx,dy in dirrs:
+                new_x = row + dx
+                new_y = col + dy
+                if 0 <= new_x < rows and 0 <= new_y < cols and grid[new_x][new_y] == 0 and (new_x,new_y) not in visited:
+                    yield (new_x,new_y)
+        
+        if grid[0][0] != 0 or grid[rows-1][cols-1] != 0:
+            return -1
+        
+        q = deque([(0,0,1)])
+        visited = set()
+        visited.add((0,0))
+        #grid[0][0] = 1
+        while q:
+            x,y,distance = q.popleft()
+            if (x,y) == (rows-1,cols-1):
+                return distance
+            for neigh in get_neighbors(x,y):
+                visited.add((x,y))
+                #grid[new_x][new+y] = 1
+                q.append((*neigh,distance+1))
+        return -1
+
+
+#####################
+# Is Graph Bipartite?
+######################
+class Solution(object):
+    def isBipartite(self, graph):
+        """
+        :type graph: List[List[int]]
+        :rtype: bool
+        """
+        '''
+        bipartite means every edge in the graph connects a node in set A and a node in set B
+        this is silly:
+        we can mark each node with a different color, -1 to one set, 1 to the other
+        then we can use dfs to visit the nodes and check if we haven't marked it and haven't seen it it must be other other color
+        if we get to the case where we have seen it and it hasn't been marked it must not be bipartite?
+        i still don't get how though...if it's connected, it NEEDS to be a different color, then we can return False
+        no two adjacent vertices can be the same color! - KEY
+        we attempt to 2 color the graph by traversing the graph and marking the neighbords of node to a different color than the one node we are at marked of a different color
+        if we succseflly 2 color the graph, we can ren turn True, but if we come across two adjacent verticses of the same color, we must return False
+        DFS first
+        mark with 1 and -1
+        
+        '''
+        
+        colors = {}
+        
+        def dfs(node):
+            #examine nodes neighrbos
+            for neighbor in graph[node]:
+                #check we have seen it 
+                if neighbor in colors:
+                    #color check
+                    if colors[neighbor] == colors[node]:
+                        return False
+                #mark with different color
+                else:
+                    colors[neighbor] = colors[node]*(-1)
+                    #then just recurse
+                    if dfs(neighbor) == False:
+                        return False
+            #we finish exploring and color this node's path/neighbor it passes!
+            return True
+        
+        #invoke for each nieghtbor
+        for i in range(len(graph)):
+            if i not in colors:
+                colors[i] = 1
+                if dfs(i) == False:
+                    return False
+        return True
+        
+#for some reason, on this case iterative stack DFS == BFS with q
+class Solution(object):
+    def isBipartite(self, graph):
+        """
+        :type graph: List[List[int]]
+        :rtype: bool
+        """
+        '''
+        bipartite means every edge in the graph connects a node in set A and a node in set B
+        this is silly:
+        we can mark each node with a different color, -1 to one set, 1 to the other
+        then we can use dfs to visit the nodes and check if we haven't marked it and haven't seen it it must be other other color
+        if we get to the case where we have seen it and it hasn't been marked it must not be bipartite?
+        i still don't get how though...if it's connected, it NEEDS to be a different color, then we can return False
+        no two adjacent vertices can be the same color! - KEY
+        we attempt to 2 color the graph by traversing the graph and marking the neighbords of node to a different color than the one node we are at marked of a different color
+        if we succseflly 2 color the graph, we can ren turn True, but if we come across two adjacent verticses of the same color, we must return False
+        DFS first
+        mark with 1 and -1
+        
+        DFS with stack
+        '''
+        colors = {}
+        N = len(graph)
+        
+        for node in range(N):
+            #if we haven't seen it we need to dfs
+            if node not in colors:
+                stack = [node]
+                colors[node] = 1
+                while stack:
+                    #dfs
+                    current_node = stack.pop()
+                    for neigh in graph[current_node]:
+                        #not marked or seen, push back on to stack and mark it
+                        if neigh not in colors:
+                            stack.append(neigh)
+                            colors[neigh] = colors[current_node]*(-1)
+                        elif colors[neigh] == colors[current_node]:
+                            return False
+        return True
+
+#we need to dfs on each node beause it would be the case there may be unconnect parts
+#what if there were part of the graph that were unconnected?
+#well if we just DFS on the connected part, and that part was bipartite, we wan't say that?
+#a graph with more than 1 disconnected parts cannot be bipartite
+class Solution(object):
+    def isBipartite(self, graph):
+        colors = {}
+        N = len(graph)
+        
+        for node in range(N):
+            if node not in colors:
+                colors[node] = 1
+                stack = [node]
+                while stack:
+                    current = stack.pop()
+                    for neigh in graph[current]:
+                        if neigh in colors:
+                            if colors[neigh] == colors[current]:
+                                return False
+                        else:
+                            colors[neigh] = colors[current]*(-1)
+                            stack.append(neigh)
+        return True
