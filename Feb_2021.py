@@ -1824,3 +1824,1196 @@ class Solution(object):
                             colors[neigh] = colors[current]*(-1)
                             stack.append(neigh)
         return True
+
+
+##################################
+# The K Weakest Rows in a Matrix
+##################################
+class Solution(object):
+    def kWeakestRows(self, mat, k):
+        """
+        :type mat: List[List[int]]
+        :type k: int
+        :rtype: List[int]
+        """
+        '''
+        for each row, count up the ones and push the value into a hash row_idx:counts 1
+        then sort and grab the ks
+        '''
+        counts = {}
+        rows = len(mat)
+        cols = len(mat[0])
+        
+        for i in range(rows):
+            count = 0
+            for j in range(cols):
+                if mat[i][j] == 1:
+                    count += 1
+            
+            counts[i] = count
+        
+        output = []
+        
+        for kv in sorted(counts.items(),key=lambda kv: kv[1], reverse=False):
+            output.append(kv[0])
+        
+        return output[:k]
+
+#more pythonic
+class Solution(object):
+    def kWeakestRows(self, mat, k):
+        """
+        :type mat: List[List[int]]
+        :type k: int
+        :rtype: List[int]
+        """
+        strengths = [(sum(row),i) for i,row in enumerate(mat)]
+        strengths.sort()
+        
+        return [idx for foo,idx in strengths[:k]]
+
+'''
+notes on time complexity
+counting O(cols)
+sorting O(rowslong(rows))
+O(row+cols) + O(cols) + O(rowslog(rows)) 
+'''
+
+#using binary search
+class Solution(object):
+    def kWeakestRows(self, mat, k):
+        """
+        :type mat: List[List[int]]
+        :type k: int
+        :rtype: List[int]
+        """
+        '''
+        we can count using binary serach?
+        use binary search to find the first zero in each row
+        then use index calculations to get the number of ones, i.e just return the index
+        instead of returning a mid value here, we keep binary seraching until we get a zero and the left of the zero is 1 and right a zero
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        
+        def binary_search_count(row):
+            lo = 0
+            high = len(row) - 1 
+            while lo < high:
+                mid = lo + (high - lo) // 2
+                if row[mid] == 1:
+                    lo = mid + 1
+                else:
+                    high = mid
+            #in this case we retorn our left pointer, but it would;nt matter in thise cse
+            return lo
+        
+        row_strengths =  [(binary_search_count(row),i) for i,row in enumerate(mat)]
+        
+        #dfault sorts by first value
+        row_strengths.sort()
+        
+        return [row for strength, row in row_strengths[:k]]
+
+#pq with binary search
+class Solution(object):
+    def kWeakestRows(self, mat, k):
+        """
+        :type mat: List[List[int]]
+        :type k: int
+        :rtype: List[int]
+        """
+        '''
+        we can count using binary serach?
+        use binary search to find the first zero in each row
+        then use index calculations to get the number of ones, i.e just return the index
+        instead of returning a mid value here, we keep binary seraching until we get a zero and the left of the zero is 1 and right a zero
+        #addition we can also use a heapq of fixed size k
+        then just pop off the heap whenever k gets to big
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        
+        def binary_search_count(row):
+            #notice here for this binary search implementation, we go up N
+            #not N -1, N being the length of the row
+            low = 0
+            high = len(row)
+            while low < high:
+                mid = low + (high - low) // 2
+                if row[mid] == 1:
+                    low = mid + 1
+                else:
+                    high = mid
+            return low
+        
+        pq = []
+        #note when heapq pushed a tuple, it takes into consideration the ordering for all elements in the tuple
+        for i,row in enumerate(mat):
+            strength = binary_search_count(row)
+            entry = (-strength,-i)
+            #contrain k and also there is no need to push a row strength if it isn't as strong a the weakest row in pq
+            if len(pq) < k or entry > pq[0]:
+                heappush(pq,entry)
+            if len(pq) > k:
+                heappop(pq)
+                
+        #pull the indices and renegate
+        idxs = []
+        while pq:
+            idxs.append(-heappop(pq)[1])
+        return idxs[::-1]
+
+###################
+# Kill Process
+###################
+class Solution(object):
+    def killProcess(self, pid, ppid, kill):
+        """
+        :type pid: List[int]
+        :type ppid: List[int]
+        :type kill: int
+        :rtype: List[int]
+        """
+        '''
+        the index who's ppid  0 is the root of the tree
+        i read pid as for each p in pid, comes from ppid at index(p)
+        do i need to recursiely make the tree????????
+        find the ppid == 0
+        create adj_list first
+        '''
+        N = len(pid)
+        adj_list = defaultdict(list) #parent:child
+        for i in range(N):
+            adj_list[ppid[i]].append(pid[i])
+        
+        #now this just becomes a graph, explore using...DFS!
+        #once i get to the kill value, add it to a container and keep recursing
+        #since we have the hash, we can just dfs starting at the kill node!
+        #fuckkkk!!
+        
+        def dfs(node):
+            #invoke at kill node
+            killed = []
+            for child in adj_list[node]:
+                killed += dfs(child)
+            #add in the node once we are done recursing
+            killed.append(node)
+            return killed
+        
+        return dfs(kill)
+
+#another way doing it globally instead
+class Solution(object):
+    def killProcess(self, pid, ppid, kill):
+        """
+        :type pid: List[int]
+        :type ppid: List[int]
+        :type kill: int
+        :rtype: List[int]
+        """
+        '''
+        the index who's ppid  0 is the root of the tree
+        i read pid as for each p in pid, comes from ppid at index(p)
+        do i need to recursiely make the tree????????
+        find the ppid == 0
+        create adj_list first
+        '''
+        N = len(pid)
+        adj_list = defaultdict(list) #parent:child
+        for i in range(N):
+            adj_list[ppid[i]].append(pid[i])
+        
+        #now this just becomes a graph, explore using...DFS!
+        #once i get to the kill value, add it to a container and keep recursing
+        #since we have the hash, we can just dfs starting at the kill node!
+        #fuckkkk!!
+        
+        killed = []
+        
+        def dfs(node):
+            for child in adj_list[node]:
+                dfs(child)
+            killed.append(node)
+        
+        dfs(kill)
+        return killed
+
+#brute force recursive
+class Solution(object):
+    def killProcess(self, pid, ppid, kill):
+        """
+        :type pid: List[int]
+        :type ppid: List[int]
+        :type kill: int
+        :rtype: List[int]
+        """
+        '''
+        lets go over some of these approaches one by one
+        BRUTE FORCE RECURSIVE
+        inution; 
+            find the kill node and kill all its children
+            traverse the ppid and find out all the children processed to be killed
+            we recurse for every child node
+        
+        '''
+        self.killed = []
+        if kill == 0:
+            return self.killed
+        self.killed.append(kill)
+        for i in range(len(ppid)):
+            if ppid[i] == 0:
+                self.killed += self.killProcess(pid,ppid,pid[i])
+        return self.killed
+
+#iteratrive DFS stack
+class Solution(object):
+    def killProcess(self, pid, ppid, kill):
+        """
+        :type pid: List[int]
+        :type ppid: List[int]
+        :type kill: int
+        :rtype: List[int]
+        """
+        '''
+        DFS but using stack
+        '''
+        N = len(ppid)
+        adj_list = defaultdict(list)
+        for i in range(N):
+            adj_list[ppid[i]].append(pid[i])
+            
+        killed = []
+        
+        #since i start at killed anyway, youre gonna have to add them the killed list
+        #what if i didn't start at the kill node?
+        #start from the root, then dfs until i get the kill node
+        #stop, then it just becomes this problem!
+        #note, you could also solve this using a deque
+        stack = [kill]
+        
+        while stack:
+            current = stack.pop()
+            killed.append(current)
+            for child in adj_list[current]:
+                stack.append(child)
+        return killed
+
+#########################
+# Letter Case Permutation
+########################
+#recursive with global results
+class Solution(object):
+    def letterCasePermutation(self, S):
+        """
+        :type S: str
+        :rtype: List[str]
+        """
+        '''
+        for every char in string S, if its alpha, we can mutate it by lowering or uppering
+        recursion
+        not you cannot mutate a string
+        '''
+        N = len(S)
+        results = []
+        
+        def mutate(idx,substring):
+            if len(substring) == N:
+                results.append(substring)
+            else:
+                #get the char
+                char = S[idx]
+                if char.isalpha():
+                    if char.islower():
+                        mutate(idx+1, substring+char.upper())
+                    else:
+                        mutate(idx+1, substring+char.lower())
+                #once we are done chekcing the cases we need to backtrack and add the last char
+                #FUCK YEAH!!!!!
+                mutate(idx+1,substring+char)
+        mutate(0,'')
+        return results
+
+#recusrive non global
+class Solution(object):
+    def letterCasePermutation(self, S):
+        """
+        :type S: str
+        :rtype: List[str]
+        """
+        '''
+        for every char in string S, if its alpha, we can mutate it by lowering or uppering
+        recursion
+        not you cannot mutate a string
+        #now trying doing it where you don't have a global results
+        there are 2^N function calls in the eexecution tree
+        each call fors though the length N 2^n times N
+
+        '''
+        N = len(S)
+        
+        def mutate(idx,substring):
+            results = []
+            if idx == N:
+                return [substring]
+            else:
+                #get the char
+                char = S[idx]
+                if char.isalpha():
+                    if char.islower():
+                        results += mutate(idx+1, substring+char.upper())
+                    else:
+                        results += mutate(idx+1, substring+char.lower())
+                #once we are done chekcing the cases we need to backtrack and add the last char
+                #FUCK YEAH!!!!!
+                results += mutate(idx+1,substring+char)
+                return results
+        return mutate(0,'')
+
+#iterative cascading
+class Solution(object):
+    def letterCasePermutation(self, S):
+        """
+        :type S: str
+        :rtype: List[str]
+        """
+        '''
+        another doing this iteratively
+        this is similar to the subsets iterative problem
+        CASCADING
+        example, say we are give S ='abc'
+        first maintain
+        and ['']
+        ['a','A']
+        ['ab','aB'] + ['Ab','AB']
+        ['ab','aB','Ab','AB']
+        ['abc','aBc','Abc','ABc'] + ['abC', 'aBC','AbC', 'ABC']
+        ['abc','aBc','Abc','ABc', 'abC', 'aBC','AbC', 'ABC']
+        '''
+        results = [[]]
+        for char in S:
+            N = len(results)
+            if char.isalpha():
+                for i in range(N):
+                    results.append(results[i][:])
+                    results[i].append(char.lower())
+                    #make the next set of lists, double index by N+i
+                    results[N+i].append(char.upper())
+            else:
+                for i in range(N):
+                    results[i].append(char)
+                    
+        return map("".join,results)
+
+#Cartesian Product using *map and itertools.product
+class Solution(object):
+    def letterCasePermutation(self, S):
+        f = lambda x: (x.lower(), x.upper()) if x.isalpha() else x
+        return map("".join, itertools.product(*map(f, S)))
+
+#iterative
+class Solution(object):
+    def letterCasePermutation(self, S):
+        """
+        :type S: str
+        :rtype: List[str]
+        """
+        '''
+        another iterative way
+        '''
+        
+        results = [""]
+        for char in S:
+            temp = []
+            if char.isalpha():
+                for foo in results:
+                    temp.append(foo+char.lower())
+                    temp.append(foo+char.upper())
+            else:
+                for foo in results:
+                    temp.append(foo+char)
+            
+            results = temp
+        
+        return results
+
+##############################
+#Container with most water
+############################
+#brute force TLE
+class Solution(object):
+    def maxArea(self, height):
+        """
+        :type height: List[int]
+        :rtype: int
+        """
+        '''
+        do the brute force way first,
+        examine every possible pair and just do a maxupdate
+        '''
+        max_area = float('-inf')
+        N = len(height)
+        
+        for i in range(N):
+            for j in range(i+1,N):
+                width = j - i
+                highest = min(height[i],height[j])
+                max_area = max(max_area, width*highest)
+        
+        return max_area
+        
+#two pointers
+class Solution(object):
+    def maxArea(self, height):
+        """
+        :type height: List[int]
+        :rtype: int
+        """
+        '''
+        the brute force suggested starting with the maximum width containter
+        we can go to a shorted width container if there is a vertical line loner thant he current ocnatiners shorter line
+        we can use two pointers 
+        at anytime we always advance the pointer of the shorter height and recalculate
+        '''
+        max_area = float('-inf')
+        left = 0
+        right = len(height) - 1
+        while left < right:
+            width = right - left
+            max_area = max(max_area,width*min(height[left],height[right]))
+            if height[left] < height[right]:
+                left += 1
+            else:
+                right -= 1
+        
+        return max_area
+
+################################
+#
+################################
+class Solution(object):
+    def numberOfArithmeticSlices(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        well first determine if the sequence is arithmetic
+        if it is
+        determine how many sequences in A are arithmetics, derive formula for this
+        well it looks like there could be sequnees that are arithmetic in an entire sequence that is not arithmetic
+        
+        '''
+        N = len(A)
+        if N < 3:
+            return 0
+        i = 0
+        while i + 2 < N:
+            if A[i+1] - A[i] != A[i+2] - A[i+1]:
+                return 0
+            i += 1
+        #we got here the sequnce must be arithmetic
+        #how many windows if size 3 to N are in A? including the whole sequence
+        #for a window if size N, the number of windows = the lenght of the array - windoow size + 1
+        window_sizes = list(range(3,N))
+        output = 0
+        for size in window_sizes:
+            output += N - size + 1
+        return output + 1
+
+#welp....i tried
+class Solution(object):
+    def numberOfArithmeticSlices(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        welp, lets go through all the solutions once again
+        the naive soluiont would be to consider every pair of start and end points
+        then we pass over that slight and check for arithmetic sequence
+        '''
+        count = 0
+        N = len(A)
+        for start in range(N-2):
+            for end in range(start+3,N+1):
+                sub = A[start:end]
+                #now examine each slice
+                sub_length = len(sub)
+                diff = sub[1] - sub[0]
+                for i in range(1,sub_length-1):
+                    if sub[i+1] - sub[i] != diff:
+                        break
+                if i+1 == sub_length-1:
+                    count += 1
+        return count
+
+#doesn't work on all cases
+class Solution(object):
+    def numberOfArithmeticSlices(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        welp, lets go through all the solutions once again
+        the naive soluiont would be to consider every pair of start and end points
+        then we pass over that slight and check for arithmetic sequence
+        '''
+        count = 0
+        #allowing up the last window size 3
+        for start in range(len(A)-2):
+            diff = A[start+1] - A[start]
+            #branch out for all possible ends points
+            for end in range(start+2,len(A)):
+                for i in range(start+1,end+1):
+                    if A[i] - A[i-1] != diff:
+                        break
+                if i == end:
+                    count += 1
+        
+        return count
+
+#recursive
+class Solution(object):
+    def numberOfArithmeticSlices(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        better brute force
+        in the last approach we considered every possible range and then pass over the range to check each consecutive differece is the same
+        We can optimize just a little bit by noticing
+        in stead of checking every coneuctive difference just check that the new ends conseuctive difference is the same
+        #recursive approach, continunig on this path, if a sequence on the range (i,j) is arithmetics then another element at j+1 must have the same difference, i.e A[j+1] - A[j] is the same
+        if so, all the ranges from (i,j+1) must also be arithmetic
+        furthrmore if the sequence on the range (i,j) isn't arithmetic, adding another element won't do use any good
+        assumwe we have a sum variable used to store the total number of arithmetic slices in teh array
+        we can define a recusrive function slices(A,i), whihc returns the number of slices in ther ange (k,i), but not part of any range (k,j)
+        k refers to the minimum inde such that the range (k,i) is valid arithmetic
+        if we know the number of slices on the right (0,i-1) to be the set x
+        if this range is indeed arithemtics, all consec elemnets have the same difference
+        adding a new element, say a_i, to extend range to (0,i)
+        and this new addition increases the a variable ap, which is the number or arithemtics slices 
+        the new additional slices will be (0,i), (1,i),(2,i),(i-2,i)
+        which is a total of x+1 additioanl arithemtic slices
+        thus, in every call, the ith elemnt has the same common differences with the last element as the previous common differences
+
+        '''
+        self.sum = 0
+        def slices(A,i):
+            #returns the number of aritmetic slices of array A up to i
+            if i < 2:
+                return 0
+            additional = 0
+            if A[i] - A[i-1] == A[i-1] - A[i-2]:
+                additional = 1 + slices(A,i-1)
+                self.sum += additional
+            else:
+                slices(A,i-1)
+            return additional
+        
+        slices(A,len(A)-1)
+        return self.sum
+                
+#dp O(N) time and O(N) space
+class Solution(object):
+    def numberOfArithmeticSlices(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        this is easier to see as DP problem
+        the minimum requiremtn for an arith seq must be at least length 3
+        we can use a sliding window of three, and when we do find it, we push 1 into our dp array
+        when we examin the next window, if it is also an arithmetic sequence, we add one but also acarry thre previous element in our dp array
+        update sum on the fly
+        
+        can also use constante space by just keeping track of previous entry and current entry
+        '''
+        N = len(A)
+        dp = [0]*N
+        count = 0
+        for i in range(2,N):
+            if A[i] - A[i-1] == A[i-1] - A[i-2]:
+                dp[i] = 1+dp[i-1]
+                count += dp[i]
+        return count
+
+        N = len(A)
+        current = 0
+        count = 0
+        for i in range(2,N):
+            if A[i] - A[i-1] == A[i-1] - A[i-2]:
+                current = 1 + current
+                count += current
+            else:
+                current = 0
+        return count
+
+class Solution(object):
+    def numberOfArithmeticSlices(self, A):
+        """
+        :type A: List[int]
+        :rtype: int
+        """
+        '''
+        123468
+         11122
+          1334
+        we can start by getting the differenes array
+        then whenever we have the same conseuctive differences we have found a match
+        '''
+        first_diffs = []
+        N = len(A)
+        for i in range(1,N):
+            first_diffs.append(A[i]-A[i-1])
+        
+        output = 0
+        offset = 1
+        #starting at the second 1
+        for i in range(1,len(first_diffs)):
+            if first_diffs[i] == first_diffs[i-1]:
+                output += offset
+                offset += 1
+            else:
+                offset = 1
+        return output
+
+#########################################
+#Minimum Remove to Make Valid Parentheses
+#########################################
+class Solution(object):
+    def minRemoveToMakeValid(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        a string is balances if the count('(') == cont(')')
+        we can pass the string and check if it is balances by increamting 1 if open
+        and decrenting 1 if closed
+        if at anytime the balance is negtaive, than the string up that point is unbalnaced
+        we can use this to our advantage
+        if we encounter a close at when the balance is zero, we know not to include that in
+        but this doesn't work for all cases
+        if we have a balance of zero after reaching the end it's notvalid
+        meaning we didn't have enough closings at the end to make the string balanced
+        we need to identify which '(' each of our ')' is actually pairing with
+        we need to know the indices of the problematic '('
+        we use a stack and each time we should add its index to tehs tack
+        each time we see an ')' we should removen an index from the stack beause the ')' will match with wtv '(' was at the top of the stack
+        algo:
+            1. keep track of problematic openings by pushing their indices onto a stack
+            2. always add opening paran first
+            3. if there is somthing on the stack and we encoutner a closing, pop it off
+            4. if there ins't a stack and we get to a closing pass it
+            5. rebuildg the string skipping over the indices in the stack
+        '''
+        def is_balanced(string):
+            balance = 0
+            for char in s:
+                if char == '(':
+                    balance += 1
+                if char == ')':
+                    balance -= 1
+                if balance < 0:
+                    return False
+            return balance == 0
+        
+        unmatched_closings = set()
+        stack_matched_pairs = [] #whats left on this stack are the problematic openings
+        for i,char in enumerate(s):
+            if char not in '()':
+                continue
+            if char == '(':
+                stack_matched_pairs.append(i)
+            if char == ')':
+                #if there is nothing to pair it with, its probematic
+                if not stack_matched_pairs:
+                    unmatched_closings.add(i)
+                #there must be a pair
+                else:
+                    stack_matched_pairs.pop()
+        #gather problemtic indices;
+        bad_indices = unmatched_closings.union(set(stack_matched_pairs))
+        
+        result = []
+        for i,c in enumerate(s):
+            if i not in bad_indices:
+                result.append(c)
+                    
+        return ''.join(result)
+
+class Solution(object):
+    def minRemoveToMakeValid(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        another way would be to just treat it like the valid paranthese problem
+        just match close with open on to the stack and if you can't then we need to get rid of it
+        '''
+        stack = []
+        s = list(s)
+        N = len(s)
+        
+        stack = []
+        
+        for i in range(N):
+            if s[i] == '(':
+                stack.append(i)
+            if s[i] == ')':
+                if stack:
+                    stack.pop()
+                else:
+                    s[i] = ''
+        while stack:
+            s[stack.pop()] = ''
+        return ''.join(s)
+
+##################
+#Roman To Integer
+###################
+
+class Solution(object):
+    def romanToInt(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        there are a couple of approaches here, lets first walk through a left to right pass
+        recall that each symbol adds its own value except for when a samlle values symbold is before a large valued symbol
+        in this case we need to subtract the alrge from the small and add the difference
+        the simplest algorithm is to use a two to scan ethrough string and examine one and two places ahead
+        i fucking had it!
+        two mainin the invariant just check that we at least two symbols to check every time we left ot right
+        '''
+        letters = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
+        numbers = [1,5,10,50,100,500,1000]
+        mapp =  {k:v for k,v in zip(letters,numbers)}
+        
+        #get the lenght of the string
+        N = len(s)
+        value = 0
+        left = 0
+        while left < N:
+            if left + 1 < N and mapp[s[left]] < mapp[s[left+1]]:
+                value += mapp[s[left+1]] - mapp[s[left]]
+                left += 2
+            else:
+                value += mapp[s[left]]
+                left += 1
+        return value
+        
+#using extra numberals for multipels 4 and 9
+class Solution(object):
+    def romanToInt(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        we can im prove by increasing the the state representation for each char
+        if we though of the dictionary to include represeantions of:
+        4,9,40,90,400,900
+        as IV, IX,XL,XC,CD,CM
+        then we can look up each pair and them togetehr
+        we then hash everythin and check that its int he hash
+        remember to fucking maintain the invariant!!!!
+        '''
+        mapp = {}
+        letters = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
+        numbers = [1,5,10,50,100,500,1000]
+        numbers += [4,9,40,90,400,900]
+        letters += ['IV', 'IX','XL','XC','CD','CM']
+        mapp = {k:v for k,v in zip(letters,numbers)}
+        
+        result = 0
+        i = 0
+        while i < len(s):
+            single = s[i:i+2]
+            double = s[i]
+            if i - 1  < len(s) and double in mapp:
+                result += mapp[double]
+                i += 2
+            else:
+                result += mapp[single]
+                i += 1
+        
+        return result
+
+#right to left
+class Solution(object):
+    def romanToInt(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        right to left,
+        recall from the left to right approach XC was just the sum of
+        mapp[C] - mapp[X]
+        which isjust the same as
+        sum += mapp[C]
+        sum -= mapp[X]
+        then we can process 1 by 1 one from the right,
+        we still need to examine its nieghbor though, unless we noticne the following
+        inution:
+            1. withotu looking at the enxt symbol, we don't know wheter we should increment or decrmenet
+            2. but the right most symbol will alwyas be added regardless! (think about this)
+        what we can is initalize the sum frist to be the value of the right most, 
+        then we can work backwards, starting from the second to last char
+        '''
+        letters = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
+        numbers = [1,5,10,50,100,500,1000]
+        mapp =  {k:v for k,v in zip(letters,numbers)}
+        
+        value = mapp[s[-1]]
+        for i in reversed(range(len(s)-1)):
+            #if the previous neighbor is smaller we need to subtract
+            if mapp[s[i+1]] > mapp[s[i]]:
+                value -= mapp[s[i]]
+            else:
+                value += mapp[s[i]]
+        return value
+
+        #an additional way not storing the final value numeral as the iniital value
+        letters = ['I', 'V', 'X', 'L', 'C', 'D', 'M']
+        numbers = [1,5,10,50,100,500,1000]
+        mapp =  {k:v for k,v in zip(letters,numbers)}
+        
+        N = len(s)
+        i = N-1
+        output = 0
+        while i >= 0:
+            if i < N-1 and mapp[s[i]] < mapp[s[i+1]]:
+                #in the case IX
+                output -= mapp[s[i]]
+            else: 
+                output += mapp[s[i]]
+            i -= 1
+        
+        return output
+
+####################
+#Broken Calculator
+###################
+#well BFS was a good try
+class Solution(object):
+    def brokenCalc(self, X, Y):
+        """
+        :type X: int
+        :type Y: int
+        :rtype: int
+        """
+        '''
+        intiallay we are starting with the value X
+        we can only double
+        or decrement one
+        return number of min ops to get Y
+        can we always get to Y?
+        well im thnking BFS, just a graph
+        '''
+        
+        q = deque([(X,0)])
+        
+        while q:
+            number,ops = q.popleft()
+            if number == Y:
+                return ops
+            q.append((number*2,ops+1))
+            q.append((number-1,ops+1))
+
+#fail again
+class Solution(object):
+    def brokenCalc(self, X, Y):
+        """
+        :type X: int
+        :type Y: int
+        :rtype: int
+        """
+        '''
+        intiallay we are starting with the value X
+        we can only double
+        or decrement one
+        return number of min ops to get Y
+        can we always get to Y?
+        well im thnking BFS, just a graph
+        if at anytime Y is less than X, we must decrease
+        otherwise we must double it
+        nope that was stupid
+        '''
+
+        ops = 0
+        
+        while X != Y:
+            if X > Y:
+                X -= 1
+            else:
+                X *= 2
+            ops += 1
+        return ops
+
+class Solution(object):
+    def brokenCalc(self, X, Y):
+        """
+        :type X: int
+        :type Y: int
+        :rtype: int
+        """
+        '''
+        work backawards
+        instead of multiplying by 2 or subtracting from 1 (from X both cases)
+        we divied by 2 when Y is even otherewsie subtract
+        we need to greedily divide by two, why?
+        well by multiplying we saw that did not have the optimal answer, so we do they opposite
+        motivation:
+            if y is even, if we were to perform two additions and one division (three steps), we could instead peform one division and on addition
+            if say y is odd, then if we perform 3 additionas and one division, we could isntead perform 1 addition, 1 division, and 1 additoin for less operatrions
+        '''
+
+        ops = 0
+        
+        while Y > X:
+            ops += 1
+            if Y % 2 == 1:
+                Y += 1
+            else:
+                Y /= 2
+        return ops + (X-Y)
+
+
+class Solution(object):
+    def brokenCalc(self, X, Y):
+        """
+        :type X: int
+        :type Y: int
+        :rtype: int
+        """
+        '''
+        you know going forwards won't work
+        lets think about cases
+        if Y < X, then we can only go in one steps
+        so its just X-Y steps
+        if even, just divide by two
+        if odd, add one then divide by two
+        greedily divide by two if you can
+        if yo can't and you're still greater than Y, add 1 then divide
+        
+        '''
+        steps = 0
+        while X != Y:
+            if Y < X:
+                steps += X-Y
+                X = Y
+            else:
+                if Y % 2 == 0:
+                    Y /= 2
+                else:
+                    Y += 1
+                steps += 1
+        return steps
+
+class Solution(object):
+    def brokenCalc(self, X, Y):
+        """
+        :type X: int
+        :type Y: int
+        :rtype: int
+        """
+        '''
+        recursive
+        '''
+        def steps(X,Y):
+            num_steps = 0
+            if X >= Y:
+                num_steps = X-Y
+            elif Y % 2 == 0:
+                num_steps +=  steps(X,Y/2) + 1
+            else:
+                num_steps +=  steps(X,Y+1) + 1
+            return num_steps
+        return steps(X,Y)
+
+##################################################
+# Longest Word in Dictionary through Deleting 
+##################################################
+#substring decomp
+class Solution(object):
+    def findLongestWord(self, s, d):
+        """
+        :type s: str
+        :type d: List[str]
+        :rtype: str
+        """
+        '''
+        the naive way would be to check if i can make each word recurively
+        '''
+        N = len(s)
+        d = set(d)
+        self.output = ""
+        
+        def substring_decomp(s,path):
+            if len(s) == 0:
+                print path[:]
+                return
+                
+            #shrink s and take, shrink s and don't take
+            substring_decomp(s[:-1],path+s[-1])
+            substring_decomp(s[:-1],path)
+        
+        substring_decomp(s,"")
+
+class Solution(object):
+    def findLongestWord(self, s, d):
+        """
+        :type s: str
+        :type d: List[str]
+        :rtype: str
+        """
+        '''
+        well this was dumb, we did not need to anthing recursive
+        we can just check if each word in d is a subsequence of s
+        '''
+        #sort the dictionary by decreasing length and lexogrphic order
+        d.sort(key = lambda x: (-len(x),x))
+        
+        #helper function to determine
+        def is_subsequence(sub,whole):
+            len_sub = len(sub)
+            len_whole = len(whole)
+            i,j = 0,0
+            while i < len_sub and j < len_whole:
+                if sub[i] == whole[j]:
+                    i += 1
+                j += 1
+            return i == len_sub
+        
+        #apply helper
+        for word in d:
+            if is_subsequence(word,s):
+                return word
+        return ""
+
+class Solution(object):
+    def findLongestWord(self, s, d):
+        """
+        :type s: str
+        :type d: List[str]
+        :rtype: str
+        """
+        '''
+        we also don't need to sort and just check everything in d
+        sorting requires extra space
+        in this case, it woudl required log(d) space
+        
+        '''
+        #helper function to determine
+        def is_subsequence(sub,whole):
+            len_sub = len(sub)
+            len_whole = len(whole)
+            i,j = 0,0
+            while i < len_sub and j < len_whole:
+                if sub[i] == whole[j]:
+                    i += 1
+                j += 1
+            return i == len_sub
+        
+        #apply helper
+        output = ""
+        for word in d:
+            if is_subsequence(word,s):
+                if len(word) > len(output):
+                    output = word
+                elif len(word) == len(output) and output[0] > word[0]:
+                    output = word
+        return output
+
+#########################
+#Find The Celebrity
+########################
+#close one
+# The knows API is already defined for you.
+# @param a, person a
+# @param b, person b
+# @return a boolean, whether a knows b
+# def knows(a, b):
+
+class Solution(object):
+    def findCelebrity(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        i could make the adjaceny list, which means i would have to call knows for every pair
+        that does not seem unreasonable given than n is at most 100
+        '''
+        if n == 2:
+            return -1
+        adj_list = defaultdict(list)
+        for i in range(n):
+            for j in range(n):
+                adj_list[i].append(knows(i,j))
+        temp = [[None]*n]*n
+        for k,v in adj_list.items():
+            temp[k] = v
+        
+        #now sum across columns 
+        col_sums = []
+        for c in range(n):
+            col_sums.append(sum([temp[r][c] for r in range(n)]))
+            
+        for i,val in enumerate(col_sums):
+            if val == n:
+                return i
+        return -1
+        
+class Solution(object):
+    def findCelebrity(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        instead of cheaking each pairwise comparison, we can view it as a grpah
+        which is what i said at first
+        if there is a celbrity, it had n-1 indirections and 0 out directions
+        we don't have the edges to begin with, but do we need to call the API so many times to find the celebrity
+        if A know's somone, we know that A cannot be the celebrity and can eliniate A
+        if we already know that someone knows another person then that person cannot be the celebrity
+        if A knows B, a cannot be the celeb
+        if not A knows B, B cannot be the celeb either
+        therefore, each call to knows, can rule out if one person is a celbrity
+        algo:
+            ranomdize the first candidate to zero, and call known with zero and 1
+            if true, it cannot be zero, so candiate becomes on
+            and we we just keep updating the candiatne in n-1 time ruling out celebrities
+            #watch the anumation
+            at the end, we have our final canddiate, that should be the celebrity
+            we check agian using our celbrity function
+        '''
+        #to determin if a person is a celebrity in O(N) time
+        def is_celebrity(person):
+            for other in range(n):
+                if person == other:
+                    continue
+                if knows(person,other) or not knows(other,person):
+                    return False
+            return True
+        
+        candidate = 0 #start at the frist one
+        for i in range(1,n):
+            if knows(candidate,i):
+                candidate = i
+        #now check
+        if is_celebrity(candidate):
+            return candidate
+        return -1
+
+
