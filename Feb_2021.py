@@ -3016,4 +3016,757 @@ class Solution(object):
             return candidate
         return -1
 
+class Solution(object):
+    def findCelebrity(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        instead of cheaking each pairwise comparison, we can view it as a grpah
+        which is what i said at first
+        if there is a celbrity, it had n-1 indirections and 0 out directions
+        we don't have the edges to begin with, but do we need to call the API so many times to find the celebrity
+        if A know's somone, we know that A cannot be the celebrity and can eliniate A
+        if we already know that someone knows another person then that person cannot be the celebrity
+        if A knows B, a cannot be the celeb
+        if not A knows B, B cannot be the celeb either
+        therefore, each call to knows, can rule out if one person is a celbrity
+        algo:
+            ranomdize the first candidate to zero, and call known with zero and 1
+            if true, it cannot be zero, so candiate becomes on
+            and we we just keep updating the candiatne in n-1 time ruling out celebrities
+            #watch the anumation
+            at the end, we have our final canddiate, that should be the celebrity
+            we check agian using our celbrity function
+        '''
+        #to determin if a person is a celebrity in O(N) time
+        def is_celebrity(person):
+            for other in range(n):
+                if person == other:
+                    continue
+                if knows(person,other) or not knows(other,person):
+                    return False
+            return True
+        
+        candidate = 0 #start at the frist one
+        for i in range(1,n):
+            if knows(candidate,i):
+                candidate = i
+        #now check
+        if is_celebrity(candidate):
+            return candidate
+        return -1
 
+########################
+#Search a 2D Matrix II
+########################
+class Solution(object):
+    def searchMatrix(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        cheeky way is just pass the whole thing
+        but there must be a log(cols)*log(rows) solution
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        for i in range(rows):
+            for j in range(cols):
+                if target == matrix[i][j]:
+                    return True
+        return False
+
+#binary searching each row for all rows
+class Solution(object):
+    def searchMatrix(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        cheeky way is just pass the whole thing
+        but there must be a log(cols)*log(rows) solution
+        i could binary search each row individually
+        binary search row by row
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        for row in range(rows):
+            #binary search the row
+            lo, hi = 0,cols-1
+            while lo < hi:
+                mid = lo + (hi - lo) // 2
+                if matrix[row][mid] == target:
+                    return True
+                elif matrix[row][mid] > target:
+                    hi = mid
+                else:
+                    lo = mid + 1
+            if matrix[row][lo] == target:
+                return True
+        return False
+
+class Solution(object):
+    def searchMatrix(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        there are a couple of approaches here, lets go over them 1 by 1
+        we can binary search on the row and column in succsession
+        if we haven't found the target, we block off the row and column
+        essentially we go down the diagonals from upper left to lower right
+        and binary search at the current row and column
+        XXXX
+        XYYY
+        XYZZ
+        XYZA
+        going down diagonally and blocking off
+        '''
+        if not matrix:
+            return False
+        #binary search functino
+        def binary_serach(matrix,target,start,vert):
+            low = start
+            high = len(matrix[0]) - 1 if vert else len(matrix)-1
+            
+            while high >= low: #we are shrinkgin low in each pass anyways, so limit high
+                mid = low + (high - low) // 2
+                #going across column
+                if vert:
+                    if matrix[start][mid] < target:
+                        low = mid+1
+                    elif matrix[start][mid] > target:
+                        hi = mid-1
+                    else:
+                        return True
+                else: #now on row
+                    if matrix[mid][start] < target:
+                        low = mid+1
+                    elif matrix[mid][start] > target:
+                        hi = mid-1
+                    return True
+            return False
+        
+        for i in range(min(len(matrix),len(matrix[0]))):
+            vert_found = binary_serach(matrix,target,i,True)
+            horz_found = binary_search(matrix,target,i,False)
+            if vert_found or horz_found:
+                return True
+            
+        return False
+
+#recursive
+class Solution(object):
+    def searchMatrix(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        we can also use recursion to solve this
+        intuition:
+            at any time, we can partition the two d matrix into four sorted sub matrices
+            two of which might contain the target, and the other two cannot
+        algo:
+            base case, if the array has no size, it cannot contain the target
+            if the target is smaller than the arrays smallest element (top left) or larger than the arrays largest elment (bottom right) it doesn't contain the target
+            recursive case, target it not met and the array has positive area
+            thereforse we seek along the matrix's middle column for an index row such taht matrix[row-1][mid] < target < matrix[row][mid]
+            we are pruning the search space, and recurse on the the matrix with the aforementioned bounds
+        '''
+        if not matrix:
+            return False
+        
+        def rec_search(left,up, right,down):
+            #mark the bounds of the slice of the amtrix
+            #out of bounds check
+            if left > right or up > down:
+                return False
+            #first base condition, lower than upper left and higher that lower right
+            elif target < matrix[up][left] or target > matrix[down][right]:
+                return False
+            #otherwise recurse
+            else:
+                #the col we want
+                mid = left + (right - left) // 2
+                #we need to move through the rows
+                row = up
+                while row <= down and matrix[row][mid] <= target:
+                    if matrix[row][mid] == target:
+                        return True
+                    row += 1
+            possibility_1 = rec_search(left,row,mid-1,down)
+            possibility_2 = rec_search(mid+1,up,right, row-1)
+            return possibility_1 or possibility_2
+        
+        return rec_search(0,0,len(matrix[0])-1,len(matrix)-1)
+
+#another way
+'''
+The idea behind this code is to recursively split the matrix into 4 sub-matrices.
+For each sub-matrix, the upper left corner (ri, ci) is the min value and the lower right corner (rj, cj) is the max value.
+If target is in that range, target may be in that sub-matrix, in which case we split it in 4 again. Otherwise, we can safely rule out the submatrix.
+'''
+class Solution:
+    def searchMatrix(self, matrix, target):
+        
+        if not matrix or not matrix[0]:
+            return False
+        
+        def explore(ri, ci, rj, cj):
+            if ri > rj or ci > cj :
+                return False
+            
+            if ri == rj and ci == cj:
+                return matrix[ri][ci] == target
+            
+            _min, _max = matrix[ri][ci], matrix[rj][cj]
+            if _min <= target <= _max:
+                rm, cm = (ri + rj) // 2, (ci + cj) // 2
+                return explore(ri, ci, rm, cm) or explore(ri, cm+1, rm, cj) or explore(rm+1, ci, rj, cm) or explore(rm+1, cm+1, rj, cj)
+            return False
+            
+        rows, columns = len(matrix), len(matrix[0])
+        return explore(0, 0, rows-1, columns-1)
+
+
+#starting from bottom left
+class Solution(object):
+    def searchMatrix(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        we can reduce the search space every time
+        since the rows and columns are sorted increasing
+        if we start all the way at end, then we are alwasy left with two options
+        and adjacent lement will alwasy be greater or smaller
+        '''
+        #edge cases empty matrix 
+        if len(matrix) == 0 or len(matrix[0]) == 0:
+            return False
+        
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        #start bottom left
+        i,j = rows-1, 0
+        
+        while 0 <= i < rows and 0 <= j < cols:
+            if matrix[i][j] == target:
+                return True
+            elif matrix[i][j] > target:
+                i -= 1
+            elif matrix[i][j] < target:
+                j += 1
+        return False
+
+#starting from upper right
+class Solution(object):
+    def searchMatrix(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: bool
+        """
+        '''
+        we can reduce the search space every time
+        since the rows and columns are sorted increasing
+        if we start all the way at end, then we are alwasy left with two options
+        and adjacent lement will alwasy be greater or smaller
+        '''
+        #edge cases empty matrix 
+        if len(matrix) == 0 or len(matrix[0]) == 0:
+            return False
+        
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        #start bottom left
+        i,j = 0, cols-1
+        
+        while 0 <= i < rows and 0 <= j < cols:
+            if matrix[i][j] == target:
+                return True
+            elif matrix[i][j] > target:
+                j -= 1
+            elif matrix[i][j] < target:
+                i += 1
+        return False
+
+##########################
+# Score of Parentheses
+##########################
+#i couldn't generalize this one ...
+#fail
+class Solution(object):
+    def scoreOfParentheses(self, S):
+        """
+        :type S: str
+        :rtype: int
+        """
+        '''
+        (()(()))
+        
+        (
+        2
+        '''
+        score = 0
+        S = list(S)
+
+        #eliminate () and put those case 1
+        temp = [] #this is our stack
+        for char in S:
+            if char == ')':
+                if temp and temp[-1] == '(':
+                    temp.pop()
+                    temp.append(1)
+                else:
+                    temp.append(char)
+
+            else:
+                temp.append(char)
+        print temp
+        #evalute all (1)
+        temp_2 = []
+        for char in temp:
+            if char == ')':
+                if temp_2:
+                    if temp_2[-1].isnumeric():
+                        temp_2.pop()
+                        temp_2.append(2)
+                    else:
+                        temp_2.append(char)
+                else:
+                    temp_2.append(char)
+            else:
+                temp_2.append(char)
+        print temp_2
+
+
+        #evaluate all additions
+
+        #final ()
+
+class Solution(object):
+    def scoreOfParentheses(self, S):
+        """
+        :type S: str
+        :rtype: int
+        """
+        '''
+        recall in a balanced parantheses, number of open will be be equal or greater number closed
+        as we go forward
+        we can use stack
+        and every time we see an open just add a zero
+        only then we encouner a close we pop off stack
+        if that value it zero we know we are supposed to lcose so the value beocmes 1
+        otherwise that val get multiplie by two
+        '''
+        stack = []
+        output, curr_val = 0,0
+        for char in S:
+            if char == '(':
+                stack.append(0)
+            elif char == ')':
+                mult = stack.pop()
+                if mult == 0:
+                    curr_val = 1
+                else:
+                    curr_val = mult*2
+                #if we are done closing out all paranthese, that meant we don't have stack
+                #just increment the output
+                if not stack:
+                    output += curr_val
+                else:
+                    #there is a value dangling and we need to increment that
+                    stack[-1] += curr_val
+        return output
+
+class Solution(object):
+    def scoreOfParentheses(self, S):
+        """
+        :type S: str
+        :rtype: int
+        """
+        '''
+        the recursive approach
+        we can split string S into A + B, and A and B are balanced
+        and they are bothe the smallest possible non empty prefix of S
+        
+        algo:
+            we call a balanced string primitive if it cannot be partitonied into two empty non-empy balance strings
+            by keeping track of balance (the number of open parantheses min close) we can partition S into primitive strings p1 + p2...pn
+            and the score S can be written as a recurrences
+            score(S) = score(p1) + score(p2)
+            
+        For each primitive substring (S[i], S[i+1], ..., S[k]), if the string is length 2, then the score of this string is 1. Otherwise, it's twice the score of the substring (S[i+1], S[i+2], ..., S[k-1]).
+        '''
+        def F(i,j):
+            #score of the balanaced stgring S[i:j]
+            ans = bal = 0
+            #split string into primitives
+            for k in range(i,j):
+                if S[k] == '(':
+                    bal += 1
+                else:
+                    bal -= 1
+                
+                if bal == 0:
+                    #if the indices differe by 1, i.e not primitive
+                    if k - i == 1:
+                        ans += 1
+                    else:
+                        #reurce
+                        ans += 2*F(i+1,k)
+                    i = k + 1
+            return ans
+        
+        return F(0,len(S))
+#come back to this problem
+class Solution:
+    def scoreOfParentheses(self, s: str) -> int:
+        score=0
+        bal=0;j=0
+        for i in range(len(s)):
+            if s[i] == '(':
+                bal += 1
+            else:
+                bal -= 1
+            if bal==0:
+                if len(s[j:i+1])==2:
+                    score += 1;
+                else:
+                    score+=2 * self.scoreOfParentheses(s[j+1:i])
+                j=i+1
+        return score
+
+class Solution(object):
+    def scoreOfParentheses(self, S):
+        """
+        :type S: str
+        :rtype: int
+        """
+        '''
+        every position in the string has a depth associated to it
+        our gail is to mainitain the score at the curent depth
+        when encoutering an opening, we add a zero, which is the the score for the curent depth
+        when close we add twice the previous depths score, unlues () which is jsut one
+        '''
+        stack = [0]
+        
+        for char in S: 
+            print stack
+            if char == '(':
+                stack.append(0)
+            else:
+                value = stack.pop()
+                stack[-1] += max(2*value,1)
+        print stack
+class Solution(object):
+    def scoreOfParentheses(self, S):
+        """
+        :type S: str
+        :rtype: int
+        """
+        '''
+        count cores
+        the final sum will be a sum of powers of 2
+        as every core (substring (), with score 1) will have its core multiplied by 2 for each exterior sef of parantehsesis
+        algo:
+            keept rack of the balance of the string
+            for every close that immediately follows an open, 1 << balance is the number of exterior set of parantheses that contains the core
+        '''
+        ans = bal = 0
+        for i,char in enumerate(S):
+            if char == '(':
+                bal += 1
+            else:
+                bal -= 1
+                if S[i-1] == '(':
+                    ans += 1 << bal
+        return ans
+        
+class Solution(object):
+    def scoreOfParentheses(self, S):
+        """
+        :type S: str
+        :rtype: int
+        """
+        '''
+        count cores
+        the final sum will be a sum of powers of 2
+        as every core (substring (), with score 1) will have its core multiplied by 2 for each exterior sef of parantehsesis
+        algo:
+            keept rack of the balance of the string
+            for every close that immediately follows an open, 1 << balance is the number of exterior set of parantheses that contains the core
+        '''
+        ans = bal = 0
+        for i,char in enumerate(S):
+            print bal
+            if char == '(':
+                bal += 1
+            else:
+                bal -= 1
+                if S[i-1] == '(':
+                    ans += 2**bal
+        return ans
+        
+
+##########################################
+# Shortest Unsorted Continuous Subarray
+##########################################
+class Solution(object):
+    def findUnsortedSubarray(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        well i can first check of the nums array is already sorted
+        brute force would be to check all subsequences
+        '''
+        N = len(nums)
+        if N == 1:
+            return 0
+        
+        #if we look, if there is sequence, its smallest value is greater than the left-1 idx
+        #and its largest value is less than right + 1 idx
+        
+        #first find the start of the array by going left and check increasing
+        left = 0
+        while left < N:
+            if  left + 1 < N and nums[left+1] >= nums[left]:
+                left += 1
+            else:
+                break
+        if left == N-1:
+            return 0
+        #now go from the right
+        right = N - 1
+        while right >= 0:
+            if right - 1 >= 0 and nums[right-1] <= nums[right]:
+                right -=1
+            else:
+                break
+        if right == 0:
+            return N
+        print left,right
+        return right - left + 1
+            
+#brute force
+class Solution(object):
+    def findUnsortedSubarray(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        BRUTE FORCE
+        examine every subarray nums[i:j] and get their min and max
+        then if nums[0:i-1] and nums[j:n-1] are sorted, then this is a viable candidate subarray
+        also all elements from nums[0:i-1] must be < min(nums[i:j])
+        and all elements from nums[j:n-1] > max(nums[i:j])
+        furthere, we also need to check if nums[0:i-1 ] and nums[j:n-1] are sorted correctly
+        if all conditions match, we can minimuze the length
+        '''
+        result = len(nums)
+        for i in range(len(nums)):
+            for j in range(i,len(nums)+1):
+                mini = float('inf')
+                maxi = float('-inf')
+                prev = float('-inf')
+                #k is just the index in this subarray
+                for k in range(i,j):
+                    mini = min(mini,nums[k])
+                    maxi = max(maxi,nums[k])
+                #now compare agains the maxi and mini
+                #if left side exceeds minie
+                #right less than maxi
+                if (i > 0 and nums[i-1] > mini) or (j < len(nums) and nums[j] < maxi):
+                    continue
+                #check nums[0:i] is sorted
+                k = 0
+                while k < i and prev <= nums[k]:
+                    prev = nums[k]
+                    k += 1
+                if k != i:
+                    continue
+                #check nums[j:n-1] is sorted
+                k = j
+                while k < len(nums) and prev <= nums[k]:
+                    prev = nums[k]
+                    k += 1
+                if k == len(nums):
+                    result = min(result, j-i)
+                    
+        return result
+
+#Better Brute Force
+class Solution(object):
+    def findUnsortedSubarray(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        better brute force
+        we can take some properites from selection sort
+        we traverse over the give nums array and for every eelemnt chosen we tru to determine its correct positions in the sorted array
+        for this we compare nums[i] with every nums[j] such that i <j < n
+        if nums[j] happens to be smaller than nums[i] it means nums[i] and nums[j] are not in their right spot
+        so we need to swap the two elements to bring them to their correct spots
+        instead of swapping we just note the position of nums[i] and nums[j] given by i and j
+        these two elments now mark the boundary
+        this is actually a very brilliant idea
+        '''
+        #if we need to swap the whole array
+        largest_left = len(nums) #minimu this
+        smallest_right = 0 #maximuse thise
+        for i in range(len(nums)-1):
+            for j in range(i+1,len(nums)):
+                if nums[j] < nums[i]:
+                    largest_left = min(largest_left,i)
+                    smallest_right = max(smallest_right,j)
+        if smallest_right - largest_left < 0:
+            return 0
+        else:
+            return smallest_right - largest_left + 1
+
+#using sorting
+class Solution(object):
+    def findUnsortedSubarray(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        using sorting
+        we can sort a copy of the given nums array
+        then we just compare elements
+        '''
+        sorted_nums = copy.deepcopy(nums)
+        sorted_nums.sort()
+        #again minimuze this range
+        largest_left = len(nums)
+        smallest_right = 0
+        for i in range(len(nums)):
+            if sorted_nums[i] != nums[i]:
+                largest_left = min(largest_left,i)
+                smallest_right = max(smallest_right,i)
+                
+        if smallest_right - largest_left < 0:
+            return 0
+        else:
+            return smallest_right - largest_left + 1
+
+#O(N) times
+class Solution(object):
+    def findUnsortedSubarray(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        using stack, stop here, im fucking done
+        the concept is similar to selection sort
+        the goal can degenerate to finding the positions ot the min and max of the unosrted subarray
+        traverse the array, and so long as we are increasing keep pushing on to the stack
+        once we encounter a falling slop we know nums[j] is out of place
+        on a decreasing sequence we pop from the stack and keep popping until we reach the stage where the element (corresponding to the index) is lesser than nums[j]
+        now we mark this as the boundary
+        do the same for the right side
+        #KEY:
+        #in order to determine the correct position of nums[j], we keep popping from the top of the stack
+        #until we reach the elements that is smaller than nums[j], call it a k
+        once the popping stops at k, we know that nums[j] should be at k + 1
+        '''
+        stack  = []
+        largest_left = len(nums)
+        smallest_right =  0
+        for i in range(len(nums)):
+            while stack and nums[stack[-1]] > nums[i]:
+                #keep minimiging the largest left
+                largest_left = min(largest_left,stack.pop())
+            stack.append(i)
+
+        #clear the stack
+        stack = []
+        for i in range(len(nums)-1,-1,-1):
+            while stack and nums[stack[-1]] < nums[i]:
+                smallest_right = max(smallest_right, stack.pop())
+            stack.append(i)
+            
+        if smallest_right - largest_left < 0:
+            return 0
+        else:
+            return smallest_right - largest_left + 1
+
+##########################
+# Validate Stack Sequences
+##########################
+#FUCK YEAH! GOT IT! 
+#THATS HOW YOU DO IT!
+class Solution(object):
+    def validateStackSequences(self, pushed, popped):
+        """
+        :type pushed: List[int]
+        :type popped: List[int]
+        :rtype: bool
+        """
+        '''
+        first start with an empty stack
+        and try pushing each element, but also examins if i can pop the element
+        if ive simulated and there is nothing left to pop its valid
+        otherwise it is not
+        '''
+        N = len(pushed)
+        pushed_ptr = 0
+        popped_ptr = 0
+        stack = []
+        while pushed_ptr < N or popped_ptr < N:
+            if stack and stack[-1] == popped[popped_ptr]:
+                stack.pop()
+                popped_ptr += 1
+            else:
+                if pushed_ptr >= N:
+                    return False
+                else:
+                    stack.append(pushed[pushed_ptr])
+                    pushed_ptr += 1
+        if not stack:
+            return True
+        else:
+            return False
+
+class Solution(object):
+    def validateStackSequences(self, pushed, popped):
+        """
+        :type pushed: List[int]
+        :type popped: List[int]
+        :rtype: bool
+        """
+        '''
+        well for every element in pushed, we push onto and empty stack
+        and if there is a stack and the top is the current value at popped well we pop
+        '''
+        stack = []
+        popped_ptr = 0
+        for num in pushed:
+            stack.append(num)
+            while stack and popped_ptr < len(popped) and stack[-1] == popped[popped_ptr]:
+                stack.pop()
+                popped_ptr += 1
+        return len(stack) == 0 
+        
