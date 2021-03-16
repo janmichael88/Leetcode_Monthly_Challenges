@@ -1310,6 +1310,42 @@ class Solution(object):
             return memo[remaining -1]
         return calcChange(coins,amount)
 
+
+#another top down memo offset with -1
+class Solution(object):
+    def coinChange(self, coins, amount):
+        """
+        :type coins: List[int]
+        :type amount: int
+        :rtype: int
+        """
+        if amount < 1:
+            return 0
+        memo = [0]*(amount+1)
+        def calcChange(coins,remaining):
+            #the path is not valid
+            if remaining < 0:
+                return -1
+            #nothing to contirbute
+            if remaining == 0:
+                return 0
+            if memo[remaining] != 0:
+                return  memo[remaining]
+            
+            minCount = amount+1
+            for c in coins:
+                count = calcChange(coins,remaining-c)
+                if count == -1:
+                    continue
+                minCount = min(minCount,count+1)
+            
+            if minCount == amount+1:
+                memo[remaining] = -1
+            else:
+                memo[remaining] = minCount
+            return memo[remaining]
+        return calcChange(coins,amount)
+
 #bottom up dp araay, i still don't really get it
 class Solution(object):
     def coinChange(self, coins, amount):
@@ -1348,3 +1384,92 @@ class Solution(object):
             return -1
         else:
             return dp[amount]
+
+#bfs
+class Solution(object):
+    def coinChange(self, coins, amount):
+        """
+        :type coins: List[int]
+        :type amount: int
+        :rtype: int
+        """
+        '''
+        using bfs
+        the trick now is how to keep the visited set
+        we check if we have not seen this amount yet, if we haven't we flipped it to visite again
+        '''
+		if not amount:
+		    return 0
+		visited = [False]*(amount+1)
+		visited[0] = True
+
+		q = deque([(0,0)])
+
+		while q:
+		    curr_amount, coinsUsed = q.popleft()
+		    #take coin
+		    coinsUsed += 1
+		    for c in coins:
+		        #incremtn amount by the count
+		        next_amount = curr_amount + c
+		        if next_amount == amount:
+		            return coinsUsed
+		        #if we can still keep going
+		        if next_amount < amount:
+		            #check we havent seen this amount yet
+		            if visited[next_amount] == False:
+		                visited[next_amount] = True
+		                q.append((next_amount,coinsUsed))
+		return -1
+
+##########################################################
+# Check If a String Contains All Binary Codes of Size K
+##########################################################
+#probably not the best way but it works
+class Solution(object):
+    def hasAllCodes(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: bool
+        """
+        '''
+        brute force would be to find all unqiue binary codes of length k in string s
+        then pass the string again to see that all binary codes are in it
+        try that way first
+        '''
+        #make hash of all binary codes of length k
+        allK = set()
+        for i in range(2**k):
+            allK.add(bin(i)[2:].zfill(k))
+        #traverse s with size k
+        count = 0
+        for i in range(len(s)-k+1):
+            if s[i:i+k] in allK:
+                allK.remove(s[i:i+k])
+        return len(allK) == 0 
+
+#not generating all binary codes, and checking on the fly
+class Solution(object):
+    def hasAllCodes(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: bool
+        """
+        '''
+        instead of creating all binary codes of length k
+        just check every substring of length k untilwe get all possible binaruy cods
+        we can keep the size of the hash equal to 2**k, since there are onlty 2**k substrings
+        this way we can add a varaint of early stopping
+        '''
+        need = 1 << k
+        seen = set()
+        for i in range(k,len(s)+1):
+            temp = s[i-k:i]
+            if temp not in seen:
+                seen.add(temp)
+                need -= 1
+            if need == 0:
+                return True
+        return False
