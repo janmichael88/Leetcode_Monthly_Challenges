@@ -1473,3 +1473,1855 @@ class Solution(object):
             if need == 0:
                 return True
         return False
+
+#rolling hash
+class Solution(object):
+    def hasAllCodes(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: bool
+        """
+        '''
+        using a rolling hash
+        we know the total number of binary codes of size k, is just 2**k
+        what does that mean?
+        we can use a hash! in fact rolling hash
+        we map each binary code to a number in the range [0,2**k -1]
+        binary number -> decimal is hash vlaue
+        because we can direclty apply bitwiseops to binary numbrs,
+        we don't need to convert to decimal explicitly
+        we just keep getting the hash (which is just the DECIMAL equivlanet) for each slice of range 3
+        
+        For example, say s="11010110", and k=3, and we just finish calculating the hash of the first substring: "110" (hash is 4+2=6, or 110). Now we want to know the next hash, which is the hash of "101".
+        We can start from the binary form of our hash, which is 110. First, we shift left, resulting 1100. We do not need the first digit, so it is a good idea to do 1100 & 111 = 100. The all-one 111 helps us to align the digits. Now we need to apply the lowest digit of "101", which is 1, to our hash, and by using |, we get 100 | last_digit = 100 | 1 = 101.
+        
+        we can write them together to get:
+        new_hash = ((old_hash << 1) & all_one) | last_digit_of_new_hash
+        '''
+        need = 1 << k
+        got = [False]*need #this marks the binary code if we have seen it or not
+        all_one = need - 1
+        hash_val = 0
+        for i in range(len(s)):
+            #calculat the hash
+            substring = s[i-k+1:i+1]
+            #get the hash
+            hash_val = ((hash_val << 1) & all_one) | int(s[i])
+            #have at least window size k
+            if i >= k-1 and got[hash_val] == False:
+                got[hash_val] = True
+                need -= 1
+                if need == 0:
+                    return True
+        return False
+        
+########################
+# Binary Trees With Factors
+#########################
+class Solution(object):
+    def numFactoredBinaryTrees(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        a factor binary tree
+        is where the children of a node has product equal to the node,
+        already we know it has to be >= len(arr)
+        now the question then becomes, for each ith elemnet in the array, how many of the len(arr) -ith element pairwise products gives the ith element
+        not necessary because i use up the pair
+        nah that did not work
+        but recall any element can be n number of times
+        
+        we can define a recusrive function
+        let recur(num) by the the answer to the question, how many binary trees exists such that their root is num
+        if we look at the left subtree and at the right subtree
+        we turn the arr into hash, since each element is unique anayway and we check:
+        * if num % candid == 0: it is divisible
+        * if num//cand in array, then this can also be a chile
+        we add recur(cand)*recur(num//cand to ans)
+        
+        eample
+        [2,4]
+        rec(2):
+            +1
+        rec(4):
+            +1
+            1*1
+        +3
+        we an invoke this function for each element in arr but with the cnadida elment removed
+        '''
+        array = set(arr)
+        N = 10**9 + 1 
+        memo = {}
+        def rec(num):
+            if num in memo:
+                return memo[num]
+            ans = 1
+            for candidate in array:
+                if num % candidate == 0 and num // candidate in array:
+                    ans += rec(candidate)*rec(num//candidate)
+            memo[num] = ans
+            return memo[num]
+        return sum(rec(num) for num in array)
+
+
+class Solution(object):
+    def numFactoredBinaryTrees(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        we can also use DP to solve this problem with the same logic
+        example [2,4,8]
+                1  2 5
+        1   1+(1*1)  1 + (2*1) + (1*1)
+        1    2         ????
+        the transiiton function is just
+        dp[i] = dp[num]*dp[num/cand]
+        
+        If you sort the array and build up subtrees, you know those subtrees could have been a subtree of an even larger root (given then the root of the subtree is factor). 
+        If we are at element, call it C, and its factors are [b] and [b/a], and we have already found the numbers of subtrees for [b] and [a/b] we multiply them (why? think of the combinations formula). 
+        if C can be made up [b] and [b/a] items, then the number of ways C can be made is just num ways at [b] times num ways at [b/a], so l[b]*l[a/b].
+        
+        '''
+        mod = 10**9 + 7
+        arr.sort()
+        dp = defaultdict(int)
+        for a in arr:
+            ans = 1
+            for b in arr:
+                if b > a:
+                    break
+                ans += (dp[b]*dp[a//b])
+            dp[a] = ans
+        print dp
+        return sum(dp.values()) % mod
+
+#better way and more explicity
+class Solution(object):
+    def numFactoredBinaryTrees(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        we can also use DP to solve this problem with the same logic
+        example [2,4,8]
+                1  2 5
+        1   1+(1*1)  1 + (2*1) + (1*1)
+        1    2         ????
+        the transiiton function is just
+        dp[i] = dp[num]*dp[num/cand]
+        
+        If you sort the array and build up subtrees, you know those subtrees could have been a subtree of an even larger root (given then the root of the subtree is factor). 
+        If we are at element, call it C, and its factors are [b] and [b/a], and we have already found the numbers of subtrees for [b] and [a/b] we multiply them (why? think of the combinations formula). 
+        if C can be made up [b] and [b/a] items, then the number of ways C can be made is just num ways at [b] times num ways at [b/a], so l[b]*l[a/b].
+        
+        '''
+        mod = 10**9 + 7
+        arr.sort()
+        N = len(arr)
+        idxs = {x:i for i,x in enumerate(arr)} #element : idx
+        dp = [1]*N #starting off you can have 1 subtree
+        for i,x in enumerate(arr):
+            for j in range(i):
+                #check if factor
+                if x %  arr[j] == 0:
+                    complement = x / arr[j] #its pair
+                    if complement in idxs:
+                        dp[i] += dp[j]*dp[idxs[complement]]
+                        dp[i] %= mod
+        return sum(dp) % mod
+
+################################
+#Swapping Nodes in a Linked List
+################################
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def swapNodes(self, head, k):
+        """
+        :type head: ListNode
+        :type k: int
+        :rtype: ListNode
+        """
+        '''
+        dump the vals into an array
+        swap k beg and k end
+        recreated the linked list
+        do it this way first
+        '''
+        arr = []
+        curr = head
+        while curr:
+            arr.append(curr.val)
+            curr = curr.next
+        arr[-k],arr[k-1] = arr[k-1],arr[-k]
+        dummy = ListNode()
+        curr = dummy
+        for num in arr:
+            curr.next = ListNode(num)
+            curr = curr.next
+        return dummy.next
+
+#three pass
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def swapNodes(self, head, k):
+        """
+        :type head: ListNode
+        :type k: int
+        :rtype: ListNode
+        """
+        '''
+        lets go over all the soluionts from LC
+        three pass apporach
+        * get length
+        * setfont note
+        *set enode 
+        *swap
+        '''
+        N = 0
+        curr = head
+        while curr:
+            N += 1
+            curr = curr.next
+        front = head
+        for i in range(1,k):
+            front = front.next
+        end = head
+        for i in range(1,N-k+1):
+            end = end.next
+        front.val,end.val = end.val, front.val
+        return head
+
+#two pass
+class Solution(object):
+    def swapNodes(self, head, k):
+        """
+        :type head: ListNode
+        :type k: int
+        :rtype: ListNode
+        """
+        '''
+        two pass
+        on the first pass while getting the length, also sent the front node
+        '''
+        N = 0
+        frontNode, endNode = head,head
+        curr = head
+        while curr:
+            N += 1
+            if N == k:
+                frontNode = curr
+            curr = curr.next
+        for i in range(1,N-k+1):
+            endNode = endNode.next
+        
+        frontNode.val,endNode.val = endNode.val, frontNode.val
+        return head
+
+#single pass
+class Solution(object):
+    def swapNodes(self, head, k):
+        """
+        :type head: ListNode
+        :type k: int
+        :rtype: ListNode
+        """
+        '''
+        now can we do it in a single pass?
+        we get stuck? how can we know the position of the end node without first geting the length of the linked list (it must have been passed at least once)
+        TRICK:
+            if endNode is k positions behind a certain node,currNode, when currNode reaches the end of the linked list, the endNode would be at the n-th node
+            when currNode is null, endNode is n-k nodes away
+        algo:
+            start iterating from the head
+            keep track of the number of nodes andincrmenet by one for each
+            if lenght is k, we know we are the start of front node, we can no create an endneo be the start
+            keep moving along advancing both pointers
+            swap
+            return
+        '''
+        N = 0
+        front,end = None,None
+        curr = head
+        while curr:
+            N += 1
+            if end:
+                end = end.next
+            if N == k:
+                front = curr
+                end = head
+            curr = curr.next
+        front.val,end.val = end.val,front.val
+        return head
+
+############################
+#Encode and Decode TinyURL
+############################
+#singel counter
+class Codec:
+    '''
+    dumd way is just hash each string as unique
+    '''
+    def __init__(self):
+        self.mapp = {}
+        self.idx = 0
+    def encode(self, longUrl):
+        """Encodes a URL to a shortened URL.
+        
+        :type longUrl: str
+        :rtype: str
+        """
+        self.mapp[self.idx] = longUrl
+        temp = self.idx
+        self.idx += 1
+        return "http://tinyurl.com/"+str(temp)
+        
+    def decode(self, shortUrl):
+        """Decodes a shortened URL to its original URL.
+        
+        :type shortUrl: str
+        :rtype: str
+        """
+        size = len("http://tinyurl.com/")
+        idx = shortUrl[size:]
+        return self.mapp[int(idx)]
+        
+        
+
+# Your Codec object will be instantiated and called as such:
+# codec = Codec()
+# codec.decode(codec.encode(url))
+
+#variable length encoding, base62
+'''
+using variable length encoding
+we make use of var leng enocding to enocde given URLS
+for every longURL we chosose a variable codelnght for the inputn url, whcuh can be any lenght between 0 to 61
+just base 61 then
+'''
+class Codec:
+    def __init__(self):
+        self.base = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.size = len(self.base)
+        self.mapp = {}
+        self.count = 1
+
+    def encode(self, longUrl):
+        """Encodes a URL to a shortened URL.
+        
+        :type longUrl: str
+        :rtype: str
+        """
+        #we are hasing everything to the base chars
+        #give refererne to the current count
+        temp = self.count
+        key = ""
+        while temp > 0:
+            temp -= 1
+            key += self.base[temp % self.size]
+            temp /= self.size
+        self.mapp[key] = longUrl
+        self.count += 1
+        return "http://tinyurl.com/" + key
+            
+
+    def decode(self, shortUrl):
+        """Decodes a shortened URL to its original URL.
+        
+        :type shortUrl: str
+        :rtype: str
+        """
+        size = len("http://tinyurl.com/")
+        idx = shortUrl[size:]
+        return self.mapp[idx]
+
+#just use the default hash function     
+
+'''
+or just use the builtin hash function
+java hash function is:
+s[0]∗31 
+(n−1)
+ +s[1]∗31 
+(n−2)
+ +...+s[n−1] , where s[i] is the ith character of the string, n is the length of the string.
+ python may be differenct but its probaly similay, jsut ust hash
+'''
+class Codec:
+    
+    def __init__(self):
+        self.mapp = {}
+    def encode(self, longUrl):
+        """Encodes a URL to a shortened URL.
+        
+        :type longUrl: str
+        :rtype: str
+        """
+        self.mapp[str(hash(longUrl))] = longUrl
+        return "http://tinyurl.com/"+str(hash(longUrl))
+        
+
+    def decode(self, shortUrl):
+        """Decodes a shortened URL to its original URL.
+        
+        :type shortUrl: str
+        :rtype: str
+        """
+        size = len("http://tinyurl.com/")
+        idx = shortUrl[size:]
+        return self.mapp[str(idx)]
+
+'''
+we can use a random interger to enocde
+in case the genrated code happed to be arleady ampped to some previous longURL, we genreae a new random inter
+'''
+import random
+class Codec:
+    def __init__(self):
+        self.mapp = {}
+        self.key = random.randint(0,2**31)
+    def encode(self, longUrl):
+        """Encodes a URL to a shortened URL.
+        
+        :type longUrl: str
+        :rtype: str
+        """
+        while self.key in self.mapp:
+            self.key = random.randint(0,2**31)
+        self.mapp[self.key] = longUrl
+        return "http://tinyurl.com/"+str(self.key)
+
+    def decode(self, shortUrl):
+        """Decodes a shortened URL to its original URL.
+        
+        :type shortUrl: str
+        :rtype: str
+        """
+        size = len("http://tinyurl.com/")
+        idx = shortUrl[size:]
+        return self.mapp[int(idx)]
+
+#####################################
+#Construct Binary Tree from String
+#####################################
+#FAIL............
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def str2tree(self, s):
+        """
+        :type s: str
+        :rtype: TreeNode
+        """
+        '''
+        i need to use a stack
+        its always a left node first
+        when i get to a closing
+        parse that and make it a node
+        and then push back on to the stack
+        then make that perivousonce a node with left connections and push back on to stack
+        then right
+        '''
+        stack = []
+        for char in s:
+            if char == ')':
+                number = 0
+                mult = 0
+                while stack and stack[-1] != '(':
+                    if stack[-1] == '-':
+                        stack.pop()
+                        number *= -1
+                    else:
+                        number += int(stack.pop())*(10**mult)
+                        mult += 1
+                stack.append(TreeNode(number))
+            else:
+                stack.append(char)
+        print stack
+        
+#recursive solution
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def str2tree(self, s):
+        """
+        :type s: str
+        :rtype: TreeNode
+        """
+        '''
+        we can model this is a recursion where () is a recusrive call that returns a TreeNode
+        we stop the recursion when we get to a closing bracket
+        closing bracket will the most recent subtree
+        algo:
+            define function to get the number for val of the node
+            while loop digit by digit trick
+            take care of mins sign
+            we define a new function, call it rec for mo
+            it takes thes tring and the current index of the current chars as nputs and return a port of the TreNode rep of the current subtree an also the dnex of the next char to be processed in the string
+            the idnex manip is importnant becasue we don't want to parse the string twice to figure out the boundaries for the children subtrees
+            we can have 1 of three termination conditions
+                1. when there are note moe characters to process
+                2. Next, we get the value for the root node of this tree. This is an invariant here. We will never find any brackets before we get the value for the root node.
+                3. Once we have the value, we form the root node.
+                4. Then, we check for an opening bracket (make sure to check for the end of string conditions always). If there is one, we make a recursive call and use the node returned as the left child of the current node.
+                5. Finally, we check if there's another opening bracket. If there is one, then it represents our right child and we again make a recursive call to construct that and make the right connection.
+                6. another opening brakcte indicates the presnece of a right chidlren, and so we simply make another recursive call and attach the returned node to the right
+                7. if another closing brracket, we are done with this node, we move one step forward and return from our current recursion
+        NOTES: the helper recursive function returns two values, 1. the node representation 2, the index of the next char
+         '''
+        def getNumber(s,index):
+            #negative check
+            is_negative = False
+            
+            if s[index] == '-':
+                is_negative = True
+                index += 1
+            number = 0
+            while index < len(s) and s[index].isdigit():
+                number = number*10+int(s[index])
+                index += 1
+            #returns the number for the node 
+            #also the index of the first opening char immedialty following the current number
+            return number if not is_negative else -number,index
+        def rec(s,index):
+            #base case
+            if index == len(s):
+                return None,index
+            #start of the tree will alwasy be a number
+            value,index = getNumber(s,index)
+            node = TreeNode(value)
+            #if there is any data left, we check for the left subtree first
+            if index < len(s) and s[index] == '(':
+                node.left,index = rec(s,index+1)
+            #if there is a right
+            if node.left and index < len(s) and s[index] == '(':
+                node.right,index = rec(s,index+1)
+            
+            if index < len(s) and s[index] == ')':
+                return node,index+1
+            else:
+                return node,index
+        return rec(s,0)[0]
+            
+#iteratively with stack
+class Solution(object):
+    def str2tree(self, s):
+        """
+        :type s: str
+        :rtype: TreeNode
+        """
+        '''
+        iterative stack approach
+        intution:
+            it's pretty much the same as the recusrive solution, the only thing we need to take care of are the three difference states of a our recusrive function
+            1. NOT STARTED: this is the initial state the node always starts in. just take the valye and amke the root
+            2. LEFT DONE - weve made the root, and there is a left child to be made, use index to detect presence of right child
+            3. RIGHT DONE - final state of any node
+        algo:
+        1. define the usual helper function to get the number
+        2. use stack
+        3. initailly push the root node on stack, with state NOT STARTED
+        4. iterate through the string doing the following
+            a. pop the node, this will be the global root
+            b. if the curr char is '-':
+                1. means we have not started processing yet, so make call to getNumber, and make the node
+                2. then check for presnce of left child by checking if there are remaining chars to process and the one we have to process now is an opening bracket
+                    - add the current node to stack, and mark as LEFT DONE
+                    - assing node.left a new Tree Now (be sure to take a look at the diagrams)
+                    - one we get to a closing bracket we conect the nodes
+                3. if it is '('
+                    -check for presence of a right child becasue we know that the value of the node is rleady set at this point
+                    -we check if the curr char, is there is one left, is '('
+                        * we add the curr node back to the queue assuming its state to be LEFT DONE
+                        * then we assign node.right to a new TreeNode and also add it to the queue
+                        
+
+        '''
+        def getNumber(s,index):
+            #negative check
+            is_negative = False
+            
+            if s[index] == '-':
+                is_negative = True
+                index += 1
+            number = 0
+            while index < len(s) and s[index].isdigit():
+                number = number*10+int(s[index])
+                index += 1
+            #returns the number for the node 
+            #also the index of the first opening char immedialty following the current number
+            return number if not is_negative else -number,index
+        
+        if not s:
+            return None
+        #init the stack with an empty node
+        root = TreeNode()
+        stack = [root]
+        #keeps track of index
+        index = 0
+        while index < len(s):
+            node = stack.pop()
+            
+            #node startd yest
+            if s[index].isdigit() or s[index] == '-':
+                value,index = getNumber(s,index)
+                node.val = value
+                
+                #now we need to check for any children left
+                if index < len(s) and s[index] == '(':
+                    stack.append(node)
+                    #assign the current nodes left
+                    node.left = TreeNode()
+                    stack.append(node.left)
+            #LEFT has been done
+            elif node.left and s[index] == '(':
+                stack.append(node)
+                node.right = TreeNode()
+                stack.append(node.right)
+            
+            index += 1
+        
+        return stack.pop() if stack else root
+
+############################################################
+#Best Time to Buy and Sell Stock with Transaction Fee
+############################################################
+#good recap article
+#https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-transaction-fee/discuss/108870/Most-consistent-ways-of-dealing-with-the-series-of-stock-problems
+class Solution(object):
+    def maxProfit(self, prices, fee):
+        """
+        :type prices: List[int]
+        :type fee: int
+        :rtype: int
+        """
+        '''
+        think of the first stock problem, where you were allowed to take as many transactions
+        well id only take if there was an increase, and is the fee put me above the previous profit
+        '''
+        N = len(prices)
+        #create dp array storing profits
+        cash = 0
+        hold = -prices[0]
+        #starting off we either have zero cash, or take the first 1 at day one
+        for i in range(1,N):
+            #cash is the amount taken if we arne't holding anything after day i
+            cash = max(cash, hold + prices[i]-fee) #sell stock
+            #we took no action
+            hold = max(hold,cash-prices[i]) #buy stock
+        return cash
+            
+
+##################################
+#Generate Random Point in a Circle
+###################
+#rejection sampling
+'''
+The area of the square is (2R)^2 = 4R(2R) 
+2
+ =4R and the area of the circle is \pi R \approx 3.14RπR≈3.14R. \dfrac{3.14R}{4R} = \dfrac{3.14}{4} = .785 
+4R
+3.14R
+​	
+ = 
+4
+3.14
+​	
+ =.785. Therefore, we will get a usable sample approximately 78.5\%78.5% of the time and the expected number of times that we will need to sample until we get a usable sample is \dfrac{1}{.785} \approx 1.274 
+.785
+1
+​	
+ ≈1.274 times.
+ '''
+class Solution(object):
+    '''
+    get the x and y limits of the of the circle
+    randomly generate 1 in that range
+    use the equation to get the other one
+    returnt he point
+    '''
+    def __init__(self, radius, x_center, y_center):
+        """
+        :type radius: float
+        :type x_center: float
+        :type y_center: float
+        """
+        self.radius = radius
+        self.xc = x_center
+        self.yc = y_center
+    def randPoint(self):
+        """
+        :rtype: List[float]
+        """
+        #we can use the rand function and genetare a random point from the smallest x to the alrgest x
+        #smae thing for the way
+        x0 = self.xc - self.radius
+        y0 = self.yc - self.radius
+        
+        while True:
+            #make a new guess
+            x1 = x0 + (2*self.radius)*random.random()
+            y1 = y0 + (2*self.radius)*random.random()
+            if (x1-self.xc)**2 + (y1-self.yc)**2 <= (self.radius)**2: #from the center
+                return x1,y1
+
+#inverse transform sampling
+'''
+we can paramtertize the circle in terms of r and theta
+and randomnly get a value in the domina of r and in the domain of theta
+'''
+class Solution(object):
+
+    def __init__(self, radius, x_center, y_center):
+        """
+        :type radius: float
+        :type x_center: float
+        :type y_center: float
+        """
+        self.r = radius
+        self.xc = x_center
+        self.yc = y_center
+
+    def randPoint(self):
+        """
+        :rtype: List[float]
+        """
+        '''
+        area = math.pi * self.r ** 2
+		R = math.sqrt(random.uniform(0, area) / math.pi)
+		Uniformly choose a point in the circle area, and get the distance between this point and the center.
+        '''
+
+        r0 = self.r*random.random()**.5 #inverse transform sampling
+        theta0 = random.random()*2*math.pi
+        return r0*math.cos(theta0)+self.xc,r0*math.sin(theta0)+self.yc
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(radius, x_center, y_center)
+# param_1 = obj.randPoint()
+
+
+##########################
+#Wiggle Subsequence
+##########################
+#close one
+class Solution(object):
+    def wiggleMaxLength(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        a wiggle subsequence is a sequence where conseuctive differences alternatet between positive and negative
+        you can only delete elements, NOT PICK AND CHOOSE
+        
+        can i just use a stack and only add an element if it less than top of the stack
+        but keep alternating
+        '''
+        def sign(x):
+            if x < 0:
+                return -1
+            else:
+                return 1
+        if len(nums) < 2:
+            return len(nums)
+        if len(set(nums)) == 1:
+            return 1
+        N = len(nums)
+        stack = [nums[0],nums[1]]
+        first_diff = stack[-1] -stack[-2]
+        for i in range(2,N):
+            curr_diff = nums[i] - stack[-1]
+            #this must be in oppisite sign of the first_diff
+            if sign(first_diff)*sign(curr_diff) == -1:
+                stack.append(nums[i])
+                first_diff = curr_diff
+        
+        return len(stack)
+
+#brute foce recusrive
+#n factorical
+#each call in the resursino tree would be the idxth element
+#then it branches into another tree for isup and !isup
+class Solution(object):
+    def wiggleMaxLength(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        there are quite a few solutions to this problem so lets go through them and type them all out
+        #BRUTE force recusion
+        we can find the legnth of every possible subseqence and findd the max length of all of them
+        we define a recursive function to help us out
+        calc(nums,idx,isUp), isUp tells use where to find an increasing wiggle or decreasing wiggle
+        if the function is called after an increasing wiggle, we need to fine the next decreasing subseqene
+        some for the opposite case
+        '''
+        @lru_cache(None)
+        def calc(nums,idx,isUp):
+            maxlength = 0
+            for i in range(idx+1,len(nums)):
+                if (isUp == True and nums[i] > nums[idx]) or (isUp == False and nums[i] < nums[idx]):
+                    #recurse maxlength 
+                    maxlength = max(maxlength,1+calc(nums,i,not isUp))
+            return maxlength
+        
+        if len(nums) < 2:
+            return len(nums)
+        
+        return 1 + max(calc(nums,0,True),calc(nums,0,False))
+
+#Dynamic programming N squared
+class Solution(object):
+    def wiggleMaxLength(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        dp solution
+        allocate two dp arrays, up and down
+        whenever we pick an element that could be part of a rising sub or decreasing sub
+        up[i] refers to the length of the longest wiggle subsequence obtatins so far considering the ith element as the last element of the wiggle subsequence and ending with a rising wiggle
+        down[i] refers to the lenght of thelongest wiggle subsequence obatined so far considering the i'th element as the last element of the wiggle subsequence and ending with a falling wiggle
+        up[i] will be updated every time we find a rising wiggle ending with the i^{th}i 
+th
+  element. 
+  Now, to find up[i] we need to consider the maximum out of all the previous wiggle subsequences ending with a falling wiggle 
+  i.e. down[j]down[j], for every j<i and nums[i]>nums[j]. Similarly, down[i]down[i] will be updated.
+
+
+        '''
+        if len(nums) < 2:
+            return len(nums)
+        N = len(nums)
+        up = [0]*N
+        down = [0]*N
+        #start with element at index 1
+        for i in range(1,N):
+            #we are not looking at the itnervetal from j to i where any j < i
+            for j in range(0,i):
+                #increasing wiggle
+                if nums[i] > nums[j]:
+                    up[i] = max(up[i],down[j]+1)
+                #decreasing wiggle
+                elif nums[i] < nums[j]:
+                    down[i] = max(down[i],up[j]+1) #add 1 indicates we have have found a longe subsequene so we include it
+        
+        return 1 + max(up[N-1],down[N-1])
+
+#Dynamic programing linear time
+class Solution(object):
+    def wiggleMaxLength(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        we can do even better doing linear time
+        intuition:
+        any element in the array can correspond to one of three states
+            1. up, nums[i] > nums[i-1]
+            2. down, nums[i] < nums[i-1]
+            3. equal, nums[i] == nums[i-1]
+        
+        we update as:
+            if up, case 1, the element before it must be a down
+            sp up[i] = down[i-1] + 1, down[i] rmeains the same as down[i-1]
+            if down, cas2, then elemnet before must wiggle up
+            so down[i] = up[i-1] +1, up[i] reamins the same is up[i-1]
+            if equal, case 3, then there is no chancge, so down[i] = down[i-1] and up[i] = up[i-1]
+        
+        at the end, we find the large of the lengths in the last entry
+        '''
+        N = len(nums)
+        if N < 2:
+            return N
+        up = [0]*N
+        down = [0]*N
+        up[0],down[0] =1,1 #bottom case, seq oflength 1 is trivially wiggle length1
+        for i in range(1,N):
+            if nums[i] > nums[i-1]:
+                up[i] = down[i-1] + 1
+                down[i] = down[i-1]
+            elif nums[i] < nums[i-1]:
+                down[i] = up[i-1] +1
+                up[i] = up[i-1]
+            else:
+                down[i] = down[i-1]
+                up[i] = up[i-1]
+        return max(up[N-1],down[N-1])
+
+#of course we can remove the dp array and just do O(1) space
+class Solution(object):
+    def wiggleMaxLength(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        O(1) space, just removing the dp arrays
+        
+        '''
+        N = len(nums)
+        if N < 2:
+            return N
+        up,down = 1,1
+        for i in range(1,N):
+            if nums[i] > nums[i-1]:
+                up = down + 1
+            elif nums[i] < nums[i-1]:
+                down = up + 1
+        return max(up,down)
+
+#greedy
+class Solution(object):
+    def wiggleMaxLength(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        '''
+        to be honest, i don't think anyone could have gotten to the O(1) space solution
+        without first doingt he DP solution
+        this one really comes from solving a subproblem and carrying it forward
+        
+        the greedy approach could have been seen, which is what i initally started first
+        lets go over it 
+        
+        the problme is equivlaent to finding  the number of alternating max and min speaks in the array
+        why? if we choose any other intermediate number to be a part of the currnet wiggle subsequence,the maximum length of the wiggle subsequence will always be less than or euqal to the one obtaine by choosing only the intermediate
+        '''
+        def sign(x):
+            if x < 0:
+                return -1
+            else:
+                return 1
+            
+        N = len(nums)
+        if N < 2:
+            return N
+        
+        first_diff = nums[1] - nums[0]
+        count = 2 if first_diff != 0 else 1
+        for i in range(2,N):
+            curr_diff = nums[i]-nums[i-1]
+            if sign(first_diff)*sign(curr_diff) == -1 and curr_diff != 0:
+                count += 1
+                first_diff = curr_diff
+        return count
+
+#################
+#Keys and Rooms
+#################
+class Solution(object):
+    def canVisitAllRooms(self, rooms):
+        """
+        :type rooms: List[List[int]]
+        :rtype: bool
+        """
+        '''
+        this is just bfs, visit all the rooms and see if we get to a rooms using the keys
+        then add the visited 
+        and return if have visited all the rooms
+        '''
+        N = len(rooms)
+        visited = set()
+        q = deque([0])
+        
+        while q:
+            curr_room = q.popleft()
+            visited.add(curr_room)
+            for key in rooms[curr_room]:
+                if key not in visited:
+                    q.append(key)
+        return len(visited) == N
+
+#could also use dfs
+class Solution(object):
+    def canVisitAllRooms(self, rooms):
+        """
+        :type rooms: List[List[int]]
+        :rtype: bool
+        """
+        visited = set()
+        
+        def dfs(room):
+            visited.add(room)
+            for r in rooms[room]:
+                if r not in visited:
+                    dfs(r)
+                    
+        dfs(0)
+        return len(visited) == len(rooms)
+
+##############################
+# Design Underground System
+#############################
+class UndergroundSystem(object):
+    '''
+    this is more of a systems design question
+    '''
+
+    def __init__(self):
+        self.custTimes = {} #(id:t,currStation)
+        self.stationCheckouts = defaultdict(list) #(to,from:time)
+        
+
+    def checkIn(self, id, stationName, t):
+        """
+        :type id: int
+        :type stationName: str
+        :type t: int
+        :rtype: None
+        """
+        self.custTimes[id] = (t,stationName)
+        
+
+    def checkOut(self, id, stationName, t):
+        """
+        :type id: int
+        :type stationName: str
+        :type t: int
+        :rtype: None
+        """
+        #get current customer infro
+        currTime,currStation = self.custTimes[id]
+        #update hash of cusTime
+        self.custTimes[id] = (t,stationName)
+        #update checkoutt imes
+        self.stationCheckouts[(currStation,stationName)].append(t-currTime)
+        
+        
+
+    def getAverageTime(self, startStation, endStation):
+        """
+        :type startStation: str
+        :type endStation: str
+        :rtype: float
+        """
+        #total times
+        total = self.stationCheckouts[(startStation,endStation)]
+        return float(sum(total)) / float(len(total))
+        
+
+
+# Your UndergroundSystem object will be instantiated and called as such:
+# obj = UndergroundSystem()
+# obj.checkIn(id,stationName,t)
+# obj.checkOut(id,stationName,t)
+# param_3 = obj.getAverageTime(startStation,endStation)
+
+#updating average on the fly
+class UndergroundSystem(object):
+    '''
+    this is more of a systems design question
+    saving on space, updating average on the fly
+    '''
+
+    def __init__(self):
+        self.custTimes = {} #(id:t,currStation)
+        self.stationCheckouts = {} #(to,from:time)
+        
+
+    def checkIn(self, id, stationName, t):
+        """
+        :type id: int
+        :type stationName: str
+        :type t: int
+        :rtype: None
+        """
+        self.custTimes[id] = (t,stationName)
+        
+
+    def checkOut(self, id, stationName, t):
+        """
+        :type id: int
+        :type stationName: str
+        :type t: int
+        :rtype: None
+        """
+        #get current customer infro
+        currTime,currStation = self.custTimes[id]
+        #update hash of cusTime
+        self.custTimes[id] = (t,stationName)
+        #update checkoutt imes
+        timeStayed = t - currTime
+        #instead of appending to list, just update the averages on the fly
+        if (currStation,stationName) in self.stationCheckouts:
+            size,currAvg =  self.stationCheckouts[(currStation,stationName)]
+            total = currAvg*size + timeStayed
+            size += 1
+            currAvg = float(total) / float(size)
+            self.stationCheckouts[(currStation,stationName)] = (size,currAvg)
+        else:
+            self.stationCheckouts[(currStation,stationName)] = (1,timeStayed)
+        
+        
+
+    def getAverageTime(self, startStation, endStation):
+        """
+        :type startStation: str
+        :type endStation: str
+        :rtype: float
+        """
+        #total times
+        return self.stationCheckouts[(startStation,endStation)][1]
+
+
+####################
+#Reordered Power of 2
+####################
+#132/135! dang it
+class Solution(object):
+    def reorderedPowerOf2(self, N):
+        """
+        :type N: int
+        :rtype: bool
+        """
+        '''
+        this is obvie a bitwise trick here
+        if there weren't then we' need every permutation of N
+        generate powers of two
+        dumpe the size (length of) each int into a hash of
+        don't do size, just hash int with digits
+        
+        for the N look if we have those digits at that key, return true
+        '''
+        mapp = defaultdict(set)
+        for i in range(32):
+            temp = str(2**i)
+            for char in temp:
+                mapp[2**i].add(char)
+        temp = str(N)
+        for k,v in mapp.items():
+            #potential candidate
+            if len(temp) == len(str(k)):
+                #check set
+                check = v
+                for char in temp:
+                    if char in check:
+                        check.remove(char)
+                if len(check) == 0:
+                    return True
+        
+        return False
+
+#comparing count objects
+class Solution(object):
+    def reorderedPowerOf2(self, N):
+        """
+        :type N: int
+        :rtype: bool
+        """
+        '''
+        this is obvie a bitwise trick here
+        if there weren't then we' need every permutation of N
+        generate powers of two
+        dumpe the size (length of) each int into a hash of
+        don't do size, just hash int with digits
+        
+        for the N look if we have those digits at that key, return true
+        
+        
+       	well we could just generate count objects nad compre
+
+       	note, if I didn't have access to count objects, i would need tod defince funcitno for out
+        '''
+        mapp = defaultdict(set)
+        countN = Counter(str(N))
+        for i in range(31):
+            currCount = Counter(str(1 << i))
+            if currCount == countN:
+                return True
+        return False
+
+######################
+#Vowel Spellchecker
+######################
+#fail, but not really, too many moveing pieces i think
+class Solution(object):
+    def spellchecker(self, wordlist, queries):
+        """
+        :type wordlist: List[str]
+        :type queries: List[str]
+        :rtype: List[str]
+        """
+        '''
+        we need to check is query word in the word list, IN ORDER
+        and immeadialety add the matched word from the wordList to and outpu
+        the problem is we need to check fo an exact match first
+        
+        this problem sucks......
+        '''
+        output = []
+        for q in queries:
+            #check exact match first
+            found = False
+            for w in wordList:
+                if found == True:
+                    break
+                if q == w:
+                    output.append(w)
+            #no exact match
+            if found == False:
+                #check caps for matching
+                count = 0
+                
+class Solution(object):
+    def spellchecker(self, wordlist, queries):
+        """
+        :type wordlist: List[str]
+        :type queries: List[str]
+        :rtype: List[str]
+        """
+        '''
+        its ok i didn't get this one, but this like a design problem 
+        we need to break the problem down into the cases
+        there are 3, and for each we need to have a specific return value
+        we also make use of a hash table
+        cases
+            1. Exact Match, hold a set of words to efficient scane whetehr query is eact
+            2. Caps Match, we hold a hash table that converts the word from its lowercase version to the oriignal word with correct cap
+            3. Vowel replacement, we hold a hash that converts the word from its lowercase versino with the vowles masked out to the originl word, * repalces vowel
+        
+        the rest of the algo rithm is just careful planning and reading
+        its more Design based
+        
+        '''
+        
+        words_perfect = set(wordlist)
+        words_cap = {}
+        words_vow = {}
+        
+        #helper function, turns vowles in *
+        def devowel(word):
+            vowels = 'aeiou' #constant O(5)
+            output = ""
+            for char in word:
+                if char in vowels:
+                    output += "*"
+                else:
+                    output += char
+            return output
+        
+        for word in wordlist:
+            wordlow = word.lower()
+            #if the key already exsits, it won't update
+            #this is the wrench here, same as checking if not in dict add it again
+            #whey set default? well recall
+            #When the query matches a word up to capitlization, you should return the first such match in the wordlist.
+            #we only update our hashes once!
+            words_cap.setdefault(wordlow, word)
+            words_vow.setdefault(devowel(wordlow), word)
+        
+        def solve(query):
+            if query in words_perfect:
+                return query
+
+            queryL = query.lower()
+            if queryL in words_cap:
+                return words_cap[queryL]
+
+            queryLV = devowel(queryL)
+            if queryLV in words_vow:
+                return words_vow[queryLV]
+            return ""
+
+        return map(solve, queries)
+
+class Solution(object):
+    def spellchecker(self, wordlist, queries):
+        """
+        :type wordlist: List[str]
+        :type queries: List[str]
+        :rtype: List[str]
+        """
+        '''
+        key take aways,
+        we mask the vowels for each word with *
+        if query word is in the original, just returnt he words
+        if query.lower in the caps dictionary, just return the first occurence of the matchs!, this is importnat
+        same thing with the devowel
+        we could have just traversed the word list backward or check if we have populated our hashes
+        '''
+        words_perfect = set(wordlist)
+        words_lowered = {}
+        words_devowel = {}
+        
+        
+        #aux functions
+        def helper(word):
+            return "".join('*' if char in 'aeiou' else char for char in word.lower())
+        
+        def query(word):
+            if word in words_perfect:
+                return word
+            if word.lower() in words_lowered:
+                return words_lowered[word.lower()]
+            if helper(word) in words_devowel:
+                return words_devowel[helper(word)]
+            return ""
+        
+        #hash words_lowered
+        for w in wordlist:
+            if w.lower() not in words_lowered:
+                words_lowered[w.lower()] = w
+        #devolwed
+        for w in wordlist:
+            if helper(w) not in words_devowel:
+                words_devowel[helper(w)] = w
+        #could have also for looped appended here        
+        return map(query,queries)
+
+##########################################
+#Find Smallest Common Element in All Rows
+##########################################
+#https://leetcode.com/problems/find-smallest-common-element-in-all-rows/discuss/387204/Python-3-solutions-Binary-Search-Hashmap-and-Set
+class Solution(object):
+    def smallestCommonElement(self, mat):
+        """
+        :type mat: List[List[int]]
+        :rtype: int
+        """
+        '''
+        get the freq counts of each element
+        then find the minimum of num whose counts are >= numw rows
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        counts = {}
+        for i in range(rows):
+            for j in range(cols):
+                if mat[i][j] in counts:
+                    counts[mat[i][j]] += 1
+                else:
+                    counts[mat[i][j]] = 1
+        answer = 10**4
+        for k,v in counts.items():
+            if v >= rows:
+                answer = min(answer,k)
+                
+        return answer if answer != 10**4 else -1
+
+#optimized with one less pass
+class Solution:
+    # 652 ms, hashmap
+    def smallestCommonElement(self, mat: List[List[int]]) -> int:
+        D = collections.defaultdict(int)
+        for arr in mat:
+            for num in arr:
+                D[num] += 1
+                if D[num] == len(mat):
+                    return num
+        return -1
+        
+
+#binary search
+class Solution(object):
+    def smallestCommonElement(self, mat):
+        """
+        :type mat: List[List[int]]
+        :rtype: int
+        """
+        '''
+        instead of counting, we can use binary search
+        we can go through each element in the first row, and then us binary serach to check if that elements exists in other rows
+        would m rows times n log m
+        this is still slower thought
+        algo:
+            iterate through each element in the first row
+            itnit found to be true
+            for each row after the first row
+            use binary search for the exsitence of that current element
+            if it does not,set foun to false, exist the loop
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        #helepr function for binary search, lets do this recurivley for fun
+        def binarySearch(val,arr,start,end):
+            if (end < start):
+                return 0
+            mid = start + (end-start)//2
+            if arr[mid] == val: 
+                return 1
+            if (val < arr[mid]):
+                return binarySearch(val, arr, start, mid-1)
+            elif (val > arr[mid]):
+                return binarySearch(val, arr, mid+1, end)
+
+        for c in range(cols):
+            candidate = mat[0][c]
+            for r in range(1,rows):
+                if binarySearch(candidate,mat[r],0,cols-1) == 0:
+                    #the break into else is actuall quite cleve
+                    break
+            else:
+                return candidate
+        return -1
+
+###########################
+#3Sum With Multiplicity
+###########################
+#TLE
+class Solution(object):
+    def threeSumMulti(self, arr, target):
+        """
+        :type arr: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        well n cubed is clrealy out, looks like n suqared might be acceptable witht this case
+        warm, code n cubed first
+        '''
+        N = len(arr)
+        count = 0
+        for i in range(N):
+            for j in range(i+1,N):
+                for k in range(j+1,N):
+                    if arr[i] + arr[j] + arr[k] == target:
+                        count += 1
+        return count
+        
+#FML....
+class Solution(object):
+    def threeSumMulti(self, arr, target):
+        """
+        :type arr: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        well n cubed is clrealy out, looks like n suqared might be acceptable witht this case
+        warm, code n cubed first
+        i can degenerate this problem by making it a two sum problem if i find a sum = target - arr[i]
+        '''
+        N = len(arr)
+        count = 0
+        for i in range(N):
+            first = arr[i]
+            twoSum = target - first
+            mapp = {}
+            #because there could be multiple multiple copes of one of the elements in the tuple
+            positions = defaultdict(list)
+            for j in range(i+1,N):
+                mapp[arr[j]] = twoSum - arr[j]
+                positions[arr[j]].append(j) #this should be in increasing order now
+            
+            for k,v in mapp.items():
+                if v in mapp:
+                    #a possible match
+                    if first + k + v == target:
+                        count += len(positions[v])
+                        del positions[arr[v]]
+        return count
+                   
+#well it was good to review two sum
+class Solution(object):
+    def threeSumMulti(self, arr, target):
+        """
+        :type arr: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        recall the two pointer method to solve the Two Sum problem
+        givne a sorted array have left and right points, whenever the elementes at those pointes == target, its one and move
+        if its short increase the lowest one and check again
+        if its large decrease it
+        this is the intuion use to solve the probelm in N^2 time
+        algo
+            * sort the array, indicies don't matter so long as  they are distinct elements
+            * for each element i, we can define T = target - array[i]
+            * then use the two pointer tech
+            * however since elements can be duplicated
+            * so we need to keep count of candidate frequencies
+            * example, he target is say, 8, and we have a remaining array (A[i+1:]) of [2,2,2,2,3,3,4,4,4,5,5,5,6,6]
+            * Whenever A[j] + A[k] == T, we should count the multiplicity of A[j] and A[k]. In this example, if A[j] == 2 and A[k] == 6, the multiplicities are 4 and 2, and the total number of pairs is 4 * 2 = 8
+            * then move on to the array [3,3,4,4,4,5,5,5]
+            *special case if A[j] == A[k]
+            * if we are at the array [4,4,4], there are only three such pairs
+            * in genearal array of length M has M*(M-1) // distinct pairs
+        '''
+        mod = 10**9 + 7
+        count = 0 
+        N = len(arr)
+        arr.sort()
+        
+        for i in range(N):
+            #apply two sum with points j and k
+            twoSum = target - arr[i]
+            j = i + 1
+            k = N -1
+            while j < k:
+                if arr[j] + arr[k] < twoSum:
+                    j += 1
+                elif arr[j] + arr[k] > twoSum:
+                    k -= 1
+                #at some point these two will equal twoSum, and case 1 are differnt
+                elif arr[j] != arr[k]:
+                    #cound the number of times weve moved left and riight
+                    left = 1
+                    right = 1
+                    while j + 1 < k and arr[j] == arr[j+1]:
+                        left += 1
+                        j += 1
+                    while k - 1 > j and arr[k] == arr[k-1]:
+                        right += 1
+                        k -= 1
+                    
+                    #how many pairs have we contirbuted
+                    count += left*right #the multiplicities
+                    count %= mod
+                    #from two sum
+                    j += 1
+                    k -= 1
+                else:
+                    #htey are equal and all the same, case 2
+                    M = (k-j+1)
+                    count += M*(M-1) / 2
+                    count %= mod
+                    break
+        return count
+
+class Solution(object):
+    def threeSumMulti(self, arr, target):
+        """
+        :type arr: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        counting with cases
+        we can define count[x] be the number of timex x occurs in A
+        then for every x+y+z == target, can try to count the correct amount
+        there are a few cases
+        case
+            1. if x,y,and z are all different, then the constribution is count[x]*count[y]*count[z]
+            2. if x == y != z, ie two are the same, then the contribution is (n choose k)
+            (count[x]_C_2)*count[z]
+            3. if x != y == z, then the contribution from these terms is count[x]*(count[y]_C_2)
+            4. if x == y == z, the contribution is count[x] C 3
+            n! / (n-k)! k!
+        '''
+        mod = 10**9 + 7
+        counts = [0]*101 #only possible numbers in the array
+        for x in arr:
+            counts[x] += 1
+        
+        result = 0
+        
+        #case 1 all differer
+        for x in range(101):
+            for y in range(x+1,101):
+                z = target - x - y
+                #constatring
+                if y < z <= 100:
+                    result += counts[x]*counts[y]*counts[z]
+                    result %= mod
+        
+        #case 2, x and y are teh same, so just 2x
+        for x in range(101):
+            z = target - 2*x
+            if x < x <= 100:
+                result += (counts[x]*(counts[x]-1)/2)*counts[z]
+                result %= mod
+        
+        #case 3,x==y, same as case2
+        for x in range(101):
+            if (target -x) % 2 == 0:
+                y = (target -x) / 2
+                if x < y <= 100:
+                    result += counts[x]*(counts[y]*(counts[y]-1))/2
+                    result %= mod
+        
+        #case 4,x==y==x
+        if target % 3 == 0:
+            x = target /3
+            if 0 <= x <= 100:
+                result += (counts[x]*(counts[x]-2)*(counts[x]-2)) / 6
+                results %= mod
+        
+        return result
+
+class Solution(object):
+    def threeSumMulti(self, arr, target):
+        """
+        :type arr: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        this can also be naturally extended from Three sum
+        again let count[x] be the number of times x occurs in theaaray
+        For example, if A = [1,1,2,2,3,3,4,4,5,5] and target = 8, then keys = [1,2,3,4,5]. When doing 3Sum on keys (with i <= j <= k), 
+        we will encounter some tuples that sum to the target, like (x,y,z) = (1,2,5), (1,3,4), (2,2,4), (2,3,3)
+        '''
+        MOD = 10**9 + 7
+        count = collections.Counter(arr)
+        keys = sorted(count)
+
+        ans = 0
+
+        # Now, let's do a 3sum on "keys", for i <= j <= k.
+        # We will use count to add the correct contribution to ans.
+        for i, x in enumerate(keys):
+            T = target - x
+            j, k = i, len(keys) - 1
+            while j <= k:
+                y, z = keys[j], keys[k]
+                if y + z < T:
+                    j += 1
+                elif y + z > T:
+                    k -= 1
+                else: # x+y+z == T, now calculate the size of the contribution
+                    if i < j < k:
+                        ans += count[x] * count[y] * count[z]
+                    elif i == j < k:
+                        ans += count[x] * (count[x] - 1) / 2 * count[z]
+                    elif i < j == k:
+                        ans += count[x] * count[y] * (count[y] - 1) / 2
+                    else:  # i == j == k
+                        ans += count[x] * (count[x] - 1) * (count[x] - 2) / 6
+
+                    j += 1
+                    k -= 1
+
+        return ans % MOD
+
+######################
+#Advantage Shuffle
+######################
+class Solution(object):
+    def advantageCount(self, A, B):
+        """
+        :type A: List[int]
+        :type B: List[int]
+        :rtype: List[int]
+        """
+        '''
+        for a in A, if a > b, we should pair it, otherwise a is uselss for our score, as it can't beat any cards
+        if every card in A is larger than every card in B, it doesn't matter what the order ir
+        we might as well use the weakest card to pair with b, and whatever is left just pair with the remaning cards
+        algo:
+            *sort A and B both into new arrays
+            *for every elemnt in a compare to B
+            *we can maintain a hash of potential pairings to a card b
+            *if a cannot beat b, add to another list for remaining
+        '''
+        A_sort = sorted(A)
+        B_sort = sorted(B)
+        
+        matchesB = {b:[] for b in B}
+        remaining = [] #there could be no beating card for card b
+        i = 0
+        for a in A_sort:
+            if a > B_sort[i]:
+                matchesB[B_sort[i]].append(a)
+                i += 1
+            else:
+                remaining.append(a)
+        output = []
+        for b in B:
+            if len(matchesB[b]) > 0:
+                output.append(matchesB[b].pop())
+            else:
+                output.append(remaining.pop())
+        return output
+
+#two pointer without hashmap
+class Solution(object):
+    def advantageCount(self, A, B):
+        """
+        :type A: List[int]
+        :type B: List[int]
+        :rtype: List[int]
+        """
+        '''
+        another way would be to sort both A and B
+        when sorting B, pair element with index value
+        start pairing the greatest element in B with the greates element in A
+        if A can't beat the current card b, use the smallest one
+        
+        '''
+        N = len(A)
+        output = [-1]*N
+        A.sort()
+        B = sorted([(v,i) for i,v in enumerate(B)])
+        
+        #now we need to pointers in A, one always pointing to the smallest, one always pointing to the lrgest
+        #then we can start pairing
+        l,r = 0, N-1
+        #go backwards starting from B
+        for i in range(N-1,-1,-1):
+            #the greater element from A
+            if A[r] > B[i][0]:
+                output[B[i][1]] = A[r]
+                r -= 1
+            else:
+                output[B[i][1]] = A[l]
+                l += 1
+        return output
+
+#############################
+#Pacific Atlantic Water Flow
+############################
+#well you almost had it...
+class Solution(object):
+    def pacificAtlantic(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        we want to find the cooridantes where water can flow,
+        so we can say, from an (i,j) point is there a decreasing path to the pacific and atlantic
+        so we want to dfs on each point and see if we can get to both the pacific and atlantic
+        if we can, then that's a valid point
+        so we need two dfs functions one for pacific and one for atlantic
+        traverse the matrix and invoke, if both dfs' make it to the respetive sides, its valid point
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        results = []
+        #every time we run dfs, make a new visited set
+        def dfs_pacific(i,j):
+            if i == -1 or j == -1:
+                return True
+            if i == rows or j == cols : #got to the atlantic side
+                return
+            visited_pacific.add((i,j))
+            for dx,dy in dirrs:
+                next_x,next_y = i + dx, j + dy
+                if 0 <= next_x < rows and 0 <= next_y < cols and  (next_x,next_y) not in visited_pacific and matrix[next_x][next_y] <= matrix[i][j]:
+                    dfs_pacific(next_x,next_y)
+                elif next_x == -1 or next_y == -1:
+                    return True
+        visited_pacific = set()          
+        for i in range(rows):
+            for j in range(cols):
+                if dfs_pacific(i,j) == True:
+                    results.append((i,j))
+        print results
+
+
+class Solution(object):
+    def pacificAtlantic(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        BFS, can flip the problem: we start traversing from each ocean and access neighboring node that is only higher
+        we complete two BFS's from the pacific and the atlanatic
+        algo:
+            if empty return emptya rray
+            queup, starting from pac and atlantic
+            only starting from the shorts
+            bfs on each
+            find the intersection of points that are in both ques
+        '''
+        if not matrix or not matrix[0]:
+            return []
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        #set up queues
+        pac_q = deque()
+        atl_q = deque()
+        
+        #first element of rows
+        for i in range(rows):
+            pac_q.append((i,0))
+            atl_q.append((i,cols-1))
+        #first elemetn of cols
+        for i in range(cols):
+            pac_q.append((0,i))
+            atl_q.append((rows-1,i))
+        
+        def bfs(q):
+            can_reach = set()
+            while q:
+                row,col = q.popleft()
+                can_reach.add((row,col))
+                for dx,dy in dirrs:
+                    new_row,new_col = row + dx, col + dy
+                    #check in constraints
+                    if 0 <= new_row < rows and 0 <= new_col < cols and (new_row,new_col) not in can_reach and matrix[new_row][new_col] >= matrix[row][col]:
+                        q.append((new_row,new_col))
+            return can_reach
+        
+        #bfs from both sides
+        pac_side = bfs(pac_q)
+        atl_side = bfs(atl_q)
+        
+        return list(pac_side.intersection(atl_side))
+
+#DFS
+class Solution(object):
+    def pacificAtlantic(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        DFS, same thing as BFS, but we would invoke on each othe nodes on the pac side and each of the nodes in the atl side
+        
+        '''
+        if not matrix or not matrix[0]:
+            return []
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        #set up queues
+        pac_reach = set()
+        atl_reach = set()
+        
+        def dfs(row,col,reached):
+            reached.add((row,col))
+            for dx,dy in dirrs:
+                new_row,new_col = row + dx, col + dy
+                #check in constraints
+                if 0 <= new_row < rows and 0 <= new_col < cols and (new_row,new_col) not in reached and matrix[new_row][new_col] >= matrix[row][col]:
+                    dfs(new_row,new_col,reached)
+        
+        #dfs invocations,first element of rows
+        for i in range(rows):
+            dfs(i,0,pac_reach)
+            dfs(i,cols-1,atl_reach)
+        #first elemetn of cols
+        for i in range(cols):
+            dfs(0,i,pac_reach)
+            dfs(rows-1,i,atl_reach)
+        return list(pac_reach.intersection(atl_reach))
+
+#########################
+#
+#########################
+
