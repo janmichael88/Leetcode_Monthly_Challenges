@@ -3322,6 +3322,876 @@ class Solution(object):
         return list(pac_reach.intersection(atl_reach))
 
 #########################
-#
+#Word Subsets
 #########################
+#fuck this problem again...
+#almost
+class Solution(object):
+    def wordSubsets(self, A, B):
+        """
+        :type A: List[str]
+        :type B: List[str]
+        :rtype: List[str]
+        """
+        '''
+        if b is a subet of a, then a is a superset of b
+        the ath word in A is the count of the number of chars in the ath words
+        when we check the ath word in a is a superset of the bth word in B we are asking char in ath word >= char in both word
+        now if we check wheter a word in a ia a superset of wordB_[I]
+        we weill check for eah letter and each i such that N_{letter}(wordA) >= N_letter (wordB_{i})
+        this is the KEY!!!! make sure to fucking remember this!
+        For example, when checking whether "warrior" is a superset of words B = ["wrr", "wa", "or"], we can combine these words in B to form a "maximum" word "arrow", that has the maximum count of every letter in each word in B.
+        which in python can be done with |=
+        reduce B the to the largest superset (i.e the set containing all b in B)
+        thenc check if we can make the a'th word in a from this superset
+        '''
+        #construct superset B
+        supersetB = {}
+        for i in range(ord('a'),ord('z')+1):
+            supersetB[chr(i)] = 0
+        for b in B:
+            countB = Counter(b)
+            for char,count in countB.items():
+                supersetB[char] = max(supersetB[char],count)
+        print supersetB
+        
+        #now see if i can make a using the supersetB
+        universals = []
+        for a in A:
+            countA = Counter(a)
+            constraint = 0
+            for char,count in countA.items():
+                if supersetB[char] >= count:
+                    constraint += 1
+            if constraint > len(B):
+                universals.append(a)
+        return universals
+        
 
+class Solution(object):
+    def wordSubsets(self, A, B):
+        """
+        :type A: List[str]
+        :type B: List[str]
+        :rtype: List[str]
+        """
+        def count(word):
+            ans = [0] * 26
+            for letter in word:
+                ans[ord(letter) - ord('a')] += 1
+            return ans
+
+        bmax = [0] * 26
+        for b in B:
+            for i, c in enumerate(count(b)):
+                bmax[i] = max(bmax[i], c)
+
+        ans = []
+        for a in A:
+            if all(x >= y for x, y in zip(count(a), bmax)):
+                ans.append(a)
+        return ans
+
+class Solution(object):
+    def wordSubsets(self, A, B):
+        """
+        :type A: List[str]
+        :type B: List[str]
+        :rtype: List[str]
+        """
+        '''
+        if b is a subet of a, then a is a superset of b
+        the ath word in A is the count of the number of chars in the ath words
+        when we check the ath word in a is a superset of the bth word in B we are asking char in ath word >= char in both word
+        now if we check wheter a word in a ia a superset of wordB_[I]
+        we weill check for eah letter and each i such that N_{letter}(wordA) >= N_letter (wordB_{i})
+        this is the KEY!!!! make sure to fucking remember this!
+        For example, when checking whether "warrior" is a superset of words B = ["wrr", "wa", "or"], we can combine these words in B to form a "maximum" word "arrow", that has the maximum count of every letter in each word in B.
+        which in python can be done with |=
+        reduce B the to the largest superset (i.e the set containing all b in B)
+        thenc check if we can make the a'th word in a from this superset
+        '''
+        #cheeky way using |=
+        count = Counter()
+        for b in B:
+            count |= Counter(b)
+            
+        results = []
+        for a in A:
+            if not count - Counter(a):
+                results.append(a)
+        return results
+        
+class Solution(object):
+    def wordSubsets(self, A, B):
+        """
+        :type A: List[str]
+        :type B: List[str]
+        :rtype: List[str]
+        """
+        '''
+        making superset of B that includes all multiplicites of each b in B
+        instead of making entries for all a to z, check if in hash and update on the fly
+        '''
+        superset_B = {}
+        for b in B:
+            temp = Counter(b)
+            for char,count in temp.items():
+                if char not in superset_B:
+                    superset_B[char] = count
+                else:
+                    superset_B[char] = max(supserset_B[char],count)
+                    
+        output = []
+        for a in A:
+            temp = Counter(a)
+            if all([char in temp and temp[char] >= count for char,count in superset_B.items() ]):
+                output.append(a)
+        return output
+
+##########################
+#Palindromic Substrings
+###########################
+#brute force TLE
+class Solution(object):
+    def countSubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        brute force
+        check all starts and ends for palindromes
+        '''
+        def is_pal(string):
+            N = len(string)
+            left,right = 0,N-1
+            while left <= right:
+                if string[left] != string[right]:
+                    return False
+                left += 1
+                right -= 1
+            return True
+        
+        ans = 0
+        for i in range(len(s)):
+            for j in range(i+1,len(s)+1):
+                if is_pal(s[i:j]) == True:
+                    ans += 1
+        return ans
+            
+class Solution(object):
+    def countSubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        dynamic programming, if we know a string is a palindrom, then its inner parts must also be a palindrome
+        axbobxa is one
+        and so is xbobx
+        and so is bob
+        and so is o
+        each can be a sub problem, and checking one subproblem solves the larger one, in fact checking them all
+        intuition:
+            while checking all substrings of a large string for palindromciity, we check smallers one repeatedly
+            if we store the result of processing those smaller substrings, we can resuse them
+            example:
+            for the string "axbobxa", the substring "bob" needs to checked f
+            or the substring "xbobx" and the string "axbobxa". 
+            In fact, to check all three of these strings, the single character string "o" needs to be checked.
+        
+        algo:
+            1. defines dp state that gets update
+            2. dp(i,j) tells us where the string from i to j is a palindrome
+            3. thus the answer to our problem lies in couting all subtrings whose state is True
+            4. the base cases:
+                a. sinlge letter dp(i,i) = Trye
+                b. double leter of the smae char, dp(i,i+1) True if s[i] == s[i+1] false if other wise
+            5. identify the optimal substructure: a string is a palindrom if:
+                a. its first and last are equal
+                b. and the rest inside is also apalindrom
+            6.The optimal substructure can be formualted inot a recurence:
+                a. dp(i,j) = Trye if all dp(i+1,j-1) where s[i]=s[j] else false
+            7. idenitfy all overlapping sub problems only once. the optimal substructue ensures that the state for a string only depends on the state for a single substring. if we copute and save the sates for all smaller substrings first, larger strings can be procesed by reusing saved states. use the bases states
+            8. the answer is found by counting all state that evaluate to True. since each state tells whether a unique substring is a palindrome or not
+        '''
+        N = len(s)
+        ans = 0
+        
+        if N <= 0:
+            return 0
+        
+        dp = [[0]*N for _ in range(N)]
+        
+        #base case, single letter substrings
+        for i in range(N):
+            dp[i][i] = 1
+        #base case, double of same char
+        for i in range(N-1):
+            if s[i] == s[i+1]:
+                dp[i][i+1] = 1
+            #start increamineting answer
+            if dp[i][i+1] == 1:
+                ans += 1
+            else:
+                ans += 0
+        #for all other caes, substrings of length 3 to N
+        for size in range(3,N+1):
+            for i in range(0,N-size+1):
+                dp[i][i+size-1] = dp[i+1][i+size-1-1] and s[i] == s[i+size-1]
+                if dp[i][i+size-1] == 1:
+                    ans += 1
+                else: 
+                    ans += 0
+                print s[i:i+size],s[i],s[i+size-1]
+        return ans
+
+#two pointer instead of dp
+class Solution(object):
+    def countSubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        examine each positions in thes string and expand from the center
+        but we also need to do this in this case the the len(s) parity is evern
+        #could have also wrapped this into a function
+        for an odd length palindrom, every chary position is a center
+        for an even length palindrome, every pair is a center
+        '''
+        output = 0
+        N = len(s)
+        for start in range(N):
+            left,right = start,start
+            while 0 <= left < N and 0 <= right < N and s[left] == s[right]:
+                output += 1
+                left -=1
+                right += 1
+            #start ands start + 1
+            left,right = start,start+1
+            while 0 <= left < N and 0 <= right < N and s[left] == s[right]:
+                output += 1
+                left -=1
+                right += 1
+        return output
+                
+
+#better dp way
+class Solution(object):
+    def countSubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        #https://leetcode.com/problems/palindromic-substrings/discuss/449719/Python-DP-Solution-with-Explanation
+        '''
+        define dp(i,j) as a boolean if s[i:j+1] is a palindrome
+        then we can model the recurrence
+        dp(i,j) = dp(i+1,j-1) if s[i] == s[j]
+        '''
+        if not s:
+            return 0
+        N = len(s)
+        dp = [[False]*N for _ in range(N)]
+        result = 0
+        #revere N to make indexing easier
+        for i in reversed(range(N)):
+            dp[i][i] = True
+            result += 1
+            for j in range(i+1,N):
+                #pairs, check chars are same
+                if j - i == 1:
+                    dp[i][j] = s[i] == s[j]
+                else:
+                    #is the recurrence
+                    dp[i][j] = (s[i]==s[j]) and (dp[i+1][j-1])
+                if dp[i][j] == True:
+                    result += 1
+        return result
+
+#############################################
+# Reconstruct Original Digits from English
+#############################################
+#so fucking close! 13/24
+#i feel like this involes a backtracking approach....
+#this approach reggidle choosese ones,
+#i need to go down this path, and see if i crash
+#if this path crashes, abamdom
+class Solution(object):
+    def originalDigits(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        the string is concated to one string, and has the numbers written out in enlgith
+        if the string had all the letters it owuld bne
+        "zeroonetwothreefourfivesixseveneightnine"
+        i can hash each written englgih number to a counter
+        greedy
+        keep substring in order until there is a change
+        '''
+        nums = ['zero','one','two','three','four','five','six','seven','eight','nine']
+        nums_strs = ['0','1','2','3','4','5','6','7','8','9']
+        allcounts = Counter(s)
+        
+        #helper function to see of char ounts in all counts and returns True or not
+        def helper(candidate,currcount):
+            if all([char in currcount and currcount[char] >= count for char,count in candidate.items()]):
+                return True
+            else:
+                return False
+        
+        output = ""
+        i = 0
+        while len(allcounts) > 0 and i < len(nums):
+            if helper(Counter(nums[i]),allcounts):
+                output += nums_strs[i]
+                allcounts -= Counter(nums[i])
+
+            elif helper(Counter(nums[i]),allcounts) == False:
+                i += 1
+        return output
+
+class Solution(object):
+    def originalDigits(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        first appraoch greedily takes the smallest english word numbers frist
+        example
+        twonine
+        the ans is '29'
+        but we could also make one
+        whihc would leave twni, which is nohting, and the constraints say all chars can be used
+        
+        inution:
+            * "z" is unique to zero
+            * "w" is uniqute to two
+            * "u" is unique to four
+            * "x" is unique to six
+            * "g" is unique to eight
+        we can hash evens to their unique chars and count em up, what about odds?
+            * "h" is present to in three and eight
+            * "f" is present in five and four
+            * "s" is present in seven and six
+        now that leaves nines and ones
+            * "i" is present in nine, five,six,and eight
+            * "n" is present in one,sevenm and nine
+            
+        algo:
+            1. find count evens
+            2. find couns, threes, fives,seves
+            3. find counts 1 and nines
+        '''
+        counts = Counter(s)
+        #output digit:fred
+        mapp = {}
+        
+        #evens
+        evens = ['0','2','4','6','8']
+        evens_chars = ['z','w','u','x','g']
+        for digit,char in zip(evens,evens_chars):
+            mapp[digit] = counts[char]
+        
+        #three,five,and sevens
+        odds = ['3','5','7']
+        odds_comps = ['8','4','6']
+        odds_chars = ['h','f','s']
+        
+        for digit,comp,char in zip(odds,odds_comps,odds_chars):
+            mapp[digit] = counts[char] - mapp[comp]
+            
+        #count9
+        mapp['9'] = counts['i'] - mapp['5'] - mapp['6'] - mapp['8']
+        #count1
+        mapp['1'] = counts['n'] - mapp['7'] - 2*mapp['9'] #two n's in nine
+        
+        return "".join([key*mapp[key] for key in sorted(mapp.keys())])
+
+class Solution(object):
+    def originalDigits(self, s):
+        """
+        :type s: str
+        :rtype: str
+        """
+        '''
+        straight cascading
+        '''
+        c = Counter(s)
+        n = [0]*10
+        
+        n[0] = c['z']
+        n[2] = c['w']
+        n[4] = c['u']
+        n[6] = c['x']
+        n[8] = c['g']
+        n[1] = c['o'] - n[0] - n[2] - n[4]
+        n[3] = c['h'] - n[8]
+        n[5] = c['f']- n[4]
+        n[7] = c['s'] - n[6]
+        n[9] = c['i'] - n[5] - n[6] - n[8]
+        
+        output = []
+        for i in range(10):
+            output.append(str(i)*n[i])
+        return ''.join(output)
+
+########################
+#Flip Binary Tree to Match Preorder Traversal
+#########################
+# Definition for a binary tree node.
+# class TreeNode(object):
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution(object):
+    def flipMatchVoyage(self, root, voyage):
+        """
+        :type root: TreeNode
+        :type voyage: List[int]
+        :rtype: List[int]
+        """
+        '''
+        pre order traversal is root, left, right
+        we want to return the nodes that we flip such that the the flipped nodes match the pre order traversal, or the voyage
+        ughhhh, this one sucks....
+        root, is an actuall Tree Note, voyage is a list
+        https://leetcode.com/problems/flip-binary-tree-to-match-preorder-traversal/discuss/214216/JavaC%2B%2BPython-DFS-Solution
+        dfs recurisve solution
+        global integer idx pointing to spot in voyage
+        if the current node we are is None, just return
+        if the curret node we are does not match the voyage, no amound of swapping can be done to change, return -1
+        if there is a let, butw e dont have the voyage value, flip the node with its right
+        '''
+        self.result = []
+        self.idx = 0
+        
+        def dfs(node):
+            if node:
+                #not matching the voyage, we are doomed
+                if node.val != voyage[self.idx]:
+                    self.result =[-1]
+                    return
+                #otherwise keep going
+                self.idx += 1
+                #if we can swap left with right
+                if node.left and node.left.val != voyage[self.idx]:
+                    self.result.append(node.val)
+                    #but since we swapped do down right now
+                    dfs(node.right)
+                    dfs(node.left)
+                else:
+                    dfs(node.left)
+                    dfs(node.right)
+        dfs(root)
+        if self.result and self.result[0] == -1:
+            return [-1]
+        return self.result
+
+class Solution(object):
+    def flipMatchVoyage(self, root, voyage):
+        """
+        :type root: TreeNode
+        :type voyage: List[int]
+        :rtype: List[int]
+        """
+        '''
+        iterative stack
+        '''
+        results = []
+        stack = [root]
+        idx = 0
+        while stack:
+            node = stack.pop()
+            if not node:
+                continue
+            #not matching, we are doomed
+            if node and node.val != voyage[idx]:
+                return [-1]
+            #on to the enxt
+            idx += 1
+            #potential swap
+            if node.right and node.right.val == voyage[idx]:
+                #making sure its not a leaf
+                if node.left:
+                    results.append(node.val)
+                stack.append(node.left)
+                stack.append(node.right)
+            else:
+                stack.append(node.right)
+                stack.append(node.left)
+        return results
+
+########################
+# Parallel Courses
+#########################
+#BFS using Q
+class Solution(object):
+    def minimumSemesters(self, n, relations):
+        """
+        :type n: int
+        :type relations: List[List[int]]
+        :rtype: int
+        """
+        '''
+        graph problme using bfs
+        intuition:
+            learn all courses avaialbe in a single semester to minmize the number of semesters
+            we start from courses taht have no prereqs
+            traverse and marked as learned, and we keep going until there are no more available course to learn
+            we add to the quea all possible classes we can take
+            is the case where we cannot take any more courses, i.e if the number of nodes we visited is strucly less than the number of total nodes
+        algo:
+            1. build the directed graph of relations
+            2. record the in-degree of each node (i.e the number of edges, in this case the num of prereqs)
+            3. inint q, and push into the q, those nodes with 0 edges
+            4. init step and visint count
+            5. bfs
+                a. inint next que to record nodes needed in next pass
+                b. incrment step
+                c. for each node in q:
+                    1. increment visited count
+                    2. for each end node reachable frmo node
+                        a. decremant the in-degre of end node
+                        b. if in indegree of end_node reaches 0, push it
+                    3. assing q to next q
+            6. if visited == N,return step, other wise retunr -1
+        '''
+        adj_list = {i:[] for i in range(1,n+1)}
+        in_degree = {i:0 for i in range(1,n+1)}
+        for start,end in relations:
+            adj_list[start].append(end)
+            in_degree[end] += 1
+            
+        q = deque()
+        #mark class completition
+        taken = set()
+        semesters = 0
+        #we need to add to this q all starting classes with 0 in degree
+        for node,preq in in_degree.items():
+            if preq == 0:
+                taken.add(node)
+                q.append(node)
+                
+        while q:
+            N = len(q)
+            #bfs for each class in q
+            for i in range(N):
+                curr_course = q.popleft()
+                for next_course in adj_list[curr_course]:
+                    #use up a preq, we added the ones with zero prereqs, so these should be > 0
+                    in_degree[next_course] -= 1
+                    #now for all the next courses, take if zero
+                    if in_degree[next_course] == 0:
+                        q.append(next_course)
+                        taken.add(next_course)
+            #incrment the semester count
+            semesters += 1
+        #we only return the semses if we have taken all classes, otherwise we didnt because there was a cycle
+        if len(taken) == n:
+            return semesters
+        else:
+            return -1
+
+#dfs with cycle detection
+#note, if i this were an interview, id go with BFS
+#dfs DAG cycle detection are way too hard
+class Solution(object):
+    def minimumSemesters(self, n, relations):
+        """
+        :type n: int
+        :type relations: List[List[int]]
+        :rtype: int
+        """
+        '''
+        dfs, from the BFS we notice one thing,
+        the number of semesters needed is equal to the length of the longet path in the graph
+        now think about this? why?
+        if we are allowed to take as many classes as we can in one semester, then the only constraint would be the number of classes that we cant ake that have a prerequsite!
+        we cannot take a class without taking its prereq, so in the graph, the min number of semesters is the longest path!
+        i.e take class one by one satisfying the prereqs
+        the problem happens if there is a cycle
+        
+        intuition:
+            * check for cycle in graph
+            * find the longest path
+            each of these parts can be done with dfs, approach 3 combines them in one approach
+            * cycle detection:
+                each node has one of three states, unvisited, visiting, visited
+                before dfs we inint all nodes to their state
+                while dfsing we mark the current node as visiting, until we search all paths out from the node
+                if we meed a node marked with processing, it must have come from upstream, i.e cycle present so abandon
+                if dfs finishes, and all ndoes are marked as visited, no ccyle
+            * longest path:
+                * typical dfs, return max out of all recusrive calls for its child nodes
+                * to prevent reducnancies, we cache
+        
+        algo:
+            Step 1: Build a directed graph from relations.
+            Step 2: Implement a function dfsCheckCycle to check whether the graph has a cycle.
+            Step 3: Implement a function dfsMaxPath to calculate the length of the longest path in the graph.
+            Step 4: Call dfsCheckCycle, return -1 if the graph has a cycle.
+            Step 5: Otherwise, call dfsMaxPath. Return the length of the longest path in the graph.
+        '''
+        adj_list = {i:[] for i in range(1,n+1)}
+        for start,end in relations:
+            adj_list[start].append(end)
+            
+        #check if graph has cycle 
+        visited = {}
+        
+        def dfs_has_cycle(node):
+            if node in visited:
+                return visited[node]
+            else:
+                visited[node] = -1 #mark as visiting
+            for end in adj_list[node]:
+                if dfs_has_cycle(end) == True:
+                    return True #cycle
+            #mark as visited
+            visited[node] = False
+            return False
+        for node in adj_list.keys():
+            if dfs_has_cycle(node) == True:
+                return -1
+        
+        #no cylce present, find longest path, markes the longest path for each node
+        visited_length = {}
+        
+        def dfs_max_path(node):
+            if node in visited_length:
+                return visited_length[node]
+            max_length = 1
+            for end in adj_list[node]:
+                #get thhe currenth length
+                length = dfs_max_path(end)
+                max_length = max(max_length,length+1)
+            #cache it
+            visited_length[node] = max_length
+            return max_length
+        
+        return max(dfs_max_path(node) for node in adj_list.keys())
+
+#######################
+#Russian Doll Envelopes
+#######################
+#near end of the month hard problem, no sweat if i cant get it
+#brute force won't work in all settings
+class Solution(object):
+    def maxEnvelopes(self, envelopes):
+        """
+        :type envelopes: List[List[int]]
+        :rtype: int
+        """
+        '''
+        an envolope can fit into another evenvolope if its w,h are less than the current envolope under consideration
+        brute force is easy
+        for each enveolope examine every other envolope and see if it can go inside it
+        update maxlength on the floy
+        '''
+        N = len(envelopes)
+        max_nesting = 0
+        for i in range(N):
+            curr_envelope = envelopes[i]
+            curr_nesting = 1
+            for j in range(N):
+                if curr_envelope[0] > envelopes[j][0] and curr_envelope[1] > envelopes[j][1]:
+                    curr_nesting += 1
+            print i,curr_nesting
+            max_nesting  = max(max_nesting,curr_nesting)
+        return max_nesting
+
+class Solution(object):
+    def maxEnvelopes(self, envelopes):
+        """
+        :type envelopes: List[List[int]]
+        :rtype: int
+        """
+        '''
+        this can be broken to the longest increasing subsequence problem (LIS)
+        we need to find a sequence such that seq[i+1] > seq[i], at some point i need to reivew
+        brief review of LIS problem:
+            we hold a dp array such that dp[i] is the smallest element that ends in increasing subsequence of legnth i + 1
+            whenver we get to a new element, call it e, we binary search inside dp to find the largest index i, such that e can end that subsequence
+            we then update dp[i] with e
+            the length of the LIS is the same as the length of dp, as if dp has index i, then it must have subsequence of length i+1
+        
+        algorithm:
+            let's pretend that we found the ebst arragnemnet of envs
+            we know that each env must be increasing in w
+            this our ebst arrangement has to be a subseq of all our envs sorted on w
+            
+            after sorting, we can simply find the length of the lognest inceasing subseq on thes second dimensino
+        example:
+            consider input: [1, 3], [1, 4], [1, 5], [2, 3], would imply we enst envelopes with heights 3,4,5
+            but this cannot be because widths for all those three with those heights are 1
+            in order to fix this, we don't just sort increaisng in first dim, but we sort decreasing second dim
+            
+        [[5,4],[6,4],[6,7],[2,3]] sort be asneding wdith and descending width
+        [2,3],[5,4],[6,4],[6,7]
+        now just look at the hgiths
+        [3,4,7]
+        which implies [2,3] -> [5,4] -> [6,7]
+        now we are just looking for the lognest increasing subsequence
+        '''
+        env = sorted(envelopes, key = lambda x: (x[0],-x[1]))
+        
+        dp = [] #this stores the indices the of the lonest icnreasin subsequege
+        for w,h in env:
+            i, N = 0,len(dp)
+            while i < N:
+                #no longe an increasing subsequence on h
+                if h <= dp[i]:
+                    break
+                i += 1
+            #gotten ot the current end
+            #meaning we encounter a new element that resulted in last increasing
+            if i == N:
+                dp.append(h)
+            #the last new element encountered did not result in an increasing subsequege
+            else:
+                dp[i] = h
+        
+        return len(dp)
+
+#binary search
+class Solution(object):
+    def maxEnvelopes(self, envelopes):
+        """
+        :type envelopes: List[List[int]]
+        :rtype: int
+        """
+        '''
+        using binary search
+        '''
+        env = sorted(envelopes, key = lambda x : (x[0],-x[1]))
+        
+        dp = []
+        for w,h in env:
+            i = bisect_left(dp,h)
+            
+            if i == len(dp):
+                dp.append(h)
+            else:
+                dp[i] = h
+        return len(dp)
+
+#binary search of LIS variant
+class Solution(object):
+    def maxEnvelopes(self, envelopes):
+        """
+        :type envelopes: List[List[int]]
+        :rtype: int
+        """
+        '''
+        binary search
+        '''
+        N = len(envelopes)
+        if N<= 1:
+            return N
+        
+        #sort ascneding width, and descending height
+        envelopes.sort(key = lambda x: (x[0],-x[1]))
+        #find LIS
+        size = 0
+        tails = [0]*N
+        
+        for w,h in envelopes:
+            #binary search
+            left,right = 0,size -1 #won't go into the first pass
+            while left <= right:
+                mid = left + (right - left) //2 
+                if tails[mid] >= h:
+                    #no longer increasing
+                    right = mid -1
+                else:
+                    left = mid + 1
+            #we want the position to the left? why? idk
+            tails[left] = h
+            size = max(size,left+1)
+        return size
+
+########################
+#Stamping the sequence
+########################
+class Solution(object):
+    def movesToStamp(self, stamp, target):
+        """
+        :type stamp: str
+        :type target: str
+        :rtype: List[int]
+        """
+        '''
+        this one is doozy, lets go over the official LC solution
+        work backwards
+        image we stamped the seq with moves m1,m2...mN 
+        now form the target, make the moves in reverse order to to get the starting string ??????
+        
+        now lets call the ith window, a subarray of target of lengthe stamp.lenghtm that starts at i
+        each move at position i is possible of the ith window matches the stamp
+        after every char in the windwo becomes a wildcard that can match any char in the stamp
+        example:
+        stamp = 'abca', target = 'aabcaca'
+        working backwards
+        starting at i == 1, we can indo the chars in the window
+        'a????ca'
+        then undo starting at i == 3
+        'a??????'
+        then undo at 0
+        '???????'
+        algo:
+            1. keep track of every window. we want to know how many cells initally match the stamp, call this made, and which ones don't call todo
+            2. any window that are ready get enqued
+            3. more specifically, we enqueue the positions of each char (to save time we enqueue by char not by window). this represents that the char is ready to turn into a ? int out working target string
+            4. for each char, look at all the windows that intesect it and updater their todo lists
+            5. if any todo lists become empty in this amnner, then we enque the chars in window made that hve not been processed yet
+        '''
+        #cache
+        M, N = len(stamp), len(target)
+        q = deque()
+        done = [False]*N
+        ans = []
+        A = []
+        #go through all windows
+        for i in range(N-M+1):
+            #for each window [i,i+M), A[i] will contain infor on what needs to change befor we can reverse it
+            made, todo = set(),set()
+            for j,c in enumerate(stamp):
+                #just coparing ith window with chars in stamp
+                a = target[i+j]
+                #matc
+                if a == c:
+                    made.add(i+j) #adding indices
+                else:
+                    todo.add(i+j)
+            #to examine
+            A.append((made,todo))
+            #if we can reverse stamp at i immediatly, enqueue letters from this window
+            if not todo: #i.e all made
+                ans.append(i)
+                for j in range(i,i+M):
+                    if not done[j]:
+                        q.append(j)
+                        done[j] = True
+        #bfs
+        while q: #for each enqued letter, i.e it could not revered just yet
+            i = q.popleft()
+            #for each window that is potentially affected, j is tart
+            for j in range(max(0,i-M+1),min(N-M,i)+1):
+                if i in A[j][1]: #the affected window
+                    A[j][1].discard(i) #remove from todolist of this window
+                    if not A[j][1]: #to di list of this window might be empty
+                        ans.append(j)
+                        for m in A[j][0]: #for each letter to potentaily enqueu
+                            if not done[m]:
+                                q.append(m)
+                                done[m] = True
+        return ans[::-1] if all(done) else []
+
+            
