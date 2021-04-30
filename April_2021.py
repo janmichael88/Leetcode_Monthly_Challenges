@@ -2201,3 +2201,2304 @@ class Solution(object):
         #connect
         before.next = after_head.next
         return before_head.next
+
+######################
+#Fibonacci Number
+######################
+class Solution(object):
+    def fib(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        bleagh good review problem
+        F(n) = F(n-1) + F(n-2)
+        recusrive memo
+        '''
+        memo = {}
+        
+        def fib(n):
+            if n == 0:
+                return 0
+            if n == 1:
+                return 1
+            if n in memo:
+                return memo[n]
+            result = fib(n-1) + fib(n-2)
+            memo[n] = result
+            return result
+        return fib(n)
+
+#bottom up dp O(1)
+class Solution(object):
+    def fib(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        bottom up dp 0(1)
+        '''
+        if n <= 1:
+            return n
+        if n == 2:
+            return 1
+        #now starting from the third
+        current = 0
+        num1 = 1
+        num2 = 1
+        for i in range(3,n+1):
+            current = num1 + num2
+            num2 = num1
+            num1 = current
+        return current
+
+class Solution(object):
+    def fib(self, n):
+        """
+        :type n: int
+        :rtype: int
+        """
+        '''
+        after solving the recurrence
+        the golden ration is : \frac{1+\sqrt{5}}{2}
+        F_{n} = golden_ration^{N+1} / \sqrt{5}
+        '''
+        golden_ratio = (1+ 5**.5) / 2
+        return int((golden_ratio**n + 1) / (5**0.5))
+
+#########################################
+#Minimum Swaps to Group All 1's Together
+#########################################
+#brute force sliding windows gives me TLE
+#need to use anohter approach
+class Solution(object):
+    def minSwaps(self, data):
+        """
+        :type data: List[int]
+        :rtype: int
+        """
+        '''
+        intuion:
+        say for example we are given the array
+        [0,0,1,1,0,1]
+        well we can swap once and get
+        [0,0,0,1,1,1]
+        we know that if we group the ones together, we have a subarray if size equal to number of ones!
+        we can use a sliding window of the size numbers of ones, and for each window record the difference between zeros and ones, and minimizne the answer on the fly, 
+        this would be the brute force sliding window approach
+        
+        '''
+        ones = sum(data)
+        answer = len(data) - ones
+        for i in range(len(data)-ones+1): #check every window
+            window = data[i:i+ones]
+            curr_ones = sum(window)
+            answer = min(answer,ones - curr_ones)
+        return answer
+
+#two pointer sliding windows
+class Solution(object):
+    def minSwaps(self, data):
+        """
+        :type data: List[int]
+        :rtype: int
+        """
+        '''
+        instead of for looping across every window in the array
+        we can use a two pointer sliding window
+        key: we need to find the maximum number of 1's in the window so that we can make 
+        the smallest number of swaps to achieve the goal
+        algo:
+            * use two pointers left and right to maintain a sliding window
+            * check every window in the array and we would calculate the number 1;s currentl seens
+            * store the largest number of ones we've sesn
+            * but also maintain the lenght of size ones
+            * since the values in the array are only zero and one, well we can just actuall incrment by their elemenmt values
+        '''
+        ones = sum(data)
+        count_ones = 0
+        max_ones = 0
+        left,right = 0,0
+        
+        #two pointers
+        while right < len(data):
+            #updating count
+            count_ones += data[right]
+            right += 1
+            #maintain length
+            if right - left > ones:
+                count_ones -= data[left]
+                left += 1
+            
+            max_ones = max(max_ones,count_ones)
+        return ones- max_ones
+        
+class Solution(object):
+    def minSwaps(self, data):
+        """
+        :type data: List[int]
+        :rtype: int
+        """
+        '''
+        we also could use a deque
+        '''
+        ones = sum(data)
+        count_ones = 0
+        max_ones = 0 
+        array = deque()
+        
+        for i in range(len(data)):
+            array.append(data[i])
+            count_ones += data[i]
+            
+            if len(array) > ones:
+                count_ones -= array.popleft() #remove the earliast eleemnt 
+            max_ones = max(max_ones,count_ones)
+        return ones - max_ones
+
+##############################################
+#Remove All Adjacent Duplicates in String II
+#############################################
+#YASSSS
+class Solution(object):
+    def removeDuplicates(self, s, k):
+        """
+        :type s: str
+        :type k: int
+        :rtype: str
+        """
+        
+        stack = []
+        for char in s:
+            #increment to matchign char at top of stack
+            if stack and stack[-1][0] == char:
+                stack[-1][1] += 1
+            #othewise just load in a new char
+            else:
+                stack.append([char,1])
+            
+            if stack[-1][1] == k:
+                stack.pop()
+        
+        
+        output = ""
+        for char,count in stack:
+            #we need to add the chars wit their final counts
+            output += char*count
+        return output
+
+############################################
+# Number of Submatrices That Sum to Target
+###########################################
+#well i have no idea...
+class Solution(object):
+    def numSubmatrixSumTarget(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        hard problem, dont worry about it too much
+        we can degenerate this problem intot he subarry sum equals k
+        one of the best solutions for this problem is to use a hashmap with key as the prefize sum
+        prefix is just cumsum up to i for i in rang len(array)
+        for i in range(len(array)): #for the 1 d case
+            \sum_{i=0}^{i}
+        we can use a prefix sum for the 2d cae
+        let P be m by n
+        P_{mn} = \sum{i=0}^{m} \sum_{j=0}^{n} x_{ij}, and so prefix sum is O(R X C)
+        reduce 2d problem to 1d ;
+            fix two rows, r1 and r2
+            using 2d prefix sum, we can get the sum of each prefmize matrix"
+                curr_sum = ps[r2][col] - ps[r1-1][col]
+            the sum itselft could be considered as a 1d prefix sum, because when rows are fixed, there is just one paramater to play with
+        takeaway:
+            use 2d prefix sum to reduce the problems to lots of smaller 1d problems
+            use 1d prefix sum to solve tehse 1 d problems
+        algo:
+            init count to 0
+            compute rows and cols
+            compure 2d prefix sum for 1 more cols and 1 more rows
+            iterate from r1 (1 to r) 
+                from r2 (r1 to r)
+                in this double loop, the left and right row bondaries are fixed
+                now we can treat this as the 1d cae
+                init hashmap: number of matrices which use [r1,r2]
+                iterate over columns from 1 to c+ 1:
+                    compute curr 1d prefix sum using prev computed 2d sum
+                    the number of times the sum occures defines the number of matrices which use r1....r2 rows and sum to target
+                    increment count by that much
+                    add the current 1d prefix sum into the hashamp
+            return count
+        
+        '''
+        #compute prefix sum for 2d case
+        def prefix_2d(matrix):
+            rows = len(matrix)
+            cols = len(matrix[0])
+            prefix = [[0*cols] for _ in range(rows)]
+            for i in range(1,rows+1):
+                for j in range(1,cols+1):
+                    prefix[i][j] = prefix[i-1][j] + prefix[i][j-1] - prefix[i-1][j-1] + matrix[i-1][j-1]
+            return prefix #idk how i'm gonna rememebr this
+        
+        rows, cols = len(matrix),len(matrix[0])
+        
+        #compute 2d prefix sum
+        ps = [[0]*(cols+1) for _ in range(rows+1)]
+        for i in range(1,rows+1):
+            for j in range(1,cols+1):
+                ps[i][j] = ps[i-1][j] + ps[i][j-1] - ps[i-1][j-1] + matrix[i-1][j-1]
+        
+        count = 0
+        #reduce to 1d case, review this problem tonight!
+        #fix two rows r1 and r2
+        #compute 1d prefix sum for all matrices using r1..r2
+        for r1 in range(1,rows+1):
+            for r2 in range(r1,rows+1):
+                h = defaultdict(int)
+                h[0] = 1
+                for col in range(1,cols+1):
+                    #1d prefix sum
+                    curr_sum = ps[r2][col] - ps[r1-1][col]
+                    #add subarrays which sum up to curr_sum - target
+                    count += h[curr_sum - target]
+                    #save current prefix sum
+                    h[curr_sum] += 1
+        return count
+
+class Solution(object):
+    def numSubmatrixSumTarget(self, matrix, target):
+        """
+        :type matrix: List[List[int]]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        https://leetcode.com/problems/number-of-submatrices-that-sum-to-target/discuss/1162767/JS-Python-Java-C%2B%2B-or-Short-Prefix-Sum-Solution-w-Explanation
+        just another way of doing it
+        takeaway from prefix sum:
+            the sum of a subarray between indices i and j == the sum of the subarray from 0 to j minis the sum of the subarray form 0 to i-1
+        intuition:
+            find number of subarrays with the taget sum by using hashmap
+        
+        algo:
+            rather than iteratively checking if sum[0,j] - sum[0,i-1] == T for every pair of i,j values, we can flit it around and say:
+            sum[0,j] - T = sum[0,i-1] and since every earlier sum value has been stored in res, we can simply lookup and add or increment if found
+        notes on prefix sum:
+            we can build the prefix sum directly into the matrix
+        '''
+        rows, cols = len(matrix[0]), len(matrix) #notice the swap here
+        count = 0
+        
+        #build prefix sum in place
+        for r in matrix: #all rows
+            for i in range(1,len(r)):
+                r[i] = r[i-1] + r[i]
+                
+        #SSEK
+        for start in range(rows):
+            for end in range(start,rows):
+                #start end are bounds for upper and lower parts of matrix
+                lookup = defaultdict(int)
+                cum_sum = 0
+                lookup[0] = 1 #do SSEK on each submatrix
+                #now go across columns
+                for row in matrix:
+                    #get current cum_sum
+                    cum_sum += row[end] - (row[start-1] if start else 0) #falling out if index
+                    #check if we already have a sum
+                    if cum_sum - target in lookup:
+                        count += lookup[cum_sum-target]
+                    #update
+                    lookup[cum_sum] += 1
+        return count
+
+##########################
+#Subarray Sum Equals K
+##########################
+#TLE OBVIE O(N^3)
+class Solution(object):
+    def subarraySum(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        brute froce, examine every possible subarray
+        dont use sum function, just + the next element
+        whenever the sum == k incrment count
+        '''
+        count = 0
+        for start in range(len(nums)):
+            for end in range(start+1,len(nums)+1):
+                sub_array_sum = 0
+                for i in range(start,end):
+                    sub_array_sum += nums[i]
+                if sub_array_sum == k:
+                    count += 1
+        return count
+
+#O(N^2)
+class Solution(object):
+    def subarraySum(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        O(N^2) time, using cum sum array
+        instead of determing sum of all subarrays for a every new subaraay consider, we can make use of the prefix sum
+        then in order to calculate the sum of elements lying between two indices, we can substract the cum sum corresponding to the two indicies to obtain the sum directly
+        algo:
+            init prefix sum array
+            to determine the sum of elements for new subarray nums[i:j]
+            we can us sum[j+1]- sum[i] ??? hmmmmm
+        
+        '''
+        N = len(nums)
+        count = 0
+        sums = [0]*(N+1) #prefix array
+        for i in range(1,N+1):
+            sums[i] = sums[i-1] + nums[i-1] #offsett, could have also just made it from nums arrayh
+        #find my starts and ends
+        for start in range(N):
+            for end in range(start+1,N+1):
+                #the difference between the end and start into sums is the sum of new candidate subarray
+                if sums[end] - sums[start] == k:
+                    count += 1
+        return count
+
+#O(N) using haspmap and compelemnt count increment
+class Solution(object):
+    def subarraySum(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: int
+        """
+        '''
+        we can use hashmap
+        intuition:
+            if the cumsum (represented by sums[i]) up to indices is the same, them sum of the elments lying in between those indices must be zero
+            extending the same though, if the cum sum up to two indices say i and j is at a difference of k, them sum lying between those indices i and j is k
+        
+        algo:
+            hashmap stores: (sum_i : num of ocurrences)
+            we keep traversing the array and keep finding the cum sum
+            every time we encounter a new sum we make a new entry and if the same sum occurs again, we increment the count corresponding sum in the hash
+            further, for every sum encountered, we also determing the number of teims the sum sum - k has occurred alreasdy, since it will determing the number of times a subarray sum with sum k has has occurred up to the index
+            we increment the count by the same amount, think about two sum
+        '''
+        count = 0
+        SUM = 0
+        mapp = defaultdict(int)
+        mapp[0] = 1 #sum of zero initially, 1 occurrence
+        for i in range(len(nums)):
+            SUM += nums[i]
+            if SUM - k in mapp:
+                count += mapp[SUM-k]
+            mapp[SUM] += 1
+        return count
+        
+#naive, but really the only way i could get it
+class Solution(object):
+    def subarraySum(self, nums, k):
+        """
+        :type nums: List[int]
+        :type k: int
+        :rtype: int
+        """
+        count = 0
+        for start in range(len(nums)):
+            summ = 0
+            for end in range(start,len(nums)):
+                summ += nums[end]
+                if summ == k:
+                    count += 1
+        return count
+        
+
+#####################################
+#Remove Nth Node From End of List
+####################################
+#meh it works
+class Solution(object):
+    def removeNthFromEnd(self, head, n):
+        """
+        :type head: ListNode
+        :type n: int
+        :rtype: ListNode
+        """
+        '''
+        dump elements in array, delete nth from end, rebuild
+        '''
+        temp = []
+        curr = head
+        while curr:
+            temp.append(curr.val)
+            curr = curr.next
+        del temp[-n]
+        #rebuild
+        dummy = ListNode(0)
+        curr = dummy
+        for num in temp:
+            curr.next = ListNode(num)
+            curr = curr.next
+        return dummy.nextr.next.next
+        return head
+
+#two pass
+class Solution(object):
+    def removeNthFromEnd(self, head, n):
+        """
+        :type head: ListNode
+        :type n: int
+        :rtype: ListNode
+        """
+        '''
+        two pass
+        '''
+        #get the length
+        #watch the edge cases, we are starting from zero for both nodes
+        dummy = ListNode(0)
+        dummy.next = head #embedding!
+        N = 0
+        temp = head
+        while temp:
+            N += 1
+            temp = temp.next
+            
+        #offset 1
+        N -= n #this part is really clever, from the end
+        temp = dummy
+        #adavance
+        while N > 0: #keep decrementing
+            N -= 1
+            temp = temp.next
+        
+        #reconnect and pass
+        temp.next = temp.next.next
+        return dummy.next
+
+#one pass
+class Solution(object):
+    def removeNthFromEnd(self, head, n):
+        """
+        :type head: ListNode
+        :type n: int
+        :rtype: ListNode
+        """
+        '''
+        we can optimze to one pass using two pointers
+        first pointer advances n+1 steps from the beginning
+        while second pointer starts from the beginning of the list
+        now both pointers are exactly separated n nodes part
+        we can maintain this gap by advancing both pointers toegether until the first pointer arrives past the last node.
+        this must mean the second pointer will be pointing to the nth node (from the last)
+        we relinkg the next pointer of the node referenced by the second pointer to point to the node's next next node
+        '''
+        dummy = ListNode(0)
+        dummy.next = head
+        first = dummy
+        second = dummy
+        
+        #advance first n away
+        for i in range(n+1):
+            first = first.next
+        #move both
+        while first:
+            first = first.next
+            second = second.next
+        
+        second.next = second.next.next
+        return dummy.next
+
+###########################
+#Combination Sum IV
+###########################
+class Solution(object):
+    def combinationSum4(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        recusrive backtracking
+        but before recursing again and advancing through the nums array, check is i can keep using then current number
+        '''
+        memo  = {}
+        #yassssss
+        
+        def rec(idx,target):
+            count = 0
+            #careful not to keep going after target diminishes
+            if target <= 0:
+                if target == 0:
+                    #valid path
+                    return 1
+                return 0
+            if (idx,target) in memo:
+                return memo[(idx,target)]
+            for i in range(idx,len(nums)):
+                candidate = nums[i]
+                if target - candidate > 0:
+                    #stay on the index
+                    count += rec(idx,target-candidate)
+                else:
+                    #move up the index
+                    count += rec(idx+1,target-candidate)
+            memo[(idx,target)] = count
+            return count
+        return rec(0,target)
+
+#top down, recursive with memo
+class Solution(object):
+    def combinationSum4(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        just some notes from the official LC writeup
+        really asking for permutations
+        or any array of multiplicty taken from nums == target
+        takeaway:
+            everytime we take a num reduce the target
+        expression:
+            we need to count the number of combinations taht make target
+            combs(target) = \intersection combs(target - nums[i]) if target >= nums[i]
+        if the numbers sorted, we could terminate in the loop to prune
+        '''
+        memo = {}
+        
+        def combs(remain):
+            if remain == 0:
+                return 1
+            if remain in memo:
+                return memo[remain]
+            
+            count = 0
+            for num in nums:
+                #can still us the numer
+                if remain - num >=0:
+                    count += combs(remain-num)
+            memo[remain] = count
+            return count
+        
+        return combs(target)
+
+class Solution(object):
+    def combinationSum4(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: int
+        """
+        '''
+        we can also come up with the bottom up DP solution
+        the analgous cache memo in top down recusrive is out dp array
+        each cell in the dp array answers the question:
+            how many combs for this target sum are there?
+            if when we take a num from nums to decrement target we are still above zero, we add to this cell the comb_sum - num count
+        
+        '''
+        dp = [0]*(target+1)
+        dp[0] = 1
+        
+        #for each sum up to target
+        for comb_sum in range(target+1):
+            #for this current sum,keep taking nums and reduct target
+            for num in nums:
+                if comb_sum - num >= 0:
+                    dp[comb_sum] += dp[comb_sum-num]
+        return dp[target]
+
+############################
+#N-ary Tree Preorder Traversal
+#############################
+#i cant belive this shit workd
+class Solution(object):
+    def preorder(self, root):
+        """
+        :type root: Node
+        :rtype: List[int]
+        """
+        '''
+        lets do this recursively first
+        recall preorder is root, left, right
+        '''
+        self.results = []
+        def dfs(node):
+            if not node:
+                return
+            self.results.append(node.val)
+            if node.children:
+                for child in node.children:
+                    dfs(child)
+        dfs(root)
+        return self.results
+
+#embedding path into function
+class Solution(object):
+    def preorder(self, root):
+        """
+        :type root: Node
+        :rtype: List[int]
+        """
+        '''
+        lets do this recursively first
+        recall preorder is root, left, right
+        '''
+        def dfs(node):
+            path = []
+            if not node:
+                return
+            path.append(node.val)
+            if node.children:
+                for child in node.children:
+                    path += dfs(child)
+            return path
+        return dfs(root)
+
+#iteratively
+class Solution(object):
+    def preorder(self, root):
+        """
+        :type root: Node
+        :rtype: List[int]
+        """
+        '''
+        iteratively, well just simulate the stack call
+        '''
+        if not root:
+            return []
+        results = []
+        stack = [root]
+        while stack:
+            curr = stack.pop()
+            if curr:
+                results.append(curr.val)
+            if curr.children:
+                for child in reversed(curr.children):
+                    #i only figured it out after seeing the pattern
+                    #need to add children in reverse
+                    stack.append(child)
+        return results
+
+########################
+#Triangle
+########################
+#yasssss!
+#i got to TLE
+class Solution(object):
+    def minimumTotal(self, triangle):
+        """
+        :type triangle: List[List[int]]
+        :rtype: int
+        """
+        '''
+        find min path fro top to bottom, min path is the smallest sum of the numbers in the path
+        recursive backtracking
+        dfs
+        from a position 
+        just build all possbile paths, and to global bucket, then find min, and return
+        
+        '''
+        rows = len(triangle)
+        #only one row,edge cae
+        if rows == 1:
+            return min(triangle[0])
+        self.paths = []
+        def dfs(row,col,path):
+            #if i've gotten to final row,add our path
+            if row == rows:
+                self.paths.append(path)
+                return
+            dfs(row+1,col+1,path+[triangle[row][col]])
+            dfs(row+1,col,path+[triangle[row][col]])
+
+        
+        dfs(0,0,[])
+        #find the min of the results
+        result = float('inf')
+        for p in self.paths:
+            result = min(sum(p),result)
+        return result
+
+class Solution(object):
+    def minimumTotal(self, triangle):
+        """
+        :type triangle: List[List[int]]
+        :rtype: int
+        """
+        '''
+        recursive official solution from LC
+        we define a helper function rec(i,j) that returns the minium path sum formt he current (i,j)
+        down to the base
+        we only recurse when there is still a row to go down into
+        written succintly:
+            return triangle[i][j] + min(rec(i+1,j+1),rec(i+1,j))
+        then we can just cache along the long
+        '''
+        memo = {}
+        
+        def dfs(i,j):
+            if (i,j) in memo:
+                return memo[(i,j)]
+            result = triangle[i][j]
+            #we keep recusring as long we can go down into a row
+            if i < len(triangle)-1:
+                result += min(dfs(i+1,j),dfs(i+1,j+1))
+            #cache
+            memo[(i,j)] = result
+            return result
+        
+        return dfs(0,0)
+
+#now lets go over some of the dp solutions
+class Solution(object):
+    def minimumTotal(self, triangle):
+        """
+        :type triangle: List[List[int]]
+        :rtype: int
+        """
+        '''
+        if we want the min path sum
+        then we we would want the minimum from left aboveus or right above us
+        then we would add this min the current cell we are at
+        this is the main idea
+        we can do this in place, and just bring down the min sum level by level
+        notes on in place algos:
+            1. if the algo needs to run in a multi thread environment (i.e parallel), then overwriting the space may not be a good idea
+            2. if there is a single thread, the algo has exlcusvive access to the array while running, the array might need to be resued later by another thread
+        since this a trianlge, we need to be careful of how we index
+        cases:
+            1. if row == col, to only
+            2. if col == 0, onle one above (row-1,col)
+            3. if col == row, one above but to elft (row-1,col-1)
+            4. other case have both (row-1,col-1) or (row-1,col)
+        we can collapse case 4, by checkt checking all cells in the current column
+        '''
+        for row in range(1,len(triangle)):
+            #starting from second row actually
+            for col in range(row+1): #col will always be 1 more than row
+                smallest_above = float('inf')
+                #find all 'available' cells above
+                if col == 0:
+                    smallest_above = triangle[row-1][col]
+                elif col == row:
+                    smallest_above = triangle[row-1][col-1]
+                else:
+                    smallest_above = min(triangle[row-1][col],triangle[row-1][col-1])
+                #update in palce
+                triangle[row][col] += smallest_above
+        #return the min in the final row
+        return min(triangle[-1])
+
+#O(N) space
+class Solution(object):
+    def minimumTotal(self, triangle):
+        """
+        :type triangle: List[List[int]]
+        :rtype: int
+        """
+        '''
+        using aux space,
+        if we wanted we could have just made a deep copy of the triangle
+        and impute taht copy, that way we would have access to the oringal still
+        even better, we just update rows for every time we are trying to find the minimum
+        O(N) space
+        '''
+        
+        prev_row = triangle[0]
+        for row in range(1,len(triangle)):
+            #starting from second row actually
+            curr_row = []
+            for col in range(row+1): #col will always be 1 more than row
+                smallest_above = float('inf')
+                #find all 'available' cells above
+                if col == 0:
+                    smallest_above = prev_row[col]
+                elif col == row:
+                    smallest_above = prev_row[col-1]
+                else:
+                    smallest_above = min(prev_row[col],prev_row[col-1])
+                #update in palce
+                curr_row.append(triangle[row][col] +smallest_above)
+            prev_row = curr_row
+        #return the min in the final row
+        return min(prev_row)
+
+#starting from the bottom of the pyramid
+class Solution(object):
+    def minimumTotal(self, triangle):
+        """
+        :type triangle: List[List[int]]
+        :rtype: int
+        """
+        '''
+        we can also start from the bottom
+        say we have
+          1
+         2 3
+        4 5 6
+        
+        we can start from the bottom row
+        4 5 6
+         2 3 
+          1
+          
+        then for each cell, we have acess to to 2 from above, 
+        we take the minimum of those two in place and incrment
+        
+        4 5 6
+         6 8
+          7
+        '''
+        #coyuld have also used aux space, NOT in place
+        N = len(triangle)
+        for row in range(N-2,-1,-1):
+            for col in range(row+1):
+                triangle[row][col] += min(triangle[row+1][col+1],triangle[row+1][col])
+        return triangle[0][0]
+
+class Solution(object):
+    def minimumTotal(self, triangle):
+        N = len(triangle)
+        below_row, above_row = triangle[N-2], triangle[N-1]
+        for row in range(N-2,-1,-1):
+            for col in range(row+1):
+                below_row[col] += min(above_row[col+1],above_row[col])
+            above_row = below_row
+            below_row = triangl
+
+############################
+#Brick Wall
+##############################
+#idk how to handle the edge cases
+class Solution(object):
+    def leastBricks(self, wall):
+        """
+        :type wall: List[List[int]]
+        :rtype: int
+        """
+        '''
+        if i want to find the least number of bricks, i need the line that has the most number of edges
+        but it could be the case where the most number of edges may not have the least number of bricks?
+        is this true??? i dont think so, taking up an edge means one less space for bricks
+        N = len(wall), which is the number of rows
+        rows = bricks + edges
+        maximizing edges minimizes bricks
+        another thing sum(ith row) same for all i in N
+        if i find the edges just subtract from N
+        cumsum array marks the edges
+        get cumsum array, 
+        hash:
+            count up edges at cumsum
+            find max, deduct from N
+            actually you want second highest, highest marks end
+        fucking edge cases!
+        '''
+        #edge case, if all same and one brike, return 
+        N = len(wall)
+        def helper(arr):
+            N = len(arr)
+            dp = [0]*N
+            dp[0] = arr[0]
+            for i in range(1,N):
+                dp[i] = dp[i-1] + arr[i]
+            return dp
+        cumsums = []
+        for row in wall:
+            cumsums.append(helper(row))
+        counts = defaultdict(int)
+        for row in cumsums:
+            for num in row:
+                counts[num] += 1
+        #edge case
+        if len(counts) == 1:
+            return N
+
+        max_edges = 0
+        for k,v in counts.items():
+            if k != N:
+                max_edges = max(max_edges,v)
+        return N - max_edges
+            return N - max_edges
+        else:
+            return max_edges
+
+#YASSSSSS
+class Solution(object):
+    def leastBricks(self, wall):
+        """
+        :type wall: List[List[int]]
+        :rtype: int
+        """
+        '''
+        if i want to find the least number of bricks, i need the line that has the most number of edges
+        but it could be the case where the most number of edges may not have the least number of bricks?
+        is this true??? i dont think so, taking up an edge means one less space for bricks
+        N = len(wall), which is the number of rows
+        rows = bricks + edges
+        maximizing edges minimizes bricks
+        another thing sum(ith row) same for all i in N
+        if i find the edges just subtract from N
+        cumsum array marks the edges
+        get cumsum array, 
+        hash:
+            count up edges at cumsum
+            find max, deduct from N
+            actually you want second highest, highest marks end
+        fucking edge cases!
+        well hold on, i think you had the right idea, just build up the hash on the fly
+        don't include the last cumsum though
+        '''
+        mapp = defaultdict(int)
+        for row in wall:
+            cum_sum = 0
+            for i in range(len(row)-1): #don't iclude the last brick
+                cum_sum += row[i]
+                mapp[cum_sum] += 1
+        result = len(wall)
+        for k,v in mapp.items():
+            result = min(result,len(wall)-v)
+        return result
+
+#update on the fly
+class Solution(object):
+    def leastBricks(self, wall):
+        """
+        :type wall: List[List[int]]
+        :rtype: int
+        """
+        mapp = defaultdict(int)
+        result = len(wall)
+        for row in wall:
+            cum_sum = 0
+            for i in range(len(row)-1): #don't iclude the last brick
+                cum_sum += row[i]
+                mapp[cum_sum] += 1
+                #update on the fly
+                result = min(result, len(wall)-mapp[cum_sum])
+        
+        return result
+
+#brute force, a few ways
+class Solution(object):
+    def leastBricks(self, wall):
+        """
+        :type wall: List[List[int]]
+        :rtype: int
+        """
+        '''
+        brute force TLE
+        we traverse a unit brick starting from the first row
+        we can keep track of what brick we are one by using another array to mark the bth brick in each row
+        we also maintain a count variable to count the number of times we cross the brick
+        for every rwo considered during the colummn by column traversal (incremented one at time) we check if we've hit
+        this is done by updating the bricks widht in the array"
+        IMPORTANT: make sure we can overwrite the input array, ask interviewer
+        
+        '''
+        #get widht of wall
+        width = 0
+        for b in wall[0]:
+            width += b
+        
+        #get height, positions arrary,and keep track of fewetet corssings
+        height = len(wall)
+        pos = [0]*height
+        fewest_intersections = height #starting off we'd assume the first line is crossing all bricks
+        for col in range(width -1):
+            count = 0
+            for i in range(height):
+                curr_row = wall[i]
+                #use up the current brick by cutting it
+                curr_row[pos[i]] -= 1
+                if curr_row[pos[i]] == 0:
+                    #move up to the new brick
+                    pos[i] += 1
+                #otherwise we have a crossing
+                else:
+                    count += 1
+            #after the first virutal brick of length 1, we update
+            fewest_intersections = min(fewest_intersections,count)
+            
+        return fewest_intersections
+
+###########################################
+#Missing Number In Arithmetic Progression
+##########################################
+class Solution(object):
+    def missingNumber(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        the big give away is that the first or last value was not removed
+        we can just use the sum of an arithmetic sequence
+        find the sum, and divide by the number of intervals n-1
+        sum = n(a1 + aN) / 2
+        subtract the sum(arr) from this sum
+        '''
+        expected_sum = (len(arr)+1)*(arr[0] + arr[-1]) / 2
+        return expected_sum - sum(arr)
+
+class Solution(object):
+    def missingNumber(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        official LC solution
+        we know the first and last were not removed,
+        we can get there different and divide by the number of values
+        idx = initial
+        idx1 = initial + 1*diff
+        idx2 = initial + 2*diff
+        idxn = initital + n*diff
+        
+        algo:
+            find the expected diffeence
+            loop through the array and check if the elelent is expected or not
+            if ist not return
+            for starters assume expected be the first element
+            this is a good trick, keep this in mind
+        '''
+        N = len(arr)
+        diff = (arr[-1] - arr[0]) / N
+        missing = arr[0]
+        for num in arr:
+            if num != missing:
+                return missing
+            missing += diff
+        return missing
+
+#binary search
+class Solution(object):
+    def missingNumber(self, arr):
+        """
+        :type arr: List[int]
+        :rtype: int
+        """
+        '''
+        in this approach we can use binary seach,
+        we know that consective difference must be at least the expected difference
+        when using binary search we can check if the mid_idx*difference is arr[0] + that
+        if it is, we know all elements from lo are ok
+        if not we check the right
+        NOW: the lo idx pointer will be the element just before the missing?
+        why? is this the case because it's supposed to be mid! 
+        and it not!
+        we return the index at the lowe + lo*difference
+        '''
+        N = len(arr)
+        diff = (arr[-1] - arr[0]) / N
+        lo = 0
+        hi = N-1
+        
+        while lo < hi:
+            mid = lo + (hi-lo) // 2
+            #we check if mid matches, if it does, the left side could not contain missing
+            if arr[mid] == arr[0] + mid*diff:
+                lo = mid + 1
+            else:
+                hi = mid
+        return arr[0]+diff*lo
+
+#######################
+#Count Binary Substrings
+#######################
+class Solution(object):
+    def countBinarySubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        two pointer
+        '''
+        count = 0 
+        for i in range(len(s)):
+            #we need to scan for two cases 10 or 01
+            l,r = i,i+1
+            while l >=0  and r < len(s) and s[l] == '0' and s[r] == '1':
+                count += 1
+                l -= 1
+                r += 1
+            l,r = i,i+1
+            while l >=0  and r < len(s) and s[l] == '1' and s[r] == '0':
+                count += 1
+                l -= 1
+                r += 1
+        return count
+
+#could have also used a q
+class Solution(object):
+    def countBinarySubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        q = deque()
+        ans = 0
+        for char in s:
+            #where we need to clear a bunch of ones and zeros
+            #kind like capturing parantheses
+            while q and q[-1] == c and q[0] != c:
+                q.pop()
+            if q and q[-1] != c:
+                q.pop()
+                ans += 1
+            q.appendleft()
+        return ans 
+
+#grouping the elements and taking the min
+class Solution(object):
+    def countBinarySubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        we can group by character and push the counts of groups into an array
+        this is pretty cool
+        s = "110001111000000", then groups = [2, 3, 4, 6]
+        for every binary string of
+        '0'*k + 1*'k' or '1'*k + '0'*k, the middle of thes tring must occur between the groups
+        now once we have the groups, we can take the minimum of each consective grouping
+        when we take the min of those two, we want to sum them up
+        we start of the array groups with 1, meaning 1 group present
+        if the two consecutive elements are different, we start a new group
+        '''
+        groups = [1]
+        for i in range(1,len(s)):
+            if s[i-1] != s[i]:
+                groups.append(1)
+            else:
+                groups[-1] += 1
+                
+        #we can only make substring with consective zeros and ones
+        #but we take min count of the grouping
+        count = 0
+        for i in range(1,len(groups)):
+            count += min(groups[i],groups[i-1])
+        return count
+
+#one pass
+class Solution(object):
+    def countBinarySubstrings(self, s):
+        """
+        :type s: str
+        :rtype: int
+        """
+        '''
+        instead of building out the whole groups array, we notice that its similar to DP
+        where we only care about the curr and prev grou
+        then we can just update
+        '''
+        count = 0
+        curr_group = 1
+        prev_group = 0 
+        #what does this mean? initally we have 1 group, but no prev group
+        for i in range(1,len(s)):
+            if s[i-1] != s[i]:
+                count += min(prev_group,curr_group)
+                prev_group = curr_group
+                curr_group = 1
+            else:
+                #same group
+                curr_group += 1
+        
+        #before returning, we need check the final group
+        return count + min(curr_group,prev_group)
+
+###############################
+#Critical Connections in a Network
+###############################
+#brute force TLE
+#be happy you got this one
+class Solution(object):
+    def criticalConnections(self, n, connections):
+        """
+        :type n: int
+        :type connections: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        hard problem
+        we are essentially looking for a bridge connection
+        if we we remove this connection the graph becomes unconnected
+        remember the edges are undirected
+        deletion of bridge increases the number of conenctred nodes
+        tarjan's algorithm is a standard way of finding the articulation of points and bridges in a grpah
+        but really, you could just ust dfs to solve this problem
+        https://www.youtube.com/watch?v=RYaakWv5m6o&ab_channel=TechRevisions
+        brute force: drop all edges and see if we get anymore disconnected components
+        then dfs to see if i can visit all nodes
+        '''
+        #brute force
+        #dfs on the graph after removing and edge
+        #if after removing the edge, i cannot
+        adj_list = defaultdict(list)
+        for a,b in connections:
+            adj_list[a].append(b)
+            adj_list[b].append(a) #need to add cmoplements because it is undireced
+        
+        #define dfs, traverse the graph and return the visited set
+        def dfs(node):
+            seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh)
+        #i dont know if dfsing from each node would give me disconenctiend graph
+        #well in voke on each n, freeze the set, add to it and call it inital start
+        initial_state = set()
+        for i in range(n):
+            seen = set()
+            dfs(i)
+            temp = []
+            for v in seen:
+                temp.append(v)
+            temp = frozenset(temp)
+            initial_state.add(temp)
+            
+        bridges = set()
+        
+        #now simulate dropping an edge
+        for i in range(len(connections)):
+            dropped = copy.deepcopy(connections)
+            del dropped[i]
+            #build_adj for dropped edge
+            adj_list = defaultdict(list)
+            for a,b in dropped:
+                adj_list[a].append(b)
+                adj_list[b].append(a)
+                #but now i have to dfs for all the nodes in this curr adjlist
+            curr_state = set()
+            for j in range(n):
+                seen = set()
+                dfs(j)
+                temp = []
+                for v in seen:
+                    temp.append(v)
+                temp = frozenset(temp)
+                curr_state.add(temp)
+            if curr_state != initial_state:
+                v1,v2 = connections[i]
+                bridges.add((v1,v2))
+        #convert back to se
+        return bridges
+
+class Solution(object):
+    def criticalConnections(self, n, connections):
+        """
+        :type n: int
+        :type connections: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        LC writeu:
+        tarjan's is an effienct articulation and bridge graph finding algorithm 
+        that find's them in O(nodes + edges) time
+        key:
+            if an edge is part of cycle, than any edge in that cyle cannot be a critical componeent, i.e an edge is a criticle connection, if and only if it is not in a cycle, think on this. why?
+            if there are mulitple ways, then our edge would not be part of the ccyle
+        approach: dfs for cycle detection
+        new concept: rank
+            rank is similar to the concept of discovery times in tarjans
+            we consider each node to be a root, temporariliy
+            the rank of the root noe is always -, if not visited, keep rank as None
+            using concept of rank is very similar to keeping set of visited nodes
+            at each step of our traversal, we maintain the rank of the nodes we've come across until now in the current path
+            if at any point, we come acorss a neigh that has a lower rank than then current node, we know then that the nieghbor must have already been visited
+            SO! if we started along a path with rank 0 from the root, and aure at a dnow ith rank m and we discover a node that alreayd has rank assigned to ie 0 <=n <m, then that implies a cycle
+        importance: 
+            we can detect a cycle simply by checking if the rank has already been assigned to some neighbor or not, so when we detect a cycle, discard that edge!
+            BUT what about ancestral edges?
+            WELL, what we need is the minimum rank that a cycle inldues. we need our dfs helper to return this information so taht previous callers can use it to identify if an edge has to be discarded or not
+            after discarding an edge, the returned min rank (from all neighboring nodes) is less than current, carry it back to the previous caller
+        we know that only the current level knows of the presence of a cycle
+        to make upper levels of recusion aware of this cycle, and to help discard edges, we return the min rank that our traversk fins
+        during a step of recusion from u to b, if DFS return something <= rank of u, then u knows its neighbotr v is part of the cycle spanning back to u or some other node higher up in the recursion tree
+        algo:
+            1. dfs function will take in node and rank
+            2. build adj list
+            3. we need graph and conndict
+            4. need array to rank our nodes
+            6 dfs function: 
+                * check if node has rank assigned 
+                * else assing rankd of this node
+                * iterate over neighbords, and recuse on each of them, returing value and doing two things
+                    1. is rank <= discoer rank, edge is part of cycle and can be discared
+                    2. record min rank
+                return min rank
+        
+        '''
+        rank = {}
+        graph = defaultdict(list)
+        conn_dict = {}
+        
+        #build rank array
+        for i in range(n):
+            rank[i] = None
+        #build graph
+        for a,b in connections:
+            graph[a].append(b)
+            graph[b].append(a) #graph is undirected
+            
+            #counting number of connections low rank to high rank initally
+            conn_dict[(min(a,b),max(a,b))] = 1
+        
+        def dfs(node,discovery_rank):
+            #if node has been already visited
+            if rank[node]:
+                return rank[node]
+            #otherwise update the current rank for the node, i.e jsut marking
+            rank[node] = discovery_rank
+            #when we recurse we need to make sure we go up a rank
+            min_rank = discovery_rank + 1 #could also just max it out
+            #examin neighs
+            for neigh in graph[node]:
+                #skip parente
+                if rank[neigh] and rank[neigh] == discovery_rank - 1:
+                    continue
+                #recurse on niegh
+                rec_rank = dfs(neigh, discovery_rank+1)
+                #1. check if edge needs to be discarded
+                if rec_rank <= discovery_rank:
+                    del conn_dict[(min(node,neigh),max(node,neigh))]
+                #2. carry the min
+                min_rank = min(min_rank,rec_rank)
+            return min_rank
+        result = []
+        dfs(0,0)
+        for a,b in conn_dict:
+            result.append([a,b])
+        return result
+
+class Solution(object):
+    def criticalConnections(self, n, connections):
+        """
+        :type n: int
+        :type connections: List[List[int]]
+        :rtype: List[List[int]]
+        """
+        '''
+        https://leetcode.com/problems/critical-connections-in-a-network/discuss/1174196/JS-Python-Java-C%2B%2B-or-Tarjan's-Algorithm-Solution-w-Explanation
+        notes:
+        the algo is referred to as Tarjan's bridge finding algo, which combines recursion with union find
+        takeaways:
+            we dfs on our graph for each node, keeping track of the earliest node we can get circle back to: if from the curr node we see a node of lower rank, than the edge from that current node to the current far node must be a bridge
+        need:
+            disocvery time array
+            lowest future node array
+            time discovered, just += 1 for each invocation
+        dfs helper"
+            for each newly visited node set value for both discover time and lowest rank node before time is increment
+            recurse on the neighbors of the current node if unvisited, 
+            then if in of the next posible nodes is of a lower rank, we have a loop, and edge should be removed
+            if the rank of the future node from this current node is higher, there is no looped conenction and th edge between curr and nex is  a bridge
+        '''
+        edges  = defaultdict(list)
+        for a,b in connections:
+            edges[a].append(b)
+            edges[b].append(a)
+        disc_times = [0]*n
+        low_ranks = [0]*n
+        times = [1] #instead of keeping global variable
+        bridges = []
+        
+        def dfs(curr,prev):
+            #makr curret node
+            disc_times[curr] = times[0]
+            low_ranks[curr] = times[0]
+            #now update time
+            times[0] += 1
+            #neighbor check
+            for neigh in edges[curr]:
+                #if not markedt yet, dfs, but also update low ranks
+                if not disc_times[neigh]:
+                    dfs(neigh,curr)
+                    low_ranks[curr] = min(low_ranks[curr],low_ranks[neigh])
+                elif neigh != prev:
+                    low_ranks[curr] = min(low_ranks[curr], disc_times[neigh])
+                if low_ranks[neigh] > disc_times[curr]:
+                    #bridge
+                    bridges.append([curr,neigh])
+        dfs(0,-1)
+        return bridges
+
+##################
+#Rotate Image
+##################
+class Solution(object):
+    def rotate(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: None Do not return anything, modify matrix in-place instead.
+        """
+        '''
+        well if i were to allocate extra space, read bottom up, and left to right of the original matrix into a new matrix, and then impute back in to the original matrix
+        do this first
+        allocation extra space
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        new_mat = [[] for _ in range(rows)]
+        new_mat_ptr = 0
+        for c in range(cols):
+            for r in range(rows):
+                #lets be clever is use index offsetting :)
+                candidate = matrix[rows-r-1][c]
+                new_mat[new_mat_ptr].append(candidate)
+            new_mat_ptr += 1
+        #impute
+        for i in range(rows):
+            for j in range(cols):
+                matrix[i][j] = new_mat[i][j]
+
+#rotate in place
+class Solution(object):
+    def rotate(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: None Do not return anything, modify matrix in-place instead.
+        """
+        '''
+        we can't just swap, otherwise the matrix gets overwrite incorrectly
+        we rotate in groups of fair
+        algo:
+            at at one time we reference four positions in the array
+            1. we cache the bottom left, call it temp
+            2. the bottom left becomes the bottom right
+            3. the bottom right becomes the upper right
+            4. the upper right becomes the upper left
+            5. the upper left becomes what we cached
+            the indexing is fiddly, but really we just shrink the window frame every time
+            we only need to through N // 2, where N is th enumber of columns
+            note, in this pass, iff N is odd, the center row and cols are manipualted last
+            this is just one of those problems where you might have to draw ane example out and hard code the rules
+        '''
+        N = len(matrix[0])
+        for i in range(N//2 + N%2):
+            for j in range(N//2):
+                tmp = matrix[N-1-j][i] #bottom left
+                matrix[N-1-j][i] = matrix[N-1-i][N-j-1] #bottome right becomes bottom left
+                matrix[N-1-i][N-j-1] = matrix[j][N-1-i] #bottom right becomes upper right
+                matrix[j][N-1-i] = matrix[i][j] #upper right becomes upper left
+                matrix[i][j] = tmp #upper left becomes what cached
+
+#tranpose and reflect
+class Solution(object):
+    def rotate(self, matrix):
+        """
+        :type matrix: List[List[int]]
+        :rtype: None Do not return anything, modify matrix in-place instead.
+        """
+        '''
+        the cheeky way to transpose the matrix and reflect
+        tranpose reflect!
+        '''
+        #transpose
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        #tranpose, 
+        for i in range(rows):
+            for j in range(i,cols):
+                matrix[j][i], matrix[i][j] = matrix[i][j], matrix[j][i]
+        #reflect
+        for i in range(rows):
+            #now think of reverse string in place
+            for j in range(cols//2):
+                matrix[i][j], matrix[i][-j - 1] = matrix[i][-j - 1], matrix[i][j]
+
+##########################
+#Furthest Building You Can Reach
+##########################
+#general solution
+class Solution(object):
+    def furthestBuilding(self, heights, bricks, ladders):
+        """
+        :type heights: List[int]
+        :type bricks: int
+        :type ladders: int
+        :rtype: int
+        """
+        '''
+        think about the two questinos that can be asked.
+        how far we can get? vs can we get to the end?
+        we dont know which climbs we need to cover because we dont know the final building we canr ached
+        if our initial idea was to use ladders on the largest jumps every time, well we dont know what the largest jump would be becasue we haven't seen it yet
+        the idea would be to use ladders first, and then reallocate a ladder with the right amount of bricks when we can
+        we can then furnisha new ladder, at the cost of using more bricks
+        KEY:  If we're out of ladders, we'll replace the most wasteful ladder allocation with bricks
+        reteive the smallest climb, MIN heap!
+        '''
+        N = len(heights)
+        ladders_used = []
+        for i in range(N-1):
+            climb = heights[i+1] - heights[i]
+            if climb <= 0:
+                continue #no need for a climb
+            #use up a ladder
+            if ladders > 0:
+                ladders -= 1
+                heappush(ladders_used,climb)
+            #what if we have no ladders, use brick
+            else:
+                if ladders_used:
+                    smallest_ladder = ladders_used[0]
+                    if climb < smallest_ladder: #forced to use bricks
+                        bricks -= climb
+                    else: #we can reallocate
+                        smallest_ladder = heappop(ladders_used)
+                        heappush(ladders_used,climb)
+                        bricks -= smallest_ladder
+                #watch for the empty heap case, we just use the current climb 
+                #and deduct from bricks
+                else:
+                    bricks -= climb
+                    #if bricks is negative and now ladders, end
+                if bricks < 0:
+                    return i
+
+        return N-1
+                
+#recudec form less conditional
+class Solution(object):
+    def furthestBuilding(self, heights, bricks, ladders):
+        """
+        :type heights: List[int]
+        :type bricks: int
+        :type ladders: int
+        :rtype: int
+        """
+        '''
+        on each iteration we always add the current climb to the hap, 
+        forcing the heap for become longer; heap constraint problem\
+        notes on time complexty, NlogN, typical heapp
+        but note the heap will never contain L+1 climbs at a time, when the heap gets to L, we need to pop
+        and replace with bricks and reclaim  aldder
+        so its actuall LogL, for each N, in the worst case, N logL
+        '''
+        N = len(heights)
+        ladders_used = []
+        for i in range(N-1):
+            climb = heights[i+1] - heights[i]
+            if climb <= 0:
+                continue #no need for a climb
+            #otherwise use a ladder for this height
+            heappush(ladders_used,climb)
+            #check we can still have ladders
+            if len(ladders_used) <= ladders:
+                continue
+            #otherwise we need to use bricsk here
+            bricks -= heappop(ladders_used)
+            #if we go negative
+            if bricks < 0:
+                return i
+        return N - 1
+
+#max heap
+class Solution(object):
+    def furthestBuilding(self, heights, bricks, ladders):
+        """
+        :type heights: List[int]
+        :type bricks: int
+        :type ladders: int
+        :rtype: int
+        """
+        '''
+        we can flip the problem and use a maxheap, but ladders and bricks should now change
+        instead of allocatin ladders we allocate bricks
+        when we are out of bricks, replace the LONGEST climb with a ladder
+        algo notes:
+            we need to keep track of how many bricks we've used, 
+            the easies way is ot subtract bricks from the input parameter and check when it goes to zero
+            the only difference now, is that when bricks goes negative, we donlt simply stop
+            we need to try to get more bricks by exchaning it with a ladder
+            we do this by removing the largest brick allovation, i.e largest climb from the heap
+            why does this work? there should be a previous climb with more bricks to reclaim
+            or we've just added the largest climb onto the max heap
+            we keep going until ladders run out
+        '''
+        bricks_used = []
+        N = len(heights)
+        for i in range(N-1):
+            climb = heights[i+1] - heights[i]
+            if climb <= 0:
+                continue # do nothing
+            #MAX HEAP
+            heappush(bricks_used, -climb)
+            #use up bricks
+            bricks -= climb
+            #our of bricks and ladders
+            if bricks < 0 and ladders == 0:
+                return i
+            #but if we out of bricks and still have ladders, use a ladder to gain bricks
+            if bricks < 0:
+                bricks += -heappop(bricks_used)
+                ladders -= 1
+        return N - 1
+
+#binarys search
+class Solution(object):
+    def furthestBuilding(self, heights, bricks, ladders):
+        """
+        :type heights: List[int]
+        :type bricks: int
+        :type ladders: int
+        :rtype: int
+        """
+        '''
+        binary search for final reachable building
+        if we can ask the question, given the number of bricks and ladders, can i reach the kth building? can i reach the kth + 1 building
+        from the first two solutions, we found an NLogL approach, and doing linear search for each thing would be (N^2logL)
+        but if we go binary search search N*(logL)^2
+        before doing binary search, we need to see if our question turns the array into an equivalent sorting, if a building is reachable from k, then i can reach builidng [0 to k]. and not k+1 to end
+        https://leetcode.com/problems/furthest-building-you-can-reach/solution/
+        elegant walk through on binary search best practices
+        TAKEAWAY ON POINTERS:
+        The short rule to remember is: if you used hi = mid - 1, then use the higher midpoint. If you used lo = mid + 1, then use the lower midpoint.
+        '''
+        def is_reach(idx):
+            #determine if the idx buiuldg is reachable
+            climbs = []
+            for h1,h2 in zip(heights[:idx], heights[1:idx+1]):
+                if h2 - h1 > 0:
+                    climbs.append(h2-h1)
+            #sort the climbs
+            climbs.sort()
+            #now check whether or not we have enough bricks and laddders to cover all climbs, use up bircks before ladders
+            bricks_rem = bricks
+            ladders_rem = ladders
+            for c in climbs:
+                #not enough bricks
+                if bricks_rem >= c:
+                    bricks_rem -= c
+                elif ladders_rem >= 1:
+                    ladders_rem -= 1 #need at least one latter
+                else:
+                    #i cant make it
+                    return False
+            return True
+        
+        #binary search
+        lo,hi = 0, len(heights) -1
+        #we want a single index, and if we are length two in the final search we want the smaller one
+        while lo < hi:
+            mid = lo + (hi - lo + 1) // 2 #why + 1?, we want the upper mid to guarentee convergence
+            if is_reach(mid):
+                #building is reacable, but idk if mid + 1 is
+                lo = mid
+            else:
+                hi = mid - 1 #not reachable
+        return lo
+
+#improvmennts to binnary serach
+class Solution(object):
+    def furthestBuilding(self, heights, bricks, ladders):
+        """
+        :type heights: List[int]
+        :type bricks: int
+        :type ladders: int
+        :rtype: int
+        """
+        '''
+        we can improve binary search from approach 4
+        instead  of min sorting the climbs array every time, just attach on index  to each climb in the climbs lists
+        then in  the reachable function, add a condition telling it to skip any climbs with an high  index greather than the one passed into the check
+        algo:
+            get the sorted climbs once, but all attach an inndex
+            min sort
+            then in min reachable function, skip  climbs greater  than current index
+        '''
+        sorted_climbs = []
+        N = len(heights)
+        for i in range(N-1):
+            climb = heights[i+1] - heights[i]
+            if climb <= 0:
+                continue
+            sorted_climbs.append([climb,i+1])
+        sorted_climbs.sort(key = lambda x: x[0])
+        
+        def is_reachable(building_idx,climbs,bricks,ladders):
+            for c,idx in climbs:
+                if idx > building_idx:
+                    continue
+                #use bricks first
+                if bricks >= c:
+                    bricks -= c
+                elif ladders >= 1:
+                    ladders -= 1
+                else:
+                    return False
+            return True
+        #binary search
+        #binary search
+        lo,hi = 0, len(heights) -1
+        #we want a single index, and if we are length two in the final search we want the smaller one
+        while lo < hi:
+            mid = lo + (hi - lo + 1) // 2 #why + 1?, we want the upper mid to guarentee convergence
+            if is_reachable(mid,sorted_climbs,bricks,ladders):
+                #building is reacable, but idk if mid + 1 is
+                lo = mid
+            else:
+                hi = mid - 1 #not reachable
+        return lo
+
+
+#################
+#Power of Three
+#################
+class Solution(object):
+    def isPowerOfThree(self, n):
+        """
+        :type n: int
+        :rtype: bool
+        """
+        '''
+        ughhh, just log base 3, if its an int or not
+        or just check all powers of three
+        '''
+        if n <= 0:
+            return False
+        power = 0
+        while 3**power <= 2**31 -1:
+            if n == 3**power:
+                return True
+            power += 1
+        return False
+
+#binary search
+class Solution(object):
+    def isPowerOfThree(self, n):
+        """
+        :type n: int
+        :rtype: bool
+        """
+        '''
+        in the last approach, i was  steadyling increasing by 1
+        i can use bianry search to speed it up
+        '''
+        #neagative case
+        if n <= 0:
+            return False
+        #but what power of three one just beflow 2**31 - 1
+        # 3^X <= 2**31 - 1
+        highest_power = floor(log(2**31 - 1) /log(3))
+        lo, hi = 0, int(highest_power)
+        while lo <= hi:
+            mid = lo + (hi - lo) // 2
+            if 3**mid == n:
+                return True
+            elif 3**mid > n:
+                hi = mid -1
+            else:
+                lo = mid + 1
+        return 3**lo == n #bonus points for this return!
+
+class Solution(object):
+    def isPowerOfThree(self, n):
+        """
+        :type n: int
+        :rtype: bool
+        """
+        '''
+        could also just keep diving by 3 and so long as we have no reaminder and check we can get to 1
+        '''
+        if n < 1:
+            return False
+        while n % 3== 0:
+            n /= 3
+        return n == 1
+
+#change of base
+class Solution(object):
+    def isPowerOfThree(self, n):
+        """
+        :type n: int
+        :rtype: bool
+        """
+        '''
+        use change of base to find the exponent, and check that exponenet i int
+        '''
+        if n < 1:
+            return False
+        exponent = log(n) / log(3)
+        return abs(exponent - round(exponent)) < 1e-11
+
+#modular arithmetic
+class Solution(object):
+    def isPowerOfThree(self, n):
+        """
+        :type n: int
+        :rtype: bool
+        """
+        '''
+        coindicentally three is a prime number
+        the largest power of three that its into signed 32 bit is 3**19
+        '''
+        if n > 0 and 3**19 % n == 0:
+            return True
+        else:
+            return False
+
+################
+#Unique Paths II
+################
+#using ausx space
+class Solution(object):
+    def uniquePathsWithObstacles(self, obstacleGrid):
+        """
+        :type obstacleGrid: List[List[int]]
+        :rtype: int
+        """
+        '''
+        in the original problem, we just accumlate the total paths from a cells top neighbfor and left neighbor
+        dp array problem and return the bottomr right answer
+        use aux space first
+        '''
+        rows = len(obstacleGrid)
+        cols = len(obstacleGrid[0])
+        dp = [[0]*cols for _ in range(rows)]
+        #fill top row
+        for i in range(cols):
+            if obstacleGrid[0][i] == 0:
+                dp[0][i] = 1
+            else:
+                break
+        #fill in first col
+        for i in range(rows):
+            if obstacleGrid[i][0] == 0:
+                dp[i][0] = 1
+            else:
+                break
+        
+        #starting from (1,1)
+        for i in range(1,rows):
+            for j in range(1,cols):
+                if obstacleGrid[i][j] == 0: #no no obstacle
+                    dp[i][j] = dp[i][j-1] + dp[i-1][j]
+                else:
+                    dp[i][j] = 0
+        return dp[-1][-1] 
+
+#now in place
+class Solution(object):
+    def uniquePathsWithObstacles(self, obstacleGrid):
+        """
+        :type obstacleGrid: List[List[int]]
+        :rtype: int
+        """
+        '''
+        now do in place,
+        since the array is only 1s and zeroz
+        '''
+        rows = len(obstacleGrid)
+        cols = len(obstacleGrid[0])
+        obstacleGrid[0][0] = 1
+        #fill top row
+        for i in range(1,cols):
+            if obstacleGrid[0][i] == 0:
+                obstacleGrid[0][i] = 1
+            else:
+                break
+        #fill in first col
+        for i in range(1,rows):
+            if obstacleGrid[i][0] == 0:
+                obstacleGrid[i][0] = 1
+            else:
+                break
+        #now start from (1,1)
+        for i in range(1,rows):
+            for j in range(1,cols):
+                if obstacleGrid[i][j] == 0:
+                    obstacleGrid[i][j] = obstacleGrid[i][j-1] + obstacleGrid[i-1][j]
+                else: 
+                    obstacleGrid[i][j] = 0
+        return obstacleGrid[-1][-1]
+
+#######################
+# Find First and Last Position of Element in Sorted Array
+#######################
+#linear time
+class Solution(object):
+    def searchRange(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: List[int]
+        """
+        '''
+        well we can just scan the array and fill in the spots
+        '''
+        N = len(nums)
+        ans = [-1,-1]
+        
+        #start from front
+        for i in range(N):
+            if nums[i] == target:
+                ans[0] = i
+                break
+                
+        #start from back
+        for j in range(N):
+            if nums[N-j-1] == target:
+                ans[1] = N-j-1
+                break
+        return ans
+
+class Solution(object):
+    def searchRange(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: List[int]
+        """
+        '''
+        great, how about log n
+        binary search to find the middle, then send out two pointers
+        no because in the case all elements are target, you'd up doing two pointers for the whole array
+        toughie....
+        [1,1,3,4,5,5,5,5,5,7,8,9,10,11]
+        we can use two binary search to find the first and last position, but how
+        FIRST POSITION IN THE ARRAY:
+            case1: if mid is the beginning index of target, our mid is first done
+            case2:the element to the left of this index is not equal to the target, (i.e nums[mid] != target, we keep looking on the left side of the array)
+            [2,7,7,7,10]
+            mid is 7, then check mid-1 == target, discard right and search left
+        LAST POSITION IN THE ARRAY:
+            [2,7,7,7,8,10]
+            mid is 7, and mid+1 == 7, discard left and search right
+        algo:
+            1 def find bound finctions
+            2. two vars, begin and end
+            3. binar searchr beg <= end
+            4. each step calculate the middle element
+                if nums[mid] == target:
+                    if looking for first:
+                        check mid and mid -1 conditions
+                    if looking for end:
+                        check mid and mid + 1 conditions
+                if nums[mid] > target:
+                    end = mid-1
+                if nums[mid] < taget:
+                    beg = mid + 1
+            5. note in the main functino if after finding first it's tsitll -1, retunr [-1,-1] because there is no start
+        '''
+        def findBound(nums, target,isFirst):
+            N = len(nums)
+            beg,end = 0,N-1
+            while beg <= end:
+                mid = beg + (end - beg) //2
+                #found target
+                if nums[mid] == target:
+                    #check finding lowbound
+                    if isFirst:
+                        #found first, not if we've found our target, at some point mid becomes beg, it has to
+                        if mid == beg or nums[mid-1] < target:
+                            return mid
+                        #seach onf left
+                        end = mid -1
+                    #finding high bound
+                    else:
+                        #found last
+                        if mid == end or nums[mid+1] > target:
+                            return mid
+                        beg = mid + 1
+                elif nums[mid] > target:
+                    end = mid - 1
+                else:
+                    beg = mid + 1
+            return -1
+        
+        low_bound = findBound(nums,target,isFirst=True)
+        if low_bound == -1:
+            return [-1,-1]
+        up_bound = findBound(nums,target,isFirst = False)
+        return [low_bound,up_bound]
+
+#another way
+class Solution(object):
+    def searchRange(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: List[int]
+        """
+        '''
+        we can do two binary searches finding left most target
+        and right most target
+        '''
+        if not nums:
+            return [-1,-1]
+        N = len(nums)
+        start,end = -1,-1
+        lo,hi = 0,N
+        #not setting <= means the pointers can eventaully cross one another
+        while lo < hi:
+            mid = lo + (hi-lo) // 2
+            if nums[mid] >= target:
+                hi = mid
+            else:
+                lo = mid+1
+        if lo < N and nums[lo] == target:
+            start = lo
+            
+        #find right bound
+        lo,hi = 0,N
+        while lo < hi:
+            mid = lo + (hi-lo) // 2
+            if nums[mid] <= target:
+                lo = mid+1
+            else:
+                hi = mid
+        if nums[hi-1] == target:
+            end = hi-1
+        
+        return [start,end]
+                
+#another way
+#https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/discuss/1181832/JS-Python-Java-C%2B%2B-or-Easy-Binary-Search-Solution-w-Explanation
+class Solution(object):
+    def searchRange(self, nums, target):
+        """
+        :type nums: List[int]
+        :type target: int
+        :rtype: List[int]
+        """
+        '''
+        just some notes in the bisect left and right functions for python
+        biseft left returns the idx of the first occurence in the sorted array 
+        bisect right returns the idx+1, of the right most target element in the array
+        '''
+        Tleft = bisect_left(nums,target)
+        #not in the array
+        if Tleft == len(nums) or nums[Tleft] != target:
+            return [-1,-1]
+        return [Tleft,bisect_right(nums,target)-1]
+
+#########################
+#Meeting Scheduler
+########################
+#two pointer
+class Solution(object):
+    def minAvailableDuration(self, slots1, slots2, duration):
+        """
+        :type slots1: List[List[int]]
+        :type slots2: List[List[int]]
+        :type duration: int
+        :rtype: List[int]
+        """
+        '''
+        if the intervlas are sorted by start
+        then the common slot available for each pair is:
+        [max(start1,start2),min(end1,end2)]
+        we can sort and use two poitners
+        why do we sort on the start? if a slot starts earlier, it will end earlier, remmeber for both people there are no overlapping time slows
+        how do we decide which pointer should beincrment:
+            we always move the one that ends EARLIER!
+            if we sorted on the start times
+            and is slots1[i][1] > slots2[j][1], we know slots[i+1][0] > slots2[j][1]
+            so that there will be no intersction between slots[i+1] and slots2[j]
+        TAKEAWAY, SORT ON START, THEN UP EARLIER END
+        '''
+        slots1.sort()
+        slots2.sort()
+        
+        p1 = p2 = 0
+        while p1 < len(slots1) and p2 < len(slots2):
+            #find common slot
+            common_start = max(slots1[p1][0],slots2[p2][0])
+            common_end = min(slots1[p1][1],slots2[p2][1])
+            if common_end - common_start >= duration:
+                return [common_start,common_start+duration]
+            #move pointer to slot ending earlier, DUH! now that I think aboutit
+            if slots1[p1][1] < slots2[p2][1]:
+                p1 += 1
+            else:
+                p2 += 1
+        return []
+
+#using heap
+class Solution(object):
+    def minAvailableDuration(self, slots1, slots2, duration):
+        """
+        :type slots1: List[List[int]]
+        :type slots2: List[List[int]]
+        :type duration: int
+        :rtype: List[int]
+        """
+        '''
+        we can also use a heap, and we only need one heap
+        we can push all the time slots into a heap, and if any two time slots are common, we know they are from different people?
+        THINK??? WHY IS THIS ALLOWED
+        it is guaranteed that no two available time slot of the same person intersect
+        for any two time slots [start1, end1] and [start2, end2] of the same person, either start1 > end2 or start2 > end1.
+        TAKEWAY, any two existinng time slots must be from different perople
+        algo:
+            inint heap of timeslots and push time slots that last longer than durationt into it
+            keep popping from the heap, so lon as we have 1 element in the heap
+            pop first
+            peek next
+            if we find end1>= start2+draitions, return it
+        '''
+        all_slots = slots1+slots2
+        #now push all slots >= duration on to heap
+        heap = []
+        for start,end in all_slots:
+            if end - start >= duration:
+                heappush(heap,(start,end))
+        while len(heap) > 1:
+            start1,end1 = heappop(heap)
+            start2,end2 = heap[0]
+            if end1 - start2 >= duration:
+                return [start2,start2+duration]
+        return []
+
+##########################
+# Powerful Integers
+##########################
+#log(1) results in div by zerp
+#TLE
+class Solution(object):
+    def powerfulIntegers(self, x, y, bound):
+        """
+        :type x: int
+        :type y: int
+        :type bound: int
+        :rtype: List[int]
+        """
+        '''
+        a powerful integer can be written as:
+        x^i + y^j <= bound
+        best idea would be to simulate, keep taking powers of i and j >=, but first we need to bound i and j
+        the smallest value x and y can be when raised to i and j is zero
+        then you have the case when x or y is 1
+        '''
+        #edge case
+        if bound == 0:
+            return []
+        #find highest i and highest j
+        highest_i = 0
+        highest_j = 0
+        
+        while bound - 1 - x**highest_i >= 0:
+            highest_i += 1
+            
+        while bound - 1 - x**highest_j >= 0:
+            highest_j += 1
+        
+        res = set()
+        for i in range(highest_i+1):
+            for j in range(highest_j+1):
+                cand = x**i + y**j
+                if cand <= bound:
+                    res.add(cand)
+        return res
+
+class Solution(object):
+    def powerfulIntegers(self, x, y, bound):
+        """
+        :type x: int
+        :type y: int
+        :type bound: int
+        :rtype: List[int]
+        """
+        '''
+        a powerful integer can be written as:
+        x^i + y^j <= bound
+        best idea would be to simulate, keep taking powers of i and j >=, but first we need to bound i and j
+        the smallest value x and y can be when raised to i and j is zero
+        then you have the case when x or y is 1
+        '''
+        #edge case
+        if bound == 0:
+            return []
+        #find highest i and highest j, watch the case for 1
+        highest_i = bound if y == 1 else int(floor(log(bound-1)/log(y)))
+        highest_j = bound if x == 1 else int(floor(log(bound-1)/log(x)))
+        
+        
+        res = set()
+        for i in range(highest_j+1):
+            for j in range(highest_i+1):
+                cand = x**i + y**j
+                if cand <= bound:
+                    res.add(cand)
+                #don't forget the break conditions
+                if x == 1:
+                    break
+            if y == 1:
+                break
+        return res
+#using bound-1
+class Solution(object):
+    def powerfulIntegers(self, x, y, bound):
+        """
+        :type x: int
+        :type y: int
+        :type bound: int
+        :rtype: List[int]
+        """
+        '''
+        a powerful integer can be written as:
+        x^i + y^j <= bound
+        best idea would be to simulate, keep taking powers of i and j >=, but first we need to bound i and j
+        the smallest value x and y can be when raised to i and j is zero
+        then you have the case when x or y is 1
+        '''
+        #edge case
+        if bound == 0:
+            return []
+        #find highest i and highest j, watch the case for 1
+        highest_i = bound if x == 1 else int(round(log(bound-1)/log(x)))
+        highest_j = bound if y == 1 else int(round(log(bound-1)/log(y)))
+        
+        
+        res = set()
+        for i in range(highest_i+1):
+            for j in range(highest_j+1):
+                cand = x**i + y**j
+                if cand <= bound:
+                    res.add(cand)
+                #don't forget the break conditions
+                if y == 1:
+                    break
+            if x == 1:
+                break
+        return res
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
