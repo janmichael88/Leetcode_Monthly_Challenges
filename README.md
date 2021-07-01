@@ -12,7 +12,7 @@ Just a code dump for all the monthly Leet code solutions.
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-Jun 2021
+July 2021
 
 Completed:
 * May 2020
