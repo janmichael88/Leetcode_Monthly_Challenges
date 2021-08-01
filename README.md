@@ -8,11 +8,12 @@ Just a code dump for all the monthly Leet code solutions.
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-3.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-4.png)
 ![alt_text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-5.png)
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-7.png)
 
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-July 2021
+Aug 2021
 
 Completed:
 * May 2020
@@ -28,3 +29,4 @@ Completed:
 * Mar 2021
 * Apr 2021
 * May 2021
+* Jul 2021
