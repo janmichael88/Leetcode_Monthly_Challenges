@@ -10,11 +10,12 @@ Just a code dump for all the monthly Leet code solutions.
 ![alt_text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-5.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-7.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-8.png)
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-9.png)
 
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-Sep 2021
+Oct 2021
 
 Completed:
 * May 2020
@@ -32,3 +33,4 @@ Completed:
 * May 2021
 * Jul 2021
 * Aug 2021
+* Sep 2021
