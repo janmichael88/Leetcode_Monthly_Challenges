@@ -57,3 +57,33 @@ class Solution:
                     dp[i][j] = max(dp[i+1][j],dp[i][j+1])
         
         return dp[0][0]
+
+#dp solution space optimized
+class Solution:
+    def longestCommonSubsequence(self, text1: str, text2: str) -> int:
+        '''
+        we can also optimize space 
+        instead of using the whole dp array, just keep current and previous rows
+        '''
+        #first check if text1 doest not reference the shoortest string, swap them
+        if len(text2) < len(text1):
+            #swap
+            text1,text2 = text2,text1
+        
+        M = len(text1)
+        N = len(text2)
+        
+        prev = [0]*(N+1)
+        curr = [0]*(N+1)
+        #remember we padded the dp array with one extra col and row with zeros
+        for i in range(M-1,-1,-1):
+            for j in range(N-1,-1,-1):
+                if text1[i] == text2[j]:
+                    curr[j] = 1 + prev[j+1]
+                else:
+                    curr[j] = max(prev[j],curr[j+1])
+            #update rwos
+            prev,curr = curr,prev
+        
+        return prev[0]
+                
