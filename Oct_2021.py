@@ -118,6 +118,9 @@ class Solution:
         return -1
 
 #yessss
+#note we could also limit the row searching by keeping track of what col index a 1 was foud in
+#then use that index as the right most bound
+#keep updating right bound if we have a more left one
 class Solution:
     def leftMostColumnWithOne(self, binaryMatrix: 'BinaryMatrix') -> int:
         '''
@@ -131,6 +134,7 @@ class Solution:
             #binary seach along a row
             left = 0
             right = cols - 1
+            # right = smallest_i - 1
             while left < right:
                 mid = left + (right - left) // 2
                 val = binaryMatrix.get(row,mid)
@@ -143,3 +147,27 @@ class Solution:
                 smallest_i = min(smallest_i,left)
         
         return smallest_i if smallest_i != cols else -1
+
+#Linear in M+N time
+class Solution:
+    def leftMostColumnWithOne(self, binaryMatrix: 'BinaryMatrix') -> int:
+        '''
+        this is similar to searching a 2d matrix
+        the most optimal approach is saddle back search
+        we need to start from a point in the matrix, where we can find a non increasing element
+        and a non decreasing element
+        
+        '''
+        rows,cols = binaryMatrix.dimensions()
+        curr_row = 0
+        curr_col =  cols - 1
+        
+        #while we are in bounds
+        while curr_row < rows and curr_col >= 0:
+            #if we find a 1, stay in row, and go down column
+            if binaryMatrix.get(curr_row,curr_col) == 1:
+                curr_col -= 1
+            else:
+                curr_row += 1
+        
+        return curr_col + 1 if curr_col != cols - 1 else -1
