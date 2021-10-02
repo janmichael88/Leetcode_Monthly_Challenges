@@ -87,3 +87,59 @@ class Solution:
         
         return prev[0]
                 
+##################################
+# 01_OCT_2021
+# 1428. Leftmost Column with at Least a One
+#############################
+#exhausted calls, 
+# """
+# This is BinaryMatrix's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class BinaryMatrix(object):
+#    def get(self, row: int, col: int) -> int:
+#    def dimensions(self) -> list[]:
+
+class Solution:
+    def leftMostColumnWithOne(self, binaryMatrix: 'BinaryMatrix') -> int:
+        '''
+        we are given a row sorted binary matrix, so its in a non decreasing order along the rows
+        we want the index of the leftmost columnwith a 1 in it
+        can only access matrix using the API
+        brute force way would be to access all elements in the object
+        we want to go down columns starting with leftmost column, if when going down this row, we hit a 1, return that column index
+        otherwise -1
+        '''
+        rows,cols = binaryMatrix.dimensions()
+        for col in range(cols):
+            for row in range(rows):
+                if binaryMatrix.get(row,col) == 1:
+                    return col
+        return -1
+
+#yessss
+class Solution:
+    def leftMostColumnWithOne(self, binaryMatrix: 'BinaryMatrix') -> int:
+        '''
+        repeatedly making calls to API won't work, cheeky way, cache calls in the constructor first
+        then check matrix, but that's stupid
+        i could binary search along each row for all rows
+        '''
+        rows,cols = binaryMatrix.dimensions()
+        smallest_i = cols
+        for row in range(rows):
+            #binary seach along a row
+            left = 0
+            right = cols - 1
+            while left < right:
+                mid = left + (right - left) // 2
+                val = binaryMatrix.get(row,mid)
+                #if its a 1, i can still look in the lower half
+                if val == 1:
+                    right = mid
+                else:
+                    left = mid + 1
+            if binaryMatrix.get(row,left) == 1:
+                smallest_i = min(smallest_i,left)
+        
+        return smallest_i if smallest_i != cols else -1
