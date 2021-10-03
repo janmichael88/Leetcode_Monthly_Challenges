@@ -263,3 +263,143 @@ class Solution:
         
         return dungeon[0][0]
 
+################################
+# 03_OCT_21
+# 55. Jump Game
+################################
+#BFS gives TLE
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        '''
+        i can try using BFS and for each jump length, try making that jump length
+        return true if i hit the the last index
+        '''
+        N = len(nums)
+        seen = set([0])
+        q = deque([0])
+        
+        while q:
+            curr = q.popleft()
+            if curr == N - 1:
+                return True
+            for step in range(nums[curr]+1):
+                neigh = curr + step
+                if neigh < N:
+                    if neigh not in seen:
+                        seen.add(neigh)
+                        q.append(neigh)
+        
+        return False
+
+#naive backtracking, i.e backtracking with memo
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        '''
+        recursive solution, without memo
+        using inefficient back tracking
+        '''
+        N = len(nums)
+        memo = {}
+        
+        def dfs(i):
+            if i == N - 1:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            max_jump = min(i + nums[i], N - 1)
+            #could also switch lines to
+            '''
+            for j in range(max_jump,i,-1):
+           	'''
+            for j in range(i+1,max_jump+1):
+                if dfs(j):
+                    return True
+            memo[i] = False
+            return memo[i]
+        
+        return dfs(0)
+
+
+#efficient recusrive
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        '''
+        recursive solution, without memo
+        using inefficient back tracking
+        to make the memo more efficient, we mark each position as good or bad
+        then call only from good positions, this prunes the call tree
+        bad jumps leads us to spot where we have zero jumps, FUCKING STUCK
+        
+        '''
+        N = len(nums)
+        memo = [0]*N
+        #states are 0:unknown, 1: Good, 2: bad
+        memo[N-1] = 1
+        
+        def dfs(i):
+            if memo[i] != 0:
+                if memo[i] == 1:
+                    return True
+                else:
+                    return False
+            
+            max_jump = min(i + nums[i],N-1)
+            for j in range(i+1,max_jump+1):
+                if dfs(j):
+                    memo[j] == 1
+                    return True
+            
+            memo[i] = 2
+            return False
+        
+        return dfs(0)
+
+#bottom up dp
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        '''
+        now lets convert this effecient recursive to top down dp
+        the key observation is that we only make a jump to the right
+        this means that if we start from the right of the array, every time we will query a position to our right
+        that position has laready been determined as being GOOD or BAD
+        
+        '''
+        N = len(nums)
+        memo = [0]*N
+        #states are 0:unknown, 1: Good, 2: bad
+        memo[N-1] = 1
+        
+        #now we start from the seond to last position
+        for i in range(N-2,-1,-1):
+            max_jump = min(i + nums[i],N-1)
+            for j in range(i+1,max_jump+1):
+                if memo[j] == 1:
+                    memo[i] == 1
+                    break
+        
+        return memo[0] == 1
+
+#greedy
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        '''
+        greedy:
+        if when we hit a good poistion, coming from a previous good positino
+        we only need to start from the first one hit!, we don't care any good positions after the first good one
+        LINEAR TIME INTUTION COMES FROM THIS!
+        keep track of the left most good poistion
+        we also stop from using an array to store our results
+        from right to left, for each position, check if there is a potential to jump that reaches a good index
+        i.e currPos + nums[currPos] >= lefmostGood index
+        if we can reach a good, than current posiiton is good, and this new good must be the next left most good
+        '''
+        N = len(nums)
+        lastGood = N - 1
+        for i in range(N-1,-1,-1):
+            #if we can get to the last good, update last good
+            if i + nums[i] >= lastGood:
+                lastGood = i
+        
+        return lastGood == 0
+        
