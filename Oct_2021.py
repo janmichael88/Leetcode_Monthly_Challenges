@@ -171,3 +171,95 @@ class Solution:
                 curr_row += 1
         
         return curr_col + 1 if curr_col != cols - 1 else -1
+
+#########################################
+# 02_OCT_21
+# 174. Dugeon Game
+##########################################
+class Solution:
+    def calculateMinimumHP(self, dungeon: List[List[int]]) -> int:
+        '''
+        we cam use dp to solve this problem
+        intution:
+        we the knigh were to start at the bottomr right cell of the dungeon, he would need to have at leat 1 more than that negative value, lets call this value curr
+        from curr, the knight could have come from above, UP
+        or from the left, LEFT (remember the knight can only move down and to the left)
+        if at UP, we gained some health, we would only need curr - health there
+        if at LEFT, we also gain health, and the difference beteween what we gain > what we would need, well would need at least 1
+        so, dp[i][j] answers the question: what is the min health needed to get to the bottom right, if i start at i,j
+        now, we need to examine from UPLEFT (UL)
+        if negative we add from the next down or right cells, and we take the max,
+        each cell will be marked with two minimal healths points (one for each actions)
+        algo:
+            define dp array, dp[row][col] answers question min health needed to reach des
+            if dp[row][col] is negative, i need at least  1 - dp[row][col] (think really fucking hard about why)
+            if dpr[row][col] is postive, i gain from this, and would only need at least 1 to get here
+            the rules for filling out the dp:
+                if possible by taking right step from curr cell, the knight might need right health points
+                if possible by taking the don step, the knight might need down_health points
+                if either of the options exists, we take the min of the two opetions
+                if non of the alternatives exsits, we are at the desitation cell
+                    * if curr cell is postives, then 1 health is enough
+                    if curr cell is negative, then know should possese one 1 - health points
+            declare dp array values with inf
+        '''
+        rows = len(dungeon)
+        cols = len(dungeon[0])
+        
+        dp = [[float('inf')]*cols for _ in range(rows)]
+        
+        #get min health function
+        def get_min_health(currCell,nextRow,nextCol):
+            #outside of rows or cols:
+            if nextRow >= rows or nextCol >= cols:
+                return float('inf')
+            return max(1,dp[nextRow][nextCol] - currCell)
+        
+        #starting from end
+        for row in range(rows-1,-1,-1):
+            for col in range(cols-1,-1,-1):
+                currCell = dungeon[row][col]
+                
+                #get possible valies
+                right_health = get_min_health(currCell,row,col+1)
+                down_health = get_min_health(currCell, row+1,col)
+                next_health = min(right_health,down_health)
+                
+                if next_health != float('inf'):
+                    min_health = next_health
+                else:
+                    min_health = 1 if currCell >= 0 else (1 - currCell)
+                dp[row][col] = min_health
+        
+        return dp[0][0]
+
+#another way using inplace for dungeon
+class Solution:
+    def calculateMinimumHP(self, dungeon: List[List[int]]) -> int:
+        '''
+        using in place dungeon array for dp
+        
+        '''
+        rows = len(dungeon)
+        cols = len(dungeon[0])
+        
+        #first set the destinaion cell to the minimum necesary
+        dungeon[rows-1][cols-1] = max(1,1-dungeon[rows-1][cols-1])
+        
+        #on the last column, we can only go down, fill this up first
+        for row in range(rows-2,-1,-1):
+            dungeon[row][cols-1] = max(1,dungeon[row+1][cols-1] - dungeon[row][cols-1])
+            
+        #for the last row, we can only go left
+        for col in range(cols-2,-1,-1):
+            dungeon[rows-1][col] = max(1,dungeon[rows-1][col+1] - dungeon[rows-1][col])
+            
+        #now fill in the reamin
+        for row in range(rows-2,-1,-1):
+            for col in range(cols-2,-1,-1):
+                min_left_right = min(dungeon[row+1][col],dungeon[row][col+1])
+                res = max(1,min_left_right - dungeon[row][col])
+                dungeon[row][col] = res
+        
+        return dungeon[0][0]
+
