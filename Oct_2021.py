@@ -536,4 +536,44 @@ class Solution:
                         perim -= 2
         
         return perim
+      
+#extra problem
+#################################
+# 04OCT21
+# 27. Remove Element
+#################################
+class Solution:
+    def removeElement(self, nums: List[int], val: int) -> int:
+        '''
+        i can use two pointers on this guy, and send the element to be remvoed to the end of the array
+        so long as that last element is not the element to be removed
+        just move the elements, the online judger will take nums[:k]
+        then just set nums = nums[:k]
+        '''
+        N = len(nums)
+        i = 0
+        for j in range(N):
+            if nums[j] != val:
+                nums[i] = nums[j]
+                i += 1
+        return i
+
+class Solution:
+    def removeElement(self, nums: List[int], val: int) -> int:
+        '''
+        two pointers from the end
+        swap and decrease size
+        note if when we swap, we don't move up left, we stay and check on the next interation
+        '''
+        N = len(nums)
+        left,right = 0, N-1
+        while left < N:
+            if nums[left] == val:
+                nums[left] = nums[right]
+                N -= 1
+                right -= 1
+            else:
+                left += 1
         
+        return N
+                
