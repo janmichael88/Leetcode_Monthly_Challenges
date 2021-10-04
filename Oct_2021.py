@@ -507,4 +507,33 @@ class Solution:
                                 perim -= 1
         
         return perim
+
+#efficient counting
+class Solution:
+    def islandPerimeter(self, grid: List[List[int]]) -> int:
+        '''
+        we can optimize the counting, by realzing that we scan left to right, top to bottom
+        so we only ever need to look to the left and up
+        if we hit an island we know we can add 4
+        if that island has a left nieghbor, decrement by 2
+        if island has up neighbor decreament by 2
+        WHY? becasue we share and edge along up edge and left edge
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        perim = 0
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    perim += 4
+                    
+                    #check up
+                    if i > 0 and grid[i-1][j] == 1:
+                        perim -= 2
+                    if j > 0 and grid[i][j-1] == 1:
+                        perim -= 2
+        
+        return perim
         
