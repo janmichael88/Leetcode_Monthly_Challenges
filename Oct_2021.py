@@ -403,3 +403,108 @@ class Solution:
         
         return lastGood == 0
         
+################################
+# 04_OCT_21
+# 463. Island Perimeter
+################################
+#close but not really correct
+class Solution:
+    def islandPerimeter(self, grid: List[List[int]]) -> int:
+        '''
+        there is exactly one island, and the island doest not have any lakes
+        i can use dfs the mark the cells that make up the eldn
+        scan the grid to find the first 1, which should contribute 4 edges
+        after than whenever i dfs, i can decrease by 1 and add 4 whenver i can dfs
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        self.perim = 0
+        
+        def dfs(r,c,seen):
+            seen.add((r,c))
+            self.perim += 4
+            for dx,dy in dirrs:
+                neigh_x = r + dx
+                neigh_y = c + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #is a one
+                    if grid[neigh_x][neigh_y] == 1 and (neigh_x,neigh_y) not in seen:
+                        seen.add((neigh_x,neigh_y))
+                        self.perim -= 1
+                        dfs(neigh_x,neigh_y,seen)
+
+                        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    dfs(i,j,set())
+                    return self.perim
+
+#zeros surrounding a 1 increase perim by 1
+class Solution:
+    def islandPerimeter(self, grid: List[List[int]]) -> int:
+        '''
+        while traversing the grid, if we hit a 1, find the zeros surroundint it
+        for each 0 around 1, add 1
+        if its a 1 mark as visitied and dfs from there
+        and up all the edges surrding that 1
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dfs(r,c):
+            #out of bounds or zero, adds 1 to this perimiter
+            if (r < 0) or (r >= rows) or (c < 0) or (c >= cols) or grid[r][c] == 0:
+                return 1
+            #if its a 1, mark as visited and dfs
+            if grid[r][c] == 1:
+                grid[r][c] = -1
+                ans = 0
+                for dx,dy in dirrs:
+                    neigh_r = r + dx
+                    neigh_c = c + dy
+                    ans += dfs(neigh_r,neigh_c)
+                return ans
+            else:
+                return 0
+            
+        
+        perim = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    perim += dfs(i,j)
+                    return perim
+
+#simple counting
+class Solution:
+    def islandPerimeter(self, grid: List[List[int]]) -> int:
+        '''
+        one way is to count the land and water cells
+        if we are at a land cell, we know we can add a max of 4
+        but if we are bounded by up,down,left,right
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        perim = 0
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    perim += 4
+                    #now lets decrease if we can
+                    for dx,dy in dirrs:
+                        neigh_x = i + dx
+                        neigh_y = j + dy
+                        if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                            if grid[neigh_x][neigh_y] == 1:
+                                perim -= 1
+        
+        return perim
+        
