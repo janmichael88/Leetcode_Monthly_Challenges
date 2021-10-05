@@ -699,3 +699,20 @@ class Solution:
             return ans
         
         return fastpow(q,n)[0][0]
+
+#############################
+# 05_OCT_2021
+# 217. Contains Duplicate
+#############################
+class Solution:
+    def containsDuplicate(self, nums: List[int]) -> bool:
+        '''
+        use hash seen and terminate
+        '''
+        seen = set()
+        for num in nums:
+            if num in seen:
+                return True
+            seen.add(num)
+        
+        return False
