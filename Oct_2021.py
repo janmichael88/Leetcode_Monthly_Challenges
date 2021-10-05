@@ -577,3 +577,125 @@ class Solution:
         
         return N
                 
+############################
+# 05OCT21
+# 70. Climbing Stairs
+############################
+#recursion
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        '''
+        if there is 1 step, theres only 1 way
+        if there are 2 steps, there are two ways
+        if there are n steps, its just the sum of the previous steps
+        F_n = F_{n-1} + F_{n-2}
+        '''
+        memo = {}
+        
+        def rec(i):
+            if i == 1:
+                return 1
+            if i == 2:
+                return 2
+            
+            if i in memo:
+                return memo[i]
+            ans = rec(i-1) + rec(i-2)
+            memo[i] = ans
+            return ans
+        
+        return rec(n)
+
+#bottom up 2
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        '''
+        bottom up 2, with array.
+        return last element
+        '''
+        
+        if n == 1:
+            return 1
+        
+        if n == 2:
+            return 2
+        dp = [0]*n
+        
+        dp[0] = 1
+        dp[1] = 2
+        
+        for i in range(2,n):
+            dp[i] = dp[i-1] + dp[i-2]
+        
+        return dp[n-1]
+
+#dp, constant space
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        '''
+        bottom up dp, constant space
+        '''
+        
+        if n == 1:
+            return 1
+        
+        first = 1
+        second = 2
+        
+        for i in range(3,n+1):
+            third = first + second
+            first = second
+            second = third
+        
+        return second
+
+#using golden ratio
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        '''
+        golden ratio, to get log(N) times
+        F_n = \frac{1}{sqrt(5)}[(\frac{1 + sqrt(5)}{2})^n - (\frac{1-sqrt(5)}{2})^n]
+        
+        '''
+        sqrt = 5**(.5)
+        fibn = (((1+sqrt)/2)**(n+1)) - (((1 - sqrt)/2)**(n+1))
+        return int(fibn/sqrt)
+
+#binets method, logN multiply
+class Solution:
+    def climbStairs(self, n: int) -> int:
+        '''
+        we can use binets method
+        first define transition matrix: 
+        [
+        F{n+1} F{n}
+        F{n}   F{n-1}
+        ]
+        
+        [
+        1 1
+        1 0
+        ]
+        then we we just use matrix expoenntial algo to raise this matrix to a power, power n
+        done in logN times
+        we return the ans the upper left
+        '''
+        q = [[1,1],[1,0]]
+        
+        def multi(a,b):
+            c = [[0,0],[0,0]]
+            for i in range(2):
+                for j in range(2):
+                    c[i][j] = a[i][0]*b[0][j] + a[i][1]*b[1][j]
+            return c
+        
+        def fastpow(a,n):
+            ans = [[1,0],[0,1]]
+            while n > 0:
+                if (n & 1) == 1:
+                    ans = multi(ans,a)
+                n >>= 1
+                a = multi(a,a)
+            return ans
+        
+        return fastpow(q,n)[0][0]
