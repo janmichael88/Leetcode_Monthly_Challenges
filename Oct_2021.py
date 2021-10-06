@@ -716,3 +716,93 @@ class Solution:
             seen.add(num)
         
         return False
+
+#######################################
+# 06OCT21
+# 442. Find All Duplicates in an Array
+#######################################
+#naive way
+class Solution:
+    def findDuplicates(self, nums: List[int]) -> List[int]:
+        '''
+        naive way is just to use seen set
+        '''
+        ans = []
+        seen = set()
+        for num in nums:
+            if num in seen:
+                ans.append(num)
+            else:
+                seen.add(num)
+        
+        return ans
+
+#using set
+class Solution:
+    def findDuplicates(self, nums: List[int]) -> List[int]:
+        '''
+        we have legnth N, and each number is in range[1,n]
+        we can use gauss trick to get the sum
+        if there are duplicates, it means we are missing numbers in th range [1,n]
+        if we decrement a value in nums by 1, it must go back to a valid index
+        if we do this op for each element in the first pass, negate decremented index value
+        second pass record negative posiionts
+        '''
+        ans = set()
+        #negate each value to be marked as seen
+        #we need to take the abs, otherwise we would be negatively indexing
+        for num in nums:
+            nums[abs(num)-1] *= -1
+        
+        #now pass again checking for positive values, negated twice
+        #we are negatinge the positions
+        for num in nums:
+            if nums[abs(num)-1] > 0:
+                ans.add(abs(num))
+        return(ans)
+
+class Solution:
+    def findDuplicates(self, nums: List[int]) -> List[int]:
+        '''
+        we have legnth N, and each number is in range[1,n]
+        we can use gauss trick to get the sum
+        if there are duplicates, it means we are missing numbers in th range [1,n]
+        if we decrement a value in nums by 1, it must go back to a valid index
+        if we do this op for each element in the first pass, negate decremented index value
+        second pass record negative posiionts
+        '''
+        ans = set()
+        #negate each value to be marked as seen
+        #we need to take the abs, otherwise we would be negatively indexing
+        for num in nums:
+            if nums[abs(num)-1] < 0:
+                ans.add(abs(num))
+            nums[abs(num)-1] *= -1
+        
+        
+        return ans
+
+class Solution:
+    def findDuplicates(self, nums: List[int]) -> List[int]:
+        '''
+        we have legnth N, and each number is in range[1,n]
+        we can use gauss trick to get the sum
+        if there are duplicates, it means we are missing numbers in th range [1,n]
+        if we decrement a value in nums by 1, it must go back to a valid index
+        if we do this op for each element in the first pass, negate decremented index value
+        second pass record negative posiionts
+        '''
+        ans = []
+        #negate each value to be marked as seen
+        #we need to take the abs, otherwise we would be negatively indexing
+        for num in nums:
+            nums[abs(num)-1] *= -1
+        
+        #now pass again checking for positive values, negated twice
+        #we are negatinge the positions
+        for num in nums:
+            if nums[abs(num)-1] > 0:
+                ans.append(abs(num))
+                #correct the second occurence
+                nums[abs(num)-1] *= -1
+        return(ans)
