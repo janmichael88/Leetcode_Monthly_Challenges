@@ -806,3 +806,104 @@ class Solution:
                 #correct the second occurence
                 nums[abs(num)-1] *= -1
         return(ans)
+
+############################################
+# 06OCT21
+# 863. All Nodes Distance K in Binary Tree
+############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        '''
+        i can make the graph for the tree
+        then use bfs to find all nodes that are k away from target
+        '''
+        #build graph
+        graph = defaultdict(list)
+        def dfs(node,parent):
+            if not node:
+                return
+            if node.val not in graph:
+                if parent:
+                    graph[node.val].append(parent.val)
+                if node.left:
+                    graph[node.val].append(node.left.val)
+                if node.right:
+                    graph[node.val].append(node.right.val)
+            
+            dfs(node.left,node)
+            dfs(node.right,node)
+        
+        dfs(root,None)
+        
+        print(graph)
+        
+        #bfs
+        seen = set([target.val])
+        q = deque([(target.val,0)])
+        ans = []
+        
+        while q:
+            curr, steps = q.popleft()
+            if steps == k:
+                ans.append(curr)
+            
+            for neigh in graph[curr]:
+                if neigh not in seen:
+                    seen.add(neigh)
+                    q.append((neigh,steps+1))
+        
+        return ans
+        
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        '''
+        we also could use recursion twice,
+        first time we mapp parents to node
+        then dfs using this new mapping
+        '''
+        
+        mapp = {}
+        
+        def build_map(node,parent):
+            if not node:
+                return
+            mapp[node] = parent
+            build_map(node.left,node)
+            build_map(node.right,node)
+        
+        build_map(root,None)
+        
+        seen = set()
+        ans = []
+        
+        def dfs(node,distance):
+            if not node or node in seen:
+                return
+            
+            seen.add(node)
+            
+            if distance == k:
+                ans.append(node.val)
+            
+            elif distance < k:
+                dfs(node.left,distance+1)
+                dfs(node.right,distance+1)
+                dfs(mapp[node],distance+1)
+        #call from target to explore
+        #if we had parent, we would not need to do the first part
+        dfs(target,0)
+        return ans
