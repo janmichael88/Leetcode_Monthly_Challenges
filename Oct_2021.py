@@ -907,3 +907,86 @@ class Solution:
         #if we had parent, we would not need to do the first part
         dfs(target,0)
         return ans
+
+#####################
+# 07OCT21
+# 79. Word Search
+#####################
+class Solution:
+    def exist(self, board: List[List[str]], word: str) -> bool:
+        '''
+        dfs from each i,j cell to find the word
+        advance index only if there is matching characer
+        dfs only if we can form here
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dfs(i,j,idx):
+            if idx >= len(word):
+                return True #word found
+            #bounds 
+            if 0 <= i < rows and 0 <= j < cols and board[i][j] == word[idx]:
+                #get the char and mark in board
+                temp = board[i][j]
+                board[i][j] = None
+                
+                for dx,dy in dirrs:
+                    if dfs(i+dx,j+dy,idx+1):
+                        return True
+                
+                #return the value
+                board[i][j] = temp
+            
+            return False
+
+        for i in range(rows):
+            for j in range(cols):
+                if dfs(i,j,0):
+                    return True
+        
+        return False
+
+class Solution:
+    def exist(self, board: List[List[str]], word: str) -> bool:
+        '''
+        dfs from each i,j cell to find the word
+        advance index only if there is matching characer
+        dfs only if we can form here
+        we could also use a seen set to add in the cell
+        then dfs from this cell
+        at the end we back track
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dfs(i,j,idx,seen):
+            if idx >= len(word):
+                return True #word found
+            #bounds 
+            if 0 <= i < rows and 0 <= j < cols and board[i][j] == word[idx] and (i,j) not in seen:
+                seen.add((i,j))
+                
+                for dx,dy in dirrs:
+                    if dfs(i+dx,j+dy,idx+1,seen):
+                        return True
+                
+                #return the value
+                seen.remove((i,j))
+            
+            return False
+
+        for i in range(rows):
+            for j in range(cols):
+                if dfs(i,j,0,set()):
+                    return True
+        
+        return False
+
+##########################
+# Robot Room Cleaner
+##########################
