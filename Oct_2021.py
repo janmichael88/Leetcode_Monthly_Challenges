@@ -1079,3 +1079,46 @@ class Trie:
 # param_2 = obj.search(word)
 # param_3 = obj.startsWith(prefix)
 
+############################
+# 08COT21
+# 1216. Valid Palindrome III
+############################
+#longest palindromic subsequence, find it, and check that it is at least N-k
+class Solution:
+    def isValidPalindrome(self, s: str, k: int) -> bool:
+        '''
+        this is similar to finding the longest palindromic subsequence
+        if we find a plaindromic subsequence of len(s) - k, then k s is a valid k palindric sub
+        algo:
+            find longest plaindromic subsequence
+            return if ans at least N - k
+            
+        '''
+        memo = {}
+        
+        def dp(l,r):
+            #left pointer passer right pointer empty string
+            if l > r:
+                return 0
+            if l == r:
+                #at least one string
+                return 1
+            if (l,r) in memo:
+                return memo[(l,r)]
+            #if they match
+            if s[l] == s[r]:
+                #its just + 2 from inside
+                ans = dp(l+1,r-1) + 2
+                memo[(l,r)] = ans
+                return ans
+            #knapsack
+            ans = max(dp(l+1,r),dp(l,r-1))
+            memo[(l,r)] = ans
+            return ans
+            
+        
+        return dp(0,len(s)-1) >= len(s) - k
+
+#dp solution
+
+
