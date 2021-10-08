@@ -987,6 +987,4 @@ class Solution:
         
         return False
 
-##########################
-# Robot Room Cleaner
-##########################
+
