@@ -987,4 +987,95 @@ class Solution:
         
         return False
 
+######################################
+# 08_OCT_21
+# 208. Implement Trie (Prefix Tree)
+######################################
+class Trie:
+
+    def __init__(self):
+        self.T = {}
+        
+
+    def insert(self, word: str) -> None:
+        root = self.T
+        for ch in word:
+            if ch not in root:
+                root[ch] = {}
+            root = root[ch]
+        #mark end as special char
+        root['#'] = True
+        
+    def find(self, pref: str) -> bool:
+        root = self.T
+        for ch in pref:
+            if ch not in root:
+                return None
+            root = root[ch]
+        
+        return root
+
+    def search(self, word: str) -> bool:
+        node = self.find(word)
+        return node is not None and "#" in node
+
+        
+
+    def startsWith(self, prefix: str) -> bool:
+        return self.find(prefix) is not None
+
+
+# Your Trie object will be instantiated and called as such:
+# obj = Trie()
+# obj.insert(word)
+# param_2 = obj.search(word)
+# param_3 = obj.startsWith(prefix)
+
+#more OOP like
+#define node object as well
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.isEnd = False
+
+class Trie:
+
+    def __init__(self):
+        self.root = TrieNode()   
+
+    def insert(self, word: str) -> None:
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                root.children[ch] = TrieNode()
+            root = root.children[ch]
+        #mark end as special char
+        root.isEnd = True
+        
+
+    def search(self, word: str) -> bool:
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                return False
+            root = root.children[ch]
+        
+        return root.isEnd
+        
+
+    def startsWith(self, prefix: str) -> bool:
+        root = self.root
+        for ch in prefix:
+            if ch not in root.children:
+                return False
+            root = root.children[ch]
+        
+        return True
+
+
+# Your Trie object will be instantiated and called as such:
+# obj = Trie()
+# obj.insert(word)
+# param_2 = obj.search(word)
+# param_3 = obj.startsWith(prefix)
 
