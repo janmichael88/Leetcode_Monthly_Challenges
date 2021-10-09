@@ -1120,5 +1120,55 @@ class Solution:
         return dp(0,len(s)-1) >= len(s) - k
 
 #dp solution
+#O(N^2 space)
+class Solution:
+    def isValidPalindrome(self, s: str, k: int) -> bool:
+        ''' 
+        we can translate this to 2d dp from the recursive solution
+        using full dp array
+        dp[i][j] represents number of valid subsequences between i and j
+        wants dp[0][len(s)-1] as our numbber
+            
+        '''
+        N = len(s)
+        dp = [[0]*N for _ in range(N)]
+        
+        for i in range(N-1,-1,-1):
+            #base case we always have length 1 as palindrome
+            dp[i][i] = 1
+            for j in range(i+1,N):
+                #matching
+                if s[i] == s[j]:
+                    dp[i][j] = dp[i+1][j-1] + 2
+                else:
+                    dp[i][j] = max(dp[i+1][j],dp[i][j-1])
+                
+        return dp[0][N-1] >= N - k
 
-
+#bottom up dp constance space
+class Solution:
+    def isValidPalindrome(self, s: str, k: int) -> bool:
+        ''' 
+        we can translate this to 2d dp from the recursive solution
+        using full dp array
+        dp[i][j] represents number of valid subsequences between i and j
+        wants dp[0][len(s)-1] as our numbber
+            
+        '''
+        N = len(s)
+        curr = [0]*N
+        prev = [0]*N
+        
+        for i in range(N-1,-1,-1):
+            #base case we always have length 1 as palindrome
+            curr[i] = 1
+            for j in range(i+1,N):
+                #matching
+                if s[i] == s[j]:
+                    curr[j] = prev[j-1] + 2
+                else:
+                    curr[j] = max(prev[j],curr[j-1])
+            
+            curr,prev = prev,curr
+        
+        return prev[N-1] >= N - k
