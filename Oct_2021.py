@@ -1311,3 +1311,48 @@ class Solution:
                 backtrack(i,j,"")
         
         return ans
+
+############################
+# 09_OCT_21
+# 7. Reverse Integer
+############################
+#close one
+class Solution:
+    def reverse(self, x: int) -> int:
+        '''
+        i can use the divmod function to get qutoient and remainder
+        then do the base 10 incrmeent multiply trick
+        '''
+        sign = -1 if x < 0 else 1
+        x = abs(x)
+        
+        ans = 0
+        
+        while x>0:
+            x,r = divmod(x,10)
+            ans += r
+            ans *= 10
+        
+        ans = (ans*sign) // 10 
+        return 0 if ans > 2**31 else ans
+
+#make sure to check overflow
+class Solution:
+    def reverse(self, x: int) -> int:
+        '''
+        i can use the divmod function to get qutoient and remainder
+        then do the base 10 incrmeent multiply trick
+        '''
+        result = 0
+
+        if x < 0:
+            symbol = -1
+            x = -x
+        else:
+            symbol = 1
+
+        while x:
+            result = result * 10 + x % 10
+            x //= 10
+
+        return 0 if result > pow(2, 31) else result * symbol
