@@ -1172,3 +1172,142 @@ class Solution:
             curr,prev = prev,curr
         
         return prev[N-1] >= N - k
+
+#######################
+# 09_OCT_21
+# 212. Word Search II
+#######################
+#dfs from each cell for reach word, TLE
+class Solution:
+    def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
+        '''
+        i could dfs the board for each word in words
+        when a word is found, return at that word to ans
+        return ans
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        ans = set()
+        
+        def dfs(i,j,pos,word):
+            if pos >= len(word):
+                return True
+            #bounds 
+            if 0 <= i < rows and 0 <= j < cols and board[i][j] == word[pos] and (i,j) not in seen:
+                seen.add((i,j))
+                
+                for dx,dy in dirrs:
+                    if dfs(i+dx,j+dy,pos+1,word):
+                        return True
+                
+                #return the value
+                seen.remove((i,j))
+            
+            return False
+        
+        for word in words:
+            seen = set()
+            for i in range(rows):
+                for j in range(cols):
+                    if word not in seen:
+                        if dfs(i,j,0,word):
+                            ans.add(word)
+                        
+        
+        return ans
+        
+#hmmm, this still takes too long
+#first lets define our Trie
+class TrieNode:
+    def __init__(self):
+        self.children = {}
+        self.isEnd = False
+
+class Trie:
+
+    def __init__(self):
+        self.root = TrieNode()   
+
+    def insert(self, word: str) -> None:
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                root.children[ch] = TrieNode()
+            root = root.children[ch]
+        #mark end as special char
+        root.isEnd = True
+        
+
+    def search(self, word: str) -> bool:
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                return False
+            root = root.children[ch]
+        
+        return root.isEnd
+        
+
+    def startsWith(self, prefix: str) -> bool:
+        root = self.root
+        for ch in prefix:
+            if ch not in root.children:
+                return False
+            root = root.children[ch]
+        
+        return True
+        
+        
+class Solution:
+    def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
+        '''
+        first make Trie structure for easy lookup with word
+        then use dfs to explore each cell
+        backtrack once we are done using dfs
+        on our backtrack we can mark a cell as being explored with 0
+        once we are done backtracking, return that to original value
+        build path along,
+        and if path is in tree we are good
+        only dfs i pref of path is in trie
+        '''
+        t = Trie()
+        for word in words:
+            t.insert(word)
+        
+        rows = len(board)
+        cols = len(board[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        
+        ans = set()
+        
+        def backtrack(r,c,path):
+            #bounds and currently being visited, terminate search
+            if not ((0 <= r < rows) and  (0 <= c < cols)) or board[r][c] == 0:
+                return
+            path += board[r][c]
+            
+            #if we can't find this path in t, stop our search
+            if not t.startsWith(path):
+                return
+            #if the current string is in t we are good
+            if t.search(path) and string not in ans:
+                ans.add(path)
+            
+            #backtrack
+            currChar = board[r][c]
+            board[r][c] = 0
+            
+            for dx,dy in dirrs:
+                backtrack(r+dx,c+dy,path)
+            
+            #backtrack
+            board[r][c] = currChar
+            
+        for i in range(rows):
+            for j in range(cols):
+                backtrack(i,j,"")
+        
+        return ans
