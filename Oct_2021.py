@@ -1312,6 +1312,77 @@ class Solution:
         
         return ans
 
+#official solution
+class Solution:
+    def findWords(self, board: List[List[str]], words: List[str]) -> List[str]:
+        '''
+        offical LC solution
+        #build trie
+            #then mark each leaf of the Trie, with a special char, and its word
+            #once we have found this word, remmove word from Trie
+        #optimizations
+            #back track along the nodes in Trie, dfs using the Trie and progress through the leaves
+        #prunes nodees in Trie during backtracking
+            #once we have seen a word, removed from Trie
+        '''
+        ending_char = '$'
+        
+        trie = {}
+        for word in words:
+            node = trie
+            for ch in word:
+                #retive next node
+                node = node.setdefault(ch,{})
+            #mark ending
+            node[ending_char]  = word
+        
+        rows = len(board)
+        cols = len(board[0])
+        dirrs = dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        ans = []
+        def backtrack(row,col,parent):
+            #get letter
+            letter = board[row][col]
+            #get root
+            curr_root = parent[letter]
+            #check if we found word, by remving special char
+            word_match = curr_root.pop(ending_char,False)
+            
+            if word_match:
+                #removed from trie, and avoid using set for results
+                ans.append(word_match)
+                
+            #being backtrackig by marking as visited
+            board[row][col] = '#'
+            
+            #inner recursion
+            for dx,dy in dirrs:
+                new_row = row + dx
+                new_col = col + dy
+                #bounds
+                if not (0 <= new_row < rows) or not (0 <= new_col < cols):
+                    continue
+                #if we can't find from this curr node
+                if board[new_row][new_col] not in curr_root:
+                    continue
+                #otherwise recurse
+                backtrack(new_row,new_col,curr_root)
+            
+            #backtrack
+            board[row][col] = letter
+            
+            #prine nodes
+            if not curr_root:
+                parent.pop(letter)
+                
+        for i in range(rows):
+            for j in range(cols):
+                if board[i][j] in trie:
+                    backtrack(i,j,trie)
+        
+        return ans
+
 ############################
 # 09_OCT_21
 # 7. Reverse Integer
