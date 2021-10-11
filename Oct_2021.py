@@ -1475,4 +1475,24 @@ class Solution:
             shifts += 1
         
         return left << shifts
+
+#using Brian Kernighan
+class Solution:
+    def rangeBitwiseAnd(self, left: int, right: int) -> int:
+        '''
+        there is a way to turn off the right most bit of a number
+        it is called Brian Kernighan algo
+        IDEA:
+            When we do an AND bit operation between num num-1, the right most bit of the original number
+            would be turned off (from zero to one)
+            n & (n-1)
+        the idea is that for a given range [m,n] and m < n, we could iterativle apply the trick
+        on the number n to turn off the right most bit of on until it becomess <= than the beginning range
+        finally we do AND bettwen n' and m to get res
+        '''
+        while left < right:
+            #reduce n
+            right = (right) & (right-1)
         
+        return left & right
+
