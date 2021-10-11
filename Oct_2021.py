@@ -1427,3 +1427,52 @@ class Solution:
             x //= 10
 
         return 0 if result > pow(2, 31) else result * symbol
+
+####################################
+# 10_OCT_21
+# 201. Bitwise AND of Numbers Range
+####################################
+#TLE, the range can be really big
+class Solution:
+    def rangeBitwiseAnd(self, left: int, right: int) -> int:
+        '''
+        just apply and operator to all number in range
+        '''
+        ans = left
+        for num in range(left+1,right+1):
+            ans = ans & num
+        return ans
+
+#bit shifts
+class Solution:
+    def rangeBitwiseAnd(self, left: int, right: int) -> int:
+        '''
+        recall if we and a series of 0 and 1 bits, if there is a 0 present at all
+        the expression resolves to zero
+        take [9,12]
+        if we align all bits up
+        00001001
+        00001010
+        00001011
+        00001100
+        
+        we see they share common prefix
+        
+        we can reformulate the question, as given two integers, return common prevfix
+        idea:
+            use bit shit until we can to a common prefix
+        algo:
+            while m < n:
+                shift both digits one at atime
+                count up shifts
+            return the number m shifted by the number of shifts in the opposite direction
+        
+        '''
+        shifts = 0
+        while left < right:
+            left >>= 1
+            right >>= 1
+            shifts += 1
+        
+        return left << shifts
+        
