@@ -1496,3 +1496,97 @@ class Solution:
         
         return left & right
 
+############################
+# 11_OCT_21
+# 543. Diameter of Binary Tree
+############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        if im at a node, a node to its child has length 1, but to get from the other child
+        it would be 1 + 1
+        this is the recurrsce
+        if left:
+            path so far
+        if right:
+            path so far
+        return max(left,right) + 1
+        '''
+        diameter = 0
+        
+            
+        def dfs(node):
+            if not node:
+                return 0
+            left = dfs(node.left)
+            right = dfs(node.right)
+            self.ans = max(self.ans,left+right)
+            return max(left,right) + 1
+            
+            
+        
+        dfs(root)
+        return self.ans
+            
+class Solution:
+    def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        https://leetcode.com/problems/diameter-of-binary-tree/discuss/112275/Python-Simple-and-Logical-Idea
+        we can do this withou the use of a global
+        pass diameters and heights as a return
+        the answer is the max of left diameter,right diamter, or sum of the two height of the trees
+        calculate max_diam and curr height as we go along
+        '''
+        
+        def dfs(node):
+            if not node:
+                return 0,0
+            left_diam,left_height = dfs(node.left)
+            right_diam,right_height = dfs(node.right)
+            #currheight at this node
+            curr_height = max(left_height,right_height) + 1
+            #max diam at this curr node is max of left,right or some of heights
+            max_diam = max(left_diam,right_diam,left_height + right_height)
+            return max_diam,curr_height
+        
+        return dfs(root)[0]
+        
+#print longest path
+class Solution:
+    def diameterOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        if i wanted to print the nodes along the longest diameter
+        '''
+        if not root:
+            return None
+        
+        self.max_length = 0
+        self.node_list = []
+        self.traverse(root)
+        
+        for node in self.node_list:
+            print(node.val)
+        
+        return self.max_length
+    
+    def traverse(self, root):
+        if not root:
+            return (0, [])
+        
+        left_max, left_node_list = self.traverse(root.left)
+        right_max, right_node_list = self.traverse(root.right)
+        
+        if left_max + right_max > self.max_length:
+            self.max_length = left_max + right_max
+            self.node_list = left_node_list + right_node_list
+        
+        if left_max > right_max:
+            return (left_max+1, left_node_list + [root])
+        else:
+            return (right_max+1, right_node_list + [root])
