@@ -1590,3 +1590,29 @@ class Solution:
             return (left_max+1, left_node_list + [root])
         else:
             return (right_max+1, right_node_list + [root])
+
+
+##############################
+# 12_OCT_21
+# 374. Guess Number Higher or Lower
+##############################
+class Solution:
+    def guessNumber(self, n: int) -> int:
+        '''
+        this is just binary search
+        '''
+        lo,hi = 1,n
+        while lo <= hi:
+            mid = lo + (hi - lo) // 2
+            res = guess(mid)
+            #found it
+            if res == 0:
+                return mid
+            #pick < mid
+            elif res == -1:
+                hi = mid - 1
+            #pick > mid
+            else:
+                lo = mid + 1
+        return -1
+        
