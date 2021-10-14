@@ -1615,4 +1615,128 @@ class Solution:
             else:
                 lo = mid + 1
         return -1
+
+#############################################################
+# 13_OCT_21
+# 1008. Construct Binary Search Tree from Preorder Traversal
+#############################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def bstFromPreorder(self, preorder: List[int]) -> Optional[TreeNode]:
+        '''
+        i can sort the preorder to get inorder as well
+        we puck elements from the preorder array, then look up this element for the in order array
+        elements to left of this prointer in inorder are in left subtree, to the right are in right sub tree
+        if not possible use nulll as pointer
+        '''
+        N = len(preorder)
+        if N < 1:
+            return None
+        #set pointer to pre
+        pre_idx = [0]
+        inorder = sorted(preorder)
         
+        #need fast lookup for inorder
+        inorder_map = {val:idx for idx,val in enumerate(inorder)}
+        
+        def make_tree(inorder_left,inorder_right):
+            #base case
+            if inorder_left == inorder_right:
+                return None
+            
+            #first get peroder root
+            root_val = preorder[pre_idx[0]]
+            #make root
+            root = TreeNode(root_val)
+            #now forom this root, split using inorder
+            inorder_idx = inorder_map[root_val]
+            #move up pointer before recursing
+            pre_idx[0] += 1
+            #recurse
+            root.left = make_tree(inorder_left,inorder_idx)
+            root.right = make_tree(inorder_idx+1,inorder_right)
+            return root
+        
+        return make_tree(0,N)
+
+#recursive solution
+class Solution:
+    def bstFromPreorder(self, preorder: List[int]) -> Optional[TreeNode]:
+        '''
+        sorting takes up times, we can do this in O(N) times
+        the inorder traversal above was used to check if the element could be place in this subtree
+        since this is a valid BST, we can use lower and upper limit tricks to see if an element belongs in this subtreee
+        similar to validate BST
+        algo:
+            initiate lower and upper limits
+            start from frist element
+            helper(lower,upper)
+                if preorder array is used up, i.e is N, return None
+                if curr val is smaller than lower limit, or larger than upper limit, return None
+                if curr val is in limits, place and recurse with changed limits left and right
+        '''
+        N = len(preorder)
+        if N < 1:
+            return None
+        idx = [0]
+        def make_tree(lower,upper):
+            #base case, end up array
+            if idx[0] == N:
+                return None
+            #get current root val
+            val = preorder[idx[0]]
+            #check bounds
+            if val < lower or val > upper:
+                return None
+            
+            idx[0] += 1
+            root = TreeNode(val)
+            root.left = make_tree(lower,val)
+            root.right = make_tree(val,upper)
+            return root
+        
+        return make_tree(float('-inf'),float('inf'))
+
+#iterative
+class Solution:
+    def bstFromPreorder(self, preorder: List[int]) -> Optional[TreeNode]:
+        '''
+        we can turn the recursive solution into an interative one using the stack
+        algo:
+            set the first preorder element as the root
+            loop over all indices in preorder array
+            adjust the parent node
+                pop out of stack all elements with the value smaller than the childe value
+                change parent node at each pop
+            id node.val < child.val:
+                set its right
+            else:
+                set its left
+            push node back on to stack
+        '''
+        N = len(preorder)
+        if N < 1:
+            return None
+        
+        root = TreeNode(preorder[0])
+        stack = [root]
+        
+        for i in range(1,N):
+            node,child = stack[-1], TreeNode(preorder[i])
+            #adjust parent
+            while stack and stack[-1].val < child.val:
+                node = stack.pop()
+            
+            #adjust chilren
+            if node.val < child.val:
+                node.right = child
+            else:
+                node.left = child
+            stack.append(child)
+        
+        return root
