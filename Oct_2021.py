@@ -1740,3 +1740,242 @@ class Solution:
             stack.append(child)
         
         return root
+
+#################################
+# 14OCT21
+# 279. Perfect Squares
+#################################
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        we can use recursion to find the minimum number of primes
+        so we have a number n, and the last prime number to be used was k
+        if we knew the min numbers used to find n-k, then the ans would be min(n-k) + 1
+        rec(n) = rec(n-k) for all k in square nums
+        '''
+        #we only need to generate squares less than sqrt(n)
+        squares = set()
+        start = 1
+        while start*start <= n:
+            squares.add(start*start)
+            start += 1
+
+        memo = {}
+        
+        def rec(curr):
+            #found at least 1 square number
+            if curr in squares:
+                return 1
+            elif curr in memo:
+                return memo[curr]
+            min_squares = float('inf')
+            for square in squares:
+                #if the current square is > than curr, can't ujse
+                if square > curr:
+                    break
+                #otherwsie minmize
+                new_num = rec(curr-square) + 1
+                min_squares = min(min_squares, new_num)
+                
+            memo[curr] = min_squares
+            return min_squares
+        
+        return rec(n)
+
+#TLE, the squares need to be in order
+class Solution:
+    def numSquares(self, n: int) -> int:
+        square_nums = [i**2 for i in range(1, int(math.sqrt(n))+1)]
+        memo = {}
+
+        def minNumSquares(k):
+            """ recursive solution """
+            # bottom cases: find a square number
+            if k in square_nums:
+                return 1
+            if k in memo:
+                return memo[k]
+            min_num = float('inf')
+
+            # Find the minimal value among all possible solutions
+            for square in square_nums:
+                if k < square:
+                    break
+                new_num = minNumSquares(k-square) + 1
+                min_num = min(min_num, new_num)
+            memo[k] = min_num
+            return min_num
+
+        return minNumSquares(n)
+
+#https://leetcode.com/problems/perfect-squares/discuss/1513258/VERY-EASY-TO-UNDERSTAND-WITH-PICTURE-PYTHON-RECURSION-%2B-MEMOIZATION
+#recusive solution
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        we can use recursion, but for each invocation check perfect squares up that number in the call
+        when we reduce a number to zero, we have found a possibel way
+        at most we can use only n 1's to get n
+        then we just check all primes up to that curr and find the minimum
+        '''
+        memo = [-1]*(n+1)
+        
+        def rec(curr):
+            if curr == 0:
+                return 0
+            if curr < 0:
+                return n
+            if memo[curr] != -1:
+                return memo[curr]
+            min_squares = n
+            start = 1
+            while start*start <= n:
+                curr_count = rec(curr-(start*start))
+                min_squares = min(min_squares,curr_count)
+                start += 1
+            
+            memo[curr] = min_squares + 1
+            return memo[curr]
+        
+        return rec(n)
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        we can translate the recursive solution using a dp 
+        and go bottom up
+        genereate all square nums
+        dp array, and dp[i] represnets the minimum number of perfect squares need to det i
+        we want whats currentlty there are the the solution from the last dp less than the current square
+        '''
+        square_nums = [i**2 for i in range(1, int(math.sqrt(n))+1)]
+        dp = [float('inf')]*(n+1)
+        #bottom case, zero
+        dp[0] = 0
+        for i in range(1,n+1):
+            #fheck on each square
+            for square in square_nums:
+                #cannot go negative
+                if i < square:
+                    break
+                dp[i] = min(dp[i],dp[i-square]+1)
+                
+        print(dp)
+        return dp[-1]
+
+#greedy emumeration
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        we can use recursion and implement it greddily
+        this helps prune the call tree
+        intuition:
+            starting from the combination of one single number to multiple numbers, once we find a combination that can sum up to the givne number n, then we can say that we msut have found the smalleat combination
+            since we are looking greedily for combindation sizes from small to large
+        we can define a function that check wheter n can be divided by the count
+        so numSquares(n) = min of all count from [1,n] is_divided_by(n,count)
+        algo:
+            precompute all sqaures from [1,sqrt(n)]
+            in main loop, iteratize from smallest size to largest size, check if n can be divided by the sum of combination (num elements)
+            bottom case, when count == 1, we jsut need to check if n is a square number! OMFG!!!, then its juss 1
+            
+        '''
+        squares = set([i * i for i in range(1, int(n**0.5)+1)])
+        def can_make_with_count(n,count):
+            #if we got to 1, check whter this n is prime
+            if count == 1:
+                return n in squares
+            
+            #recurse
+            for k in squares:
+                #use up a prime, and decrease
+                if can_make_with_count(n-k,count-1):
+                    return True
+            return False
+        
+        for count in range(1,n+1):
+            if can_make_with_count(n,count):
+                return count
+
+#greedy and BFS
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        we notice that in the greedy method, its a call tree using cam_make_with_count
+        this makes an N ary tree with sqrt(n) nodes
+        intuition:
+            given an N ary tree, where each node represents a remainder of the number n, subtracting a combination
+            of square numbers, our task is to find the node in the tree:
+                1. value of the nodes should be a sqaure number
+                2. closes to the root
+        in the greedy method, we actually make the call tree similar to a graph in BFS
+        algo:
+            generate all possible squares
+            make q, which could keep all the remainders to enumerate at each level
+            iterate over q
+                at each iteration checkk if remainder is one of square numbers
+                if not, subtract it with on of the squars numbers to get remainder and add remainder to nextq
+            break out of loop once we get a remainder that is square
+        
+        NOTE: our q is a set, to help eliminate redundancy
+        '''
+        squares = []
+        start = 1
+        while start*start <= n:
+            squares.append(start*start)
+            start += 1
+        
+        levels = 0
+        q = {n}
+        while q:
+            #go down in level
+            levels += 1
+            next_q = set()
+            for rem in q:
+                for sq in squares:
+                    if rem == sq:
+                        return levels
+                    elif rem < sq:
+                        break
+                    else:
+                        next_q.add(rem - sq)
+            #get next level
+            q = next_q
+        
+        return levels
+
+#mathy way
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        bachets conjecture sets upper boud for number of sqaures to make real numbers
+        p = a^2 + b^2 + c^2 + d^2
+        largest numsquares can b <= 4
+        however lagrange four square theorem does not tell us directly the least numbers of squares to decompose
+        adrien-maries legendr:
+            three square theorem
+            4^k (8m+7) = n = a^2 + b^2 + c^2
+            allows us to check if number can only be decomposed into 4 squares
+        Case 3.1). if the number is a square number itself, which is easy to check e.g. n == int(sqrt(n)) ^ 2.
+        Case 3.2). if the number can be decomposed into the sum of two squares. Unfortunately, there is no mathematical weapon that can help us to check this case in one shot. We need to resort to the enumeration approach.
+        '''
+        def isSquare(n:int) -> bool:
+            sq = int(math.sqrt(n))
+            return sq*sq == n
+
+        while (n & 3) == 0:
+            n >>= 2      # reducing the 4^k factor from number
+        if (n & 7) == 7: # mod 8
+            return 4
+
+        if isSquare(n):
+            return 1
+        # check if the number can be decomposed into sum of two squares
+        for i in range(1, int(n**(0.5)) + 1):
+            if isSquare(n - i*i):
+                return 2
+        # bottom case from the three-square theorem
+        return 3
+
+
+
+                
