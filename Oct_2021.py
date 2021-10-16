@@ -1976,6 +1976,157 @@ class Solution:
         # bottom case from the three-square theorem
         return 3
 
+#########################################
+# 15OCT21
+# 309. Best Time to Buy and Sell Stock with Cooldown
+#########################################
+#recursie solution
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        we are given an array of stock prices
+        we have an unlimited number of transactions, i.e we can buy or sell as many times
+        but after selling stock, we have to wait on more day
+        return max profits
+        at any one day, we have two choices, buy or sellf
+        for each recursive call, maintain a buy state
+        
+        if we cannot afford a transaction today just adavance
+        ans1 = rec(day+1,buy)
+        
+        if we can afforcd a transaction today
+        if buy:
+            ans2 = -prices[i] + rec(i+1,false)
+        else:
+            ans2 = prices[i] + rec(i+2,true)
+        
+        if we go past the index, i.e past the days, return 0, no profit CAN be made
+        '''
+        memo = {}
+        N = len(prices)
+        
+        def rec(day,buy):
+            if day >= N:
+                return 0
+            if (day,buy) in memo:
+                return memo[(day,buy)]
+            #no transaction, we always have this choice
+            ans1 = rec(day+1,buy)
+            
+            #second choice
+            ans2 = 0
+            if buy:
+                ans2 = -prices[day] + rec(day+1,0)
+            else:
+                ans2 = prices[day] + rec(day+2,1)
+                
+            memo[(day,buy)] = max(ans1,ans2)
+            return memo[(day,buy)]
+        #we start off with buying
+        return rec(0,1)
 
+#translating to dp
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        we can turn the top down recursive solution into a bottom up dp solution
+        at any one time we a have of just staying, i.e not gettin profit
+        if we can buy, going down in profit
+        if we can sell, going up in profit
+        for every day, we have two states of buy or not buy
+        '''
+        if not prices:
+            return 0
+        
+        #make dp arrays, add 2 more spots for edge cases
+        N = len(prices)
+        dp = [[0]*(2) for _ in range(N+3)]
+        
+        for day in range(N-1,-1,-1):
+            for buy in range(2):
+                #edge cases
+                if day >= N:
+                    dp[day][buy] = 0
+                else:
+                    ans1 = dp[day+1][buy]
+                    if buy:
+                        ans2 = -prices[day] + dp[day+1][0]
+                    else:
+                        ans2 = prices[day] + dp[day+2][1]
+                
+                #update
+                dp[day][buy] = max(ans1,ans2)
+        
+        return dp[0][1]
+
+#using state machines, offical solutions
+# https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/solution/
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        we can define states:
+            held: agent holds a stock that it bought some point before
+            sold: agent just sold stock right before entering this state
+            reset: starting point; holding no stock and did not sell stock before; gives us cooldown after selling
+        
+        actions:
+            sell: agent sells stock at curr moment, after selling agent goes to sold state
+            but: buy, goes to hold state:
+            rest: no transaction, stay
+            
+        go down prices, and look at each state, calculate states for each price!
+        each node in graph, we hold max profits so far
+        
+        algo:
+            define three state arrays
+            (i.e. held[i], sold[i] and reset[i]) which correspond to the three states that we defined before.
+            elements in state arrays repsent max profits so far
+            example sold[2] is max profits we gain if we sell sock at price point[2]
+        
+        transitions:
+            sold[i] = hold[i-1] + price[i]
+            held[i] = max(held[i-1],reset[i-1] - price[i])
+            reset[i] = max(reset[i-1],sold[i-1])
+        
+        max profits is max(sold[n],reset[n]), either sell or hold at n
+        base case:
+            kicked off from the reset state, since we don't start off holding any stock
+            and so we assign inital values of sold and helad as Integer.MIN_VALUE
+        '''
+        N = len(prices)
+        sold = [0]*(N+1)
+        held = [0]*(N+1)
+        reset = [0]*(N+1)
+        
+        #bases cases
+        sold[0] = held[0] = float('-inf')
+        
+        for i in range(N):
+            sold[i+1] = held[i] + prices[i]
+            held[i+1] = max(held[i],reset[i] - prices[i])
+            reset[i+1] = max(reset[i],sold[i])
+        
+        return max(sold[-1],reset[-1])
+
+#reducing state space to O(1)
+class Solution(object):
+    def maxProfit(self, prices):
+        """
+        :type prices: List[int]
+        :rtype: int
+        """
+        sold, held, reset = float('-inf'), float('-inf'), 0
+
+        for price in prices:
+            # Alternative: the calculation is done in parallel.
+            # Therefore no need to keep temporary variables
+            #sold, held, reset = held + price, max(held, reset-price), max(reset, sold)
+
+            pre_sold = sold
+            sold = held + price
+            held = max(held, reset - price)
+            reset = max(reset, pre_sold)
+
+        return max(sold, reset)
 
                 
