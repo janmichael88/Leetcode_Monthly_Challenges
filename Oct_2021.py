@@ -2278,4 +2278,86 @@ class Solution:
                     dp[day][trans] = max(ans1,ans2)
         
         return dp[0][-1]
+
+##############################
+# 17OCT21
+# 437. Path Sum III
+##############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pathSum(self, root: Optional[TreeNode], targetSum: int) -> int:
+        '''
+        i can do down a path each bracnh
+        and for each path, check if the sumSoFar == targetSum, it is, then increment count by 1
+        dfs twice
+        define helper funcion, and invoke at each node in the tree
+        '''
+        if not root:
+            return 0
+        
+        self.total = 0
+        def dfs_from_node(node,sumSoFar):
+            if not node:
+                return 0
+            if sumSoFar + node.val == targetSum:
+                self.total += 1
+            dfs_from_node(node.left,sumSoFar + node.val)
+            dfs_from_node(node.right,sumSoFar + node.val)
+        
+        def dfs_from_root(node):
+            if not node:
+                return 
+            dfs_from_node(node,0)
+            dfs_from_root(node.left)
+            dfs_from_root(node.right)
+        
+        dfs_from_root(root)
+        return self.total
+            
+class Solution:
+    def pathSum(self, root: Optional[TreeNode], targetSum: int) -> int:
+        '''
+        we can use the concept of prefix sum, and check if a complement sum resides in our hasmap or not
+        recall the problem, Find Number of continuous subarray that sum to target
+        algo:
+            init global variable to hold counts
+            default to preoder if we want to span the tree
+            update sumSoFar with curr node val
+            check if it euqls target
+            but we also could have found this sum compleement, in our hasmap
+        '''
+        countSumsSeen = defaultdict(int)
+        self.total = 0
+        
+        def dfs(node,sumSoFar):
+            if not node:
+                return 
+            sumSoFar += node.val
+            
+            #case 1, its a match
+            if sumSoFar == targetSum:
+                self.total += 1
+            
+            #case 2, find comp
+            comp = sumSoFar - targetSum
+            if comp in countSumsSeen:
+                self.total += countSumsSeen[comp]
+            
+            #add to seen
+            countSumsSeen[sumSoFar] += 1
+            
+            #recruse
+            dfs(node.left,sumSoFar)
+            dfs(node.right,sumSoFar)
+            
+            #back track
+            countSumsSeen[sumSoFar] -= 1
+        
+        dfs(root,0)
+        return self.total
                 
