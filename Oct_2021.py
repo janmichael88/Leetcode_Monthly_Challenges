@@ -2129,4 +2129,153 @@ class Solution(object):
 
         return max(sold, reset)
 
+#######################################
+# 16OCT21
+# 123: Best Time to Buy and Sell Stock III
+#######################################
+#recursive
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        lets try to do this recursifely first
+        we have day, buy, and 2 transactions, once 2 are down we are left to keep advancing in the array
+        we need to know if we are in own or sell state
+        we need to be holding stock to get it
+        '''
+        memo = {}
+        N = len(prices)
+        
+        def rec(day,own,k):
+            if day >= N or k == 0:
+                return 0
+            if (day,own,k) in memo:
+                return memo[(day,own,k)]
+            #if i had own stack, i can sell or stay, and if sell use up transation
+            #take means i do an action
+            if own:
+                #i can sell and go up in prices
+                take = prices[day] + rec(day+1,0,k-1)
+                #or just hold and go on to the next day
+                no_take = rec(day+1,1,k)
+            else:
+                #i dont own, so i have to buy, but keep k
+                take = -prices[day] + rec(day+1,1,k)
+                #stay but keep k
+                no_take = rec(day+1,0,k)
+            
+            memo[(day,own,k)] = max(take,no_take)
+            return memo[(day,own,k)]
+
+        
+        return rec(0,0,2)
+
+#now translate to dp
+#this doesn't really work, assumes we own and have k transactions done
+#need to treat transactions differently
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        now just try translating recursiion to dp
+        3 d dp array, but since we only have 2 own states, and k transctions
+        its just O(days*states*transations)
+        which the last two are a constant factor
+        '''
+        if not prices:
+            return 0
+        
+        N = len(prices)
+        dp = [[[0]*(3)]*(2) for _ in range(N+1)] #to include for base case +1, but upper bound must be inclusive
+        for day in range(N,-1,-1):
+            for own in range(2):
+                for trans in range(3):
+                    #base case,out of bounds or out of trans
+                    if trans == 0 or day >= N:
+                        dp[day][own][trans] = 0
+                    else:
+                        if own:
+                            take = prices[day] + dp[day+1][0][trans-1]
+                            no_take = dp[day+1][1][trans]
+                        else:
+                            take = -prices[day] + dp[day+1][1][trans]
+                            no_take = dp[day+1][0][trans]
+                        
+                        dp[day][own][trans] = max(take,no_take)
+                        
+        
+        print(dp)
+#another recursive way
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        # https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/discuss/1523723/C%2B%2B-or-Four-Solutions-%3A-Recursion-Memoization-DP-with-O(N)-space-DP-with-O(1)-Space
+        #just another way to think recursively
+        if we have k transactions with no cool down, we would have buy,sell.....buy,sell k times
+        if have at least one transction we have choices:
+            no transaction = rec(day+1,trans left)
+        if we buy:
+            -prices[day] + rec(day+1,trans-1)
+        or sell
+            prices[day] + rec(day+1,trans-1)
+        base cases, gone past days, 0 or no trans left, which is zero
+        
+        '''
+        memo = {}
+        N = len(prices)
+        def rec(day,transactionsLeft):
+            if day >= N or transactionsLeft == 0:
+                return 0
+            if (day,transactionsLeft) in memo:
+                return memo[(day,transactionsLeft)]
+
+            #we can always choose to stay
+            ans1 = rec(day+1,transactionsLeft)
+            ans2 = 0
+            #if we can buy
+            buy = (transactionsLeft % 2 == 0)
+            if buy:
+                ans2 = -prices[day] + rec(day+1, transactionsLeft -1)
+            else:
+                ans2 = prices[day] + rec(day+1, transactionsLeft -1)
+
+            memo[(day,transactionsLeft)] = max(ans1,ans2)
+            return memo[(day,transactionsLeft)] 
+        
+        return rec(0,4)
+
+#translating to dp
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        # https://leetcode.com/problems/best-time-to-buy-and-sell-stock-iii/discuss/1523723/C%2B%2B-or-Four-Solutions-%3A-Recursion-Memoization-DP-with-O(N)-space-DP-with-O(1)-Space
+        #just another way to think recursively
+        if we have k transactions with no cool down, we would have buy,sell.....buy,sell k times
+        if have at least one transction we have choices:
+            no transaction = rec(day+1,trans left)
+        if we buy:
+            -prices[day] + rec(day+1,trans-1)
+        or sell
+            prices[day] + rec(day+1,trans-1)
+        base cases, gone past days, 0 or no trans left, which is zero
+        
+        '''
+        N = len(prices)
+        k = 2
+        dp = [[0]*(2*k+1) for _ in range(N+1)]
+        
+        for day in range(N, -1,-1):
+            for trans in range(2*k+1):
+                if day >= N or trans == 0:
+                    dp[day][trans] = 0
+                else:
+                    ans1 = dp[day+1][trans]
+                    ans2 = 0
+                    buy = (trans % 2 == 0)
+                    if buy:
+                        ans2 = -prices[day] + dp[day+1][trans -1]
+                    else:
+                        ans2 = prices[day] + dp[day+1][trans-1]
+                    
+                    dp[day][trans] = max(ans1,ans2)
+        
+        return dp[0][-1]
                 
