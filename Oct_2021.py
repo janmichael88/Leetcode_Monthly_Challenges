@@ -2360,4 +2360,97 @@ class Solution:
         
         dfs(root,0)
         return self.total
+
+################################################
+# 17OCT21
+# 302. Smallest Rectangle Enclosing Black Pixels
+################################################
+#i had this one! just the fucking cornere cases
+# not we could have minimized and maximized on the fly
+class Solution:
+    def minArea(self, image: List[List[str]], x: int, y: int) -> int:
+        '''
+        if im given the position of a black pixel, and there is only on region
+        i can bfs from this posiiton to find all positions of black
+        then i can the smallest bounding box for this compoenent
+        and subtract that from the total area of the sqaure
+        '''
+        rows = len(image)
+        cols = len(image[0])
+        
+        if rows == 0 or cols == 0:
+            return 1
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        seen = set([(x,y)])
+        q = deque([(x,y)])
+        
+        while q:
+            curr_x,curr_y = q.popleft()
+            #find nieghs
+            for dx,dy in dirrs:
+                neigh_x = curr_x + dx
+                neigh_y = curr_y + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #not seen
+                    if (neigh_x,neigh_y) not in seen and image[neigh_x][neigh_y] == '1':
+                        seen.add((neigh_x,neigh_y))
+                        q.append((neigh_x,neigh_y))
+                        
+        #now find min x and max y
+        min_x = rows
+        max_x = 0
+        
+        min_y = cols
+        max_y = 0
+        
+        for i,j in seen:
+            min_x = min(min_x,i)
+            max_x = max(max_x,i)
+            
+            min_y = min(min_y,j)
+            max_y = max(max_y,j)
+        
+        size_x = max_x - min_x + 1
+        size_y = max_y - min_y + 1
+        
+        return (1+ max_x - min_x)*(1 + max_y - min_y)
+
+#naive linear
+class Solution:
+    def minArea(self, image: List[List[str]], x: int, y: int) -> int:
+        '''
+        naive way, which still passes would be to scan each row and find upper and lower bounds for x and y
+        
+        '''
+        if not image:
+            return 0
+        
+        rows = len(image)
+        cols = len(image[0])
+        
+        min_x = rows
+        min_y = cols
+        
+        max_x = 0
+        max_y = 0
+        
+        has_black = False
+        
+        for i in range(rows):
+            for j in range(cols):
+                if image[i][j] == '1':
+                    has_black = True
+                    
+                    min_x = min(min_x,i)
+                    min_y = min(min_y,j)
+
+                    max_x = max(max_x,i)
+                    max_y = max(max_y,j)
+                    
+        if not has_black:
+            return 0
+        
+        return (1 + max_x - min_x)*(1+max_y-min_y)
                 
