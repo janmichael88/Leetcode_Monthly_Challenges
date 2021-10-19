@@ -2499,4 +2499,216 @@ class Solution:
         dfs(root,0,None,x)
         dfs(root,0,None,y)
         return (self.depth_x == self.depth_y) and (self.parent_x != self.parent_y)
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isCousins(self, root: Optional[TreeNode], x: int, y: int) -> bool:
+        '''
+        a brute force way would be to to record all depths for nodes and parent child relationshups in hash
+        then check x and y using the hashes
+        '''
+        depths = {}
+        parents = {}
+        
+        def dfs(node,depth, parent):
+            if not node:
+                return
+            depths[node.val] = depth
+            parents[node.val] = parent
+            dfs(node.left,depth+1,node)
+            dfs(node.right,depth + 1,node)
+        
+        dfs(root,0,None)
+        return depths[x] == depths[y] and parents[x] != parents[y]
+
+#recursion with early stopping        
+class Solution:
+    def isCousins(self, root: Optional[TreeNode], x: int, y: int) -> bool:
+        '''
+        the problem is that if we have already found nodes earlier in the tree, we keep recursing
+        we want to to terminated once we know x and y are cousins
+        or stop searching beyond a level, once we already know
+        
+        algo:
+            start traversing the tree from the root node, looking for x and y
+            record epth when first (either x or y is found) and return true
+            once one of th nodes is discoered, for every other recursve call after teh discovery we can return false
+            if the curr depth is more than recorde depth - meaning we did not find the other node at the same depth, no need to search beyond
+            return true when the other node is discofered and has same depth
+            recurse left and right on current ndoe
+            if both left and right recusions return True
+            
+        '''
+        self.recorded_depth = None
+        self.is_cousin = False
+        
+        def dfs(node,depth,x,y):
+            if not node:
+                return False
+            #dont get past first recorded depth
+            if self.recorded_depth and depth > self.recorded_depth:
+                return False
+            
+            #found
+            if node.val == x or node.val == y:
+                #save first
+                if self.recorded_depth is None:
+                    self.recorded_depth = depth
+                #return true if second ndoe is found at same curr depth
+                return self.recorded_depth == depth
+            
+            #recursive vases
+            left = dfs(node.left,depth+1,x,y)
+            right = dfs(node.right,depth+1,x,y)
+            
+            ##since we early stopped, the cannot be more than 1
+            if left and right and self.recorded_depth != depth + 1:
+                self.is_cousin = True
+            
+            return left or right
+        
+        dfs(root,0,x,y)
+        return self.is_cousin
+
+#bfs, with early stopping
+class Solution:
+    def isCousins(self, root: Optional[TreeNode], x: int, y: int) -> bool:
+        '''
+        problem with dfs is that it goes far down to find the first node
+        we could have stopped earlier,
+        since we want nodes at same level, we can use BFS - level order traversal
+        nodes at same level could be siblings or cousins, need to determin way to distinguish
+        algo:
+            1. do level order traversal using q
+            2. for every node popped off q, check if node is either x or y. if it is for the first time, set both sibling and cousin flgas as true
+            3. to distinguish from cousin insert markers in the q
+            4. whenever we encouneter the null marker, set siblings to false, end of marking sibling territory
+            5. second time we encouner node which si equal to node x or node y, we will have clairty about wheter or not we are still in sibling territory
+            6. if we are, then return true, else false
+        '''
+        # Queue for BFS
+        queue = deque([root])
+
+        while queue:
+
+            siblings = False
+            cousins = False
+            nodes_at_depth = len(queue)
+            for _ in range(nodes_at_depth):
+
+                # FIFO
+                node = queue.popleft()  
+
+                # Encountered the marker.
+                # Siblings should be set to false as we are crossing the boundary.
+                if node is None:
+                    siblings = False
+                else:
+                    if node.val == x or node.val == y:
+                        # Set both the siblings and cousins flag to true
+                        # for a potential first sibling/cousin found.
+                        if not cousins:
+                            siblings, cousins = True, True
+                        else:
+                            # If the siblings flag is still true this means we are still
+                            # within the siblings boundary and hence the nodes are not cousins.
+                            return not siblings
+
+                    queue.append(node.left) if node.left else None
+                    queue.append(node.right) if node.right else None
+                    # Adding the null marker for the siblings
+                    queue.append(None)
+            # After the end of a level if `cousins` is set to true
+            # This means we found only one node at this level
+            if cousins:
+                return False
+
+        return False
+        
+#########################
+# 19OCT21
+# 496. Next Greater Element I
+#########################
+#welp it passes
+class Solution:
+    def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        '''
+        well just try the brute force first,
+        find number in nums2, then check for the next greater
+        i can hash the nums2 array, since they are unique to jump to the right index
+        
+        '''
+        nums2_mapp = {}
+        res = []
+        for i,num in enumerate(nums2):
+            nums2_mapp[num] = i
+        
+        print(nums2_mapp)
+        #now go throuh numbers in nums1
+        for num in nums1:
+            #jump to that spot in nums2
+            index = nums2_mapp[num]
+            found = False
+            for j in range(index+1,len(nums2)):
+                if nums2[j] > num:
+                    res.append(nums2[j])
+                    found = True
+                    break
+            if not found:
+                res.append(-1)
+        
+        return res
+
+#stack O(m+n) == O(n)
+class Solution:
+    def nextGreaterElement(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        '''
+        we can use a stack to update elments in our mapp
+        mapp has entries in nums2 mapping (element, next_greater element)
+        algo:
+            start with nums2 array
+            keep pushing on to stack,
+            when we come to element that is larger than what it on the top of the stack
+            pop off and make the mapping from popped element to the curr element we are on
+        pass through the mappp once more using nums1 as the elments
+        key words: montonous stack
+        '''
+        stack = []
+        mapp = {}
+        
+        for num in nums2:
+            #we need something in the stack, and curr element is >
+            while stack and num > stack[-1]:
+                #add to map
+                mapp[stack.pop()] = num
+            stack.append(num)
+        
+        #the remaining elements have no next greater
+        while stack:
+            mapp[stack.pop()] = -1
+        
+        res = []
+        for num in nums1:
+            res.append(mapp[num])
+        
+        return res
+
+#also remember the .get for python dics
+class Solution:
+    def nextGreaterElement(self, nums1, nums2):
+        dic, stack = {}, []
+        
+        for num in nums2[::-1]:
+            while stack and num > stack[-1]:
+                stack.pop()
+            if stack:
+                dic[num] = stack[-1]
+            stack.append(num)
+            
+        return [dic.get(num, -1) for num in nums1]
                 
