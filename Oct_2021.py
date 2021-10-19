@@ -2453,4 +2453,50 @@ class Solution:
             return 0
         
         return (1 + max_x - min_x)*(1+max_y-min_y)
+
+#############################
+# 18OCT21
+# 993. Cousins in Binary Tree
+#############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isCousins(self, root: Optional[TreeNode], x: int, y: int) -> bool:
+        '''
+        two nodes are cousins if they have the same depth with different parents
+        what if i dfs's twice, getting depths of x and y, and their parents
+        then just return whether depths match and parents are different
+        '''
+        if not root:
+            return False
+        self.depth_x = None
+        self.parent_x = None
+        
+        self.depth_y = None
+        self.parent_y = None
+        
+        
+        
+        def dfs(node,depth,parent,target):
+            if not node:
+                return
+            if node.val == target:
+                if target == x:
+                    self.depth_x = depth
+                    self.parent_x = parent
+                    return
+                else:
+                    self.depth_y = depth
+                    self.parent_y = parent
+                    return
+            dfs(node.left,depth+1,node,target)
+            dfs(node.right,depth+1,node,target)
+            
+        dfs(root,0,None,x)
+        dfs(root,0,None,y)
+        return (self.depth_x == self.depth_y) and (self.parent_x != self.parent_y)
                 
