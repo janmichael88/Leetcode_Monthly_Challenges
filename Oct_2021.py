@@ -2711,4 +2711,74 @@ class Solution:
             stack.append(num)
             
         return [dic.get(num, -1) for num in nums1]
+
+########################
+# 19OCT21
+# 151. Reverse Words in a String
+########################
+class Solution:
+    def reverseWords(self, s: str) -> str:
+        '''
+        just split on space then reverse
+        '''
+        s = s.split(" ")
+        #get only words
+        s = [word for word in s if word != '']
+        print(s)
+        s = " ".join(s[::-1])
+        return s
+
+#two pointer method
+class Solution:
+    def reverseWords(self, s: str) -> str:
+        '''
+        we can use the two pointer method for reversing a string
+        first reverse the whole string,
+        then revese each word
+        '''
+        s = self.trim_spaces(s)
+        self.reverse(s,0, len(s)-1)
+        self.reverse_each_word(s)
+        
+        return "".join(s)
+    def trim_spaces(self, s:str) -> list:
+        l,r = 0,len(s) - 1
+        #remove leading white spaces
+        while l <= r and s[l] == ' ':
+            l += 1
+        #remove trailing white
+        while l <= r and s[r] == ' ':
+            r -= 1
+        
+        output = []
+        while l <= r:
+            if s[l] != ' ':
+                output.append(s[l])
+            elif output[-1] != ' ':
+                output.append(s[l])
+            l += 1
+        
+        return output
+    
+    #define revese function
+    def reverse(self,l : list, left: int, right: int) -> None:
+        while left <= right:
+            l[left], l[right] = l[right], l[left]
+            left, right = left + 1, right - 1
+    
+    #now reverse words
+    def reverse_each_word(self, l: list) -> None:
+        N = len(l)
+        start = end = 0
+        while start < N:
+            #go to end of word
+            while end < N and l[end] != ' ':
+                end += 1
+            #reverse the workd
+            self.reverse(l,start,end-1)
+            #move pointers
+            start = end + 1
+            end += 1
+
+
                 
