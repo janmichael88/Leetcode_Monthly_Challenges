@@ -2850,4 +2850,46 @@ class RandomizedSet:
 # param_2 = obj.remove(val)
 # param_3 = obj.getRandom()
 
+#############################
+# 22OCT21
+# 451. Sort Characters By Frequency
+#############################
+class Solution:
+    def frequencySort(self, s: str) -> str:
+        '''
+        i get char counts
+        then pass over the hash in order
+        '''
+        ans = ''
+        counts = Counter(s)
+        for k,v in sorted(counts.items(),key = lambda item: item[1],reverse = True):
+            ans += k*v
+        
+        return ans
+
+#bucket sort
+class Solution:
+    def frequencySort(self, s: str) -> str:
+        '''
+        i can use bucket sort on the char freq counts
+        if i get all the char counts, i would have one bucket for each up the max count
+        if i go backward in this count array, i would just need to find the char with this count
+        '''
+        charToCount = Counter(s)
+        countToChar = defaultdict(list)
+        max_freq = 0
+        for char,count in charToCount.items():
+            countToChar[count].append(char)
+            max_freq = max(max_freq,count)
+        
+        ans = ""
+        #starting with highest
+        for freq in range(max_freq,-1,-1):
+            if freq in countToChar:
+                for char in countToChar[freq]:
+                    ans += freq*char
+        
+        return ans
+
+
                 
