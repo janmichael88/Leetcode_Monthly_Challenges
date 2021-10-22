@@ -2780,5 +2780,74 @@ class Solution:
             start = end + 1
             end += 1
 
+#############################
+# 380. Insert Delete GetRandom O(1)
+# 21OCT21
+#############################
+class RandomizedSet:
+    '''
+    abstract data type used in a lot algos like markov chain monte carlo
+    and metropolis hastings where its difficult to compute the distribution itself
+    intuition:
+        swap element to delete with last one
+        pop last element out
+        or just swap last element when we can remove
+    insert:
+        add value to to dcit
+        append to array
+    
+    delete:
+        retreive index of element to delte frm hashampa
+        move last element to the place in hash
+        pop last elemen tou
+    '''
+
+    def __init__(self):
+        self.valueToIndex = {}
+        self.arr = []
+        self.size = 0
+        
+
+    def insert(self, val: int) -> bool:
+        #check in struct
+        if val in self.valueToIndex:
+            return False
+        #otherwise put
+        self.valueToIndex[val] = self.size
+        self.arr.append(val)
+        self.size += 1
+        return True
+        
+
+    def remove(self, val: int) -> bool:
+        if val not in self.valueToIndex:
+            return False
+        #otherwise swap the last element in the array to the vale we want to remove
+        last_element = self.arr[-1]
+        #index ov val we are removing
+        idx = self.valueToIndex[val]
+        #swap
+        self.arr[idx] = last_element
+        #replace
+        self.valueToIndex[last_element] = idx
+        #pop from list
+        self.arr.pop()
+        self.size -= 1
+        #rmove from hashamp
+        del self.valueToIndex[val]
+        return True
+        
+        
+
+    def getRandom(self) -> int:
+        #random choice, i guess this is allowed
+        return random.choice(self.arr)
+
+
+# Your RandomizedSet object will be instantiated and called as such:
+# obj = RandomizedSet()
+# param_1 = obj.insert(val)
+# param_2 = obj.remove(val)
+# param_3 = obj.getRandom()
 
                 
