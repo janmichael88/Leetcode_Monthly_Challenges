@@ -2891,5 +2891,250 @@ class Solution:
         
         return ans
 
+##############################
+# 23OCT21
+# 154: Find Minimum in Rotated Sorted Array II
+#############################
+
+class Solution:
+    def findMin(self, nums: List[int]) -> int:
+        '''
+        rotating an array just means cycling the elements
+        the problem is a follow up to the original problem, fiding min in rotated sorted array
+        but this time we have duplicate elements
+        recall in the last problem, we wanted to look for inflection point
+        here we need to compare our pivot points to the upper and lower bounds
+        there are three cases:
+            case 1: nums[pivot] < nums[high]
+                the minimum cannot lie on the right side, so we upper bound with mid
+            case 2: nums[pivot] > nums[high]
+                the minimum cannot lie on the left side, so put a lower bound to pivot + 1
+            case 3: nums[pivot] == nums[high]:
+                we cannot tell what side, so we move both pointers only by 1
+        
+        how algo differs from classic binary search:
+            use upper bound of search scope, instead of comparing to desired value
+            in the third case, we further move the upper bound, while in regular binary search we return
+        '''
+        
+        l, r = 0, len(nums)-1
+        if nums[r] > nums[0]:
+            return nums[0]
+        
+        #binary search
+        while l < r:
+            mid = l + (r - l) // 2
+            #upper and lower bounds are equal, we cannot tell the difference
+            if nums[l] == nums[mid] == nums[r]:
+                l += 1
+                r -= 1
+            #its in lower half
+            elif nums[mid] <= nums[r]:
+                r = mid
+            #its in upper half
+            else:
+                l = mid + 1
+        
+        return nums[l]
+
+
+###################################
+# 22OCT21
+# 1066. Campus Bikes II
+###################################
+#TLE
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> int:
+        '''
+        we want to assign each worker a unique bike such that their manhattan distances is minimized
+        we may have unused bikes where n < m
+        brute force would be to try all mappins of workers to bikes
+        the find the min cost
+        the inputs are small enough to allow for generating all combinations
+        do brute force first
+        '''
+        N = len(workers)
+        M = len(bikes)
+        
+        self.ans = float('inf')
+        #generate all permutations of N using M elements
+        def backtrack(perm,i,options,picked):
+            if i == N:
+                self.ans = min(self.ans,manhattan(workers,perm))
+                return
+            else:
+                for j in range(M):
+                    if not picked[j]:
+                        picked[j] = True
+                        perm[i] = options[j]
+                        backtrack(perm,i+1,options,picked)
+                        picked[j] = False
+        
+        #get distance
+        def manhattan(wokers,bikes):
+            #workers are their coords, bikes are indices
+            ans = 0
+            for coords_w,coords_b in zip(workers,bikes):
+                ans += abs(coords_w[0] - coords_b[0]) + abs(coords_w[1] - coords_b[1])
+            return ans
+            
+        
+        backtrack([0]*N,0,bikes,[False]*M)
+        return self.ans
+
+#using taken array and storing as tuple in memo
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> int:
+        '''
+        if we have M bikes and N workers
+        the total number of combinations of workes to unqiue bikes is M*(M-1)....*(M-N+1)
+        which we can write as M! / (M-N)!, if N == M, then we just have M! and this should be ok if we have 12 choises
+        suppose we have one combinaiton of bikes, and its total dist ia smallestDistatancSum
+        now going down a path we have acculmate a currDistSum and currDistSum >= smallest, we don't need to go down
+        we can greedily start searching
+        algo:
+            1. for every worker starting fomr index 0, traverse over other ibikes if not visited bike
+            2. add manhat disate above assignment to the total distance incurred so far
+            3. backtrack
+            4. update smallest distance
+        '''
+        memo = {}
+        
+        def manhat(worker,bike):
+            return abs(worker[0] - bike[0]) + abs(worker[1] - bike[1])
+        
+        def backtrack(workers,bikes,worker_idx,taken):
+            #gone througgh all workers
+            if worker_idx >= len(workers):
+                return 0
+            
+            if tuple(taken) in memo:
+                return memo[tuple(taken)]
+            
+            smallestSoFar = float('inf')
+            for bikeIndex in range(len(bikes)):
+                if not taken[bikeIndex]:
+                    #find distance
+                    toAdd = manhat(workers[worker_idx],bikes[bikeIndex])
+                    #take the bike
+                    taken[bikeIndex] = True
+                    #get new dist
+                    potential_smallest = toAdd + backtrack(workers,bikes, worker_idx+1,taken)
+                    smallestSoFar = min(smallestSoFar,potential_smallest)
+                    #dont forget to backtrack
+                    taken[bikeIndex] = False
+            
+            #memoisze
+            memo[tuple(taken)] = smallestSoFar
+            return smallestSoFar
+        
+        taken = [False]*len(bikes)
+        return backtrack(workers,bikes,0,taken)
+
+#using bit masking
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> int:
+        '''
+        if we have M bikes and N workers
+        the total number of combinations of workes to unqiue bikes is M*(M-1)....*(M-N+1)
+        which we can write as M! / (M-N)!, if N == M, then we just have M! and this should be ok if we have 12 choises
+        suppose we have one combinaiton of bikes, and its total dist ia smallestDistatancSum
+        now going down a path we have acculmate a currDistSum and currDistSum >= smallest, we don't need to go down
+        we can greedily start searching
+        algo:
+            1. for every worker starting fomr index 0, traverse over other ibikes if not visited bike
+            2. add manhat disate above assignment to the total distance incurred so far
+            3. backtrack
+            4. update smallest distance
+        '''
+        memo = {}
+        
+        def manhat(worker,bike):
+            return abs(worker[0] - bike[0]) + abs(worker[1] - bike[1])
+        
+        def backtrack(workers,bikes,worker_idx,taken):
+            #gone througgh all workers
+            if worker_idx >= len(workers):
+                return 0
+            
+            if taken in memo:
+                return memo[taken]
+            
+            smallestSoFar = float('inf')
+            for bikeIndex in range(len(bikes)):
+                if (taken & (1 << bikeIndex)) == 0:
+                    #find distance
+                    toAdd = manhat(workers[worker_idx],bikes[bikeIndex])
+                    #take the bike
+                    taken |= 1 << bikeIndex
+                    #get new dist
+                    potential_smallest = toAdd + backtrack(workers,bikes, worker_idx+1,taken)
+                    smallestSoFar = min(smallestSoFar,potential_smallest)
+                    #dont forget to backtrack
+                    taken &= ~(1 << bikeIndex) 
+            
+            #memoisze
+            memo[taken] = smallestSoFar
+            return smallestSoFar
+        
+        taken = 0
+        return backtrack(workers,bikes,0,taken)
+
+#bottom up dp
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> int:
+        '''
+        we can translate this to bottom up do, by iterating over all masksa
+        there are at most 2**10 possible makes, represeting which bikes we had taken
+        bikes will alwaus be great than workers, final state is when number of bikes choses is number of workers
+        if we have mask with six ones, we want add another bike such that there sum manhat is smallest
+        algo:
+            1 travers over every mask from 2**10
+            2. for every value of mask, traverse bike index
+                if bike at index has not been taken, change value
+            3. the wok to which the boave bike is assignes is given by number of bikes already assigne
+            4. the distance sum for this mask, will be equal to te distance sume for mask (memo[mask]))
+            okust the new manhat distance
+                record newmask in memo
+            5. base cases:
+                number of 1s == number of workers
+        '''
+        dp = [float('inf')]*(2**10)
+        dp[0] = 0
+        
+        def manhat(worker,bike):
+            return abs(worker[0] - bike[0]) + abs(worker[1] - bike[1])
+        
+        #brian kernighan
+        def countones(mask):
+            count = 0
+            while mask != 0:
+                mask &= (mask-1)
+                count += 1
+            return count
+        
+        numBikes = len(bikes)
+        numWorkers = len(workers)
+        smallestDist = float('inf')
+        
+        #traverase over all masks
+        for mask in range(1 << numBikes):
+            nextWorkerIndex = countones(mask)
+            #uf mask has more number of 1's than workers, update answer so faar
+            if nextWorkerIndex >= numWorkers:
+                smallestDist = min(smallestDist, dp[mask])
+                continue
+            
+            for bikeIndex in range(numBikes):
+                if (mask & (1 << bikeIndex)) == 0:
+                    newMask = (1 << bikeIndex) | mask
+                    #update
+                    dp[newMask] = min(dp[newMask],dp[mask] + manhat(workers[nextWorkerIndex],bikes[bikeIndex]))
+                    
+        
+        return smallestDist
+
+#there is a dijkstras solution
+
 
                 
