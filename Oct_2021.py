@@ -2937,6 +2937,111 @@ class Solution:
         
         return nums[l]
 
+################################
+# 24OCT21
+# 222. Count Complete Tree Nodes
+################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countNodes(self, root: Optional[TreeNode]) -> int:
+        '''
+        at a node, the number of nodes is nodes on left side + nodes on right side + 1
+        base case, is when there isn't a node, so return 0
+        '''
+        
+        def dfs(node):
+            if not node:
+                return 0
+            left = dfs(node.left)
+            right = dfs(node.right)
+            return left + right + 1
+        
+        return dfs(root)
+
+class Solution:
+    def countNodes(self, root: Optional[TreeNode]) -> int:
+        '''
+        now iteratively with stack
+        '''
+        if not root:
+            return 0
+        
+        nodes = 0
+        stack = [root]
+        
+        while stack:
+            curr = stack.pop()
+            nodes += 1
+            if curr:
+                if curr.left:
+                    stack.append(curr.left)
+                if curr.right:
+                    stack.append(curr.right)
+
+        return nodes
+
+#binary search, after binary searching for path enumeration to last level index of leaf node
+class Solution:
+    def countNodes(self, root: Optional[TreeNode]) -> int:
+        '''
+        an interesting bit is that the tree is complete
+        so all levels, except that last are full
+        we would compute the depth, and use sum serries up to depth - 1
+        2**d - 1
+        but we can only do this for levels up to d-1
+        so we have 2**d -1 + last_level_nodes
+        how to find number of nodes at last level?
+        we can enumerate all the nodes at the last level from 0 to 2d - 1
+        then use binary search to find the sequence of nodes
+        then use binary search on the indices to find the last node index filled on last level
+        then we can use binay search to contruct the sequence of moves to get to e leaf in O(d) times
+        '''
+        #helper function to find index of a last level leaf node
+        def exists(idx,depth,node):
+            #last level enumerate 0 to 2d -1
+            left,right = 0, 2**depth - 1
+            for _ in range(depth):
+                pivot = left + (right - left) // 2
+                if idx <= pivot:
+                    node = node.left
+                    right = pivot
+                else:
+                    node = node.right
+                    left = pivot + 1
+            
+            return node is not None
+        if not root:
+            return 0
+        #find depth
+        depth = 0
+        curr = root
+        while curr.left:
+            curr = curr.left
+            depth += 1
+        
+        if depth == 0:
+            return 1
+        
+
+        # Last level nodes are enumerated from 0 to 2**d - 1 (left -> right).
+        # Perform binary search to check how many nodes exist.
+        left, right = 0, 2**depth - 1
+        while left <= right:
+            pivot = left + (right - left) // 2
+            if exists(pivot, depth, root):
+                left = pivot + 1
+            else:
+                right = pivot - 1
+        
+        # The tree contains 2**d - 1 nodes on the first (d - 1) levels
+        # and left nodes on the last level.
+        return (2**depth - 1) + left
+
 
 ###################################
 # 22OCT21
@@ -3134,7 +3239,6 @@ class Solution:
         
         return smallestDist
 
-#there is a dijkstras solution
 
 
                 
