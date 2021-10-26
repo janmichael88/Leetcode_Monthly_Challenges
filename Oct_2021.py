@@ -3239,6 +3239,133 @@ class Solution:
         
         return smallestDist
 
+##########################
+# 25OCT21
+# 155. Min Stack
+##########################
+class MinStack:
+    '''
+    store minimum value so far along side a pushed element
+    stack invariant, numbers beneath x will not change when we append or pop
+    '''
+
+    def __init__(self):
+        self.stack = []
+        
+
+    def push(self, val: int) -> None:
+        #if stack is empty jsut push value and value a min
+        if not self.stack:
+            self.stack.append((val,val))
+            return
+        #other wise find min
+        curr_min = self.stack[-1][1]
+        #append new value with min of currmin and val
+        self.stack.append((val,min(val,curr_min)))
+        
+
+    def pop(self) -> None:
+        #pop removes an element need to update min
+        self.stack.pop()
+        
+
+    def top(self) -> int:
+        return self.stack[-1][0]
+
+    def getMin(self) -> int:
+        return self.stack[-1][1]
+        
+
+
+# Your MinStack object will be instantiated and called as such:
+# obj = MinStack()
+# obj.push(val)
+# obj.pop()
+# param_3 = obj.top()
+# param_4 = obj.getMin()
+
+class MinStack:
+    '''
+    problem with sotrings min, the mins can get very repitive and take up sapce
+    we can use two stacks, 
+    always add to main, and only push to min stack if value to be added is less then the top
+    problem? yes, if we popper from the main stack, and the val popped was top of min stack --- this fails
+    we check:
+        if main[-1] -- minstack[-1]:
+            pop from min
+    we need to watch for the case when the element we are adding is the current min
+    insteadf only pushing numbers to the min stack if the are less than the curr min
+    we push them if the are less than or equal too
+    '''
+
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []
+        
+
+    def push(self, val: int) -> None:
+        #always append to main
+        self.stack.append(val)
+        #keep repeated min elements
+        if not self.min_stack or val <= self.min_stack[-1]:
+            self.min_stack.append(val)
+
+    def pop(self) -> None:
+        #we always pop from main, but we need to check if both top elements are ==
+        if self.stack[-1] == self.min_stack[-1]:
+            self.min_stack.pop()
+        self.stack.pop()
+        
+
+    def top(self) -> int:
+        return self.stack[-1]
+        
+
+    def getMin(self) -> int:
+        return self.min_stack[-1]
+
+
+#optimized two stacks
+class MinStack:
+    '''
+    in the two stack approacj, we pushed a new number on to the minstack iff <= curr min
+    one downsice is that if the same number is pusshed, it takes up space on the stack
+    we push in pairs, where first val is number, and second number isfreq
+    '''
+    def __init__(self):
+        self.stack = []
+        self.min_stack = []
+
+    def push(self, val: int) -> None:
+        #laways push on main
+        self.stack.append(val)
+        #if min stack is empty, and is smaller, push value with freq of 1
+        if not self.min_stack or  val <= self.min_stack[-1][0]:
+            self.min_stack.append([val,1])
+        
+        #if the same, increase
+        elif self.min_stack[-1][0] == val:
+            self.min_stack[-1][1] += 1
+        
+
+    def pop(self) -> None:
+        #tops are equal, pop
+        if self.min_stack[-1][0] == self.stack[-1]:
+            self.min_stack[-1][1] -= 1
+        #if count at min zero, remove
+        if self.min_stack[-1][1] == 0:
+            self.min_stack.pop()
+        #pop from main
+        self.stack.pop()
+        
+
+    def top(self) -> int:
+        return self.stack[-1]
+        
+
+    def getMin(self) -> int:
+        return self.min_stack[-1][0]
+        
 
 
                 
