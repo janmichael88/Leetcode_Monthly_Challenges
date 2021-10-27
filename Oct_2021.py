@@ -3365,7 +3365,128 @@ class MinStack:
 
     def getMin(self) -> int:
         return self.min_stack[-1][0]
-        
 
+########################
+# 26OCT21
+# 226. Invert Binary Tree
+#########################
+#recursive
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        looks like root stays fixed when inverting
+        we swap a node on the left side with its right
+        if we are at a node, and its children have already been inverted, then we just make left point to right
+        and make right point to left
+        '''
+        def dfs(node):
+            if not node:
+                return
+            left = dfs(node.left)
+            right = dfs(node.right)
+            node.left = right
+            node.right = left
+            return node
+        
+        return dfs(root)
+
+#woooohooo
+class Solution:
+    def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        """
+        itertative approach
+        """
+        if not root:
+            return root
+        
+        stack = [root] #return laster
+        
+        while stack:
+            curr = stack.pop()
+            #get sides
+            left_side = curr.left
+            right_side = curr.right
+            curr.left = right_side
+            curr.right = left_side
+            
+            if curr.left:
+                stack.append(curr.left)
+            if curr.right:
+                stack.append(curr.right)
+        
+        return root
+        
+################################
+# 27OCT21
+# 75. Sort Colors
+################################
+class Solution:
+    def sortColors(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        if i count the numbers of zeros, then i know where i can place the them in the array
+        '''
+        zeros = 0
+        ones = 0
+        twos = 0
+        
+        for num in nums:
+            if num == 0:
+                zeros += 1
+            if num == 1:
+                ones += 1
+            if num == 2:
+                twos += 1
+                
+        #now place  them in the array
+        N = len(nums)
+        ptr = 0
+        while ptr < N:
+            #first use up zeros
+            while zeros > 0:
+                nums[ptr] = 0
+                ptr += 1
+                zeros -= 1
+            while ones > 0:
+                nums[ptr] = 1
+                ptr += 1
+                ones -= 1
+            while twos > 0:
+                nums[ptr] = 2
+                ptr += 1
+                twos -= 1
+
+class Solution:
+    def sortColors(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        this is knows as the Dutch national flag problem
+        maintain three pointers, left,right, and curr
+        if nums[curr] pointer is a 0 swap with left
+        if nums[curr] pointers is a two, swap with right
+        '''
+        left = curr = 0
+        right = len(nums) - 1
+        
+        while curr <= right: #we may need to do an additional swap at the middel
+            if nums[curr] == 0:
+                nums[left],nums[curr] = nums[curr],nums[left]
+                curr += 1
+                left += 1
+            elif nums[curr] == 2:
+                nums[curr],nums[right] = nums[right],nums[curr]
+                right -= 1
+            else:
+                curr += 1
 
                 
