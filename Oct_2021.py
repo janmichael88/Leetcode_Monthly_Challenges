@@ -3489,4 +3489,52 @@ class Solution:
             else:
                 curr += 1
 
+###########################
+# 27OCT21
+# 257. Binary Tree Paths
+###########################
+class Solution:
+    def binaryTreePaths(self, root: Optional[TreeNode]) -> List[str]:
+        
+        paths = []
+        
+        if not root:
+            return []
+        
+        def dfs(node,path):
+            #node,left,right
+            if node:
+                path += str(node.val)
+                if not node.left and not node.right:
+                    paths.append(path)
+                else:
+                    path += "->"
+                    dfs(node.left,path)
+                    dfs(node.right,path)
+        
+        dfs(root,"")
+        return paths
+
+class Solution:
+    def binaryTreePaths(self, root: Optional[TreeNode]) -> List[str]:
+        if not root:
+            return []
+        
+        paths = []
+        
+        stack = [(root,"")]
+        
+        while stack:
+            node,curr_path = stack.pop()
+            if node:
+                curr_path += str(node.val)
                 
+                if not node.left and not node.right:
+                    paths.append(curr_path)
+                else:
+                    if node.left:
+                        stack.append((node.left,curr_path+"->"))
+                    if node.right:
+                        stack.append((node.right,curr_path+"->"))
+        
+        return paths
