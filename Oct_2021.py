@@ -3538,3 +3538,88 @@ class Solution:
                         stack.append((node.right,curr_path+"->"))
         
         return paths
+
+#########################
+# 28OCT21
+# 15. 3Sum
+#########################
+#yesss! no sort solution
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        '''
+        we want all triplets that equal zero
+        two sum anchored at each point
+        nums[j] + nums[k] = -nums[i]
+        
+        '''
+        res = set()
+        N = len(nums)
+        
+        for i in range(N):
+            curr = nums[i]
+            targetTwoSum = -curr
+            #mapp for complements
+            mapp = {}
+            for j in range(i+1,N):
+                #find comp
+                complement = targetTwoSum - nums[j]
+                if complement in mapp and mapp[complement] != j:
+                    ans = [nums[i],nums[j],complement]
+                    ans = tuple(sorted(ans))
+                    res.add(ans)
+                else:
+                    mapp[nums[j]] = j
+
+#problem is with duplicates but still passes
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        '''
+        we can also sort the array and use a two pointer solution to find triplest equaling zero
+        '''
+        nums.sort()
+        N = len(nums)
+        
+        res = set()
+        for i in range(N):
+            left, right = i+1,N-1
+            while left < right:
+                curr_sum = nums[i] + nums[left] + nums[right]
+                cand = tuple(sorted([nums[i],nums[left],nums[right]]))
+                if curr_sum == 0:
+                    res.add(cand)
+                if curr_sum < 0:
+                    left += 1
+                else:
+                    right -= 1
+        
+        return res
+        
+#sort, with two pointers, but pass on duplicates
+class Solution:
+    def threeSum(self, nums: List[int]) -> List[List[int]]:
+        nums.sort()
+        ans = []
+        n = len(nums)
+        i = 0
+        while i < n:
+            if nums[i] > 0: 
+                break  # Since arr[i] <= arr[l] <= arr[r], if arr[i] > 0 then sum=arr[i]+arr[l]+arr[r] > 0
+            l = i + 1
+            r = n - 1
+            while l < r:
+                sum3 = nums[i] + nums[l] + nums[r]
+                if sum3 == 0:
+                    ans.append([nums[i], nums[l], nums[r]])
+                    while l+1 < n and nums[l+1] == nums[l]: 
+                        l += 1  # Skip duplicates nums[l]
+                    l += 1
+                    r -= 1
+                elif sum3 < 0: 
+                    l += 1
+                else: 
+                    r -= 1
+
+            while i+1 < n and nums[i+1] == nums[i]: 
+                i += 1  # Skip duplicates nums[i]
+            i += 1
+        return ans
