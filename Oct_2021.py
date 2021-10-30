@@ -3623,3 +3623,169 @@ class Solution:
                 i += 1  # Skip duplicates nums[i]
             i += 1
         return ans
+
+#########################
+# 29OCT21
+# 994. Rotting Oranges
+#########################
+# i think i had this one, fucking edge cases
+class Solution:
+    def orangesRotting(self, grid: List[List[int]]) -> int:
+        '''
+        we can use bfs to turn the organes a different color
+        we can con modify grid in place as in infect
+        how do we count?
+        we can push a counter to each i,j cell
+        than increment 1 when we can infect
+        return min
+        i can q up all the rotten oranges
+        then bfs on each rotten one, 
+        when a bfs increment timer by 1 take min of all timers
+        then pass the grid once more to chek all rotten
+        '''
+        
+        rows = len(grid)
+        cols = len(grid)
+        
+        rotten = []
+        fresh = []
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    fresh.append([i,j])
+                elif grid[i][j] == 2:
+                    rotten.append([i,j,0])
+                    
+        print(fresh)
+        print(rotten)
+                    
+        #no fresh
+        if len(fresh) == 0 and len(rotten) > 0:
+            print('err')
+            return 0
+        if len(fresh) == 0 and len(rotten) == 0:
+            return 0
+        if len(fresh) > 0 and len(rotten) == 0:
+            print('err')
+            return -1
+        
+        min_time = 0
+        curr_iteration = 0
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        q = deque(rotten)
+        seen = set()
+        
+        while q:
+            x,y,time = q.popleft()
+            seen.add((x,y))
+            min_time = min(curr_iteration, time)
+            
+            for dx,dy in dirrs:
+                neigh_x = dx + x
+                neigh_y = dy + y
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #haven't seen it
+                    if (neigh_x,neigh_y) not in seen:
+                        #is fresh
+                        if grid[neigh_x][neigh_y] == 1:
+                            #make rotten
+                            grid[neigh_x][neigh_y] = 2
+                            seen.add((neigh_x, neigh_y))
+                            q.append([neigh_x,neigh_y,time+1])
+            curr_iteration += 1
+            
+        
+                        
+        #travere grid on more time
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    return -1
+        return min_time
+
+class Solution:
+    def orangesRotting(self, grid: List[List[int]]) -> int:
+        
+        # number of rows
+        rows = len(grid)
+        if rows == 0:  # check if grid is empty
+            return -1
+        
+        # number of columns
+        cols = len(grid[0])
+        
+        # keep track of fresh oranges
+        fresh_cnt = 0
+        
+        # queue with rotten oranges (for BFS)
+        rotten = deque()
+        
+        # visit each cell in the grid
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == 2:
+                    # add the rotten orange coordinates to the queue
+                    rotten.append((r, c))
+                elif grid[r][c] == 1:
+                    # update fresh oranges count
+                    fresh_cnt += 1
+        
+        # keep track of minutes passed.
+        minutes_passed = 0
+        
+        # If there are rotten oranges in the queue and there are still fresh oranges in the grid keep looping
+        while rotten and fresh_cnt > 0:
+
+            # update the number of minutes passed
+            # it is safe to update the minutes by 1, since we visit oranges level by level in BFS traversal.
+            minutes_passed += 1
+            
+            # process rotten oranges on the current level
+            for _ in range(len(rotten)):
+                x, y = rotten.popleft()
+                
+                # visit all the adjacent cells
+                for dx, dy in [(1,0), (-1,0), (0,1), (0,-1)]:
+                    # calculate the coordinates of the adjacent cell
+                    xx, yy = x + dx, y + dy
+                    # ignore the cell if it is out of the grid boundary
+                    if xx < 0 or xx == rows or yy < 0 or yy == cols:
+                        continue
+                    # ignore the cell if it is empty '0' or visited before '2'
+                    if grid[xx][yy] == 0 or grid[xx][yy] == 2:
+                        continue
+                        
+                    # update the fresh oranges count
+                    fresh_cnt -= 1
+                    
+                    # mark the current fresh orange as rotten
+                    grid[xx][yy] = 2
+                    
+                    # add the current rotten to the queue
+                    rotten.append((xx, yy))
+
+        
+        # return the number of minutes taken to make all the fresh oranges to be rotten
+        # return -1 if there are fresh oranges left in the grid (there were no adjacent rotten oranges to make them rotten)
+        return minutes_passed if fresh_cnt == 0 else -1
+
+##############################
+# 29OCT21
+# 1762. Buildings With an Ocean View
+##############################
+class Solution:
+    def findBuildings(self, heights: List[int]) -> List[int]:
+        N = len(heights)
+        #i can always see the right most
+        canSee = [N-1]
+        
+        curr_max = heights[-1]
+        for i in range(N-2,-1,-1):
+            if heights[i] > curr_max:
+                canSee.append(i)
+            curr_max = max(curr_max,heights[i])
+        
+        return canSee[::-1]
