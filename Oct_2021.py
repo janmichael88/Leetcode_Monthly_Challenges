@@ -3778,6 +3778,50 @@ class Solution:
 ##############################
 class Solution:
     def findBuildings(self, heights: List[int]) -> List[int]:
+        '''
+        using montonic stack
+        if we started from the right we can push a building on to the stack such that the
+        current building we are on is taller than what is currently at the top
+        keep popping to make stack monotnic
+        return the reversed order
+        '''
+        N = len(heights)
+        stack = []
+        
+        for i in range(N):
+            while stack and heights[stack[-1]] <= heights[i]:
+                stack.pop()
+            stack.append(i)
+            
+        
+        return stack
+
+#another stack solution
+class Solution:
+    def findBuildings(self, heights: List[int]) -> List[int]:
+        n = len(heights)
+        answer = []
+        
+        # Monotonically decreasing stack.
+        stack = []
+        for current in reversed(range(n)):
+            # If the building to the right is smaller, we can pop it.
+            while stack and heights[stack[-1]] < heights[current]:
+                stack.pop()
+            
+            # If the stack is empty, it means there is no building to the right 
+            # that can block the view of the current building.
+            if not stack:
+                answer.append(current)
+            
+            # Push the current building in the stack.
+            stack.append(current)
+        
+        answer.reverse()
+        return answer
+
+class Solution:
+    def findBuildings(self, heights: List[int]) -> List[int]:
         N = len(heights)
         #i can always see the right most
         canSee = [N-1]
@@ -3789,3 +3833,95 @@ class Solution:
             curr_max = max(curr_max,heights[i])
         
         return canSee[::-1]
+
+#############################
+# 30OCT21
+# 1044. Longest Duplicate Substring
+#############################
+'''
+we can use rabin karp to find if a strings match in linear time
+then use binary search to see if there is a duplicated piece
+naive solutino would be to build all possible substrings for all lengths N-1
+and find the longes duplicated one
+task 1:
+    key, if there is a duplicate string of length N-1, then there is a duplicate string of N-2
+    this is a montonic function, and we can use binary search to find the answer
+task 2:
+    we could avoid using rabin karp if we used siding window, with hash of all substrings
+    but the hash coule be very big, new tidbit, string slicing is not constant time (need to make copy)
+    best way is to use asci values in array
+    combine with rolling hash
+
+generating rolling hash:
+    only lowe cases chars a-z, so nums 0 to 25
+    arr[i] = (int)S.charAt(i) - (int)'a'
+    we can define the hash of a string of length L as:
+    h_{0} = \sum_{i=0}^{L-1} c_{i}a^{L-1-i}
+    if we want to go from abcd to bcde, remove number 0 and add 4
+    h1 = (h0 - 0*26^3)*26 + 4*26^0
+    in general, rolling hash is
+    h1 = (h0*a -c0*a^L) + c_{L+1}
+    overflow, a^L could be large so we take mod a using a larger prime number
+    modulus must be large and prime, fit into 32 bit signed interger
+    10**9 + 7
+'''
+class Solution:
+    def search(self, L: int, a: int, MOD: int, n: int, nums: List[int]) -> str:
+        """
+        Rabin-Karp with polynomial rolling hash.
+        Search a substring of given length
+        that occurs at least 2 times.
+        @return start position if the substring exits and -1 otherwise.
+        """
+        # Compute the hash of the substring S[:L].
+        h = 0
+        for i in range(L):
+            h = (h * a + nums[i]) % MOD
+              
+        # Store the already seen hash values for substrings of length L.
+        seen = collections.defaultdict(list)
+        seen[h].append(0)
+        
+        # Const value to be used often : a**L % MOD
+        aL = pow(a, L, MOD) 
+        for start in range(1, n - L + 1):
+            # Compute the rolling hash in O(1) time
+            #try going from 1234 to 2345, then generate the expression
+            h = (h * a - nums[start - 1] * aL + nums[start + L - 1]) % MOD
+            if h in seen:
+                # Check if the current substring matches any of the previous substrings with hash h.
+                current_substring = nums[start : start + L]
+                if any(current_substring == nums[index : index + L] for index in seen[h]):
+                    return start
+            seen[h].append(start)
+        return -1
+        
+    def longestDupSubstring(self, S: str) -> str:
+        # Modulus value for the rolling hash function to avoid overflow.
+        MOD = 10**9 + 7
+        
+        # Select a base value for the rolling hash function.
+        a = 26
+        n = len(S)
+        
+        # Convert string to array of integers to implement constant time slice.
+        nums = [ord(S[i]) - ord('a') for i in range(n)]
+        
+        # Use binary search to find the longest duplicate substring.
+        start = -1
+        left, right = 1, n - 1
+        while left <= right:
+            # Guess the length of the longest substring.
+            L = left + (right - left) // 2
+            start_of_duplicate = self.search(L, a, MOD, n, nums)
+            
+            # If a duplicate substring of length L exists, increase left and store the
+            # starting index of the duplicate substring.  Otherwise decrease right.
+            if start_of_duplicate != -1:
+                left = L + 1
+                start = start_of_duplicate
+            else:
+                right = L - 1
+        
+        # The longest substring (if any) begins at index start and ends at start + left.
+        return S[start : start + left - 1]
