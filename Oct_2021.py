@@ -3925,3 +3925,147 @@ class Solution:
         
         # The longest substring (if any) begins at index start and ends at start + left.
         return S[start : start + left - 1]
+
+###############################################
+# 31OCT21
+# 430. Flatten a Multilevel Doubly Linked List
+###############################################
+#close one again
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, prev, next, child):
+        self.val = val
+        self.prev = prev
+        self.next = next
+        self.child = child
+"""
+
+class Solution:
+    def flatten(self, head: 'Node') -> 'Node':
+        '''
+        i could make a dummy DLL node, then use recursino to unroll the head
+        '''
+        self.dummy = Node(-1)
+        self.prev = None
+        self.curr = self.dummy
+        
+        def dfs(node):
+            if not node:
+                return 
+            if node.child:
+                dfs(node.child)
+            self.curr.next = node
+            self.curr.prev = self.prev
+            self.prev = node
+            self.curr = self.curr.next
+            
+        dfs(head)
+        return self.dummy.next
+
+#recursive solution
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, prev, next, child):
+        self.val = val
+        self.prev = prev
+        self.next = next
+        self.child = child
+"""
+
+class Solution:
+    def flatten(self, head: 'Node') -> 'Node':
+        '''
+        i could make a dummy DLL node, then use recursino to unroll the head
+        turns out to be very similar to a preorder of binary tree
+        
+        algo:
+            define a flatten dfs function which takes two pointers as input and returns pointter of tail in flattened list
+            curr point leads to sublist we would like to flatten and prev pointer points to element that should preced curr
+            in flatten_dfs, first establish links between prev and curr -> take care of curr state befor echildren
+            also, make sure to flatten the left substree (which we get from the children)
+            then  with the tail elemen t of the prev sublist, further flatten  the right
+            
+            make sure to copy node.next before recusing
+            after flattening the sublist from curr.child we should remove the child pointer since it is no longer needed in final results
+            
+            we need to create a psuedo head (dummy Node) in funciton
+            this helps with null pointer checks, like if prev == null
+            
+        '''
+        
+        def flatten_helper(prev,curr):
+            #function returns pointer tail of flattend list
+            #base case
+            if not curr:
+                return prev
+            curr.prev = prev
+            prev.next = curr
+            
+            #get next node
+            nextNode = curr.next
+            #recursviely get the tail
+            tail = flatten_helper(curr,curr.child)
+            #after we done recursing, set final child to non
+            curr.child = None
+            return flatten_helper(tail,nextNode)
+        
+        if not head:
+            return head
+        
+        dummy = Node(None,None,head,None)
+        flatten_helper(dummy,head)
+        
+        #detach psuedo head from real head
+        dummy.next.prev = None
+        return dummy.next
+
+#iterative
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val, prev, next, child):
+        self.val = val
+        self.prev = prev
+        self.next = next
+        self.child = child
+"""
+
+class Solution:
+    def flatten(self, head: 'Node') -> 'Node':
+        '''
+        stack solution
+        algo:
+            * create stack and push head to stack, also creat var holding prev
+            * enter loop to terate stack unil etmpy
+            * in loop, pop our not, then make prev curr connection
+                * then take care of nodes pointer by curr.next and curr.child
+                if curr.next does exists, push node into stack
+                if curr.child exists, push node into stack
+        '''
+        if not head:
+            return
+        
+        dummy = Node(-1,None,head,None)
+        prev = dummy
+        
+        stack = [head]
+        
+        while stack:
+            curr = stack.pop()
+            
+            prev.next = curr
+            curr.prev = prev
+            prev = curr
+            
+            #process next before childre
+            if curr.next:
+                stack.append(curr.next)
+            if curr.child:
+                stack.append(curr.child)
+                curr.child = None #remove all child pointers
+        
+        #detach dummy from head
+        dummy.next.prev = None
+        return dummy.next
