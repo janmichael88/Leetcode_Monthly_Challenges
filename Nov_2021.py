@@ -134,6 +134,64 @@ class Solution:
         return board
         print(non_capture_zeros)
 
+############################
+# 02NOV21
+# 980. Unique Paths III
+############################
+class Solution:
+    def uniquePathsIII(self, grid: List[List[int]]) -> int:
+        '''
+        dfs to build all possible paths from target to source, making sure we only touch a square only once
+        this is a backtracking problem
+        
+        first identify start and end points, and also count up empty spaces
+        when we dfs pass in curr row and curr col as well as the number of empty spaces taken up
+        if its the end and empty count matches, we have a path
+        dfs on in bounds and empty and no obstacel cells
+        then bactrack
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        start_r,start_c = 0,0
+        end_r,end_c= 0,0
+        
+        empty = 0
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    start_r,start_c = i,j
+                elif grid[i][j] == 2:
+                    end_r,end_c = i,j
+                elif grid[i][j] == 0:
+                    empty += 1
+        
+        self.num_paths = 0
+        #backtracking and dfs
+        visited = set()
+        def dfs(row,col,visited,walk): #walk counts up the number of empty squares we have hit
+            #to end our recurion
+            if row == end_r and col == end_c:
+                #but also make sure we walked all squares including the end
+                if walk == empty + 1:
+                    self.num_paths += 1
+                return
+            #if we aren't here we can recurse
+            #constraints, in bounds, not and obstalce and not visited
+            if 0<= row < rows and 0 <= col <cols and grid[row][col] != -1 and (row,col) not in visited:
+                #first add
+                visited.add((row,col))
+                #now dfs
+                for i,j in [(0,1),(0,-1),(1,0),(-1,0)]:
+                    dfs(row+i,col+j,visited,walk+1)
+                #backtrack
+                visited.remove((row,col))
+            
+        #invoke
+        dfs(start_r,start_c,visited,0)
+        return self.num_paths
+
 ########################
 # 01NOV21
 # 1231. Divide Chocolate
