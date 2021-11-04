@@ -192,6 +192,57 @@ class Solution:
         dfs(start_r,start_c,visited,0)
         return self.num_paths
 
+################################
+# 03NOV21
+# 129. Sum Root to Leaf Numbers
+################################
+#recursive
+class Solution:
+    def sumNumbers(self, root: Optional[TreeNode]) -> int:
+        '''
+        i could generate all paths as a string,
+        convert strings to int and add
+        better way is to conert on the flow
+        '''
+        self.sum_paths = 0
+        
+        def dfs(node,curr_number):
+            if node:
+                curr_number = curr_number*10 + node.val
+                if not node.left and not node.right:
+                    self.sum_paths += curr_number
+                
+                dfs(node.left,curr_number)
+                dfs(node.right,curr_number)
+        
+        dfs(root,0)
+        return self.sum_paths
+
+#iterative
+class Solution:
+    def sumNumbers(self, root: Optional[TreeNode]) -> int:
+        '''
+        i could generate all paths as a string,
+        convert strings to int and add
+        better way is to conert on the flow
+        '''
+        sum_paths = 0
+        
+        stack = [(root,0)]
+        
+        while stack:
+            node, curr_number = stack.pop()
+            if node:
+                curr_number = curr_number*10 + node.val
+                if not node.left and not node.right:
+                    sum_paths += curr_number
+            if node.left:
+                stack.append((node.left,curr_number))
+            if node.right:
+                stack.append((node.right,curr_number))
+            
+        return sum_paths
+
 ########################
 # 01NOV21
 # 1231. Divide Chocolate
