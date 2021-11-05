@@ -243,6 +243,82 @@ class Solution:
             
         return sum_paths
 
+##########################
+# 04NOV21
+# 404. Sum of Left Leaves
+##########################
+class Solution:
+    def sumOfLeftLeaves(self, root: Optional[TreeNode]) -> int:
+        '''
+        its a left leaf only if i had gone left before
+        just pass in gone left in call
+        '''
+        self.sum = 0
+        
+        def dfs(node,went_left):
+            if not node:
+                return
+            if not node.left and not node.right:
+                if went_left:
+                    self.sum += node.val
+                
+                return
+            
+            dfs(node.left, True)
+            dfs(node.right,False)
+            
+    
+        dfs(root,False)
+        return self.sum
+            
+#terative with stack
+class Solution:
+    def sumOfLeftLeaves(self, root: Optional[TreeNode]) -> int:
+        '''
+        can also so iterativley using stack
+        '''
+        ans = 0
+        
+        
+        stack = [(root,False)]
+        
+        while stack:
+            curr, went_left = stack.pop()
+            
+            if not curr:
+                continue
+            if not curr.left and not curr.right:
+                if went_left:
+                    ans += curr.val
+                    
+            if curr.left:
+                stack.append((curr.left,True))
+            
+            if curr.right:
+                stack.append((curr.right,False))
+
+        return ans
+
+class Solution:
+    def sumOfLeftLeaves(self, root: Optional[TreeNode]) -> int:
+        '''
+        another recursive way but no global update
+        return sum of problesm
+        '''
+        if not root:
+            return root
+        
+        def dfs(node,went_left):
+            if not node:
+                return 0
+            if not node.left and not node.right:
+                if went_left:
+                    return node.val
+            
+            return dfs(node.left,True) + dfs(node.right,False)
+        
+        return dfs(root, False)
+
 ########################
 # 01NOV21
 # 1231. Divide Chocolate
