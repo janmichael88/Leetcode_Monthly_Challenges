@@ -373,7 +373,127 @@ class Solution:
         return int(((2 * n + 0.25)**0.5 - 0.5))
 
 
+#########################
+# 260. Single Number III
+# 06NOV21
+########################
+class Solution:
+    def singleNumber(self, nums: List[int]) -> List[int]:
+        '''
+        naive way is to just count
+        '''
+        counts = Counter(nums)
+        ans = []
+        for k,v in counts.items():
+            if v == 1:
+                ans.append(k)
+        return ans
+
+
+class Solution:
+    def singleNumber(self, nums: List[int]) -> List[int]:
+        '''
+        it's a bit mask problem
+        bitmask ^= x, sets bith with the num
+        just xor it
+        second occurence of x clears it
+        x  & (-x) isloates right most bit
+        
+        so lets create a bistmask: bitmaxk ^x, and since some elemnts are written two, the
+        mask will net keep it
+        '''
+        #xor all nums to get bist maks, remember only two elements have muliplict 1
+        bitmask = 0
+        for num in nums:
+            bitmask ^= num
+            
+        #now find the right most bit
+        diff = bitmask & (-bitmask)
+        
+        first = 0
+        for num in nums:
+            if num & diff:
+                first ^= num
+        
+        #get second one
+        second = bitmask^first
+        return [first, second]
+
 ########################
 # 01NOV21
 # 1231. Divide Chocolate
 ########################
+class Solution:
+    def maximizeSweetness(self, sweetness: List[int], k: int) -> int:
+        '''
+        turns out this happens to be a binary search problem
+        there is a standard template for binary search problems like these
+        
+        instea of trying all possible k-1 cuts, try all possible minimum sweet vaulue
+        first try to cut using the best possible min value, or 1 more than
+        example,
+            let x = sum(sweetness) + 1
+            check if we can cut the bar into k+1 values having x - 1 as sweetness
+            if it works, well we can go to x - 2, then x -3, then x - 4....
+        
+        now we have two new qustions, given a min sweetness, how to check if k+1 cutting exists
+        is there a more efficient way to find the max workable value x
+        
+        how to check if cutting plan exists?
+            go piece by piece until we get to x, then make a new piece
+            two ending conditons:
+                reach end of bar, and everyone has a piece with sweetness no less than x
+                if we reached the ending position, not everyone has gotten a pice, so this x cannot be true
+                if we go to the second, we know this x works, so we can go lower
+        
+        now, is there a better way to search fo the best optimal value
+        intuion, if a cutting plan with a min value exists, then there also exists a cutting plan with min value of x -1
+        i.e if 5 works, 4 is guaranteed to work
+        
+        so once we find a cutting plan with a minimum workable value of x there are two scenarios
+            1. there exists a piece with sweentess of exactly x
+            2. there does not exist piece with an exact sweetness of x, but a workable value exists larger than x
+            
+        DIVISION of workable and un workable values == BINARY SEARCh
+        
+        what is the search space?
+            left is the min(sweetness), right is sum(sweetness) / (k+1), i.e the largest possible sweetness we can get for ourselves
+            mid = (left + right + 1) / 2
+            If we can successfully cut the chocolate into k + 1 pieces and every piece has a sweetness no less than mid, this means mid is a workable value and that there may exist a larger workable value. 
+            
+        NOTE? Why do we use mid = (left + right + 1) / 2 instead of mid = (left + right) . 2
+        special case, it would looop foever
+        
+        algo;
+            1. setup two boundaries left and right
+            2. git middle
+            3. check if we can gut into k+1 pieces with no sweetness less than mid, where mid is workable value
+            4. if cutting the chocolate bar in this method results in everyone recieing a piece at elast mid, then left == mid, other wisse, right = mid - 1
+            5. reapat, 
+            6. return left or right as answer
+            
+        '''
+        num_people = k + 1
+        left = min(sweetness)
+        right = sum(sweetness) // num_people
+        
+        while left < right:
+            #get middle, curr sweetness is this peron's current bar
+            #make sure we have at least k+1
+            mid = (left + right + 1) //2
+            cur_sweetness = 0
+            people_with_chocolate = 0
+            for s in sweetness:
+                cur_sweetness += s
+                
+                #new cut?
+                if cur_sweetness >= mid:
+                    people_with_chocolate += 1
+                    cur_sweetness = 0
+            #can we do it
+            if people_with_chocolate >= num_people:
+                left = mid
+            else:
+                right = mid - 1
+        
+        return right
