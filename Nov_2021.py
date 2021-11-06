@@ -319,6 +319,60 @@ class Solution:
         
         return dfs(root, False)
 
+#########################
+# 441. Arranging Coins
+# 05Nov21
+#########################
+#welp, it passes
+class Solution:
+    def arrangeCoins(self, n: int) -> int:
+        '''
+        i could just subtract each the number of coins for each level,
+        when i can't thats' the level
+        '''
+        level = 1
+        coins = 1
+        
+        n -= 1
+        while n > coins:
+            level += 1
+            coins += 1
+            n -= coins
+        
+        return level
+            
+#how about the binary search solution
+class Solution:
+    def arrangeCoins(self, n: int) -> int:
+        '''
+        i know that if i'm at the kth level, 
+        i need k(k+1) / 2 coins
+        the number of coins are in the range [1,2**31 -1]
+        so we want to find the maximum k, such k(k+1) / 2 <= N
+        we can solve this using binary serach sine the function k(k+1) /2 is increaing
+        '''
+        left = 1
+        right = n
+        
+        while left <= right:
+            level = (left + (right - left) // 2)
+            coins = level*(level+1) // 2
+            if coins == n:
+                return level
+            if coins > n:
+                right  = level - 1
+            else:
+                left = level + 1
+        
+        return right
+        
+
+#O(1), just use math
+class Solution:
+    def arrangeCoins(self, n: int) -> int:
+        return int(((2 * n + 0.25)**0.5 - 0.5))
+
+
 ########################
 # 01NOV21
 # 1231. Divide Chocolate
