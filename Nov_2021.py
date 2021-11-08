@@ -497,3 +497,186 @@ class Solution:
                 right = mid - 1
         
         return right
+
+#########################
+# 07NOV21
+# 43. Multiply Strings
+#########################
+class Solution:
+    def multiply(self, num1: str, num2: str) -> str:
+        '''
+        we are not allowed to convert inputs direcly
+        so we can just use elementary math
+        consider the the nums 123*456
+        123*(6 + 50 + 400)
+        (123*6) + 123(*50) + 123*(400)
+        123*6 + 123*(5*10) + 123*4*100
+        
+        \sum (firstNumber*(jth digit ot second Number)*10^(index of j digit counting from end))
+        
+        we need to start from the last position for both strings when multiplying
+        we can just reverse both nums
+        
+        for each digit in nums2, we multiply by num1 and get an inntermediate result
+        call this currResult, which will be storing in a list
+        
+        algo:
+            1. reverse both numbers
+            2. for each digit in secondNumber:
+                keep carry variable set to0
+                init currResult array beginning with appropriate number of zeros accoroding tot he place of the secondNUmber diidgt
+                for each digit in secondNUmber
+                    multiplye secondNumbers diigt firstnumbers digit and add carry
+                    take reminder of with 10 as arry
+                    append lest digit to currresult
+                    divide multiplication by 10 to get the new value for carry
+                append remaining value for carry if any
+                push the curr resutls into the results array
+            3. compute the cum sum overall
+            4. reverse and return ans
+        '''
+        #special cases
+        if num1 == '0' or num2 == '0':
+            return '0'
+        
+        #reverse numbers
+        first_num = num1[::-1]
+        second_num = num2[::-1]
+
+        #for each digit in second number, multupky by first number digit, then store the multiplation result
+        #reverse in res aray
+        res = []
+        for i,digit in enumerate(second_num):
+            res.append(self.multiply_one(digit,i,first_num))
+            
+        #sum all
+        ans = self.sum_results(res)
+        
+        # Reverse answer and join the digits to get the final answer.
+        return ''.join(str(digit) for digit in reversed(ans))
+            
+        print(ans)
+            
+    def multiply_one(self,digit2,num_zeros,first_num):
+        curr_res = [0]*num_zeros
+        carry = 0
+        for digit1 in first_num:
+            mult = int(digit1)*int(digit2) + carry
+            #get new carry
+            carry = mult // 10
+            #append last digit
+            curr_res.append(mult % 10)
+        
+        #final carry
+        if carry != 0:
+            curr_res.append(carry)
+        return curr_res
+    
+    def sum_results(self, results: List[List[int]]) -> List[int]:
+        # Initialize answer as a number from results.
+        answer = results.pop()
+
+        # Add each result to answer one at a time.
+        for result in results:
+            new_answer = []
+            carry = 0
+
+            # Sum each digit from answer and result. Note: zip_longest is the
+            # same as zip, except that it pads the shorter list with fillvalue.
+            for digit1, digit2 in zip_longest(result, answer, fillvalue=0):
+                # Add current digit from both numbers.
+                curr_sum = digit1 + digit2 + carry
+                # Set carry equal to the tens place digit of curr_sum.
+                carry = curr_sum // 10
+                # Append the ones place digit of curr_sum to the new answer.
+                new_answer.append(curr_sum % 10)
+
+            if carry != 0:
+                new_answer.append(carry)
+
+            # Update answer to new_answer which equals answer + result
+            answer = new_answer
+
+        return answer
+
+#saving space
+class Solution:
+    def multiply(self, num1: str, num2: str) -> str:
+        '''
+        we can save space by first getting the results array hoding at least M + N digits
+        the proof is ugly
+        then same as before
+        note,
+        M+N >= (M*N)
+        Algorithm
+
+        Reverse both numbers.
+        Initialize ans array with (N+M)(N+M) zeros.
+        For each digit in secondNumber:
+        Keep a carry variable, initially equal to 0.
+        Initialize an array (currentResult) that begins with some zeros based on the place of the digit in secondNumber.
+        For each digit of firstNumber:
+        Multiply secondNumber's digit and firstNumber's digit and add previous carry to the multiplication.
+        Take the remainder of multiplication with 10 to get the last digit.
+        Append the last digit to currentResult array.
+        Divide the multiplication by 10 to obtain the new value for carry.
+        After iterating over each digit in the first number, if carry is not zero, append carry to the currentResult.
+        Add currentResult to the ans.
+        If the last digit in ans is zero, before reversing ans, we must pop the zero from ans. Otherwise, there would be a leading zero in the final answer.
+        Reverse ans and return it.
+        '''
+        if num1 == "0" or num2 == "0": 
+            return "0"
+        
+        # Reverse both numbers.
+        first_number = num1[::-1]
+        second_number = num2[::-1]
+        
+        # To store the multiplication result of each digit of secondNumber with firstNumber.
+        N = len(first_number) + len(second_number)
+        answer = [0] * N
+
+        # Multiply each digit in second_number by the first_number
+        # and add each result to answer
+        for index, digit in enumerate(second_number):
+            answer = self.addStrings(self.multiplyOneDigit(first_number, digit, index), answer)
+
+        # Pop excess zero from the end of answer (if any).
+        if answer[-1] == 0:
+            answer.pop()
+
+        # Ans is in the reversed order.
+        # Reverse it to get the final answer.
+        answer.reverse()
+        return ''.join(str(digit) for digit in answer)
+    
+    def multiplyOneDigit(self, first_number: str, digit2: str, num_zeros: int):
+        # Insert 0s at the beginning based on the current digit's place.
+        currentResult = [0] * num_zeros
+        carry = 0
+
+        # Multiply firstNumber with the current digit of secondNumber.
+        for digit1 in first_number:
+            multiplication = int(digit1) * int(digit2) + carry
+            # Set carry equal to the tens place digit of multiplication.
+            carry = multiplication // 10
+            # Append the ones place digit of multiplication to the current result.
+            currentResult.append(multiplication % 10)
+
+        if carry != 0:
+            currentResult.append(carry)
+        return currentResult
+    
+    def addStrings(self, result: list, answer: list) -> list:
+        carry = 0
+        i = 0
+        new_answer = []
+        for digit1, digit2 in zip_longest(result, answer, fillvalue=0):
+            # Add current digits of both numbers.
+            curr_sum = digit1 + digit2 + carry
+            carry = curr_sum // 10
+            # Append last digit of curr_sum to the answer.
+            new_answer.append(curr_sum % 10)
+            i += 1
+        
+        return new_answer
