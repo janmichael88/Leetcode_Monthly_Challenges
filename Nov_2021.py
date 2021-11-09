@@ -680,3 +680,141 @@ class Solution:
             i += 1
         
         return new_answer
+
+############################
+# 96. Unique Binary Search Trees
+# 08NOV21
+############################
+#recusive 
+class Solution:
+    def numTrees(self, n: int) -> int:
+        '''
+        this is just the catalan number
+        \sum_{i}^{n} i(n-i)
+        each element i can be a root, then we have 1,i-1 elements on right, and i+1,n on the left
+        for the number of unique trees at i, i need the number of unique trees for i-1 and i+1
+        then mulitply them
+        '''
+        memo = {}
+        
+        def rec(n):
+            #base case
+            if (n == 0) or (n==1):
+                return 1
+            #retrieve
+            if n in memo:
+                return memo[n]
+            ans = 0
+            for i in range(n):
+                left = rec(n-i-1)
+                right = rec(i)
+                ans += left*right
+            
+            memo[n] = ans
+            return ans
+        
+        return rec(n)
+
+#iterative
+class Solution:
+    def numTrees(self, n: int) -> int:
+        '''
+        now just translate bottom up
+        '''
+        dp = [0]*(n+1)
+        dp[0] = 1
+        
+        for node in range(1,n+1):
+            #markt the left side bound
+            for i in range(node):
+                left = dp[node - 1 - i]
+                right = dp[i]
+                dp[node] += left*right
+        
+        return dp[-1]
+
+#catlan closure number
+class Solution:
+    def numTrees(self, n: int) -> int:
+        '''
+        C_{0} = 1
+        C{n+1} = (2(2n + 1) / (n+2))*C_{n}
+        '''
+        C = 1
+        for i in range(0, n):
+            C = C * 2*(2*i+1)/(i+2)
+        return int(C)
+
+###########################
+# 1178. Number of Valid Words for Each Puzzle
+# 09NOV21
+###########################
+#TLE
+class Solution:
+    def findNumOfValidWords(self, words: List[str], puzzles: List[str]) -> List[int]:
+        '''
+        a word in words is valid if:
+            word containss the first letter of the pusszle (could be in puzzles)
+            for each letter in word, that letter in in pusszle
+        we want the number of valid words for each puzzle i
+        brute force check maybe?
+        #first pass puzzles and set each one
+        #then check conditoins for eacch word
+        '''
+        N = len(words)
+        M = len(puzzles)
+        
+        ans = [0]*(M)
+        
+        #set puzzle
+        set_puzzles = [set(p) for p in puzzles]
+        #set words
+        set_words = [set(w) for w in words]
+        
+        for i in range(M):
+            count = 0
+            for word,chars in zip(words,set_words):
+                if set(puzzles[i][0]).issubset(chars) and chars.issubset(set_puzzles[i]):
+                    #print(word,puzzles[i])
+                    count += 1
+            
+            ans[i] = count
+        
+        return ans
+
+
+#hashing and frozen sets, would be faster using bit masking and Trie
+class Solution:
+    def findNumOfValidWords(self, words: List[str], puzzles: List[str]) -> List[int]:
+        '''
+        we can also use frozenses to answer this question
+        part 1:
+            for each w in words, calculate the set of words letters
+            count the number of different sets
+        part 2:
+            for each p in puzzles, get all subsets using p as first
+            for each set if subpuzzle, finds its occruence
+            sum up and append answer
+        '''
+        #stored state of each word as frozenset with occurnce of 1
+        count = collections.Counter(frozenset(w) for w in words)
+        res = []
+        for p in puzzles:
+            subs = [p[0]]
+            for c in p[1:]:
+                subs += [s + c for s in subs]
+            #print(subs)
+            #this prings all combinations of puzzle start wit its first char
+            curr_count = 0
+            for s in subs:
+                curr_count += count[frozenset(s)]
+            
+            #append to answer for each puzzle
+            res.append(curr_count)
+        
+        return res
+
+###################################
+# 425. Word Squares
+# 08NOV21
+###################################
