@@ -814,7 +814,182 @@ class Solution:
         
         return res
 
+#hashing and bitmasks
+class Solution:
+    def findNumOfValidWords(self, words: List[str], puzzles: List[str]) -> List[int]:
+        '''
+        using bit masking, notice from the constraints that we are given more puzzzle than words
+        but the words are longer than the puzzles
+        brute force owule be to check each word
+            and for eah word check first letter in pusszle
+            and puzzle contains every letter in word
+            O(len(words)*len(puzzles))
+            we now know we must use hasing or Trie
+        we need to count number of words matching a puzzle
+        where the value stores the number of strings in the bin
+        in python we can use native structure called frozenset as keys in dict, but for other languages
+        we would need to write a custom hasing function
+        BITMASK as the key
+        remember target work should contain first letter in puzzle and cannt contain any letters that are not in puzzle
+        challenge:
+            how to iterate over all the subsets of a set, DFS
+            use the mask trick to find all possible subsets for a given mask
+            use subset = (subset - 1) & bitmask to ensure each subset only contains chars that exists in bit mask
+        intution:
+            iteralte over all subsets of letters contains in puzzle that also contain first letter of puzzle
+            then for each subset, add number of words that match the subset to the count of valid words for curr_puzzle
+        algo:
+            1. build map
+                for word in words
+                    transform into bitmask fo chars
+                    if bitmakse has not eebn sen before, store occurnece, it is has been seen before increment by 1
+            2. count number of valid words for each puzzle
+                for each puzzle
+                    get bitmask
+                    iterat over every possible submask contains the first letter in puzzle
+                    a word is valid for a puzzle if bit makse matches one of the puzzles submasks
+                    for eachsubmaks found, increment count by 1
+        '''
+        def bitmask(word):
+            mask = 0
+            for letter in word:
+                mask |= 1 << (ord(letter) - ord('a'))
+            return mask
+        
+        #get counts
+        word_counts = Counter(bitmask(word) for word in words)
+        
+        result = []
+        for puzzle in puzzles:
+            #first letter
+            first = 1 << (ord(puzzle[0]) - ord('a'))
+            #get its count
+            count = word_counts[first]
+            #now use the remaing of the words
+            mask = bitmask(puzzle[1:])
+            #iterate over every possible subset of char
+            submask = mask
+            while submask:
+                #increment count by the number of words that matach
+                count += word_counts[submask | first]
+                submask = (submask - 1) & mask
+            result.append(count)
+        return result
+
 ###################################
 # 425. Word Squares
 # 08NOV21
 ###################################
+#hashtable
+class Solution:
+    def wordSquares(self, words: List[str]) -> List[List[str]]:
+        '''
+        i word square is an n x n matrix such that evey row and every col is a word in words
+        we know that this matrix must by symmetrical
+        if we know the upper right part, we could get its lower part
+        
+        intuion: backtracking
+            construct the word square row by row top to bottom
+            place a word in a row and see if we can add another
+            keep going until we can
+            backtrack once we can't
+            take advantage of the symmextric property:
+                example if i place the word ball
+                second row word must start with a
+                third row word must start with l....and so on
+                
+        we can use hashtable for fast lookup
+        
+        '''
+        N = len(words[0])
+        #build prefix hashtable
+        prefixHash = {}
+        for word in words:
+            for i in range(1,len(word)+1):
+                prefixHash.setdefault(word[:i],set()).add(word)
+        
+        #helper function to find word withs ppref
+        def getWords(pref):
+            if pref in prefixHash:
+                return prefixHash[pref]
+            else:
+                return set([])
+        
+        results = []
+        word_squares = []
+        #define backtracking
+        def backtrack(step,word_squares,results):
+            if step == N:
+                #build up candidates
+                results.append(word_squares[:])
+                return
+            
+            pref = "".join([word[step] for word in word_squares])
+            for cand in getWords(pref):
+                word_squares.append(cand)
+                backtrack(step+1,word_squares,results)
+                word_squares.pop()
+        
+        for word in words:
+            word_squares = [word]
+            backtrack(1,word_squares,results)
+        return results
+
+#trie
+class Solution:
+    def wordSquares(self, words: List[str]) -> List[List[str]]:
+        '''
+        we could laso use a trie
+        when building the trie, store index to to work to mark completion of that word
+        but more so, to show so far this this pref belongs to this wordd
+        '''
+        N = len(words[0])
+        
+        trie = {}
+        
+        results = []
+        word_squares = []
+        
+        for i,word in enumerate(words):
+            node = trie
+            for char in word:
+                if char in node:
+                    node = node[char]
+                else:
+                    newNode = {}
+                    newNode["#"] = []
+                    node[char] = newNode
+                    node = newNode
+                #mark with index
+                node['#'].append(i)
+        
+        #helper function find words with pref
+        def getWords(pref):
+            node = trie
+            for char in pref:
+                if char not in pref:
+                    return []
+                node = node[char]
+            
+            #find indes at this node
+            return [words[i] for i in node['#']]
+        
+        def backtracking(step, word_squares, results):
+            if step == N:
+                results.append(word_squares[:])
+                return
+
+            prefix = ''.join([word[step] for word in word_squares])
+            for candidate in getWords(prefix):
+                word_squares.append(candidate)
+                backtracking(step+1, word_squares, results)
+                word_squares.pop()
+                
+        for word in words:
+            word_squares = [word]
+            backtracking(1,word_squares,results)
+            word_squares.pop()
+        
+        return results
+        
+ 
