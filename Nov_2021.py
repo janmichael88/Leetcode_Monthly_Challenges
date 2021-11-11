@@ -991,5 +991,47 @@ class Solution:
             word_squares.pop()
         
         return results
+
+########################
+# 10Nov21
+# 122. Best Time to Buy and Sell Stock II
+#########################
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        no cool down, we can buy immediatley after selling
+        we can sell immediately after buying
+        only add profit if there is a difference between i and i+1
+        '''
+        N = len(prices)
+        profit = 0
+        for i in range(N-1):
+            if prices[i+1] - prices[i] > 0:
+                profit += prices[i+1] - prices[i]
         
- 
+        return profit
+        
+#peak and valley approach
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        find first valley
+        then find first peak
+        '''
+        n = len(prices)
+        i = 0
+        valley = prices[0]
+        peak = prices[0]
+        maxprof = 0
+        while i < n - 1:
+            #find valley
+            while (i < n-1) and (prices[i] >= prices[i+1]):
+                i += 1
+            valley = prices[i]
+            #find peak
+            while (i < n-1) and (prices[i] <= prices[i+1]):
+                i += 1
+            peak = prices[i]
+            maxprof += peak - valley
+        
+        return maxprof
