@@ -1035,3 +1035,113 @@ class Solution:
             maxprof += peak - valley
         
         return maxprof
+
+######################################################
+# 11Nov21
+# 1413. Minimum Value to Get Positive Step by Step Sum
+######################################################
+class Solution:
+    def minStartValue(self, nums: List[int]) -> int:
+        '''
+        we we want to find the minimum start value such that the the step by step sum is never less than 1
+        [-3,2,-3,4,2]
+        get initial differences
+        [-1,-1,1,6]
+        len(nums) is also very small, and the range for each int is [-100,100]
+        step by steo sum is a rolling sum
+        you could brute force start with 1 and check
+        then incrementally add 1 to a start value until we cant
+        '''
+        min_start = 1
+        while True:
+            total = min_start
+            is_valid = True
+            
+            for num in nums:
+                total += num
+                #check
+                if total < 1:
+                    is_valid = False
+                    break
+            
+            if is_valid:
+                return min_start
+            else:
+                min_start += 1
+
+#binary search
+class Solution:
+    def minStartValue(self, nums: List[int]) -> int:
+        '''
+        side note:
+            imagine the case [1,1,1,1....-m,-m,-m]
+            its step by step sum is
+            n = len(nums)
+            (n//2) + (n//2 + 1)(-m)
+            (n//2) + (n//2)*(-m) - m
+            (n//2)(1 - m) - m
+        we can use binary search to find min start value
+        left = 1
+        right should be larger enough to make sure each step by step sum is > 1
+        we want the largest workable value times the length of nums
+        100*len(nums)+1
+        '''
+        n = len(nums)
+        m = 100
+        
+        left = 1
+        right = n*m+1
+        
+        #we want to found lower bound for workable value, 
+        while left < right:
+            mid = left + (right - left) //2
+            total = mid
+            is_valid = True
+            
+            for num in nums:
+                total += num
+                #check
+                if total < 1:
+                    is_valid = False
+                    break
+            
+            if is_valid:
+                #if this value works, anything after mid should work, no need to look there
+                right = mid
+            else:
+                # we need to keep up more
+                left = mid + 1
+        #return the lower bound after finising, we dont want to set the invariant to left <= right
+        #otherwise left would have moved up and we'd be wrong
+        return left 
+
+#pref sum
+class Solution:
+    def minStartValue(self, nums: List[int]) -> int:
+        '''
+        if i get pref sums for each num
+        i know that that sum so far must be greater than 1
+        suppose we have the array [a,b,c,d]
+        prefixes would be
+        [0,a,a+b,a+b+c,a+b+c+d]
+        key: the min start value is the value that make the minimum element equal exactly 1
+        if at any point our prefsum goes below 1, we need to negate this and make it on1 more
+        i.e for all pref in pref sum
+        find its min, and set min = -x + 1
+        minVal + startVal = 1
+        startVal = 1 - minval
+        so find the smallest pref sum
+        as long as the smallest step by step sum is >= 1, every other step by step sum will be >= 1
+        find the min start value , which is the value that makes min step by step > 1
+        '''
+        startValue = 0
+        total = 0
+        
+        for num in nums:
+            total += num
+            startValue = min(startValue,total)
+            
+        # We have to change the minimum step-by-step total to 1, 
+        # by increasing the startValue from 0 to -min_val + 1, 
+        # which is just the minimum startValue we want.
+        return -startValue + 1
