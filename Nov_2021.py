@@ -1145,3 +1145,105 @@ class Solution:
         # by increasing the startValue from 0 to -min_val + 1, 
         # which is just the minimum startValue we want.
         return -startValue + 1
+
+#####################################
+# 203. Remove Linked List Elements
+# 12Nov21
+#####################################
+class Solution:
+    def removeElements(self, head: Optional[ListNode], val: int) -> Optional[ListNode]:
+        '''
+        loop through LL, and maintain curr and next pointers, also maitain curr and curr.next
+        if node.val is val make .next connection
+        #edge cases require dummy node to help out
+        '''
+        dummy = ListNode(-1)
+        dummy.next = head
+        
+        prev = dummy
+        curr = head
+        
+        while curr:
+            if curr.val == val:
+                prev.next = curr.next
+            else:
+                prev = curr
+            curr = curr.next
+        
+        return dummy.next
+
+######################
+# 739. Daily Temperatures
+# 13NOV21
+######################
+#brute force
+class Solution:
+    def dailyTemperatures(self, temperatures: List[int]) -> List[int]:
+        '''
+        we want to return an array dp where dp[i] is the num days we have to wait to get to wa 
+        temp in the temps array that is wamemer
+        brute  force would be to just  linear scan to the right for each temp in the array
+        if im at temp[i] and i know the  temp[i+1] > temp
+        and i have dp[i], then its  just one more
+        
+        i don't think  i can use dp on this one, the sub problem is not  repeatable
+        and we want to return an array
+        
+        increasing  motonic stack?
+        keep pushing on to stack  
+        '''
+        N = len(temperatures)
+        ans  = [0]*N
+        
+        for i in range(N):
+            for j in  range(i+1,N):
+                if temperatures[j] > temperatures[i]:
+                    ans[i] = j - i
+                    break
+        return ans
+        
+
+ #montonic stack
+ class Solution:
+    def dailyTemperatures(self, temperatures: List[int]) -> List[int]:
+        '''
+        imagine the case we have that at the first day, the  temp that  is higher is on the last day
+        then we would have to go through the whole array
+        if we make sense of the fact that temps in desecnidng order can share  the  same answer day
+        we can imporve time comp
+        
+        NOTE:
+        montonic stacks are a good option when a problem ivoles comparing size of numeric eleemtns
+        with their order being relevant
+        
+        for a day, there are two posssibiltes:
+            1. curr day is not warmer than temp on top of stack, we push temp on to stack
+            2. if curr day is warmer: it menas that curr day is the irst day with a warmer temp!
+                when  we find a warmer temp, the number of  days is the diff between curr index  and index ono top of stack
+         when we  can find a warmer temp, we  cant stop checking only after  one element
+         we pop from the stack  until there is no longer a colder temp than current
+        '''
+        N = len(temperatures)
+        ans  = [0]*N
+        
+        stack = []
+        for curr_day,curr_temp in enumerate(temperatures):
+            #if we have a stack and  the temp  curr_temp is  larger then what is at top
+            #we  can  update
+            while stack and temperatures[stack[-1]] < curr_temp:
+                #update temp for  curr index  at top of stack
+                prev_day = stack.pop()
+                ans[prev_day] = curr_day - prev_day
+            stack.append(curr_day)
+        
+        return ans
+        
+
+
+
+
+
+
+
+
+
