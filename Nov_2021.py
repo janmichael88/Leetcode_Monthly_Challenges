@@ -1237,10 +1237,179 @@ class Solution:
             stack.append(curr_day)
         
         return ans
+
+###############################
+# 14NOV21
+# 1286. Iterator for Combination
+###############################
+class CombinationIterator:
+
+    def __init__(self, characters: str, combinationLength: int):
+        '''
+        number of combinations is N! / N
+        i could just recursivley generate each one in order
+        then use pointer to move
+        '''
+        self.combos = []
+        N = len(characters)
+        def rec(i,path):
+            if len(path) == combinationLength:
+                self.combos.append("".join(path[:]))
+                return
+            for j in range(i,N):
+                path.append(characters[j])
+                rec(j+1,path)
+                path.pop()
+        
+        rec(0,[])
+        self.num_combos = len(self.combos)
+        self.curr_combo = 0
+
+    def next(self) -> str:
+        temp = self.curr_combo
+        self.curr_combo += 1
+        return self.combos[temp]
+
+    def hasNext(self) -> bool:
+        return self.curr_combo < self.num_combos
+
+# Your CombinationIterator object will be instantiated and called as such:
+# obj = CombinationIterator(characters, combinationLength)
+# param_1 = obj.next()
+# param_2 = obj.hasNext()
+
+#precompute using algorithm L
+class CombinationIterator:
+
+    def __init__(self, characters: str, combinationLength: int):
+        '''
+        backtracking is risky because we can't control the flow
+        we can use the bitmasking trick and subset generation to generate the next 
+        combination in order
+        the algo is affectionately called algorithm L, by Knuth
+        if we have N elements, we have 2**n different masks
+        only take bits that are set
+        we take characters[i] if the n - 1 - ith bit is set
+        trick: to test if ith bit in bitmask is set
+        bitmask & (1 << i) != 0
+        '''
+        self.combs = []
+        self.N = len(characters)
+        self.k = combinationLength
+        
+        for bitmask in range(1 << self.N):
+            if self.count_ones(bitmask) == self.k:
+                #take chars
+                curr = ""
+                for j in range(self.N):
+                    if bitmask & (1 << self.N - 1 - j):
+                        curr += characters[j]
+                
+                self.combs.append(curr)
+        #print(self.combs)
+        #note this does in reverse
+    
+    def count_ones(self,num):
+        count = 0
+        while num > 0:
+            if num & 1:
+                count += 1
+            num = num >> 1
+        return count
+
+    def next(self) -> str:
+        return self.combs.pop()
         
 
+    def hasNext(self) -> bool:
+        return self.combs
 
 
+#instead of precomputing, build one at a time
+class CombinationIterator:
+
+    def __init__(self, characters: str, combinationLength: int):
+        '''
+        start with highest bitmask 1 k times followed by 0 n-k times
+        at each step generate a combinaton of the curr bistmask
+        if n-1-jth bit is set, take it
+        generate next mask, decrease until we hit k requirement
+        
+        '''
+        self.n = len(characters)
+        self.k = combinationLength
+        self.chars = characters
+        
+        #generate first mask
+        self.bitmask = (1 << self.n) - (1 << self.n -self.k)
+
+    def next(self) -> str:
+        #get curr combination
+        curr = ""
+        for j in range(self.n):
+            if self.bitmask & (1 << self.n -j - 1):
+                curr += self.chars[j]
+        
+        #get next mask
+        self.bitmask -= 1
+        while self.bitmask > 0 and self.count_ones(self.bitmask) != self.k:
+            self.bitmask -= 1
+        
+        return curr
+        
+
+    def hasNext(self) -> bool:
+        return self.bitmask > 0
+    
+    def count_ones(self,num):
+        count = 0
+        while num > 0:
+            if num & 1:
+                count += 1
+            num = num >> 1
+        return count
+
+#################################
+# 14NOV21
+# 368. Largest Divisible Subset
+################################
+class Solution:
+    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:
+        '''
+        basically we want the largest subset where each AN i,j pair can divide each other
+        given a list of claues [E,F,G] sorted in increasing order, and this list already forms a divisible subset we can say two things:
+            1. for any value that can be divided by the largest element in the divible subset, by adding the new value into the subset, one can form another subset for all h if h% G == 0 making [E,F,G,h]
+            2. for all values that can divide the smallest element in the subset, by adding the new value into the subset, one cam form another divisible subset
+            i.f for all d if E % d == 0, then [d,E,F,G]
+        
+        inutions, sort list increasingly to help enumerations
+        claim 1:
+            for an ordered list [X1,X2,...Xn] we claim that the largest divisible subset from this list is the largest subset amont all possible subsets ending with each number in the list
+        define EDS function
+        EDS(X_{i}), X_i is a subset of the list nums ending with X_i
+        given list [2,4,7,8]
+        EDS(4) = {2,4}
+        EDS(2) = {2}
+        
+        lets call our target LDS
+        LDS([X1,X2...XN]) = max(EDS(Xi) for all X_i)
+        when we call EDS(8), we have alreayd called EDS for all elements less than 8
+        to obtain EDS(8) we simply enumerate all elements before and their EDS
+        
+        '''
+        nums.sort()
+        subsets = {-1:set()}
+        
+        for num in nums:
+            EDS = []
+            for k in subsets:
+                #if i can divide it
+                if num % k == 0:
+                    EDS.append(subsets[k])
+            EDS = max(EDS,key=len)
+            subsets[num] = EDS | {num}
+        
+        return list(max(subsets.values(),key = len))
 
 
 
