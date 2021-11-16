@@ -1411,8 +1411,133 @@ class Solution:
         
         return list(max(subsets.values(),key = len))
 
+#recursive
+class Solution:
+    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:
+        '''
+        if we define dp(i)
+        this returns the largest subset in nums where the the subset ends in nums[i]
+        we can further extend this by seeing if the max or min of dp(i) can be further divided
+        a single number represents a divisible subset
+        
+        
+        EDS(i) = max(EDS(j) for all nums[j] < nums[i])
+        
+        ours LDS for [X1,X2,X3...XN] = max(EDS(i) for i in range(1,n))
+        [2,4,7,8]
+        EDS(8) calls EDS(2), EDS(4),EDS(7)
+        EDS(7) calls EDS(2) EDS(4)
+        EDS(4) calls EDS(2)
+        we store answers for each
+        
+        '''
+        #corner case
+        if len(nums) == 0:
+            return []
+        
+        nums.sort()
+        memo = {}
+        
+        def EDS(i):
+            if i in memo:
+                return memo[i]
+            curr_num = nums[i]
+            #trying to calc current maxSubset
+            maxSubset = []
+            #value of EDS(i) depends on prev elements
+            for j in range(0,i):
+                #corrloary 1
+                if curr_num % nums[j] == 0:
+                    #recuse
+                    subset = EDS(j)
+                    if len(maxSubset) < len(subset):
+                        maxSubset = subset
+            #extend the found max subset wut the curr_num
+            maxSubset = maxSubset.copy()
+            maxSubset.append(curr_num)
+            memo[i] = maxSubset
+            return maxSubset
+        
+        all_subsets = []
+        for i in range(len(nums)):
+            all_subsets.append(EDS(i))
+        
+        #print(all_subsets)
+        #print(memo)
+        
+        return max(all_subsets,key=len)
 
+#tabulation dp soltution
+#similar to LIS
+#https://leetcode.com/problems/largest-divisible-subset/discuss/684738/Python-Short-DP-with-O(n2)-explained-(update)
+class Solution:
+    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:
+        '''
+        we can treat this like LIS:
+        say we have: nums = [4,5,8,12,16,20]
+        
+        sol[0] = [4], the biggest divisible subset has size 1.
+        sol[1] = [5], because 5 % 4 != 0.
+        sol[2] = [4,8], because 8 % 4 = 0.
+        sol[3] = [4,12], because 12 % 4 = 0.
+        sol[4] = [4,8,16], because 16 % 8 = 0 and 16 % 4 = 0 and we choose 8, because it has longer set.
+        sol[5] = [4,20] (or [5,20] in fact, but it does not matter). We take [4,20], because it has the biggest length and when we see 5, we do not update it.
+        Finally, answer is [4,8,16].
+        '''
+        if len(nums) == 0:
+            return []
+        
+        nums.sort()
+        
+        dp = [[num] for num in nums] #each num is trivially a disivisble subset
+        for i in range(len(nums)):
+            #check everything up to i
+            for j in range(i):
+                if nums[i] % nums[j] == 0 and len(dp[i]) < len(dp[j]) + 1:
+                    dp[i] = dp[j] + [nums[i]]
+        
+        print(dp)
+        return max(dp,key = len)
 
+##########################
+# 15Nov21
+# 1522. Diameter of N-Ary Tree
+##########################
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children if children is not None else []
+"""
 
+class Solution:
+    def diameter(self, root: 'Node') -> int:
+        """
+        :type root: 'Node'
+        :rtype: int
+        """
+        '''
+        from the binary tree problem just take the max of left and right and add 1
+        but we need to do this for if childre
+        but we want the two longest depths at level
+        
+        '''
+        self.diameter = 0
+        
+        def dfs(node):
+            if not node:
+                return [0,0]
+            depths = [0,0]
+            if node.children:
+                for child in node.children:
+                    depths.append(dfs(child))
+            
+            self.diameter = max(self.diameter,sum(sorted(depths)[-2:]))
+            return max(depths) + 1
+        
+        dfs(root)
+        return self.diameter
+                
 
 
