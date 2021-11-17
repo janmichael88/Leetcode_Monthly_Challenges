@@ -1538,6 +1538,98 @@ class Solution:
         
         dfs(root)
         return self.diameter
-                
 
+#keeping track of top 2
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children if children is not None else []
+"""
+
+class Solution:
+    def diameter(self, root: 'Node') -> int:
+        """
+        :type root: 'Node'
+        :rtype: int
+        """
+        '''
+        a couple of insights, first is that the longest path in a tree can only happend between two leaf nodes
+        or between a lead node and the root
+        second: each non leaf node acts as a brdige between the paths on its left and right
+        combining them together gives a larger path
+        for eaach node we want to find its two longest paths
+        we could use height or depth for this one
+        
+        height:
+            recall the height of a a node is defined as the length of the longest path downward from node to a leaf
+            leaf nodes have height zero
+            need combination of two longest paths
+            if we are at a node (call it l with children m and n)
+            height(node) = height(child m) + height(child n) + 2
+        
+        height(node) = max(height(child)) + 1 for all child in node.children
+        we could keep all heightgs in an array and sort and take top 2
+        or just ecord top 2
+        '''
+        self.diam = 0
+        
+        def height(node):
+            if not node:
+                return 0
+            #find top two heights
+            max_height_1 = 0
+            max_height_2 = 0
+            for child in node.children:
+                parent_height = height(child) + 1
+                if parent_height > max_height_1:
+                    max_height_1, max_height_2 = parent_height, max_height_1
+                elif parent_height > max_height_2:
+                    max_height_2 = parent_height
+            #diam update
+            combined = max_height_1 + max_height_2
+            self.diam = max(self.diam,combined)
+            return max_height_1
+        
+        height(root)
+        return self.diam
+
+#############################
+# 668. Kth Smallest Number in Multiplication Table
+# 16NOV21
+#############################
+class Solution:
+    def findKthNumber(self, m: int, n: int, k: int) -> int:
+        '''
+        we can use binary search to find the kth value in the array
+        we define an enough function that is true only of there are k or more valuees in the table
+        i.e it describes whether or not x is large enough to be the kth value
+        how do we count whether are are at least k elements for each mid point
+        if we are at the ith row, it looks like
+        [i,2*i,3*i....n*i]
+        the larggest possible k*i <= x 
+        basically we are counting the number of elements at least x by using the number of elements in a row
+        we inrease count by min(x//i,n)
+        return count >= k (at leat k)
+        '''
+        def enough(x):
+            count = 0
+            for i in range(1,m+1):
+                count += min(x // i, n)
+            return count >= k
+        
+        lo,hi = 1,m*n
+        #return the lower bound, in the case we cannot find exactly k
+        #we don't want to cross over into hi, otherwise we don't get a lower bound
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            if not enough(mid):
+                #we need more element
+                lo = mid + 1
+            else:
+                #we have more than enough elements so try smaller
+                hi = mid
+        
+        return lo
 
