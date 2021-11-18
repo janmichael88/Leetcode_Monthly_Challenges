@@ -1633,3 +1633,197 @@ class Solution:
         
         return lo
 
+##########################
+# 62. Unique Paths
+# 17NOV21
+###########################
+#recursion with memo
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        '''
+        this is a classis dp problem
+        dp(i,j) represents the number of ways to get to (i,j) from the start
+        dp(i,j) = num ways from above + num ways from left (remember we can only go down and right)
+        dp(i,j) = dp(i,j-1) + dp(i-1,j)
+        base case, only on first row and col, there's only one way
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            if i == 1 or j == 1:
+                return 1
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = dp(i,j-1) + dp(i-1,j)
+            memo[(i,j)] = ans
+            return ans
+
+        return dp(m,n)
+
+#iterative dp class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        '''
+        iterative dp
+        '''
+        #dont forget to fill in bases cases
+        dp = [[1]*n for _ in range(m)]
+        
+        for i in range(1,m):
+            for j in range(1,n):
+                dp[i][j] = dp[i-1][j] + dp[i][j-1]
+        
+        return dp[-1][-1]
+
+#math poly
+from math import factorial
+class Solution:
+    def uniquePaths(self, m: int, n: int) -> int:
+        '''
+        this is a classic combinatorial problem, there are h+v moves to from start to finish
+        h = m- 1 horizontal moves and v = n-1 vertical moves
+        # from start to destination, we need (m-1) ↓ moves and (n-1) → moves
+        # Thus, the number of unique paths is the number of permutations of (m-1) ↓ and (n-1) →
+        #
+        # Number of unique paths = ( m-1 + n-1 ) ! / (m-1)! * (n-1)!
+        
+        
+        '''
+        return factorial( m+n-2 ) // ( factorial( m-1 ) * factorial( n-1 ) )    
+
+###################################
+# 238. Product of Array Except Self
+# 17NOV21
+###################################
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        just multiply all to get the product of everything in the first pas
+        then pass through the array again dividing by the num
+        the problem is with zeros, becaue that reduces product to 0
+        keep track of indices that have zero
+        '''
+        all_prod = 1
+        zero_idxs = set()
+        
+        for i in range(len(nums)):
+            if nums[i] != 0:
+                all_prod *= nums[i]
+            else:
+                zero_idxs.add(i)
+        
+        answer = []
+        
+        #in the case we don't have zeros
+        if len(zero_idxs) == 0:
+
+            for i in range(len(nums)):
+                answer.append(all_prod // nums[i])
+        
+            return answer
+        #we have zero
+        else:
+            for i in range(len(nums)):
+                if i in zero_idxs:
+                    answer.append(all_prod)
+                else:
+                    answer.append(0)
+            return answer
+
+
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        idea, if we are at the ith element, all we want is the product to its left side and the product to its right side
+        then we just multiply these two to get the product
+        we can generate in two pass the products to the left of each number
+        and the products to the right of each number
+        base case being 1 for the starting and ending elements
+        '''
+        N = len(nums)
+        answer = [0]*N
+        left = [0]*N
+        right = [0]*N
+        
+        #for the first element, there is nothing, so its left product is 1
+        left[0] = 1
+        
+        for i in range(1,N):
+            left[i] = nums[i-1]*left[i-1]
+        
+        #get products to the right
+        right[N-1] = 1
+        for i in range(N-2,-1,-1):
+            right[i] = nums[i+1]*right[i+1]
+        
+        #put into answer
+        for i in range(N):
+            answer[i] = left[i]*right[i]
+        
+        return(answer)
+
+#using constant space
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        for constance space we can use the answer array to first start products to the left
+        then on the second pass we find products to the right and put into answer
+        '''
+        N = len(nums)
+        answer = [0]*N
+        #for the first element, there is nothing, so its left product is 1
+        answer[0] = 1
+        
+        for i in range(1,N):
+            answer[i] = nums[i-1]*answer[i-1]
+        
+        #get products to the right
+        #we need to hold the base case for products to the right
+        right = 1
+        for i in range(N-1,-1,-1):
+            answer[i] = answer[i]*right
+            right *= nums[i]
+        
+        
+        return(answer)
+
+################################################
+# 17NOV21
+# 448. Find All Numbers Disappeared in an Array
+################################################
+class Solution:
+    def findDisappearedNumbers(self, nums: List[int]) -> List[int]:
+        '''
+        the numbers in the array can be [1,n]
+        dumb way turn the numbers int a set
+        '''
+        n = len(nums)
+        nums = set(nums)
+        ans = []
+        for num in range(1,n+1):
+            if num not in nums:
+                ans.append(num)
+        
+        return ans
+        
+class Solution:
+    def findDisappearedNumbers(self, nums: List[int]) -> List[int]:
+        '''
+        since all the numbers are positive and are in beteween [1,n]
+        we can mark the number as visited by going to its index and making it negative
+        then pass the array once again and take indices whose num[at index] is > 0
+        '''
+        n = len(nums)
+        
+        for i in range(n):
+            #finds where it should be in the array
+            j = abs(nums[i]) - 1
+            if nums[j] > 0:
+                #negate it
+                nums[j] *= -1
+        
+        #now check if a num is positive, then its index+1 was not seen
+        ans = []
+        for i in range(n):
+            if nums[i] > 0:
+                ans.append(i+1)
+        return ans
