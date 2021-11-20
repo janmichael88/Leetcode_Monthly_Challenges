@@ -1827,3 +1827,56 @@ class Solution:
             if nums[i] > 0:
                 ans.append(i+1)
         return ans
+
+#############################
+# 461. Hamming Distance
+# 18NOV21
+#############################
+class Solution:
+    def hammingDistance(self, x: int, y: int) -> int:
+        '''
+        just xor the two ti find where bits are different
+        then count them up
+        '''
+        diff = x ^ y
+        count = 0
+        while diff:
+            count += diff & 1
+            diff = diff >> 1
+        
+        return count
+
+#brian kernighan
+class Solution:
+    def hammingDistance(self, x: int, y: int) -> int:
+        '''
+        recall the brian kernighan algo, to switch of last bit
+        we can do evern faster than just shifiting over 1 bit at a time
+        skip bits of zeros in between bits of 1
+        i can turn off right most bit
+        num & (num - 1) clears the right most bit
+        '''
+        diff = x ^ y
+        distance = 0
+        
+        while diff:
+            distance += 1
+            diff = diff & (diff - 1)
+        
+        return distance
+
+##################################
+# 28. Implement strStr()
+# 18NOV21
+##################################
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        M = len(haystack)
+        N = len(needle)
+        
+        for i in range(M-N+1):
+            if haystack[i:i+N] == needle:
+                return i
+        return -1
+
+#KMP search O(m+n)
