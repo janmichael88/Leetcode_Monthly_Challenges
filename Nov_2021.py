@@ -1865,6 +1865,111 @@ class Solution:
         
         return distance
 
+########################################
+# 540. Single Element in a Sorted Array
+# 20NOV21
+#######################################
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+        '''
+        just count and return
+        '''
+        counts = Counter(nums)
+        return [num for num,count in counts.items() if count == 1][0]
+        
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+        '''
+        check every other element
+        '''
+        for i in range(0,len(nums)-1,2):
+            if nums[i] != nums[i+1]:
+                return nums[i]
+        
+        return nums[len(nums)-1]
+
+#logN and constant space
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+        '''
+        recall each element is either present once or twice
+        also notice that the starting array will alwasy be of odd length; 2*(some number of elemnte) + 1
+        notice that if we have a subarray, the single element would appear only in the one that is odd length
+        algo:
+            1. keep dividing in half, and if we get to the point where reduced search space is 1, it must be that eleemtn
+            2. at each iteration we need to determine the parity of the legnth of each sub array
+            there are a few cases
+                a. right side remains odd length, lo = mid + 2
+                b. left side is odd length, hi = mid - 1
+                c. mid's pair is to th left, and halves ar even, hi = mid - 2
+                d. mid's pair if to the left, and havel are odd, lo = mid + 1
+            
+            return the lower bound
+            note that this algo still works even if the array is not sorted
+            invariant was the a side can always be odd or even lengthed
+        notes on lo and hi bounds
+        if you are returning from inside the loop, use left <= right
+        if you are reducing the search space, use left < right and finally return a[left]
+        
+        if you discard mid for the next iteration (i.e. l = mid+1 or r = mid-1) then use while (l <= r).
+        if you keep mid for the next iteration (i.e. l = mid or r = mid) then use while (l < r)
+        '''
+        lo = 0
+        hi = len(nums) - 1
+        
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            halves_even = (hi - mid) % 2 == 0
+            if nums[mid+1] == nums[mid]:
+                if halves_even:
+                    lo = mid+ 2
+                else:
+                    hi = mid - 1
+            elif nums[mid-1] == nums[mid]:
+                if halves_even:
+                    hi = mid - 2
+                else:
+                    lo = mid + 1
+            else:
+                return nums[mid]
+        
+        return nums[lo]
+
+#binarys search for the right even index
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+        '''
+        it turns out that we can just binary search on even indices
+        the single element if at the first even index not followed by a pair (from the first first linear seach idea)
+        now in stead of doing a linear search to find this index, we use binary search to find this index
+        after the single element, the pattern chnages to being odd indexes followed by their pair
+        this means that the single element (an even index) and all other elements after it are even indices not followed by their pair
+        therefoce, given any index in the array, we an easily determin whether the single elemnt is to the left or to the right
+        
+        algo:
+            we can set lo and hi in the usual way
+            we need to make sure our mid is even, so we can check its pair
+            do this by decrementing 1 if odd
+            then we check whether ot not the mid index is the same as the one after it
+                if i is, we know that mid is not the single leement, and the singel element must be on the side afther this index
+                if it is not, we know that the single element is at either mid or before mid
+        '''
+        lo = 0
+        hi = len(nums) - 1
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            if mid % 2 == 1:
+                mid -= 1
+            if nums[mid] == nums[mid + 1]:
+                lo = mid + 2
+            else:
+                hi = mid
+        return nums[lo]
+
+
+
+
+
 ##################################
 # 28. Implement strStr()
 # 18NOV21
