@@ -1966,9 +1966,86 @@ class Solution:
                 hi = mid
         return nums[lo]
 
+########################
+# 106. Construct Binary Tree from Inorder and Postorder Traversal
+# 21NOV21
+########################
+#recursion but re scan in order array
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def buildTree(self, inorder: List[int], postorder: List[int]) -> Optional[TreeNode]:
+        '''
+        in a post order traversal, the last element is the root
+        for in order, if im at i, then anything from 0 to i-1 is on left substree 
+        and anything from i+1 to N is ont the right subtree
+        if i had pre order, then i would know what's root, left and right
+        go in reverse of post order
+        '''
+        if not inorder:
+            return None
+        post_idx = [len(postorder) - 1]
+        
+        def helper(in_left,in_right):
+            if in_left > in_right:
+                return None
+            #current root fomr post order
+            root = TreeNode(postorder[post_idx[0]])
+            #get ready for next call
+            post_idx[0] -= 1
+            if in_left == in_right:
+                return root
+            #find middle of in order using post_idx
+            mid = inorder.index(root.val)
+            #recursion right first then left
+            root.right = helper(mid+1,in_right)
+            root.left = helper(in_left,mid - 1)
+            return root
+        
+        return helper(0,len(inorder)-1)
 
-
-
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def buildTree(self, inorder: List[int], postorder: List[int]) -> Optional[TreeNode]:
+        '''
+        instead of having to re scan the inorder array, mapp the vals to their indices
+        since the values will be uniqe
+        '''
+        if not inorder:
+            return None
+        
+        mapp = {val:i for i,val in enumerate(inorder)}
+        
+        post_idx = [len(postorder) - 1]
+        
+        def helper(in_left,in_right):
+            if in_left > in_right:
+                return None
+            #current root fomr post order
+            root = TreeNode(postorder[post_idx[0]])
+            #get ready for next call
+            post_idx[0] -= 1
+            if in_left == in_right:
+                return root
+            #find middle of in order using post_idx
+            mid = mapp[root.val]
+            #recursion right first then left
+            root.right = helper(mid+1,in_right)
+            root.left = helper(in_left,mid - 1)
+            return root
+        
+        return helper(0,len(inorder)-1)
+        
+        print(mapp)
 
 ##################################
 # 28. Implement strStr()
@@ -1985,3 +2062,265 @@ class Solution:
         return -1
 
 #KMP search O(m+n)
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        '''
+        we can use KMP to find substring match in O(n+m) time
+        we first need to creat the longest prefix also suffix array 
+        this answer, if we are at the ith index in the pattern then then there exsits a prefix of this length
+        that is also a suffix
+        
+        then use the array to find the first occurrence of the needle in the haystack
+        
+        '''
+        if len(needle) == 0:
+            return 0
+        
+        #build longes prefix also suffix array
+        lps = [0]*len(needle)
+        i = 1
+        j = 0
+        
+        while i < len(needle):
+            if needle[i] == needle[j]:
+                j += 1
+                lps[i] = j
+                i += 1
+            else:
+                if j != 0:
+                    j = lps[j-1]
+                else:
+                    i += 1
+        
+        n = len(haystack)
+        m = len(needle)
+        i,j = 0,0
+        while i < n:
+            if haystack[i] == needle[j]:
+                i += 1
+                j += 1
+                #if found solution
+                if (j == m):
+                    return i - m
+            else:
+                if j != 0:
+                    j = lps[j-1]
+                else:
+                    i += 1
+        
+        return -1
+
+###########################
+# 450. Delete Node in a BST
+# 21NOV21
+###########################
+#fuckkk
+class Solution:
+    def deleteNode(self, root: Optional[TreeNode], key: int) -> Optional[TreeNode]:
+        '''
+        if the node we are at is a leaf, then just make that next pointer to none
+        if the node has a left child, my the left the node
+        if the node has a right children, make the right the curr node
+        if left and right child, make right he node, and set node to the node that we deleted's left
+        '''
+        prev = None
+        curr = root
+        
+        while curr:
+            #on the left side
+            if curr.val > key:
+                prev = curr
+                curr = curr.left
+            #on the right
+            elif curr.val < key:
+                prev = curr
+                curr = curr.right
+            else:
+                #must be the curr node
+                #it's a leaf
+                if not curr.left and not curr.right:
+                    if prev.val > curr.val:
+                        prev.left = None
+                    else:
+                        prev.right = None
+                elif not curr.left
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def deleteNode(self, root: Optional[TreeNode], key: int) -> Optional[TreeNode]:
+        '''
+        from a node, we can find its predecessor, the node in value just before the curr node
+        from a node, we can find its successor, the node in value just after the curr node
+        INORDER -> Left, Node, Right
+        to find pred, go left once, then right as far as we can
+        to find succ, go right once, then far lest as we can
+        
+        case:
+            1 if its a leaf, delete it, node = null
+            2. node has right, then repplace with succ, then recursively replace with succ
+            3. node has a left, then its succ is somwhere in the upper tree, recursivley place with pred
+            
+                If key > root.val then delete the node to delete is in the right subtree root.right = deleteNode(root.right, key).
+
+    If key < root.val then delete the node to delete is in the left subtree root.left = deleteNode(root.left, key).
+
+    If key == root.val then the node to delete is right here. Let's do it :
+
+    If the node is a leaf, the delete process is straightforward : root = null.
+
+    If the node is not a leaf and has the right child, then replace the node value by a successor value root.val = successor.val, and then recursively delete the successor in the right subtree root.right = deleteNode(root.right, root.val).
+
+    If the node is not a leaf and has only the left child, then replace the node value by a predecessor value root.val = predecessor.val, and then recursively delete the predecessor in the left subtree root.left = deleteNode(root.left, root.val).
+
+    Return root.
+        '''
+        if not root:
+            return None
+        
+        #delete from right subtree
+        if key > root.val:
+            root.right = self.deleteNode(root.right,key)
+        #delete from left
+        elif key < root.val:
+            root.left = self.deleteNode(root.left,key)
+            
+        #we are there
+        else:
+            if not root.left and not root.right:
+                root = None
+            elif root.right:
+                root.val = self.succ(root)
+                root.right = self.deleteNode(root.right,root.val)
+            else:
+                root.val = self.pred(root)
+                root.left = self.deleteNode(root.left,root.val)
+        
+        return root
+    def succ(self,root):
+        root = root.right
+        while root.left:
+            root = root.left
+        return root.val
+    
+    def pred(self,root):
+        root = root.left
+        while root.right:
+            root = root.right
+        return root.val
+
+######################
+# 22NOV21
+# 1429. First Unique Number
+######################
+#brute force in finding the unique element
+class FirstUnique:
+
+    def __init__(self, nums: List[int]):
+        '''
+        we have queue of integers, we can only add and not remove
+        '''
+        self.deq = deque(nums)
+        
+
+    def showFirstUnique(self) -> int:
+        '''
+        reads from left to right
+        '''
+        for num in self.deq:
+            if self.deq.count(num) == 1:
+                return num
+        return -1
+        
+
+    def add(self, value: int) -> None:
+        self.deq.append(value)
+        
+
+
+# Your FirstUnique object will be instantiated and called as such:
+# obj = FirstUnique(nums)
+# param_1 = obj.showFirstUnique()
+# obj.add(value)
+
+#q and hashmap
+class FirstUnique:
+
+    def __init__(self, nums: List[int]):
+        '''
+        we need a fast way of determing what is the first unique number in the deq
+        otherwise when we call showFirstUnique we have to go through the whole deque
+        intuion:
+            we want to know if this number has occurred once or more than once
+            instead of couting how many times a number occurred in the deque, we could instead keep a hashmap of numbers to booleans
+           mapp of nums to booleans if we have not seen them, if true, update to false and do not add to q
+        the problem now lies in whether we want to delete in the shorFirstUnique method or in the add method
+        deleting after the add method, forces use to pass the array once more to carry out a deletion
+        however, adding to the showFirstUnique method, we can save more time (amortized)
+        '''
+        self.queue = deque(nums)
+        self.isUnique = {}
+        #add using method
+        for num in nums:
+            self.add(num)
+
+    def showFirstUnique(self) -> int:
+        '''
+        we need to start clearing the q of any non uniques before return
+        because of the add invariant, any number in the que must be unique
+        '''
+        while self.queue and self.isUnique[self.queue[0]] == False:
+            self.queue.popleft()
+        #what should be remaining is the next unique
+        if self.queue:
+            return self.queue[0]
+        return -1
+
+    def add(self, value: int) -> None:
+        #case 1: we need to ad the number
+        if value not in self.isUnique:
+            self.isUnique[value] = True
+            self.queue.append(value)
+        #case 2: its not unique, dont add
+        else:
+            self.isUnique[value] = False
+
+#ordered dict, or linked hash set
+from collections import OrderedDict
+class FirstUnique:
+
+    def __init__(self, nums: List[int]):
+        '''
+        O(1) time complexity will alwasy be better than amotrized o(1)
+        to get O(1) for showFirst unique, we would need to have each removal happen with its corresponding add()
+        not after some abritray call to showFirstUnique()
+        we can remove and get next if we use LinkedList (gives us previous right away)
+        there is very not so well known data structure known as a linked hahsset
+        or ordereddcit in pythong
+        same O(1) add, delete, update, etc operations, but also gives as the elements added in order
+        we can use ordereddict as set, if we make its values None
+        '''
+        self.q = OrderedDict()
+        self.isUnique = {}
+        for num in nums:
+            self.add(num)
+        
+    def showFirstUnique(self) -> int:
+        if self.q:
+            return next(iter(self.q))
+        return -1
+
+    def add(self, value: int) -> None:
+        #case 1, not unique so add it
+        if value not in self.isUnique:
+            self.isUnique[value] = True
+            self.q[value] = None
+        #case 2, remove from q
+        elif self.isUnique[value] == True:
+            self.isUnique[value] = False
+            self.q.pop(value)
+        #case 3, nothing, since after the second time, it would have been removed
