@@ -2324,3 +2324,219 @@ class FirstUnique:
             self.isUnique[value] = False
             self.q.pop(value)
         #case 3, nothing, since after the second time, it would have been removed
+
+##############################
+# 8. String to Integer (atoi)
+# 23NOV21
+##############################
+class Solution:
+    def myAtoi(self, s: str) -> int:
+        '''
+        keep advanving left pointer if its not an ord
+        then keep decrementing right pointer if is not order
+        * discard all leading whitespace
+        * get sign of number
+        * overflow
+        * invalid input
+        '''
+        INT_MIN = -(2**31)
+        INT_MAX = 2**31 - 1
+        
+        s = s.strip()
+        
+        N = len(s)
+        sign = 1
+        num = 0
+        i = 0
+        
+        if N == 0:
+            return 0
+        
+        
+        #sign correction
+        if s[0] == '-':
+            sign *= -1
+            i += 1
+        elif s[0] == '+':
+            i += 1
+        
+        #go through string
+        while i < N and '0' <= s[i] <= '9':
+            curr_digit = ord(s[i]) - ord('0')
+            #abandon if we know its oveflown
+            if num > INT_MAX // 10 or (num == INT_MAX // 10 and curr_digit >7):
+                return INT_MAX if sign == 1 else INT_MIN
+            num = num*10 + curr_digit
+            i += 1
+        
+        return num*sign
+
+
+################################################
+# 23NOV21 
+# 952. Largest Component Size by Common Factor
+###############################################
+##union find and check all factors by group
+class DisjointSetUnion(object):
+    
+    def __init__(self,size):
+        #start off with each node pointing to itself
+        self.parent = [i for i in range(size+1)]
+        #keep track of the size of each componeent
+        self.size = [1]*(size+1)
+        
+    def find(self,x):
+        #recursively search for x's parent
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def union(self,x,y):
+        px = self.find(x)
+        py = self.find(y)
+        
+        #if two nodes are same set, take the left guy
+        if px == py:
+            return px
+        #otherwise make the parent be the bigger set
+        if self.size[px] > self.size[py]:
+            px,py = py,px
+        #add the smaller component to the larger one
+        self.parent[px] = py
+        self.size[py] += self.size[px]
+        return py
+
+class Solution:
+    def largestComponentSize(self, nums: List[int]) -> int:
+        '''
+        we need to make the graph connecting nums if they have common factor greater than 1
+        how to determine if two numbers share common factor > 1?
+        solution is too long, just go over union find for connected components but first finding common factors
+        in pseudo code this is what we want:
+        group_count = {}
+        for num in number_list:
+            group_id = group(num)
+            group_count[group_id] += 1
+        return max(group_count.values())
+        
+        then this becomes a graph partition problem
+        build groups by common factors o fht numbers, which can done in a single iteration for each number
+        think of venn diagram
+        
+        algo:
+            attribute each number to a serious of groups who's parent is a common factor
+                iterate through num from 1 to sqrt(num)
+                for each factor check is it is and group num and factor
+                also perform opration on complement as well
+            go through the groups and find the largest connected one
+            
+        '''
+        dsu = DisjointSetUnion(max(nums))
+        for num in nums:
+            for factor in range(2,int(num**.5) + 1):
+                #check if if is a factor
+                if num % factor == 0:
+                    #union the two
+                    dsu.union(num,factor)
+                    #also check is complement factor
+                    dsu.union(num,num//factor)
+        #count the size of group one by one
+        max_size = 0
+        group_count = defaultdict(int)
+        for num in nums:
+            group_id = dsu.find(num)
+            group_count[group_id] += 1
+            max_size = max(max_size, group_count[group_id])
+
+        return max_size
+
+#using seive of erastothenese
+class DisjointSetUnion(object):
+    
+    def __init__(self,size):
+        #start off with each node pointing to itself
+        self.parent = [i for i in range(size+1)]
+        #keep track of the size of each componeent
+        self.size = [1]*(size+1)
+        
+    def find(self,x):
+        #recursively search for x's parent
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def union(self,x,y):
+        px = self.find(x)
+        py = self.find(y)
+        
+        #if two nodes are same set, take the left guy
+        if px == py:
+            return px
+        #otherwise make the parent be the bigger set
+        if self.size[px] > self.size[py]:
+            px,py = py,px
+        #add the smaller component to the larger one
+        self.parent[px] = py
+        self.size[py] += self.size[px]
+        return py
+
+class Solution:
+    def largestComponentSize(self, nums: List[int]) -> int:
+        '''
+        we need to make the graph connecting nums if they have common factor greater than 1
+        how to determine if two numbers share common factor > 1?
+        solution is too long, just go over union find for connected components but first finding common factors
+        in pseudo code this is what we want:
+        group_count = {}
+        for num in number_list:
+            group_id = group(num)
+            group_count[group_id] += 1
+        return max(group_count.values())
+        
+        using sieve:    
+        instead of checking all factors, some of which might be non essential for the grouping
+        we could find the prime factorization of a number using the seuve method
+        
+        algo:
+        decompose each number into its prime fators and apply union ops on the primes
+            iterate through each number, decompose
+            join all groups that possess these prime factors by applying union on adjacent pairs
+            keep hash for mapping between each number and its any of prime factors
+            later use table to find out which group that each number belongs to
+        iterate through each number a second time to find out the groups
+            since we build union find off primes, just find the prime_factor -> group_id
+        
+        '''
+        
+        dsu = DisjointSetUnion(max(nums))
+        num_factor_map = {}
+        
+        for num in nums:
+            prime_factors = list(set(self.primeDecompose(num)))
+            # map a number to its first prime factor
+            num_factor_map[num] = prime_factors[0]
+            # merge all groups that contain the prime factors.
+            for i in range(0, len(prime_factors)-1):
+                dsu.union(prime_factors[i], prime_factors[i+1])
+        
+        max_size = 0
+        group_count = defaultdict(int)
+        for num in nums:
+            group_id = dsu.find(num_factor_map[num])
+            group_count[group_id] += 1
+            max_size = max(max_size, group_count[group_id]) 
+        
+        return max_size
+
+    
+    def primeDecompose(self, num):
+        factor = 2
+        prime_factors = []
+        while num >= factor*factor:
+            if num % factor == 0:
+                prime_factors.append(factor)
+                num = num // factor
+            else:
+                factor += 1
+        prime_factors.append(num)
+        return prime_factors
