@@ -2540,3 +2540,140 @@ class Solution:
                 factor += 1
         prime_factors.append(num)
         return prime_factors
+
+#############################
+# 24NOV21
+# 986. Interval List Intersections
+############################
+class Solution:
+    def intervalIntersection(self, firstList: List[List[int]], secondList: List[List[int]]) -> List[List[int]]:
+        '''
+        if there is an intersection, we want the maxes of the lefts
+        and the mins of the right
+        '''
+        ans = []
+        i = j = 0
+        
+        while i < len(firstList) and j < len(secondList):
+            #get the bounds for the interval
+            lo = max(firstList[i][0],secondList[j][0])
+            hi = min(firstList[i][1],secondList[j][1])
+            
+            if lo <= hi:
+                ans.append([lo,hi])
+            #move the smaller of the two
+            if firstList[i][1] < secondList[j][1]:
+                i += 1
+            else:
+                j += 1
+        
+        return ans
+
+#######################
+# 24NOV21
+# 53. Maximum Subarray
+#######################
+#recursion
+class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        '''
+        dp(i) represent the max sum ending at nums[i]
+        if i know the previous dp(i-1), then its max owuld dp dp(i) = max(dp(i-1) + nums[i], nums[i])
+        '''
+        memo = {}
+        N = len(nums)
+        def dp(i):
+            if i < 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = max(dp(i-1)+nums[i],nums[i])
+            memo[i] = ans
+            return ans
+        
+        dp(N-1)
+        return max(memo.values())
+
+#dp, kadanes algo
+class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        '''
+        dp(i) represent the max sum ending at nums[i]
+        if i know the previous dp(i-1), then its max owuld dp dp(i) = max(dp(i-1) + nums[i], nums[i])
+        '''
+        N = len(nums)
+        dp = [0]*N
+        dp[0] = nums[0]
+        
+        for i in range(1,N):
+            dp[i] = max(nums[i],dp[i-1]+nums[i])
+        return max(dp)
+
+#constant space
+class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        '''
+        dp(i) represent the max sum ending at nums[i]
+        if i know the previous dp(i-1), then its max owuld dp dp(i) = max(dp(i-1) + nums[i], nums[i])
+        '''
+        N = len(nums)
+        curr_max = highest_max = nums[0]
+        
+        for i in range(1,N):
+            curr_max = max(nums[i], curr_max + nums[i])
+            highest_max = max(highest_max, curr_max)
+        return highest_max
+
+##########################
+# 24NOV21
+# 219. Contains Duplicate II
+##########################
+#TLE
+class Solution:
+    def containsNearbyDuplicate(self, nums: List[int], k: int) -> bool:
+        '''
+        indicies i and j need to be at least k away from each other
+        and nums[i] == nums[j]
+        brute force would be to check all i and j k away then return true
+        '''
+        N = len(nums)
+        for i in range(N):
+            for j in range(max(i-k,0),i):
+                if nums[i] == nums[j]:
+                    return True
+        return False
+
+#sliding hash window if fixed size
+class Solution:
+    def containsNearbyDuplicate(self, nums: List[int], k: int) -> bool:
+        '''
+        i can keep a hash set of size k,
+        keep adding nums[i] to it
+        if im within k, and i see the nums again, i know it was between i and j
+        once set size becomes more than k, remove the element i-k
+        '''
+        seen = set()
+        N = len(nums)
+        for i in range(N):
+            if nums[i] in seen:
+                return True
+            seen.add(nums[i])
+            if len(seen) > k:
+                seen.remove(nums[i-k])
+        
+        return False
+        
+class Solution:
+    def containsNearbyDuplicate(self, nums: List[int], k: int) -> bool:
+        '''
+        using hashmap
+        '''
+        seen = {}
+        for i,v in enumerate(nums):
+            if v in seen:
+                if abs(i - seen[v]) <= k:
+                    return True
+            seen[v] = i
+        
+        return False
+
