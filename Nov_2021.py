@@ -2677,3 +2677,157 @@ class Solution:
         
         return False
 
+#################################
+# 35. Search Insert Position
+# 25NOV21
+#################################
+class Solution:
+    def searchInsert(self, nums: List[int], target: int) -> int:
+        '''
+        just binary search to find the left bound
+        '''
+        lo,hi = 0,len(nums)
+        
+        while lo < hi:
+            mid = lo + (hi - lo)//2
+            #match
+            if nums[mid] == target:
+                return mid
+            elif nums[mid] > target:
+                hi = mid
+            else:
+                lo = mid + 1
+        
+        return lo
+
+###################
+# 26NOV21
+# 292. Nim Game
+###################
+#bleah
+class Solution:
+    def canWinNim(self, n: int) -> bool:
+        '''
+        nim game, i go first and i alternate with my friend
+        a player can take 1 to 3 stones on each stone
+        the peron to remove the last state is the winner
+        return true if i can win the game, or false if i  cannot
+        
+        if  its my last turn and there are three stones left, i win
+        example:
+            n = 5, i could take 1, which leaves 4, opp takes 1, then i take 3 and win
+            i need to ensure that on my last move, <= 3 stones
+            
+        '''
+        memo = {}
+        
+        def rec(stones):
+            if stones <= 3:
+                return True
+            else:
+                return False
+            take_one = rec(stones-1)
+            take_two = rec(stones-2)
+            take_three = rec(stones-3)
+            ans = take_one or take_two or take_three
+            memo[stones] = ans
+            return ans
+        
+        return rec(n)
+        
+
+#O(1)
+class Solution:
+    def canWinNim(self, n: int) -> bool:
+        '''
+        i need there to be at least 3 stones on my turn for me to win
+        any losing position is one where n is a mutiple of 4
+        '''
+        return (n % 4 != 0)
+
+####################################
+# 238. Product of Array Except Self
+# 27NOV21
+####################################
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        i can find the products to the left and find products to the right
+        then just multiply them
+        [1,2,3,4]
+        products to left:
+        [1,1,2,,6]
+        products to right:
+        [24,12,4,1]
+        ans is just
+        [24,12,8,6]
+        '''
+        N = len(nums)
+        ans = [0]*N
+        right_products = [1]*N
+        left_products = [1]*N
+        
+        #going left to right, find left products first
+        for i in range(1,N):
+            left_products[i] = left_products[i-1]*nums[i-1]
+            
+        #going right to left, find right products
+        for i in range(N-2,-1,-1):
+            right_products[i] = right_products[i+1]*nums[i+1]
+            
+        for i in range(N):
+            ans[i] = left_products[i]*right_products[i]
+        
+        return  ans
+
+#constant space
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        i can find the products to the left and find products to the right
+        then just multiply them
+        [1,2,3,4]
+        products to left:
+        [1,1,2,,6]
+        products to right:
+        [24,12,4,1]
+        ans is just
+        [24,12,8,6]
+        '''
+        N = len(nums)
+        ans = [0]*N
+        ans[0] = 1
+        #going left to right, find left products first
+        for i in range(1,N):
+            ans[i] = ans[i-1]*nums[i-1]
+            
+        right = 1
+        for i in range(N-1,-1,-1):
+            ans[i] = ans[i]*right
+            right = right*nums[i]
+        
+        return ans
+
+#######################################
+# 797. All Paths From Source to Target
+# 28NOV21
+#######################################
+#dfs with back tracking
+class Solution:
+    def allPathsSourceTarget(self, graph: List[List[int]]) -> List[List[int]]:
+        '''
+        just dfs from the start node, and carry path along as argument
+        when i hit the node that is n-1 add to global result
+        '''
+        N = len(graph)
+        ans = []
+        def dfs(node,path):
+            if node == N-1:
+                ans.append(path[:])
+                return
+            for neigh in graph[node]:
+                path.append(neigh)
+                dfs(neigh,path)
+                path.pop()
+        dfs(0,[0])
+        return ans
