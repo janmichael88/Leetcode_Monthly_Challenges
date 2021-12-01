@@ -2831,3 +2831,633 @@ class Solution:
                 path.pop()
         dfs(0,[0])
         return ans
+
+##########################
+# 721. Accounts Merge
+# 28NNOV21
+##########################
+#nice try
+class Solution:
+    def accountsMerge(self, accounts: List[List[str]]) -> List[List[str]]:
+        '''
+        this is just a hashing problem
+        '''
+        mapp = {}
+        for i in range(len(accounts)):
+            curr_account = accounts[i]
+            #put in mapp
+            if curr_account[0] not in mapp:
+                mapp[curr_account[0]] = set()
+            
+            for j in range(1,len(curr_account)):
+                if curr_account[j] not in mapp[curr_account[0]]:
+                    mapp[curr_account[0]].add(curr_account[j])
+        
+        ans = []
+        for name,emails in sorted(mapp.items()):
+            temp = [name]
+            for email in emails:
+                temp.append(email)
+            ans.append(temp)
+        
+        return ans
+
+#close oone!
+class Solution:
+    def accountsMerge(self, accounts: List[List[str]]) -> List[List[str]]:
+        '''
+        note:
+        two accounts definitely belong to the same person is there is  some common email to both accounts
+        even if two accounts have the same name, the may  belong  to different people
+        '''
+        mapp = {}
+        offset = 0
+        for i in range(len(accounts)):
+            curr_name  = accounts[i][0]
+            curr_emails = accounts[i][1:]
+            
+            #create new name entry
+            if curr_name not in mapp:
+                mapp[curr_name] = set(curr_emails)
+            #if it is in there check it belongs
+            elif curr_name in mapp:
+                #check intersection
+                inter = mapp[curr_name].intersection(set(curr_emails))
+                #is a match
+                if len(inter) > 0:
+                    for em in curr_emails:
+                        mapp[curr_name].add(em)
+                else:
+                    mapp[curr_name+"*"+str(offset)] = set(curr_emails)
+                    offset += 1
+        
+        res = []
+        for name,emails in mapp.items():
+            entry = [name]
+            for em in sorted(emails):
+                entry.append(em)
+            res.append(entry)
+        
+        #clear *
+        for i in range(len(res)):
+            if "*" in res[i][0]:
+                idx = res[i][0].index('*')
+                name = res[i][0][:idx]
+                #replace
+                res[i][0] = name
+        return res
+                
+#dfs on each  accoount
+class Solution:
+    def accountsMerge(self, accounts: List[List[str]]) -> List[List[str]]:
+        '''
+        turns out we can frame this as a graph problem 
+        where each  email is a node, and a edge between them indicates they belong to the same persoono
+        so each accouont be represented as by a connected component
+        then we can add an edge between connceted components
+        
+        we can make the adjaceny list where intially each email maps to an accouont index
+        then for each accoouont dfs to find the correspoding emails
+        '''
+        emails_account_map = defaultdict(list)
+        
+        for i,account in enumerate(accounts):
+            for j in  range(1,len(account)):
+                email = account[j]
+                emails_account_map[email].append(i)
+        
+        visited_accounts = [False]*len(accounts)
+        
+        #then dfs on each  accuont to find  the emails  that it the accoonts  belongs too
+        def dfs(i,emails):
+            if visited_accounts[i]:
+                return
+            #visit
+            visited_accounts[i] = True
+            for j in range(1,len(accounts[i])):
+                email = accounts[i][j]
+                emails.add(email)
+                for neigh  in emails_account_map[email]:
+                    dfs(neigh,emails)
+        #dfs no aeach
+        ans = []
+        for i,accoount in enumerate(accounts):
+            if visited_accounts[i]:
+                continue
+            name = accoount[0]
+            emails  = set()
+            dfs(i,emails)
+            ans.append([name]+sorted(emails))
+        return ans
+
+#bfs
+class Solution:
+    def accountsMerge(self, accounts: List[List[str]]) -> List[List[str]]:
+        '''
+        say we have N accounts  and each account  has K emails
+        we could have an edge for every pair of emails which would result in N combinations K edges
+        this is way too big?
+        instead making a cyclic grahh (N C 2) edes, we can for each account connect first email to every other email
+        #algo:
+            first make adj list for starting email point to account number
+            also for each email keep mapping to account name of eacy access
+        '''
+        email_to_name = {}
+        email_graph = defaultdict(set)
+        
+        for i,acc in enumerate(accounts):
+            for email in acc[1:]:
+                email_graph[email].add(i)
+                email_to_name[email] = acc[0]
+                
+        #bfs for each email to find connected compoenents
+        ans = []
+        visited = set()
+        q = deque([])
+        for email in email_graph:
+            #if i haven't seen this emial yet
+            if email not in visited:
+                #find name it could belong to
+                name = email_to_name[email]
+                #q up and visite
+                q.append(email)
+                visited.add(email)
+                #conntected
+                connected = []
+                while q:
+                    #add this as part of the connected component
+                    curr = q.popleft()
+                    connected.append(curr)
+                    #find accoounts point to this email
+                    for neigh_account in email_graph[curr]:
+                        #find emails associated to  accoount
+                        for neigh_email in accounts[neigh_account][1:]:
+                            if neigh_email not in visited:
+                                q.append(neigh_email)
+                                visited.add(neigh_email)
+                
+                #what's left in the q are the connected components
+                ans.append([name]+sorted(connected))
+        
+        return ans
+                
+                
+        print(email_to_name)
+        print(email_graph)
+
+#union find
+class DSU(object):
+    
+    def __init__(self,size):
+        self.parent = [i for i in range(size)]
+        self.size = [1]*(size)
+        
+    def find(self,x):
+        #using path compression
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+            
+    def union(self,a,b):
+        repA = self.find(a)
+        repB = self.find(b)
+        
+        if repA == repB:
+            return
+        #union by size: rep of smaller group points to larger group
+        if self.size[repA] >= self.size[repB]:
+            self.size[repA] += self.size[repB]
+            self.parent[repB] = repA
+        else:
+            self.size[repB] += self.size[repA]
+            self.parent[repA] = repB
+        
+
+class Solution:
+    def accountsMerge(self, accounts: List[List[str]]) -> List[List[str]]:
+        '''
+        lets go over the official DSU solution
+        we can use the account index as a uniqure identifier
+        we can assign the account index as the group when we go thorugh the email the first time
+        then union of the emails match up
+        then go through the reps to find their children
+        '''
+        N = len(accounts)
+        dsu = DSU(N)
+        
+        email_group = {}
+        
+        for i in range(N):
+            accountSize = len(accounts[i])
+            for j in range(1,accountSize):
+                email = accounts[i][j]
+                accountName = accounts[i][0]
+                
+                if email not in email_group:
+                    email_group[email] = i
+                #if we have seen this email unions this with the previous group of the email
+                else:
+                    dsu.union(i,email_group[email])
+        #stor emails correspoing to components representative
+        components = defaultdict(list)
+        for email in email_group:
+            group = email_group[email]
+            #find rep
+            groupRep = dsu.find(group)
+            #add to components    
+            components[groupRep].append(email)
+        
+        #sort components and get account name
+        merged = []
+        for group in components:
+            emails = components[group]
+            emails = sorted(emails)
+            name = accounts[group]
+            merged.append([name[0]] +emails)
+        
+        return merged
+
+############################
+# 29NOV21
+# 333. Largest BST Subtree
+############################ 
+#check valid BST for each node, then count them up
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def largestBSTSubtree(self, root: Optional[TreeNode]) -> int:
+        '''
+        leaves are trivially a bst
+        if i'm at a node, call it curr this is a bst if:
+            curr.left.val < curr.val and curr.right.val > curr.val
+            i can for each node, return the size of the bst in each
+            then just take the max 
+        i can check each node for valid bst
+        then just call on each node
+        '''
+        self.sizes = []
+        def isValid(node,lower,upper):
+            if not node:
+                return True
+            if not (lower < node.val < upper):
+                return False
+            left  = isValid(node.left,lower,node.val)
+            right = isValid(node.right, node.val, upper)
+            return left and right
+        
+        #we also need a helper function to count up the nodes
+        def countNodes(node):
+            if not node:
+                return 0
+            left = countNodes(node.left)
+            right = countNodes(node.right)
+            return left + right + 1
+        
+        def dfs(node):
+            if not node:
+                return 0
+            if not node.left and not node.right:
+                return 1
+            if isValid(node,float('-inf'),float('inf')):
+                return countNodes(node)
+            else:
+                return max(dfs(node.left),dfs(node.right))
+        
+        return dfs(root)
+
+#apporach 1, count, check valid
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def largestBSTSubtree(self, root: Optional[TreeNode]) -> int:
+        '''
+        this is a good review of BST's lets go over the three apporaches to BSTS
+        from a node, we can find the max on th left and ensure that this node is greater than the max
+        from a node, we can find the min on the right side and ensure this node is less than the min
+        if this is true, than this nodes subtree is a BST
+        both must be true
+        algo:
+            1, traverse each node in the bst
+            2. if this node is a bst, count up the nodes
+            3. when we invoke count,update a global max answer
+        turns out to be N cubed
+        
+        '''
+        def find_max(node):
+            if not node:
+                return float('-inf')
+            return max(node.val, find_max(node.left), find_max(node.right))
+        
+        def find_min(node):
+            if not node:
+                return float('inf')
+            return min(node.val, find_min(node.left),find_min(node.right))
+        
+        def count_node(node):
+            if not node:
+                return 0
+            return 1 + count_node(node.left) + count_node(node.right)
+        
+        def isValid(node):
+            if not node:
+                return True
+            left_max = find_max(node.left)
+            if left_max >= node.val:
+                return False
+            right_min = find_min(node.right)
+            if right_min <= node.val:
+                return False
+            return isValid(node.left) and isValid(node.right)
+        
+        def dfs(node):
+            if not node:
+                return 0
+            if isValid(node):
+                return count_node(node)
+            return max(dfs(node.left),dfs(node.right))
+        
+        #print(find_max(root))
+        #print(find_min(root))
+        #print(count_node(root))
+        #print(isValid(root.left))
+        return dfs(root)
+        
+#inorder traverse check
+class Solution:
+    def largestBSTSubtree(self, root: Optional[TreeNode]) -> int:
+        '''
+        inorder!
+        if it is indeed a BST, then the pre order should be strictly increasing
+        so traversing all left subtree nodes first, then node, then right, should yeild strictly increasing sequence
+        we cans tore the in order traversal of the given tree in an array, and check if the array is strictly increasing or not
+        we need to check every pair of adjacent elements to check if the array is sorted or not
+        at any one time, we only compare curr and prev, so we don't need to hold the array
+        if at any point, we see a sequnce that is not increasing, then we node the tree rooted at this node is NOT a BST
+        
+        algo:
+            1. traverse all nodes in tree
+            2. for each node traverse:
+                a. check inorder traverasl is increasgin using curr and pre arpporach
+                b. if is it, count up the nodes!
+        '''
+        self.prev = None
+        def count_node(node):
+            if not node:
+                return 0
+            return 1 + count_node(node.left) + count_node(node.right)
+        
+        def isValid(node):
+            if not node:
+                return True
+            #in order is, left, node,right
+            if not isValid(node.left):
+                return False
+            if self.prev and self.prev.val >= node.val:
+                return False
+            self.prev = node
+            return isValid(node.right)
+        
+        
+        def dfs(node):
+            if not node:
+                return 0
+            if isValid(node):
+                return count_node(node)
+            return max(dfs(node.left),dfs(node.right))
+        
+        return dfs(root)
+
+#post order
+# Each node will return min node value, max node value, size
+class NodeValue:
+    def __init__(self, min_node, max_node, max_size):
+        self.max_node = max_node
+        self.min_node = min_node
+        self.max_size = max_size
+        
+class Solution:
+    def largestBSTSubtree(self, root: Optional[TreeNode]) -> int:
+        '''
+        notice that when checking the children structures of nodes, we have repeated computations
+        by traversing the children first, we can pass information up to the parents to determine if a parent is BST in constant time
+        example:
+        A left subtree needs to tell its parent whether it is BST and the maximum value in it. This allows us to compare the maximum value with the parent’s data to check the BST property.
+        instead of calling countNodes seperately, we can pass the number of nodes in the curr subtree up to the parent
+        we need to carry four things up
+            1. whether each subtree itself is a BST
+            2. the max val in subtree
+            3. the min val in subtree
+            4. the size of subtree
+        
+        normally to determing if a node is BST, we need min and mx values from left and right
+        and if both are BSTS
+        now, we only need the min and max values returned by the class to its children
+        When a subtree is not a BST, all the trees this subtree is a part of will also not be binary search trees
+        instead of returning the minimum and maximum value stored in the tree, we can return [-infinity, infinity][−infinity,infinity], such that all of the nodes above this subtree will also fail the BST check.
+        Algorithm
+
+    Traverse each node of the given tree in a post-order manner.
+    That is, visit the left child, then the right child, and then the root node.
+    For each node, perform the following checks to determine if the subtree rooted at the current node is a BST:
+    Current node's value should be smaller than minimum node value of right subtree.
+    Current node's value should be greater than maximum node value of left subtree.
+    If the tree rooted at the current node is BST:
+    Calculate the size of the current subtree by adding 1 (for the current node) to the size of the left subtree plus the size of the right subtree.
+    Otherwise, if the current node is not a BST, return max BST size in left or right subtree of the current node.
+        
+        '''
+        return self.largest_bst_subtree_helper(root).max_size
+    def largest_bst_subtree_helper(self, root):
+        # An empty tree is a BST of size 0.
+        if not root:
+            return NodeValue(float('inf'), float('-inf'), 0)
+
+        # Get values from left and right subtree of current tree.
+        left = self.largest_bst_subtree_helper(root.left)
+        right = self.largest_bst_subtree_helper(root.right)
+        
+        # Current node is greater than max in left AND smaller than min in right, it is a BST.
+        if left.max_node < root.val < right.min_node:
+            # It is a BST.
+            return NodeValue(min(root.val, left.min_node), max(root.val, right.max_node), 
+                             left.max_size + right.max_size + 1)
+        
+        # Otherwise, return [-inf, inf] so that parent can't be valid BST
+        return NodeValue(float('-inf'), float('inf'), max(left.max_size, right.max_size))
+
+#######################
+# 85. Maximal Rectangle
+# 30NOV21
+#######################
+#brute force is something like this
+class Solution:
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        '''
+        brute force would be check all areas and return max
+        we can define a rectanlge using upper left and bottomr right coorindate
+        then just check if this rectangle has all ones in it
+        brute force is actually pretty tricky to do
+        '''
+        rows = len(matrix)
+        if rows == 0:
+            return 0
+        cols = len(matrix[0])
+        
+
+        ans = 0
+        
+        for start_row in range(rows):
+            for start_col in range(cols):
+                for end_row in range(start_row,rows):
+                    for end_col in range(start_col,cols):
+                        #get area
+                        area = 0
+                        for i in range(end_row):
+                            for j in range(end_col):
+                                if matrix[i][j] == '1':
+                                    area += 1
+                                else:
+                                    break
+                        if area == end_row*end_col:
+                            ans = max(ans,area)
+        
+        return area
+
+#approach 2
+class Solution:
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        '''
+        brute force evidently runs in O(N^3 * M^3) time
+        we can do a littler bit better than this
+        approach 2 - dynmaic programming better brute force on histograms
+        
+        for a row, we can keep track of max consecutive ones
+        then we can compte the maximum area rectangle (anchoring as the lower right) using the following:
+        
+        maxWidth = min(maxWidth, widthHere)
+        curArea = maxWidth*(currRow - origRow + 1)
+        maxArea = max(maxArea,curArea)
+        '''
+        maxarea = 0
+
+        #dp[i][j] hold the max consective ones at each row i ending at column j
+        dp = [[0]*len(matrix[0]) for _ in range(len(matrix))]
+        
+        for i in range(len(matrix)):
+            for j in range(len(matrix[0])):
+                if matrix[i][j] == '0':
+                    continue
+                #compute max with for curr row
+                dp[i][j] = dp[i][j-1] + 1 if j > 0 else 1
+                width = dp[i][j]
+                
+                #compute max areas for rectanlge with lower right corner at (i,j)
+                for k in range(i,-1,-1): #going down from curr i
+                    width = min(width,dp[k][j])
+                    height = i - k + 1
+                    maxarea = max(maxarea,width*height)
+        
+        return maxarea
+
+#apporach 3, similar to largest hisogram in rectangle
+class Solution:
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        '''
+        brute force evidently runs in O(N^3 * M^3) time
+        we can do a littler bit better than this
+        approach 2 - dynmaic programming better brute force on histograms
+        
+        for a row, we can keep track of max consecutive ones
+        then we can compte the maximum area rectangle (anchoring as the lower right) using the following:
+        
+        maxWidth = min(maxWidth, widthHere)
+        curArea = maxWidth*(currRow - origRow + 1)
+        maxArea = max(maxArea,curArea)
+        
+        the bottleneck with approach 2 was trying to find the max width, this requires another pass, 
+        so O(N^2 times M)
+        we can treat the inner loop as finding the largest rectanle in histogram problem -LC 84
+        
+        '''
+        if not matrix:
+            return 0
+        
+        def getMaxWidth(widths):
+            stack = [-1]
+            
+            maxarea = 0
+            
+            for i in range(len(widths)):
+                while stack[-1] != -1 and widths[stack[-1]] >= widths[i]:
+                    curr_width = i - stack[-1] - 1
+                    maxarea = max(maxarea,widths[stack.pop()]*curr_width)
+                stack.append(i)
+                
+            while stack[-1] != -1:
+                curr_width = len(widths) - stack[-1] - 1
+                maxarea = max(maxarea, widths[stack.pop()]*curr_width)
+                
+            return maxarea
+
+        #dp[i][j] hold the max consective ones at each row i ending at column j
+        maxarea = 0
+        dp = [0] * len(matrix[0])
+        for i in range(len(matrix)):
+            for j in range(len(matrix[0])):
+                if matrix[i][j] == '0':
+                    continue
+                #compute max with for curr row
+                dp[j] = dp[j-1] + 1 if j > 0 else 1
+                
+            maxarea = max(maxarea, getMaxWidth(dp))
+        
+        return maxarea
+
+#approach 4, dp
+class Solution:
+
+    def maximalRectangle(self, matrix: List[List[str]]) -> int:
+        if not matrix: return 0
+
+        m = len(matrix)
+        n = len(matrix[0])
+
+        left = [0] * n # initialize left as the leftmost boundary possible
+        right = [n] * n # initialize right as the rightmost boundary possible
+        height = [0] * n
+
+        maxarea = 0
+
+        for i in range(m):
+
+            cur_left, cur_right = 0, n
+            # update height
+            for j in range(n):
+                if matrix[i][j] == '1': height[j] += 1
+                else: height[j] = 0
+            # update left
+            for j in range(n):
+                if matrix[i][j] == '1': left[j] = max(left[j], cur_left)
+                else:
+                    left[j] = 0
+                    cur_left = j + 1
+            # update right
+            for j in range(n-1, -1, -1):
+                if matrix[i][j] == '1': right[j] = min(right[j], cur_right)
+                else:
+                    right[j] = n
+                    cur_right = j
+            # update the area
+            for j in range(n):
+                maxarea = max(maxarea, height[j] * (right[j] - left[j]))
+
+        return maxarea
+
