@@ -123,7 +123,7 @@ class Solution:
         odd.next = evenHead
         return head
 
-        
+
 ##################################################
 # 708. Insert into a Sorted Circular Linked List
 # 01DEC21
@@ -182,4 +182,111 @@ class Solution:
         temp.next = dummy.next
         return dummy.next
 
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val=None, next=None):
+        self.val = val
+        self.next = next
+"""
 
+class Solution:
+    def insert(self, head: 'Node', insertVal: int) -> 'Node':
+        '''
+        we can use two pointers to traverse the linked list
+        we need to keep two pointers to keep track of curr and prev
+        we can move through the list and find a suitable place for insertVal to go in between prev and curr
+        
+        algo:
+            loop with two pointers
+            termination condition occurs when prev gets back to head
+            during loop, check if current place bounded by two pointers is the right place to insert
+            if not go forward
+        
+        casework:
+            1. the value of the new nodes sits between the min and max values of the current list
+                or rather, prev.val <= insertVal <= curr.val
+            2. value of new node goes beyon the min and max values of the curr list
+            either less than the minimal value or greater than the maximal values
+            in eitehr case the new node should be added right after the tail node
+                first we should locate the position of the tail node, by finding the descending order between adjacent 
+                check if new value goes beyong vlaues of tail and head nodes, which are pointed by prev and curr
+                
+                2.1 insertval >= prev.val
+                2.2 insertval <= curr.val
+                
+                once we located the tail and head ndoes, we extend the original list by inserting the value in between the tail and head ndoes 
+                or in between prev and curr pointers
+                
+            3. there is one case that does not fall into any of hte above, list contains uniform values
+            just add the node anywhere
+            
+            4. empty LL, return the inservalt pointing to itself
+        '''
+        if head == None:
+            newNode = Node(insertVal,None)
+            newNode.next = newNode
+            return newNode
+        
+        prev,curr = head, head.next
+        toInsert = False
+        
+        while True:
+            
+            #case 1
+            if prev.val <= insertVal <= curr.val:
+                toInsert = True
+            #case 2, locate tail element, prev points to the tail, or the largest element!
+            elif prev.val > curr.val:
+                if insertVal >= prev.val or insertVal <= curr.val:
+                    toInsert = True
+            
+            if toInsert:
+                prev.next = Node(insertVal,curr)
+                #we made an insert!
+                return head
+            prev = curr
+            curr = curr.next
+            
+            #break out of loop if prev gets to head
+            if prev == head:
+                break
+        
+        #we broke out of the loop, must be in case 3, just add at end
+        prev.next = Node(insertVal,curr)
+
+        return head
+
+#with looping invariant
+# https://leetcode.com/problems/insert-into-a-sorted-circular-linked-list/discuss/1294608/Python-solution-with-comments
+class Solution:
+    def insert(self, head: 'Node', insertVal: int) -> 'Node':
+        node = Node(insertVal)
+        
+        #empty list
+        if not head:
+            node.next = node
+            return node
+        
+        #set min and max paointers, if list contains all the same values, stop advancing the pointers when 
+        #we reach the head again
+        max_node = head
+        while max_node.val <= max_node.next.val and max_node.next != head:
+            max_node = max_node.next
+        
+        #set min
+        min_node = max_node.next
+        
+        #case 2, min < insertVal < max
+        if min_node.val < insertVal < max_node.val:
+            curr = min_node
+            while curr.next.val < insertVal:
+                curr = curr.next
+            node.next = curr.next
+            curr.next = node
+            
+        #case 3, at the ends
+        else:
+            node.next = min_node
+            max_node.next = node
+        
