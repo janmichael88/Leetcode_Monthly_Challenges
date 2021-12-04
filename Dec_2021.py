@@ -290,3 +290,88 @@ class Solution:
             node.next = min_node
             max_node.next = node
         
+############################
+# 152. Maximum Product Subarray
+# 03Dec21
+############################
+#dp, linear space
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        '''
+        i cant simply just treat this like Kadane's, where we take a max or zero
+        because i negative later on in the array could re negate the negative and drive it up
+        
+        if all the numbers are positive, then the answer is just the whole array
+        what is if used an accumlation of products
+        [2,3,-2,4]
+        [2,6,-12,-48]
+        i could rescan, and find that largest is at 6
+        then i want the part of the array where its increasing the most
+        
+        notes:
+            zeros in the array would immeditale reset the streak
+            negatives could re negate them
+        
+        i can store two dp arrays
+        dp max will store the max up to this points
+        dp min will store the min up this point
+        '''
+        N = len(nums)
+        dp_max = [0]*N
+        dp_min = [0]*N
+        
+        dp_max[0] = dp_min[0] = nums[0]
+        
+        #first pass, find min and max at each pointin the array
+        for i in range(1,N):
+            dp_max[i] = max(nums[i]*dp_max[i-1],nums[i],dp_min[i-1]*nums[i])
+            dp_min[i] = min(nums[i]*dp_min[i-1],nums[i],dp_max[i-1]*nums[i])
+        
+        #second pass, find the max that could be obtained at each point using the two dp
+        maxes = [0]*N
+        #starting off take max of the beginning
+        
+        for i in range(N):
+            maxes[i] = max(dp_max[i],dp_min[i])
+            
+        return max(maxes)
+
+#we can eliminate the dp arrays and save values along the way instead
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        N = len(nums)
+        
+        dp_max = dp_min = nums[0]
+        ans = dp_max
+        
+        #first pass, find min and max at each pointin the array
+        for i in range(1,N):
+            curr_max = max(nums[i]*dp_max,nums[i],dp_min*nums[i])
+            curr_min = min(nums[i]*dp_min,nums[i],dp_max*nums[i])
+            dp_max = curr_max
+            dp_min = curr_min
+            
+            ans = max(ans,dp_max)
+        
+            
+        return ans
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
