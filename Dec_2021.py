@@ -356,6 +356,87 @@ class Solution:
             
         return ans
 
+###############################
+# 1032. Stream of Characters
+# 04DEC21
+###############################
+class StreamChecker:
+    '''
+    we need to check if stream of letters form a suffux
+    we can build a Trie in reverse
+    then mainin set of poiners during the query
+    
+    we also start from the end of the stream and ehck character by characeter going down the Trie
+    when querying, we can use q deque, and just check into tree if we have formed a valid suffix
+    '''
+
+    def __init__(self, words: List[str]):
+        self.trie = {}
+        self.stream = deque([])
+        
+        for word in set(words):
+            node = self.trie
+            for ch in reversed(word):
+                if ch not in node:
+                    node[ch] = {}
+                node = node[ch]
+            
+            #mark completion of word
+            node['#'] = word
+        
+
+    def query(self, letter: str) -> bool:
+        #load into stream
+        self.stream.appendleft(letter)
+        #now check
+        node = self.trie
+        
+        for ch in self.stream:
+            #valid suffic
+            if '#' in node:
+                return True
+            if ch not in node:
+                return False
+            #move current node if stream matched
+            node = node[ch]
+        return '#' in node
+
+
+# Your StreamChecker object will be instantiated and called as such:
+# obj = StreamChecker(words)
+# param_1 = obj.query(letter)
+
+#brute force
+class StreamChecker:
+    '''
+    lets try brute force
+    save all input chars and check each word for suffux
+    '''
+
+    def __init__(self, words: List[str]):
+        self.words = set(words)
+        self.stream = []
+        self.suffixes = set()
+        
+
+    def query(self, letter: str) -> bool:
+        self.stream.append(letter)
+        #get all suffixes from this stream
+        temp = "".join(self.stream)
+        #add suffixes
+        for i in range(len(temp)+1):
+            self.suffixes.add(temp[-i:])
+        #for each suffix check ends withw word
+        for word in self.words:
+            for suff in self.suffixes:
+                if word.endswith(suff):
+                    return True
+        return False
+
+# Your StreamChecker object will be instantiated and called as such:
+# obj = StreamChecker(words)
+# param_1 = obj.query(letter)
+
 
 
 
