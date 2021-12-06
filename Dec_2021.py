@@ -438,6 +438,106 @@ class StreamChecker:
 # param_1 = obj.query(letter)
 
 
+###########################
+# 05DEC21
+# 337. House Robber III
+###########################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def rob(self, root: Optional[TreeNode]) -> int:
+        '''
+        same as the first house robber problem,
+        but if i have robbed from this parent, i cannot rob any of its children
+        return the max that i can rob
+        that max that i robbed at a node is just the max(left,right)
+        brute force recursino would be to just pass in wheter or not we robbed from the parent
+        if we have robbed from parent, the just return from the children
+        if we have'nt robbed, we have two choices so take the max
+        TLE though
+        
+        '''
+        def dfs(node,parent_robbed = False):
+            if not node:
+                return 0
+            #if i have robbed this parent, just retun the calls from the childre
+            if parent_robbed:
+                return dfs(node.left,False) + dfs(node.right,False)
+            if not parent_robbed:
+                #two choices 
+                rob = node.val + dfs(node.left,True) + dfs(node.right,True)
+                not_rob = dfs(node.left,False) + dfs(node.right,False)
+                return max(rob,not_rob)
+        
+        return dfs(root)
+        
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def rob(self, root: Optional[TreeNode]) -> int:
+        '''
+        the problem with brute force recusion is that we have to many dfs calls
+        we need to reduce the number of times we call our recursive function
+        we have a ncessary call to both sides of three, so lets call them first
+        we can pass the results up, first element if money we got from stating this node and robbing
+        second element, starting and not robbing
+        '''
+        def dfs(node):
+            if not node:
+                return [0,0]
+            left = dfs(node.left)
+            right = dfs(node.right)
+            rob = node.val + left[1] + right[1]
+            not_rob = max(left) + max(right)
+            return [rob,not_rob]
+        
+        return max(dfs(root))
+
+#using memo
+class Solution:
+    def rob(self, root: Optional[TreeNode]) -> int:
+        '''
+        we can improve this using memoeization but we need to stored the robbed and not robbed states
+        for each node, then we can just retreive
+        
+        '''
+        robbed = {}
+        not_robbed = {}
+        
+        def dfs(node,parent_robbed):
+            if not node:
+                return 0
+            if parent_robbed:
+                #first check
+                if node in robbed:
+                    return robbed[node]
+                res = dfs(node.left,False) + dfs(node.right,False)
+                robbed[node] = res
+                return res
+            #not robbed
+            if not parent_robbed:
+                if node in not_robbed:
+                    return not_robbed[node]
+                rob_here = node.val + dfs(node.left, True) + dfs(node.right,True)
+                no_rob_here = dfs(node.left,False) + dfs(node.right,False)
+                res = max(rob_here, no_rob_here)
+                not_robbed[node] = res
+                return res
+        
+        return dfs(root,False)
+
+########################################################
+# 1217. Minimum Cost to Move Chips to The Same Position
+# 06DEC21
+########################################################
 
 
 
