@@ -538,9 +538,67 @@ class Solution:
 # 1217. Minimum Cost to Move Chips to The Same Position
 # 06DEC21
 ########################################################
+# move to zeroth and first columns
+class Solution:
+    def minCostToMoveChips(self, position: List[int]) -> int:
+        '''
+        we are given n chips, and position[i] marks the position of the ith chip
+        if we move a chip two spaces, it costs zero
+        if we move a chip 1 space, it costs 1
+        return min cost of moving chips to the same position
+        greedy:
+            first move chips that are two away to some spot, total costs 0
+            then just move the ones that are one away
+            * first move keeps parity of element as it is
+            * second move changes parity of element
+            * since the first move is free, if all number have same parity, the answer would be zero
+            * find minimum cost to make all numbers same parity
+            * if they are the same parity, it costs zero to move them
+        
+        try moving all chips to the zero position
+        then move all chips to the one positions
+        then just move the the smallest pile over
+            
+        '''
+        zero_position = 0
+        one_position = 0
+        
+        for pos in position:
+            #if positino if even, move it to zero
+            if pos % 2 == 0:
+                zero_position += 1
+            #goes to the one position
+            else:
+                one_position += 1
+        
+        #move the smaller pile over
+        return min(zero_position, one_position)
 
-
-
+############################
+# 06DEC21
+# 434. Number of Segments in a String
+############################
+class Solution:
+    def countSegments(self, s: str) -> int:
+        '''
+        split count does not work
+        need to advance pointers and a white space, then capture segments when not
+        '''
+        N = len(s)
+        ans = 0
+        i = 0
+        while i < N:
+            #keep advnacing it is a white space
+            while i < N and s[i] == ' ':
+                i += 1
+            #start of segment
+            if i < N:
+                ans += 1
+            #advance on chars
+            while i < N and s[i] != ' ':
+                i += 1
+        
+        return ans
 
 
 
