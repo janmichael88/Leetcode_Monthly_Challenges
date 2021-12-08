@@ -600,7 +600,146 @@ class Solution:
         
         return ans
 
+##############################
+# 1290. Convert Binary Number in a Linked List to Integer
+# 07DEC21
+##############################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def getDecimalValue(self, head: ListNode) -> int:
+        '''
+        first pass find number of nodes
+        then use number of nodes as exponent
+        '''
+        N = 0
+        temp = head
+        while temp:
+            N += 1
+            temp = temp.next
+        
+        ans = 0
+        temp = head
+        while temp:
+            ans += temp.val << N-1
+            temp = temp.next
+            N -= 1
+        return ans
 
+class Solution:
+    def getDecimalValue(self, head: ListNode) -> int:
+        '''
+        we also don't need to find the number of nodes
+        treat this like building new int
+        multiply by base and ad next val
+        '''
+        ans = head.val
+        while head.next:
+            #move over one position
+            ans <<= 1
+            #set first bit position
+            ans |= head.next.val
+            head = head.next
+        return ans
+
+##################################
+# 349. Intersection of Two Arrays
+# 07DEC21
+#################################
+class Solution:
+    def intersection(self, nums1: List[int], nums2: List[int]) -> List[int]:
+        '''
+        hash both and check of one is in the other
+        '''
+        nums1 = set(nums1)
+        nums2 = set(nums2)
+        
+        ans = []
+        for num in nums1:
+            if num in nums2:
+                ans.append(num)
+        
+        return ans
+
+##############################
+# 563. Binary Tree Tilt
+# 07DEC21
+##############################
+class Solution:
+    def findTilt(self, root: Optional[TreeNode]) -> int:
+        '''
+        we want to return the sum of all a nodes tilt
+        we define tilt as the  abs diff between the the sum of left and the sum of right
+        if a node has no left child, the sum of left subtree node is zero
+        same for the right
+        for a node, we want to pass in left subtree sums and right subtree sums
+        '''
+        def sumTree(node):
+            if not node:
+                return 0
+            left = sumTree(node.left)
+            right = sumTree(node.right)
+            return left + right + node.val
+        
+        
+        self.tilts = 0
+        def sumTilt(node):
+            if not node:
+                return 0
+            left_sum = sumTree(node.left)
+            right_sum = sumTree(node.right)
+            tilt = abs(left_sum -right_sum)
+            self.tilts += tilt
+            sumTilt(node.left)
+            sumTilt(node.right)
+        
+        sumTilt(root)
+        return self.tilts
+
+class Solution:
+    def findTilt(self, root: Optional[TreeNode]) -> int:
+        '''
+        we want to return the sum of all a nodes tilt
+        we define tilt as the  abs diff between the the sum of left and the sum of right
+        if a node has no left child, the sum of left subtree node is zero
+        same for the right
+        for a node, we want to pass in left subtree sums and right subtree sums
+        '''
+        self.tilts = 0
+        def sumTree(node):
+            if not node:
+                return 0
+            left = sumTree(node.left)
+            right = sumTree(node.right)
+            tilt = abs(left - right)
+            self.tilts += tilt
+            return left + right + node.val
+        
+        sumTree(root)
+        return self.tilts
+            
+class Solution:
+    def findTilt(self, root: Optional[TreeNode]) -> int:
+        '''
+        we want to return the sum of all a nodes tilt
+        we define tilt as the  abs diff between the the sum of left and the sum of right
+        if a node has no left child, the sum of left subtree node is zero
+        same for the right
+        for a node, we want to pass in left subtree sums and right subtree sums
+        '''
+        def sumTree(node,tiltsSoFar):
+            if not node:
+                return [0,0]
+            left = sumTree(node.left,tiltsSoFar)
+            right = sumTree(node.right,tiltsSoFar)
+            tilt = abs(left[0] - right[0]) + left[1] + right[1]
+            tiltsSoFar += tilt
+            return [left[0] + right[0] + node.val,tiltsSoFar]
+        
+        return sumTree(root,0)[1]
 
 
 
