@@ -741,8 +741,183 @@ class Solution:
         
         return sumTree(root,0)[1]
 
+#############################
+# 364. Nested List Weight Sum II
+# 08DEC21
+############################
+# """
+# This is the interface that allows for creating nested lists.
+# You should not implement it, or speculate about its implementation
+# """
+#class NestedInteger:
+#    def __init__(self, value=None):
+#        """
+#        If value is not specified, initializes an empty list.
+#        Otherwise initializes a single integer equal to value.
+#        """
+#
+#    def isInteger(self):
+#        """
+#        @return True if this NestedInteger holds a single integer, rather than a nested list.
+#        :rtype bool
+#        """
+#
+#    def add(self, elem):
+#        """
+#        Set this NestedInteger to hold a nested list and adds a nested integer elem to it.
+#        :rtype void
+#        """
+#
+#    def setInteger(self, value):
+#        """
+#        Set this NestedInteger to hold a single integer equal to value.
+#        :rtype void
+#        """
+#
+#    def getInteger(self):
+#        """
+#        @return the single integer that this NestedInteger holds, if it holds a single integer
+#        Return None if this NestedInteger holds a nested list
+#        :rtype int
+#        """
+#
+#    def getList(self):
+#        """
+#        @return the nested list that this NestedInteger holds, if it holds a nested list
+#        Return None if this NestedInteger holds a single integer
+#        :rtype List[NestedInteger]
+#        """
 
+class Solution:
+    def depthSumInverse(self, nestedList: List[NestedInteger]) -> int:
+        '''
+        i first need to find the depths of the integers
+        the find the max
+        then find its weight
+        then take dot product
+        i can use dfs to flatten the nested list
+        append to array (integer,depth)
+        '''
+        self.int_depth_array = []
+        def dfs(nestedList,depth):
+            for nested in nestedList:
+                if nested.isInteger():
+                    self.int_depth_array.append([nested.getInteger(),depth+1])
+                else:
+                    dfs(nested.getList(),depth+1)
+                    
+        dfs(nestedList,0)
+        #now find max depth
+        max_depth = 0
+        for num,depth in self.int_depth_array:
+            max_depth = max(max_depth,depth)
+        ans = 0
+        for num,depth in self.int_depth_array:
+            ans += (max_depth - depth + 1)*num
+        return ans
+        
+#another dfs
+class Solution:
+    def depthSumInverse(self, nestedList: List[NestedInteger]) -> int:
+        '''
+        another way, just find max depth and the just re traverse
+        
+        '''
+        #find max
+        def find_max(nestedList):
+            max_depth = 1
+            for nested in nestedList:
+                if not nested.isInteger():
+                    max_depth = max(max_depth, 1+ find_max(nested.getList()))
+            return max_depth
+        
+        def dfs(nestedList,depth,max_depth):
+            weights = 0
+            for nested in nestedList:
+                if nested.isInteger():
+                    weights += nested.getInteger()*(max_depth - depth + 1)
+                else:
+                    weights += dfs(nested.getList(),depth+1,max_depth)
+            return weights
+        
+        max_depth = find_max(nestedList)
+        #remember we start at depth of 1
+        return dfs(nestedList, 1,max_depth)
 
+#single pass dfs, using class
+class WeightedSumTriplet(object):
+    #note i could have used an integer array just fine
+    def __init__(self):
+        self.maxDepth = 0
+        self.sumOfElements = 0
+        self.sumOfProducts = 0
+    
+    def dfs(self,nestedList,depth):
+        for nl in nestedList:
+            #if its an int, record and increment
+            if nl.isInteger():
+                self.sumOfElements += nl.getInteger()
+                self.sumOfProducts += nl.getInteger()*depth
+                self.maxDepth = max(self.maxDepth,depth)
+            #otherwise recurse
+            else:
+                #return new triplet
+                newTriplet = WeightedSumTriplet()
+                newTriplet.dfs(nl.getList(),depth+1)
+                self.sumOfElements += newTriplet.sumOfElements
+                self.sumOfProducts += newTriplet.sumOfProducts
+                self.maxDepth = max(self.maxDepth, newTriplet.maxDepth)
+                
+   
+class Solution:
+    def depthSumInverse(self, nestedList: List[NestedInteger]) -> int:
+        '''
+        if there were  a way to do this one time, rather, find the sum of weights
+        where we only need to use the maxdepth at the end
+        turns out the final derivation is:
+        (maxDepth + 1)*sumOfElements - sumOfProducts
+        which means we only need to keep track of sumof Elements and sum of products
+        sumofproducts being the the element in the list times its depth!
+        '''
+        Triplet = WeightedSumTriplet()
+        Triplet.dfs(nestedList,1)
+        return (Triplet.maxDepth + 1)*(Triplet.sumOfElements) - (Triplet.sumOfProducts)
+
+class Solution:
+    def depthSumInverse(self, nestedList: List[NestedInteger]) -> int:
+        '''
+        we also could have use bfs, 
+        keep track of sum of elements, sum of products, and maxdepth
+        again we just use (maxDepth + 1)*sumOfElements - sumOfProducts
+        '''
+        q = deque([])
+        for nl in nestedList:
+            q.append(nl)
+            
+        curr_depth = 1
+        max_depth = 0
+        sumOfElements = 0
+        sumOfProducts = 0
+        
+        while q:
+            size = len(q)
+            max_depth = max(max_depth,curr_depth)
+            
+            #pop each thin
+            for i in range(size):
+                curr = q.popleft()
+                #if its an interger update
+                if curr.isInteger():
+                    sumOfElements += curr.getInteger()
+                    sumOfProducts += curr.getInteger()*curr_depth
+                #otherwise q up
+                else:
+                    for neigh in curr.getList():
+                        q.append(neigh)            
+            #done with this level,go down
+            curr_depth += 1
+        
+        return (max_depth+1)*sumOfElements - sumOfProducts
 
 
 
