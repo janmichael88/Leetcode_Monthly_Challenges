@@ -919,6 +919,68 @@ class Solution:
         
         return (max_depth+1)*sumOfElements - sumOfProducts
 
+#############################
+# 1306. Jump Game III
+# 09DEC21
+#############################
+#bfs FTW
+class Solution:
+    def canReach(self, arr: List[int], start: int) -> bool:
+        '''
+        bfs from start and check if i can hit an element zero
+        '''
+        
+        N = len(arr)
+        visited = set()
+        #start off q
+        q = deque([start])
+        
+        while q:
+            curr = q.popleft()
+            visited.add(curr)
+            #hit target
+            if arr[curr] == 0:
+                return True
+            for neigh in [curr+arr[curr],curr-arr[curr]]:
+                #in bounds
+                if 0 <= neigh < N:
+                    if neigh not in visited:
+                        q.append(neigh)
+        
+        return False
+
+#sorta?
+class Solution:
+    def canReach(self, arr: List[int], start: int) -> bool:
+        '''
+        we also could use dfs
+        but this time we can save on space by making the node negative
+        '''
+        N = len(arr)
+        def dfs(idx):
+            #check
+            if arr[idx] == 0:
+                return True
+            arr[idx] = -arr[idx]
+            #check for neighbors
+            for neigh in [idx+arr[idx],idx-arr[idx]]:
+                if 0 <= neigh < N:
+                    if arr[neigh] >= 0:
+                        if dfs(neigh):
+                            return True
+                        else:
+                            return False
+            return False 
+        
+        return dfs(0)
+
+class Solution:
+    def canReach(self, A, cur):
+        if cur < 0 or cur >= len(A) or A[cur] < 0: return False
+        A[cur] *= -1
+        return A[cur] == 0 or self.canReach(A, cur + A[cur]) or self.canReach(A, cur - A[cur])
+
+
 
 
 
