@@ -980,9 +980,244 @@ class Solution:
         A[cur] *= -1
         return A[cur] == 0 or self.canReach(A, cur + A[cur]) or self.canReach(A, cur - A[cur])
 
+#################################
+# 790. Domino and Tromino Tiling
+# 10NOV21
+#################################
+#well this was fail...
+class Solution:
+    def numTilings(self, n: int) -> int:
+        '''
+        we have two shapes, domino and tromino, we can rotate, but does it really matter
+        if we are only trying to figure out the number of ways
+        we want to tmake a 2*n board
+        n is from 1 to 1000 inclusive
+        recusrive?
+        for n = 1,
+        theres only one way
+        for n  == 2
+        there are two ways
+        for n = 3, there are 5 ways
+        if i could reduce 3 to 1 or 2, 
+        using dom only
+        f(3) = f(1) + f(2)
+        
+        if i used trominoes
+        f(5) = 2
+        
+        so f(5) = f(1) + f(2) + f(5) using tromnios
+        
+        '''
+        return 
 
+class Solution:
+    def numTilings(self, n: int) -> int:
+        '''
+        notice that for some values of n, we can derive a board placement usint a previous n-k
+        this might give a fully covered board, but it could also give a partially covered board
+        to generate all board positions, we need to look back at previous fully board positions and partially board positions
+        
+        we can define f(k) number of way to fully cover board of width k
+        we can define p(k) number of wayt so partially cover board with width k
+        
+        we can determine the number of ways to fully or partially tile a boad with width k, by looking at the number of ways to arrive at f(k) or p(k) by placing additional dominos or trominos
+        
+        from f(k-1) we can add 1 vertical domino for each tiliing with width of k-1
+        from f(k-2) we can add 2 horiontal domnios for each tiling
+            note we don't need to add 2 vertical dominoes since f(k-1) will cover that case
+            
+        from p(k-1) we can add an L shaped tromino for each tiling in a partially covred board with a width of k-1
+            we will multiply by p(k-1) by 2, because for any partially covered tiling, there will be a horizontally symmetrical tiling of it, could place tromino upside down or rightside up
+            
+        summing ways to reach f(k) gives us
+            f(k) = f(k-1) * f(k-2) + 2*p(k-1)
+            
+        how about p(k)
+        think about ways to get to p(4) or partially covered 4
+        
+        this is FUCKING IMPORTANT:
+            Take a pen and start drawing scenarios that contribute to p(4)p(4) (this is a good technique to aid critical thinking during an interview). Start by drawing p(4)p(4), remember p(4)p(4) is a board of width 4 with the first 3 columns fully covered and the last column half covered. Now, try removing a domino or a tromino to find which scenarios contribute to p(4)p(4). Notice that p(k)p(k) can come from the below scenarios:
 
+        
+        adding a tromino to a fully covered board of width k-2 (i.f f(k-2))
+        adding horizontal domino to a partially covered board widwith k-1 p(k-1)
+        p(k) = p(k-1) + f(k-2)
+        
+        algo:
+            1. first dervie base cases for f(1), f(2), p(2):
+                f(1) = 1
+                f(2) = 2
+                p(2) = 1
+            2. define the following:
+                f(k): The number of ways to fully cover a board of width k
+                p(k): The number of ways to partially cover a board of width k
+            3. recurse
+            4. don't forget to cache
+        '''
+        mod = 10**9 + 7
+        f_memo = {}
+        p_memo = {}
+        
+        def p(n):
+            if n == 2:
+                return 1
+            if n in p_memo:
+                return p_memo[n]
+            res =  (p(n-1) + f(n-2)) % mod
+            p_memo[n] = res
+            return res
+        
+        def f(n):
+            if n <= 2:
+                return n
+            if n in f_memo:
+                return f_memo[n]
+            res = (f(n-1) + f(n-2) + 2*p(n-1)) % mod
+            f_memo[n] = res
+            return res
+        
+        return f(n)
+        
+#bottom up dp
+class Solution:
+    def numTilings(self, n: int) -> int:
+        '''
+        we can just translte the memozied version to bottom up dp
+        '''
+        if n <= 2:
+            return n
+        mod = 10**9 + 7
+        N = n
+        
+        f_dp = [0]*(N+1)
+        p_dp = [0]*(N+1)
+        
+        #fill in base cases
+        p_dp[2] = 1
+        f_dp[1] = 1
+        f_dp[2] = 2
+        
+        for i in range(3,N+1):
+            f_dp[i] = (f_dp[i-1] + f_dp[i-2] +2*p_dp[i-1]) % mod
+            p_dp[i] = (p_dp[i-1] + f_dp[i-2]) % mod
+        
+        return f_dp[n]
 
+class Solution:
+    def numTilings(self, n: int) -> int:
+        '''
+        we can save on space by only keeping track of the actual previous valyes
+        we only ever need f(n-1), f(n-2) and p(n-1)
+        
+        f_curr represents f(k-1)
+        p_curr represents p(k-1)
+        start off with f_curr being 2
+        and p_curr being 1
+        
+        state transitions are:
+            fCurrent = fCurrent + fPrevious + 2 * pCurrent
+            pCurrent = pCurrent + fPrevious
+            fPrevious = fCurrent (use the value of fCurrent before its update in the first step)
+        
+        '''
+        if n <= 2:
+            return n
+        
+        mod = 10**9 + 7
+        
+        f_curr = 2
+        f_prev = 1
+        p_curr = 1
+        
+        for k in range(3,n+1):
+            temp = f_curr
+            #udates f and pr
+            f_curr = (f_curr + f_prev + 2*p_curr) % mod
+            p_curr = (p_curr + f_prev) % mod
+            f_prev = temp
+        return f_curr
+
+#note there are few matrix exponential equations, just revist this
+class Solution:
+    def numTilings(self, n: int) -> int:
+        '''
+        we can use the matrix exponential after dervinf the transition functions
+        recall our functions:
+        
+        f(k)=f(k−1)+f(k−2)+2∗p(k−1)
+        p(k) = p(k-1) + f(k-2)p(k)=p(k−1)+f(k−2)
+        
+        we can right this as matrix multiplacation
+        
+        [f(k),f(k-1),p(k)] = [[1,1,2],[1,0,0],[0,1,1]] dot [f(k-1),f(k-2),p(k-1)]
+        where the just exponential the matrix k-2 times
+        '''
+        self.mod = 10**9 + 7
+        self.mat = [[1,1,2],[1,0,0],[0,1,1]]
+        self.size = 3
+        
+        def matrix_product(m1, m2):  
+            """Return product of 2 square matrices."""
+            # Result matrix `ans` will also be a square matrix with same dimensions.
+            ans = [[0] * self.size for _ in range(self.size)]  
+            for row in range(self.size):
+                for col in range(self.size):
+                    cur_sum = 0
+                    for k in range(self.size):
+                        cur_sum += (m1[row][k] * m2[k][col]) % self.mod
+                    ans[row][col] = cur_sum
+            return ans
+        
+        def matrix_expo(n):  
+            """Perform matrix multiplication n times."""
+            cur = self.mat
+            for _ in range(1, n):
+                cur = matrix_product(cur, self.mat)
+            # The answer will be cur[0][0] * f(2) + cur[0][1] * f(1) + cur[0][2] * p(2)
+            return (cur[0][0] * 2 + cur[0][1] * 1 + cur[0][2] * 1) % self.mod
+        
+        # Handle base cases
+        if n <= 2:
+            return n  
+        
+        return matrix_expo(n - 2)
+
+#fast matrix exponentiation
+class Solution:
+    def numTilings(self, n: int) -> int:
+        MOD = 1_000_000_007
+        SQ_MATRIX = [[1, 1, 2], [1, 0, 0], [0, 1, 1]]  # Initialize square matrix
+        SIZE = 3  # Width/Length of square matrix
+
+        def matrix_product(m1, m2):  
+            """Return product of 2 square matrices."""
+            nonlocal MOD, SIZE
+            # Result matrix `ans` will also be a square matrix with same dimension
+            ans = [[0] * SIZE for _ in range(SIZE)]  
+            for row in range(SIZE):
+                for col in range(SIZE):
+                    cur_sum = 0
+                    for k in range(SIZE):
+                        cur_sum = (cur_sum + m1[row][k] * m2[k][col]) % MOD
+                    ans[row][col] = cur_sum
+            return ans
+
+        @cache  
+        def matrix_expo(n):
+            nonlocal SQ_MATRIX
+            if n == 1:  # base case
+                return SQ_MATRIX
+            elif n % 2:  # If `n` is odd
+                return matrix_product(matrix_expo(n - 1), SQ_MATRIX)
+            else:  # If `n` is even
+                return matrix_product(matrix_expo(n // 2), matrix_expo(n // 2))
+
+        if n <= 2:
+            return n
+
+        # The answer will be cur[0][0] * f(2) + cur[0][1] * f(1) + cur[0][2] * p(2)
+        ans = matrix_expo(n - 2)[0]
+        return (ans[0] * 2 + ans[1] * 1 + ans[2] * 1) % MOD
 
 
 
