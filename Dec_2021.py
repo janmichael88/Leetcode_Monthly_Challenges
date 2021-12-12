@@ -1219,9 +1219,178 @@ class Solution:
         ans = matrix_expo(n - 2)[0]
         return (ans[0] * 2 + ans[1] * 1 + ans[2] * 1) % MOD
 
+#################################
+# 878. Nth Magical Number
+# 11DEC21
+##################################
+#TLE
+class Solution:
+    def nthMagicalNumber(self, n: int, a: int, b: int) -> int:
+        '''
+        brute force would be to start with 1, and check if divisible by a or b
+        if its mark, then return if nth is the nth
+        '''
+        curr = 1
+        rank = 0
+        
+        while curr <= 10**9:
+            if (curr % a == 0) or (curr % b == 0):
+                rank += 1
+                #print(curr,rank)
+                if rank == n:
+                    return curr
+            curr += 1
+
+#another brute force
+class Solution:
+    def nthMagicalNumber(self, n: int, a: int, b: int) -> int:
+        '''
+        brute force would be to simply iterate from min(A,B) until we find B magical numbers
+        
+        '''
+        mod = 10**9 + 7
+        start = min(a,b)
+        while n > 0:
+            if (start % a == 0) or (start % b == 0):
+                n -= 1
+            start += 1
+        return (start - 1) % mod
 
 
+class Solution:
+    def nthMagicalNumber(self, n: int, a: int, b: int) -> int:
+        '''
+        brute force would be to start with 1, and check if divisible by a or b
+        if its mark, then return if nth is the nth
+        
+        first realize the the pattern of magical numbers repeats itself
+        example, if A = 6, and B = 10, the fist magial numbers are
+        [6,10,12,18,20,24,30]
+        with the same patten repeating for +30 times some multiple
+        in general for a pattern there will be lcm(A,B) // A + lcm(A,B) // B - 1 numbers in a group
+        algo:
+            lets try to count the nth number mathematically
+            if L is the LCM of A and B, and if X <= L is is magical, the X+L is also magical
+            same thing for B
+            
+            if there M magical numbers, then we can represent:
+            M = (L/A) + (L/B) - 1 magical numbers less than or equal to L
+            instead of counting 1 at a time, we can count by M at a time
+            
+            Now supporse:
+            N = M*q + r, with r < M, then the first L*q numbers countain M*q magical numbers,
+            and within the next numbers (L*q + 1, L*q + 2.....)
+            
+            we can brute foce, for the next magical numbers less (L*q)
+            if the r'th such magical number is Y, then the final anwer will be L*q + Y
+            
+        
+        '''
+        def gcd(x,y):
+            small = x if x > y else y
+            gcd = 1
+            for i in range(1,small+1):
+                if (x % i == 0) and (y % i == 0):
+                    gcd = i
+            return gcd
+        
+        mod = 10**9 + 7
+        #find GCD
+        gcd = gcd(a,b)
+        #using GCD find LCM
+        lcm = (a // gcd)*b
+        #using inclusion/exlucion find the number of magical numbers (the length of the pattern)
+        m = (lcm//A) + (lcm//b) - 1
+        #find number of timmes m goes into n
+        q,r = divmod(n,m)
+        
+        #if it goes evenly, then its just the end
+        if r == 0:
+            return q*L % mod
+        
+        #otherwise we need to find
+        heads = [a,b]
+        for _ in range(r-1):
+            if heads[0] <= heads[1]:
+                heads[0] += a
+            else:
+                heads[1] += b
+        
+        return (q*lcm + min(heads)) % mod
 
+#better way
+#https://leetcode.com/problems/nth-magical-number/discuss/1622665/Python-2-solutions%3A-find-patternbinary-search
+class Solution:
+    def nthMagicalNumber(self, n: int, a: int, b: int) -> int:
+        '''
+        brute force would be to simply iterate from min(A,B) until we find B magical numbers
+        
+        '''
+        def gcd(x,y):
+            small = x if x > y else y
+            gcd = 1
+            for i in range(1,small+1):
+                if (x % i == 0) and (y % i == 0):
+                    gcd = i
+            return gcd
+        #find lcm of a and b
+        mod = 10**9 + 7
+        lcm = a*b // gcd(a,b)
+        #generate candidates
+        candidates = []
+        #start with multiples of A
+        for i in range(1,lcm //a):
+            candidates.append(i*a)
+        for i in range(1,lcm//b+1):
+            candidates.append(i*b)
+        
+        #sorte
+        candidates = sorted(candidates)
+        #find the length of the pattern
+        m = len(candidates)
+        #when returning we want to check how multiples of m we haegone
+        return (candidates[(n-1) % m] + lcm*((n-1)//m)) % mod 
 
+class Solution:
+    def nthMagicalNumber(self, n: int, a: int, b: int) -> int:
+        '''
+        notes on the binary search solution,
+            lcm(a,b) = a*b // gcd(a,b)
+            the initial right pointer is N*min(a,b)
+            we want to find the number of magical numbers we have before our x
+            we define a functino: f(x), which is th number of magical numbers <= x
+            by inclusion/exclusion, or just rule of double couting
+            f(x) = x//a + x//b - x//lcm
+            why the last part? we need to make sure we don't double count
+            then we just check if we have numbers gretar than n
+        '''
+        def gcd(x,y):
+            small = x if x > y else y
+            gcd = 1
+            for i in range(1,small+1):
+                if (x % i == 0) and (y % i == 0):
+                    gcd = i
+            return gcd
+        
+        mod = 10**9 + 7
+        lcm = a*b // gcd(a,b)
+        
+        left = 0
+        right = n*min(a,b)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            #if i don't have enough numbers, extend the range
+            if mid//a + mid//b - mid//lcm < n:
+                left = mid + 1
+            else:
+                right = mid
+        
+        return left % mod
 
+#also, recall the recursive definition for defining the gcd
+def gcd(x,y):
+    if x == 0:
+        return y
+    return gcd(y % x,x)
 
