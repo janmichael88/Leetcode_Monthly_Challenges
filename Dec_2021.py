@@ -1394,3 +1394,144 @@ def gcd(x,y):
         return y
     return gcd(y % x,x)
 
+#################################
+# 416. Partition Equal Subset Sum
+# 12Dec21
+#################################
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        '''
+        if i find the sum of the array, the two paritions must be equal
+        i can try building a subset until the subset becomes SUM // 2
+        if it any point the subset grows beyond that i need to abandon
+        it would help to sort the array first
+        '''
+        N = len(nums)
+        SUM = sum(nums)
+        
+        #cannot be partitioned evenly
+        if SUM % 2 == 1:
+            return False
+        
+        #sort
+        nums = sorted(nums)
+        
+        memo = {}
+        
+        def rec(i,curr_sum):
+            #got to end
+            if i == N:
+                if curr_sum == SUM // 2:
+                    return True
+                else:
+                    return False
+            
+            if curr_sum > SUM // 2:
+                return False
+            
+            #got here
+            if curr_sum == SUM // 2:
+                return True
+            
+            if (i,curr_sum) in memo:
+                return memo[(i,curr_sum)]
+            take = rec(i+1,curr_sum+nums[i])
+            no_take = rec(i+1,curr_sum)
+            res = take or no_take
+            memo[(i,curr_sum)] = res
+            return res
+        
+        return rec(0,0)
+
+#another recursion
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        '''
+        if i find the sum of the array, the two paritions must be equal
+        i can try building a subset until the subset becomes SUM // 2
+        if it any point the subset grows beyond that i need to abandon
+        it would help to sort the array first
+        '''
+        N = len(nums)
+        SUM = sum(nums)
+        
+        #cannot be partitioned evenly
+        if SUM % 2 == 1:
+            return False
+        
+        #find the target sum
+        subset_sum = SUM // 2
+        memo = {}
+        
+        def rec(i,subset_sum):
+            if subset_sum == 0:
+                return True
+            if i == 0 or subset_sum < 0:
+                return False
+            if (i,subset_sum) in memo:
+                return memo[(i,subset_sum)]
+            take = rec(i-1,subset_sum - nums[i-1])
+            no_take = rec(i-1,subset_sum)
+            res = take or no_take
+            memo[(i,subset_sum)] = res
+            return res
+        
+        return rec(N-1,subset_sum)
+            
+
+#bottom up dp
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        '''
+        translating recusion to dp
+        dp[i][j] returns true of all nums including nums up to index x and == j
+        flase if i can't
+        
+        '''
+        N = len(nums)
+        SUM = sum(nums)
+        
+        #cannot be partitioned evenly
+        if SUM % 2 == 1:
+            return False
+        
+        #find the target sum
+        subset_sum = SUM // 2
+        
+        dp = [[False]*(subset_sum+1) for _ in range(N+1)]
+        
+        for i in range(1,N+1):
+            curr = nums[i-1]
+            for j in range(subset_sum+1):
+                #base case
+                if j == 0:
+                    dp[i][j] = True
+                elif j < curr:
+                    #carry over
+                    dp[i][j] = dp[i-1][j]
+                else:
+                    dp[i][j] = dp[i-1][j] or dp[i-1][j - curr]
+        
+        return dp[N][subset_sum]
+
+############################
+# 1446. Consecutive Characters
+# 12DEC21
+############################
+class Solution:
+    def maxPower(self, s: str) -> int:
+        '''
+        just count the streaks
+        and keep the longest one
+        '''
+        max_streak = 1
+        curr_streak = 1
+        N = len(s)
+        for i in range(1,N):
+            if s[i-1] == s[i]:
+                curr_streak += 1
+                max_streak = max(max_streak,curr_streak)
+            else:
+                curr_streak = 1
+        
+        return max_streak
