@@ -1535,3 +1535,27 @@ class Solution:
                 curr_streak = 1
         
         return max_streak
+
+############################
+# 13Dec21
+# 263. Ugly Number
+############################
+class Solution:
+    def isUgly(self, n: int) -> bool:
+        '''
+        an ugly numebr is a positive integer whose prime factors are limited to 2,3, and 5
+        well if a number if less than 0, its not ugly
+        1 is an edge cass as well
+        carefull for overflow
+        keep reuding to 1 until we can't
+        one we've gone as far as we can check if it is 1
+        '''
+        if n <= 0:
+            return False
+        if n == 1:
+            return True
+        for x in [2, 3, 5]:
+            while n % x == 0:
+                n = n / x
+        return n == 1
+        
