@@ -1559,3 +1559,77 @@ class Solution:
                 n = n / x
         return n == 1
         
+################################
+# 938. Range Sum of BST
+# 14DEC21
+################################
+class Solution:
+    def rangeSumBST(self, root: Optional[TreeNode], low: int, high: int) -> int:
+        '''
+        traverse all nodes in tree and increment sum
+        '''
+        self.sum = 0
+        
+        def dfs(node,low,high):
+            if not node:
+                return
+            if low <= node.val <= high:
+                self.sum += node.val
+            dfs(node.left,low,high)
+            dfs(node.right,low,high)
+        
+        dfs(root,low,high)
+        return self.sum
+
+class Solution:
+    def rangeSumBST(self, root: Optional[TreeNode], low: int, high: int) -> int:
+        '''
+        without the use of global variable
+        
+        '''
+        def dfs(root,low,high):
+            if not root:
+                return 0
+            total = 0
+            if low <= root.val <= high:
+                total += root.val
+            if root.val > low:
+                total += dfs(root.left,low,high)
+            if root.val < high:
+                total += dfs(root.right,low,high)
+            return total
+        
+        return dfs(root,low,high)
+
+class Solution:
+    def rangeSumBST(self, root: Optional[TreeNode], low: int, high: int) -> int:
+        '''
+        iterative stack
+        '''
+        ans = 0
+        stack = [root]
+        
+        while stack:
+            curr = stack.pop()
+            if not curr:
+                continue
+            if low <= curr.val <= high:
+                ans += curr.val
+            if curr.left:
+                stack.append(curr.left)
+            if curr.right:
+                stack.append(curr.right)
+        
+        return ans
+
+#########################
+# 293. Flip Game
+# 14DEC21
+#########################
+class Solution:
+    def generatePossibleNextMoves(self, s: str) -> List[str]:
+        ans = []
+        for i in range(len(s)-1):
+            if s[i:i+2] == "++": ans.append(s[:i]+"--"+s[i+2:])
+        return ans 
+    
