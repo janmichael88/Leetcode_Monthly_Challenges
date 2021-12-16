@@ -1633,3 +1633,213 @@ class Solution:
             if s[i:i+2] == "++": ans.append(s[:i]+"--"+s[i+2:])
         return ans 
     
+#############################
+# 147. Insertion Sort List
+# 15DEC21
+#############################
+#pull apart and sort
+class Solution:
+    def insertionSortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        for insertion sort, in an array, we traverse each element and try to place the element in the correst position
+        two parts, a sorted part, and an unsorted part
+        however we need to scan the sorted part every time for an insertion
+        first approach, pull all nums into an an array and code insertion sorts
+        '''
+        nums = []
+        curr = head
+        while curr:
+            nums.append(curr.val)
+            curr = curr.next
+        
+        #now do insertion sort
+        for i in range(len(nums)):
+            temp = nums[i]
+            j = i
+            while j > 0 and nums[j-1] > temp:
+                nums[j] = nums[j-1]
+                j -= 1
+            nums[j] = temp
+        
+        dummy = ListNode()
+        curr = dummy
+        for num in nums:
+            curr.next = ListNode(val=num)
+            curr = curr.next
+        return dummy.next
+
+#swapping values
+class Solution:
+    def insertionSortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        to do insertion sort in a linked list
+        we need to use a pair of pointers, prev and next
+        '''
+        cur = head
+        while cur:
+            temp = head #alway start from beginning
+            while temp != cur:
+                if temp.val > cur.val:
+                    #swap
+                    temp.val,cur.val = cur.val, temp.val
+                #otheriwse adanve temp
+                temp = temp.next
+            #always advance
+            cur = cur.next
+        
+        return head
+
+#swapping nodes
+#https://leetcode.com/problems/insertion-sort-list/discuss/1629811/C%2B%2BPythonJava-2-Simple-Solution-w-Explanation-or-Swap-values-%2B-Pointer-Manipulation-Approaches
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def insertionSortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        by using the swap values idea, we head to iterate from head to curr, every time
+        usually insertion sort works by finding the current elements place to be in the sorted arrayr
+        recall in the last, we always had to shit adjacent elements up or down
+        
+        algo: 
+        we can find the correct position of cur by iterating in sorted portions of list until we find a node which has value less than cur
+        then remove curr from its original positison and insert
+        1. update point of cur to j, which is the position before which cur needs to be inserted
+        2. update enxt point nodes of j to cur
+            this is because cur is now inserted before j and this prevs next ndoe should point at cur
+        3. update enxt pointer of previous node to enxt of oc
+        4. the current node is now placed at its proper position and all pointers have been updated
+        '''
+        #starting off pointers
+        dummy = ListNode(val= -1, next = head)
+        cur_prev = head
+        cur = head.next
+        
+        while cur:
+            #state arouod cur
+            j_prev = dummy
+            j = dummy.next
+            cur_next = cur.next
+            if cur.val > cur_prev.val:
+                cur_prev = cur
+            else:
+                while j.val < cur.val:
+                    j_prev = j
+                    j = j.next
+                cur.next = j
+                j_prev.next = cur
+                cur_prev.next = cur_next
+            cur = cur_next
+        return dummy.next
+
+#official solution
+class Solution:
+    def insertionSortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        official solution
+        move prev pointer to the corret positionon
+        than reassign pointers
+        
+        '''
+        #starting off pointers
+        dummy = ListNode()
+        curr = head
+
+        while curr:
+            # At each iteration, we insert an element into the resulting list.
+            prev = dummy
+
+            # find the position to insert the current node
+            while prev.next and prev.next.val < curr.val:
+                prev = prev.next
+
+            next = curr.next
+            # insert the current node to the new list
+            curr.next = prev.next
+            prev.next = curr
+
+            # moving on to the next iteration
+            curr = next
+
+        return dummy.next
+
+##################################
+# 624. Maximum Distance in Arrays
+# 15DEC21
+##################################
+#TLE brute force
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        find mins  and  maxs
+        crap, note that the min and max cannot come from the same array
+        note, that there will be at most 10**5 integers in the array
+        what if i mapp each num to its index array
+        
+        brute force would be to check all i,j where i != j
+        '''
+        ans = 0
+        N = len(arrays)
+        for i in range(N):
+            for j in range(N):
+                if i != j:
+                    ans = max(ans,abs(arrays[i][0]-arrays[j][-1]))
+        
+        return ans
+
+#better brute force
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        find mins  and  maxs
+        crap, note that the min and max cannot come from the same array
+        note, that there will be at most 10**5 integers in the array
+        what if i mapp each num to its index array
+        
+        brute force would be to check all i,j where i != j
+        
+        we can do better, since there only i*j over two pairs
+        '''
+        ans = 0
+        N = len(arrays)
+        for i in range(N):
+            for j in range(i+1,N):
+                #swapping i and j
+                ans = max(ans,abs(arrays[i][0]-arrays[j][-1]))
+                ans = max(ans,abs(arrays[j][0]-arrays[i][-1]))
+        
+        return ans
+
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        we don't need to compare every i,j array if i != j
+        really what we are asking is for the largest gap between any two arrays in arrrays
+        we can keep track of a min so far and a max so far
+        update the largest abs diff, but also update the min so far and max so far
+        we initalize with the starting array at index 0 and check every array after that
+        
+        
+        digress:
+            we don't need to another res update after the last 1?
+            because if we did, the curr_min and curr_max would belong to the same array
+        '''
+        res = 0
+        curr_min = arrays[0][0]
+        curr_max = arrays[0][-1]
+        
+        for i in range(1,len(arrays)):
+            #first find the curr diff, abs(min_val - max of curr array)
+            diff1 = abs(arrays[i][-1] - curr_min)
+            #second diff, abs(max_val - min array)
+            diff2 = abs(arrays[i][0] - curr_max)
+            #update answer
+            res = max(res,max(diff1,diff2))
+            #update currmin and currmax
+            curr_min = min(curr_min, arrays[i][0])
+            curr_max = max(curr_max, arrays[i][-1])
+    
+        return res
+        
