@@ -1843,3 +1843,178 @@ class Solution:
     
         return res
         
+############################
+# 310. Minimum Height Trees
+# 16DEC21
+############################
+#TLE, max highet of N-ary tree for each node
+#find MHT for each rooted node
+class Solution:
+    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        notes:
+            any connected graph without a cycle is a tree
+            we are given an undirected graph
+            with n nodes, and an edge list
+        we can used any node we want as the root,
+        return the min height of all trees
+        
+        brute force would be to dfs each tree using 0 to n-1 as the root
+        get the max depth for each traversal and return the min
+        '''
+        adj_list = defaultdict(list)
+        for a,b in edges:
+            adj_list[a].append(b)
+            adj_list[b].append(a)
+        
+        def dfs(node,seen,depth):
+            #note, depth will start off at 0, but keep track of min
+            #keep track of global max depth
+            self.max_depth = max(self.max_depth,depth)
+            if node not in seen:
+                seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,depth+1)
+
+        '''            
+        self.max_depth = 0
+        dfs(0,set(),0)
+        print(self.max_depth)
+        '''
+        temp = []
+        for i in range(n):
+            self.max_depth = 0
+            dfs(i,set(),0)
+            temp.append([i,self.max_depth])
+            
+        #find min height
+        min_height = min([h for n,h in temp])
+        #find nodes having min height
+        ans = []
+        for n,h in temp:
+            if h == min_height:
+                ans.append(n)
+        
+        return ans
+
+#BFS layer by layer
+class Solution:
+    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        note that the brute force gives TLE,
+        very similat to top sort on course scheduel i and ii
+        lets define the distance between two numbers as the number of edges that connects the two nodes
+        because this is a tree and there are no cycles, there must only be one path between any two nodes
+        lets define the height of a tre as the maximum distance bettween the root and all it leaf nodes
+        reduction:
+            the problem is finding out the nodes that are overall close to all other nodes
+        
+        this way we are actuall looking for centrods
+        IMPORTANT assertion: for a tree like graph, the number of centroids is no more than 2
+        if nodes form a chain there are two cases:
+            if the number of nodes is even, there are only two centroids
+            if number of nodes is odd, there is only one
+        
+        proof by contradiction:
+            for three nodes, if there were three centroids, this would HAVE to form a cycle
+            there cannot be more than two centroids
+        
+        algo:
+            reudce the problem:
+                look for all centroid nodes in a tree like grpah, which is bounded by two
+            idea: trim out leaf nodes layer by layer until we reach the core of the graph
+            really its top sort from centroids
+            in this case, we trim out leaf nodes which are farther away from the centroids
+            at each step, the nodes we trim out are closer to the centroids than the nodes in the previous step
+        BFS strategy:
+            * make adj lists
+            * create queue which would be used to hold all leaf nodes
+            * at beginning, put all current leage nodes into q
+            * loop until there is only two nodes left in graph
+            * at each iteration
+                * remove current leaf nodes from q
+                * while removing ndoes, we also drop edges that link the  nodes
+                * as a consequence, some of the non lead nodes would become leaf ndoes
+                * and these ndoes would be trimmed out in next iterations
+            * terminate when there are no more than ndoes left in the graph
+        '''
+        if not edges:
+            return [0]
+        seen = [False]*n
+        adj_list = defaultdict(set)
+        
+        for u,v in edges:
+            adj_list[u].add(v)
+            adj_list[v].add(u)
+        
+        leaves = []
+        new_leaves = []
+        in_degree = []
+        
+        #find leaves in degree for all nods
+        for i in range(n):
+            if len(adj_list[i]) == 1:
+                leaves.append(i)
+            in_degree.append(len(adj_list[i]))
+            
+        while n > 2:
+            for leaf in leaves:
+                for neigh in adj_list[leaf]:
+                    #reduce indegre
+                    in_degree[neigh] -= 1
+                    #get ready for next layr
+                    if in_degree[neigh] == 1:
+                        new_leaves.append(neigh)
+            
+            #remove leave
+            n -= len(leaves)
+            leaves = new_leaves[:]
+            new_leaves = []
+        
+        return leaves
+
+class Solution:
+    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        another way to dfs twice to find the longest path in given graph
+        there can only be a max of 2 MHTS, and the node which uyeild the min height tree  are the mid points of a longes path in the given graph
+        for an MHT, we want the minimum distance to all leaves from a root
+        so its obvious that what we are actually tring to find  is a node that balances the amx distance from itselt to its extreme nodes
+        choosing the middle nodes of the longest path will ensure the tree has its two longes branches
+            if 1 root, L//2
+            if 2 root, L//2 - 1
+        
+        we can abritrailty dfs from a node to find its first leaf, call it node1
+        then dfs from node1 as far as we can, node2
+        node1 to node2 is guranteed to be the longest path
+        for this path, the middle nodes minimuze the depth of three
+        '''
+        graph = defaultdict(set)
+        seen = [False]*n
+        
+        for u,v in edges:
+            graph[u].add(v)
+            graph[v].add(u)
+        
+        def dfs(i):
+            #this returns the path
+            if seen[i]:
+                return []
+            seen[i] = True
+            longest_path = []
+            for neigh in graph[i]:
+                longest_path.append(dfs(neigh))
+            #find the longest one
+            longest_path = max(longest_path,key = len, default=[])
+            #don't forget to include the currnet node
+            longest_path += [i]
+            #backtrak
+            seen[i] = False
+            return longest_path
+        
+        #first dfs to find the first leaf
+        node1 = dfs(0)[0]
+        #second one to recrod the ptath
+        path = dfs(node1)
+        return set([path[len(path)//2], path[(len(path)-1)//2]])
