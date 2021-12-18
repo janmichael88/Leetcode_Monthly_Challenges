@@ -2018,3 +2018,207 @@ class Solution:
         #second one to recrod the ptath
         path = dfs(node1)
         return set([path[len(path)//2], path[(len(path)-1)//2]])
+
+#######################
+# 221. Maximal Square
+# 17DEC21
+#######################
+#welp this almsot works
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        i can probably use dynamic programming for this problem
+        a single cell is trivially a square
+        so for the first row and col, is there's a 1, its area is 1
+        now if im at (i,j), look at i-1, and j-1, is they were ones, then take the its max in
+        put 1
+        dp(i,j) = if 1, check dp(i-1,j) and dp(i,j-1) and dp(i-1,j-1) is one
+        dp(i,j) answers the question, the largest square that can be made with lower right corner ending at (i,j)
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dp = [[0]*cols for _ in range(rows)]
+        
+        #first base cases for first row and cols
+        for i in range(rows):
+            if matrix[i][0] == '1':
+                dp[i][0] = 1
+        #cols
+        for j in range(cols):
+            if matrix[0][j] == '1':
+                dp[0][j] = 1
+        
+        ans = 0
+        for i in range(1,rows):
+            for j in range(1,cols):
+                #if this is a one, see if i can make q sqaure
+                if matrix[i][j] == '1':
+                    dp[i][j] = min(dp[i-1][j],dp[i-1][j-1],dp[i][j-1]) + 1
+                #can't make it, well its at elast 1 from here
+                else:
+                    dp[i][j] = 1
+                
+                ans = max(ans,dp[i][j])
+        
+        return ans*ans
+
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        i can probably use dynamic programming for this problem
+        a single cell is trivially a square
+        so for the first row and col, is there's a 1, its area is 1
+        now if im at (i,j), look at i-1, and j-1, is they were ones, then take the its max in
+        put 1
+        dp(i,j) = if 1, check dp(i-1,j) and dp(i,j-1) and dp(i-1,j-1) is one
+        dp(i,j) answers the question, the largest square that can be made with lower right corner ending at (i,j)
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dp = [[0]*(cols+1) for _ in range(rows+1)]
+        
+        
+        ans = 0
+        for i in range(1,rows+1):
+            for j in range(1,cols+1):
+                #if this is a one, see if i can make q sqaure
+                if matrix[i-1][j-1] == '1':
+                    dp[i][j] = min(min(dp[i-1][j],dp[i][j-1]),dp[i-1][j-1]) + 1
+                
+                    ans = max(ans,dp[i][j])
+        
+        return ans*ans
+
+#lets go over a few of the solutions 
+#https://leetcode.com/problems/maximal-square/discuss/1632376/C%2B%2BPython-6-Simple-Solution-w-Explanation-or-Optimizations-from-Brute-Force-to-DP
+#brute force
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        brute force, consider all squares with all possible side lenghts
+        for each cell and for each side length, check all 1s, then just return sum
+        or rather return the product of sideLen
+        '''
+        def isSquare(row,col,size):
+            #coll way of using all
+            return all(all(matrix[i][j] == '1' for j in range(col,col+size)) for i in range(row,row+size))
+        
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        for size in range(min(rows,cols),0,-1):
+            for row in range(rows-size+1):
+                for col in range(cols-size+1):
+                    if isSquare(row,col,size):
+                        return size*size
+        
+        return 0
+
+#better brute force, keep track of consecutive ones
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        we can optimize the brute force
+        instead of checking each possible side length for a square starting at a given cell, we can optimize the process by starting from row of that cell and expaning the side length for that till it is possible
+        continue this for below rows as well until consec ones > curr row number
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        ans = 0
+        
+        def get_max_square_len(row,col):
+            all_ones_row = min(rows - row,cols - col)
+            sq_len = 0
+            i = j = 0
+            while i < all_ones_row:
+                j = 0
+                while j < all_ones_row and matrix[i+row][j+col] != '0':
+                    j += 1
+                all_ones_row = j
+                sq_len = min(all_ones_row,i := i + 1)
+            
+            return sq_len
+        
+        for row in range(rows):
+            for col in range(cols):
+                ans = max(ans, get_max_square_len(row,col))
+        
+        return ans*ans
+
+#optimized, consecutives ones arrays
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        note in the brute force, we were iteratively calculating the maxinum consective ones multiple times
+        we can precompute, and for each row, record the number of max consective ones
+        The following solution uses ones matrix where ones[i][j] denotes number of consecutive ones to the right of the (i, j) cell.
+        
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        ans = 0
+        
+        ones = [[0]*(cols+1) for _ in range(rows)]
+        for i in range(rows-1,-1,-1):
+            for j in range(cols-1,-1,-1):
+                ones[i][j] = 1 + ones[i][j+1] if matrix[i][j] == '1' else 0
+        
+        def get_max_square_len(row, col):
+            all_ones_row_len, sq_len, i, j = min(rows-row, cols-col), 0, 0, 0
+            while i < all_ones_row_len:                
+                all_ones_row_len = min(all_ones_row_len, ones[i+row][col])
+                sq_len = min(all_ones_row_len, i := i + 1)
+            return sq_len
+        
+        for row in range(rows):
+            for col in range(cols):
+                ans = max(ans, get_max_square_len(row, col))
+        return ans * ans
+
+#dp, using up m*n space
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        dp solution
+        if we represent dp(i,j) as the largest square that can be formed with bottom right corner at (i,j)
+        if matrix[i,j] = 1
+        dp(i,j) = min(dp(i-1,j),dp(i-1,j-1),dp(i,j-1)) + 1
+        we add one because we can make a new square
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dp = [[0]*(cols+1) for _ in range(rows+1)]
+        
+        ans = 0
+        for i in range(1, rows+1):
+            for j in range(1,cols+1):
+                if matrix[i-1][j-1] == '1':
+                    dp[i][j] = min(dp[i-1][j],dp[i][j-1],dp[i-1][j-1]) + 1
+                    ans = max(ans,dp[i][j])
+        
+        return ans*ans
+
+#saving on space, we only care about the curr row and previous row
+class Solution:
+    def maximalSquare(self, matrix: List[List[str]]) -> int:
+        '''
+        dp solution
+        if we represent dp(i,j) as the largest square that can be formed with bottom right corner at (i,j)
+        if matrix[i,j] = 1
+        dp(i,j) = min(dp(i-1,j),dp(i-1,j-1),dp(i,j-1)) + 1
+        we add one because we can make a new square
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        curr = prev =  [0]*(cols+1)
+        
+        ans = 0
+        for i in range(1, rows+1):
+            for j in range(1,cols+1):
+                if matrix[i-1][j-1] == '1':
+                    curr[j] = min(prev[j],curr[j-1],prev[j-1]) + 1
+                    ans = max(ans,curr[j])
+            prev = curr
+            curr = [0]*(cols+1)
+        return ans*ans
+        
