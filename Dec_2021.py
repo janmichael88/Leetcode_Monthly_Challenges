@@ -2221,4 +2221,172 @@ class Solution:
             prev = curr
             curr = [0]*(cols+1)
         return ans*ans
+
+#########################################
+# 902. Numbers At Most N Given Digit Set
+# 18DEC21
+#########################################
+#fuck...
+#note backtracking has too big of input sizes to work
+class Solution:
+    def atMostNGivenDigitSet(self, digits: List[str], n: int) -> int:
+        '''
+        this is a back tracking problem
+        the only issue is that i can keep taking as many digits, i can use digits[i] as many times as i want
+        '''
+        ans = []
         
+        def backtrack(i,path):
+            #if the path is greater than n, terminated
+            if int("".join(path)) > n:
+                return
+            #anytime we have valid answer add it
+            if int("".join(path)) <= n:
+                ans.append(''.join(path))
+                return
+            
+            for j in range(i,len(digits)):
+                backtrack(j,path+[digits[j]])
+        
+        backtrack(0,[])
+        return ans
+
+class Solution:
+    def atMostNGivenDigitSet(self, D, N):
+        '''
+        first, lets call a positive integer X, valid if X <= N and X only consits of digits from D
+        now, say N has K digits
+        if we write a vlid number with k digits (k < K), then there are len(D)**k possible numbers we could write
+        since all are less than N
+        now say we are to write a valid K digit number left to right, 
+        N = 2345
+        K = 4
+        D = ['1','2'....'9']
+        consider what happens when we write the first digit
+        if the firt digit is less than the first digit of N, then we can continue to wrte any numbers after
+        for a total of len(D)**(k-1)
+        if we starrt with 1, we could get 1111 to 1999 from this prefix
+        if the first digit we write is the same, then we requirer that the next digit we write is equal to or lower than the nexr digit N, in our example, N = 2345, then if we start with 2, the next digit we write must be 3 or less
+        we can't write a larger digit because if we start wtih 3, then evne number 3000 > N
+        
+        algo:
+            dp[i] be the number of ways to write a valid number if N becamse N[i]
+            i.e N = 2345
+            dp[0] be numbers at most 2345
+            dp[1] be numbers at most 345
+            dp[2] be numberts at most 45
+            dp[3] be numbers at most 5
+            
+            rather dp[i] = (number of d in D with d < S[i])*(len(D)**(K-i-1)) + dp[i+1] if S[i] in D
+        '''
+        #get the number of digits in N
+        S = str(N)
+        K = len(S)
+        dp = [0]*K + [1]
+        #dp[i] = total number of valid integers is N was N[i:]
+        for i in range(K-1,-1,-1):
+            #now check for each digit in D
+            for d in D:
+                if d < S[i]:
+                    #i can make len(D)**(k-1) digits for this i
+                    #recal digits are in order
+                    dp[i] += len(D)**(K-i-1)
+                #if i can't carry it over
+                elif d == S[i]:
+                    #if this digit is equal, the next i+1 will not work because the digits are orderd
+                    dp[i] += dp[i+1]
+        '''
+        trying to make numbes for each size len(D) - 1
+        add this to the first entry in dp
+        for i in range(1,K):
+            print(i,len(D)**i)
+        '''
+        #making digits for N[i:] for i in range(len(N)) - 1
+        digits = 0
+        for i in range(1,K):
+            digits += len(D)**i
+        return dp[0] + digits
+
+#another way, but i get the first approach
+class Solution:
+    def atMostNGivenDigitSet(self, D: List[str], N: int) -> int:
+        '''
+        we can use binary search onf this problem,
+        recall that int eh first approach, a positive interge X is valid if X <= N, and only contains digits in D
+        we let B = len(digits)
+        there is a bijection between valid integers 
+        examples:
+            D = ['1','3','5','7']
+            we could write numbers
+            '1', '3', '5', '7', '11', '13', '15', '17', '31', ... 
+            as a bijective base (B) numbers 
+            1', '2', '3', '4', '11', '12', '13', '14', '21', ....
+        our approach then becomes finding the largest valid integer and convert it into a bijectiv base -b
+        from which it easy to find its rank (position in the seqeuence)
+        becaue of the bijection, the rank of this element must by the number of valid integers
+        examples:
+        N = 64, using same D digits
+        we have 1,33,....55,57
+        which can be written as bijective base 4 numbers 1,2..33,34
+        algo:
+            1. convert N into the largest possible valid integer X
+            2. convert X into bijective base b
+            3. conver ther result into a decimal answer
+            
+            example D = ['2','4','6','8']
+            
+            if the firdt digit of N is in D, we write that digit and continue, example N = 25123
+            if the first digits of N > min(D) then we write the largest possible number from D, less than the digits
+            Example: n = 5123, the write 4888
+            if first digit of N is < min(D) then we must subtract 1
+            For example, if N = 123, we will write 88. If N = 4123, we will write 2888. And if N = 22123, we will write 8888. This is because "subtracting 1" from '', '4', '22' yields '', '2', '8' (can't go below 0).
+            
+        '''
+        B = len(D) # bijective-base B
+        S = str(N)
+        K = len(S)
+        A = []  #  The largest valid number in bijective-base-B.
+
+        for c in S:
+            if c in D:
+                A.append(D.index(c) + 1)
+            else:
+                i = bisect.bisect(D, c)
+                A.append(i)
+                # i = 1 + (largest index j with c >= D[j], or -1 if impossible)
+                if i == 0:
+                    # subtract 1
+                    for j in range(len(A) - 1, 0, -1):
+                        if A[j]: break
+                        A[j] += B
+                        A[j-1] -= 1
+
+                A.extend([B] * (K - len(A)))
+                break
+
+        ans = 0
+        for x in A:
+            ans = ans * B + x
+        return ans
+
+##########################
+# 19DEC21
+# 
+##########################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
