@@ -2371,9 +2371,119 @@ class Solution:
 
 ##########################
 # 19DEC21
-# 
+# 394. Decode String
 ##########################
+class Solution:
+    def decodeString(self, s: str) -> str:
+        '''
+        i can use a stack and work inside to tou
+        we keep pushing onto a stack until we hit a closing bracket, 
+        once we hit the close we can push back
+        but we need to make sure we reverse when pushing back
+        '''
+        stack = []
+        for char in s:
+            #decode if closing
+            if char == "]":
+                #prepare
+                decoded_string = ""
+                while stack[-1] != '[':
+                    decoded_string += stack.pop()
+                #clear the opening
+                stack.pop()
+                #recall its a string, so we could get a string int lager than 9
+                base = 1
+                k = 0
+                while stack and '0' <= stack[-1] <= '9':
+                    k = k + (ord(stack.pop()) - ord('0'))*base
+                    base *= 10
+                
+                string_len = len(decoded_string)
+                #we need to push this bask k times, but in revers
+                while k != 0:
+                    for char2 in reversed(decoded_string):
+                        stack.append(char2)
+                    
+                    k -= 1
+            #otherwise append to stack
+            else:
+                stack.append(char)
+        
+        return "".join(stack)
 
+class Solution:
+    def decodeString(self, s: str) -> str:
+        '''
+        we can also solve this recursively
+        start by buillding k ands tring and recusrively decode at each nested level
+        then return the current decoding and recurse
+        
+        algo:
+            build result while enxt char is lettter and buildg number while next char is digit
+            ignore the next '[' 
+            decode the current pattern k[decoded] and append to result
+            return curr result
+            
+            base case:
+                traverseed through all of s or the next char is ] , which prompts us to evaluate
+        '''
+        index = [0]
+        def rec(s):
+            result = ""
+            while index[0] < len(s) and s[index[0]] != ']':
+                if not ('0' <= s[index[0]] <= '9'):
+                    result += s[index[0]]
+                    index[0] += 1
+                else:
+                    k = 0
+                    while index[0] < len(s) and '0' <= s[index[0]] <= '9':
+                        k = k*10 + ord(s[index[0]]) - ord('0')
+                        index[0] += 1
+                    #ignore opening
+                    index[0] += 1
+                    #decode
+                    decoded_string = rec(s)
+                    #ignore enxt
+                    index[0] += 1
+                    #buuild k[decoded]
+                    while k > 0:
+                        result += decoded_string
+                        k -= 1
+            
+            return result
+        
+        return rec(s)
+
+####################################
+# 1200. Minimum Absolute Difference
+# 19DEC21
+####################################
+class Solution:
+    def minimumAbsDifference(self, arr: List[int]) -> List[List[int]]:
+        '''
+        we want to find all pairs of elements with min abs diff of any two elements
+        rather return list of all pairs [a,b]
+        such that 
+            a,b in arr
+            a < b
+            b - a == min abs different of any two elements in array
+        
+        sort the array
+        the find the min difference
+        the find elements that have that difference
+        '''
+        arr = sorted(arr)
+        N = len(arr)
+        absoluteMinDiff = float('inf')
+        for i in range(1,N):
+            absoluteMinDiff = min(absoluteMinDiff, abs(arr[i]-arr[i-1]))
+        
+        ans = []
+        for i in range(1,N):
+            if abs(arr[i] - arr[i-1]) == absoluteMinDiff:
+                ans.append([arr[i-1],arr[i]])
+        
+        return ans
 
 
 
