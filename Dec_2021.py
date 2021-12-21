@@ -2485,6 +2485,113 @@ class Solution:
         
         return ans
 
+#counting sort
+class Solution:
+    def minimumAbsDifference(self, arr: List[int]) -> List[List[int]]:
+        '''
+        we can use counting sort, create items an array to store [min(arr),max(arr)]
+        zero inclusive
+        since the numbers couold be negative, we use an aux array of size 2*10^6
+        so we need to build a bijection between the element value and the index in the aux array
+        we can map the value to index where this element should be palced by adding a term.
+        shift = 10^6, or rather the largest element in arr
+        to sort the array, we can find the corresponding index of this intger index = value + shift
+        and increase the vlaue at index in the aux array lie by 1
+        note: the shift == -min(arr)
+        to mapp num -> num + shigt
+        this gives us the cout array,
+        not the array is strictly increasing, so the items array, which was iniitally zero will contains ones
+        we can traverse  the line again, and where line[index] != 0 this signifies the value index - shift
+        question: how to collect and compare pairs of adjacent eleemnts
+        we scan the lines array and check if a 1 is present at this index
+        if a 1 is presnet, then the number lines[index] - shift is in the original array
+        keep not of curr and prev 1, update if min diff gets larger
+        algo;
+            1. find the min and max of the array
+            2. init aux array of size min - max + 1
+            3. pass over arr, and increment num + shift in aux by 1
+            4.  travere aux array and for each check for 1 and 0
+        '''
+        smallest = min(arr)
+        largest = max(arr)
+        shift = -smallest
+        line = [0]*(largest - smallest + 1)
+        #first pass, mapp nums to line
+        for num in arr:
+            line[num+shift] = 1
+            
+        min_diff_pair = largest - smallest
+        prev = 0
+        res = []
+        
+        for curr in range(1,largest + shift + 1):
+            if line[curr] == 0:
+                continue
+            ##otherwise its a 1
+            #first check if curr diff is the  min diff
+            if curr - prev == min_diff_pair:
+                res.append([prev - shift,curr-shift])
+            #otherwise update min diff
+            elif curr - prev < min_diff_pair:
+                #reupdate the new res, because we found a smaller one
+                res = [[prev - shift,curr-shift]]
+                min_diff_pair = curr - prev
+            #update prev
+            prev = curr
+        
+        return res
+        print(line)
+
+####################
+# 38. Count and Say
+# 20DEC21
+####################
+class Solution:
+    def countAndSay(self, n: int) -> str:
+        '''
+        base case is '1'
+        for n = 4
+        n = 1   '1' 
+        n = 2   '11'
+        n = 3   '21'
+        n = 4   '1211'
+        n = 5   '111221'
+        n = 6   '312211'
+        n = 7   '13112221'
+        i'm given the recurrence already, so then lets start from the base case
+        and build out way to n
+        to generate the nth tearm just count and say n-1'term
+        '''
+        
+        def countSayHelper(s):
+            N = len(s)
+            left = 0
+            right  = 1
+            res = ""
+            while left < N:
+                while right < N and s[left] == s[right]:
+                    right += 1
+                count = right - left
+                res += str(count)
+                res += str(s[left])
+                left = right
+                right += 1
+            
+            return res
+        
+        if n == 1:
+            return '1'
+        
+        curr = '1'
+        for i in range(n-1):
+            ans = countSayHelper(curr)
+            curr = ans
+        return curr
+
+########################
+# 
+#
+#######################
 
 
 
