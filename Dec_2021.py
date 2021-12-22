@@ -2589,10 +2589,66 @@ class Solution:
         return curr
 
 ########################
-# 
-#
+# 231. Power of Two
+# 21DEC21
 #######################
+class Solution:
+    def isPowerOfTwo(self, n: int) -> bool:
+        '''
+        i can just divide by two and check i can reduce to 1
+        also careful of negatives
+        '''
+        if n <= 0:
+            return False
+        while n % 2 == 0:
+            n //= 2
+        
+        return n == 1
 
+class Solution:
+    def isPowerOfTwo(self, n: int) -> bool:
+        '''
+        if its a power of two, there should only 1 in its bitset
+        '''
+        if n <= 0:
+            return False
+        ones = 0
+        while n:
+            ones += n & 1
+            n >>= 1
+        
+        return ones == 1
+
+class Solution:
+    def isPowerOfTwo(self, n: int) -> bool:
+        '''
+        recall the tricks x & (-x)
+        twos complement, -x is the same as ~x + 1
+        recall, if we have a number x, we get its complement (flipping all bits) 
+        using ~x
+        -x = ~x + 1
+        x & (-x) clears all bits and sets right most bit of x to 1
+        a number is a power of two if x & (-x) == x
+        '''
+        if n <= 0:
+            return False
+        
+        return n & (-n) == n
+
+class Solution:
+    def isPowerOfTwo(self, n: int) -> bool:
+        '''
+        brian kernighan, x & (x-1)
+        subtracting 1 means decremting right most bit by 1
+        and set all lower zero bits to 1
+        for a power of two, it just has one bit
+        so by clearing the right most bit and checking == 0
+        n must be power of two
+        '''
+        if n <= 0:
+            return False
+        
+        return n & (n-1) == 0
 
 
 
