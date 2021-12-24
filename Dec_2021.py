@@ -2650,9 +2650,307 @@ class Solution:
         
         return n & (n-1) == 0
 
+#################################
+# 345. Reverse Vowels of a String
+# 21DEC21
+#################################
+class Solution:
+    def reverseVowels(self, s: str) -> str:
+        '''
+        swap only if both left and right pointers are vowels
+        '''
+        N = len(s)
+        s = list(s)
+        left = 0
+        right = N - 1
+        vowels = 'aeiouAEIOU'
+        
+        while left < right:
+            #check for vowels
+            if s[left] in vowels:
+                while s[right] not in vowels:
+                    right -= 1
+                #swap
+                s[left],s[right] = s[right],s[left]
+                left += 1
+                right -= 1
+            elif s[right] in vowels:
+                while s[left] not in vowels:
+                    left += 1
+                #swap
+                s[left],s[right] = s[right],s[left]
+                left += 1
+                right -= 1
+            else:
+                left += 1
+                right -= 1
+        
+        return "".join(s)
 
+########################
+# 143. Reorder List
+# 22DEC21
+########################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def reorderList(self, head: Optional[ListNode]) -> None:
+        """
+        Do not return anything, modify head in-place instead.
+        """
+        '''
+        cheeky way is to pull values from list and modify.val for each node
+        then do it every other starting from the end
+        then i can two pointers for each and reset the nodes
+        '''
+        vals = []
+        temp = head
+        while temp:
+            vals.append(temp.val)
+            temp = temp.next
+            
+        left = 0
+        right = len(vals) - 1
+        ptr = 0
+        temp = head
+        while temp:
+            #take from beginning
+            if ptr % 2 == 0:
+                temp.val = vals[left]
+                left += 1
+            elif ptr % 2 == 1:
+                temp.val = vals[right]
+                right -= 1
+            temp = temp.next
+            ptr += 1
+            
 
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def reorderList(self, head: Optional[ListNode]) -> None:
+        """
+        Do not return anything, modify head in-place instead.
+        """
+        '''
+        really if we just found the head of the middle node
+        reversed the middle linked list
+        then merged the two lists we would get the answer
+        we can find the middle of the linked list using two pointers
+        then reverse the seoncd part of the list
+        then merge
+        '''
+        if not head:
+            return 
+        
+        #find middle
+        slow = fast = head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+        
+        #reverse second par of list, #slow is not pointing to head of middle
+        prev = None
+        curr = slow
+        while curr:
+            temp = curr.next
+            curr.next = prev
+            prev = curr
+            curr = temp
+        
+        #merged the two
+        first = head
+        second = prev
+        while second.next:
+            first.next, first = second, first.next
+            second.next,second = first, second.next
+            
 
+##############################################
+# 1153. String Transforms Into Another String
+# 22DEC21
+##############################################
+class Solution:
+    def canConvert(self, str1: str, str2: str) -> bool:
+        '''
+        the solution is kinda long winded so lets break this down in to parts
+        1. One to One Mapping:
+            if each char in str1 can map to str2, we can transfrom this with zero or more conversion
+        2. One to Many mapping
+            if chars in str1 are not different and one of the smae chars in str1 is mapped to another in str2
+        3. Linked List
+            if the mappings form a linked list, must be careful in the order we transform
+            by there is no cycle in this mapping, so still possible
+        4. Cylic Linked List
+            we need to break the cycle mapping in str1, which any char not in str1 and str2
+        5. Multiple Linked Lists
+            we can break the cycle, so long as we have a unique char
+        6. Cylic Linked List with 26 letters
+            cannot do, beause we need ane extra char to brea the cycle
+        7. Linked List with 26 Letters and One Loop
+            say we have str1, containing all 26 unique lower case chars
+            says str2, only contains 25, we can still convert
+            why? two char from string 1 mapp to the sam char
+            we adopt greey stretgy and conver yh to z
+            the idea is to make these to chars (y and z) converted both to z
+        inution:
+            if str1 has 26 unique chars, it is still possible to convert str1 to str2 
+            as long as str2 has less than 26 chars
+            SO, if str1 has 26 uique chard and str2 does not, there will always be a way to transform str1 into str2
+        
+        
+        '''
+        if str1 == str2:
+            return True
+        
+        conversion_mappings = dict()
+        unique_characters_in_str2 = set()
+        
+        # Make sure that no character in str1 is mapped to multiple characters in str2.
+        for letter1, letter2 in zip(str1, str2):
+            if letter1 not in conversion_mappings:
+                conversion_mappings[letter1] = letter2
+                unique_characters_in_str2.add(letter2)
+            elif conversion_mappings[letter1] != letter2:
+                # letter1 maps to 2 different characters, so str1 cannot transform into str2.
+                return False
+        
+        
+        if len(unique_characters_in_str2) < 26:
+            # No character in str1 maps to 2 or more different characters in str2 and there
+            # is at least one temporary character that can be used to break any loops.
+            return True
+        
+        # The conversion mapping forms one or more cycles and there are no temporary 
+        # characters that we can use to break the loops, so str1 cannot transform into str2.
+        return False
+
+###########################
+# 23May21
+# 23DEC21
+############################
+class Solution:
+    def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
+        '''
+        we can used dfs to find a topologiclat sorted order
+        we are given edges of the form [a,b], where b is a prereq to a
+        so the edge is of the form a -> b, directed and unweighted
+        the graph is cyclic, if there were a cycle the wouln't be a way to take all coures
+        problem says it might not be possible, so it must be cyclic
+        apporach 1, dfs
+        
+        consider all paths starting from A, once we've gone as far as we can go, we know we can at least start from this course
+        intution:
+            let S be a stack of courses
+            dfs(node):
+                for neigh in adjlist at node
+                    dfs(neigh)
+                S.append(node)
+        algo:
+            1. init stack S, that contains the order
+            2. make adjlist, b needs to be taken before a
+            3. for each node in the graph, dfs, in case that node was not visited during a previous nodes' traversal
+            4. suppose we are executing the dfs for a node N, 
+                we recursively tarverse all the neighbrods of N, which have not been procesed
+            5. once processsing all neighs, and N to stack
+            6. return order of stack from top to bottom
+        
+        to differentiate whether we have visited a node on this path while dfsin'g or dfsing a fist time we can color the nodes
+        1, means not visited
+        2, means visited while dfsing
+        3, means visited and added to stack
+        
+        '''
+        adj_list = defaultdict(list)
+        
+        #build adj list
+        for a,b in prerequisites:
+            adj_list[b].append(a)
+        
+        top_sort = []
+        self.is_possible = True
+        color = {node:1 for node in range(numCourses)}
+        
+        def dfs(node):
+            #if there is a cycle, stop recursing
+            if not self.is_possible:
+                return
+            #mark as 2
+            color[node] = 2
+            #traverse on neighs
+            if node in adj_list:
+                for neigh in adj_list[node]:
+                    #if its white dfs
+                    if color[neigh] == 1:
+                        dfs(neigh)
+                    elif color[neigh] == 2:
+                        self.is_possible = False
+            #mark 3 and add
+            color[node] = 3
+            top_sort.append(node)
+        
+        for v in range(numCourses):
+            if color[v] == 1:
+                dfs(v)
+        
+        return top_sort[::-1] if self.is_possible else []
+
+#top sort using in degree
+class Solution:
+    def findOrder(self, numCourses: int, prerequisites: List[List[int]]) -> List[int]:
+        '''
+        keeping track of in degree
+        intuition:
+            first node in top ordering will be a node or nodes with 0 in degree
+            process zero in degree ndoes frist, along with out going edges
+            one we process a node, reduce its in degree
+            
+        algo:
+            1. init q to keept rack of all the dnoes in the graph with 0 in degree
+            2. iterate over all the edges inthe input and create adj list
+            3. add all the nodes with 0 in degree to q
+                pop node from q
+                bfs, reuding neigh's indegree by 1
+                add to q if zero
+                add node to top sorted order
+        '''
+                # Prepare the graph
+        adj_list = defaultdict(list)
+        indegree = {}
+        for dest, src in prerequisites:
+            adj_list[src].append(dest)
+
+            # Record each node's in-degree
+            indegree[dest] = indegree.get(dest, 0) + 1
+
+        # Queue for maintainig list of nodes that have 0 in-degree
+        zero_indegree_queue = deque([k for k in range(numCourses) if k not in indegree])
+
+        topological_sorted_order = []
+
+        # Until there are nodes in the Q
+        while zero_indegree_queue:
+
+            # Pop one node with 0 in-degree
+            vertex = zero_indegree_queue.popleft()
+            topological_sorted_order.append(vertex)
+
+            # Reduce in-degree for all the neighbors
+            if vertex in adj_list:
+                for neighbor in adj_list[vertex]:
+                    indegree[neighbor] -= 1
+
+                    # Add neighbor to Q if in-degree becomes 0
+                    if indegree[neighbor] == 0:
+                        zero_indegree_queue.append(neighbor)
+
+        return topological_sorted_order if len(topological_sorted_order) == numCourses else []
 
 
 
