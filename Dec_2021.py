@@ -2952,6 +2952,115 @@ class Solution:
 
         return topological_sorted_order if len(topological_sorted_order) == numCourses else []
 
+###########################
+# 56. Merge Intervals
+# 24DEC21
+############################
+class Solution:
+    def merge(self, intervals: List[List[int]]) -> List[List[int]]:
+        '''
+        i can sort in the start times then just merge or update the end times
+        after sorting there are a few cases
+        '''
+        intervals = sorted(intervals, key = lambda x: x[0])
+        N = len(intervals)
+        
+        ans = [intervals[0]]
+        for start,end in intervals[1:]:
+            #curr start is in between curr interval in ans
+            if ans[-1][0] <= start <= ans[-1][1]:
+                ans[-1][0] = min(ans[-1][0],start)
+                ans[-1][1] = max(ans[-1][1],end)
+            else:
+                ans.append([start,end])
+        
+        return ans
+
+#########################
+# 227. Basic Calculator II
+# 25DEC21
+#########################
+class Solution:
+    def calculate(self, s: str) -> int:
+        '''
+        i can push on a stack the actual number values
+        if a number is a digit, get the top, multiple by ten and add the next digit
+        it its a minus, make that number negative
+        / and * need to be evaluated
+        continue in white spaces
+        '''
+        N = len(s)
+        if not s:
+            return 0
+        
+        stack = []
+        currNum = 0
+        operation = '+'
+        
+        for i in range(N):
+            currChar = s[i]
+            #if its a number
+            if '0' <= currChar <= '9':
+                currNum = (currNum*10) + ord(currChar) - ord('0')
+            #make sure its not a digit and not whitepsace or the last char
+            if not ('0' <= currChar <= '9') and (currChar != " ") or i == N-1:
+                if operation == '-':
+                    stack.append(-currNum)
+                elif operation == '+':
+                    stack.append(currNum)
+                elif operation == '*':
+                    stack.append(stack.pop()*currNum)
+                elif operation == '/':
+                    stack.append(int(stack.pop()/currNum))
+                #update op and currnum
+                operation = currChar
+                currNum = 0
+        #second pass
+        res = 0
+        while stack:
+            res += stack.pop()
+        
+        return res
+
+#O(1) space
+class Solution:
+    def calculate(self, s: str) -> int:
+        '''
+        fiinallly we can save spaced without using stack
+        and just keep lastNum
+        then update lastNUm
+        '''
+        N = len(s)
+        if not s:
+            return 0
+        
+        currNum = lastNum = res = 0
+        operation = '+'
+        
+        for i in range(N):
+            currChar = s[i]
+            #if its a number
+            if '0' <= currChar <= '9':
+                currNum = (currNum*10) + ord(currChar) - ord('0')
+            #make sure its not a digit and not whitepsace or the last char
+            if not ('0' <= currChar <= '9') and (currChar != " ") or i == N-1:
+                if operation == '-' or operation == '-':
+                    res += lastNum
+                    lastNum = currNum if (operation == '+') else -currNum
+                elif operation == '*':
+                    lastNum = lastNum*currNum
+                elif operation == '/':
+                    lastNum = int(lastNum / currNum)
+                #update op and currnum
+                operation = currChar
+                currNum = 0
+        
+        res += lastNum
+        return res
+
+
+
+
 
 
 
