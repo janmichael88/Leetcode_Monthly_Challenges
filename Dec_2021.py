@@ -3058,9 +3058,89 @@ class Solution:
         res += lastNum
         return res
 
+###############################
+# 973. K Closest Points to Origin
+# 26DEC21
+###############################
+class Solution:
+    def kClosest(self, points: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        we want the k closest points to the origin
+        for each point, find its euclidean distance
+        sort by disatnce then return k of them
+        '''
+        def getDist(x,y):
+            return ((x*x) + (y*y))**.5
+        
+        temp = []
+        for x,y in points:
+            temp.append([getDist(x,y),x,y])
+        
+        temp = sorted(temp, key = lambda x:x[0])
+        ans = []
+        for i in range(k):
+            point = temp[i]
+            ans.append([point[1],point[2]])
+        
+        return ans
 
+        
+        
 
+############################
+# 476. Number Complement
+# 27DEC21
+############################
+class Solution:
+    def findComplement(self, num: int) -> int:
+        '''
+        easiet way is to flip bit by bit
+        '''
+        temp = num
+        position = 1
+        while temp:
+            num = num ^ position
+            position = position << 1
+            temp = temp >> 1
+        return num
+            
+class Solution:
+    def findComplement(self, num: int) -> int:
+        '''
+        we can construct a mask where there are 1 bits
+        then use the mask to flip
+        algo:
+            compute bit length of the input number: log_2(num) + 1
+            compute 1 bits bitmask of length l : (1 << len) - 1
+            return num ^ mask
+        num - 1, get me the all ones
+        then just xor it
+        '''
+        bits = 0
+        temp = num
+        while temp:
+            bits += 1
+            temp = temp >> 1
+        
+        #get the ones maske
+        ones_mask = (1 << bits) - 1
+        return num ^ ones_mask
 
+class Solution:
+    def findComplement(self, num: int) -> int:
+        '''
+        get highest one biut
+        create the same 1 bit masks by propogating the highest 1-bit into the lower ones
+        
+        '''
+        bitmask = num
+        bitmask |= (bitmask >> 1)
+        bitmask |= (bitmask >> 2)
+        bitmask |= (bitmask >> 4)
+        bitmask |= (bitmask >> 8)
+        bitmask |= (bitmask >> 16)
+        # flip all bits
+        return bitmask ^ num
 
 
 
