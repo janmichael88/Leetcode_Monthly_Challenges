@@ -3084,7 +3084,104 @@ class Solution:
         
         return ans
 
+#usingheap
+class Solution:
+    def kClosest(self, points: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        we can use a max heap of size k
+        first push the squared distances for the first k element into a max heap
+        then only add new elements that are closer than the op oint in 
+        usse heappush pop option
+        '''
+        heap = []
+        for i in range(k):
+            heap.append((-self.getDist(points[i]),i))
+        #make into a heap
+        heapq.heapify(heap)
+        #now check for every element after k
+        for i in range(k,len(points)):
+            dist = -self.getDist(points[i])
+            #if point is closer than the kth farhtest, pushpoi
+            if dist > heap[0][0]:
+                heapq.heappushpop(heap,(dist,i))
         
+        return [points[i] for (_,i) in heap]
+    def getDist(self, point):
+        return point[0]**2 + point[1]**2
+
+# binary search
+class Solution:
+    def kClosest(self, points: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        we can use binary search
+        intuiton:
+            first choose a target distance, then iterate through every point during each binary search loop check if we have k elements
+            if it contains less than k points, we will increase our target distance
+            this is NlogN, which is no better than the standard sorting method
+        we can improve on this inution:
+            if the target distance yeilds fewer than k closer points, then we know this points are in out answer at least and can be ignoared in future iterations
+            if the target distance yields more than k closer points, on the other hand, we know that we can disacard points that fell outside target distance
+            by doing this we keep reducing space by half (N + N//2 + N//4 + N//16...) = 2N
+            we actually need to use the eucliean distance, instead of squared distance
+            An even distribution of the points in the input array will yield an even distribution of distances, but an uneven distribution of squared distances.
+            using euclidean distance instead of the squared distances will help convering to middle faster
+            we can precompute distances in a sperate array
+            this will allow us to use an array of reference indicies, rather than having to created and modify more complex arrays during each iteration
+        
+        algo:
+            1. precompute euclidean distances of each point
+            2. define the initial binary search range by identifying the farthest computed distance
+            3. perform a binary search from low to high using reference distances
+                * calculate the mid point of the remaining range as the target distance
+                * split the remaining points ont those closer and those father than the target distance
+                * if closer array has fewer than k points, add them to the clsoes array and decrease k
+                * keep only the appropriate remanining array for the next interation and update binary search range
+            4. once k elements have been added to the closest array, return closed k points
+        '''
+        # Precompute the Euclidean distance for each point
+        distances = [self.euclidean_distance(point) for point in points]
+        # Create a reference list of point indices
+        remaining = [i for i in range(len(points))]
+        # Define the initial binary search range
+        low, high = 0, max(distances)
+        
+        # Perform a binary search of the distances
+        # to find the k closest points
+        closest = []
+        while k:
+            mid = low + (high - low) / 2
+            closer, farther = self.split_distances(remaining, distances, mid)
+            if len(closer) > k:
+                # If more than k points are in the closer distances
+                # then discard the farther points and continue
+                remaining = closer
+                high = mid
+            else:
+                # Add the closer points to the answer array and keep
+                # searching the farther distances for the remaining points
+                k -= len(closer)
+                closest.extend(closer)
+                remaining = farther
+                low = mid
+                
+        # Return the k closest points using the reference indices
+        return [points[i] for i in closest]
+        
+    def split_distances(self, remaining: List[int], distances: List[float],mid: int) -> List[List[int]]:
+        closer = []
+        farther = []
+        for index in remaining:
+            if distances[index] <= mid:
+                closer.append(index)
+            else:
+                farther.append(index)
+        return [closer,farther]
+
+
+    def euclidean_distance(self, point: List[int]) -> float:
+        """Calculate and return the Euclidean distance."""
+        return sqrt(point[0] ** 2 + point[1] ** 2)
+
         
 
 ############################
@@ -3142,9 +3239,289 @@ class Solution:
         # flip all bits
         return bitmask ^ num
 
+#################################
+# 876. Middle of the Linked List
+# 28DEC21
+#################################
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def middleNode(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        just use slow and a fast pointer
+        '''
+        slow = head
+        fast = head
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+        return slow
 
 
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def middleNode(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can output to an array
+        ptu every node into an array
+        return the middle
+        '''
+        nodes = []
+        temp = head
+        while temp:
+            nodes.append(temp)
+            temp = temp.next
+        
+        return nodes[len(nodes) // 2]
+        
 
+################################
+# 116. Populating Next Right Pointers in Each Node
+# 28DEC21
+################################
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+"""
+
+class Solution:
+    def connect(self, root: 'Optional[Node]') -> 'Optional[Node]':
+        '''
+        just bfs on each level
+        '''
+        if not root:
+            return None
+        q = deque([root])
+        
+        while q:
+            N = len(q)
+            for i in range(N):
+                #get the first
+                curr = q.popleft()
+                if i < N -1:
+                    curr.next = q[0]
+                if curr.left:
+                    q.append(curr.left)
+                if curr.right:
+                    q.append(curr.right)
+        return root
+
+class Solution:
+    def connect(self, root: 'Optional[Node]') -> 'Optional[Node]':
+        '''
+        i can use recursion
+        for every node, if theres a left and right
+        left.next -> right
+        but also 
+        we need to make node.right.next = node.next.left
+        then recurse
+        '''
+        if not root:
+            return None
+        def dfs(node):
+            if not node:
+                return
+            if node and node.left and node.right:
+                node.left.next = node.right
+                if node.next:
+                    node.right.next = node.next.left
+                dfs(node.left)
+                dfs(node.right)
+        
+        dfs(root)
+        return root
+        
+
+#stack
+class Solution:
+    def connect(self, root: 'Node') -> 'Node':
+        '''
+        if a node as children, the node.left.next = node.right.next 
+        to get the bridge, we have to go next then conenct the right and left
+        '''
+        if not root:
+            return None
+        
+        stack = [root]
+        
+        while stack:
+            curr = stack.pop()
+            if not curr:
+                continue
+            if curr and curr.left and curr.right:
+                curr.left.next = curr.right
+                if curr.next:
+                    curr.right.next = curr.next.left
+                stack.append(curr.left)
+                stack.append(curr.right)
+
+        return root
+
+#############################
+# 1244. Design A Leaderboard
+# 28DEC21
+#############################
+#brute force
+class Leaderboard:
+
+    def __init__(self):
+        self.mapp = {}
+
+    def addScore(self, playerId: int, score: int) -> None:
+        if playerId in self.mapp:
+            self.mapp[playerId] += score
+        else:
+            self.mapp[playerId] = score
+
+    def top(self, K: int) -> int:
+        scores = [v for k,v in self.mapp.items()]
+        scores = sorted(scores)
+        return sum(scores[-K:])
+
+    def reset(self, playerId: int) -> None:
+        del self.mapp[playerId]
+
+
+# Your Leaderboard object will be instantiated and called as such:
+# obj = Leaderboard()
+# obj.addScore(playerId,score)
+# param_2 = obj.top(K)
+
+class Leaderboard:
+
+    def __init__(self):
+        self.mapp = {}
+
+    def addScore(self, playerId: int, score: int) -> None:
+        if playerId in self.mapp:
+            self.mapp[playerId] += score
+        else:
+            self.mapp[playerId] = score
+
+    def top(self, K: int) -> int:
+        heap = []
+        for score in self.mapp.values():
+            heapq.heappush(heap,score)
+            #only keep K greatest
+            if len(heap) > K:
+                heapq.heappop(heap)
+        res = 0
+        while heap:
+            res += heapq.heappop(heap)
+        return res
+
+    def reset(self, playerId: int) -> None:
+        del self.mapp[playerId]
+
+
+# Your Leaderboard object will be instantiated and called as such:
+# obj = Leaderboard()
+# obj.addScore(playerId,score)
+# param_2 = obj.top(K)
+# obj.reset(playerId)
+# obj.reset(playerId)
+
+from sortedcontainers import SortedDict
+
+class Leaderboard:
+    '''
+    we can do a trade off in the time complexity of the top function at the expense of the time complexity of
+    the add score
+    we take advanttage of using a BST like data structure - sortedDict in python
+    
+    algo:
+        1. initialize a dict or scores uses uding playerID and score
+        2. init SoretedMap 
+            this would be structued such that the key would be the score and the value be the number of players 
+            that have this scored. (imiage this being represented as a balanced BST with the keys being used for arranging the tree. we need the top function to use the scores and so we use them as the key)
+        3. addScore
+            get old score of playerId
+                update value of oldScore in map iv value has reached 0, remove the score entry
+                simply update the dict with new score for the player
+                add the updated value tot he sortedScoreMap as well by incrementing the valye by 1, one more player has this score
+                if the playe doesn't exitst init the score to score
+        4. top
+            iterate overa lll keys, because its BST< in roder traversal would return them in sorted order
+            so we will simly iterate over the keys and pick the first K
+            also we have arranged the tree with each score mapped to how many players have the sctore
+            pick the first K entries 
+        
+        5. reset
+            note the old score for the player
+            update the value of old score in mapp
+            delte the entry containg playerId
+            
+    '''
+    def __init__(self):
+        self.scores = {}
+        self.sortedScores = SortedDict()
+        
+    def addScore(self, playerId: int, score: int) -> None:
+        #the score dictionary simply contains the mapping fromt the playerID to score
+        #socredScores contain a BST with key as the score and value as the number of player with the scroe
+        if playerId not in self.scores:
+            self.scores[playerId] = score
+            self.sortedScores[-score] = self.sortedScores.get(-score,0) + 1
+        else:
+            preScore = self.scores[playerId]
+            val = self.sortedScores.get(-preScore)
+            #only 1 left
+            if val == 1:
+                del self.sortedScores[-preScore]
+            else:
+                self.scortedScores[-preScore] = val - 1
+            #newscore update
+            newScore = preScore + score
+            self.scores[playerId] = newScore
+            self.sortedScores[-newScore] = self.sortedScores.get(-newScore,0) + 1
+        
+
+    def top(self, K: int) -> int:
+        count, total = 0,0
+        
+        for key,value in self.sortedScores.items():
+            times = self.sortedScores.get(key)
+            for _ in range(times):
+                total += -key
+                count += 1
+                #found top k
+                if count == K:
+                    break
+            
+            #again
+            if count == K:
+                break
+        
+        return total
+        
+
+    def reset(self, playerId: int) -> None:
+        preScore = self.scores[playerId]
+        if self.sortedScores[-preScore] == 1:
+            del self.sortedScores[-preScore]
+        else:
+            self.sortedScores[-preScore] -= 1
+        
+        del self.scores[playerId]
+
+
+# Your Leaderboard object will be instantiated and called as such:
+# obj = Leaderboard()
+# obj.addScore(playerId,score)
+# param_2 = obj.top(K)
 
 
 
