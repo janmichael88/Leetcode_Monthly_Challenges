@@ -3523,7 +3523,105 @@ class Leaderboard:
 # obj.addScore(playerId,score)
 # param_2 = obj.top(K)
 
+########################################
+# 1015. Smallest Integer Divisible by K
+# 30DEC21
+########################################
+#close one
+class Solution:
+    def smallestRepunitDivByK(self, k: int) -> int:
+        '''
+        given a number k, we need to find the smallest integer n such that n is divisble by k and contain only the 1 digit
+        well start from 1 and then 11, then 111
+        then check if this number can be divised by k
+        if it can, return the its length
+        other wise return -1
+        
+        '''
+        n = 1
+        size = 1
+        while n < 2**1000000000:
+            if n % k == 0:
+                return size
+            n = n*10 + 1
+            size = size + 1
+        return -1
+        
+class Solution:
+    def smallestRepunitDivByK(self, K: int) -> int:
+        '''
+        we need to realize the the remainder % k and n % k are the same
+        run this to see that this is true
+        n = 1
+        remainder = 1
+        while n < 100000:
+            print(n % k,remainder % k)
+            n = n*10 + 1
+            remainder = n % k
+        
+        so instead of keeping track of n, just incremnet n and only check the remainder
+        
+        also, note the if k is 2 or 5, we cannot divide n
+        
 
+        '''
+        remainder = 1
+        length_N = 1
 
+        seen_remainders = set()
+
+        while remainder%K != 0:
+            N = remainder*10 + 1
+            remainder = N%K
+            length_N += 1
+
+            if remainder in seen_remainders:
+                return -1
+            else:
+                seen_remainders.add(remainder)
+
+        return length_N
+
+class Solution:
+    def smallestRepunitDivByK(self, k: int) -> int:
+        '''
+        we need to realize the the remainder % k and n % k are the same
+        run this to see that this is true
+        n = 1
+        remainder = 1
+        while n < 100000:
+            print(n % k,remainder % k)
+            n = n*10 + 1
+            remainder = n % k
+        
+        so instead of keeping track of n, just incremnet n and only check the remainder
+        
+        also, note the if k is 2 or 5, we cannot divide n
+        note that the remainder and N have the same remiander of K, so it ok to use the remainder instead of N
+        notice that remainder % k repeats its self
+        and also notice that if n does not exist, the loop continues endlessly
+        
+        but now reacll the pigeon hole princieple, the values of K can only 0 to K-1, and there should be K of them
+        as a result if the while loop continues to run more than K times, we can conclude that the remainder repeats
+        and since we cannot have any repeated remainders
+        
+        so if N exists, the while loop must return length_n in the first K loops
+        
+
+        '''
+        if k == 2 or k == 5:
+            return -1
+        
+        remainder = 0
+        for length in range(1,k+1):
+            remainder = (remainder*10 + 1) % k
+            if remainder == 0:
+                return length
+        return -1
+
+########################
+#
+#
+########################
 
 
