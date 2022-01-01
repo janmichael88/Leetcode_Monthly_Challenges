@@ -3619,9 +3619,101 @@ class Solution:
                 return length
         return -1
 
-########################
-#
-#
-########################
+####################################################
+# 1026. Maximum Difference Between Node and Ancestor
+# 31DEC21
+####################################################
+#close one
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        if i want the max diff for a subtree, i would first want to find the minimum in that substree
+        then dfs agian finding the min and update global max diff
+        '''
+        def find_min(node):
+            if not node.left and not node.right:
+                return node.val
+            left = None
+            right = None
+            if node.left:
+                left = find_min(node.left)
+            if node.right:
+                right = find_min(node.right)
+            if left and right:
+                return min(left,right)
+            elif left and not right:
+                return left
+            else:
+                return right
+            
+        self.max = 0
+        
+        def dfs(node):
+            if not node:
+                return
+            #at this currnot find min
+            curr_min = find_min(node)
+            self.max = max(self.max,abs(node.val-curr_min))
+            #recurse
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
+        return self.max
 
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        since we are asked to find the max diff, we don't need to compare all acnestors for a given node
+        we only need to compare the ancestors with max and min
+        so for a given node, we only need the max val and min val
+        while dfsing, keep trackg on min and max so far
+        then update globally
+        '''
+        if not root:
+            return 0
+        
+        self.max = 0
+        def dfs(node, curr_max,curr_min):
+            if not node:
+                return
+            #update diff from node to max and min
+            self.max = max(self.max,abs(node.val - curr_max),abs(node.val - curr_min))
+            #update
+            curr_max = max(curr_max,node.val)
+            curr_min = min(curr_min, node.val)
+            dfs(node.left,curr_max,curr_min)
+            dfs(node.right,curr_max,curr_min)
+        
+        dfs(root,root.val,root.val)
+        return self.max
+        
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        intuition: maximum min minimum
+        given any two nodes on the same root to leaf path, they must have had the required ancestor relationship
+        therefore we just need to record the max and min valus along all root to leaf paths and return max diff
+        '''
+        if not root:
+            return 0
+        
+        def dfs(node,curr_max,curr_min):
+            if not node:
+                return curr_max - curr_min
+            #updates
+            curr_max = max(curr_max,node.val)
+            curr_min = min(curr_min, node.val)
+            left = dfs(node.left,curr_max,curr_min)
+            right = dfs(node.right,curr_max,curr_min)
+            return max(left,right)
+        
+        return dfs(root,root.val,root.val)
 
