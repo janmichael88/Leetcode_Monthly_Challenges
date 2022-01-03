@@ -164,3 +164,129 @@ class Solution:
                     dp[left][right] = max(remaining + gain, dp[left][right])
         # burst nums[1]...nums[n-2], excluding the first one and the last one
         return dp[1][n - 2]
+
+#######################################################
+# Pairs of Songs With Total Durations Divisible by 60
+# 02DEC21
+#######################################################
+class Solution:
+    def numPairsDivisibleBy60(self, time: List[int]) -> int:
+        '''
+        return the number of songs, such that their sum is divisble by 60
+        (a+b) % 60 == 0
+        (a%60) + (b%60) == 0
+        from the hint, we only need to consider each song length mod 60
+        count the number of songs with length % 60 and store that in array of size 60
+        dont forget to check complemetbs
+        we are loooking for two songs a and b such that
+        a & 60 == 0, b % 60 or (a % 60) + (b % 60) == 60 
+        
+        '''
+        mapp = collections.defaultdict(int)
+        pairs = 0
+        for t in time:
+            #get mod 60 if this song
+            mod_60 = t % 60
+            #if its mod 60 already, find songs where mod 60 is 0
+            if mod_60 == 0:
+                pairs += mapp[mod_60]
+            #if its not check for compelemnt
+            else:
+                complement = 60 - mod_60
+                pairs += mapp[complement]
+            #now put mod 60 into mapp
+            mapp[mod_60] += 1
+            
+            
+        return pairs
+
+###############################
+# 568. Maximum Vacation Days
+# 02DEC21
+###############################
+class Solution:
+    def maxVacationDays(self, flights: List[List[int]], days: List[List[int]]) -> int:
+        '''
+        my job is to schedule the traveling to maximize the number of vacation days i can take following the rules
+        return max vacation days i can take during k weeks
+        rules:
+        1. i can travel to n cities, indexced 0 to n - 1, initallty on city 0
+        2. cities connected by flights there exists a flight i,j if flights[i][j] == 1
+        3. we have k weeks, 7 days, we can only take one flight on one days, and we can only take a flight on each week's monday morning
+        4. for each city, i am restricted in days, given matrisx days which is n by k, i can only stay in city i for days[i][k] for the k'th week
+        5. i could stay in a city beyong the number of vacations days, but you should work on the extra days,
+        which will not be counted as vacation days
+        6. if i fly from city A to cyt B and take the vacation on that day, the deduction is towards the vacation days of city B in that week
+        7. do not consider the impact of flight hours on vacation days
+        return max vacation days i can take during k weeks
+        
+        for each week, i need to play and work such that it's sum is seven days
+        
+        inution:
+            for every function call, we traverse over all the cities and find out  all cities connected to current one
+            for the current day we can either travel to a new city of stay (0/1 knapsack)
+            if we decide to switch lets call it j
+            after chaing the city we need to find the number of vacationa which we can take from the new city as current city
+            days[j][weekno] + dfs(j,weekno + 1)
+        '''
+        memo = {}
+        n = len(flights)
+        k = len(days[0])
+        def dp(curr_city,week_num):
+            #got to last weekno, no vacation
+            if week_num == k:
+                return 0
+            if (curr_city,week_num) in memo:
+                return memo[(curr_city,week_num)]
+            max_days = 0
+            for i in range(n):
+                #can take flight or stay at same cit
+                if flights[curr_city][i] == 1 or i == curr_city:
+                    #get new days
+                    vac = days[i][week_num] + dp(i,week_num + 1)
+                    max_days = max(max_days,vac)
+            memo[(curr_city,week_num)] = max_days
+            return max_days
+        
+        return dp(0,0)
+
+class Solution:
+    def maxVacationDays(self, flights: List[List[int]], days: List[List[int]]) -> int:
+        '''
+        now just translate to bottom up
+        the maximum number of vacationss that cant be taken given that we start from the ith city in the kth week is not dependent on the vacations that can be taken in earlier weeks
+        it only depends in the number of vacations that can be taken in the upcoming weeks and also on the connetions in flights
+        dp[i][k] represent the maximum number of vacations which can be taken from the ith city in the kth week
+        which would give us our anser
+        to dill each dp[i][k]:
+            1. start from the ith city in the kth week and staty in the same city for the k+1 week
+            so dp[i][k] = days[i][k] + dp[i,k+1]
+            
+            2. we start from the ith city in the kth week and move the the jth city in the k+1 week
+            only if flights[i][j] is 1
+        
+        in order to maximize the number of vacastions that can be taken from the ith city in the kth week,
+        we need to choose the desitinatino city that leads to a max number of vacatinos
+        so the factor to be considered here is
+        maxdays[j][k] + days[j][k+1] for all i,j,k satsifying flights[i][j] = 0
+            
+        '''
+        n = len(flights)
+        k = len(days[0])
+        
+        dp = [[0]*(k+1) for _ in range(n)]
+        
+        #start backwards in days to get the first entry
+        for week in range(k-1,-1,-1):
+            #check all curr cities
+            for curr_city in range(n):
+                #first update by stating in city
+                dp[curr_city][week] = days[curr_city][week] + dp[curr_city][week+1]
+                #now check for flights
+                for dest_city in range(n):
+                    if flights[curr_city][dest_city] == 1:
+                        take = days[dest_city][week] + dp[dest_city][week+1]
+                        no_take = dp[curr_city][week]
+                        dp[curr_city][week] = max(take,no_take)
+        
+        return dp[0][0]
