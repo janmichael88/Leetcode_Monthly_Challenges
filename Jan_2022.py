@@ -290,3 +290,131 @@ class Solution:
                         dp[curr_city][week] = max(take,no_take)
         
         return dp[0][0]
+
+###########################
+# 997. Find the Town Judge
+# 03DEC21
+###########################
+class Solution:
+    def findJudge(self, n: int, trust: List[List[int]]) -> int:
+        '''
+        we have n people 1 to n
+        if the town judge exists then:
+            1. town judge tructs nobody
+            2. everybody (except town judge) trust the judge
+            3. there is eacatly one person that statfies 1 and 2
+        
+        return label of judge if it exits, else -1
+        for this to be true, all nodes except judge must point
+        make the adj list
+        then scan from 1 to n if if its not there
+        if its check that everyone trusts it
+        '''
+        
+        adj_list = defaultdict(int)
+        in_degree = defaultdict(int)
+        
+        for a,b in trust:
+            adj_list[a] = b
+            #incrment in degree
+            in_degree[b] += 1
+        
+        #pass from 1 to n
+        for i in range(1,n+1):
+            if i not in adj_list:
+                if in_degree[i] == n - 1:
+                    return i
+        
+        return -1
+
+class Solution:
+    def findJudge(self, n: int, trust: List[List[int]]) -> int:
+        '''
+        another way is to just check the in and out degrees
+        also for there to be a judge, there must be n-1 edges
+        otherwise we cannot do it
+        '''
+        if len(trust) < n -1:
+            return - 1
+        
+        indegree = [0]*(n+1)
+        outdegree = [0]*(n+1)
+        
+        for a,b in trust:
+            outdegree[a] += 1
+            indegree[b] += 1
+        
+        for i in range(1,n+1):
+            if indegree[i] == n - 1 and outdegree[i] == 0:
+                return i
+            
+        return -1
+
+class Solution:
+    def findJudge(self, n: int, trust: List[List[int]]) -> int:
+        '''
+        we can use trust scrcore for each person
+        for an out going edge, -1, incoming edge +1
+        the max indegree is N-1
+        the town judge must be the person with score N-1 exactly
+        '''
+        if len(trust) < n -1:
+            return - 1
+        
+        trust_scores = [0]*(n+1)
+        
+        for a,b in trust:
+            trust_scores[a] -= 1
+            trust_scores[b] += 1
+        
+        for i in range(1,n+1):
+            if trust_scores[i] == n - 1:
+                return i
+        
+        return -1
+
+#########################
+# 401. Binary Watch
+# 03DEC21
+#########################
+class Solution:
+    def readBinaryWatch(self, turnedOn: int) -> List[str]:
+        #cheeky way
+        watch = [1,2,4,8,1,2,4,8,16,32]
+        times = []
+        for leds in itertools.combinations(range(len(watch)), turnedOn):
+            h = sum(watch[i] for i in leds if i < 4)
+            m = sum(watch[i] for i in leds if i >= 4)
+            if h > 11 or m > 59: continue
+            times.append("{}:{:02d}".format(h, m))
+        return times
+
+class Solution:
+    def readBinaryWatch(self, turnedOn: int) -> List[str]:
+        '''
+        for a given turned on number i can grab the indices that belong to it
+        the watch ash 4 digits for hours [1,,2,4,8]
+        the watche has [1,2,4,8,16,32]
+        ive i'm given a number say 4 lighted turned on
+        i want a combination if 4 indices taken from the total
+        '''
+        watch = [1,2,4,8,1,2,4,8,16,32]
+        N = len(watch)
+        ans = []
+        for lights in itertools.combinations(range(N),turnedOn):
+            #now check hours and in mins
+            hours = 0
+            mins = 0
+            for i in lights:
+                if i < 4:
+                    hours += watch[i]
+                if i >= 4:
+                    mins += watch[i]
+            
+            if hours > 11 or mins > 59:
+                continue
+            ans.append("{}:{:02d}".format(hours,mins))
+        
+        return ans
+
+#dfs solution
