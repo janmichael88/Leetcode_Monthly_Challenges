@@ -418,3 +418,175 @@ class Solution:
         return ans
 
 #dfs solution
+class Solution:
+    def readBinaryWatch(self, turnedOn: int) -> List[str]:
+        '''
+        we can use recursion to find out the number of solutions
+        for each call keep track of n,hours,mins,and current index to take
+        then for each call 
+            decrement n, but add to hours anad/or mins if we can
+            since the numbers are in binary we can use bit shifts to icnrement
+            also we can prune when hours > 11 or mins > 59
+        '''
+        results = []
+        
+        def dfs(n,hours,mins,idx):
+            #prune
+            if hours >= 12 or mins > 59:
+                return
+            if not n:
+                temp = str(hours)+":"+"0"*(mins < 10) + str(mins)
+                results.append(temp)
+                return
+            #check all
+            for i in range(idx,10):
+                #first 4 positions are for hours
+                if i < 4:
+                    dfs(n-1,hours | (1 << i),mins,i+1)
+                #the rest are for minuts
+                else:
+                    k = i - 4
+                    dfs(n-1,hours,mins | (1 << k),i+1)
+        
+        dfs(turnedOn,0,0,0)
+        return results
+
+#not using bit manip
+class Solution:
+    def readBinaryWatch(self, turnedOn: int) -> List[str]:
+        '''
+        we can use recursion to find out the number of solutions
+        for each call keep track of n,hours,mins,and current index to take
+        then for each call 
+            decrement n, but add to hours anad/or mins if we can
+            since the numbers are in binary we can use bit shifts to icnrement
+            also we can prune when hours > 11 or mins > 59
+        '''
+        def dfs(LEDS, idx, hrs, mins, n):
+            # base cases
+            if hrs >= 12 or mins >= 60:
+                return
+            if n == 0:
+                time = str(hrs) + ":" + "0"*(mins<10) + str(mins)
+                result.append(time)
+                return
+
+            if idx < len(LEDS):
+                if idx <= 3:  # handle hours
+                    dfs(LEDS, idx+1, hrs + LEDS[idx], mins, n-1)
+                else:  # handle minutes
+                    dfs(LEDS, idx+1, hrs, mins + LEDS[idx], n-1)
+                # next hour / min state
+                dfs(LEDS, idx+1, hrs, mins, n)
+        result = []
+        LEDS = [
+            8, 4, 2, 1,  # top row of watch
+            32, 16, 8, 4, 2, 1 # bottom row of watch
+        ]
+        dfs(LEDS, 0, 0, 0, turnedOn)
+        
+        return result
+
+#######################################
+# 1009. Complement of Base 10 Integer
+# 04DEC21
+######################################
+class Solution:
+    def bitwiseComplement(self, n: int) -> int:
+        '''
+        just flip bit by bit
+        '''
+        if n == 0:
+            return 1
+        temp = n
+        pos = 1
+        while temp:
+            n = n ^ pos
+            temp = temp >> 1
+            pos = pos << 1
+        
+        return n
+
+class Solution:
+    def bitwiseComplement(self, num: int) -> int:
+        '''
+        count bits and use ones mask
+        '''
+        if num == 0:
+            return 1
+        temp = num
+        bits = 0
+        while temp:
+            bits += 1
+            temp = temp >> 1
+        #get ones mask
+        ones = (1 << bits) - 1
+        return num ^ ones
+
+################################
+# 131. Palindrome Partitioning
+# 05DEC21
+################################
+class Solution:
+    def partition(self, s: str) -> List[List[str]]:
+        '''
+        the input is small enough for an exponenital solution
+        generation all partitions and check each paritions is a palindrome
+        for adding to a built path, check if its a palindrome, then add it
+        '''
+        N = len(s)
+        results = []
+        
+        def isPal(left,right):
+            while left < right:
+                if s[left] != s[right]:
+                    return False
+                left += 1
+                right -= 1
+            return True
+        
+        def dfs(i,path):
+            #if i got to the end of the string, its a valid path
+            if i == N:
+                results.append(path[:])
+                return
+            
+            for j in range(i,N):
+                if isPal(i,j):
+                    path.append(s[i:j+1])
+                    dfs(j+1,path)
+                    path.pop()
+                    
+        dfs(0,[])
+        return(results)
+
+class Solution:
+    def partition(self, s: str) -> List[List[str]]:
+        '''
+        the input is small enough for an exponenital solution
+        generation all partitions and check each paritions is a palindrome
+        for adding to a built path, check if its a palindrome, then add it
+        
+        we can also determine if a string a palindrom in 0(1) time by using overlapping subproblems
+        '''
+        N = len(s)
+        results = []
+        dp = [[False]*N for _ in range(N)]
+        
+        
+        def dfs(i,path):
+            #if i got to the end of the string, its a valid path
+            if i == N:
+                results.append(path[:])
+                return
+            
+            for j in range(i,N):
+                if s[i] == s[j]:
+                    if j - i <= 2 or dp[i+1][j-1] == True:
+                        dp[i][j] = True
+                        path.append(s[i:j+1])
+                        dfs(j+1,path)
+                        path.pop()
+                    
+        dfs(0,[])
+        return(results)
