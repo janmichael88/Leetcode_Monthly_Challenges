@@ -590,3 +590,89 @@ class Solution:
                     
         dfs(0,[])
         return(results)
+
+##########################
+# 1094. Car Pooling
+# 06DEC21
+##########################
+class Solution:
+    def carPooling(self, trips: List[List[int]], capacity: int) -> bool:
+        '''
+        the car can only go east, i.e to the right
+        so we cannot go back, this eliminates backtracking
+        we could evluate all paths going forward, but that would be exponenital in lenght lists
+        for each start, the capcity goes up of numb passengers
+        for each end, the capacity goes down
+        i can proccess these in order of drop off and record the the state of my car, after sorting of course
+        note similarity to meeting rooms II problem
+        '''
+        times = []
+        for people,start,end in trips:
+            times.append((start,people))
+            times.append((end,-people))
+        
+        #sort
+        times.sort()
+        
+        #now go in order and pick up people and check\
+        car = 0
+        for curr,people in times:
+            car += people
+            if car > capacity:
+                return False
+        return True
+
+class Solution:
+    def carPooling(self, trips: List[List[int]], capacity: int) -> bool:
+        '''
+        there is also a bucket sort solution
+        notice that there max distance is no more than 1000
+        initlize 1001 buckets and put number passenger change in each bucket
+        '''
+        times = [0]*1001
+        for people, start, end in trips:
+            times[start] += people
+            times[end] -= people
+        
+        car = 0
+        for peep in times:
+            car += peep
+            if car > capacity:
+                return False
+        return True
+
+'''
+this is cool solution using cum sums
+
+Let us start with example and understand what exactly we are asked to do:
+trips = [[3,2,7],[3,7,9],[8,3,9]], capacity = 11. Let us represent it in the following way:
+
+# # 3 3 3 3 3 # # #
+# # # # # # # 3 3 3
+# # # 8 8 8 8 8 8 8
+
+Now, the question is we sum all these lists, where we deal # as 0 (0 0 3 11 11 11 11 11 11 11) will some number be more than capacity = 11 or not. Let us instead each list construct another list, such that its cumulative sum is our list:
+
+0 0 3 0 0 0 0 -3 0 0 0
+0 0 0 0 0 0 0 3 0 0 -3
+0 0 0 8 0 0 0 0 0 0 -8
+
+Then if we sum these lists and evaluate cumulative sums, we will have exactly what is needed:
+
+0 0 3 8 0 0 0 0 0 0 -11 -> cumulative sums -> 0 0 3 11 11 11 11 11 11 11 0
+'''
+class Solution:
+    def carPooling(self, trips: List[List[int]], capacity: int) -> bool:
+        m = max([i for _,_,i in trips])
+        times = [0]*(m+2)
+        for i,j,k in trips:
+            times[j+1] += i
+            times[k+1] -= i
+        
+        car = 0
+        for change in times:
+            car += change
+            if car > capacity:
+                return False
+        return True
+        
