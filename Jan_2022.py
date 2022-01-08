@@ -167,7 +167,7 @@ class Solution:
 
 #######################################################
 # Pairs of Songs With Total Durations Divisible by 60
-# 02DEC21
+# 02JAN22
 #######################################################
 class Solution:
     def numPairsDivisibleBy60(self, time: List[int]) -> int:
@@ -202,7 +202,7 @@ class Solution:
 
 ###############################
 # 568. Maximum Vacation Days
-# 02DEC21
+# 02JAN22
 ###############################
 class Solution:
     def maxVacationDays(self, flights: List[List[int]], days: List[List[int]]) -> int:
@@ -293,7 +293,7 @@ class Solution:
 
 ###########################
 # 997. Find the Town Judge
-# 03DEC21
+# 03JAN22
 ###########################
 class Solution:
     def findJudge(self, n: int, trust: List[List[int]]) -> int:
@@ -375,7 +375,7 @@ class Solution:
 
 #########################
 # 401. Binary Watch
-# 03DEC21
+# 03JAN22
 #########################
 class Solution:
     def readBinaryWatch(self, turnedOn: int) -> List[str]:
@@ -489,7 +489,7 @@ class Solution:
 
 #######################################
 # 1009. Complement of Base 10 Integer
-# 04DEC21
+# 04JAN22
 ######################################
 class Solution:
     def bitwiseComplement(self, n: int) -> int:
@@ -525,7 +525,7 @@ class Solution:
 
 ################################
 # 131. Palindrome Partitioning
-# 05DEC21
+# 05JAN22
 ################################
 class Solution:
     def partition(self, s: str) -> List[List[str]]:
@@ -593,7 +593,7 @@ class Solution:
 
 ##########################
 # 1094. Car Pooling
-# 06DEC21
+# 06JAN22
 ##########################
 class Solution:
     def carPooling(self, trips: List[List[int]], capacity: int) -> bool:
@@ -676,3 +676,82 @@ class Solution:
                 return False
         return True
         
+###############################
+# 382. Linked List Random Node
+# 07JAN22
+###############################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+
+    def __init__(self, head: Optional[ListNode]):
+        self.nums = []
+        temp = head
+        while temp:
+            self.nums.append(temp.val)
+            temp = temp.next
+
+    def getRandom(self) -> int:
+        #another way, geneteat randome number from 1 to 0
+        #pick = int(random.random() * len(self.nums))
+        #use pick as index
+        return random.choice(self.nums)
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(head)
+# param_1 = obj.getRandom()
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+
+    def __init__(self, head: Optional[ListNode]):
+        '''
+        good reivist of a problem
+        we can use reservoir sampling to sample over a populatin of unknown size with constnace space
+        the algo is intended to sample k elements from a population of unknonw size, in this case k
+        reservior sampling is a family, but the most popular one is known as algoirthm R
+        in pseudo code:
+        
+        def algoR(S,R):
+            #S has items to sample from of unknonw size K
+            #creat R
+            for i in range(1,K):
+                R[i] = S[i]
+            #replace elements with gradually increasing prob
+            for i in range(k+1,n):
+                j = random(1,i)
+                if j <= k:
+                    R[j] = S[i]
+        
+        the important thing to remember is that at ane one time, each element has equal probability of being chosen into the R array
+        '''
+        self.head = head
+        
+
+    def getRandom(self) -> int:
+        scope = 1
+        chosen = 0
+        curr = self.head
+        while curr:
+            #decide whther to include the element in reservoir
+            if random.random() < 1/scope:
+                chosen = curr.val
+            #move on to next and update
+            curr = curr.next
+            scope += 1
+        
+        return chosen
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(head)
+# param_1 = obj.getRandom()
+
