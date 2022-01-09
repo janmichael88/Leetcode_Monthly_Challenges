@@ -755,3 +755,104 @@ class Solution:
 # obj = Solution(head)
 # param_1 = obj.getRandom()
 
+##########################
+# 1463. Cherry Pickup II
+# 08DEC21
+##########################
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        '''
+        two robots, one starting at (0,0) and the other (0,cols-1)
+        find max cherries we can take using both robots
+            * from (i,j) we can go (i+1,j), (i+1,j-1), (i+1,j+1)
+            * can only go down really
+            * passing through i,j we go up grid[i][j]
+            * if both go through same cell, only one takes cherries
+            * both need to his the bottom
+            
+        in the first problem we only had one robot, now have 2
+        if we move robot1, then try to figure out robot 2, thats too many subproblems
+        if we move boths robots together, we get (r1,r2,c1,c2)
+        which represents the rows and cols for each robot, but we know we have to move them together
+        and that they only go down
+        so r1 == r2
+        then we have (r,c1,c2), since its dp, we try all and find the max
+        dp(i,j,k) = max(dp(new_i,new_j,new_k) for all possible (new_i,new_j,new_k) + dp(i,j,k)
+        there are 9 possible subprblems from and i,j,k
+            ROBOT1 | ROBOT2
+        ------------------------
+         LEFT DOWN |  LEFT DOWN
+         LEFT DOWN |       DOWN
+         LEFT DOWN | RIGHT DOWN
+              DOWN |  LEFT DOWN
+              DOWN |       DOWN
+              DOWN | RIGHT DOWN
+        RIGHT DOWN |  LEFT DOWN
+        RIGHT DOWN |       DOWN  
+        RIGHT DOWN | RIGHT DOWN 
+        
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        memo = {}
+        
+        def dp(i,j,k):
+            #if out of bounds, no cherries to be taken
+            if i < 0 or i >= rows or j < 0 or j >= cols or k < 0 or k >=cols:
+                return 0
+            if (i,j,k) in memo:
+                return memo[(i,j,k)]
+            #current cell
+            res = 0
+            res += grid[i][j]
+            #if robots are not on the same scell
+            if j != k:
+                res += grid[i][k]
+            #solve subproblems if i haven't hit the last row
+            if i != rows -1:
+                max_of_all_subproblems = 0
+                for dj in [-1,0,1]:
+                    for dk in [-1,0,1]:
+                        max_of_all_subproblems = max(max_of_all_subproblems,dp(i+1,j+dj,k+dk))
+                #add to res
+                res += max_of_all_subproblems
+            
+            memo[(i,j,k)] = res
+            return res
+        
+        return dp(0,0,cols -1)
+
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        '''
+        also bottom up
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dp = [[[0]*cols]*cols]*rows
+        
+        #starting from the end
+        for i in reversed(range(rows)):
+            for j in range(cols):
+                for k in range(cols):
+                    #current cell
+                    res = 0
+                    res += grid[i][j]
+                    #if robots are not on the same scell
+                    if j != k:
+                        res += grid[i][k]
+                    #solve subproblems if i haven't hit the last row
+                    if i != rows -1:
+                        max_of_all_subproblems = 0
+                        for dj in [-1,0,1]:
+                            for dk in [-1,0,1]:
+                                #must be in bounds
+                                if (0 <= i + 1 < rows) and (0 <= j + dj < cols) and (0 <= k + dk < cols):
+                                    max_of_all_subproblems = max(max_of_all_subproblems,dp[i+1][j +dj][k+dk])
+                        res += max_of_all_subproblems
+                    dp[i][j][k] = res
+                        
+        return dp[0][0][cols-1]
+        
