@@ -757,7 +757,7 @@ class Solution:
 
 ##########################
 # 1463. Cherry Pickup II
-# 08DEC21
+# 08JAN22
 ##########################
 class Solution:
     def cherryPickup(self, grid: List[List[int]]) -> int:
@@ -855,4 +855,161 @@ class Solution:
                     dp[i][j][k] = res
                         
         return dp[0][0][cols-1]
+
+################################
+# 1041. Robot Bounded In Circle
+# 09JAN22
+###############################
+class Solution:
+    def isRobotBounded(self, instructions: str) -> bool:
+        '''
+        there has to be a pattern, in order to return true, the robot has to come back
+        the problem with simulating is that it would take a long time before coming back to center
+        from the hint
+            if the final vector isn't point north it has to come back
+            so how do a keep track of the vector state
+            the final vector consits of change in direction plus change in position
+        
+        this is a good example of limit cycle trajectory
+        inital proog:
+            after at most 4 cycles, the limit cycle trajectory return to the inital points, it is bounded
+            ideally if we ran through in intrusction set 4 times and ended up at 0,0, the robot is bounded
+        '''
+        #four pass check
+        start = [0,0]
+        #must go in clockwise direction for modular arithmetic to work
+        dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+        #initally we are facing north
+        idx = 0
+        for _ in range(4):
+            for step in instructions:
+                if step == 'L':
+                    idx = (idx+3) % 4
+                elif step == 'R':
+                    idx = (idx+1) % 4
+                else:
+                    start[0] += dirs[idx][0]
+                    start[1] += dirs[idx][1]
+        return start == [0,0]
+
+class Solution:
+    def isRobotBounded(self, instructions: str) -> bool:
+        '''
+        we dont have to check 4 times, just check if at start or not facing north
+        '''
+        #four pass check
+        start = [0,0]
+        #must go in clockwise direction for modular arithmetic to work
+        dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+        #initally we are facing north
+        idx = 0
+        for step in instructions:
+            if step == 'L':
+                idx = (idx+3) % 4
+            elif step == 'R':
+                idx = (idx+1) % 4
+            else:
+                start[0] += dirs[idx][0]
+                start[1] += dirs[idx][1]
+        return start == [0,0] or idx != 0
+
+##################################
+# 4. Median of Two Sorted Arrays
+# 09JAN22
+##################################
+#log(M+N)
+
+class Solution:
+    def findMedianSortedArrays(self, nums1: List[int], nums2: List[int]) -> float:
+        '''
+        we can solve this in log(m+n) using kth smallest in two sorted arrays
+        a few notes:
+            * when the total length is pdd, the median is in the middle
+            * when the total length is even, the median is the average of the middle 2
+        for getkth recursive:
+            if sum of two medians indices is smaller than k
+                if nums1 median value bigger than nums2, then nums2's first half will always be positioned before nums1's median, so k would never be in num2's first half
+            if sum of two median's indicies is bigger than k
+                if nums1 median value bigger than nums2, then nums2's first half would be merged before nums1's first half, thus k always come before nums1's median, then nums1's second half would never include k
+
+
+        '''
+        len1 = len(nums1)
+        len2 = len(nums2)
+        # when total length is odd, the median is the middle
+        if (len1 + len2) % 2 != 0:
+            return self.get_kth(nums1, nums2, 0, len1-1, 0, len2-1, (len1+len2)//2)
+        else:
+        # when total length is even, the median is the average of the middle 2
+            middle1 = self.get_kth(nums1, nums2, 0, len1-1, 0, len2-1, (len1+len2)//2)
+            middle2 = self.get_kth(nums1, nums2, 0, len1-1, 0, len2-1, (len1+len2)//2-1)
+            return (middle1 + middle2) / 2
+        
+    def get_kth(self, nums1, nums2, start1, end1, start2, end2, k):
+        if start1 > end1:
+            return nums2[k-start1]
+        if start2 > end2:
+            return nums1[k-start2]
+
+        middle1 = (start1 + end1) // 2
+        middle2 = (start2 + end2) // 2
+        middle1_value = nums1[middle1]
+        middle2_value = nums2[middle2]
+
+        # if sum of two median's indicies is smaller than k
+        # i dont have at least k elements
+        if (middle1 + middle2) < k:
+                # if nums1 median value bigger than nums2, then nums2's first half will always be positioned before nums1's median, so k would never be in num2's first half
+            if middle1_value > middle2_value:
+                #move up the smaller
+                return self.get_kth(nums1, nums2, start1, end1, middle2+1, end2, k)
+            else:
+                return self.get_kth(nums1, nums2, middle1+1, end1, start2, end2, k)
+                # if sum of two median's indicies is bigger than k
+        else:
+            # if nums1 median value bigger than nums2, then nums2's first half would be merged before nums1's first half, thus k always come before nums1's median, then nums1's second half would never include k
+            if middle1_value > middle2_value:
+                return self.get_kth(nums1, nums2, start1, middle1-1, start2, end2, k)
+            else:
+                return self.get_kth(nums1, nums2, start1, end1, start2, middle2-1, k)
+
+
+#from tushar roy
+#min log(m,n)
+class Solution:
+    def findMedianSortedArrays(self, nums1, nums2):
+        """
+        :type nums1: List[int]
+        :type nums2: List[int]
+        :rtype: float
+        """
+        if len(nums1) > len(nums2):
+            nums1, nums2 = nums2, nums1
+        
+        m, n = len(nums1), len(nums2)
+        
+        left_size = (m + n + 1) // 2
+        start = 0
+        end = m
+        is_even = ((m + n) % 2) == 0
+        while start <= end:
+            a_part = (start + end) // 2
+            b_part = left_size - a_part
+            
+            aleftmax = float("-inf") if a_part == 0 else nums1[a_part - 1]
+            arightmin = float("inf") if a_part == m else nums1[a_part]
+            bleftmax = float("-inf") if b_part == 0 else nums2[b_part - 1]
+            brightmin = float("inf") if b_part == n else nums2[b_part]
+            
+            if aleftmax <= brightmin and bleftmax <= arightmin:
+                if not is_even:
+                    return max(aleftmax, bleftmax)
+                else:
+                    return (max(aleftmax, bleftmax) + min(arightmin, brightmin))/ 2
+            elif aleftmax > brightmin:
+                end = a_part - 1
+            elif bleftmax > arightmin:
+                start = a_part + 1
+            
+
         
