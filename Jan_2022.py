@@ -1011,5 +1011,131 @@ class Solution:
             elif bleftmax > arightmin:
                 start = a_part + 1
             
-
+###################
+# 67. Add Binary
+# 10JAN22
+###################
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        '''
+        start off by reversing the two strings
+        create string and
+        while loop for both twoo pointers
+        add and carry
+        finish remaing
+        returned reverse string as answwer
+        '''
+        a = a[::-1]
+        b = a[::-1]
         
+        res = ""
+        carry = 0
+        i = j = 0
+        
+        while i < len(a) and j < len(b):
+            #get initial value
+            val = (int(a[i]) + int(b[i])) % 2
+            #include carry
+            val += carry
+            #update carry
+            carry = (int(a[i]) + int(b[i])) // 2
+            #add to res
+            res += str(val)
+            i += 1
+            j += 1
+        
+        #remainders
+        while i < len(a):
+            val = (int(a[i])) % 2
+            val += carry
+            carry = (int(a[i]) + carry) //2
+            
+            res += str(val)
+            i += 1
+            
+        while j < len(b):
+            val = (int(b[j])) % 2
+            val += carry
+            carry = (int(b[j]) + carry) //2
+            res += str(val)
+            j += 1
+        
+        if carry:
+            res += '1'
+        
+        return res[::-1]
+
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        '''
+        we can use the fill string operation in python
+        '''
+        N = max(len(a),len(b))
+        #this fills left
+        a = a.zfill(N)
+        b = b.zfill(N)
+        
+        carry = 0
+        ans = ""
+        
+        #now start backwards
+        for i in range(N-1,-1,-1):
+            #we will add to carry and use that as our answer
+            if a[i] == '1':
+                carry += 1
+            if b[i] == '1':
+                carry += 1
+            #check
+            if carry % 2 == 1:
+                ans += '1'
+            else:
+                ans += '0'
+            
+            carry = carry // 2
+        
+        if carry:
+            ans += '1'
+        
+        return "".join(ans[::-1])
+
+class Solution:
+    def addBinary(self, a: str, b: str) -> str:
+        '''
+        we can xor if we can't use addition
+        turns out a ^ b is answer without carry
+        and to find current carry we just shift this number to the left once
+        now the problem is reduced:
+            find the sum of answer without carry and carry
+        its the same problem - to sum two numbers
+        and once could solve it in a loop while carry it not == o
+        algo:
+            convert a an b in to ints - x will be used to keep ans and y for carry
+            while carry i non zero:
+                current answer w/o carry ix ans = x^y
+                current carry is left shift - carry = (x & y) << 1
+                swap
+        '''
+        x = int(a,2)
+        y = int(b,2)
+        
+        while y:
+            #get answer without carry
+            answer = x ^ y
+            #find the current carry
+            carry = (x & y) << 1
+            x,y = answer,carry
+        
+        return bin(x)[2:]
+
+#cool way of controlling loop invariant
+class Solution:
+    def addBinary(self, a, b):
+        i, j, summ, carry = len(a) - 1, len(b) - 1, [], 0
+        while i >= 0 or j >= 0 or carry:
+            d1 = int(a[i]) if i >= 0 else 0
+            d2 = int(b[j]) if j >= 0 else 0
+            summ += [str((d1 + d2 + carry) % 2)]
+            carry = (d1 + d2 + carry) // 2
+            i, j = i-1, j-1 
+        return "".join(summ[::-1])
+
