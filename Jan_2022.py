@@ -1139,3 +1139,287 @@ class Solution:
             i, j = i-1, j-1 
         return "".join(summ[::-1])
 
+#########################################
+# 1022. Sum of Root To Leaf Binary Numbers
+# 11JAN22
+#########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def sumRootToLeaf(self, root: Optional[TreeNode]) -> int:
+        '''
+        this is really just building all root to leaf paths and adding
+        i can use a global variable and add to this when i hit a leaf node
+        i can use the shift operator to move and add
+        then use | to add
+        '''
+        self.res = 0
+        
+        def dfs(node,curr):
+            if not node:
+                return
+            #if there is leaf, add
+            curr = (curr << 1) | node.val
+            if not node.left and not node.right:
+                self.res += curr
+
+            dfs(node.left,curr)
+            dfs(node.right,curr)
+
+        dfs(root,0)
+        return self.res
+
+class Solution:
+    def sumRootToLeaf(self, root: Optional[TreeNode]) -> int:
+        '''
+        this is really just building all root to leaf paths and adding
+        i can use a global variable and add to this when i hit a leaf node
+        i can use the shift operator to move and add
+        then use | to add
+        '''
+        res = 0
+        
+        stack = [(root,0)]
+        
+        while stack:
+            node,curr = stack.pop()
+            if not node:
+                continue
+            curr = (curr << 1) | node.val
+
+            if not node.left and not node.right:
+                res += curr
+            
+            stack.append((node.left,curr))
+            stack.append((node.right,curr))
+
+
+        return res
+
+###############################
+# 422. Valid Word Square
+# 11JAN22
+###############################
+class Solution:
+    def validWordSquare(self, words: List[str]) -> bool:
+        '''
+        for it to be a valid word square all i,j elements must be the same as j,i
+        
+        '''
+        for i in range(len(words)):
+            #matching word
+            matched_word = words[i]
+            #check of this word is bigger than the square
+            if len(matched_word) > len(words):
+                return False
+            #now check chars
+            for j in range(len(matched_word)):
+                #if the word to be checked is smaller than current word it is not valid
+                #i is the current row index, and if the j'th word to be checked has smaller length than the current row it must be an invalid square
+                if len(words[j]) <= i or words[j][i] != matched_word[j]:
+                    return False
+        return True
+
+'''
+zip(*words) is a commonly used Python trick to transpose a matrix. zip_longest is used in place of zip for stirngs of different lengths, e.g. words = ["abcd","bnrt","crm","dt"].
+
+>>> list(zip(*words))
+[('a', 'b', 'c', 'd'), ('b', 'n', 'r', 't')]
+>>> list(zip_longest(*words))
+[('a', 'b', 'c', 'd'), ('b', 'n', 'r', 't'), ('c', 'r', 'm', None), ('d', 't', None, None)]
+
+'''
+class Solution:
+    def validWordSquare(self, words: List[str]) -> bool:
+        return words == ["".join(x) for x in zip_longest(*words, fillvalue="")]
+
+class Solution:
+    def validWordSquare(self, words: List[str]) -> bool:
+        '''
+        using zip and zip longest
+        
+        '''
+        zipped_words = []
+        for x in zip_longest(*words,fillvalue=""):
+            zipped_words.append("".join(x))
+        
+        return words == zipped_words
+
+class Solution:
+    def validWordSquare(self, words: List[str]) -> bool:
+        '''
+        using zip and zip longest
+        
+        '''
+        for i in range(len(words)):
+            build_word = ""
+            for j in range(len(words)):
+                if i < len(words[j]):
+                    build_word += words[j][i]
+            
+            if words[i] != build_word:
+                return False
+        
+        return True
+
+####################################
+# 588. Design In-Memory File System
+# 11JAN22
+####################################
+#almost!
+class Dir:
+    def __init__(self):
+        self.dirs = defaultdict(Dir)
+        self.files = defaultdict(str)
+
+class FileSystem:
+    '''
+    we can use a next dicts for each
+    each node contains two hashmaps files and dirs
+    files contains names of the file and its contents
+    dirs is another name with subdirectory as key and a structure as value
+    '''
+
+    def __init__(self):
+        self.root = Dir()
+        
+
+    def ls(self, path: str) -> List[str]:
+        #give reference to root
+        t = self.root
+        #hold files
+        files = []
+        #not empty back slash
+        if path != "/":
+            d = path.split("/")
+            #don't start at begnning and end
+            for i in range(1,len(d)-1):
+                #move the root
+                if d[i] in t.dirs:
+                    t = t.dirs[d[i]]
+            if d[len(d)-1] in t.files:
+                files.append(d[len(d)-1])
+                return files
+            else:
+                if d[len(d)-1] in t.dirs:
+                    t = t.dirs[d(len(d))-1]
+        #add the rest
+        for foo in t.dirs.keys():
+            files.append(foo)
+        for foo in t.files.keys():
+            files.append(foo)
+            
+        return sorted(files)
+
+    def mkdir(self, path: str) -> None:
+        t = self.root
+        d = path.split("/")
+        for i in range(1,len(d)):
+            if d[i] in t.dirs:
+                #make new
+                t.dirs[d[i]] = Dir()
+            #always
+            if d[i] in t.dirs:
+                t = t.dirs[d[i]]
+        
+
+    def addContentToFile(self, filePath: str, content: str) -> None:
+        t = self.root
+        d = filePath.split("/")
+        for i in range(1,len(d)-1):
+            if d[i] in t.dirs:
+                t = t.dirs[d[i]]
+        #add
+        if d[len(d)-1] in t.files:
+            temp = t.files[d[len(d)-1]]
+            t.files[d[len(d)-1]] = temp+content
+        else:
+            t.files[d[len(d)-1]] = content
+
+    def readContentFromFile(self, filePath: str) -> str:
+        t = self.root
+        d = filePath.split("/")
+        for i in range(1,len(d)-1):
+            if d[i] in t.dirs:
+                t = t.dirs[d[i]]
+        
+        if d[len(d)-1] in t.files:
+            return t.files[d(len(d))-1]
+        else:
+            return ""
+        
+
+
+# Your FileSystem object will be instantiated and called as such:
+# obj = FileSystem()
+# param_1 = obj.ls(path)
+# obj.mkdir(path)
+# obj.addContentToFile(filePath,content)
+# param_4 = obj.readContentFromFile(filePath)
+
+class TrieNode:
+    def __init__(self):
+        self.content = ""
+        self.children = defaultdict(TrieNode)
+        self.isfile = False
+
+class FileSystem:
+
+    def __init__(self):
+        self.root = TrieNode()
+        
+    def ls(self, path: str) -> List[str]:
+        node = self.root
+        path_list = path.split("/")
+        for p in path_list:
+            if not p:
+                continue
+            node = node.children.get(p)
+        if node.isfile:
+            return [p]
+        ans = [i for i in node.children.keys()]
+        if not ans:
+            return ans
+        ans.sort()
+        return ans
+
+    def mkdir(self, path: str) -> None:
+        path_list = path.split("/")
+        node = self.root
+        for p in path_list:
+            if not p:
+                continue
+            node = node.children[p]
+        
+
+    def addContentToFile(self, filePath: str, content: str) -> None:
+        path_list = filePath.split("/")
+        node = self.root
+        for p in path_list:
+            if not p:
+                continue
+            node = node.children[p]
+        node.content += content
+        node.isfile = True
+
+    def readContentFromFile(self, filePath: str) -> str:
+        path_list = filePath.split("/")
+        node = self.root
+        for p in path_list:
+            if not p:
+                continue
+            node = node.children.get(p)
+        return node.content
+        
+
+
+# Your FileSystem object will be instantiated and called as such:
+# obj = FileSystem()
+# param_1 = obj.ls(path)
+# obj.mkdir(path)
+# obj.addContentToFile(filePath,content)
+# param_4 = obj.readContentFromFile(filePath)
