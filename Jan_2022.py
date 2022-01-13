@@ -1353,14 +1353,6 @@ class FileSystem:
             return ""
         
 
-
-# Your FileSystem object will be instantiated and called as such:
-# obj = FileSystem()
-# param_1 = obj.ls(path)
-# obj.mkdir(path)
-# obj.addContentToFile(filePath,content)
-# param_4 = obj.readContentFromFile(filePath)
-
 class TrieNode:
     def __init__(self):
         self.content = ""
@@ -1423,3 +1415,51 @@ class FileSystem:
 # obj.mkdir(path)
 # obj.addContentToFile(filePath,content)
 # param_4 = obj.readContentFromFile(filePath)
+
+##########################################
+# 701. Insert into a Binary Search Tree
+# 12JAN22
+######################################
+class Solution:
+    def insertIntoBST(self, root: Optional[TreeNode], val: int) -> Optional[TreeNode]:
+        '''
+        just use recursion
+        if val is greater than node go right
+        else go left
+        '''
+        def dfs(node,val):
+            if not node:
+                return TreeNode(val)
+            if val > node.val:
+                node.right = dfs(node.right,val)
+            else:
+                node.left = dfs(node.left,val)
+            return node
+        
+        return dfs(root,val)
+
+class Solution:
+    def insertIntoBST(self, root: Optional[TreeNode], val: int) -> Optional[TreeNode]:
+        '''
+        another way is to just use two pointers and keep connection
+        '''
+        if not root:
+            return TreeNode(val)
+        
+        prev = None
+        curr = root
+        
+        while curr:
+            prev = curr
+            if curr.val > val:
+                curr = curr.left
+            else:
+                curr = curr.right
+                
+        #now im at the point with prev because curr is none
+        if prev.val > val:
+            prev.left = TreeNode(val)
+        else:
+            prev.right = TreeNode(val)
+        
+        return root
