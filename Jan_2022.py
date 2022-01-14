@@ -1463,3 +1463,114 @@ class Solution:
             prev.right = TreeNode(val)
         
         return root
+
+#################################################
+# 452. Minimum Number of Arrows to Burst Balloons
+# 13JAN22
+#################################################
+#sorting on start
+class Solution:
+    def findMinArrowShots(self, points: List[List[int]]) -> int:
+        '''
+        this is kinda like an interval problem
+        if the intervals intersect somewhere, than using one arrow at the intersection pops all the balloons
+        if i sort on their starting x's, keep merging until i can't
+        once i can't i use up an arrow
+        '''
+        N = len(points)
+        if N == 0:
+            return 0
+        #sort on start
+        points.sort(key = lambda x: x[0])
+        #keep extending otherwise use up an arrow
+        arrows = 1
+        end = points[0][1]
+        for curr_start,curr_end in points:
+            if curr_start <= end:
+                #update end
+                end = min(end,curr_end)
+            else:
+                end = curr_end
+                arrows += 1
+        
+        return arrows
+
+#sorting on end, not proof of greedy algos is hard
+class Solution:
+    def findMinArrowShots(self, points: List[List[int]]) -> int:
+        '''
+        another way is to sort on their end index
+        for a balloon there are two possibilites:
+            to have a start coord smaller than the curr ending balloon, means thats these balloons could have been popped togetehr
+            to have a start coor larger than the curr ending, means we woul need an extra arrow
+        
+        this means that could always track the end of the curr ballon and ignore all balloons which end before it
+        once the current ballon has ended, we increase the number of arraows by one
+        '''
+        N = len(points)
+        if N == 0:
+            return 0
+        #sort on start
+        points.sort(key = lambda x: x[1])
+        arrows = 1
+        starting_end = points[0][1]
+        for start,end in points:
+            if start > starting_end:
+                arrows += 1
+                starting_end = end
+        
+        return arrows
+
+
+######################################
+# 166. Fraction to Recurring Decimal
+# 13JAN22
+######################################
+class Solution:
+    def fractionToDecimal(self, num: int, denom: int) -> str:
+        '''
+        a stupid way would be to divide num by num than find the repeating unit
+        you need to try a couple of test cases with long division
+        the key insight here is the once the remainder starts repeating, so does the divied resutl
+        algo:
+            need to keep a hashtable that maps from the remainder to is ppositoin in the fractional part
+            once that has been found, you can enclose the recurring fractinoal part with ()
+        '''
+        #first check if it goes evenly
+        if num % denom == 0:
+            return str(num//denom)
+        
+        #otherwise we gotta get the integral part and decimal part
+        sign = '' if num*denom >=0 else '-'
+        #easier to start with positive values
+        num = abs(num)
+        denom = abs(denom)
+        
+        #init rest with sign and intergral part
+        res = sign+str(num//denom)+"."
+        
+        #start off with remainder
+        num = num % denom
+        i = 0
+        part = ''
+        
+        m = {num:i} #the remainder and position
+        
+        while num % denom != 0: #while there is a reaminder
+            #add zeros digit
+            num *= 10
+            i += 1
+            rem = num % denom
+            part += str(num // denom)
+            #if we have seen this remainder, build it part and return
+            if rem in m:
+                #we've repeated up this part so first find the non repreating part
+                non_repeating = part[:m[rem]]
+                repeating = part[m[rem]:]
+                return res + non_repeating + '('+repeating+')'
+            #other mark as new
+            m[rem] = i
+            num = rem
+        
+        #must bs non repeating in remainder
+        return res + part
