@@ -1574,3 +1574,323 @@ class Solution:
         
         #must bs non repeating in remainder
         return res + part
+
+############################
+# 13DEC22
+# 156. Binary Tree Upside Down
+###########################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def upsideDownBinaryTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        if i'm at a node,
+        the left child if there is one becomes the new root
+        the root becomes right
+        the original right becomes left
+        it is guranteed that every right node has a sibling a left node with the same parent
+        and has no children
+        
+        #another way of reframing
+        1. the root's right node becomes the left node of the left node of root
+            root.left.left = root.right
+        2. root becomes the right node of root's left node:
+            root.leftright = root
+        3. above rules apply on the left edge and return left node along path
+        note this is bottom up
+        '''
+        def dfs(root):
+            if not root or (not root.left and not root.right):
+                return root
+            
+            left = dfs(root.left)
+            root.left.left = root.right
+            root.left.right = root
+            root.left = None
+            root.right = None
+            return left
+        
+        return dfs(root)
+
+class Solution:
+    def upsideDownBinaryTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can use top down, but since a tree is DAG we need to pass information along
+        specifically we need the parent from where we came from and the right sibling
+        '''
+        self.ans = None
+        
+        def dfs(root,parent,right):
+            if not root:
+                return 
+            left_child = root.left
+            right_child = root.right
+            root.left = right
+            root.right = parent
+
+            if left_child:
+                dfs(left_child,root,right_child)
+            else:
+                self.ans = root
+        
+        dfs(root,None,None)
+        return self.ans
+
+#iterative
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def upsideDownBinaryTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can also do this iteratively, but we need to kepe track of the old referemces
+        '''
+        old_left_leaf = None
+        old_parent = None
+        old_right_sibling = None
+        
+        while root:
+            #change the current level
+            left_child = root.left
+            right_child = root.right
+            root.left = old_right_sibling
+            root.right = old_parent
+            
+            #check if we need to keep going
+            if not left_child:
+                old_left_leaf = root
+                break
+            #otherwise go down a level
+            old_parent = root
+            root = left_child
+            old_right_sibling = right_child
+        
+        return old_left_leaf
+        
+
+#helpful https://leetcode.com/problems/binary-tree-upside-down/discuss/502244/Graph-Explanation-with-3-Python-Solutions
+
+############################
+# 8. String to Integer (atoi)
+# 14JAN22
+############################
+class Solution:
+    def myAtoi(self, s: str) -> int:
+        '''
+        keep advanving left pointer if its not an ord
+        then keep decrementing right pointer if is not order
+        * discard all leading whitespace
+        * get sign of number
+        * overflow
+        * invalid input
+        '''
+        INT_MIN = -(2**31)
+        INT_MAX = 2**31 - 1
+        
+        s = s.strip()
+        
+        N = len(s)
+        sign = 1
+        num = 0
+        i = 0
+        
+        if N == 0:
+            return 0
+        
+        
+        #sign correction
+        if s[0] == '-':
+            sign *= -1
+            i += 1
+        elif s[0] == '+':
+            i += 1
+        
+        #go through string
+        while i < N and '0' <= s[i] <= '9':
+            curr_digit = ord(s[i]) - ord('0')
+            #abandon if we know its oveflown
+            if num > INT_MAX // 10 or (num == INT_MAX // 10 and curr_digit >7):
+                return INT_MAX if sign == 1 else INT_MIN
+            num = num*10 + curr_digit
+            i += 1
+        
+        return num*sign
+            
+#offical solution
+#abbreviating 0-7 and 0-8 check
+class Solution:
+    def myAtoi(self, s: str) -> int:
+        '''
+        just follow the rules, make sure we strip ending and leading whitespaces
+        make sure we get rid of any leading zeros
+        if we had access to a longs vars, we could just simply check for overflow and underflow
+        but it's better to assume
+        the last section really about checking for underflow and overflow
+        
+        overflow:
+            max is 2**31 - 1 = 2147483647
+            case 1: curr number is less than int_max / 10(214748364) we can add in any number
+            case 2: curr number is greater than int_max / 10(214748364) adding any number will go over
+            case 3: if curr number is equal to int_max / 10 (214748364) we are limited to the digits between 0 and 7
+        
+        underflow:
+            the min value is -2**31 = -2147483648
+            case 1: if the curr numer is greater than int_min / 10 (-214748364) then we can add any new digits
+            case 2: of the curr number is less than int_mina / 10 (-214748364), appending any digits will make it less
+            case 3: if curr numer is == tp int_min / 10, we are limited to anydigits between 0 and 8
+            
+        now notice:
+        Notice that cases 1 and 2 are similar for overflow and underflow. The only difference is case 3: for overflow, we can append any digit between 0 and 7, but for underflow, we can append any digit between 0 and 8.
+        
+        we can combine both cases and if examine only the asbolute values
+        
+        iniitally store the sign
+        if curr number is less than int_max / 10, we can append next digitd
+        if curr number is greater than int_max / 10:
+            and sign is +, reutnr int_max
+            and sign is negative, return int_min
+            
+        uf curr number is euqal to int_max / 10:
+            we can add any digit in between 0 and 7
+                if next digit is 8, return int max
+                if sign is negtaigve, wetrun int mina
+            if greater than 8
+                if + return int max
+                if _ return int min
+                
+        Note: We do not need to handle 0-7 for positive and 0-8 for negative integers separately. If the sign is negative and the current number is 214748364, then appending the digit 8, which is more than 7, will also lead to the same result, i.e., INT_MIN.
+        '''
+        sign = 1
+        res = 0
+        index = 0
+        N = len(s)
+        
+        INT_MAX = 2**31 - 1
+        INT_MIN = -(2**31)
+        
+        #discards all white spaces from beignning
+        while index < N and s[index] == ' ':
+            index += 1
+        
+        #get sign
+        if index < N and s[index] == '+':
+            sign = 1
+            index += 1
+        elif index < N and s[index] == '-':
+            sign = -1
+            index += 1
+            
+        #travere next digits of input and stop if it is not a digit
+        #end of string is also non digit character
+        while index < N and s[index].isdigit():
+            #get digit
+            digit = int(s[index])
+            
+            #check over and underflow
+            if (res > INT_MAX // 10) or (res == INT_MAX // 10 and digit > INT_MAX % 10):
+                return INT_MAX if sign == 1 else INT_MIN
+            
+            res *= 10
+            res += digit
+            index += 1
+        
+        return sign*res
+
+#using a state machine
+class StateMachine:
+    def __init__(self):
+        self.State = { "q0": 1, "q1": 2, "q2": 3, "qd": 4 }
+        self.INT_MAX, self.INT_MIN = pow(2, 31) - 1, -pow(2, 31)
+        
+        # Store current state value.
+        self.__current_state = self.State["q0"]
+        # Store result formed and its sign.
+        self.__result = 0
+        self.__sign = 1
+
+    def to_state_q1(self, ch: chr) -> None:
+        """Transition to state q1."""
+        self.__sign = -1 if (ch == '-') else 1
+        self.__current_state = self.State["q1"]
+    
+    def to_state_q2(self, digit: int) -> None:
+        """Transition to state q2."""
+        self.__current_state = self.State["q2"]
+        self.append_digit(digit)
+    
+    def to_state_qd(self) -> None:
+        """Transition to dead state qd."""
+        self.__current_state = self.State["qd"]
+    
+    def append_digit(self, digit: int) -> None:
+        """Append digit to result, if out of range return clamped value."""
+        if ((self.__result > self.INT_MAX // 10) or 
+            (self.__result == self.INT_MAX // 10 and digit > self.INT_MAX % 10)):
+            if self.__sign == 1:
+                # If sign is 1, clamp result to INT_MAX.
+                self.__result = self.INT_MAX
+            else:
+                # If sign is -1, clamp result to INT_MIN.
+                self.__result = self.INT_MIN
+                self.__sign = 1
+            
+            # When the 32-bit int range is exceeded, a dead state is reached.
+            self.to_state_qd()
+        else:
+            # Append current digit to the result. 
+            self.__result = (self.__result * 10) + digit
+
+    def transition(self, ch: chr) -> None:
+        """Change state based on current input character."""
+        if self.__current_state == self.State["q0"]:
+            # Beginning state of the string (or some whitespaces are skipped).
+            if ch == ' ':
+                # Current character is a whitespaces.
+                # We stay in same state. 
+                return
+            elif ch == '-' or ch == '+':
+                # Current character is a sign.
+                self.to_state_q1(ch)
+            elif ch.isdigit():
+                # Current character is a digit.
+                self.to_state_q2(int(ch))
+            else:
+                # Current character is not a space/sign/digit.
+                # Reached a dead state.
+                self.to_state_qd()
+        
+        elif self.__current_state == self.State["q1"] or self.__current_state == self.State["q2"]:
+            # Previous character was a sign or digit.
+            if ch.isdigit():
+                # Current character is a digit.
+                self.to_state_q2(int(ch))
+            else:
+                # Current character is not a digit.
+                # Reached a dead state.
+                self.to_state_qd()
+    
+    def get_integer(self) -> None:
+        """Return the final result formed with it's sign."""
+        return self.__sign * self.__result
+    
+    def get_state(self) -> None:
+        """Get current state."""
+        return self.__current_state
+
+class Solution:
+    def myAtoi(self, input: str) -> int:
+        q = StateMachine()
+        
+        for ch in input:
+            q.transition(ch)
+            if q.get_state() == q.State["qd"]:
+                break
+
+        return q.get_integer()
