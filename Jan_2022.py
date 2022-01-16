@@ -1894,3 +1894,164 @@ class Solution:
                 break
 
         return q.get_integer()
+
+###########################
+# 1345. Jump Game IV
+# 15JAN22
+###########################
+#close one
+#don't forget to clear to prevent a reduanct search
+
+class Solution:
+    def minJumps(self, arr: List[int]) -> int:
+        '''
+        from an index i, i can jump to i+1,i-1 or to j where arr[i] == arr[j]
+        i can used bfs to find the min number of steps for this one
+        but first i need to mapp
+        the mapp will mark values to a list of indices
+        '''
+        neighbors = defaultdict(list)
+        for i,num in enumerate(arr):
+            neighbors[num].append(i)
+            
+        #mark beignning index as seen
+        seen = set()
+        seen.add(0)
+        N = len(arr)
+        q = deque([(0,0)])
+        
+        while q:
+            curr,steps = q.popleft()
+            if curr == N - 1:
+                return steps
+            #now find valid neighbors,adjacnet first
+            neighs = [curr-1,curr+1]
+            #now find neighbors with matching values
+            for cand in neighbors[arr[curr]]:
+                neighs.append(cand)
+            #clear the list to prevent
+            neighbors[arr[curr]].clear()
+            #now check if we can visite
+            for n in neighs:
+                #in bounds
+                if 0 <= n < N:
+                    if n not in seen:
+                        q.append((n,steps+1))
+                        seen.add(n)
+        
+        return -1
+
+class Solution:
+    def minJumps(self, arr: List[int]) -> int:
+        '''
+        can also do it an additoinal way using next layer and return global step
+        '''
+        N = len(arr)
+        
+        if N <= 1:
+            return 0
+        
+        neighbors = defaultdict(list)
+        for i,num in enumerate(arr):
+            neighbors[num].append(i)
+            
+        curr = [0]
+        seen = {0}
+        steps = 0
+        
+        while curr:
+            nex = []
+            #check
+            for node in curr:
+                if node == N-1:
+                    return steps
+                #check same value
+                for child in neighbors[arr[node]]:
+                    if child not in seen:
+                        seen.add(child)
+                        nex.append(child)
+                
+                #clear to prevent redudant seraches
+                neighbors[arr[node]].clear()
+                
+                #check neighbaord
+                for child in [node-1, node+1]:
+                    if 0 <= child < len(arr) and child not in seen:
+                        seen.add(child)
+                        nex.append(child)
+            
+            curr = nex
+            steps += 1
+        
+###########################
+# 253. Meeting Rooms II
+# 15JAN22
+###########################
+class Solution:
+    def minMeetingRooms(self, intervals: List[List[int]]) -> int:
+        '''
+        this is similar to the bursting ballonws problem
+        if i sort in start times
+        if the start time of meeting overlaps with the start and end, we need a new room
+        i can use a heap and use it to keep track of the earliest ending time
+        then we can just add a room meeting into the q and pop if we have to
+        we need to use a min heap
+        '''
+        if not intervals:
+            return 0
+        
+        intervals.sort(key = lambda x: x[0])
+        
+        rooms = []
+        #add the first room ending time
+        heappush(rooms,intervals[0][1])
+        
+        #now check starting with second meeting
+        for start,end in intervals[1:]:
+            #if the start time i'm on is less than the smallest end time so far, we have a free room
+            if rooms[0] <= start:
+                heappop(rooms)
+            #add in the new rooms end time
+            heappush(rooms,end)
+        
+        return len(rooms)
+            
+class Solution:
+    def minMeetingRooms(self, intervals: List[List[int]]) -> int:
+        '''
+        we can also use a two pointer trick after sorting starts end ends invdidually
+        we keep advancing our start pointer if we are less than the smallest ending time
+        ounce we get to a point where our start time is less than the smallest end, we know that a room has been freed
+        '''
+        if not intervals:
+            return 0
+        
+        starts = []
+        ends = []
+        for start,end in intervals:
+            starts.append(start)
+            ends.append(end)
+        
+        #sort both
+        starts.sort()
+        ends.sort()
+        
+        rooms = 0
+        start_pointer = 0
+        end_pointer = 0
+        
+        while start_pointer < len(intervals):
+                        # If there is a meeting that has ended by the time the meeting at `start_pointer` starts
+            if starts[start_pointer] >= ends[end_pointer]:
+                # Free up a room and increment the end_pointer.
+                rooms -= 1
+                end_pointer += 1
+
+            # We do this irrespective of whether a room frees up or not.
+            # If a room got free, then this used_rooms += 1 wouldn't have any effect. used_rooms would
+            # remain the same in that case. If no room was free, then this would increase used_rooms
+            rooms += 1    
+            start_pointer += 1 
+
+        
+        return rooms
