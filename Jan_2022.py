@@ -1576,7 +1576,7 @@ class Solution:
         return res + part
 
 ############################
-# 13DEC22
+# 13JAN22
 # 156. Binary Tree Upside Down
 ###########################
 # Definition for a binary tree node.
@@ -2055,3 +2055,114 @@ class Solution:
 
         
         return rooms
+
+###########################################
+# 849. Maximize Distance to Closest Person
+# 16JAN22
+###########################################
+class Solution:
+    def maxDistToClosest(self, seats: List[int]) -> int:
+        '''
+        we have at least 1 person sitting
+        and at least on open seat
+        we want to place Alex in an empty seat such that the distance between him and the next seat is maximized
+        [1,0,0,0,1,0,1]
+        nearest to the left:    [0,1,2,3,0,1,0]
+        neartest to the right   [0,3,2,1,0,1,0]
+        we want the max distance from both sides at the ith position
+        then check in both arrays and update only if left max and right max are greater
+        
+        For approach 1, the 'right' array is constructed in incorrectly. For cases like [1,0,0,0], the left array is correct and becomes [0,1,2,3]. However, the right array becomes [0,6,5,4]. I'm sure this is an oversight, but in the case where there is no one in the right side, we are free to take the last seat.
+        '''
+        N = len(seats)
+        
+        #find lefts arrays
+        #in the case where there is only one seat
+        left = [N]*N
+        for i in range(N):
+            if seats[i] == 1:
+                left[i] = 0
+            elif i > 0:
+                left[i] = left[i-1] + 1
+            #remember this loop control if i'm the i+1 or i-1 falls out of index
+                
+        #find the rights array
+        right = [N]*N
+        for i in range(N-1,-1,-1):
+            if seats[i] == 1:
+                right[i] = 0
+            elif i < N-1:
+                right[i] = right[i+1] + 1
+                
+        ans = 0
+        for i in range(N):
+            #find the smallest if left and right
+            smallest_left_and_right = min(left[i],right[i])
+            #find the max
+            ans = max(ans,smallest_left_and_right)
+        print(left,right)
+        return ans
+
+class Solution:
+    def maxDistToClosest(self, seats: List[int]) -> int:
+        '''
+        we can also use group by
+        note that in groups of size K adjacent empty seats, the answer must be (K+1) // 2
+        i can find this group and find the largest suze
+        '''
+        N = len(seats)
+        K = 0
+        ans = 0
+        
+        #first find longest adjacent 0s
+        for i in range(N):
+            if seats[i] == 1:
+                K = 0
+            else:
+                K += 1
+                ans = max(ans, (K + 1) // 2)
+        
+        #now check for cases in 1,0,0,0,0
+        for i in range(N):
+            if seats[i] == 1:
+                ans = max(ans,i)
+                break
+        
+        for i in range(N-1,-1,-1):
+            if seats[i] == 1:
+                ans = max(ans,N-1-i)
+                break
+        
+        return ans
+
+######################################
+# 405. Convert a Number to Hexadecimal
+# 16JAN22
+######################################
+class Solution:
+    def toHex(self, num: int) -> str:
+        '''
+        first, if a number is greater than zero, we can convert
+        is less than zero first find its complement by shifting it to the largest val
+        for a number we can find its compelmeent by inverting bits and adding 1
+        
+        now that we have its compelement we need to find the hexa
+        we can use digits 0123456789abcdef
+        then just usse the mod and reduce trick matching indices
+        '''
+        if num < 0:
+            num += 2**32
+        
+        hex_alpha = "0123456789abcdef"
+        res = ""
+        
+        while num:
+            res = hex_alpha[num % 16] + res
+            num //= 16
+        
+        if not res:
+            return "0"
+        
+        return res
+
+
