@@ -2165,4 +2165,87 @@ class Solution:
         
         return res
 
+############################
+# 290. Word Pattern
+# 17JAN22
+############################
+#two maps
+class Solution:
+    def wordPattern(self, pattern: str, s: str) -> bool:
+        '''
+        we can make mapping of each letter to word
+        if we haven't made the bijection, i.e char to word, make it
+        if we have made, check that the mapping is right
+        then return false
+        '''
+        N = len(pattern)
+        words = s.split(" ")
+        
+        if N != len(words):
+            return False
+        
+        mapp = {}
+        mapp_2 = {}
+        
+        for char, word in zip(pattern, words):
+            if char in mapp:
+                if mapp[char] != word:
+                    return False
+            elif word in mapp_2:
+                if mapp_2[word] != char:
+                    return False
+            else:
+                mapp[char] = word
+                mapp_2[word] = char
+        
+        return True
 
+class Solution:
+    def wordPattern(self, pattern: str, s: str) -> bool:
+        '''
+        we can avoid using two hashmaps, if we check that the len of unique chars in pattern does not equal length of the unique set of words
+        '''
+        N = len(pattern)
+        words = s.split(" ")
+        
+        if N != len(words):
+            return False
+        if len(set(pattern)) != len(set(words)):
+            return False
+        
+        mapp = {}
+        for char, word in zip(pattern, words):
+            if char in mapp:
+                if mapp[char] != word:
+                    return False
+            else:
+                mapp[char] = word
+                
+        return True
+
+############################
+# 455. Assign Cookies
+# 17JAN22
+#############################
+class Solution:
+    def findContentChildren(self, g: List[int], s: List[int]) -> int:
+        '''
+        we are given len(g) children
+        and len(s) cookies
+        we want to try to give each child at most 1 cookie
+        i can assigne s[j] to g[i] if s[j] >= g[i]
+        we want to maximuze the content
+        greediyl try to satisfy the content using the largest cookies
+        sort and use two pointers
+        '''
+        g.sort()
+        s.sort()
+        i,j = len(g)-1,len(s)-1
+        count = 0
+        while (i>=0 and j>=0):
+            if g[i] <= s[j]:
+                count += 1
+                j-=1
+            i -= 1
+        return count
+        
