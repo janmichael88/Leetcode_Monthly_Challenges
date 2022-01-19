@@ -2249,3 +2249,131 @@ class Solution:
             i -= 1
         return count
         
+############################
+# 605. Can Place Flowers
+# 18JAN22
+############################
+#its the stupid ifs
+class Solution:
+    def canPlaceFlowers(self, flowerbed: List[int], n: int) -> bool:
+        '''
+        well it was easier than i thought, just sscan and place
+        for each position we just left and right, only if we can
+        '''
+        N = len(flowerbed)
+        i = 0
+        count = 0
+        
+        while i < N:
+            if i == 0:
+                if flowerbed[i] == 0 and flowerbed[i+1] == 0:
+                    flowerbed[i] += 1
+                    count += 1
+            elif i == N-1:
+                if flowerbed[i] == 0 and flowerbed[i-1] == 0:
+                    flowerbed[i] += 1
+                    count += 1
+            elif flowerbed[i] == 0:
+                if flowerbed[i-1] == 0 and flowerbed[i+1] == 0:
+                    flowerbed[i] += 1
+                    count += 1
+            i += 1
+        
+        return count >= n
+
+class Solution:
+    def canPlaceFlowers(self, flowerbed: List[int], n: int) -> bool:
+        '''
+        well it was easier than i thought, just sscan and place
+        for each position we just left and right, only if we can
+        '''
+        N = len(flowerbed)
+        i = 0
+        count = 0
+        
+        while i < N:
+            if flowerbed[i] == 0:
+                if i == 0 or flowerbed[i-1] == 0:
+                    if i == N -1 or flowerbed[i+1] == 0:
+                        flowerbed[i] += 1
+                        count += 1
+            i += 1
+        
+        return count >= n
+
+#terminate early
+class Solution:
+    def canPlaceFlowers(self, flowerbed: List[int], n: int) -> bool:
+        '''
+        well it was easier than i thought, just sscan and place
+        for each position we just left and right, only if we can
+        '''
+        N = len(flowerbed)
+        i = 0
+        count = 0
+        
+        while i < N:
+            if flowerbed[i] == 0:
+                if i == 0 or flowerbed[i-1] == 0:
+                    if i == N -1 or flowerbed[i+1] == 0:
+                        flowerbed[i] += 1
+                        count += 1
+            if count >= n:
+                return True
+            i += 1
+        
+        return False
+
+#############################
+# 482. License Key Formatting
+# 18JAN22
+#############################
+class Solution:
+    def licenseKeyFormatting(self, s: str, k: int) -> str:
+        '''
+        we have string s, with n dashes and n+1 groups
+        we want to re format the string such that the groups have at least k chars
+        except the first group
+        if the number of chars goes into k evenly, we know that each group can have k chars
+        if it does not then it is the first group that must have < k chars
+        if num_chars % k != 0, then the first group should have num_chars % k chars
+        then the rest evens out
+        '''
+        #get usubale chars
+        s = "".join(s.split("-"))
+        #convet lowercases chars
+        s = [ch.upper() for ch in s]
+        
+        groups = []
+        if len(s) % k == 0:
+            groups.append("".join(s[:k]))
+            s = s[k:]
+        else:
+            groups.append("".join(s[:len(s) % k]))
+            s = s[len(s) % k:]
+            
+        #now take from s in lenghts of 2
+        for i in range(0,len(s),k):
+            groups.append("".join(s[i:i+k]))
+            
+        return "-".join(groups)
+
+class Solution:
+    def licenseKeyFormatting(self, s: str, k: int) -> str:
+        '''
+        just another way, first find the length of the first group
+        then just advance in K steps
+        '''
+        s = "".join(s.split('-')).upper()
+        N = len(s)
+        #find remaidner
+        rem = k if N % k == 0 else N % k
+        #set curr pointer to end of rem
+        i = rem
+        res = s[:rem]
+        
+        while i < N:
+            res += '-' + s[i:i+k]
+            i += k
+        
+        return res
