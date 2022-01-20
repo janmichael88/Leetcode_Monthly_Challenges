@@ -2377,3 +2377,198 @@ class Solution:
             i += k
         
         return res
+
+###########################
+# 142. Linked List Cycle II
+# 19JAN22
+############################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        i could dfs for each node
+        '''
+        curr = head
+        seen = set()
+        
+        while curr:
+            if curr in seen:
+                return curr
+            else:
+                seen.add(curr)
+                curr = curr.next
+        
+        return None
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.next = None
+
+class Solution:
+    def detectCycle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can use the tortise and the hare trick and use two phases
+        phase 1:
+            slow and fast pointers until they intersection
+            if they don't intersection we know there isn't a cycle so return null
+            if we have a linked list with a cycle of length C:
+                let us label nodes in cycle from 0 to C - 1
+                let us lable node out of cycle from F to -1 (where F is the length not in cycle)
+                after F iterations, slow has gone to 0 and fast has down to fast % C iterations
+                fast traverses 2*F nodes in F iterations, all of which are in the cycle
+                after C-h iterations, the slow points to C-h in the cycle, but also fast should come back
+                fast + 2(C-fast) = 2C-fast
+                                = (C- fast) % C
+                so after n interations, both slow and fast will at some point a in the cycle
+        phase 2:
+            if we have found a cycle, we must find the entrance,
+            we know that fast moves twice as fast as slow, 2d(slow) = d(fast)
+            two pointers from head and interseciton and advance until they meet
+            2(F + a) = F + nC + a
+            Hence the coordinate of the intersection point is F + a = nCF+a=nC
+        '''
+        if not head:
+            return None
+        intersect = self.getIntersect(head)
+        if not intersect:
+            return None
+        
+        p1 = head
+        p2 = intersect
+        
+        while p1 != p2:
+            p1 = p1.next
+            p2 = p2.next
+        return p1
+    
+    def getIntersect(self,head):
+        slow = head
+        fast = head
+        
+        while fast and fast.next:
+            slow = slow.next
+            fast = fast.next.next
+            if slow == fast:
+                return slow
+        
+        return None
+
+#################################
+# 209. Minimum Size Subarray Sum
+# 19JAN22
+################################
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        '''
+        brute force would be to generate all contig subrray and find min sum at least target
+        we want the legnth not the actual sum
+        '''
+        ans = float('inf')
+        N = len(nums)
+        for i in range(N):
+            for j in range(i,N):
+                SUM = sum(nums[i:j+1])
+                if SUM >= target:
+                    ans = min(ans, j-i+1)
+                    break #we can break here since we are looking for the smallest
+        
+        return ans if ans != float('inf') else 0
+
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        '''
+        brute force would be to generate all contig subrray and find min sum at least target
+        we want the legnth not the actual sum
+        we can reduce to n^2  by storing cumsums and finding sum in 0(1) time
+        '''
+        ans = float('inf')
+        N = len(nums)
+        if N == 0:
+            return 0
+        
+        pref_sum = [0]*N
+        pref_sum[0] = nums[0]
+        
+        for i in range(1,N):
+            pref_sum[i] = pref_sum[i-1] + nums[i]
+        
+        for i in range(N):
+            for j in range(i,N):
+                curr_sum = pref_sum[j] - pref_sum[i] + nums[i]
+                if curr_sum >= target:
+                    ans = min(ans, j-i+1)
+                    break
+        
+        return ans if ans != float('inf') else 0
+
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        '''
+        we can imporve from N^2 by using binary search
+        but to make this easier we need to prefix the pref_sum with a zero
+        recall for the N^2 approach, we were looking for a subarray staring with i and ending with j
+        such that it was greater than s
+        '''
+        ans = float('inf')
+        N = len(nums)
+        if N == 0:
+            return 0
+        
+        pref_sum = [0]
+        
+        for num in nums:
+            pref_sum.append(num + pref_sum[-1])
+        
+        #we can index uding pref_sum for an i change to i+1
+        #sum of nums[i:j] == pref_sum[j+1] - pref_sum[i]
+        '''
+        for i in range(N):
+            for j in range(1,N+1):
+                substring = nums[i:j]
+                print(sum(substring),pref_sum[j] - pref_sum[i])
+        '''
+        for i in range(N):
+            #find lower bound, smallest pref_sum[j] at least target
+            to_find = target + pref_sum[i]
+            left = i
+            right = len(pref_sum) - 1
+            while left < right:
+                mid = left + (right - left) // 2
+                if pref_sum[mid] <= to_find:
+                    left = mid + 1
+                else:
+                    right = mid
+            #print(left,right,mid)
+            if mid != len(pref_sum) - 1:
+                ans = min(ans, (left - i + 1))
+        
+        return ans if ans != float('inf') else 0
+
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        '''
+        two pointerrs sliding window
+        we can move the starting index of the current subarray as soon as we know that no better 
+        could be done with this index as starting index
+        then we just move pointers so that we are never above target until we hit target
+        '''
+        N = len(nums)
+        ans = float('inf')
+        left = 0
+        curr_sum = 0
+        for i in range(N):
+            curr_sum += nums[i]
+            while curr_sum >= target:
+                ans = min(ans, i + 1 - left)
+                curr_sum -= nums[left]
+                left += 1
+        
+        return ans if ans != float('inf') else 0
+
