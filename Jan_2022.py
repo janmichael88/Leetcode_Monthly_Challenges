@@ -2572,3 +2572,137 @@ class Solution:
         
         return ans if ans != float('inf') else 0
 
+#################################
+# 875. Koko Eating Bananas
+# 20JAN22
+#################################
+#brute force
+class Solution:
+    def minEatingSpeed(self, piles: List[int], h: int) -> int:
+        '''
+        '''
+        #start with the smallest k and go uo
+        k = 1
+        
+        while True:
+            hours = 0
+            for b in piles:
+                hours += math.ceil(b/k)
+            
+            if hours <= h:
+                return k
+            else:
+                k += 1
+
+class Solution:
+    def minEatingSpeed(self, piles: List[int], h: int) -> int:
+        '''
+        we want to find the minimum k such that she can eat all the bannans
+        we can pick any k, for each hour she chooses some pile of bannans and eats k from that pile
+        if pile < k bannase she eats all of them and will not east any more
+        binary seach for all k between min(piles) and max(piles)
+        if she can eat at this value of k, then she can do for all values less than k
+        if a pile < k, eats them all and cannot eat during this hour
+        if pile > k, i need to calculate how many hours it will take
+        we need to return the left or right bound int this case since we want the minimum workable k
+        
+        '''
+        left = 1
+        right = max(piles)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            
+            hours = 0
+            for p in piles:
+                hours += math.ceil(p/mid)
+                
+            #check if we can do it
+            if hours <= h:
+                right = mid
+            else:
+                left = mid + 1
+        
+        return left
+
+##########################
+# 134. Gas Station
+# 21JAN22
+##########################
+#brute force
+class Solution:
+    def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
+        '''
+        we have care with unlimited gas tank, and we can increment by gas[i] when we are on i
+        to go from i to i + 1 costs cost[i]
+        we wwant to to find the starting index if we can traverse the whole circuit
+        
+        brute force would be to try all indices and see if i can return back to i
+        start with that
+        '''
+        N = len(gas)
+        
+        for i in range(N):
+            tank = 0
+            curr = i
+            #increase by this amount
+            tank += gas[curr]
+            while tank > 0:
+                #now check if i can reach
+                next_station = (curr + 1) % N
+                if next_station == i and tank - cost[curr] >= 0:
+                    return i+1
+                else:
+                    #update tank
+                    tank -= cost[curr]
+                    tank += gas[next_station]
+                    curr = next_station
+        
+        return -1
+
+class Solution:
+    def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
+        '''
+        1. first note that if sum(gas) < sum(cost) we can't do it 
+        2. its impossible to start at a station i if gas[i] - cost[i] < 0, or gas[i] < cost[i]
+        because there wouldn't be enough in the tank to travel i + 1
+        
+        we can generalize this by just checking the curr tank at each station, and if it goes < 0 it cannot be the start
+        
+        algo: 
+            1. init total tank and curr tank as zero and choose station 0 as starting
+            2. iterate over all stations:
+                update totla and curr
+                if curr < 0 at i + 1, make i+1 the new starting point and reset curr to 0
+            3. return -1 if total < 0 and starting station otherwise
+            
+        why does this work?
+        imagine the situation when the total tank >= 0 and the algoreturns Ns at starting station
+        then this ensures its possible to go from Ns to 0, but what  about 0 to Ns
+        we can use proof by contradiction and assume 0 < k < Ns such that one couldn't reach this station starting from Ns
+        we can right the cost at each stationo as
+        \sum_{i=0}^{N} gas[i] - cost[i]
+        we can split this as:
+        \sum_{i=0}^{k} gas[i] - cost[i] + \sum_{i=k+1}^{N-1} gas[i] - cost[i]
+        second part is negative, otherwise the starting stationo would be before Ns
+        it couold be equal to zero only in the case k = Ns -1
+        
+        '''
+        n = len(gas)
+        
+        total_tank, curr_tank = 0, 0
+        starting_station = 0
+        for i in range(n):
+            total_tank += gas[i] - cost[i]
+            curr_tank += gas[i] - cost[i]
+            # If one couldn't get here,
+            if curr_tank < 0:
+                # Pick up the next station as the starting one.
+                starting_station = i + 1
+                # Start with an empty tank.
+                curr_tank = 0
+        
+        return starting_station if total_tank >= 0 else -1
+        
+
+
