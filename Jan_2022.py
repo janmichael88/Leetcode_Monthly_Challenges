@@ -2703,6 +2703,69 @@ class Solution:
                 curr_tank = 0
         
         return starting_station if total_tank >= 0 else -1
+
+########################
+# 1510. Stone Game IV
+# 22JAN22
+#######################
+class Solution:
+    def winnerSquareGame(self, n: int) -> bool:
+        '''
+        i can just keep taking stones recursviely until i get the  case on alices turn
+        if on alice's turn we have 1 left, return true
+        per zermelos' theorem, if the game cannot end in a draw in any way,
+        then there exists a winning strategy for either player
+        if it is found that a player can get to a winning position from their current position, then that persno must win
+        rather, if we start with alice, and we  find that alice can get to a winning position
+        than Alice must win,
+        if alice can win from that position,  then she must win!
+        base case  is fired when alice can get to one stone, which is True
+        if 0 stones in her turn, she cant wint
+        note that if we start in  reverse of sqrt to 1 its so much faster
+        '''
+        memo = {}
+        
+        def dfs(stones):
+            if stones == 0:
+                return False
+            if stones == 1:
+                return True
+            if stones in memo:
+                return memo[stones]
+            root = int(stones**0.5)
+            for take in range(1,root+1)[::-1]:
+                #remoee
+                remove = stones - take*take
+                #if at any pooint it's false on this turn, its' true on next
+                if dfs(remove) == False:
+                    memo[stones] = True
+                    return True
+            memo[stones] = False
+            return False
+        
+        return dfs(n)
+                    
+class Solution:
+    def winnerSquareGame(self, n: int) -> bool:
+        '''
+        in dfs, we started from n and went down to no stones
+        here we need to build up to the number n
+        dp[i] reprsents the winning state we are in
+        dp[0] = False
+        dp[1] = True
+        '''
+        dp = [False]*(n+1)
+        dp[1] = True
+        for stone in range(1,n+1):
+            for take in range(1, int(stone**0.5)+1)[::-1]:
+                remove = stone - take*take
+                #there are stoones  left
+                if remove >= 0:
+                    if dp[remove] == False:
+                        dp[stone] = True
+                        break
+        
+        return dp[n]
         
 
 
