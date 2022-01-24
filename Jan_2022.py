@@ -2767,5 +2767,118 @@ class Solution:
         
         return dp[n]
         
+############################
+# 1291. Sequential Digits
+# 22JAN22
+############################
+#close one
+class Solution:
+    def sequentialDigits(self, low: int, high: int) -> List[int]:
+        '''
+        the largest sequential digit is
+        123 456 789
+        the smallest sequential digit is 
+        12
+        i can use recursion to generate a sequential digit using the times 1 plus next digit trick
+        '''
+        all_sequential = []
+        
+        def rec(last_digit,path):
+            if last_digit > 10:
+                return
+            if low <= path <= high:
+                all_sequential.append(path)
+                return
+            path = path*10 + last_digit
+            rec(last_digit+1,path)
+        
+        for i in range(1,10):
+            rec(i,0)
+        return(all_sequential)
+
+class Solution:
+    def sequentialDigits(self, low: int, high: int) -> List[int]:
+        '''
+        we can use a sliding window apporach
+        we notice that all the sequential numbers are substrings of 1234456789
+        we can generate all subtrings and check they are inboounds
+        '''
+        nums = '123456789'
+        N = len(nums)
+        smallest = len(str(low))
+        largest = len(str(high))
+        ans = []
+        for l in range(smallest,largest+1):
+            for start in range(N-l+1):
+                num = nums[start:start+l]
+                if low <= int(num) <= high:
+                    ans.append(num)
+        
+        return ans
+
+#############################################
+#1602. Find Nearest Right Node in Binary Tree
+# 23JAN22
+##############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findNearestRightNode(self, root: TreeNode, u: TreeNode) -> Optional[TreeNode]:
+        '''
+        we can just do level order bfs
+        and for each level check if the current node is u,
+        if it is and have less than the number of nodes, return the next one
+        otherwise return None
+        '''
+        q = deque([root])
+        
+        while q:
+            #get size of current level
+            N = len(q)
+            for i in range(N):
+                curr =  q.popleft()
+                if curr == u:
+                    if i < N -1:
+                        return q.popleft()
+                    else:
+                        return None
+                else:
+                    if curr.left:
+                        q.append(curr.left)
+                    if curr.right:
+                        q.append(curr.right)
+        return None
+        
+########################
+# 223. Rectangle Area
+# 23JAN22
+########################
+class Solution:
+    def computeArea(self, ax1: int, ay1: int, ax2: int, ay2: int, bx1: int, by1: int, bx2: int, by2: int) -> int:
+        '''
+        first find the area of both rects
+        then find intersectino
+        area1 = abs(C-A)*abs(B-D)
+        area2 = abs(E-G)*abs(F-H)
+        w = min(C,G)-max(A,E)
+        h = min(D, H)-max(B,F)
+        if w<=0 or h<=0:
+            return area1 + area2
+        else:
+            return area1 + area2 - w*h
+        '''
+        area_a = abs(ax2 - ax1)*abs(ay2-ay1)
+        area_b = abs(bx2 - bx1)*abs(by2-by1)
+        #now we need to find intersection, lets call it w and h
+        w_intersection = max(min(ax2,bx2) - max(ax1,bx1),0)
+        h_intersection = max(min(ay2,by2) - max(ay1,by1),0)
+        
+        return area_a + area_b - abs(w_intersection)*abs(h_intersection)
+
+
 
 
