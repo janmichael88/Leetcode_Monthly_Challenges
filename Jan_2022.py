@@ -2879,6 +2879,109 @@ class Solution:
         
         return area_a + area_b - abs(w_intersection)*abs(h_intersection)
 
+#######################
+# 520. Detect Capital
+# 24JAN22
+#######################
+class Solution:
+    def detectCapitalUse(self, word: str) -> bool:
+        '''
+        usage of capitals is correct if any of three are true:
+            1. all letters are capitals
+            2. all leters are not
+            3. only the first letter in this is capital
+        '''
+        def case1(w):
+            N = len(w)
+            upper_cases = 0
+            for ch in w:
+                if ch.isupper():
+                    upper_cases += 1
+            return upper_cases == N
+        
+        def case2(w):
+            N = len(w)
+            lower_cases = 0
+            for ch in w:
+                if ch.islower():
+                    lower_cases += 1
+            return lower_cases == N
+        
+        def case3(w):
+            N = len(w)
+            upper_cases = 0
+            for ch in w[1:]:
+                if ch.isupper():
+                    upper_cases += 1
+            return w[0].isupper() and upper_cases == 0
+        
+        return case1(word) or case2(word) or case3(word)
+
+#cheeky way
+class Solution:
+    def detectCapitalUse(self, word: str) -> bool:
+        return word.islower() or word.isupper() or word.istitle()
 
 
+#improved
+class Solution:
+    def detectCapitalUse(self, word: str) -> bool:
+        '''
+        we can improve this if we combine cases
+        note that the biggest differeence between cases 2 and 3 are is the condition of that first char
+        for 2 and 3, no matter what the frist char is, the rest should be lower case 
+        '''
+        n = len(word)
+        
+        if n == 1:
+            return True
+        
+        #case 1, all capital
+        if word[0].isupper() and word[1].isupper():
+            for i in range(2,n):
+                if not word[i].isupper():
+                    return False
+        else:
+            for i in range(1,n):
+                if word[i].isupper():
+                    return False
+        
+        return True
 
+import re
+class Solution:
+    def detectCapitalUse(self, word: str) -> bool:
+        '''
+        we can use regix
+        [A-Z]*, matches one char between A-Z followed by any number
+        [a-z]*. matches one char between a-z any number
+        [A-Z][a-z]*
+        we can pipe these three 
+        [A−Z]∗∣[a−z]∗∣[A−Z][a−z]∗
+        '''
+        pattern = r'[A−Z]*|[a−z]*|[A−Z][a−z]*'
+        return re.fullmatch(pattern,word)
+        
+
+###############################
+# 492. Construct the Rectangle
+# 24JAN22
+###############################
+class Solution:
+    def constructRectangle(self, area: int) -> List[int]:
+        '''
+        we need to return an L,W == area
+        L >= W
+        abs(L-W) should be as small as possible
+        
+        if the webpage is a sqaure, then the L and W values that give the best ans are sqrt(area)
+        but we can only go in integer amounts
+        i can start with width 1
+        keep decrementing by 1 until i find it
+        '''
+        start = int(area**.5)
+        while start >= 1:
+            if area % start == 0:
+                return [area // start,start]
+            else:
+                start -= 1
