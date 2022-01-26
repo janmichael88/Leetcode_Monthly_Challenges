@@ -2985,3 +2985,177 @@ class Solution:
                 return [area // start,start]
             else:
                 start -= 1
+
+###########################
+# 941. Valid Mountain Array
+# 25JAN22
+###########################
+class Solution:
+    def validMountainArray(self, arr: List[int]) -> bool:
+        '''
+        we can just check for strictly increasing and decreasing
+        can't check every i
+        we need to walk up then walk down
+        
+        '''
+        N = len(arr)
+        
+        #size requirement
+        if N < 3:
+            return False
+        
+        #walk up
+        i = 0
+        
+        while i < N-1 and arr[i+1] > arr[i]: #note the order of the logicals
+            i += 1
+            
+        #if i got to the end or didn't move at all
+        if i == 0 or i == N-1:
+            return False
+
+        #walk down
+        while i < N-1 and arr[i+1] < arr[i]:
+            i += 1
+        
+        #i must be at the end of the array
+        return i == N-1
+
+############################
+# 500. Keyboard Row
+# 25JAN22
+############################
+class Solution:
+    def findWords(self, words: List[str]) -> List[str]:
+        '''
+        for each word check if its chars are in the row
+        make sure to lowercase ach one
+        we only want to make sure its on only one row!
+        '''
+        rows = ['qwertyuiop','asdfghjkl','zxcvbnm']
+        
+        ans = []
+        
+        for word in words:
+            count = 0
+            for row in rows:
+                word_lower = word.lower()
+                #now check each char is in this row
+                if all([ch in row for ch in word_lower]):
+                    count += 1
+            if count == 1:
+                ans.append(word)
+        
+        return ans
+
+#this was kind of cool way to compare sets in python
+class Solution:
+    def findWords(self, words: List[str]) -> List[str]:
+        '''
+        for each word check if its chars are in the row
+        make sure to lowercase ach one
+        we only want to make sure its on only one row!
+        '''
+        rows = [set('qwertyuiop'),set('asdfghjkl'),set('zxcvbnm')]
+        
+        ans = []
+        
+        for word in words:
+            w = set(word.lower())
+            for row in rows:
+                if w <= row:
+                    ans.append(word)
+                    break
+        
+        return ans
+
+############################
+# Gmail Label Strings (Extra Problem https://leetcode.com/discuss/interview-question/1717614/google-phone-screen-swe-l3-gmail-label-strings)
+# 25JAN22
+############################
+'''
+given a container of folders, return its labels
+folders = [
+    {id: 27, parentId: 15, name: 'projects'},
+    {id: 81, parentId: 27, name: 'novel'},
+    {id: 15, parentId: 0, name: personal'}, // a parentId of 0 means root
+    {id: 35, parentId: 27, name: 'blog'},
+]
+
+// Sample output:
+
+labels = [
+    'personal/projects',
+    'personal/projects/novel',
+    'personal',
+    'personal/projects/blog',
+]
+
+i need to make a graph
+each vertex is an edge with out direction going 
+keep two maps one for graph and one for name
+then dfs
+'''
+import collections
+folders = folders = [
+    {'id': 27, 'parentId': 15, 'name': 'projects'},
+    {'id': 81, 'parentId': 27, 'name': 'novel'},
+    {'id': 15, 'parentId': 0, 'name': 'personal'}, #a parentId of 0 means root
+    {'id': 35, 'parentId': 27, 'name': 'blog'},
+]
+
+graph = collections.defaultdict(list)
+id_to_name = collections.defaultdict()
+
+for folder in folders:
+    #make edge
+    graph[folder['parentId']].append(folder['id'])
+    #add to name
+    id_to_name[folder['id']] = folder['name']
+
+res = []
+
+
+def dfs(curr,path):
+    res.append(path)
+    if curr in graph:
+        for neigh in graph[curr]:
+            #update path
+            path = path + '/' + id_to_name[neigh]
+            dfs(neigh,path)
+
+dfs(0,'')
+print(res)
+
+#could also do bfs
+
+import collections
+folders = folders = [
+    {'id': 27, 'parentId': 15, 'name': 'projects'},
+    {'id': 81, 'parentId': 27, 'name': 'novel'},
+    {'id': 15, 'parentId': 0, 'name': 'personal'}, #a parentId of 0 means root
+    {'id': 35, 'parentId': 27, 'name': 'blog'},
+]
+
+graph = collections.defaultdict(list)
+id_to_name = collections.defaultdict()
+
+for folder in folders:
+    #make edge
+    graph[folder['parentId']].append(folder['id'])
+    #add to name
+    id_to_name[folder['id']] = folder['name']
+
+res = []
+q = collections.deque([[0,'']]) #store ad list with curr and path
+while q:
+    curr,path = q.popleft()
+    res.append(path)
+    if curr in graph:
+        for neigh in graph[curr]:
+            path = path + '/' + id_to_name[neigh]
+            q.append([neigh,path])
+
+print(res)
+
+
