@@ -3158,4 +3158,158 @@ while q:
 
 print(res)
 
+#############################################
+#1305. All Elements in Two Binary Search Trees
+# 26JAN22
+############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getAllElements(self, root1: TreeNode, root2: TreeNode) -> List[int]:
+        '''
+        dumn way would be to just travers both trees and return sorted
+        '''
+        ans = []
+        def dfs(node):
+            if not node:
+                return
+            ans.append(node.val)
+            dfs(node.left)
+            dfs(node.right)
+            
+        dfs(root1)
+        dfs(root2)
+        
+        return sorted(ans)
+        
+#withour sorting
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getAllElements(self, root1: TreeNode, root2: TreeNode) -> List[int]:
+        '''
+        we can inorder borth trees then use two point merge trick
+        '''
+        def inorder(root, lst):
+            if not root: return
+            inorder(root.left, lst)
+            lst.append(root.val)
+            inorder(root.right, lst)
+        
+        lst1, lst2 = [], []
+        inorder(root1, lst1)
+        inorder(root2, lst2)
+        
+        i1, i2, res = 0, 0, []
+        s1, s2 = len(lst1), len(lst2)
+        
+        while i1 < s1 and i2 < s2:
+            if lst1[i1] < lst2[i2]:
+                res += [lst1[i1]]
+                i1 += 1
+            else:
+                res += [lst2[i2]]
+                i2 += 1
+                
+        return res + lst1[i1:] + lst2[i2:]
+            
+class Solution:
+    def getAllElements(self, root1: TreeNode, root2: TreeNode) -> List[int]:
+        '''
+        we can save space by doing in order in parallel
+        here we can use a stack to arrest the momemnts in recursion
+        '''
+        stack1 = []
+        stack2 = []
+        
+        merged = []
+        
+        while root1 or root2 or stack1 or stack2:
+            #go left in both
+            while root1:
+                stack1.append(root1)
+                root1 = root1.left
+            while root2:
+                stack2.append(root2)
+                root2 = root2.left
+                
+            #add the smallest value to merged, pop from stack, and go right
+            if not stack2 or stack1 and stack1[-1].val <= stack2[-1].val:
+                root1 = stack1.pop()
+                merged.append(root1.val)
+                root1 = root1.right
+            else:
+                root2 = stack2.pop()
+                merged.append(root2.val)   
+                root2 = root2.right
+
+        return merged
+
+#################################
+# 244. Shortest Word Distance II
+# 26JAN22
+#################################
+class WordDistance:
+    '''
+    i can make a mapping for words dict to index position
+    then just return the mapped values
+    '''
+
+    def __init__(self, wordsDict: List[str]):
+        self.mapp = collections.defaultdict(list)
+        for i,word in enumerate(wordsDict):
+            self.mapp[word].append(i)
+
+    def shortest(self, word1: str, word2: str) -> int:
+        #get their posisitions
+        pos1 = self.mapp[word1]
+        pos2 = self.mapp[word2]
+        ans = float('inf')
+        for i in pos1:
+            for j in pos2:
+                ans = min(ans, abs(i-j))
+        
+        return ans
+
+
+# Your WordDistance object will be instantiated and called as such:
+# obj = WordDistance(wordsDict)
+# param_1 = obj.shortest(word1,word2)
+
+class WordDistance:
+    '''
+    we can improve the shortest call to linear time instead of the double for loop
+    we adavance the smallest pointer first to minimize the diff
+    '''
+
+    def __init__(self, wordsDict: List[str]):
+        self.mapp = collections.defaultdict(list)
+        for i,word in enumerate(wordsDict):
+            self.mapp[word].append(i)
+
+    def shortest(self, word1: str, word2: str) -> int:
+        #get their posisitions
+        pos1 = self.mapp[word1]
+        pos2 = self.mapp[word2]
+        ans = float('inf')
+        i,j = 0,0
+        #we don't need to traverse the entirey of both lists, just stop when the we done with the shortes one
+        #why? if we got to the end of the shorter list, and the second list must be increasing, we 
+        #would only every increase the the diff
+        while i < len(pos1) and j < len(pos2):
+            ans = min(ans, abs(pos1[i]-pos2[j]))
+            if pos1[i] < pos2[j]:
+                i += 1
+            else:
+                j += 1
+        
+        return ans
 
