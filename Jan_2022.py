@@ -3313,3 +3313,229 @@ class WordDistance:
         
         return ans
 
+#############################################
+# 421. Maximum XOR of Two Numbers in an Array
+# 27JAN22
+#############################################
+class Solution:
+    def findMaximumXOR(self, nums: List[int]) -> int:
+        '''
+        xor is true, if two bits are (0 1) or (1 0)
+        we can use prefix hases of the nuber's binary rep
+        3 = 00011
+        10 = 01010
+        5 = 00101
+        25 = 11001
+        2 = 00010
+        8 = 01000
+        
+        make sure to pad with zeros to the left up to L, where L is the longest bitwise rep of a number
+        make largest num with L bits
+        in this case 11111 , L is 5 and then check bit by bit
+        can we find two pairs who's XOR would give us 1****, yes!
+        can we fins two pairs who's XOR would give us 11***, yes!
+        this is the intuition right here
+        to answer the second questions consider the prefixes up to the current bit we are at
+        3 = 00*** 
+        10 = 01***
+        5 = 00****
+        25 = 11***
+        2 = 00***
+        8 = 01***
+        we are looking for two nums i,j where i ^ j = 11***, i.e 5 and 5 work
+        linar time, one had to perorm N operations to compute the prefixes, though the number of prefizes if L=i
+        algo:
+            * compute number of bits L to be used,
+            * init max_xor
+            * loop from L-1 donwn to 0, for each set bit
+                * left shit the max_sor to free the next bit
+                * init var, curr_xor = max_xor | 1 by setting 1 in the right most bit of max_sor
+                * now check if curr_xor could be made using available prefixes
+                * get all possible prefixes of L - i lenght, by passing over nums
+                    * make hash set of prefixes
+                * iterate over all prefixes and check if curr_xor could be dont using them
+                * i.e i^j == curr_xor
+                * rewrite p1 == curr_xor^p2 and check for each p if curr_xor&p is in prefixes
+                * if it ix, set max_xor to be curr_xor
+                
+        time complexity is O(NL), but L is constant
+        '''
+        #get largest size
+        L = len(bin(max(nums))) - 2
+        max_xor = 0
+        for i in range(L-1,-1,-1):
+            #left shift max_xor by 1 and set right most
+            max_xor <<= 1
+            #set right most to check, we want to try to make this!
+            curr_xor = max_xor | 1
+            #compute all existing prefixes if length L-i
+            prefixes = set()
+            for num in nums:
+                prefixes.add(num >> i)
+            #print(i,prefixes)
+            #now lets check if we can make curr_xor with any of the prefixes
+                            # if p1 ^ p2 == curr_xor then
+                # p1 ^ curr_xor == p2 ( p2 is in prefixes)
+            for p in prefixes:
+                if p^curr_xor in prefixes:
+                    max_xor = curr_xor
+                    '''
+                    could also do 
+                    max_xor = max_xor | 1
+                    then not break
+                    '''
+                    break
+        
+        return max_xor
+
+class Solution:
+    def findMaximumXOR(self, nums: List[int]) -> int:
+        '''
+        note that since we are trying to use prefixes of bits, it might make sense to use a trie
+        BITWISE TRIE
+        examples after two stops of moving the max XOR (11***) its obvious we want to pair it with nums
+        who's bitwise prefixes are (00***)
+        we want a more efficient way to look for the right prefixes, instead of scanning all prefixes
+        very similar to word trie, but this time use bits to represent the numes
+        root to leaf path reads left to right in the bitwise representations
+        depth of trie, is length of the longest binary rep of max number, 
+        so now how do we find the max xor of two numbers using the trie?
+        
+        to maximize the xor, we choose the opposite bit at each step when we can
+        try to go down the opposite bit at each step when possible, add 1 bit at the end of the current xpr
+        if not just go down the same bit
+        '''
+        L = len(bin(max(nums))) - 2
+        N = len(nums)
+        
+        for i in range(N):
+            num = nums[i]
+            #turn cur num into list of 0 and 1 from binary rep, with zeros added
+            bin_num = []
+            for j in range(L-1,-1,-1):
+                bin_num.append((num >> j) & 1)
+            nums[i] = bin_num
+        
+        max_xor = 0
+        trie = {}
+        for num in nums:
+            node = trie
+            xor_node = trie
+            curr_xor = 0
+            #being insertion
+            for bit in num:
+                if bit not in node:
+                    node[bit] = {}
+                node = node[bit]
+                
+                #now lets try to maximize the xor
+                toggled_bit = 1 - bit
+                if toggled_bit in xor_node:
+                    curr_xor = (curr_xor << 1) | 1
+                    xor_node = xor_node[toggled_bit]
+                else:
+                    curr_xor = (curr_xor << 1)
+                    xor_node = xor_node[bit]
+            
+            max_xor = max(max_xor,curr_xor)
+        
+        return max_xor
+
+##################################################
+# 211. Design Add and Search Words Data Structure
+# 28JAN22
+##################################################
+class WordDictionary:
+    '''
+    well this speaks word trie, but first lets use a hahsmap
+    we can mapp the word length to all words of that length
+    then just check char matches and '.' matches
+    '''
+
+    def __init__(self):
+        self.mapp = defaultdict(list)
+        
+
+    def addWord(self, word: str) -> None:
+        #add word to its length
+        N = len(word)
+        self.mapp[N].append(word)
+        
+
+    def search(self, word: str) -> bool:
+        N = len(word)
+        for candidate in self.mapp[N]:
+            i = 0
+            while i < N and (candidate[i] == word[i] or word[i] == '.'):
+                i += 1
+            if i == N:
+                return True
+        return False
+        
+
+
+# Your WordDictionary object will be instantiated and called as such:
+# obj = WordDictionary()
+# obj.addWord(word)
+# param_2 = obj.search(word)
+
+#Trie Solution
+class TrieNode:
+    def __init__(self):
+        self.children = defaultdict()
+        self.end = False
+        
+class Trie:
+    def __init__(self):
+        self.root = TrieNode()
+    
+    def insert(self,word):
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                root.children[ch] = TrieNode()
+            root = root.children[ch]
+        root.end = True
+        
+    def search(self,node,word):
+        N = len(word)
+        for i in range(N):
+            ch = word[i]
+            #now we need to see if its a char or "."
+            if ch == '.': #we need to dfs
+                for child in node.children:
+                    if self.search(node.children[child],word[i+1:]):
+                        return True
+                return False
+            elif ch not in node.children:
+                return False
+            node = node.children[ch]
+        return node.end
+        
+    def searchFrom(self,node,word):
+        return self.search(self.root,word)
+
+class WordDictionary:
+    '''
+    when searching, if we hit a '.' we need to explore all possible paths
+    if we get '.' we can dfs here to explore
+    '''
+
+    def __init__(self):
+        self.root = Trie()
+        
+
+    def addWord(self, word: str) -> None:
+        self.root.insert(word)
+        
+
+    def search(self, word: str) -> bool:
+        return self.root.searchFrom(self.root,word)
+
+
+# Your WordDictionary object will be instantiated and called as such:
+# obj = WordDictionary()
+# obj.addWord(word)
+# param_2 = obj.search(word)
+
+
