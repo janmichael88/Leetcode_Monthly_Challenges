@@ -3538,4 +3538,159 @@ class WordDictionary:
 # obj.addWord(word)
 # param_2 = obj.search(word)
 
+#######################################
+# 501. Find Mode in Binary Search Tree
+# 28JAN22
+########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findMode(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        just dfs and count
+        '''
+        counts = Counter()
+        self.max_count = 0
+        def dfs(node):
+            if not node:
+                return
+            counts[node.val] += 1
+            self.max_count = max(self.max_count,counts[node.val])
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
+        ans = []
+        for k,v in counts.items():
+            if v == self.max_count:
+                ans.append(k)
+        return ans
 
+#####################################
+# 84. Largest Rectangle in Histogram
+# 29JAN22
+#####################################
+#this was a review problem from Recursion II
+#slow brute foce
+#examine all start end end intervals
+#within each interval, find the smallest height
+class Solution:
+    def largestRectangleArea(self, heights: List[int]) -> int:
+        max_area = 0
+        for i in range(len(heights)):
+            for j in range(i, len(heights)):
+                min_height = inf
+                for k in range(i, j + 1):
+                    min_height = min(min_height, heights[k])
+                max_area = max(max_area, min_height * (j - i + 1))
+        return max_area
+
+
+#brute force TLE
+class Solution:
+    def largestRectangleArea(self, heights: List[int]) -> int:
+        '''
+        brute force would be to try to increase the area by adding more bars to the left
+        for each bar, compute the area
+        '''
+        ans = 0
+        N = len(heights)
+        for i in range(N):
+            #we find the min height so far, before checking the next bar
+            curr_height = heights[i]
+            for j in range(i,N):
+                curr_height = min(curr_height,heights[j])
+                new_area = curr_height*(j - i + 1)
+                ans = max(ans,new_area)
+        
+        return ans
+
+#divid and conquer
+class Solution:
+    def largestRectangleArea(self, heights: List[int]) -> int:
+        '''
+        the rectanlgle with the max area is the max of the following:
+            1. Widest possible rectangle with smallest height
+            2. the largest recangle to the left of the shortest bar (sub problem)
+            3. the largest rectanble to the fihgrt of the shortest bar (sub problem)
+            
+        we can add memo for the recursive solution
+        '''
+        memo = {}
+        N = len(heights)
+        def recurse(start,end):
+            if start > end:
+                return 0
+            if (start,end) in memo:
+                return memo[(start,end)]
+            
+            smallestHeightIndex = start
+            for i in range(start,end+1):
+                if heights[smallestHeightIndex] > heights[i]:
+                    smallestHeightIndex = i
+            currArea = heights[smallestHeightIndex]*(end-start+1)
+            lookLeft = recurse(start,smallestHeightIndex-1)
+            lookRight = recurse(smallestHeightIndex+1,end)
+            ans = max(currArea,lookLeft,lookRight)
+            memo[(start,end)] = ans
+            return memo[(start,end)]
+        
+        return recurse(0,N-1)
+
+class Solution:
+    def largestRectangleArea(self, heights: List[int]) -> int:
+        '''
+        two ideas:
+            1. keep upper bound for a bar and a lower bound for a bar
+            2. maintain strictly increasing stack (montonic stack problem)
+        
+        need to keep finding an upper right limit, otherwise we can;t and curr position is the right limit
+        intuition
+        we keep pushing the index values on to the stack and maintain variant the stack is increasing
+        when we come to one where the bar at the top of stack is less then current bar, we start popping from stack
+        whnever we pop, we need to do a max area update
+        key -> right limit is curr bar, left limit if at top of stack
+        area is:    
+            (i−stack[top−1]−1)×a[stack[top]].
+        
+        one we finish the array we keep popping from the stakc
+        and update max area:
+            (stack[top]−stack[top−1])×a[stack[top]]
+        '''
+        stack = [-1]
+        max_area = 0
+        N = len(heights)
+        
+        for i in range(N):
+            #if there is something on the stack and not strictly increasing
+            while stack[-1] != -1 and heights[stack[-1]] >= heights[i]:
+                #get height
+                curr_height = heights[stack.pop()]
+                #find limits
+                right_limit = i
+                left_limit = stack[-1]
+                width = right_limit - left_limit - 1
+                max_area = max(max_area, width*curr_height)
+            stack.append(i)
+        
+        #now if there are bars to be processed
+        while stack[-1] != -1:
+            #get height
+            curr_height = heights[stack.pop()]
+            #find limits
+            right_limit = N
+            left_limit = stack[-1]
+            width = right_limit - left_limit - 1
+            max_area = max(max_area, width*curr_height)
+            
+        
+        return max_area
+
+##############################
+# 249. Group Shifted Strings
+# 29JAN21
+#############################
