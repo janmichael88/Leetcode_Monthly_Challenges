@@ -3690,7 +3690,179 @@ class Solution:
         
         return max_area
 
+########################################
+# 501. Find Mode in Binary Search Tree
+# 30JAN22
+########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findMode(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        just dfs and count
+        '''
+        counts = Counter()
+        self.max_count = 0
+        def dfs(node):
+            if not node:
+                return
+            counts[node.val] += 1
+            self.max_count = max(self.max_count,counts[node.val])
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
+        ans = []
+        for k,v in counts.items():
+            if v == self.max_count:
+                ans.append(k)
+        return ans
+
+#this isn't O(1) and true O(1) is actually prett hard
+#here is a pseudo O(1) solution
+class Solution:
+    def findMode(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        we can do an inorder traversal of a BST 
+        and just compare the curr node to the previous
+        if they match increase the ccurne toun of duplicate
+        if they don't reset count to 1 
+        compare current to maxcount so far
+        '''
+        self.prev = None
+        self.max_count = 0
+        self.curr_count = 0
+        self.result = []
+        
+        def dfs(node):
+            if not node:
+                return
+            dfs(node.left)
+            #check prev and curr count
+            self.curr_count = 1 if node.val != self.prev else self.curr_count + 1
+            #updates
+            if self.curr_count == self.max_count:
+                self.result.append(node.val)
+            elif self.curr_count > self.max_count:
+                self.res = [node.val]
+                self.max_count = self.curr_count
+            self.prev = node.val
+            dfs(node.right)
+        
+        dfs(root)
+        return self.result
+        
 ##############################
-# 249. Group Shifted Strings
-# 29JAN21
+# 189. Rotate Array
+# 30JAN22
 #############################
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        i can use a q and just push and pop left and right
+        '''
+        q = deque(nums)
+        while k > 0:
+            right = q.pop()
+            q.appendleft(right)
+            k -= 1
+        
+        for i in range(len(nums)):
+            nums[i] = q[i]
+
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        there are a couple of solutions, lets go over some of them
+        first we need to take care of the case where k > len(nums)
+        in this case, we can just take the mod, this should give us the rotation
+        brute force would be to just move their elementgs in their final positions
+        this is O(1) but O(N*k)
+        '''
+        k = k % len(nums)
+        for i in range(k):
+            previous = nums[-1]
+            #swap right
+            for j in range(len(nums)):
+                nums[j],previous = previous,nums[j]
+
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        if we shift by k
+        then i = (i+k) % len(nums)
+        '''
+        N = len(nums)
+        temp = [0]*N
+        for i in range(N):
+            temp[(i+k) % N] = nums[i]
+        
+        nums[:] = temp
+
+#another way
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        from and index i, we know where to place that element (i+k) % N
+        we can just store this temp num anbd replace
+        but there could be a problem if n % k == 0, where k = k %n (since a k larger then n leads to an equivlaent k % n), think of the case if we were passing the array left to right, we would fall out of index (after len(nums)) and would be back on the left side again; here wannot cach as temp, because this is the elemeent we  are trying to replace!
+        in thise case, while picking up numbers to be placed at the correct position, we wille ventually rach a number where we starting
+        if this happens, well just go on the next number
+        move each number for each value of k % n
+        '''
+        n = len(nums)
+        k %= n
+        
+        start = count = 0
+        while count < n:
+            current, prev = start, nums[start]
+            while True:
+                next_idx = (current + k) % n
+                nums[next_idx], prev = prev, nums[next_idx]
+                current = next_idx
+                count += 1
+                
+                if start == current:
+                    break
+            start += 1
+        
+class Solution:
+    def rotate(self, nums: List[int], k: int) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        we can just reverse
+        this is based on the face that when we rotate the array k times, elements from the back end of the array from to the front and the rest of thelements from the front get shfited backwards
+        in this approacj we reverese all the elements of the aray
+        then reversing the first k elements following by reversing the rest n-l
+        three reverses
+        '''
+        n = len(nums)
+        k %= n
+
+        self.reverse(nums, 0, n - 1)
+        self.reverse(nums, 0, k - 1)
+        self.reverse(nums, k, n - 1)
+    
+    def reverse(self, nums: list, start: int, end: int) -> None:
+        while start < end:
+            nums[start], nums[end] = nums[end], nums[start]
+            start, end = start + 1, end - 1
+                
