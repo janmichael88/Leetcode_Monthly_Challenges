@@ -18,7 +18,7 @@ Just a code dump for all the monthly Leet code solutions.
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-Jan 2022
+Feb 2022
 
 Completed:
 * May 2020
@@ -40,4 +40,4 @@ Completed:
 * Oct 2021
 * Nov 2021
 * Dec 2021
-
+* Jan 2022
