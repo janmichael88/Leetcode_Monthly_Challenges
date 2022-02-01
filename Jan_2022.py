@@ -3866,3 +3866,140 @@ class Solution:
             nums[start], nums[end] = nums[end], nums[start]
             start, end = start + 1, end - 1
                 
+#############################
+# 249. Group Shifted Strings
+# 30JAN22
+#############################
+class Solution:
+    def groupStrings(self, strings: List[str]) -> List[List[str]]:
+        '''
+        we can promote each char in the string to its next one in ascii (mod26)
+        abc becomes bcd
+        bcd becomes cde
+        xyz becomes yza
+        
+        i can get the differecne in ascii between each char, this will be the key
+        then just map each transofmration to its string
+        then just returnt the groups
+        
+        if we have
+        abc, it takes 0 shifts to get to abc
+        bcd, takes 1 shift to get to abc
+        cde, takes 2 shifts to get back to abc
+        
+        the number of shifts is our hashvalue
+        
+        to make every string the same, the first char for all strings will also have to be the same
+        we first convert the first char of all the strings ot any char, lets just pick a
+        to convert the first char to a, we require some number of shifts and we need to shfit the otehr chars of string by the same value
+        
+        algo:
+            pass over thes strings
+                for each string, find the the number of shifts to 
+        '''
+        def decode(string):
+            #find offset after applying shift of first char to 0
+            temp = ""
+            shift = ord(string[0])
+            for ch in string:
+                #get offset, don't foget to mod 26
+                offset = (ord(ch) - shift) % 26
+                #convert to letter
+                offset = chr(offset % 26 + ord('a'))
+                #add
+                temp += offset
+            return temp
+        
+        #mapp
+        mapp = defaultdict(list)
+        for s in strings:
+            mapp[decode(s)].append(s)
+        
+        return [group for group in mapp.values()]
+
+class Solution:
+    def groupStrings(self, strings: List[str]) -> List[List[str]]:
+        '''
+        we can generate the hash anothe way
+        we can map each string to the collectino fo ascci code values between each char!
+        this works because the strings in the same shifting sequence will have the same collection of differecnes
+        note the use of a negative shift, still working with mod 26
+        also note, we don't need to conver the shift to an asccii from a to z, we can just keep this number
+        
+        '''
+        def decode(string):
+            key = ""
+            for a,b in zip(string,string[1:]):
+                diff = (ord(b) - ord(a)) % 26
+                diff = chr(diff + ord('a'))
+                key += diff
+            return key
+        
+        #mapp
+        mapp = defaultdict(list)
+        for s in strings:
+            mapp[decode(s)].append(s)
+        
+        return [group for group in mapp.values()]
+
+#################################
+# 1672. Richest Customer Wealth
+# 30JAN22
+#################################
+class Solution:
+    def maximumWealth(self, accounts: List[List[int]]) -> int:
+        return max([sum(account) for account in accounts])
+
+
+######################
+# 504. Base 7
+# 31JAN22
+######################
+class Solution:
+    def convertToBase7(self, num: int) -> str:
+        '''
+        similar to convert to hexadecmial
+        just take mod7 and interger division by 7
+        if its' negative tack on the sign
+        '''
+        
+        if num == 0:
+            return "0"
+        sign = '-' if num < 0 else ''
+        num = abs(num)
+        bits = "0123456"
+        
+        res = ""
+        
+        while num:
+            res = bits[num % 7] + res
+            num //= 7
+        
+        return sign+res
+
+#another way
+class Solution:
+    def convertToBase7(self, num):
+        n, res = abs(num), ''
+        while n:
+            res = str(n % 7) + res
+            n /= 7
+        return '-' * (num < 0) + res or "0"
+
+#we can also do this recursively
+'''
+less then 7, just return the number
+otherwise reduce by 7 and add its mod
+don't forget the case when its negative
+add sign and flip
+'''
+class Solution:
+    def rec(self,n):
+        if n < 0:
+            return "-"+self.rec(-n)
+        if n < 7:
+            return str(n)
+        return rec(n//7) + str(n % 7)
+
+
+
