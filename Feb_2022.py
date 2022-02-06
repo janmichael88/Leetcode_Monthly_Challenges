@@ -452,5 +452,345 @@ class LRUCache:
 # param_1 = obj.get(key)
 # obj.put(key,value)
 
+########################
+# 454. 4Sum II
+# 03FEB22
+########################
+#got ncubed!
+class Solution:
+    def fourSumCount(self, nums1: List[int], nums2: List[int], nums3: List[int], nums4: List[int]) -> int:
+        '''
+        the lengnth of  the arrays is small enough to allow cubic solutiono
+        i can find the sum in the first three arrays
+        then check if the comolement is in nums4
+        i can dump nums4 into a mapp into a count
+        '''
+        #first mapp the last array
+        counts = Counter(nums4)
+        N = len(nums1)
+        
+        ans = 0
+        for i in range(N):
+            for j in range(N):
+                for k in range(N):
+                    #find complement
+                    comp = -(nums1[i]+nums2[j]+nums3[k])
+                    if comp in counts:
+                        ans += counts[comp]
+        
+        return ans
+
+class Solution:
+    def fourSumCount(self, nums1: List[int], nums2: List[int], nums3: List[int], nums4: List[int]) -> int:
+        '''
+        looks like they want an O(N^2) solution
+        first observe that nums1[i] + nums2[j] + nums3[k] + nums4[l] == 0
+        this implies that
+        nums1[i] + nums2[j] = -(nums3[k] + nums4[l])
+        we can put into a hashmap the sums of the first i and j
+        then check for complements of k and l on second pass
+        '''
+        counts = Counter()
+        ans = 0
+        N = len(nums1)
+        
+        for i in range(N):
+            for j in range(N):
+                SUM = nums1[i] + nums2[j]
+                counts[SUM] += 1
+        
+        for k in range(N):
+            for l in range(N):
+                COMP = -(nums3[k] + nums4[l])
+                if COMP in counts:
+                    ans += counts[COMP]
+        
+        return ans
+
+#don't forget the .get for dicts
+class Solution:
+    def fourSumCount(self, A: List[int], B: List[int], C: List[int], D: List[int]) -> int:
+        cnt = 0
+        m = {}
+        for a in A:
+            for b in B:
+                m[a + b] = m.get(a + b, 0) + 1
+        for c in C:
+            for d in D:
+                cnt += m.get(-(c + d), 0)
+        return cnt
+
+########################################
+# 241. Different Ways to Add Parentheses
+# 03FEB22
+########################################
+class Solution:
+    def diffWaysToCompute(self, expression: str) -> List[int]:
+        '''
+        we first have to notice the recurrence
+        we define our operators as '+-*'
+    We will call +/-/* symbols.
+
+    (base) case 1: if there is 0 symbol, 
+        e.g. 1, we simply return it as a list, [1].
+
+    case 2: if there is 1 symbol, 
+        e.g., 1 + 2, we divide it by symbol and add parenthesis in both sides: (1) + (2), (1) and (2) reduce to case 1, and we add the results of both sides and return as a list, [3].
+
+    case 3: if there are 2 symbols, 
+        e.g., 1 + 2 + 3, we divide it by symbol and add parenthesis in both sides: (1) + (2 + 3) or (1 + 2) + (3).
+        Take (1) + (2 + 3) for example, (1) reduces to case1, (2 + 3) reduces to case 2 (then case 1), finally we add the results of both sides and add the final ressult to the list, [6].
+        
+        If there are n symbols, for each symbol, we divide it into two parts and add parenthesis in both sides, each side is reduced to a subproblem which can be solved recursively, finally we combine the results of both sides by the symbol and add to the final result list.
+
+...
+        '''
+        memo = {}
+        
+        def rec(expression):
+            #base case
+            if all([op not in expression for op in '+-*']):
+                return [int(expression)]
+            res = []
+            for i,v in enumerate(expression):
+                #if its an operation, we need to apply to the left and right
+                if any([op in  v for op in '+-*']):
+                    left = rec(expression[:i])
+                    right = rec(expression[i+1:])
+                    for left_ans in left:
+                        for right_ans in right:
+                            #apply opertions
+                            if v == '+':
+                                res.append(left_ans + right_ans)
+                            elif v == '-':
+                                res.append(left_ans - right_ans)
+                            else:
+                                res.append(left_ans*right_ans)
+            memo['expression'] = res
+            return res
+        
+        return rec(expression)
+
+#now lets try top down
+#try using i,j instead of expres
+
+class Solution:
+    def diffWaysToCompute(self, expression: str) -> List[int]:
+        '''
+        instead of passing a string expression, lets pass indices i and j
+        '''
+        memo = {}
+        def rec(i,j):
+            #if we get to a point where expression[i:j] has no op, return this value
+            if all([op not in expression[i:j] for op in '+-*']):
+                return [int(expression[i:j])]
+            res = []
+            for k in range(i,j):
+                v = expression[k]
+                if any([op in  v for op in '+-*']):
+                    left = rec(i,k)
+                    right = rec(k+1,j)
+                    for left_ans in left:
+                        for right_ans in right:
+                            #apply opertions
+                            if v == '+':
+                                res.append(left_ans + right_ans)
+                            elif v == '-':
+                                res.append(left_ans - right_ans)
+                            else:
+                                res.append(left_ans*right_ans)
+            memo[(i,j)] = res
+            return res
+        
+        return rec(0,len(expression))
+
+#it's something like this...
+class Solution:
+    def diffWaysToCompute(self, expression: str) -> List[int]:
+        '''
+        now lets try doing this bottom up
+        '''
+        N = len(expression)
+        dp = [[[] for _ in range(N)] for _ in range(N)]
+        #fill in base cases
+        for i in range(N):
+            for j in range(i,N):
+                if all([op not in expression[i:j+1] for op in '+-*']):
+                    dp[i][j] += [int(expression[i:j+1])]
+                    
+        #fill in rest
+        for i in range(N):
+            for j in range(N):
+                for k in range(i,j):
+                    v = expression[k]
+                    if any([op in  v for op in '+-*']):
+                        #print(v,dp[i][k-1],dp[k+1][j-1])
+                        left = dp[i][k-1]
+                        right = dp[k+1][j]
+                        res = []
+                        for left_ans in left:
+                            for right_ans in right:
+                                print(left,right)
+                                #apply opertions
+                                if v == '+':
+                                    res.append(left_ans + right_ans)
+                                elif v == '-':
+                                    res.append(left_ans - right_ans)
+                                else:
+                                    res.append(left_ans*right_ans)
+                        dp[i][j] = res
+        
+        print(dp)
+
+#actual answer.......fuck, why can't i get this...
+import operator, re
+ops = {'+': operator.add, '-': operator.sub, '*': operator.mul}
+
+class Solution(object):
+    def diffWaysToCompute(self, s):
+        nums = [int(x) for x in re.findall(r'[0-9]+', s)]
+        opers = re.findall(r'\+|\-|\*', s)
+        n, DP = len(nums), {}
+        for i in range(n):
+            DP[i, i] = [nums[i]]
+        for i in range(n - 1):
+            DP[i, i+1] = [ops[opers[i]](nums[i], nums[i + 1])]
+        for k in range(3, n + 1):
+            for i in range(n - k + 1):
+                j = i + k - 1
+                DP[i, j] = []
+                for v in range(i, j):
+                    left = DP[i, v]
+                    right = DP[v + 1, j]
+                    for e1 in left:
+                        for e2 in right:
+                            DP[i, j].append(ops[opers[v]](e1, e2))
+        return DP[0, n - 1]
+
+#############################
+# 04FEB21
+# 525. Contiguous Array
+#############################
+#using hashmap
+class Solution:
+    def findMaxLength(self, nums: List[int]) -> int:
+        '''
+        for an array between i and j
+        we can get count ones using sum(nums[i:j]) 
+        we can get sum zeros by using j-i+1 - sum(nums[i:j])
+        notice that for a contiguous subarray, it obeys the proprerty  that if adding 1  and zero is -1
+        the  balance is  zeroo
+        if a  balance is  is zero, we  know that from the start  of the  array we  have  a contiguouos  subarray
+        mark  the positions  of  where  the balance is zero, we can find another  sub array
+        points in the  subarray that have balance 0 to the  next are also contiguoours sub array
+        more  see if we see  that balance appears again, then the array between thoose  balance poionts
+        has  the  same number  of zeroos
+        '''
+        #make curr_balance mapp
+        balance_mapp = {}
+        balance = 0
+        N = len(nums)
+        ans = 0
+        
+        for i in range(N):
+            balance += 1 if nums[i] == 1 else -1
+            #check for anoother balance point
+            if balance == 0:
+                ans = max(ans, i+1)
+            if balance in  balance_mapp:
+                ans = max(ans, i - balance_mapp[balance])
+            else:
+                balance_mapp[balance] = i
+        
+        return ans
+
+#can  also use array, but  need to accuont for negative numbers
+class Solution:
+    def findMaxLength(self, nums: List[int]) -> int:
+        '''
+        '''
+        #make curr_balance mapp
+        N = len(nums)
+        balance_mapp =[0]*(2*N + 1)
+        balance = 0
+        ans = 0
+        
+        for i in range(N):
+            balance += 1 if nums[i] == 1 else -1
+            #check for anoother balance point
+            #conovert too index in array
+            if balance == 0:
+                ans = max(ans, i+1)
+            if balance_mapp[balance + N] >= 0:
+                ans = max(ans, i - balance_mapp[balance +  N]-1)
+            else:
+                balance_mapp[balance + N] = i 
+        
+        return ans
+
+####################################
+# 245. Shortest Word Distance III
+# 04FEB22
+#####################################
+class Solution:
+    def shortestWordDistance(self, wordsDict: List[str], word1: str, word2: str) -> int:
+        mapp = collections.defaultdict(list)
+        for i,word in enumerate(wordsDict):
+            mapp[word].append(i)
+            
+        #get their posisitions
+        pos1 = mapp[word1]
+        pos2 = mapp[word2]
+        #case 1: when they are not the same word, treat like the first
+        if word1 != word2:
+            ans = float('inf')
+            i,j = 0,0
+            #we don't need to traverse the entirey of both lists, just stop when the we done with the shortes one
+            #why? if we got to the end of the shorter list, and the second list must be increasing, we 
+            #would only every increase the the diff
+            while i < len(pos1) and j < len(pos2):
+                ans = min(ans, abs(pos1[i]-pos2[j]))
+                if pos1[i] < pos2[j]:
+                    i += 1
+                else:
+                    j += 1
+
+            return ans
+        
+        else:
+            #pass one of the indicies arrays and record the min diff
+            ans = float('inf')
+            for i in range(1,len(pos1)):
+                ans = min(pos1[i] - pos1[i-1],ans)
+            
+            return ans
+
+class Solution:
+    def shortestWordDistance(self, wordsDict: List[str], word1: str, word2: str) -> int:
+        '''
+        we can just do this in one pass, similar to the first problem in this series
+        keep track of a last pointer
+        check for word1 or word1
+        set the last pointer to the last seen index of either word1 or word2
+        then just update
+        '''
+        last_seen_idx = None
+        ans = float('inf')
+        N = len(wordsDict)
+        same = word1 == word2
+        for i in range(N):
+            #if this word either matches word1 or word2
+            if wordsDict[i] == word1  or wordsDict[i] == word2:
+                #if we have last seen either of the words
+                if last_seen_idx != None:
+                    #if they are the same, or if the last seen idx is not the samme is current
+                    #we only could have got here if we matched word1 or word2
+                    #or that they are they are the same
+                    if same or wordsDict[last_seen_idx] != wordsDict[i]:
+                        ans = min(ans, i - last_seen_idx)
+                #save last_seen
+                last_seen_idx = i
+
+        return ans
 
 
