@@ -794,3 +794,243 @@ class Solution:
         return ans
 
 
+#################################
+# 23. Merge k Sorted Lists
+# 05FEB22
+#################################
+#brute force solution
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def mergeKLists(self, lists):
+        """
+        :type lists: List[ListNode]
+        :rtype: ListNode
+        """
+        '''
+        well the naive way would be to get all the elements, sort and recreate the list
+        '''
+        elements = []
+        for linked in lists:
+            while linked:
+                elements.append(linked.val)
+                linked = linked.next
+        #sort
+        elements.sort()
+        dummy = ListNode()
+        cur = dummy
+        for num in elements:
+            cur.next = ListNode(val=num)
+            cur = cur.next
+        return dummy.next
+
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def mergeKLists(self, lists):
+        """
+        :type lists: List[ListNode]
+        :rtype: ListNode
+        """
+        '''
+        i cant megere linked lists in in pairs
+        take the first one, merge with the first one, and make that new list
+        then with the new list merge again with the second one
+        '''
+        #edge case
+        if not lists:
+            return None
+        if len(lists) == 1:
+            return lists[0]
+        
+        def mergeTwo(l1,l2):
+            #mergine two at time and reutring the new one
+            dummy = curr = ListNode()
+            while l1 and l2:
+                if l1.val < l2.val:
+                    curr.next = ListNode(l1.val)
+                    l1 = l1.next
+                else:
+                    curr.next = ListNode(l2.val)
+                    l2 = l2.next
+                curr = curr.next
+            
+            #left over
+            if l1:
+                curr.next = l1
+            if l2:
+                curr.next = l2
+            return dummy.next
+                
+        result = lists[0]
+        for linked in lists[1:]:
+            result = mergeTwo(result, linked)
+            
+        return result
+
+#using a heap
+# Definition for singly-linked list.
+# class ListNode(object):
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution(object):
+    def mergeKLists(self, lists):
+        """
+        :type lists: List[ListNode]
+        :rtype: ListNode
+        """
+        '''
+        i could use a heap, prrioty queue and keep taking the min
+        when i take the min move the pointer to the correspoding linked list
+        '''
+        heap = []
+        
+        for i in range(len(lists)):
+            if lists[i]:
+                heappush(heap,(lists[i].val,i))
+        
+        dummy = curr = ListNode()
+        
+        while heap:
+            val, i = heappop(heap)
+            #set the value
+            curr.next = ListNode(val)
+            #now move point
+            if lists[i].next:
+                #move pointer and push next
+                lists[i] = lists[i].next
+                heappush(heap,(lists[i].val,i))
+            curr = curr.next
+        return dummy.next
+
+##############################################
+# 80. Remove Duplicates from Sorted Array II
+# 06FEB22
+##############################################
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        '''
+        we need to remove duplicates in the integer array so that their multiplicty is at most 2
+        we can push the duplicated elements to the end of the array (it does not matter beyond this)
+        finally we want to return k, which would be the number of elements that have been mulitpicty > 2
+        brute force would be to pass the array and check current occurences of each eleemnts
+        
+        algo:
+            1. lets create two pointers, one pointing into the array, and the othe recording the count
+            2. lower bound for count will always be 1
+            3. if we find the curr element is the same as prev element, we increase the count by 1
+                if count > 2, this is repeated elment and we delete it fom the array,
+                we can also decrease the current pointer by 1
+            4. if curr elment is not teh same as prev, reset count to 1
+            5. return the number of duplicteates, which is just the length of the array
+        '''
+        i = 1
+        count = 1
+        while i < len(nums):
+            #same element
+            if nums[i] == nums[i-1]: 
+                count += 1
+                
+                #greater than 2
+                if count > 2:
+                    nums.pop(i)
+                    
+                    #lower pointer 
+                    i -= 1
+            else:
+                count = 1
+                
+            i += 1
+        
+        return len(nums)
+
+#linear time, but using up space
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        '''
+        anothe way would be to use up space and record indices of elements that have been duplicated
+        then just take the elements not in thos indcies and rebuild the array
+        this is not 0(1)
+        '''
+        idxs = set()
+        i = 1
+        count = 1
+        while i < len(nums):
+            if nums[i] == nums[i-1]:
+                count += 1
+                
+                if count > 2:
+                    idxs.add(i)
+            
+            else:
+                count = 1
+            
+            i += 1
+        
+        new_nums = []
+        for i in range(len(nums)):
+            if i in idxs:
+                continue
+            new_nums.append(nums[i])
+        
+        nums[:len(new_nums)] = new_nums
+        return len(new_nums)
+
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        '''
+        in the last approach, we modified in place, but also has to return the len of the array
+        we can just return how many number of elements that have multiplcity > 2
+        we need to use two pointers here:
+        
+        algo: 
+            1. keep two pointers i and j; i is curr poitner, j is potision where we can place unawanted
+            2. keep count variable
+            3. if curr elment == prev element, incrematn count
+                if count > 2, then we have an un wanted eleemnt, in this case we keep moving forward
+            4. if count <= 2, we can move the element from index i to index j
+            5. if we ecnoutner new element, resetcount to 1, and move this element to j
+        '''
+        next_available = 1
+        count = 1
+        
+        for i in range(1,len(nums)):
+            
+            #same element
+            if nums[i] == nums[i-1]:
+                count += 1
+            else:
+                count = 1
+            
+            #for a count <= 2, we can copy the elemnt over from i to j
+            if count <= 2:
+                nums[next_available] = nums[i]
+                next_available += 1
+        
+        return next_available
+
+class Solution:
+    def removeDuplicates(self, nums: List[int]) -> int:
+        '''
+        another way wouyld be to always wap 2 away
+        if we can't swap move up the
+        '''
+        if len(nums) <= 2:
+            return len(nums)
+        
+        j = 2
+        for i in range(2,len(nums)):
+            nums[j] = nums[i]
+            if nums[j] != nums[j-2]:
+                #because they can only be duplicated, we need maintain the criteria ofr the array
+                j += 1
+        
+        return j
+        
