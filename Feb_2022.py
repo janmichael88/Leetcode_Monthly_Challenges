@@ -1034,3 +1034,258 @@ class Solution:
         
         return j
         
+#################################
+# 389. Find the Difference
+# 07FEB22
+#################################
+class Solution:
+    def findTheDifference(self, s: str, t: str) -> str:
+        '''
+        i can use a counter to find the count of chars in s
+        then pass t and decrement along
+        '''
+        counts = Counter(s)
+        for ch in t:
+            #not in counts
+            if ch not in counts:
+                return ch
+            #must be in counts
+            else:
+                counts[ch] -= 1
+                if counts[ch] < 0:
+                    return ch
+        
+        print(counts)
+
+#sorting
+class Solution:
+    def findTheDifference(self, s: str, t: str) -> str:
+        '''
+        another way is to just sort
+        then return the unmatching char
+        otherwise it's at the end
+        '''
+        s = sorted(s)
+        t = sorted(t)
+        
+        i = 0
+        while i < len(s):
+            if s[i] != t[i]:
+                return t[i]
+            
+            i += 1
+        
+        return t[i]
+
+#bit manipulation
+class Solution:
+    def findTheDifference(self, s: str, t: str) -> str:
+        '''
+        we can use xor
+        recall xor is true if only one of the bits is true
+        if we xor all elements in s
+        then x all elements in t
+        the final is what is different
+        '''
+        # Initialize ch with 0, because 0 ^ X = X
+        # 0 when XORed with any bit would not change the bits value.
+        ch = 0
+
+        # XOR all the characters of both s and t.
+        for char_ in s:
+            ch ^= ord(char_)
+
+        for char_ in t:
+            ch ^= ord(char_)
+
+        # What is left after XORing everything is the difference.
+        return chr(ch)
+
+#########################################
+# 530. Minimum Absolute Difference in BST
+# 07FEB22
+#########################################
+#close one
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getMinimumDifference(self, root: Optional[TreeNode]) -> int:
+        '''
+        i would only ever have to compare parent to child nodes, never up along a path because that would result in a greater differene
+        '''
+        self.ans = float('inf')
+        
+        def dfs(node,parent_value):
+            if not node:
+                return
+            
+            local_min = abs(node.val - parent_value)
+            #update
+            self.ans = min(self.ans,local_min)
+            dfs(node.left,node.val)
+            dfs(node.right,node.val)
+            
+        dfs(root,float('inf'))
+        return self.ans
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getMinimumDifference(self, root: Optional[TreeNode]) -> int:
+        '''
+        we can just do in order, and find the min of the first order differences
+        
+        '''
+        L = []
+        def dfs(node):
+            if node.left: 
+                dfs(node.left)
+            L.append(node.val)
+            if node.right: 
+                dfs(node.right)
+        dfs(root)
+        
+        return min(b - a for a, b in zip(L, L[1:]))
+
+
+#####################################
+# 247. Strobogrammatic Number II
+# 07FEB22
+#####################################
+class Solution:
+    def findStrobogrammatic(self, n: int) -> List[str]:
+        '''
+        a strobrogrammatic number is a number that reads the same when inverted 180 degrees
+        for an even length there is no center
+        for an odd length there is a center
+        the digits that can be strobgrammic are
+        0:0
+        1:1
+        8:8
+        6:9
+        9:6
+        unflipped:flipped
+        for odd length, the digit at the center cannot change, so the centers must be 0,1,8, if odd
+        when two positions interchange, we can use both types of digits which change into one another or we put two same digits which remain the same when rotated 
+        
+        approach 1 recursion:
+            casework, look for patterns tryin to create with n = 1 up to n = 4
+            n = 1:
+                0,1,8
+            n = 2:
+                11, 88,69,96
+                note, we cannot do 00, since this is not a valid two digit number
+            n = 3,
+                index 1 is the center, and can be 0,1,8
+                suppose we had all the 1-digit strobrogrammtic numbers, to find the 3 digits numbers, we just need to append one extra digit at th ebgning and end
+                i.e fix at the center, every 1-digit strobrogammitc number, and use the reversible pairs
+            n = 4
+                for this, index 0 and 3 will interhcnage, and index 1 and 2 will interchange
+                to find the 4 digit stobrorammitc numbers, we just need to append 1 extra digit at the begnning or end
+            
+        to find n digit strobrogrammitc numbers,we first need to find the solutions to n-2 digits, and thena ppend reversible digits to beginning and end
+        
+        the transition function becomes:
+            generateStroboNumbers(N) = List("digit1" + "number" + "digit2"
+                                for each number in generateStroboNumbers(N - 2)
+                                for each (digit1, digit2) in reversiblePairs
+                               )
+        base cases:
+            when n = 0, base case is the results of the emptry string, n = [""]
+            when n = 1, base case is jsut ['0','1','8']
+        
+        note: we use base case for n = 0, instead of n = 2, becaue we cannot include '00' as a valid number
+        if we did n = 1, we would alwasy reduce to n = 0, or n = 1, then we could try bulding using '0'
+        we can contorl for this by passing in final length as paramter
+
+    algo:
+    Initialize a data structure reversiblePairs, which contains all pairs of reversible digits.
+
+    Call and return the recursive function, generateStroboNumbers(n, finalLength), where the first argument indicates that the current call will generate all n-digit strobogrammatic numbers. The second argument indicates the length of the final strobogrammatic numbers that we will generate and will be used to check if we can add '0' to the beginning and end of a number.
+
+    Create a function generateStroboNumbers(n, finalLength) which will return all strobogrammatic numbers of n-digits:
+
+    Check for base cases, if n == 0 return an array with an empty string [""], otherwise if n == 1 return ["0", "1", "8"].
+    Call generateStroboNumbers(n - 2, finalLength) to get all the strobogrammatic numbers of (n-2) digits and store them in subAns.
+    Initialize an empty array currStroboNums to store strobogrammatic numbers of n-digits.
+    For each number in prevStroboNums we append all reversiblePairs at the beginning and the end except when the current reversible pair is '00' and n == finalLength (because we can't append '0' at the beginning of a number) and push this new number in ans.
+    At the end of the function, return all the strobogrammatic numbers, i.e. currStroboNums.
+        '''
+        pairs = [['0','0'],['1','1'],['6','9'],['8','8'],['9','6']]
+        
+        def rec(n,final_length):
+            #base cases
+            if n == 0:
+                return ['']
+            if n == 1:
+                return ['0','1','8']
+            
+            prev_nums = rec(n-2,final_length)
+            curr_nums = []
+            for prev in prev_nums:
+                for pair in pairs:
+                    #we cannot add zeros to the front
+                    #nor can we add any digits to then of we have finishted the current length
+                    if pair[0] != '0' or n != final_length:
+                        curr_nums.append(pair[0]+prev+pair[1])
+            
+            return curr_nums
+        
+        return rec(n,n)
+
+class Solution:
+    def findStrobogrammatic(self, n: int) -> List[str]:
+        '''
+        since the recusive call is tree, we can do a level order traversal 
+        at each root, we just calculate all the strobrorammtic numbers
+        we keep all strobrogrammtic numbers of N-2 in the queue and then append all reversible pairs to all the numbers in the queue to get strob. number of N digits
+        we also know we can't append the '00' pair at the beginning of the number
+        so here we use one varibale currStringLenth which denots the length of the strob number at this level
+        when currStringLength == n, the added number will be the first in postiion
+        
+        algo:
+        Initialize:
+
+        reversiblePairs as a data structure that stores all pairs of reversible digits.
+        q as a queue for doing level order traversal.
+        In javascript and python, we will use an array as a queue for easier implementation.
+        currStringsLength as 0 if n is even or 1 if n is odd, to denote the number of digits in each string, in the current level strobogrammatic numbers.
+        If n is even, we push [""] in the queue, and initialize currStringsLength with 0, because n will decrease till 0. Thus for this case, our starting case will be 0-digit strobogrammatic numbers.
+        Otherwise, if n is odd, we push ["0", "1", "8"] in the queue and initialize currStringsLength with 1, because for odd n the starting case will be 1-digit strobogrammatic numbers.
+
+        We will iterate over one whole level stored in the queue until currStringsLength becomes equal to n.
+
+        In each level, we will append two characters, thus increasing currStringsLength by 2.
+        For each number in the current level (present in the queue) we pop it and, append all reversiblePairs at the beginning and the end except when the current reversible pair is '00' and currStringsLength == n (because we can't append '0' at the beginning of a number) and push this new number in the queue again.
+        After traversing all levels, the queue will contain all n digit strobogrammatic numbers, thus we push them in a stroboNums array and return it.
+        '''
+        reversible_pairs = [
+            ['0', '0'], ['1', '1'], 
+            ['6', '9'], ['8', '8'], ['9', '6']
+        ]
+
+        # When n is even (n % 2 == 0), we start with strings of length 0 and
+        # when n is odd (n % 2 == 1), we start with strings of length 1.
+        curr_strings_length = n % 2
+        
+        q = ["0", "1", "8"] if curr_strings_length == 1 else [""]
+        
+        while curr_strings_length < n:
+            curr_strings_length += 2
+            next_level = []
+            
+            for number in q:
+                for pair in reversible_pairs:
+                    if curr_strings_length != n or pair[0] != '0':
+                        next_level.append(pair[0] + number + pair[1])
+            q = next_level
+            
+        return q
