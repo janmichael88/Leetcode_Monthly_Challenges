@@ -1289,3 +1289,141 @@ class Solution:
             q = next_level
             
         return q
+
+###########################
+# 258. Add Digits
+# 08FEB22
+###########################
+class Solution:
+    def addDigits(self, num: int) -> int:
+        '''
+        just mod 10 and // 10 to pop off last digit
+        but we need to make sure we don't terminate the loop before summing them up
+        define recursively
+        '''
+        def rec(n):
+            print(n)
+            if n // 10 == 0:
+                return n
+            new_n = 0
+            while n:
+                new_n += n % 10
+                n = n // 10
+            return rec(new_n)
+            
+        return rec(num)
+            
+
+class Solution:
+    def addDigits(self, num: int) -> int:
+        '''
+        just mod 10 and // 10 to pop off last digit
+        but we need to make sure we don't terminate the loop before summing them up
+        define recursively
+        then find the pattern
+        
+        the answer is always in the range [1,9]
+        only when the num is 0, the answer is zero
+        or when the number is divisble by 9, return 9
+        '''
+        def rec(n):
+            if n // 10 == 0:
+                return n
+            new_n = 0
+            while n:
+                new_n += n % 10
+                n = n // 10
+            return rec(new_n)
+            
+        '''
+        for i in range(1000):
+            print(i,rec(i))
+        '''
+        if num == 0:
+            return 0
+        if num % 9 == 0:
+            return 9
+        return num % 9
+
+#iterative version
+class Solution:
+    def addDigits(self, num: int) -> int:
+        digital_root = 0
+        while num > 0:
+            digital_root += num % 10
+            num = num // 10
+            
+            if num == 0 and digital_root > 9:
+                num = digital_root
+                digital_root = 0
+                
+        return digital_root
+
+        '''
+        just some notes in the math explanation, the value we are asked  to compute is  called the  digital root
+        if we have a  k digit number, we can demopcoose it  to:
+        n  = d0 + d1*10^1 + d2*10^2 + ... + dk*10^k
+        we can rewrtie base  10 as:
+        10^k = 9*(1 k times) + 1
+        
+        we eventually get to n mod 9 = (d0 + d1 + d2 + ... + dk) mod 9
+        
+        the cases are:
+            n == 0, then return 0
+            n % 9 == 0, then return 9
+            else, return n % 9
+        '''
+
+########################################
+# 1274. Number of Ships in a Rectangle
+# 08FEB22
+########################################
+# """
+# This is Sea's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class Sea(object):
+#    def hasShips(self, topRight: 'Point', bottomLeft: 'Point') -> bool:
+#
+#class Point(object):
+#   def __init__(self, x: int, y: int):
+#       self.x = x
+#       self.y = y
+
+class Solution(object):
+    def countShips(self, sea: 'Sea', topRight: 'Point', bottomLeft: 'Point') -> int:
+        '''
+        i can use divide and conquer 
+        i can divide the seach space into 4 recatangles at every call
+        but be careful in cases where it is not a perfect square
+        i can dvide the squre into 4 parts
+        and on each part recurse
+        rec(sq) = sum(rec(smaller_sq) for sq in [4 squares])
+        but how do we define this
+        
+        base case:
+            if i return false for has ships, there are no ships in the rectangle, return 0
+            if the corners pass each other, there possible couldn't be a ship there, return 0
+            the recursive case (dived into 4 and sum them up)
+        '''
+        #if current the corners pass each other, there possible couldn't be a ship
+        if bottomLeft.x > topRight.x or bottomLeft.y > topRight.y:
+            return 0
+        #if there isn't a ship to be found in this square
+        if not sea.hasShips(topRight,bottomLeft):
+            return 0
+        #otherwise we must have collapsed to a point where there is a ship
+        if (bottomLeft.x == topRight.x) and (bottomLeft.y == topRight.y) and (sea.hasShips(topRight,bottomLeft)):
+            return 1
+        
+        num_ships = 0
+        mid_x = (bottomLeft.x + topRight.x) // 2
+        mid_y = (bottomLeft.y + topRight.y) // 2
+        
+        #we have 4 sqaures to search bottomleft (BL), upperleft (UL), upperRight (UR), bottomright (BR)
+        #not i could have gotten creative here with a for loop
+        BL = self.countShips(sea,Point(mid_x,mid_y), bottomLeft)
+        UL = self.countShips(sea,Point(mid_x,topRight.y), Point(bottomLeft.x,mid_y+1))
+        UR = self.countShips(sea,Point(topRight.x,topRight.y), Point(mid_x+1,mid_y+1))
+        BR = self.countShips(sea,Point(topRight.x,mid_y), Point(mid_x+1,bottomLeft.y))
+        return BL + UL + UR + BR
