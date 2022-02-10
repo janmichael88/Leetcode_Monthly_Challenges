@@ -1401,10 +1401,32 @@ class Solution(object):
         rec(sq) = sum(rec(smaller_sq) for sq in [4 squares])
         but how do we define this
         
+        the original size of the rectable will be no greater than 1000**2
+        using recursion would result in the largest level to be log4(1000^2) = 10, 
+        if there were a ship at every point, we would need a million calles to has ship, but we are limited to only 400
+        the problem statement says that there can be at most 10 ships in a singel call
+        
+        there can be at most 10 ships in the rectangle, i.e, the last level can contain no more than 10 calls to the recursive function
+        so the max number of subrectagnles at each can be nore more than 40
+        if we log4(1000*1000) ~ 10, then that last level would contain 10*40 = 400 calls, which is our limit
+        
+        division of rectangles:
+            for each rectangle, defined by bottomLeft and upperRight, we cand define bounds for 4 smaller rectangles
+            find mid_x and mid_y
+            then the reactanlges can be defined by new bottomleft and upperright cooridnates
         base case:
             if i return false for has ships, there are no ships in the rectangle, return 0
             if the corners pass each other, there possible couldn't be a ship there, return 0
             the recursive case (dived into 4 and sum them up)
+            
+        notes on time complexity:
+            Hi @sud01 we can simplify the time complexity analysis a little, it equals O(1) (the time required for a single recursive call) times the number of recursive calls.
+
+In the third picture, we see that there can be at most S sub-rectangles (one per ship, so at most 10) that contain a ship. And for each subrectangle, we will make 4 recursive calls (one with a ship, and 3 without a ship). Thus, we have at most 4 * S recursive calls per layer.
+
+Now the question is, how many layers can there be? Since with each recursive call we divide our search space by 2 in the X and Y direction, the maximum depth of the recursion tree will be log2max(M, N).
+
+Multiplying the width * height of the recursion tree, we get (4 * S) * (log2max(M, N)) = O(S * log2max(M, N)). Hope this helps!
         '''
         #if current the corners pass each other, there possible couldn't be a ship
         if bottomLeft.x > topRight.x or bottomLeft.y > topRight.y:
@@ -1427,3 +1449,150 @@ class Solution(object):
         UR = self.countShips(sea,Point(topRight.x,topRight.y), Point(mid_x+1,mid_y+1))
         BR = self.countShips(sea,Point(topRight.x,mid_y), Point(mid_x+1,bottomLeft.y))
         return BL + UL + UR + BR
+
+#there's also an interative version
+# 48 ms, faster than 46.38%
+class Solution(object):
+    def countShips(self, sea: 'Sea', topRight: 'Point', bottomLeft: 'Point') -> int:
+        res = 0
+        right, top = topRight.x, topRight.y
+        left, bottom = bottomLeft.x, bottomLeft.y
+        q = [(right, top, left, bottom)]
+        while len(q) > 0:
+            right, top, left, bottom = q.pop(0)
+            
+            if left > right or bottom > top:
+                continue
+            
+            hasShip = sea.hasShips(Point(right, top), Point(left, bottom))
+            if hasShip == False:
+                continue
+            if left == right and top == bottom:
+                res += 1
+            else:
+                midX = (left + right) // 2
+                midY = (top + bottom) // 2
+                q.append((right, top, midX+1, midY+1))  # top right
+                q.append((right, midY, midX+1, bottom))  # bottom right
+                q.append((midX, midY, left, bottom))    # bottom left
+                q.append((midX, top, left, midY+1))     # top left
+        return res
+
+#################################
+# 532. K-diff Pairs in an Array
+# 09FEB22
+#################################
+class Solution:
+    def findPairs(self, nums: List[int], k: int) -> int:
+        '''
+        we can define a k diff pair, as:
+            given indices i,j and 0 <= i < j < len(nums)
+            abs(nums[i] - nums[j]) == k
+        
+        its the absoulute difference in their values
+        we want the total number of unique pairs
+        brute force is trivial, what is use a hashmap, and check its complement is in there
+        its complement would be k more than the current value
+        
+        we can create a count of nums in the table
+        then for each num in count, check if num + k in table
+        if k == 0, we are checking for multiplicty
+        '''
+        counts = Counter(nums)
+        
+        pairs = 0
+        
+        for num in counts:
+            #if k > 0
+            if k > 0:
+                #if in mapp
+                if num + k in counts:
+                    pairs += 1
+            #if k is 0, we are just looking for multiplicty
+            else:
+                if counts[num] > 1:
+                    pairs += 1
+        
+        return pairs
+        
+#########################
+# 251. Flatten 2D Vector
+# 09FEB22
+#########################
+class Vector2D:
+
+    def __init__(self, vec: List[List[int]]):
+        '''
+        i can just flatten intially the check with points
+        '''
+        self.flattened = []
+        for l in vec:
+            for num in l:
+                self.flattened.append(num)
+        self.cap = len(self.flattened)
+        self.ptr = 0
+
+    def next(self) -> int:
+        ans = self.flattened[self.ptr]
+        self.ptr += 1
+        return ans
+
+    def hasNext(self) -> bool:
+        return self.ptr < self.cap
+
+
+# Your Vector2D object will be instantiated and called as such:
+# obj = Vector2D(vec)
+# param_1 = obj.next()
+# param_2 = obj.hasNext()
+
+class Vector2D:
+
+    def __init__(self, vec: List[List[int]]):
+        '''
+        frist approach involved flattening out in constructor
+        we can maintin two pointers, one pointing to each nested list, and another pointing in elements in the pointed to nested lists
+        then just advance
+        note, when the outer becomes equal to the length of the 2D vector, it means there are nore more inner vectors 
+        so there are no numbers next
+        
+        we need to define an advanceToNext() helper function that checks if the current inner and outer values point to an int
+        if they don't move it forard until they point to an int
+        if outer == len(vec) there are no more vectors left
+        
+        both next and hasnext make call to advanve to next to ensure inner and out point to an int or that outer is at tis stop
+        
+        it is important to note that calling the hasNext() method will only cause the pointers to move if the don't point to an interger
+        once they point to an integer, repeated calls to hasnext() will not move them further
+        
+        '''
+        self.vec = vec
+        self.element_ptr = 0
+        self.list_ptr = 0
+    
+    def move_to_next_list(self):
+        #if eleemnt ptr and list ptr point to an int, the method does nothing
+        #otherwise both are advanced until they point to an int
+        #if there are no more ints, the list point == len(vec), and so this termiantes
+        while self.list_ptr < len(self.vec) and self.element_ptr == len(self.vec[self.list_ptr]):
+            self.list_ptr += 1
+            self.element_ptr = 0
+        
+
+    def next(self) -> int:
+        #ensure positions pointsers are moved so that they point to an int
+        self.move_to_next_list()
+        #return result
+        res = self.vec[self.list_ptr][self.element_ptr]
+        self.element_ptr += 1
+        return res
+        
+    def hasNext(self) -> bool:
+        #advance to int
+        self.move_to_next_list()
+        return self.list_ptr < len(self.vec)
+
+# Your Vector2D object will be instantiated and called as such:
+# obj = Vector2D(vec)
+# param_1 = obj.next()
+# param_2 = obj.hasNext()
