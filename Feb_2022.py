@@ -1596,3 +1596,129 @@ class Vector2D:
 # obj = Vector2D(vec)
 # param_1 = obj.next()
 # param_2 = obj.hasNext()
+
+#############################
+# 560. Subarray Sum Equals K
+# 10FEB22
+#############################
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        '''
+        i can get the pref sum array and then just check all i,j in that pref sum array
+        '''
+        N = len(nums)
+        pref_sum = [0]
+        for num in nums:
+            pref_sum.append(num + pref_sum[-1])
+        
+        #now just check all i,j indexing back into pref_sum
+        ans = 0
+        for i in range(N):
+            for j in range(i+1,N+1):
+                #watch for the +1 and -1 
+                #off by one index
+                sub_sum = pref_sum[j] - pref_sum[i]
+                if sub_sum == k:
+                    ans += 1
+        return ans
+        
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        '''
+        we can also save space but nopt pre computing the pref sum array
+        '''
+        N = len(nums)
+        
+        #now just check all i,j indexing back into pref_sum
+        ans = 0
+        for i in range(N):
+            sub_sum = 0
+            for j in range(i,N):
+                sub_sum += nums[j]
+                if sub_sum == k:
+                    ans += 1
+        return ans
+        
+class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        '''
+        we can use a hashap storing the occurrences of the rolling sums
+        then we just check if the complement of this exists.
+        why does this work?
+        if we have two indices, call them j and k, sucht hat j < k
+        and sum(nums[i:j]) == sum(nums[i:k])
+        then the sum(nums[j:k]) must be zero
+        
+        extending if the cum sum up two two indices, call them i and j, is at a difference of k
+        sum(nums[i:j]) - sum(nums[i:k]) = k, then sum(nums[i:j]) = k
+        
+        if we have subarray sum == k
+        then sum_end = sum_start + k
+        implying that sumstart = sumend -k
+        '''
+        N = len(nums)
+        sum_mapp = Counter()
+        sum_mapp[0] += 1
+        count = 0
+        sub_sum = 0
+        for num in nums:
+            #find current rolling summ
+            sub_sum += num
+            #if its complement is in mapp
+            #then it must mean there was another subarray sum == k, with multipliacity
+            if sub_sum - k in sum_mapp:
+                count += sum_mapp[sub_sum - k]
+            sum_mapp[sub_sum] += 1
+        
+        return count
+
+#################################
+# 254. Factor Combinations
+# 10FEB22
+##################################
+class Solution:
+    def getFactors(self, n: int) -> List[List[int]]:
+        '''
+        we can only include factors in the range [2,n-1]
+        i need to use dfs to build up a path
+        for a number n, i can check if it is diviible by [2,sqrt(n)]
+        for each of this candidates add to the path, and reduce the number by that candidate
+        since, i can reduce that number by the candidate, add it to global ans
+        '''
+        if n == 1:
+            return []
+        res = []
+        
+        def dfs(num,start,path):
+            if len(path) > 0:
+                res.append(path + [num])
+            #start off at next candidate
+            for cand in range(start,int(num**0.5 + 1)):
+                if num % cand == 0:
+                    dfs(num // cand,cand,path + [cand])
+                    
+                    
+        dfs(n,2,[])
+        return res
+
+#iterative
+class Solution:
+    def getFactors(self, n: int) -> List[List[int]]:
+        if n == 1:
+            return []
+        res = []
+        
+        stack = [(n,2,[])]
+        
+        while stack:
+            num,start,path = stack.pop()
+            
+            if len(path) > 0:
+                res.append(path + [num])
+            #start off at next candidate
+            for cand in range(start,int(num**0.5 + 1)):
+                if num % cand == 0:
+                    stack.append((num // cand,cand,path + [cand]))
+                    
+                    
+        return res
