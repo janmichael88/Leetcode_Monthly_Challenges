@@ -1722,3 +1722,121 @@ class Solution:
                     
                     
         return res
+
+##################################
+# 567. Permutation in String
+# 11FEB22
+##################################
+#brute force, generate perms of smaller, and check if subtring of larger
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        brute force would be to generate all permutations of the shorter string
+        and check if it is a substring of the longer string
+        this would be O(N)
+        '''
+        s1 = list(s1)
+        self.ans = False
+        
+        
+        def permute(string,size):
+            #finished permuting
+            if size == len(string):
+                #is substring
+                if  "".join(string) in s2:
+                    self.ans = True
+                    return
+                
+            for i in range(size,len(string)):
+                string[i],string[size] = string[size],string[i]
+                permute(string,size+1)
+                string[i],string[size] = string[size],string[i]
+                
+        permute(s1,0)
+        return self.ans
+            
+#sorting
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        we can sort; one string will be a permutation of another string only if both of them containt the same chars the same number of times
+        one string x is a permutation of another string y, only if sorted(x) = sorted(y)
+        '''
+        s1 = sorted(s1)
+        for i in range(len(s2) - len(s1)+1):
+            sub = s2[i:i+len(s1)]
+            if s1 == sorted(sub):
+                return True
+        return False
+
+#hashmap counting
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        this stems for the facts that one string will be a permutation of another string if boht contain the same chars with frequency
+        we can consider of possible substring of 2 of length s1 and check frequency counts match
+        '''
+        counts_s1 = Counter(s1)
+        for i in range(len(s2) - len(s1)+1):
+            sub = s2[i:i+len(s1)]
+            if counts_s1 == Counter(sub):
+                return True
+        
+        return False
+
+#sliiding window, hashmap, check zero counts after reducing
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        this stems from the fact the we don't neeed to generate a new hashmap for every substring in s2
+        we can create the hashmap once for the first window in s2
+        then later when we slide in the window, we remove a char and add a char
+        
+        tricks:
+            we can loop over the entire string s2 and check if current char in counter
+            then we need to make sure the last character is removed
+                we do this by first checking if we have at least len(s1), then decrement
+                as soon as all the counts hit zero, we have a valid perm in s2
+        '''
+        counts_s1 = Counter(s1)
+        
+        for i in range(len(s2)):
+            #remove
+            if s2[i] in counts_s1:
+                counts_s1[s2[i]] -= 1
+            #add back in
+            if i >= len(s1) and  s2[i-len(s1)] in counts_s1:
+                counts_s1[s2[i-len(s1)]] += 1
+            
+            if all([counts_s1[i] == 0 for i in counts_s1]):
+                return True
+        
+        return False
+
+#optimzied,check zero counts
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        we can slightly optimize by using an extra vairable to count the number of chars whose freqeucne gets to zero
+        during the sliding
+        this helps to avoid iterating over the entire hashmap
+        '''
+        cntr, w, match = Counter(s1), len(s1), 0     
+
+        for i in range(len(s2)):
+            if s2[i] in cntr:
+                if not cntr[s2[i]]: match -= 1
+                cntr[s2[i]] -= 1
+                if not cntr[s2[i]]: match += 1
+
+            if i >= w and s2[i-w] in cntr:
+                if not cntr[s2[i-w]]: match -= 1
+                cntr[s2[i-w]] += 1
+                if not cntr[s2[i-w]]: match += 1
+
+            if match == len(cntr):
+                return True
+
+        return False
+
+
