@@ -1839,4 +1839,167 @@ class Solution:
 
         return False
 
+##########################
+# 127. Word Ladder
+# 12FEB22
+###########################
+#TLE, the problem is generateing the grapch
+class Solution:
+    def ladderLength(self, beginWord: str, endWord: str, wordList: List[str]) -> int:
+        '''
+        shortest transformation sequence screams shortest paths
+        we need tp make a graph for each word in the wordList
+        the outgoing edge would be if we can get from one word to another with a single change
+        once we have the graph, we can just do bfs
+        
+        this gets TLE, because graph generation takes way too long
+        '''
+        #edge cases
+        if endWord not in wordList or not endWord or not beginWord or not wordList:
+            return 0
+        #add beginword to wordList
+        wordList += [beginWord]
 
+        #build graph
+        graph = defaultdict(set)
+        N = len(wordList)
+        for i in range(N):
+            for j in range(N):
+                if i != j :
+                    start = wordList[i]
+                    neigh = wordList[j]
+                    for k in range(len(beginWord)):
+                        curr = start[:k]+'*'+start[k+1:]
+                        cand = neigh[:k]+'*'+neigh[k+1:]
+                        if curr == cand:
+                            graph[start].add(neigh)
+                            
+        #bfs
+        q = deque([(beginWord,1)])
+        seen = set()
+        seen.add(beginWord)
+        
+        while q:
+            curr,length_so_far = q.popleft()
+            if curr == endWord:
+                return length_so_far
+            for neigh in graph[curr]:
+                if neigh not in seen:
+                    seen.add(neigh)
+                    q.append((neigh,length_so_far + 1))
+        
+        return 0
+
+class Solution:
+    def ladderLength(self, beginWord: str, endWord: str, wordList: List[str]) -> int:
+        '''
+        new graph generation, instead of trying to find all possible one aways from each word
+        we can find its generate state
+        i.e hot can be *ot,h*t,ho*
+        these genearics state will all point to hot
+        
+        if we don't this, we would have to iterate fore very word, finds its wildcard, and pair it, which would take way too long
+        '''
+        if endWord not in wordList or not endWord or not beginWord or not wordList:
+            return 0
+
+        # Since all words are of same length.
+        L = len(beginWord)
+
+        # Dictionary to hold combination of words that can be formed,
+        # from any given word. By changing one letter at a time.
+        all_combo_dict = defaultdict(list)
+        for word in wordList:
+            for i in range(L):
+                # Key is the generic word
+                # Value is a list of words which have the same intermediate generic word.
+                all_combo_dict[word[:i] + "*" + word[i+1:]].append(word)
+
+
+        # Queue for BFS
+        queue = collections.deque([(beginWord, 1)])
+        # Visited to make sure we don't repeat processing same word.
+        visited = {beginWord: True}
+        while queue:
+            current_word, level = queue.popleft()
+            for i in range(L):
+                # Intermediate words for current word
+                intermediate_word = current_word[:i] + "*" + current_word[i+1:]
+
+                # Next states are all the words which share the same intermediate state.
+                for word in all_combo_dict[intermediate_word]:
+                    # If at any point if we find what we are looking for
+                    # i.e. the end word - we can return with the answer.
+                    if word == endWord:
+                        return level + 1
+                    # Otherwise, add it to the BFS Queue. Also mark it visited
+                    if word not in visited:
+                        visited[word] = True
+                        queue.append((word, level + 1))
+                #don't forget to clear the candidate after exaining the next word
+                all_combo_dict[intermediate_word] = []
+        return 0
+
+#bi directinol bfs
+class Solution:
+    def ladderLength(self, beginWord: str, endWord: str, wordList: List[str]) -> int:
+        '''
+        we can also a a bi-directinal search, where we start from both being word and end word
+        the only difference is that we terminate, once we have found a word in either parallel search
+        
+        to code this out better, we build out a helper function to carry out only one iteration (one level of bfs)
+        then we can all this from beign adna dn
+        
+        the shortes transformation sequence is the sum of lvles othe meeting point node from both ends
+        or the number of steps progresgressed in bfs from begin and end
+        '''
+        self.N = len(beginWord)
+        self.graph = defaultdict(list)
+        
+        #edge cases
+        if endWord not in wordList or not endWord or not beginWord or not wordList:
+            return 0
+        
+        for word in wordList:
+            for i in range(self.N):
+                state = word[:i]+'*'+word[i+1:]
+                self.graph[state].append(word)
+        
+        #set up for bi-driection bfs
+        q_begin = deque([beginWord])
+        q_end = deque([endWord])
+        
+        #visited sets, we can't use a set here, because we want to maintain the leveks
+        visited_begin = {beginWord : 1}
+        visited_end = {endWord : 1}
+        ans = None
+        
+        while q_begin and q_end:
+            #progress with bi-directional search but start with smaller one first
+            if len(q_begin) < len(q_end):
+                ans = self.invokeBFS(q_begin,visited_begin,visited_end)
+            else:
+                ans = self.invokeBFS(q_end,visited_end, visited_begin)
+            if ans:
+                return ans
+        
+        return 0
+    
+    def invokeBFS(self,q,visited,others_visited):
+        q_size = len(q)
+        for _ in range(q_size):
+            current_word = q.popleft()
+            for i in range(self.N):
+                #intermediate words
+                state = current_word[i:]+'*'+ current_word[i+1:]
+                #now check neigbors
+                for neigh in self.graph[state]:
+                    #if the state has already been visited from the other parallel search, this mean we found our answer
+                    if neigh in others_visited:
+                        return visited[neigh] + others_visited[neigh]
+                    #if its not, mark as visited, but not before increaming depth size
+                    if neigh not in visited:
+                        visited[neigh] = visited[current_word] + 1
+                        q.append(neigh)
+        return None
+        
