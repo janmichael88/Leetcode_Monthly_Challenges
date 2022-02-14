@@ -2002,4 +2002,106 @@ class Solution:
                         visited[neigh] = visited[current_word] + 1
                         q.append(neigh)
         return None
+
+########################
+# 78. Subsets
+# 13FEB22
+########################
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        '''
+        routine recusrive path generation
+        each recursive call add currenet element then try to incldue in new path
+        we need to recusrive that we create to start at one of the elemetns
+        then we need to call this for each eleemnt
+        '''
+        paths = []
+        N = len(nums)
         
+        #single recursive call for and we need to invoke at each index
+        def rec(i,path,size):
+            if len(path) == size:
+                paths.append(path[:])
+                return
+            for j in range(i,N):
+                path.append(nums[j])
+                rec(j+1,path,size)
+                path.pop()
+                
+        
+        for size in range(N+1):
+            rec(0,[],size)
+        return paths
+
+# using global variable and not calling on each one
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        '''
+        we can also contain the recursive call to invoke on each element anyway
+        rather than recusring for each index
+        '''
+        self.paths = []
+        N = len(nums)
+        def rec(start,path):
+            #always add in the new path
+            print(path)
+            self.paths += [path]
+            for i in range(start,N):
+                rec(i+1,path + [nums[i]])
+        
+        rec(0,[])
+        return self.paths
+
+#iterative, cascading
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        '''
+        we can seen an initital ouput with and empty list
+        then add each num to it
+        '''
+        subsets = [[]]
+        
+        for num in nums:
+            #to store new subsets
+            new_subsets = []
+            for sub in subsets:
+                new_subsets.append(sub +[num])
+            
+            for new_subset in new_subsets:
+                subsets.append(new_subset)
+        
+        return subsets
+
+#we can use the bit masking trick from Knuth
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        '''
+        we can use the bit track, where we take an element at an index or we dont
+        '''
+        N = len(nums)
+        subsets = []
+        for num in range(2**N):
+            bit_mask = []
+            for _ in range(N):
+                #mod 2 of numbers gives us LSB
+                bit = num % 2
+                bit_mask.append(bit)
+                #reduce number
+                num = num >> 1
+            #reverse mask 
+            bit_mask = bit_mask[::-1]
+            #generate new subse
+            subset = []
+            for i in range(N):
+                if bit_mask[i]:
+                    subset.append(nums[i])
+            
+            subsets.append(subset)
+            
+        return subsets
+        
+################################
+# 
+#
+################################
+
