@@ -2101,7 +2101,121 @@ class Solution:
         return subsets
         
 ################################
-# 
-#
+# 104. Maximum Depth of Binary Tree
+# 14FEB22
 ################################
+class Solution:
+    def maxDepth(self, root: Optional[TreeNode]) -> int:
+        '''
+        bottom up return directly
+        recurrnce is:
+            rec(node) = max(rec(node.left),rec(node.right)) + 1
+            bottom case is the empty node
+        '''
+        def dfs(node):
+            if not node:
+                return 0
+            left = dfs(node.left)
+            right = dfs(node.right)
+            return max(left,right) + 1
+        
+        return dfs(root)
+        
+class Solution:
+    def maxDepth(self, root: Optional[TreeNode]) -> int:
+        self.ans = 0
+        
+        def dfs(node,depth):
+            if not node:
+                return
+            dfs(node.left,depth+1)
+            self.ans = max(self.ans,depth)
+            dfs(node.right,depth+1)
+        
+        dfs(root,1)
+        return self.ans
 
+class Solution:
+    def maxDepth(self, root: Optional[TreeNode]) -> int:
+        ans = 0
+        
+        
+        stack = [(root,1)]
+        
+        while stack:
+            node,depth = stack.pop()
+            if not node:
+                continue
+            if node.left:
+                stack.append((node.left,depth+1))
+            
+            ans = max(ans,depth)
+            
+            if node.right:
+                stack.append((node.right,depth+1))
+        
+        return ans
+
+################################
+# 506. Relative Banks
+# 14FEB22
+#################################
+class Solution:
+    def findRelativeRanks(self, score: List[int]) -> List[str]:
+        '''
+        top three scores should get the 'Gold Medal', 'Silver Medal', 'Bronze Medal'
+        the rest get their positions
+        hashmap score maps to its value
+        '''
+        sorted_score = sorted(score, reverse = True)
+        mapp = {}
+        for i,s in enumerate(sorted_score):
+            if i == 0:
+                mapp[s] = 'Gold Medal'
+            elif i == 1:
+                mapp[s] = 'Silver Medal'
+            elif i == 2:
+                mapp[s] = 'Bronze Medal'
+            else:
+                mapp[s] = str(i+1)
+            
+        ans = []
+        for s in score:
+            ans.append(mapp[s])
+        
+        return ans
+
+#just a another cool way
+class Solution:
+    def findRelativeRanks(self, nums):
+        rank = {n:i>2 and str(i+1) or ["Gold","Silver","Bronze"][i]+' Medal' for i,n in enumerate(sorted(nums,reverse=True))}
+        return [rank[num] for num in nums]
+
+#########################
+# 507. Perfect Number
+# 14FEB22
+##########################
+class Solution:
+    def checkPerfectNumber(self, num: int) -> bool:
+        '''
+        a perfect number is a positive integers == to sum of divisors, excluding the numberitself
+        
+        find all divisors of num
+        sum them and check
+        '''
+        sum_divisors = 0
+        i = 1
+        
+        #we will examine only up sqrt(num)
+        while i*i <= num:
+            if num % i == 0:
+                sum_divisors += i
+                #check its complement, must coonsider num // i, i i divides num
+                #but only if i != sqrt(num)
+                if i*i != num:
+                    sum_divisors += num // i
+            
+            i += 1
+        #we sum up all such factors and check if given num is preft
+        #we need to subtract num frmo the sum
+        return sum_divisors - num == num
