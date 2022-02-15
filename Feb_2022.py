@@ -2217,5 +2217,7 @@ class Solution:
             
             i += 1
         #we sum up all such factors and check if given num is preft
-        #we need to subtract num frmo the sum
+        #we need to subtract num frmo the sum, why? becasue we consindered 1 as factor, which also forced 
+        #us to consider num as a factor, we double counted here
+        #we need to remove it from the sum and check sum - num is num
         return sum_divisors - num == num
