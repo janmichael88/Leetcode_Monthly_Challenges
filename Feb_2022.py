@@ -2221,3 +2221,207 @@ class Solution:
         #us to consider num as a factor, we double counted here
         #we need to remove it from the sum and check sum - num is num
         return sum_divisors - num == num
+
+################################
+# 136. Single Number
+# 15FEB22
+#################################
+class Solution:
+    def singleNumber(self, nums: List[int]) -> int:
+        '''
+        hash map is trivial
+        if i have numbers a,b,c,d
+        and a,b,c are in the array twice
+        a + a + b + b + c + c + d
+        how can we find d?
+        d = (a + a + b + b + c + c + d) - (a + a + b + b + c + c)
+        d = sum(array) - 2*(a + b + c)
+        turns out to be just 2*sum(nums) - sum(nums)
+        '''
+        return 2*sum(set(nums)) - sum(nums)
+
+class Solution:
+    def singleNumber(self, nums: List[int]) -> int:
+        '''
+        turns out we can use XOR
+        recall XOR is true only if 1 element is true
+        but more importnatly it has the following two properties
+        num XOR 0 = num
+        num XOR num = 0
+        
+        if we have a XOR b XOR a
+        is the same as
+        a XOR a XOR b
+        0 XOR B
+        b
+        '''
+        ans = 0
+        for num in nums:
+            ans = ans ^ num
+        
+        return ans
+        
+#############################################################
+# 1100. Find K-Length Substrings With No Repeated Characters
+# 15FEB22
+#############################################################
+class Solution:
+    def numKLenSubstrNoRepeats(self, s: str, k: int) -> int:
+        '''
+        brute force would be to examine each substring of length k
+        '''
+        #edge case, if there the lenght of the substring is more than the unique number of chars
+        if k > 26:
+            return 0
+        ans = 0
+        N = len(s)
+        
+        for i in range(N-k+1):
+            counts = Counter(s[i:i+k])
+            if all([v == 1 for _,v in counts.items()]):
+                ans += 1
+        
+        return ans
+
+class Solution:
+    def numKLenSubstrNoRepeats(self, s: str, k: int) -> int:
+        '''
+        brute force would be to examine each substring of length k
+        '''
+        #edge case, if there the lenght of the substring is more than the unique number of chars
+        if k > 26:
+            return 0
+        ans = 0
+        N = len(s)
+        
+        for i in range(N-k+1):
+            counts = [0]*26
+            #found = False
+            '''
+            recall the break fall through in python for loops
+            '''
+            for j in range(i,i+k):
+                curr_char = ord(s[j]) - ord('a')
+                counts[curr_char] += 1
+                if counts[curr_char] > 1:
+                    #found = True   
+                    break
+            else:
+                ans += 1
+        
+        return ans
+            
+#close one....
+class Solution:
+    def numKLenSubstrNoRepeats(self, s: str, k: int) -> int:
+        '''
+        examining all k lenght substrings would result len(s) times k
+        which is too much, we want to do this in linear time
+        we can store a char counts into an inital counter
+        then just add in the next char and delete the last char
+        we maintain a size variable, and only increment when adding new char
+        '''
+        size = 0
+        counts = Counter()
+        N = len(s)
+        ans = 0
+        
+        #edge cases
+        if N < k:
+            return 0
+        
+        
+        #adding initial counts
+        for i in range(k):
+            if s[i] in counts:
+                counts[s[i]] += 1
+            else:
+                counts[s[i]] = 1
+                size += 1
+                
+        for i in range(k+1,N):
+            #checking size contstaint
+            if size == k:
+                ans += 1
+            #remove leftmost char
+            if s[i-k] in counts:
+                if counts[s[i-k]] == 0:
+                    del counts[s[i-k]]
+                else:
+                    counts[s[i-k]] -= 1
+                size -= 1
+            #add in new char
+            if s[i] in counts:
+                counts[s[i]] += 1
+            else:
+                counts[s[i]] = 1
+                size += 1
+        
+        if size == k:
+            ans += 1
+        
+        return ans
+
+#sliding window
+class Solution:
+    def numKLenSubstrNoRepeats(self, s: str, k: int) -> int:
+        '''
+        we can use a slidigin and we keep advancing the right pointer as long as we are <= k
+        and the next character we are addining isn't repeated
+        if it is repeated, we need to shrink the left pointer
+        whenver right - left + 1 == k, we found a valid substring
+        '''
+        if k > 26:
+            return 0
+        ans = 0
+        N = len(s)
+        left = right = 0
+        #note we also could have used a array count here
+        counts = Counter()
+        
+        while right < N:
+            #load up the right most char
+            counts[s[right]] += 1
+            
+            #if the current char appears more than one in the hash, keep shrinking left unitl
+            #we break out of this invariant
+            while counts[s[right]] > 1:
+                counts[s[left]] -= 1
+                left += 1
+            
+            #check size requirment
+            if right - left + 1 == k:
+                ans += 1
+                
+                #finally reduce the size by one more, becae it can't be bigger than k
+                counts[s[left]] -= 1
+                left += 1
+            
+            right += 1
+        
+        return ans
+
+class Solution:
+    def numKLenSubstrNoRepeats(self, s: str, k: int) -> int:
+        count = 0
+        seen = set()
+        i = j = 0
+        N = len(s)
+        
+        while j < N:
+            if len(seen) == k:
+                count += 1
+                seen.remove(s[i])
+                i += 1
+            if s[j] in seen:
+                seen.remove(s[i])
+                i += 1
+            else:
+                seen.add(s[j])
+                j += 1
+                
+        #final check after going throught hem all
+        if len(seen) == k:
+            count += 1
+        
+        return count
