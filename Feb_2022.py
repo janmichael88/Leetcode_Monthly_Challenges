@@ -2425,3 +2425,134 @@ class Solution:
             count += 1
         
         return count
+
+###########################
+# 24. Swap Nodes in Pairs
+# 16FEB22
+#############################
+#close one
+class Solution:
+    def swapPairs(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we actually want to swap the noodes, we can't just change the values
+        if we are at a node and if this is the node we want to swap
+        we simply  reverse it and return the new head
+        ''' 
+        def swap(node):
+            #if there isn't a next node, it means we can't swap, so return
+            if not node.next:
+                return node
+            #other wise we swap
+            curr = node
+            nxt = node.next
+            nxt.next = curr
+            curr.next = node.next
+            return node
+        
+        dummy = ListNode(val = -1,next = head)
+        prev = dummy
+        curr = dummy.next
+        while curr.next:
+            curr = swap(curr)
+            curr = curr.next.next
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def swapPairs(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can do this iteratively
+        algo:
+            1. pass through the list in steps of two
+            2. swap ther pair of nodes as we go, before we jump to the next pair; lets call them first ands second
+            3. swap the two nodes:
+                first.next = second.next
+                second.next = first
+            4. we also need to assign the prev next to the head of the swapper pair
+            this would ensure the currently swapped paid is linked correct to the end of the prev swapped list
+        
+        we can use sentinel node to help with edge cases
+        
+        
+        '''
+        dummy = ListNode(-1)
+        dummy.next = head
+        
+        prev = dummy
+        
+        while head and head.next:
+            
+            #hold reference pointers
+            first = head
+            second = head.next
+            
+            #swap
+            first.next = second.next
+            second.next = first
+            prev.next = second
+            
+            #reinit the ehad  and prev
+            prev = first
+            head = first.next
+        
+        return dummy.next
+
+#recursivee
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def swapPairs(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        now lets think about this recursviely, we know that we have to move in steps of two
+        in every function call, we take out two nodes which would be swapped and the remaining nodes are
+        passed into the next function call
+        
+        its good think of this recursively, because we can apply the function to a reduced size of the LL
+        the return of the recursion, returns the swapped remaining list of nodes
+        we just wap the curent two nodes anda attach the remaining list we get from recursion
+        '''
+        def swap(node):
+            #base case, we need to retun this node, if there isn't one or there isn't a enxt
+            if not node or not node.next:
+                return node
+            
+            #refererences to ndoes being swapped
+            first = node
+            second = node.next
+            
+            #swap
+            first.next = swap(second.next)
+            second.next = first
+            
+            #now the second head becomes the new one
+            return second
+        
+        return swap(head)
+            
+
+#####################################################
+# 255. Verify Preorder Sequence in Binary Search Tree
+# 16FEB22
+#####################################################
+class Solution:
+    def verifyPreorder(self, preorder: List[int]) -> bool:
+        '''
+        preoder is node,left,right
+        and binary search tree has the property that for each node:
+            node.left.val < node.val < node.right.val
+        '''
+        st = []
+        low = float('-inf')
+        for x in preorder:
+            if x < low:
+                return False
+            while st and st[-1] < x:
+                low = st.pop()
+            st.append(x)
+        return True
