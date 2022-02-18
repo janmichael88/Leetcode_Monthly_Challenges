@@ -2543,16 +2543,129 @@ class Solution:
 class Solution:
     def verifyPreorder(self, preorder: List[int]) -> bool:
         '''
-        preoder is node,left,right
-        and binary search tree has the property that for each node:
-            node.left.val < node.val < node.right.val
+        if we are given a pre-order traversal, the order would be node,left,right
+        but its also the case that from a parent, its left child is smaller, and the right child is greater
+        we can just traverse the tree and check the invariant hold, but we are not given the tree
+        we are given its pre-order
+        maintain the lower bound possible float('-inf') and traverse the tree, if at any point we find that
+        the current value < low, it cannot be a valid pre-order return false
+        while we are traversing, we add an eleement to the stack
+        and if the top of the stack is smaller then the current value, we update the low
         '''
-        st = []
-        low = float('-inf')
-        for x in preorder:
-            if x < low:
+        stack = []
+        lower = float('-inf')
+        for num in preorder:
+            if num < lower:
                 return False
-            while st and st[-1] < x:
-                low = st.pop()
-            st.append(x)
+            while stack and stack[-1] < num:
+                lower = stack.pop()
+            stack.append(num)
+        
         return True
+
+############################
+# 39. Combination Sum
+# 17FEB22
+##############################
+class Solution(object):
+    def combinationSum(self, candidates, target):
+        """
+        :type candidates: List[int]
+        :type target: int
+        :rtype: List[List[int]]
+        """
+        '''
+        good review problem, lets try the recursive solution first
+        we can build up a combindation of numbers if we keep building but decremeting the targe as go along, we then check if the combindations meet the taret
+        add to results outside
+
+        additional thoughts after revisiting, in this solution we ARE NOT backtracking
+        we keep adding a canddinat until our target becomes negative
+        which in some cases is actually slower, because we always keep adding a number
+        '''
+        results = []
+        
+        def recurse(comb,idx,target):
+            if target <=0:
+                if target == 0 and comb:
+                    results.append(comb)
+                return
+            
+            for i in range(idx,len(candidates)):
+                num = candidates[i]
+                recurse(comb+[num],i,target-num)
+        
+        recurse([],0,target)
+        return results
+
+class Solution(object):
+    def combinationSum(self, candidates, target):
+        """
+        :type candidates: List[int]
+        :type target: int
+        :rtype: List[List[int]]
+        """
+        '''
+        official backtracking solution,lets make sure i get it this stime
+        recall backtracking, building up a solution, but then abandoning that solution when it does not meet the constraint
+        build up a solution recursively, but traverse the canddiates in order!
+        we can then treat this is a DFS backtracking solution
+        we deinfe backtrack(remain,comb,start) which populates results outside the fal
+            comb is the current build
+            remain because we cant look back
+            and start (this moves too)
+        the base case
+        if reamin == 0 we're done
+        if less than 0, we've exceeded the target
+        '''
+        
+        results = []
+        def backtrack(remaining, comb,start):
+            #comb is init as an empty list
+            if remaining == 0: #found a set
+                results.append(list(comb))
+                return
+            elif remaining < 0:
+                return #abandon this
+            
+            #recurse
+            for i in range(start,len(candidates)):
+                comb.append(candidates[i])
+                #give the current number a chance to be seen again
+                backtrack(remaining - candidates[i],comb,i)
+                #backtrack
+                comb.pop()
+                
+        #invoke
+        backtrack(target,[],0)
+        return results
+
+class Solution(object):
+    def combinationSum(self, candidates, target):
+        """
+        :type candidates: List[int]
+        :type target: int
+        :rtype: List[List[int]]
+        """
+        '''
+        dp solution
+          build up a list of lists in a 2d array
+        X         0     1       2       3       4               5   
+        [1]       []   [1]    [1,1]   [1,1,1]  [1,1,1,1]        [1,1,1,1,1]
+        [2]       []   [0]     [2]    [2,1,1]  [[2,1,1],[2,2]]  [[2,2,1],[1]]
+        [3]       [] 
+        '''
+        dp = [[] for _ in range(target+1)]
+        
+        for c in candidates:
+            for i in range(1,target+1):
+                if i < c:
+                    continue
+                elif i == c:
+                    dp[i].append([c])
+                #now we can more the candidate when c is greater than i
+                else:
+                    for foo in dp[i-c]:
+                        dp[i].append(foo + [c])
+        return dp[target]
+        
