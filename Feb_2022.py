@@ -2669,3 +2669,109 @@ class Solution(object):
                         dp[i].append(foo + [c])
         return dp[target]
         
+###############################
+# 402. Remove K Digits
+# 18FEB22
+###############################
+#almost had it!
+class Solution:
+    def removeKdigits(self, num: str, k: int) -> str:
+        '''
+        we are only allowed to remove digits, we can't swap around the ordering
+        for example 1432219 and k = 3
+        after removing 4,3,2
+        we get 1219
+        
+        note the string can contain leading zeros, which reduces the number even further
+        can i just push numbers on the stack if the next number is greater then what's currently on the stack
+        
+        there must be a stack approach, montonic increasing stack
+        lets start with the initial number 1432219 and k = 3
+        
+        [1,2,1,9
+        
+        ]
+        
+        '''
+        
+        stack = []
+        
+        for num in num:
+            while stack and stack[-1] > num and k > 0:
+                stack.pop()
+                k -= 1
+            stack.append(num)
+        
+        #create number
+        return "".join(stack).lstrip('0') or "0"
+
+#just cases to watch out for, when we have taken < k digits out
+class Solution:
+    def removeKdigits(self, num: str, k: int) -> str:
+        '''
+        we know its a motonic stack solution but lets cover the official solution
+        it is the left most distinct digits that determine whether a number is bigger than another number
+        if A = 1axxx
+        and B = 1bxxx
+        if a > b, then A > B
+        if we ar given the number 425
+        4 > 2, so we are certain that removing a 4 would make the number smaller
+        if we kept 4, then the other possibilites would be 42, and 45 and 2 < 5, so we wouldn't remove it
+        
+        intuition:
+            given a sequence of d digits (D1 D2 D3 D4 ...DN) if the digitd D2 is <then its left nieghter D1
+            then we should remove its less neight in order to obtain min
+        
+        greedy:
+            removing digits one by one that are smaller than its nieghbor
+            once we remove a digit from the sequecne, the remaining digits form a new problem and we can apply the same rule
+            
+        algo:
+            * for each digit, if the digit is less than top of the stack, left neighbor of the digit, then we pop the stack (i.i removing the left neighbor) at the end we push onto the stack
+            * we keep adding until the there is a stack, we have yet to remove k, or what is at the top of the stack is greater
+            
+        special cases:
+            if we have removed only m digitgs, with m < k, we would just chop off the remaining k-m digits (would make it smaller)
+            remove leading zeros
+            return empty string if stack is empty
+        '''
+        stack = []
+        
+        for num in num:
+            while stack and stack[-1] > num and k > 0:
+                stack.pop()
+                k -= 1
+            stack.append(num)
+        
+        #if we have taken < k nums, take the rest
+        if k > 0:
+            stack = stack[:-k]
+        
+        #create number
+        return "".join(stack).lstrip('0') or "0"
+
+################################
+# 259. 3Sum Smaller
+# 18FEB22
+################################
+#this almost works....
+class Solution:
+    def threeSumSmaller(self, nums: List[int], target: int) -> int:
+        '''
+        i could reduce the problem two 2 sum
+        traverse nums, using the first num as anchor, given by inderx i
+        then for each num i to N, break down to 2sum
+        '''
+        ans = 0
+        N = len(nums)
+        for i in range(N):
+            mapp = {}
+            for j in range(i,N):
+                mapp[nums[j]] = j
+            #traver mapp fo find triplets
+            for num,k in mapp.items():
+                if nums[i] + nums[j] + num < target:
+                    if i != j != k:
+                        ans += 1
+        
+        return ans
