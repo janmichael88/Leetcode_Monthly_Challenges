@@ -2750,6 +2750,205 @@ class Solution:
         #create number
         return "".join(stack).lstrip('0') or "0"
 
+#################################
+# 1675. Minimize Deviation in Array
+# 19FEB22
+#################################
+#simulation and heap
+class Solution:
+    def minimumDeviation(self, nums: List[int]) -> int:
+        '''
+        the allowed operations can only be called on single elements in the array, 
+        if it is even, we are only allowed to divide by 2
+        if it is odd, we are only allowed to multiple by 2
+        
+        define deviation as the max difference between any two elements in the array
+        return the min deviation
+        
+        first of all, checking each pairwise difference for all elements would take to long, so don't even bother checking for that
+        
+        i can use two heaps, min heap and max heap, then at one one time i can obtain access to the deviation in the array in lg(N) time
+        
+        if we have an even number, we can only reduce it
+        if we have an odd number, we can only increase it
+        
+        intuition:
+            we can try increasing each number to its largest possible then just reduce
+            deviation = max - min
+            the only we can minimuze deivation is bye decreaing max or increasing min
+            since we alreayd increased nums to their largest, we cannot increase min -> we must decrease max
+            we obvie use a heap to get max/min in constant time (it's always at the top)
+        
+        algo:
+            1. init max heap of evens, for each number in nums:
+                is even push into heap, if odd, multiply by 2 then push
+            2. heapify evens
+            3. mainint min to keep track of smallest elements in evens
+            4. take out max number in evens, 
+                us max and maintined min to update he min deviation
+                if number is even dvidie by 2 and push back in
+            5. repat until max number in evens is odd
+            6. return min
+        #recall python is min heap, so we negate
+        '''
+        evens = []
+        minimum = float('inf')
+        for num in nums:
+            if num % 2 == 0:
+                evens.append(-num)
+                minimum = min(minimum,num)
+            else:
+                evens.append(-num*2)
+                minimum = min(minimum,num*2)
+
+        
+        #heapify in O(N) time
+        heapify(evens)
+        
+        #now we try to minimize the deviation
+        min_deviation = float('inf')
+
+        
+        #recall we cannot raise the maximum, we can only reduce it
+        while evens:
+            current_value = -heapq.heappop(evens)
+            min_deviation = min(min_deviation, current_value-minimum)
+            if current_value % 2 == 0:
+                minimum = min(minimum, current_value//2)
+                heapq.heappush(evens, -current_value//2)
+            else:
+                # if the maximum is odd, break and return
+                break
+        return min_deviation
+
+#Approach 2: Pretreatment + Sorting + Sliding Window
+class Solution:
+    def minimumDeviation(self, nums: List[int]) -> int:
+        '''
+        pretreament, sorting, and sliding window
+        in approach 1, we maintained a list and kept changing the elemtns of the list, rather
+        can we pre calculate all the changeable candidates
+        
+        for each even number, divide until it becomes odd
+        for each odd number, multiply by 2
+        
+        this then becomes 'Smallest Range Covering Elements from K lists'
+        
+        [8,5,1,6]
+        8: [1,2,4,8]
+        5: [5,10]
+        1: [1,2]
+        6: [3,6]
+        
+        we can then turn these into lists of lists, where each list[i] = [num,i] (i is the index of original element)
+        
+        then we need to find out the min interval such that the interval contains all the index'a candidates (i.e we capture all indices)
+        this is just a sliding window problem
+        
+        algo:
+            1. init possible:
+                pass nums and for each num push all possible [candidate,i] into possible
+            2. sort possible
+            3. init vector needInclude, where needInclude[i] makrs if slidign window includes i's candidates or not
+            4. inint integer notIncluded, representing the total number of index whose all candiate are not in the sliding window
+            5. move pointer of sliding window right:
+                if notIncluded shows that the sliding window includes every index's candidates (notIncluded == 0)
+                move left pointer to right until sldigin window does not include them,
+                update min dev
+            6. repeat until left gets to end of possible
+            7. return ans
+        '''
+        N = len(nums)
+        possible = []
+        for i,num in enumerate(nums):
+            if num % 2 == 0:
+                temp = num
+                possible.append((temp,i))
+                while temp % 2 == 0:
+                    temp //= 2
+                    possible.append((temp,i))
+            else:
+                possible.append((num,i))
+                possible.append((num*2,i))
+        
+        #sort
+        possible.sort()
+        #start sliding window
+        min_deviation = float('inf')
+        need_include = {i:1 for i in range(N)}
+        not_included = N
+        current_start = 0
+        
+        for current_value, current_item in possible:
+            need_include[current_item] -= 1
+            if need_include[current_item] == 0:
+                not_included -= 1
+            #shrink window and update min_deviatino
+            if not_included == 0:
+                while need_include[possible[current_start][1]] < 0:
+                    need_include[possible[current_start][1]] += 1
+                    current_start += 1
+                if min_deviation > current_value - possible[current_start][0]:
+                    min_deviation = current_value - possible[current_start][0]
+                
+                need_include[possible[current_start][1]] += 1
+                current_start += 1
+                not_included += 1
+        
+        return min_deviation
+
+
+#Approach 3: Pretreatment + Heap + Sliding Window
+class Solution:
+    def minimumDeviation(self, nums: List[int]) -> int:
+        '''
+        instead of sorting we can use a heap and retrieve the minimum on the fly when we advance the right pointer
+        no different than the sorting method
+        '''
+        n = len(nums)
+        # pretreatment
+        possible = []
+        for i, num in enumerate(nums):
+            if num % 2 == 0:
+                temp = num
+                possible.append((temp, i))
+                while temp % 2 == 0:
+                    temp //= 2
+                    possible.append((temp, i))
+            else:
+                possible.append((num, i))
+                possible.append((num*2, i))
+
+        heapq.heapify(possible)
+        min_deviation = inf
+        need_include = {i: 1 for i in range(n)}
+        not_included = n
+        current_start = 0
+        seen = []
+        # get minimum from heap
+        while possible:
+            current_value, current_item = heapq.heappop(possible)
+            seen.append([current_value, current_item])
+            need_include[current_item] -= 1
+            if need_include[current_item] == 0:
+                not_included -= 1
+            if not_included == 0:
+                while need_include[seen[current_start][1]] < 0:
+                    need_include[seen[current_start][1]] += 1
+                    current_start += 1
+                if min_deviation > current_value - seen[current_start][0]:
+                    min_deviation = current_value - seen[current_start][0]
+
+                need_include[seen[current_start][1]] += 1
+                current_start += 1
+                not_included += 1
+
+        return min_deviation
+        
+'''
+make sure to do smallest Range Covering Elements from K lists
+'''
+
 ################################
 # 259. 3Sum Smaller
 # 18FEB22
