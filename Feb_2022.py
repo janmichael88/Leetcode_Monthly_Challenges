@@ -2949,6 +2949,72 @@ class Solution:
 make sure to do smallest Range Covering Elements from K lists
 '''
 
+####################################
+# 1288. Remove Covered Intervals
+# 20FEB22
+####################################
+# I can't believe this worked
+class Solution:
+    def removeCoveredIntervals(self, intervals: List[List[int]]) -> int:
+        '''
+        we want to remove intervals that are already coverd by another interval
+        we are NOT adding or creating or MERGRING intervals
+        if an interval is captured by another interval, remove it
+        an interval MUST be covered completely, no partial covered by two intervals are allowd
+        if i sort on start, 
+        hint say brute force for all intervals
+
+        '''
+        N = len(intervals)
+        ans = N
+        for i in range(N):
+            for j in range(N):
+                first = intervals[i]
+                second = intervals[j]
+                if first[0] >= second[0] and first[1] <= second[1] and i != j:
+                    ans -= 1
+                    break
+                    
+        
+        return ans
+
+#sorting
+class Solution:
+    def removeCoveredIntervals(self, intervals: List[List[int]]) -> int:
+        '''
+        there must be a sorting solution
+        if i sort on the starts, then i just need to keep track of the largest end so far
+        and for the current interval just check if it meets the merge criteria
+        example:
+            [[1,4],[3,6],[2,8]]
+            after sorting on starts
+            [[1,4],[2,8],[3,6]]
+            
+        after sorting we know that start1 < start2
+        but for the ends:
+            if end1 < end2: its not totally captures
+            if end1 >= end2: it must be captured
+            
+        edge case:
+            when start1 == start2, we need to break the tie
+            we need to take the longer interval first, so we sort by the negative end
+        '''
+        # Sort by start point.
+        # If two intervals share the same start point
+        # put the longer one to be the first.
+        intervals.sort(key = lambda x: (x[0], -x[1]))
+        count = 0
+        
+        prev_end = 0
+        for _, end in intervals:
+            # if current interval is not covered
+            # by the previous one
+            if end > prev_end:
+                count += 1    
+                prev_end = end
+        
+        return count
+
 ################################
 # 259. 3Sum Smaller
 # 18FEB22
