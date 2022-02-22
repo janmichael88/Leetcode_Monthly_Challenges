@@ -3015,6 +3015,99 @@ class Solution:
         
         return count
 
+
+################################
+# 169. Majority Element
+# 21FEB22
+################################
+class Solution:
+    def majorityElement(self, nums: List[int]) -> int:
+        '''
+        if len(nums) is even, there cannot be a majority, but we assume it exsist, so len(nums) is odd
+        there can only be two unique elements in the array, otherwise it would be impossible to have a majority
+        hashmap and coount
+        '''
+        counts = Counter(nums)
+        return max(counts.keys(), key = counts.get)
+
+class Solution:
+    def majorityElement(self, nums: List[int]) -> int:
+        '''
+        if there is guranteed to be a majority element, then after sorting the majorigy element should lie in the iddle
+        why? there is overlap in the coounts of of majority element
+        '''
+        nums.sort()
+        return nums[len(nums)//2]
+
+import random
+class Solution:
+    def majorityElement(self, nums: List[int]) -> int:
+        '''
+        because there is a majority  element, we are likley to pick this element  by change
+        we keep picking a random element until we pick it at least len(nums)//2 times
+        the algorithm is verfiably  correct because we  ensure that the randomnly chosen value is the morjority element
+        if it is not, we pick again
+        we spend linear time getting the sum, but the simulation time is bounded by a constant, in fact it is no more than  a constant factor
+        
+        '''
+        majority_count = len(nums)//2
+        while True:
+            candidate = random.choice(nums)
+            if sum(1 for elem in nums if elem == candidate) > majority_count:
+                return candidate
+
+class Solution:
+    def majorityElement(self, nums: List[int]) -> int:
+        '''
+        Boyer moore:
+            we start off with a  0 count, whenever we see a 0 count, that num is oour answer
+            when the num is the answer increment += 1, else -= 1
+        
+        intuition:
+            we try to look for the majoriy element in each suffix (ending with index i) in the array nums
+            for i in len(nums) find majority in nums[i:]
+                this is kinda like dp
+            
+            whenever count == 0:
+                we forget about everything  in nums up the current number as the  candidate for  the majority  element up the current index
+                and consider the current number  as the candidate for  the majority element
+        '''
+        count = 0
+        cand = None
+        
+        for num in nums:
+            if count == 0:
+                cand = num
+            if num == cand:
+                count += 1
+            else:
+                count -= 1
+            
+        return cand
+
+#################################
+# 541. Reverse String II
+# 21FEB22
+##################################
+class Solution:
+    def reverseStr(self, s: str, k: int) -> str:
+        '''
+        we can just swap for every 2k eleemtns
+        '''
+        temp = list(s)
+        for i in range(0,len(temp),2*k):
+            left = i
+            #weight either go to the end at i + k - 1
+            #note if at any point there are fewere than k chars, left reverse all of them
+            #if there are < 2k, but >= k chars, then reverse the k chars and leave original
+            right = min(i+k-1,len(temp) - 1)
+            while left < right:
+                temp[left],temp[right] = temp[right],temp[left]
+                left += 1
+                right -= 1
+        
+        return "".join(temp)
+
 ################################
 # 259. 3Sum Smaller
 # 18FEB22
@@ -3039,4 +3132,75 @@ class Solution:
                     if i != j != k:
                         ans += 1
         
+        return ans
+
+class Solution:
+    def threeSumSmaller(self, nums: List[int], target: int) -> int:
+        '''
+        note:
+            the i < j < k critieria just means that we must pick a triplet with difference indicies
+            so we can sory, and treat that as the 3sum problem
+            we binary serach for last element until we find the left most bound
+            then every element before that bound must form a pair
+            
+        we first find pairs (i,j)
+        nums[i] + nums[j] < target
+        we sort the array then apply binary search to find the alrgest index j such that nums[i] + nums[j] < target for each i
+        once we have found that largest index j, there must be at least j-i pairs
+        '''
+        nums.sort()
+        N = len(nums)
+        ans = 0
+        #first find all candidate pairs (i,j)
+        for i in range(N):
+            for j in range(i+1,N):
+                #binary search to find the kth, just less than target
+                #then add those pairs to ans
+                left = j
+                right = N - 1
+                while left < right:
+                    #note we choose the upper middle element as the parition point, instead of lower element
+                    #if we picked the lower middle, then in the case where there are two elemenets 
+                    #nums[mid] < target, evlautes to true, and the loop would never termiante
+                    mid = (left + right + 1) // 2
+                    if nums[i] + nums[j] + nums[mid] < target:
+                        left = mid
+                    else:
+                        right = mid - 1
+                
+                #the k'th index if the left bound
+                ans += left - j
+        
+        return ans
+        
+
+class Solution:
+    def threeSumSmaller(self, nums: List[int], target: int) -> int:
+        '''
+        we can use two pointers, but this better illustrated with an exmaples
+        nums = [3,5,2,8,1] and target = 7
+        sorting
+        nums = [1,2,3,5,8]
+        start with two pointers left and right
+        1+8 > 7
+        so we reduce the right pointer
+        1+5 < 7
+        and in fact any pair between 1 and 5 would satisfy the target, this is our answer
+        right - left
+        '''
+        nums.sort()
+        ans = 0
+        N = len(nums)
+        for i in range(N-2):
+            left = i+1
+            right = N - 1
+            while left < right:
+                #look for target - nums[i]
+                if nums[left] + nums[right] < target - nums[i]:
+                    ans += right - left
+                    left += 1
+                else:
+                    right -= 1
+                    
+            
         return ans
