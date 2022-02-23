@@ -3204,3 +3204,129 @@ class Solution:
                     
             
         return ans
+
+###############################
+# 171. Excel Sheet Column Number
+# 22FEB22
+###############################
+class Solution:
+    def titleToNumber(self, columnTitle: str) -> int:
+        '''
+        this is just base 26 and we take letter from mod26
+        init ans as 0
+        traverse array in revers
+        ans = \sum_{i}^{len(columnTite)} (position of alpaha)*(26)^index
+        '''
+        ans = 0
+        N = len(columnTitle)
+        for i in reversed(range(N)):
+            #conver char between number 0 and 25
+            char_num = ord(columnTitle[i]) - ord('A') + 1
+            digit = char_num*26**(N-i-1)
+            ans += digit
+        
+        return ans
+            
+class Solution:
+    def titleToNumber(self, columnTitle: str) -> int:
+        '''
+        another way, we can just go left to right
+        multiply the result by 26 every time
+        then add its char_num
+        '''
+        ans = 0
+        N = len(columnTitle)
+        for i in range(N):
+            ans = ans*26
+            ans += ord(columnTitle[i]) - ord('A') + 1
+        
+        return ans
+
+class Solution:
+    def titleToNumber(self, columnTitle: str) -> int:
+        '''
+        another way, we can just go left to right
+        multiply the result by 26 every time
+        then add its char_num
+        
+        example in base 10 
+        '1' = 1
+        '13' = (1 x 10) + 3 = 13
+        '133' = (13 x 10) + 3 = 133
+        '1337' = (133 x 10) + 7 = 1337
+        
+        example in base 26
+        L = 12
+        E = (12 x 26) + 5 = 317
+        E = (317 x 26) + 5 = 8247
+        T = (8247 x 26) + 20 = 214442
+        '''
+        ans = 0
+        N = len(columnTitle)
+        for i in range(N):
+            ans = ans*26
+            ans += ord(columnTitle[i]) - ord('A') + 1
+        
+        return ans
+
+################################
+# 1064. Fixed Point
+# 22FEB22
+#################################
+class Solution:
+    def fixedPoint(self, arr: List[int]) -> int:
+        '''
+        just scan left to right
+        since it is sorted in scending order
+        '''
+        N = len(arr)
+        for i in range(N):
+            if i == arr[i]:
+                return i
+        
+        return -1
+
+class Solution:
+    def fixedPoint(self, arr: List[int]) -> int:
+        '''
+        we can do binary search!
+        the array is sorted in ascending order
+        
+        the key behind binary search is 
+            when to search on what side
+            when to include/exclude the middle point
+            when to take upper of lower middle
+            when to return lower left bound or upper right bound
+            
+        these are four tings we need to consider when binary searching
+        
+        we first check to see if arr[mid] == mid:
+            if that is the case we know that we are good here
+            so let's store this answer and try find a smaller one
+            if arr[mid] < mid:
+                we check the right side, so left = mid + 1
+                we need to go up to look for a minimum
+            if arr[mid] > mid:
+                we check the left side: right = mid - 1
+                we need to look down for a minimum
+        
+        we store possible answers and keep reducing
+        we can left left == right, since we are storing the index and do one final check when size of the array is 1
+                
+        '''
+        left = 0
+        right = len(arr) - 1
+        
+        answer = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid] == mid:
+                answer = mid
+                right = mid - 1
+            elif arr[mid] < mid:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return answer
