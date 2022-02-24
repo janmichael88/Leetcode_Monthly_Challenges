@@ -3330,3 +3330,238 @@ class Solution:
                 right = mid - 1
         
         return answer
+
+###########################
+# 133. Clone Graph
+# 23FEB22
+############################
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val = 0, neighbors = None):
+        self.val = val
+        self.neighbors = neighbors if neighbors is not None else []
+"""
+
+class Solution(object):
+    def cloneGraph(self, node):
+        """
+        :type node: Node
+        :rtype: Node
+        """
+        '''
+        this is graph traversal, so i can use dfs
+        this is just dfs
+        i can traverse the graph recurisvely and for each node to cloned variable, use hash
+        
+        algo:
+            allocate a hash map, call this cloned
+            seen set will be the hash map
+            the key will be the node, and the value will be a list of nodes
+            for each node:
+                check is we have seen this nodes neighbors:
+                    the RECURSE for each neighbor
+            after recursing put back into the hashmap
+                
+        '''
+        #edge case 
+        if not node:
+            return node
+        
+        #init cloned, RETURN THIS SHIT!, but give reference to the node
+        cloned_map = {}
+        
+        def dfs(node):
+            #for each node visited add to cloned map
+            cloned_map[node] = Node(node.val) #initilize for each first time visited
+            for n in node.neighbors:
+                if n not in cloned_map:
+                    #FUCKING RECURSE
+                    dfs(n)
+                #update cloned
+                #recall key is node and val is a list, adding all neighbors from the node we are at
+                cloned_map[node].neighbors += [cloned_map[n]]
+        
+        #inovke
+        dfs(node)
+        return cloned_map[node]
+
+
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val = 0, neighbors = None):
+        self.val = val
+        self.neighbors = neighbors if neighbors is not None else []
+"""
+
+class Solution(object):
+    def cloneGraph(self, node):
+        """
+        :type node: Node
+        :rtype: Node
+        """
+        '''
+        this is just DFS, but with a wrench
+        [[2,4],[1,3],[2,4],[1,3]]
+        start at 1, visited(1), go to 2
+        visited(1,2), go to 3
+        visted(1,2) go to 4
+        before we get the node 4, mark nodes 1, and 3 in hash
+        thoughts....
+        if we dfs on each node we'd get to the end befor ever initalizsing nodes 1,3
+        in our dfs call give reference to each node, which means we can't see the neighbors 
+        before firing dfs, we need to create a copy of the node into our hash
+        why? in the absence of ordering, we might get caught in the recursion because we could encouter the node again down the line, example 1,3 is at node 4, but i haven't given reference to nodes 1,3 (its later in the call stack)
+        
+        algo:
+            dfs on a node, then build up its neighbors later
+            we only for each neihbor of a node, we don't need anymore than that!
+            visited set has key a node.val and val as being a copy of the node
+            the return case for a dfs call is just a node, in fact the neighboring nodes/node
+        '''
+        #return copy.deepcopy(node)
+
+        #edge case
+        if not node:
+            return None
+        
+        visited = {} #key is node.val and value is copy of node
+        def helper_dfs(node,visited):
+            #create new node, to prevent cycle, give reference to each node visited
+            new = Node(node.val)
+            #mark node as visited, give reference to new node COPYYYYY
+            visited[node.val] = new
+            #we need to find neighbors for this node,allocate as method
+            new.neighbors = []
+            
+            for n in node.neighbors:
+                if n.val not in visited:
+                    #add in our neighrbos and FUCKING RECURSE!!!
+                    new.neighbors.append(helper_dfs(n,visited)) #add the nodes along the path
+                else:
+                    new.neighbors.append(visited[n.val]) #if i have seen it, just add the one node
+            #now add the neighbors for this node back in        
+            return new
+        
+        #invoke
+        return helper_dfs(node, visited)
+
+#another recursive way
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val = 0, neighbors = None):
+        self.val = val
+        self.neighbors = neighbors if neighbors is not None else []
+"""
+
+class Solution:
+    def cloneGraph(self, node: 'Node') -> 'Node':
+        visited ={}
+        
+        def dfs(node):
+            #empty node, just return it
+            if not node:
+                return node
+            #if we've seen this, return what we've seen so far
+            if node in visited:
+                return visited[node]
+            
+            cloned = Node(node.val,[])
+            #mark
+            visited[node] = cloned
+            
+            #recursive case
+            if node.neighbors:
+                for neigh in node.neighbors:
+                    cloned.neighbors.append(dfs(neigh))
+            
+            return cloned
+        
+        return dfs(node)
+                
+#using bfs, could have also used stack
+class Solution:
+    def cloneGraph(self, node: 'Node') -> 'Node':
+        '''
+        this can also just translate to bfs
+        '''
+        if not node:
+            return node
+        
+        visited ={}
+        
+        q = deque([node])
+        #make first copy
+        visited[node] = Node(node.val, [])
+        
+        while q:
+            curr = q.popleft()
+            
+            #check neighbors
+            for neigh in curr.neighbors:
+                #if we haven't seen a neighbor, make entry
+                if neigh not in visited:
+                    #make entry
+                    visited[neigh] = Node(neigh.val, [])
+                    #add to q
+                    q.append(neigh)
+                #if we have seen it, retrive from visited to add in its neighbors
+                visited[curr].neighbors.append(visited[neigh])
+        
+        return visited[node]
+
+######################################################
+# 632. Smallest Range Covering Elements from K Lists
+# 23FEB22
+#######################################################
+class Solution:
+    def smallestRange(self, nums: List[List[int]]) -> List[int]:
+        '''
+        i can concatenate all the nums into one list, where each element in the list is [num,idx of list]
+        we can then use a sliding window to try to first make a window
+        '''
+        #concat list and sort
+        N = len(nums)
+        merged = []
+        for i,l in enumerate(nums):
+            for num in l:
+                merged.append([num,i])
+        
+        #sort
+        merged.sort()
+        
+        #start sliding window
+        #keep expanding right until we capture all indicies
+        #we can keep Counter of the number of list indices taken
+        captured_indices = Counter()
+        total_captured = 0
+        left, right = 0,0
+        range_ans = [merged[0][0],merged[-1][0]] #minimuze this
+        #possible ranges
+        #range_ans = []
+        
+        while right < len(merged):
+            #add in right most element for window
+            curr = merged[right]
+            #mark
+            captured_indices[curr[1]] += 1
+            #we we have at least k indices in counter, shrink
+            while len(captured_indices) == N:
+                #range_ans[0] = max(range_ans[0],merged[left][0])
+                #range_ans[1] = min(range_ans[1],curr[0])
+                local_range = [merged[left][0],curr[0]]
+                if local_range[1] - local_range[0] < range_ans[1] - range_ans[0]:
+                    range_ans = local_range[:]
+                if captured_indices[merged[left][1]] > 1:
+                    captured_indices[merged[left][1]] -= 1
+                else:
+                    del captured_indices[merged[left][1]]
+                left += 1
+            
+            right += 1
+        
+        #f
+        return range_ans
+            
