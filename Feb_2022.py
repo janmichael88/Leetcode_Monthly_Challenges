@@ -3565,3 +3565,217 @@ class Solution:
         #f
         return range_ans
             
+#############################
+# 148. Sort List
+# 24FEB22
+#############################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def sortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can use merge sort on a linked list
+        we need to define two helper methods, get middle and merge
+        then recursively call and left and right
+        
+        divide and conqure,
+            recursively split the original list into sublists of equal sizes,
+            sort each sublist independently, and mrerge the sorted lists
+        '''
+        #edge cases
+        if not head or not head.next:
+            return head
+        
+        mid = self.getMid(head)
+        left = self.sortList(head)
+        right = self.sortList(mid)
+        return self.merge(left,right)
+    
+    def getMid(self,node):
+        prev = None
+        #carry prev along and adance in the non none case
+        while node and node.next:
+            prev = node if not prev else prev.next
+            node = node.next.next
+        
+        #we need to break off
+        #assign mid to be the next after prev
+        mid = prev.next
+        prev.next = None
+        return mid
+    
+    def merge(self, l1,l2):
+        dummy = ListNode()
+        tail = dummy
+        while l1 and l2:
+            #take the smaller of two and advance
+            if l1.val < l2.val:
+                tail.next = l1
+                l1 = l1.next
+                tail = tail.next
+            else:
+                tail.next = l2
+                l2 = l2.next
+                tail = tail.next
+        
+        #add remaining
+        tail.next = l1 if l1 else l2
+        return dummy.next
+
+#bottom up
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def sortList(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can also to this bottom up, or iteratively
+        the bottom up approach starts by splitting the problem into the smallest subproblem and merge
+        first, split the list into sublists of size 1 and merge iteratively in sorted order - the merged list is solved similarily
+        the process continues until we sort the entire lists
+        
+        algo:
+            assumer there are N nodes in the linked list
+            start with splitting the sublists of until we get size 1
+            each adjacent pair of subslits of size 1 is merged in sorted order
+            after the first iteration, we get the sorted lists of size 2
+            we repeat and split until we get sublists of size 1,2,4,8....
+            to split the list in two sublists, we start using two poitners
+        '''
+        "merge sort, O(n*log(n)) time, O(1) memory."
+        l = self.list_len(head)
+        size = 1
+        
+        prev_head = head
+        while size < l:
+            curr_linkedlist = ListNode()
+            curr_last = curr_linkedlist
+            while prev_head:
+                head_1 = prev_head
+                tail_1 = head_2 = self.preceed(head_1, size)
+                tail_2 = self.preceed(head_2, size)
+                curr_last = self.merge(head_1, tail_1, head_2, tail_2, curr_last)
+                prev_head = tail_2
+            prev_head = curr_linkedlist.next
+            size *= 2
+            
+        return prev_head
+        
+        
+    def list_len(self,head):
+        "returns the length of list."
+        ans = 0
+        while head:
+            ans += 1
+            head = head.next
+        return ans
+
+    def preceed(self,node, count):
+        "returns the node `count` hops from `node`."
+        for _ in range(count):
+            if not node:
+                return None
+            node = node.next
+        return node
+
+    def merge(self,head_1, tail_1, head_2, tail_2, output):
+        "merge-sorts two lists by moving nodes to `output` by appending."
+        while head_1 != tail_1 or head_2 != tail_2:
+            if head_1 != tail_1 and (head_2 == tail_2 or head_1.val < head_2.val):
+                output.next = head_1
+                head_1 = head_1.next
+            else:
+                output.next = head_2
+                head_2 = head_2.next
+            output = output.next
+        output.next = None
+        return output
+
+############################################
+# 314. Binary Tree Vertical Order Traversal
+# 24FEB22
+############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def verticalOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        '''
+        i can pass in a start of zero, then whenever i go left -1, else + 1
+        this will give columns -n .... n
+        with n being 1/2 the largest width of the tree
+        as we dfs, store into a hashmap
+        '''
+        if not root:
+            return []
+        mapp = defaultdict(list)
+        
+        def dfs(node,row_num,column_num):
+            if not node:
+                return
+            #order does not matter, default to in order
+            #we store against a column number but also keep track of the row number
+            mapp[column_num].append([row_num,node.val])
+            dfs(node.left, row_num + 1, column_num - 1)
+            dfs(node.right, row_num + 1, column_num + 1)
+            
+        dfs(root,0,0)
+        #i could have calculated these globally while traversing tree
+        MIN = min(mapp.keys())
+        MAX = max(mapp.keys())
+        ans = []
+        for col in range(MIN,MAX+1):
+            mapp[col].sort(key=lambda x:x[0])
+            colVals = [val for row, val in mapp[col]]
+            ans.append(colVals)
+        
+        return ans
+
+#bfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def verticalOrder(self, root: Optional[TreeNode]) -> List[List[int]]:
+        '''
+        could also use bfs
+        '''
+        if not root:
+            return []
+        mapp = defaultdict(list)
+        
+        q = deque([(root,0,0)])
+        
+        while q:
+            node,row_num,col_num = q.popleft()
+            
+            if not node:
+                continue
+            mapp[col_num].append([row_num,node.val])
+            if node.left:
+                q.append((node.left, row_num + 1, col_num - 1))
+            if node.right:
+                q.append((node.right, row_num + 1, col_num + 1))
+            
+        MIN = min(mapp.keys())
+        MAX = max(mapp.keys())
+        ans = []
+        for col in range(MIN,MAX+1):
+            mapp[col].sort(key=lambda x:x[0])
+            colVals = [val for row, val in mapp[col]]
+            ans.append(colVals)
+        
+        return ans
+        
+
