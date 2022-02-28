@@ -3778,4 +3778,390 @@ class Solution:
         
         return ans
         
+##############################
+# 25FEB22
+# 165. Compare Version Numbers
+###############################
+class Solution:
+    def compareVersion(self, version1: str, version2: str) -> int:
+        '''
+        rules:
+            if version1 < version2 ; return -1
+            if version1 > version2 ; return 1
+            else they must be equal, return 0
+        
+        I can just leftstrip all leading zeros
+        then just compare down the line
+        '''
+        v1 = ""
+        v2 = ""
+        
+        #clearn
+        for foo in version1.split('.'):
+            #careful for case with only singel 0
+            if len(foo) == 1:
+                v1 += foo
+            else:
+                v1 += foo.lstrip('0')
+                
+        for foo in version2.split('.'):
+            #careful for case with only singel 0
+            if len(foo) == 1:
+                v2 += foo
+            else:
+                v2 += foo.lstrip('0')
+        
+        print(v1,v2)
+        #now just compare
+        #but careful tow atch for the lengths
+        for i in range(max(len(v1),len(v2))):
+            num1 = int(v1[i]) if i < len(v1) else 0
+            num2 = int(v2[i]) if i < len(v2) else 0
+            if num1 != num2:
+                return 1 if num1 > num2 else -1
+        
+        return 0
 
+class Solution:
+    def compareVersion(self, version1: str, version2: str) -> int:
+        '''
+        we can split on a dot and compare chunk by chunk
+        cast the chunk into an int and compare
+        '''
+        v1 = version1.split('.')
+        v2 = version2.split('.')
+        
+        for i in range(max(len(v1),len(v2))):
+            i1 = int(v1[i]) if i < len(v1) else 0
+            i2 = int(v2[i]) if i < len(v2) else 0
+            if i1 != i2:
+                return 1 if i1 > i2 else -1
+            
+        return 
+
+#another way
+class Solution:
+    def compareVersion(self, version1: str, version2: str) -> int:
+        '''
+        we get split on . and do string to int conversion
+        make strings even lenth by adding zeros if we have to
+        we can do a hack with list comparison in python by comparing strings directyl
+        (s1 > s2) - (s1 < s2) trick: if s1 > s2 then we have 1-0 = 1, if s1 = s2, then we have 0-0 = 0, if we have s1< s2, then 0-1 = -1.
+        '''
+        s1 = [int(i) for i in version1.split('.')]
+        s2 = [int(i) for i in version2.split('.')]
+        
+        #add zeros if we have to
+        l1 = len(s1)
+        l2 = len(s2)
+        
+        if l1 < l2: 
+            s1 += [0]*(l2-l1) 
+        else: 
+            s2 += [0]*(l1 - l2)
+            
+        return (s1 > s2) - (s1 < s2)
+
+########################################
+# 27FEB22
+# 847. Shortest Path Visiting All Nodes
+########################################
+class Solution:
+    def shortestPathLength(self, graph: List[List[int]]) -> int:
+        '''
+        we can begin by asking the question, 'at each node, which edge should we take depeds on which nodes we have already visited'
+        this is kinda similar to the Traveling Salesman Probelm
+        small constraints suggest that we want to explore all posibilites, so recursion comes into play
+        what information do we need at any given moment?
+            1. we need to know what node we are currently at
+            2. we need to know which nodes we have already visits
+        
+        bit manipulation to encode state:
+            if there are n nodes, then there are 2^N possible stats of nodes we have taken so far
+            for each node, we have either visited or not visited it, so we can use an integer to represent nodes 
+            that we have visited ebfore
+            example, we have n = 8 nodes, and we have visited, nodes 2,3,6
+            01001100 -> 76
+        
+        but we need to know two more things:
+            1. how to change the mask?
+            2. how to tell what nodes we have visited so far for a given masl
+            we can do the bit shift and XOR trick
+            mask = mask ^ (node << i times)
+            we can update the mask in this way
+            to check if we have seen this nodes in the mask, we cna use the AND operator
+            if the result of the AND operator gives us 0, we know we haven't seen it yet
+            seen:
+                mask = mask & (mask << i times), 
+                would yeild zero if not seen
+        
+        intuition:
+            we can define the state  as (node,mask), where node is current state, and mask is the bit state
+            recall we can only move to a node if an edge exists -> neighbors
+            think about? how we got to a node 
+            if we are at 0, we can go to 1, for the first time, or we could have gotten to 1 before
+            if we have already visited 1, our maks would have been 11 before visiting 1 the second times
+            if we have not already visited 1, our mask would be 10, then 11, think on this carefully
+            so for any given state (node,mask) we can visit all neighbaors of a node, and for each neighbor, we can have mask remain unchanged or have mask after flipping the bit at the position (take or don't take)
+            IPMPORTANT PART HERE:  
+                we should look at tall the options and chose the best one
+                since each movement counts as a step, we need to add 1
+            DP TRANSITION FUNCTION:
+                dp(node,mask) = 1 + min(dp(neighbor,mask),dp(neighbor,mask ^ (1 << node)) for all neighbord in graph[node])
+                
+                the mask ^ (1 << node) operations is flipping the bit at the position node using the, XOR changes the bit, AND checks
+                to prevent cycles we can cache state states's values (which is bit, which is num) as infinity
+                 This ensures that if we go from (A, mask) to (B, mask) we cannot return to A until we have visited at least one new node (thus changing mask).
+                 inital states set to infity (similar to djikstras)
+            BASE CASE:
+                when we have visited all nodes, return 0, -> we don't need to dfs anywehre else after seeing all of them
+                when there is only 1 unvisited node, return 0 because we have visited all other ndoes, and we must be standing on the final node
+                we start DFS with all nodes intially being visited
+                endingMask (1 << N) - 1
+                this means we start out dfs(node,ending maskg)
+                work towards of base cases:
+                    any time a node only have a single bit in it, represents a starting point
+                
+                check if mask has only 1 bit init:
+                    use the Brian Kernighan trick: from power to two
+                    mask & (mask - 1) == 0
+                    the trick sets the right most bit to 0
+                    100...000 or 0111..111 
+        algo:
+            * start off with ending mask 
+            * N = len(graph)
+            * ening mask = (1 << N) - 1
+            * dfs for each node n [0 to n-1], tkek the min
+        '''
+        n = len(graph)
+        ending_mask = (1 << n) - 1
+        memo = {}
+        
+        def dp(node,mask):
+            if (node,mask) in memo:
+                return memo[(node,mask)]
+            #base case, mask only has a single 1, which means that onlye one node has been visite
+            #remember we worked backwars from top
+            if mask & (mask -1) == 0:
+                return 0
+            
+            #initial state to be marked as inf
+            memo[(node,mask)] = float('inf')
+            for neigh in graph[node]:
+                #if i've seen this node in this state
+                if mask & (1 << neigh):
+                    #get of visiting thourgh theis neigh
+                    take = 1 + dp(neigh,mask)
+                    no_take = 1 + dp(neigh, mask ^ (1 << node))
+                    #take the minimum
+                    memo[(node,mask)] = min(memo[(node,mask)],take,no_take)
+            
+            return memo[(node,mask)]
+        
+        ans = float('inf')
+        for i in range(n):
+            ans = min(ans,dp(i,ending_mask))
+        
+        return ans
+        
+#bfs
+class Solution:
+    def shortestPathLength(self, graph: List[List[int]]) -> int:
+        '''
+        for top down dfs, we started assuming we saw all the nodes, and was trying to find the min
+        from the leaves, which are single nodes
+        shortest path should really be BFS
+        we start q with all possible makes having only 1 node, then find the shortest path
+        once we have mask that containts all the nodes
+        
+        differene:
+            because we are working backwards in the previous approach we still need to keep track of (neighbord,mask) and (neighbord, mask (1<< node))
+            since we are moving forward, the state should is different
+            example, so we are at A, and want to go to B
+            it sholdn't matter if we go B->A->B or A->B, upon arriving at B, we want this node be to set to 1
+            Since we always want the bit to be set to 1, we will use an OR operation with 1 << neighbor to make sure the bit is set to 1.
+            
+        More formally, for any given state (node, mask), we can traverse to (neighbor, mask | (1 << neighbor)) for all neighbors in graph[node]
+        We will still need to use some space to ensure that we don't revisit states and create an infinite cycle, but this time we don't need to associate the states with any values, just a flag to indicate if it has been visited yet or not.
+
+        algo:
+        If graph only contains one node, then return 0 as we can start at node 0 and complete the problem without taking any steps.
+
+    Initialize some variables:
+
+    n, as the length of graph.
+    endingMask = (1 << n) - 1, a bitmask that represents all nodes being visited.
+    seen, a data structure that will be used to indicate if we have visited a state to prevent cycles.
+    queue, a data structure that implements an abstract queue used for our BFS.
+    steps, an integer that keeps track of which step we are on. Since BFS gaurantees a shortest path, as soon as we encounter endingMask, we can return steps.
+    Populate queue and seen with the base cases (starting at all nodes with the mask set to having only visited the given node). This is (i, 1 << i) for all i from 0 to n - 1.
+
+    Perform a BFS:
+
+    Initialize nextQueue, which will replace queue at the end of the current step.
+    Loop through the current queue. For each state (node, mask), loop through graph[node]. For each neighbor, declare a new state (neighbor, nextMask), where nextMask = mask | (1 << neighbor). If nextMask == endingMask, then that means taking one more step to the neighbor will complete visiting all nodes, so return 1 + steps. Otherwise, if this new state has not yet been visited, then add it nextQueue and seen.
+    After looping through the current queue, increment steps by 1 and replace queue with nextQueue.
+    The constraints state that the input graph is always connected, therefore there will always be an answer. The return statement in the BFS will always trigger, and we don't need to worry about other cases.
+        '''
+        if len(graph) == 1:
+            return 0
+        
+        n = len(graph)
+        ending_mask = (1 << n) - 1
+        queue = [(node, 1 << node) for node in range(n)]
+        seen = set(queue)
+
+        steps = 0
+        while queue:
+            next_queue = []
+            for i in range(len(queue)):
+                node, mask = queue[i]
+                for neighbor in graph[node]:
+                    next_mask = mask | (1 << neighbor)
+                    if next_mask == ending_mask:
+                        return 1 + steps
+                    
+                    if (neighbor, next_mask) not in seen:
+                        seen.add((neighbor, next_mask))
+                        next_queue.append((neighbor, next_mask))
+            
+            steps += 1
+            queue = next_queue
+        
+####################################
+# 662. Maximum Width of Binary Tree
+# 27FEB22
+###################################
+#close one
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def widthOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        whenever i go left, it goes -1
+        whenever i go right, it goes +1
+        bfs, but carry how much left and how much it when right
+        then for every level, find the distance
+        '''
+        ans = 0
+        q = deque([(root,0)])
+        while q:
+            #update max
+            first = q[0]
+            last = q[-1]
+            ans = max(ans,abs(first[1]-last[1]))
+            N = len(q)
+            for _ in range(N):
+                curr,width = q.popleft()
+                if curr.left:
+                    q.append((curr.left,width -1))
+                if curr.right:
+                    q.append((curr.right,width+1))
+        
+        return ans
+
+#use the index from parent trick 2*i for left and 2*i + 1
+class Solution:
+    def widthOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        if we are at node with index i, it's children nodes for left and right are given by
+        2*i for the left and 2*i + 1
+        we can keep findind the index for each node at each level
+        and for each level, find the difference between the node at the beginning and the node at the end
+        '''
+        if not root:
+            return 0
+        
+        ans = 0
+        q = deque([(root,0)])
+        while q:
+            #update max
+            first = q[0][1]
+            last = q[-1][1]
+            ans = max(ans,last - first + 1)
+            N = len(q)
+            for _ in range(N):
+                curr,width = q.popleft()
+                if curr.left:
+                    q.append((curr.left,2*width))
+                if curr.right:
+                    q.append((curr.right,2*width + 1))
+        #last one
+
+        return ans
+
+#dfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def widthOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        we can do a dfs and record each depth mappy to the first col index  at the depth
+        we need to to preorder, node,left,right,
+        when there isn't an entry for a depth, this must be the first time we have seen it, so add
+        otherwise, we update the enetry and record the max
+        '''
+        mapp = {}
+        self.ans = 0
+        
+        def dfs(node,depth,col):
+            if not node:
+                return
+            if depth not in mapp:
+                mapp[depth] = col
+                
+            #update step
+            self.ans = max(self.ans, col - mapp[depth]+1)
+            dfs(node.left,depth+1,2*col)
+            dfs(node.right,depth+1,2*col + 1)
+        
+        dfs(root,0,0)
+        return self.ans
+        
+##################################
+# 766. Toeplitz Matrix
+# 27FEB22
+##################################
+class Solution:
+    def isToeplitzMatrix(self, matrix: List[List[int]]) -> bool:
+        '''
+        recall the for a diagonal matrix, we can reference a diag by finding i-j
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        mapp = defaultdict(set)
+        
+        for i in range(rows):
+            for j in range(cols):
+                mapp[i-j].add(matrix[i][j])
+        
+        #pass hashmap checking 
+        for k,v in mapp.items():
+            if len(v) != 1:
+                return False
+        
+        return True
+
+class Solution:
+    def isToeplitzMatrix(self, matrix: List[List[int]]) -> bool:
+        '''
+        just chek prev diag element only when we can check one
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        for i in range(rows):
+            for j in range(cols):
+                if i > 0 and j > 0:
+                    if matrix[i-1][j-1] != matrix[i][j]:
+                        return False
+                    
+        return True
