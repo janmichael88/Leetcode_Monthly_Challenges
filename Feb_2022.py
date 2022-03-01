@@ -4125,7 +4125,7 @@ class Solution:
         
         dfs(root,0,0)
         return self.ans
-        
+
 ##################################
 # 766. Toeplitz Matrix
 # 27FEB22
@@ -4165,3 +4165,31 @@ class Solution:
                         return False
                     
         return True
+
+#######################################
+# 228. Summary Ranges
+# 28FEB22
+#######################################
+class Solution:
+    def summaryRanges(self, nums: List[int]) -> List[str]:
+        '''
+        i can use a sliding window and only extend if they are strincly increasing by 1
+        '''
+        N = len(nums)
+        ans = []
+        left = right = 0
+        while right < N:
+            #try to extend the current intervale
+            while right + 1 < N and nums[right+1] - nums[right] == 1:
+                right += 1
+            
+            #if we have made an interval of length > 1
+            if right - left > 0:
+                ans.append(str(nums[left])+"->"+str(nums[right]))
+            elif right - left == 0:
+                ans.append(str(nums[left]))
+            
+            right += 1
+            left = right
+        
+        return ans
