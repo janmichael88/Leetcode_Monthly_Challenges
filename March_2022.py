@@ -209,3 +209,97 @@ class Solution:
                 stack.append((child,copy_child))
             
         return cloned
+
+###############################
+# 02MAR22
+# 392. Is Subsequence
+###############################
+class Solution:
+    def isSubsequence(self, s: str, t: str) -> bool:
+        '''
+        we just want to check if s is a substring of t
+        just move pointers in s and t and return if we moved all the way to s
+        '''
+        #s is too big
+        if len(s) > len(t):
+            return False
+        
+        ptr_s = 0
+        ptr_t = 0
+        
+        while ptr_t < len(t) and ptr_s < len(s):
+            #match
+            if s[ptr_s] == t[ptr_t]:
+                ptr_s += 1
+            ptr_t += 1
+        
+        return  ptr_s == len(s)
+
+#recursive solution
+class Solution:
+    def isSubsequence(self, s: str, t: str) -> bool:
+        '''
+        we can use recursion 
+        dp(i,j) answers the question if s[:i] is a subsequence of s[:j]
+        if s[i] == t[j] then we are left so solve the subproblem on s[i+1:] and s[j+1]
+        if s[i] != t[j], then we are forced to advance the pointer j into target and see if we can 
+        find a subsequence s[:i] in t[:j+1]
+        
+        base cases:
+            if we have advanced i, then it must be a subsequence
+            if we have advance j, but still letters are unmatched
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            #base caes
+            if i == len(s):
+                return True
+            if j == len(t):
+                return False
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #recursive case
+            if s[i] == t[j]:
+                res = dp(i+1,j+1)
+                memo[(i,j)] = res
+                return res
+            res = dp(i,j+1)
+            memo[(i,j)] = res
+            return res
+        
+        dp(0,0)
+        print(memo)
+
+class Solution:
+    def isSubsequence(self, s: str, t: str) -> bool:
+        '''
+        follow up question can be solved greedily using hashmap
+        if we repeatedly have incoming chars s1,s2,s3....n
+        we have to repeatedly search the target string each time a new char s comes in
+        one way is to precompute a hash for each char in t mapping to its index
+        
+        now with the hashmap precomputed, we match greedily
+        when searching indices, we can use binary search to avoid scaning linearly
+        we want the index that is just greater than the current index
+        if the index we find is >= len(s) it can't be dont because there are no more indices to choose from
+        
+        We use the pointer to check if an index is suitable or not. For instance, for the character a whose corresponding indices are [0, 3], we need to pick an index out of all the appearances as a match. Suppose at certain moment, the pointer is located at the index 1. Then, the suitable greedy match would be the index of 3, which is the first index that is larger than the current position of the target pointer.
+        '''
+        mapp = defaultdict(list)
+        for i,char in enumerate(t):
+            mapp[char].append(i)
+            
+        curr_idx = -1
+        for char in s:
+            if char not in mapp:
+                return False
+            idxs = mapp[char]
+            candidate = bisect.bisect_right(idxs,curr_idx)
+            #if i got to the end of the idxs list, there isn't an index just one greate
+            if candidate != len(idxs):
+                curr_idx = idxs[candidate]
+            else:
+                return False
+            
+        return True
