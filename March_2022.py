@@ -303,3 +303,253 @@ class Solution:
                 return False
             
         return True
+
+###################################
+# 03MAR22
+# 413. Arithmetic Slices
+###################################
+#brute force, fails N^3
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        this is a revisit of a problem
+        
+        brute force would be to just check all possible array slices of length > 3
+        check first first order differences, and scan all diffs
+        
+        '''
+        ans = 0
+        N = len(nums)
+        for start in range(N-2):
+            diff = nums[start+1] - nums[start]
+            for end in range(start+2,N):
+                #store slice
+                curr_slice = nums[start:end+1]
+                for i in range(len(curr_slice)-1):
+                    if curr_slice[i+1] - curr_slice[i] != diff:
+                        break
+                else:
+                    ans += 1
+        
+        return ans
+
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        N^2 is a little different, but should still pass
+        instead of checking every possible range and check differences we do something a little different
+        
+        define start and end pointers into nums of satisfibaility for arithmetic sequence
+        we simply need to check that nums[end] and nums[end+1] have same difference as the previus diffs
+        in the slice nums[start:end]
+        
+        i.e we just check the last pair to have the same diff
+        '''
+        ans = 0
+        N = len(nums)
+        for start in range(N-2):
+            diff = nums[start+1] - nums[start]
+            for end in range(start+2,N):
+                #store slice
+                if nums[end] - nums[end-1] == diff:
+                    ans += 1
+                else:
+                    break
+        
+        return ans
+
+#recursive case
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        finally we can use recursion to solve this problem
+        let dp(i) be the number of arithmetic subsequences ending at i
+        dp(i) = dp(i-1) + 1 if nums[i] - nums[i-1] == nums[i+1] - nums[i]
+        we need to start from the end of the array though
+        we reduce each subproblem by 1
+        we need to update sum globally thought? we could probably write this as the final return call
+        
+        '''
+        memo = {}
+        def dp(i):
+            if i < 2:
+                return 0
+            if i in memo:
+                return memo[i]
+            #check if adding new one increases the count
+            if nums[i] - nums[i-1] == nums[i-1] - nums[i-2]:
+                res = 1 + dp(i-1)
+                memo[i] = res
+                return res
+            #we are forced to start over the count if there isn't a match at this current if when adding the new element at index i does not consitute a valid arithmetic sequence
+            else:
+                return 0
+            
+        #dp for all to get the count
+        count = 0
+        #we also could have reversed the order to get this to run faster
+        for i in range(len(nums)):
+            count += dp(i)
+        
+        return count
+        
+
+#dp
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        we can translate this to bottom up dp
+        '''
+        N = len(nums)
+        dp = [0]*N
+        for i in range(2,N):
+            if nums[i] - nums[i-1] == nums[i-1] - nums[i-2]:
+                dp[i] = 1 + dp[i-1]
+            else:
+                dp[i] = 0
+        
+        return sum(dp)
+        
+#no last pass for sum
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        we can translate this to bottom up dp
+        '''
+        N = len(nums)
+        dp = [0]*N
+        ans = 0
+        for i in range(2,N):
+            if nums[i] - nums[i-1] == nums[i-1] - nums[i-2]:
+                dp[i] = 1 + dp[i-1]
+                ans += dp[i]
+            else:
+                dp[i] = 0
+        
+        return ans
+
+#constant space, no last pass for sum
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        we can translate this to bottom up dp
+        '''
+        N = len(nums)
+        dp_curr = dp_prev = 0
+        ans = 0
+        for i in range(2,N):
+            if nums[i] - nums[i-1] == nums[i-1] - nums[i-2]:
+                dp_curr = 1 + dp_prev
+                ans += dp_curr
+            else:
+                dp_curr = 0
+            dp_prev = dp_curr
+        
+        return ans
+      
+#################################
+# 03MAR22
+# 267. Palindrome Permutation II
+#################################
+#good enough for interview
+class Solution:
+    def generatePalindromes(self, s: str) -> List[str]:
+        '''
+        we can just use recursion to generate all possible permutations
+        then just check if the permutation is a palindrome
+        '''
+        N = len(s)
+        ans = set()
+        def rec(i,taken,path):
+            if sum(taken) == N:
+                cand = "".join(path)
+                if cand == cand[::-1]:
+                    ans.add(cand)
+            #mark as taken
+            for j in range(N):
+                if not taken[j]:
+                    taken[j] = True
+                    path[i] = s[j]
+                    rec(i+1,taken,path)
+                    taken[j] = False
+
+                            
+        rec(0,[False]*N,[0]*N)
+
+#make sure to check this post on similar combination, permutations problem
+class Solution:
+    def generatePalindromes(self, s: str) -> List[str]:
+        '''
+        we can just use recursion to generate all possible permutations
+        then just check if the permutation is a palindrome
+        
+        pretty much had it, but we first need to check if a permuation can be a palindrom at all
+        we can count up the chars for a permutation
+        if the number of chars with off number of occruences exceeds 1, its indicates that no
+        palindromic permuatis is possible for s
+        
+        after we have shown that the string s can yeild a palindromic permutation we must be judicious in the 
+        permutation generation!
+        
+        one way is to generate half the string, and just append its reverse to the string
+        
+        Based on this idea, by making use of the number of occurences of the characters in ss stored in mapmap, we create a string stst which contains all the characters of ss but with the number of occurences of these characters in stst reduced to half their original number of occurences in ss.
+        
+        In case of a string ss with odd length, whose palindromic permutations are possible, one of the characters in ss must be occuring an odd number of times. 
+        
+        We keep a track of this character, chch, and it is kept separte from the string stst. We again generate the permutations for stst similarly and append the reverse of the generated permutation to itself, but we also place the character chch at the middle of the generated string.
+        
+        Key, we only want to generate a palindromic permutation, NOT generate every permutation
+        
+        we swap the current element with all the elements lying towards its right to generate the permutations
+        
+         Before swapping, we can check if the elements being swapped are equal. If so, the permutations generated even after swapping the two will be duplicates(redundant).
+         
+         here for the permutation scheme, we use the swapping trick
+        '''
+        #first check count requirment
+             
+        kv = Counter(s)
+        mid = [k for k, v in kv.items() if v%2]
+        #mid records count of odd counts, i cannot form a palindrom of the number of odd counts is > 1
+        if len(mid) > 1:
+            return []
+        mid = '' if mid == [] else mid[0]
+        #find the middle of the palindrome
+        half = ''.join([k * (v//2) for k, v in kv.items()])
+        #this is the only half we have to permute!
+        #the remaining half should be on the other side of center
+        half = [c for c in half]
+        
+        #using mid as cener point, generate permuations of the hafl elements
+        #then create permutation + mid + permutation[::-1]
+        def rec(end,temp):
+            if len(temp) == end:
+                curr = ''.join(temp)
+                ans.append(curr + mid + curr[::-1])
+            else:
+                for i in range(end):
+                    #the right half of the or statment is for making sure we don't duplicate
+                    if visited[i] or (i>0 and half[i] == half[i-1] and not visited[i-1]):
+                        continue
+                    visited[i] = True
+                    temp.append(half[i])
+                    rec(end, temp)
+                    visited[i] = False
+                    temp.pop()
+                    
+        ans = []
+        visited = [False] * len(half)
+        rec(len(half), [])
+        return ans
+
+
+#using builtins, just don't forget about these
+class Solution(object):
+    def generatePalindromes(self, s):
+        d = collections.Counter(s)
+        m = tuple(k for k, v in d.iteritems() if v % 2)
+        p = ''.join(k*(v/2) for k, v in d.iteritems())
+        return [''.join(i + m + i[::-1]) for i in set(itertools.permutations(p))] if len(m) < 2 else []
+
+        
