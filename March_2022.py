@@ -552,4 +552,187 @@ class Solution(object):
         p = ''.join(k*(v/2) for k, v in d.iteritems())
         return [''.join(i + m + i[::-1]) for i in set(itertools.permutations(p))] if len(m) < 2 else []
 
+##########################
+# 04MAR22
+# 799. Champagne Tower
+##########################
+class Solution:
+    def champagneTower(self, poured: int, query_row: int, query_glass: int) -> float:
+        '''
+        we need to generate the final query after pouring poured
+        once we create the query row, just get the glass number
+        we need to simulate the overflow from a current glass to a glass below it
+        
+        #key intuition
+        In general, if a glass has flow-through X, then Q = (X - 1.0) / 2.0 quantity of champagne will equally flow left and right. We can simulate the entire pour for 100 rows of glasses. A glass at (r, c) will have excess champagne flow towards (r+1, c) and (r+1, c+1).
+        '''
+        curr_row = [poured]
+        #in the loop generate next row with on more
+        for row in range(query_row):
+            #calculate overflow
+            next_row = [0]*(len(curr_row) + 1)
+            for col in range(len(curr_row)):
+                #get this cups overflow
+                cup_overflow = (curr_row[col] - 1.0) / 2.0
+                #if there is overflow it spills below, and left and right
+                if cup_overflow > 0:
+                    next_row[col] += cup_overflow
+                    next_row[col+1] += cup_overflow
+            
+            curr_row = next_row
+        
+        return min(1,curr_row[query_glass])
+
+#instead of not saving space, build out whole matrix
+class Solution(object):
+    def champagneTower(self, poured, query_row, query_glass):
+        A = [[0] * k for k in xrange(1, 102)]
+        A[0][0] = poured
+        for r in xrange(query_row + 1):
+            for c in xrange(r+1):
+                q = (A[r][c] - 1.0) / 2.0
+                if q > 0:
+                    A[r+1][c] += q
+                    A[r+1][c+1] += q
+
+        return min(1, A[query_row][query_glass])
+
+#recursive case
+class Solution:
+    def champagneTower(self, poured: int, query_row: int, query_glass: int) -> float:
+        '''
+        we can also definte the (i,j) element recursively
+        dp(i,j) = {
+        case 1: when we are at the beginning and end glasses of a row
+            dp(i-1,j+1) or dp(i-1,j) we want the excess
+        case 2: we take exess from both
+            dp(i-1,j-1) + dp(i-1,j)
+            
+        base case, top. or (i,j) == 0 return poured
+        }
+        for each dp call we need to mainin the volume in the current glass and how much is overflowed
+        
+        '''
+        memo = {}
+        
+        
+        def _rec(i, j):
+            #base case
+            if i == 0 and j == 0:
+                available = float(poured)
+                in_glass = available if available <= 1 else 1
+                excess = available - in_glass
+                return in_glass, excess
+            
+            #retreival case
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            #recursive case
+            else:
+                _, left = _rec(i - 1, j - 1) if j else (0, 0.0)
+                _, right = _rec(i - 1, j) if j < i else (0, 0.0)
+                available = left / 2.0 + right / 2.0
+            in_glass = available if available <= 1 else 1
+            excess = available - in_glass
+            memo[(i,j)] = (in_glass,excess)
+            return in_glass, excess
+        
+        return _rec(query_row, query_glass)[0]
+
+
+#################################
+# 271. Encode and Decode Strings
+# 04MAR22
+#################################
+class Codec:
+    def encode(self, strs: [str]) -> str:
+        """Encodes a list of strings to a single string.
+        """
+        '''
+        just use the 256'th ascii char as the delimeter in the string
+        then split on that char
+        '''
+        delimiter = chr(256)
+        encoded = delimiter.join(strs)
+        return encoded
+        
+
+    def decode(self, s: str) -> [str]:
+        """Decodes a single string to a list of strings.
+        """
+        delimiter = chr(256)
+        return s.split(delimiter)
+
+# Your Codec object will be instantiated and called as such:
+# codec = Codec()
+# codec.decode(codec.encode(strs))
+
+class Codec:
+    '''
+    this is either a know or don't know, i'm not gonna whip it out of my ass
+    it's based encoding used in http v1.1
+    
+    encode:
+        each chunk is precended by it's size in bytes
+        i.e its size is the delimiter
+        iterate over the aray of chunks:
+            for each chunk computes it's length and conver that length into a 4 bytes string
+            append to encoded string
+                4 bytes string with information about chunk size in byets
+                chunk itself
+        return encoded string
+        
+    decode: 
+        read in b4 bytes, next one should be the string
+    '''
+    
+    def len_to_str(self,x):
+        x = len(x)
+        #shift 4 bytes
+        bytes = [chr(x >> (i * 8) & 0xff) for i in range(4)]
+        #reverse and joing to get the bytes string for a chunk
+        bytes.reverse()
+        bytes_str = ''.join(bytes)
+        return bytes_str
+    
+    def str_to_int(self, bytes_str):
+        """
+        Decodes bytes string to integer.
+        """
+        result = 0
+        #256 bits is 8 bytes, 1 a byte == 8 bits
+        for ch in bytes_str:
+            result = result * 256 + ord(ch)
+        return result
+    
+    def encode(self, strs: [str]) -> str:
+        """Encodes a list of strings to a single string.
+        """
+        # encode here is a workaround to fix BE CodecDriver error
+        return ''.join(self.len_to_str(x) + x.encode('utf-8') for x in strs)
+        
+
+    def decode(self, s: str) -> [str]:
+        """Decodes a single string to a list of strings.
+        """
+        i = 0
+        n = len(s)
+        output = []
+        while i < n:
+            #compute length for first chunk
+            length = self.str_to_int(s[i:i+4])
+            #move up to its positsion
+            i += 4
+            #convert this chunk to string
+            output.append(s[i:i+length])
+            #advance to end of current chunk
+            i += length
+        return output
+        
+
+
+# Your Codec object will be instantiated and called as such:
+# codec = Codec()
+# codec.decode(codec.encode(strs))
         
