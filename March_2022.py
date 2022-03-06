@@ -736,3 +736,198 @@ class Codec:
 # codec = Codec()
 # codec.decode(codec.encode(strs))
         
+###########################
+# 740. Delete and Earn
+# 05MAR22
+###########################
+class Solution:
+    def deleteAndEarn(self, nums: List[int]) -> int:
+        '''
+        we are given an int array nums and we want to maximize the number of points
+        we can perform the following single operatio any number of times:
+            picks nums[i] delete and earn nums[i]
+            then delete every element that equlas nums[i] - 1 and nums[i] + 1
+            
+        we let dp(i) be the the max number of points i cant get if i delete nums[i]
+        rather lets call it dp(num)
+        if we deleted a num, we can get all occurecnes of the number
+        so far we have dp(num) = counts[num]*num + previous calss
+        but what is previous calles
+        well if we have taken dp(num) the last number we possible would have taken would be dp(num-2)
+        but we did take this num, we don't gain anything, but still need the answer from dp(num-1)
+        
+        dp(num) = max(gain + dp(num-2), + dp(num-1))
+        base cases:
+            if obvious that dp(0) = 0, because we get no points with the 0 num
+            INTUITION ON BASE CASES:
+                dp(num-2) would keep calling itself until we get to dp(0)
+                but what about dp(1)?
+                well, the only thing we stand to gain from dp(1) because 1*(number of 1 times) will always be that number
+                
+        before doing dp, we can convert the array to the number of points we can get by deleting the number
+        rather counts[num] = number of times num shows up
+        
+        when we invoke, the dp, we start with the largest number in nums, and see the max for each
+        '''
+        points_obtained = Counter()
+        max_number = 0
+        for num in nums:
+            points_obtained[num] += num
+            max_number = max(max_number,num)
+            
+        memo = {}
+        
+        def dp(curr_num):
+            if curr_num == 0:
+                return 0
+            if curr_num == 1:
+                return points_obtained[1]
+            if curr_num in memo:
+                return memo[curr_num]
+            ans = max(points_obtained[curr_num] + dp(curr_num-2), dp(curr_num-1))
+            memo[curr_num] = ans
+            return ans
+        
+        return dp(max_number)
+
+class Solution:
+    def deleteAndEarn(self, nums: List[int]) -> int:
+        '''
+        translating to dp
+        we need states of up to max_number
+        '''
+        points_obtained = Counter()
+        max_number = 0
+        for num in nums:
+            points_obtained[num] += num
+            max_number = max(max_number,num)
+            
+        dp = [0]*(max_number + 1)
+        dp[1] = points_obtained[1]
+        
+        
+        for num in range(2,len(dp)):
+            dp[num] = max(points_obtained[num] + dp[num-2], dp[num-1])
+        
+        return dp[max_number]
+
+#saving space
+class Solution:
+    def deleteAndEarn(self, nums: List[int]) -> int:
+        '''
+        we can use up constance space just by saving the last two states
+        then update
+        '''
+        points_obtained = Counter()
+        max_number = 0
+        for num in nums:
+            points_obtained[num] += num
+            max_number = max(max_number,num)
+            
+        dp_num_minus_two = 0
+        dp_num_minus_one = points_obtained[1]
+        curr_dp = 0
+        
+        
+        for num in range(2,max_number+1):
+            curr_dp = max(points_obtained[num] + dp_num_minus_two, dp_num_minus_one)
+            #update
+            dp_num_minus_two = dp_num_minus_one
+            dp_num_minus_one = curr_dp
+        
+        return dp_num_minus_one
+
+class Solution:
+    def deleteAndEarn(self, nums: List[int]) -> int:
+        '''
+        instead of checking over each possible point up to max num
+        we instead check only points in our counts mapp
+        think of test cases like [1,2,3,1000]
+        
+        if we find that adjacent elements have a difference of 1, that means we can only take the points associated with one of them and we apply the normal recurrence
+        howevery if they do not differ by 1, then we don't need to worry about deletions and just take the points
+        
+        '''
+        points = defaultdict(int)
+        # Precompute how many points we gain from taking an element
+        for num in nums:
+            points[num] += num
+            
+        elements = sorted(points.keys())
+        two_back = 0
+        one_back = points[elements[0]]
+        
+        for i in range(1, len(elements)):
+            current_element = elements[i]
+            if current_element == elements[i - 1] + 1:
+                # The 2 elements are adjacent, cannot take both - apply normal recurrence
+                two_back, one_back = one_back, max(one_back, two_back + points[current_element])
+            else:
+                # Otherwise, we don't need to worry about adjacent deletions
+                two_back, one_back = one_back, one_back + points[current_element]
+
+        return one_back
+
+################################
+# 280. Wiggle Sort
+# 05MAR22
+################################
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        we want to reorder the array such that
+        nums[0] <= nums[1] >= nums[2] <= nums[3]..
+        any permutation with this characteristic suffices as an answer
+        which just want a an array that goes up and down, but not strictly increasing or strictly decreasing
+        or rather we want the difference to be alternating
+        omg
+        if i have an already sorted array
+        [1,2,3,4,5,6]
+        i could swap
+        [2,1,3,4,5,6]
+        [2,1,4,3,5,6]
+        [2,1,4,3,6,5]
+        sort and swap pairwise starting from the second element
+        '''
+        nums.sort()
+        N = len(nums)
+        for i in range(1,len(nums)-1,2):
+            nums[i],nums[i+1] = nums[i+1], nums[i]
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        we can traverse the array once and check whether or not it needs to be wiggled
+        if it needs to ne wiggled we swap the current element with its next
+        since the second element must be <= then the first, we start of by checking the less than requirement
+        in order for the wiggle to work, we must define 1 starting case
+        for example it cannot be nums[0] <= nums[1].... or nums[0] >= nums[1]
+        also note, the array can be wiggle sorted
+        
+        here's another proof
+        
+        Suppose A[0: i-1] is wiggle sorted, when
+
+        i is even:
+            if A[i] <= A[i - 1], then A[0: i] is also wiggle sorted.
+            if A[i] > A[i - 1], then we swap A[i] and A[i - 1], since A[0: i -1] is wiggle sorted, A[i - 1] >= A[i - 2], which means A[i] > A[i - 2]. After swapping, we have A[i - 2] <= A[i] >= A[i - 1], both A[i] and A[i - 1] refers to the elements before swapping. So, A[0: i] is wiggle sorted after we swap.
+        i is odd, the proof is similar.
+
+        '''
+        N = len(nums)
+        less = True
+        for i in range(N-1):
+            if less:
+                if nums[i] > nums[i+1]:
+                    nums[i],nums[i+1] = nums[i+1], nums[i]
+            else:
+                if nums[i] < nums[i+1]:
+                    nums[i],nums[i+1] = nums[i+1], nums[i]
+            less = not less
+        
+
