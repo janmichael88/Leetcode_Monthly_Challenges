@@ -930,4 +930,331 @@ class Solution:
                     nums[i],nums[i+1] = nums[i+1], nums[i]
             less = not less
         
+####################################################
+# 1359. Count All Valid Pickup and Delivery Options
+# 06MAR22
+###################################################
+#backtracking brute force
+#https://leetcode.com/problems/count-all-valid-pickup-and-delivery-options/discuss/1069610/Java-Find-order-permutations-using-backtracking
+class Solution:
+    def countOrders(self, n: int) -> int:
+        '''
+        for n = 1
+        (p1,d1)
+        for n = 2
+        (P1,P2,D1,D2), (P1,P2,D2,D1), (P1,D1,P2,D2), (P2,P1,D1,D2), (P2,P1,D2,D1) and (P2,D2,P1,D1
+        
+        rules:
+            delivery(i) must always be after pickip(i)
+            brute force would be to use backtracking
+            we can pass over the orders and it is not picked up, pick up the order, mark and recurse
+            if it is already picked up, but not delivered, then deliver it
+            after delivering all unmark the delivers and pick up to make another combination
+        '''
+        count = [0]
+        picked = [False]*n
+        delivered = [False]*n
+        paths = []
+        
+        def dfs(path,picked,delivered):
+            p = sum(picked)
+            d = sum(delivered)
+            
+            #ending
+            if p == n and d == n:
+                count[0] += 1
+                count[0] %= 10**9 + 7
+                paths.append(path[:])
+                return
+            
+            for i in range(n):
+                if picked[i]:
+                    pass
+                if delivered[i]:
+                    pass
+                
+                #if not deliverd and picked
+                if not delivered[i] and picked[i]:
+                    path.append(f"D{i}")
+                    delivered[i] = True
+                    dfs(path,picked,delivered)
+                    #backtrtack
+                    path.pop()
+                    delivered[i] = False
+                    
+                #not picked
+                if not picked[i]:
+                    path.append(f"P{i}")
+                    picked[i] = True
+                    dfs(path,picked,delivered)
+                    path.pop()
+                    picked[i] = False
+                    
+        dfs([],picked,delivered)
+        print(paths)
 
+#top down
+class Solution:
+    def countOrders(self, n: int) -> int:
+        '''
+        instead of generating each possible permutation and incrementing acount, perhaps we can use the counts
+        from previous subproblems to generate the answer -> top down recursion
+        
+        intuion:
+            if there are n unpicked orders, then we have n different options for orders that we can pick up at the current step, exmpla: 
+            [p0,p1,p2] all are initially unpicked at step i, we for step i, we can choose from 3, so there are at least 3 ways (from this i'th step!)
+            insteaf of picking up each one by one and recursinv, we could count the nunber of ways to pick (n-1)
+            so intead of calling it n times we only call it at most one more additional time
+            
+            if we pick one order then we need to count the ways for the rest of the remaining orders
+            remainin orders of just a smaller subproblem (0/1 knap sack really)
+            
+            lets so we have 'unpicked' number of orders that have not been pickedup and 'undelivered' number of orders to be delivered.
+            If we want to pick one order than there are 'unpicked' different choide to pick at this step
+            If we want to deliver one oder, then there are undelivred - unpicked differecnt choices 
+            
+            rather we can say:
+            // If we want to pick one order then,
+            waysToPick = unpicked * totalWays(unpicked - 1, undelivered)
+
+            // If we want to deliver one order then,    
+            waysToDeliver = (undelivered - unpicked) * totalWays(unpicked, undelivered - 1)
+            
+            then the num ways for this step would be:
+                waysToPick + waysToDeliver mod 10*9 + 7
+                
+            base case, when unpcicked > undelieer, return 1 way,or we have delivered everything
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        #dp(n,n) rerpesetns the number of ways to pickup and deliver n itesm
+        #we we want dp(n-1,n) and dp(n,n-1)
+        def dp(unpicked,undelivered):
+            #we have picked up and delivered everything
+            if unpicked == 0 and undelivered == 0:
+                return 1
+            #when we cannot pick or deliver if there is nothing to pick from
+            #we cannot deliever of if wedon't have enough picked up
+            if unpicked < 0 or undelivered < 0 or undelivered < unpicked: 
+                return 0
+            if (unpicked,undelivered) in memo:
+                return memo[(unpicked,undelivered)]
+            
+            #number ways pick up order
+            ans = unpicked*dp(unpicked-1,undelivered)
+            ans %= mod
+            
+            #number of ways to get deliver picked order
+            ans += (undelivered - unpicked)*dp(unpicked,undelivered-1)
+            ans %= mod
+            
+            memo[(unpicked,undelivered)] = ans
+            return ans
+
+#bottom up
+class Solution:
+    def countOrders(self, n: int) -> int:
+        '''
+        we can just translate this to bottom up
+        don't worry about the special cases code that in the loop
+        '''
+        mod = 10**9 + 7
+        dp = [[0]*(n+1) for _ in range(n+1)]
+        for unpicked in range(n+1):
+            for undelivered in range(n+1):
+                if (unpicked,undelivered) == (0,0):
+                    dp[unpicked][undelivered] = 1
+                if unpicked < 0 or undelivered < 0 or undelivered < unpicked: 
+                    dp[unpicked][undelivered] = 0
+                #number of ways to pick up order, but make sure for boundary check
+                if unpicked - 1 >= 0:
+                    dp[unpicked][undelivered] += unpicked*dp[unpicked-1][undelivered]
+                dp[unpicked][undelivered] %= mod
+                #number of ways to deliver, with boundary check
+                if undelivered - 1 >= 0 and (undelivered - unpicked > 0):
+                    dp[unpicked][undelivered] += (undelivered - unpicked)*dp[unpicked][undelivered -1]
+                dp[unpicked][undelivered] %= mod
+                    
+        
+        return dp[n][n]
+                
+#permutations
+class Solution:
+    def countOrders(self, n: int) -> int:
+        '''
+        for n pickups, we can do this n!
+        now after placing n pick ups in any random order, how many ways can we place n deliveris
+        so we have placed:
+            P2 P4 P1 P3
+            we now need to place D3, we only have on spot to place it it must come after P3
+            P2 P4 P1 P3 D3
+            
+            now we want to place D1, there are three choides
+            to place D4, there are 5 choices
+            to place D2, there are 7 choides
+            so the way to arrang N pickes up and delivers is: N! \prod_{i=1}^{N} (2*i- 1)
+        '''
+        MOD = 1_000_000_007
+        ans = 1
+
+        for i in range(1, n + 1):
+            # Ways to arrange all pickups, 1*2*3*4*5*...*n
+            ans = ans * i
+            # Ways to arrange all deliveries, 1*3*5*...*(2n-1)
+            ans = ans * (2 * i - 1)
+            ans %= MOD
+        
+        return ans
+
+##############################
+# 07MAR22
+# 21. Merge Two Sorted Lists
+##############################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        two pointers into list1 and list2
+        take the smaaller
+        '''
+        dummy = ListNode()
+        curr = dummy
+        
+        l1_ptr = list1
+        l2_ptr = list2
+        
+        while l1_ptr and l2_ptr:
+            if l1_ptr.val <= l2_ptr.val:
+                curr.next = l1_ptr
+                l1_ptr = l1_ptr.next
+            else:
+                curr.next = l2_ptr
+                l2_ptr = l2_ptr.next
+            curr = curr.next
+            
+        #adding remaingin
+        curr.next = l1_ptr if l1_ptr else l2_ptr
+        
+        return dummy.next
+
+class Solution:
+    def mergeTwoLists(self, list1: Optional[ListNode], list2: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can do this recursively
+        helper function to merge(l1,l2)
+        base cases:
+            if one list is empty, return the other
+        
+        recursive case:
+            if l1.val < l2.val:
+                just take l1.val and call on a smapller subproblem (l1.next,l2)
+            same for the other
+        '''
+        def rec(l1,l2):
+            if not l1:
+                return l2
+            if not l2:
+                return l1
+            elif l1.val < l2.val:
+                l1.next = rec(l1.next,l2)
+                return l1
+            else:
+                l2.next = rec(l1,l2.next)
+                return l2
+        
+        return rec(list1, list2)
+
+
+###########################
+# 281. Zigzag Iterator
+# 08MAR22
+###########################
+class ZigzagIterator:
+    def __init__(self, v1: List[int], v2: List[int]):
+        '''
+        just alternate between 0 and 1, i can increment a poitner by one each time,
+        then just mod 2 it
+        more precsiely the pointer to vector moves cyclically
+        and only pointer to an element in the vector increments
+        '''
+        self.vecs = [v1,v2]
+        self.p_elem = 0
+        self.p_vec = 0
+        self.size = len(v1) + len(v2)
+        self.count = 0
+
+    def next(self) -> int:
+        iter_num = 0 
+        ans = None
+        
+        while iter_num < len(self.vecs):
+            #if we can get a return value from this pointer
+            curr_vec = self.vecs[self.p_vec]
+            if self.p_elem < len(curr_vec):
+                ans = curr_vec[self.p_elem]
+                
+            #move current iter_num
+            iter_num += 1
+            #make sure to adjust the p_vec
+            self.p_vec = (self.p_vec + 1) % len(self.vecs)
+            
+            #increment element poitner once iterating all vectors, i.e we started from zero again
+            if self.p_vec == 0:
+                self.p_elem += 1
+                
+            #if we have ans to return, return it
+            if ans is not None:
+                self.count += 1
+                return ans
+        raise Exception 
+        
+class ZigzagIterator:
+    def __init__(self, v1: List[int], v2: List[int]):
+        '''
+        the issue with the first approach is not the most effecient, when the input vectors are not equal in size
+        examples:
+            [1] and [1,2,3,4,5]
+            we would keep cycling between 1 and 2, but we know we should just stay on 2
+        
+        we can use a queue to keep pointers in input vectors
+        
+        initially each input vector will have a correspinding pointer in q
+        at each next() call, we pop out a pointer from the q,
+        then we go into this pointed vector to retreive the element
+            if the vector sill has elements let, we append another poitner pointed to this vectors at the end of the q
+            if all the elemnt in th chose vector are outputted, we do not add this pointer to the end of the q
+            we won't need to pass over vectors that have been exhausted
+            
+        for has next:
+            as long as there are pointers in q to process
+            
+        However, the key point here is that we could simply use some index and integer to implement the role of pointer in the above idea.
+        '''
+        self.vecs = [v1,v2]
+        self.q = deque()
+        for i,v in enumerate(self.vecs):
+            if len(v) > 0:
+                self.q.append((i,0)) #ptrs and start element
+
+    def next(self) -> int:
+        if self.q:
+            vec_index, elem_index = self.q.popleft()
+            #get nextt
+            next_elem_index = elem_index + 1
+            #check if there are more
+            if next_elem_index < len(self.vecs[vec_index]):
+                #append the rest
+                self.q.append((vec_index,next_elem_index))
+            return self.vecs[vec_index][elem_index]
+        
+        #error
+        raise Exception
+        
+
+    def hasNext(self) -> bool:
+        return len(self.q) != 0
