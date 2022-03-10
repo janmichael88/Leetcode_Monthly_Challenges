@@ -1258,3 +1258,167 @@ class ZigzagIterator:
 
     def hasNext(self) -> bool:
         return len(self.q) != 0
+
+###############################################
+# 82. Remove Duplicates from Sorted List II
+# 09MAR22
+###############################################
+#close one! works at de-duplicating
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteDuplicates(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        i can use two pointers, curr and next
+        and if next == curr keep advancing it
+        '''
+        curr = head
+        
+        while curr:
+            next_node = curr.next
+            while next_node and next_node.val == curr.val:
+                next_node = next_node.next
+            curr.next = next_node
+            curr = curr.next
+        
+        return head
+            
+     
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteDuplicates(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        i can use two pointers, curr and next
+        and if next == curr keep advancing it
+        
+        need to use dummy and maintin head and predecessor
+        then delete duplicates 
+        return dummy.next
+        '''
+        dummy = ListNode(-1)
+        dummy.next = head
+        pred = dummy
+        curr = head
+        
+        while curr:
+            #duplicates
+            if curr.next and curr.val == curr.next.val:
+                #move next head
+                while curr.next and curr.val == curr.next.val:
+                    curr = curr.next
+                #delete all duplicates, head stops at the last duplicated valu
+                pred.next = curr.next
+            else:
+                pred = pred.next
+                
+            #move head
+            curr = curr.next
+        
+        return dummy.next
+
+
+#################################
+# 398. Random Pick Index
+# 09MAR22
+#################################
+class Solution:
+
+    def __init__(self, nums: List[int]):
+        '''
+        we want to pick a random index given a target
+        '''
+        self.mapp = defaultdict(list)
+        for i,num in enumerate(nums):
+            self.mapp[num].append(i)
+
+    def pick(self, target: int) -> int:
+        #return random index
+        return random.choice(self.mapp[target])
+        
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(nums)
+# param_1 = obj.pick(target)
+
+#resrvoir sampling
+
+class Solution:
+
+    def __init__(self, nums: List[int]):
+        '''
+        we can use algorithm R, reservoir sampling
+        for example, say we have n numbers to chose from, the probability of picking the current number of 1/n
+        this implies we dont pic the other n+1 numbers with probability (1-1/n)
+        rather we do not pick any number further from index (i+1)
+        \prod_{i=1}^{n-1} \frac{i}{i+1}
+        
+        we can interpret this as:
+            * picking the ith number from the list of i numbers
+            * which means not picking the (i+1)th number from the list of (i+1) numbers
+            * rather not picking the (nth) number from the list of (n) numbers, picking the rest (n-1)
+        '''
+        self.nums = nums
+        
+
+    def pick(self, target: int) -> int:
+        N = len(self.nums)
+        count = 0 #current count of target num
+        idx = 0
+        for i in range(N):
+            #if nums is target, this index is a candidate
+            if self.nums[i] == target:
+                count += 1
+                
+                #pick or don't pick this current index
+                if random.randint(1,count) == count:
+                    idx = i
+            
+        return idx
+            
+        
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(nums)
+# param_1 = obj.pick(target)
+
+class Solution:
+
+    def __init__(self, nums: List[int]):
+        '''
+        we can use algorithm R, reservoir sampling
+        for example, say we have n numbers to chose from, the probability of picking the current number of 1/n
+        this implies we dont pic the other n+1 numbers with probability (1-1/n)
+        rather we do not pick any number further from index (i+1)
+        \prod_{i=1}^{n-1} \frac{i}{i+1}
+        
+        we can interpret this as:
+            * picking the ith number from the list of i numbers
+            * which means not picking the (i+1)th number from the list of (i+1) numbers
+            * rather not picking the (nth) number from the list of (n) numbers, picking the rest (n-1)
+        '''
+        self.nums = nums
+        
+
+    def pick(self, target: int) -> int:
+        N = len(self.nums)
+        count = 0 #current count of target num
+        idx = 0
+        for i in range(N):
+            #if nums is target, this index is a candidate
+            if self.nums[i] == target:
+                count += 1
+                
+                #pick or don't pick this current index, if greater than current count
+                if random.random() < 1/count:
+                    idx = i
+            
+        return idx
