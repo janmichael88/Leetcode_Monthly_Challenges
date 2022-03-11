@@ -1422,3 +1422,87 @@ class Solution:
                     idx = i
             
         return idx
+
+###################################
+# 2. Add Two Numbers
+# 10MAR22
+###################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        create dummy list
+        and through lists by moving l1 and l2
+        create carry
+        '''
+        dummy = ListNode(-1)
+        carry = 0
+        curr = dummy
+        
+        while l1 or l2:
+            l1_val = l1.val if l1 else 0
+            l2_val = l2.val if l2 else 0
+            #get current answer
+            curr_sum = l1_val + l2_val + carry
+            #get node answer after modding
+            node_ans = curr_sum % 10
+            #update carry
+            carry = curr_sum // 10
+            #add nodes
+            curr.next = ListNode(node_ans)
+            curr  = curr.next
+            if l1:
+                l1 = l1.next
+            if l2:
+                l2 = l2.next
+        if carry:
+            curr.next = ListNode(carry)
+        return dummy.next
+
+###############################
+# 10MAR22
+# 288. Unique Word Abbreviation
+###############################
+class ValidWordAbbr:
+    '''
+    we define abbreviation of a word as the concat of first letter + num letters betweeen first and last + last
+    isUnique returns True if:
+        there is no word in dict whose abbreviation is equal to word's abbreviation
+        for any word in dict whose abbreviation == word's abbreivation that word and word are the same
+    '''
+
+    def __init__(self, dictionary: List[str]):
+        '''
+        i can use hashmap: it should be abbrev:word
+        abbreivation: set(words)
+        then just check
+        '''
+        self.mapp = defaultdict(set)
+        for s in dictionary:
+            val = s
+            if len(s) > 2:
+                s = s[0]+str(len(s)-2)+s[-1]
+            self.mapp[s].add(val)
+
+        
+
+    def isUnique(self, word: str) -> bool:
+        val = word 
+        if len(word) > 2:
+            word = word[0]+str(len(word)-2)+word[-1]
+        # if word abbreviation not in the dictionary, or word itself in the dictionary (word itself may 
+        # appear multiple times in the dictionary, so it's better using set instead of list)
+        
+        #left side, if abbrev not in mapp, then there is no word in dictionary whose abbrev == word's abbrev
+        #right side, if the current word's abbrev == a dictionary word's abbrev, check if word in the set
+        return word not in self.mapp or (len(self.mapp[word]) == 1 and val in self.mapp[word])
+
+# Your ValidWordAbbr object will be instantiated and called as such:
+# obj = ValidWordAbbr(dictionary)
+# param_1 = obj.isUnique(word)
+# obj = ValidWordAbbr(dictionary)
+# param_1 = obj.isUnique(word)
