@@ -1506,3 +1506,436 @@ class ValidWordAbbr:
 # param_1 = obj.isUnique(word)
 # obj = ValidWordAbbr(dictionary)
 # param_1 = obj.isUnique(word)
+
+###############################
+# 61. Rotate List
+# 11MAR22
+################################
+#messy buy it works
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def rotateRight(self, head: Optional[ListNode], k: int) -> Optional[ListNode]:
+        '''
+        first pass is find the length of the the array
+        we can only rotate at most N times, at which point N+1 becomes the original linked list
+        find the actual shift be doing N % k
+        hold current head as pointer
+        advance another pointer N % k times
+        '''
+        if not head:
+            return head
+        
+        #find the size:
+        N = 0
+        curr = head
+        
+        while curr:
+            N += 1
+            curr = curr.next
+            
+        #find actualy rotation size
+        k = k % N
+        
+        #if it goes evenly, no switch at all
+        if k == 0:
+            return head
+        
+        #otherwise we need to find the head of the reconnecionted list
+        #which would be at N - k
+        #advance to new head
+        new_head_count = N - k
+        prev = None
+        curr = head
+        while new_head_count > 0:
+            prev = curr
+            curr = curr.next
+            new_head_count -= 1
+        
+        #make prev.next none
+        prev.next = None
+        curr_temp = curr
+        while curr_temp.next:
+            curr_temp = curr_temp.next
+        
+        curr_temp.next = head
+        return curr
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def rotateRight(self, head: Optional[ListNode], k: int) -> Optional[ListNode]:
+        '''
+        an easier way would be to reconnect the linked list into a ring
+        and break at the point where rotation happens
+        
+        if we have n nodes, the new head is at n-k and the tail is at n-k-1
+        in the case where k >= n, we jus take to be k % n
+        '''
+        if not head:
+            return None
+        if not head.next:
+            return head
+        
+          # close the linked list into the ring
+        old_tail = head
+        n = 1 #recall we presently have at least 1 node to start
+        while old_tail.next:
+            old_tail = old_tail.next
+            n += 1
+        old_tail.next = head
+        
+        # find new tail : (n - k % n - 1)th node
+        # and new head : (n - k % n)th node
+        new_tail = head
+        for i in range(n - k % n-1):
+            new_tail = new_tail.next
+        new_head = new_tail.next
+        
+        # break the ring
+        new_tail.next = None
+        
+        return new_head
+
+#######################################
+# 12MAR22
+# 138. Copy List with Random Pointer
+#####################################
+#recursive, using up space
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, x: int, next: 'Node' = None, random: 'Node' = None):
+        self.val = int(x)
+        self.next = next
+        self.random = random
+"""
+
+class Solution:
+    def copyRandomList(self, head: 'Optional[Node]') -> 'Optional[Node]':
+        '''
+        i can use a hashmap to make copies
+        old node:copy
+        just traverse and put into mapp
+        we can use dfs to travers the linked list
+        at each call put into mapp
+        
+        we dfs along the graph
+        
+        base cases:
+            not node, return None
+            already seen node, return its copy
+            
+        recursive case:
+            make a copy
+            put in mapp
+            add its next and random pointers
+            
+        intuition on recursive function:
+            the function returns a copy of the current node and also copy its next and random
+        '''
+        #mapp to store node:copey
+        self.visited = {}
+        
+        def make_copy(node):
+            if not node:
+                return None
+            #return its copy
+            if node in self.visited:
+                return self.visited[node]
+            
+            cloned_node = ListNode(node.val)
+            #put into mapp
+            self.visited[node] = cloned_node
+            #adjust each recursively
+            cloned_node.next = make_copy(node.next)
+            cloned_node.random = make_copy(node.random)
+            
+            return cloned_node
+
+#iterative
+class Solution:
+    def copyRandomList(self, head: 'Optional[Node]') -> 'Optional[Node]':
+        '''
+        we can also treay this iteratively
+        traverrse and copy along
+        if a next or randomo node already exsist in visited, retrieve
+        ohterwise make copy
+        
+        we define a helper functiono that makes a copy of the corresponding node
+        
+        '''
+        self.visited = {}
+        
+        if not head:
+            return head
+        
+        curr = head
+        copied = Node(curr.val)
+        self.visited[curr] = copied
+        
+        while curr:
+            copied.next = self.copy_node(curr.next)
+            copied.random = self.copy_node(curr.random)
+            
+            copied = copied.next
+            curr = curr.next
+        
+        return self.visited[head]
+        
+    def copy_node(self,node):
+        if node:
+            if node in self.visited:
+                return self.visited[node]
+            else:
+                copied = Node(node.val)
+                self.visited[node] = copied
+                return self.visited[node]
+        return None
+
+
+#O(1) space
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, x: int, next: 'Node' = None, random: 'Node' = None):
+        self.val = int(x)
+        self.next = next
+        self.random = random
+"""
+
+class Solution:
+    def copyRandomList(self, head: 'Optional[Node]') -> 'Optional[Node]':
+        '''
+        from the hint, we can avoid using extra space by putting copies right next to the ooriginal
+        Old List: A --> B --> C --> D
+        InterWeaved List: A --> A' --> B --> B' --> C --> C' --> D --> D'
+        The interweaving is done using next pointers and we can make use of interweaved structure to get the correct reference nodes for random pointers.
+        
+        it's a rather tricky implementation to get correct
+        
+        algo: three passes
+            1. traverse the original list and clone the nodes, placing cloonded copy next to original node
+                clonded_node.next = originial_nodex.next
+                original_node.next = cloned_node
+            2. second pass, we conntect randoms
+                clonded_node.random = original_node.random
+                original_node.random = cloned_node
+            3. last pass, we need to unweave
+                next pointers need to be assgiend so that we only have the A', B' and C' connected
+                
+        '''
+        if not head:
+            return head
+
+        # Creating a new weaved list of original and copied nodes.
+        ptr = head
+        while ptr:
+
+            # Cloned node
+            new_node = Node(ptr.val, None, None)
+
+            # Inserting the cloned node just next to the original node.
+            # If A->B->C is the original linked list,
+            # Linked list after weaving cloned nodes would be A->A'->B->B'->C->C'
+            new_node.next = ptr.next
+            ptr.next = new_node
+            ptr = new_node.next
+
+        ptr = head
+
+        # Now link the random pointers of the new nodes created.
+        # Iterate the newly created list and use the original nodes random pointers,
+        # to assign references to random pointers for cloned nodes.
+        while ptr:
+            ptr.next.random = ptr.random.next if ptr.random else None
+            ptr = ptr.next.next
+
+        # Unweave the linked list to get back the original linked list and the cloned list.
+        # i.e. A->A'->B->B'->C->C' would be broken to A->B->C and A'->B'->C'
+        ptr_old_list = head # A->B->C
+        ptr_new_list = head.next # A'->B'->C'
+        head_new = head.next
+        while ptr_old_list:
+            ptr_old_list.next = ptr_old_list.next.next
+            ptr_new_list.next = ptr_new_list.next.next if ptr_new_list.next else None
+            ptr_old_list = ptr_old_list.next
+            ptr_new_list = ptr_new_list.next
+        return head_new
+            
+###############################
+# 71. Simplify Path
+# 14MAR22
+###############################
+class Solution:
+    def simplifyPath(self, path: str) -> str:
+        '''
+        important bits
+        we need to used a stack and split on the correct delimiter '/'
+        
+        1. init stack
+        2. split input string on '/' because anything in between '/' is a valid command/director
+        3. traverse over the split string
+        4. if we see a '.' or empty, we do nothing
+        5. if we see a '..' we go up a level, and pop from stack
+        6. othewsie simply add to the stack
+        7. join using delimtier '/'
+        '''
+        stack = []
+        
+        for part in path.split('/'):
+            #if we see a .. then we have to pop from the stack, i.e returnf rom directoy
+            if part == '..':
+                if stack:
+                    stack.pop()
+            #if we see . or is empty, it's just a read out
+            elif part == '.' or not part:
+                continue
+            #must be a new directory access
+            else:
+                stack.append(part)
+        
+        return "/"+"/".join(stack)
+        
+
+###############################
+# 291. Word Pattern II
+# 14MAR22
+################################
+class Solution:
+    def wordPatternMatch(self, pattern: str, s: str) -> bool:
+        '''
+        return true if s matches the pattern
+        s matches pattern if there is somoe bijective mapping oof strings in pattern to a string in s
+        
+        we can solve this using backtracking, we just have to keep trying to use char in the pattern to match diffetn legnth of substrings in s
+        we keep going until we through the whole string and pattern
+        
+        pattern = "abab", s = "redblueredblue"
+        
+        a matches r
+        b matches e
+        a matches d, whoops not a good match for a!
+        b matched ed instead
+        
+        while recursing, if the pattenr char exsists in hashamp already, we just have tosee fi we can use to match the same lentgh of the string
+        
+        example: say so far we have
+        a:red
+        b:blue
+        when we see a again, it better be trying to matche red
+        so lets to swe str[i...i+3] matches a
+        
+        we use hash set to avoid duplicate matches
+        
+        if char a matches string red, then char b cannot be use to match red
+        
+        '''
+        class Solution:
+    def wordPatternMatch(self, pattern: str, s: str) -> bool:
+        '''
+        we need to use backtracking
+        two pointers in each call (i,j)
+        i points into pattern and j points into string s
+        if i have moved all the way through pattern and s, we can make mapping and return tru
+        '''
+        mapp = {}
+        seen = set()
+        
+        def dfs(i,j):
+            #base cases moved through both, pattern mapping exits
+            if i == len(s) and j == len(pattern):
+                return True
+            if i == len(s) or j == len(pattern):
+                return False
+            
+            #get curr char from pattern
+            curr_pattern = pattern[j]
+            
+            #if pattern char exists
+            if curr_pattern in mapp:
+                word_string = mapp[curr_pattern]
+                
+                #if this pattern doesn't match where we are so far
+                if not s.startswith(word_string,i): #i.e no match
+                    return False
+                #keep going on to try matching, because we've aleady matched up to len(s)
+                return dfs(i+len(word_string),j+1)
+                
+            #recursive case, check all ends, we move through our ends
+            for k in range(i,len(s)):
+                word_string = s[i:k+1]
+                if word_string in seen:
+                    continue
+                ##put intp mapp
+                mapp[curr_pattern] = word_string
+                seen.add(word_string)
+                #if i can still dfs
+                if dfs(k+1,j+1):
+                    return True
+                #backtrack
+                del mapp[curr_pattern]
+                seen.remove(word_string)
+            #reached the end
+            return False
+            
+        return dfs(0,0)
+
+class Solution:
+    def wordPatternMatch(self, pattern: str, s: str) -> bool:
+        '''
+        we can still use bactracking but this time with two maps to get the correct bijection
+        (pattern in p) -> (substring in s)
+        (substring in s) -> (pattern in p)
+        
+        we need to push both i and j pointers in backtracking call to meet the true criterie
+        '''
+        pattern_to_substring = {}
+        substring_to_pattern = {}
+        def backtrack(i,j):
+            #ending conditions
+            if i == len(pattern) and j == len(s):
+                return True
+            #only one pointer has moved all the way
+            if i == len(pattern) or j == len(s): 
+                return False
+            #get the current candidate pattern
+            p = pattern[i]
+            #check if we have currently mapped it
+            if p in pattern_to_substring:
+                #get it
+                w = pattern_to_substring[p]
+                #check if we can this current substring in s is the word or not
+                if not s[j:j+len(w)] == w:
+                    return False
+                #if we don't return false, keep going, advance pointer in pattern 1, and pointer in s len of current substring
+                return backtrack(i+1,j+len(w))
+            #recursive case
+            else:
+                #check all ending points in s
+                for k in range(j,len(s)):
+                    w = s[j:k+1]
+                    #if we've seen this already keep going
+                    if w in substring_to_pattern:
+                        continue
+                    #map if
+                    pattern_to_substring[p] = w
+                    substring_to_pattern[w] = p
+                    #backtrack
+                    if backtrack(i+1,k+1):
+                        return True
+                    pattern_to_substring.pop(p)
+                    substring_to_pattern.pop(w)
+                
+                return False
+            
+        if len(s) < len(pattern):
+            return False
+        
+        return backtrack(0,0)
