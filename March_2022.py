@@ -1939,3 +1939,143 @@ class Solution:
             return False
         
         return backtrack(0,0)
+
+################################################
+# 1249. Minimum Remove to Make Valid Parentheses
+# 15MAR22
+#################################################
+class Solution:
+    def minRemoveToMakeValid(self, s: str) -> str:
+        '''
+        we need to store the indices of the paranthese we want to remove
+        recall the balance functino of parantheses
+        balance = 0
+        for char in s:
+            if char '(':
+                balance += 1
+            if char ')':
+                balance -= 1
+            if balance < 0:
+                return False
+        return balance == 0
+        
+        we push on to a stack the index of each (
+        when we see a ), we pop from the stack if there is a stack
+        
+        we are left with the indices we want to remove
+        but we just can't leave un matched ) on the stack
+        we need to keep a set of all unmatched indices == )
+        in cases like )), these are all unmatched
+        only when there is a stack we clear it with )
+        '''
+        stack = []
+        unmatched_idxs = set()
+        
+        for i,c in enumerate(s):
+            #an actual char
+            if c not in '()':
+                continue
+            #openindg
+            if c == '(':
+                stack.append(i)
+            #not opening but close, with empty stack, nothing to pop, we need to remove
+            elif not stack:
+                unmatched_idxs.add(i)
+            #closing and we can match it
+            else:
+                stack.pop()
+                
+        #add unmatched in stack
+        for i in stack:
+            unmatched_idxs.add(i)
+        
+        ans = ""
+        for i,c in enumerate(s):
+            if i not in unmatched_idxs:
+                ans += c
+        
+        return ans
+
+class Solution:
+    def minRemoveToMakeValid(self, s: str) -> str:
+        '''
+        from the previous apporach, we know that for all invalid ')' we know immediately that they are invalid 
+        i.e the ones we are adding to the set
+        it is the ( we don't know abut until the end (since they were left on the stack at the end)
+        
+        we do two passes still
+        but in the first pass clear the unmatched )
+        reverse the string
+        then clear the unmathced ) again
+        
+        just need to look at the string in reverse. We do this by swapping the "(" and ")" for each other, and reversing the order of all characters in the string.
+
+        
+        '''
+        s = self.delete_invalid_closing(s,'(',')')
+        s = self.delete_invalid_closing(s[::-1],')','(')
+        
+        return s[::-1]
+        
+    def delete_invalid_closing(self,string,open_symbol,close_symbol):
+        sb = ""
+        balance = 0
+        for c in string:
+            if c == open_symbol:
+                balance += 1
+            if c == close_symbol:
+                #don't need to include it
+                if balance == 0:
+                    continue
+                balance -= 1
+            #add to string
+            sb += c
+        
+        return sb
+
+#######################
+# 294. Flip Game II
+# 16MAR22
+#######################
+class Solution:
+    def canWin(self, s: str) -> bool:
+        '''
+        we are given a current state
+        in one move a play can only change '++' to '--'
+        
+        the game ends when a person can no longer make a move,
+        
+        we can use backtracking to figure out if we can win or not
+        backtrack(state) returns whether or not a player can win if they switch a ++ to --
+        
+        say i have ++++
+        
+        i make it ++--
+        opponenet makes it ++++
+        i can just make it ++--
+        
+        so try making it +--+
+        at this point i can win
+        
+        we try flipping all ++ in s, if we can flip check that the other person cannot win with the change starte
+        
+        
+        '''
+        
+        memo = {}
+        
+        def backtrack(state):
+            if state in memo:
+                return memo[state]
+            
+            #try switch a ++ and see if we can win from here
+            for i in range(len(state)-1):
+                if state[i] == '+' and state[i+1] == "+":
+                    if backtrack(state[:i]+"--"+state[i+2:]) == False:
+                        memo[state] = True
+                        return True
+            memo[state] = False
+            return False
+        
+        return backtrack(s)
+        
