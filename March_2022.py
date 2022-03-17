@@ -2079,3 +2079,162 @@ class Solution:
         
         return backtrack(s)
         
+#################################
+# 946. Validate Stack Sequences
+# 16MAR22
+##################################
+class Solution:
+    def validateStackSequences(self, pushed: List[int], popped: List[int]) -> bool:
+        '''
+        we can simulate pushing and popping
+        instead of using a deque, just reverse popped and pushed
+        
+        we keep pushing onto a an empty stack
+        if we get through all elements, return true
+        if we get to an invalid move return false
+        '''
+        stack = []
+        
+        #reverse
+        pushed = pushed[::-1]
+        popped = popped[::-1]
+        
+        while pushed:
+            #get first push element and put onto a stack
+            stack.append(pushed.pop())
+            #now pop if we can
+            while stack and stack[-1] == popped[-1]:
+                stack.pop()
+                popped.pop()
+
+        
+        return len(pushed) == 0 and len(popped) == 0
+
+##########################
+# 1057. Campus Bikes
+# 16MAR22
+###########################
+#this one is actually tricky, you can't just compared bike to worker for all workers
+#we want to pair them with the shortest ones
+#close though
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> List[int]:
+        '''
+        assign each worker to its neareast bike
+        we the manhattan distance as the distance from worker to bike
+        
+        ties:
+            if there are multiple (worker_i, bike_j) pairs with the same shortest distance, chose pair with smallest worker index
+            if there are again multiple ways to do that, choose the pair with the smalest bike index
+            
+        return array of n elements
+        where each element i represents what bike the ith person will take
+        
+        for each bike, examine all workers and pair with with the closest one, if there is a tie, the worker with the smaller index takes it
+        
+        '''
+        N = len(workers)
+        M = len(bikes)
+        
+        ans = [0]*N
+        found = set()
+        
+        for i,w in enumerate(workers):
+            worker_to_bike_distances = []
+            for j,b in enumerate(bikes):
+                if j in found:
+                    continue
+                worker_to_bike_dist = abs(b[0] - w[0]) + abs(b[1] - w[1])
+                #add to list as [index,dist]
+                worker_to_bike_distances.append([j,worker_to_bike_dist])
+            #find smallest without sorting
+            smallest_dist = min([dist for worker,dist in worker_to_bike_dist])
+            #scan again to find candidates
+            candidates = []
+            for worker,dist in worker_to_bike_dist:
+                if dist == smallest_dist:
+                    candidates.append(worker)
+            #get closest
+            closest = min(candidates)
+            ans[closest] 
+
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> List[int]:
+        '''
+        we can't just do a pairwise worker to bike relationship, then take the smallest
+        we need to examine all worker-bike pairs then choose the smallest for each one
+        
+        algo:
+            1. Generate all (worker,bike pairs) and find its manhattan distance
+            2. sort all the truples in ascending order
+            3. pass over the triplets
+                if worker has not been aissnged a bike, and bike is still available, then assing the bike to the woker and mark as unavailable for both
+                if al workers have been assigned a bike, we are done!
+        '''
+        triplets = []
+        for i,worker in enumerate(workers):
+            for j,bike in enumerate(bikes):
+                dist = abs(worker[0]-bike[0]) + abs(worker[1]-bike[1])
+                triplets.append([dist,i,j])
+        
+        #sort ascending
+        #note for sorting in python, we priortize first, then second, then third
+        triplets.sort()
+        
+        ans = [None]*len(workers)
+        count = 0 #we cant terminate if we have mapped all workers to bikes
+        
+        bikes_assigned = set()
+        
+        for dist,worker,bike in triplets:
+            if not ans[worker] and bike not in bikes_assigned:
+                #marker
+                bikes_assigned.add(bike)
+                ans[worker] = bike
+                count += 1
+                
+                #early termination
+                if count == len(workers):
+                    return ans
+        
+        return ans
+
+#bucket sort
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> List[int]:
+        '''
+        we can use bucket sort, 
+        intuition notes:
+            we can have at most 1000X1000 pairs
+            but the maximum possible distanace would be 1998 (if bike is at (0,0) and person is at (999))
+            make 1998 buckets!
+            groups by distance, and then go in order
+            we iteratre  over all possible distances in ascending order
+        '''
+        min_dist = float('inf') #start from here
+        dist_pairs = collections.defaultdict(list)
+        for i,worker in enumerate(workers):
+            for j,bike in enumerate(bikes):
+                dist = abs(worker[0]-bike[0]) + abs(worker[1]-bike[1])
+                dist_pairs[dist].append([i,j])
+                min_dist = min(min_dist,dist)
+        
+        #starting off
+        curr = min_dist
+        bike_taken = [False]*len(bikes)
+        worker_ans = [-1]*len(workers)
+        pair_count = 0
+        
+        #we need to keep going until all workers have been paired
+        while pair_count < len(workers):
+            #check pair at each dist
+            for worker,bike in dist_pairs[curr]:
+                if worker_ans[worker] == -1 and not bike_taken[bike]:
+                    #if bothe worker and bike are free, assigne
+                    bike_taken[bike] = True
+                    worker_ans[worker] = bike
+                    pair_count += 1
+            
+            curr += 1
+        
+        return worker_ans
