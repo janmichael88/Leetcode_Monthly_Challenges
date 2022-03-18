@@ -2238,3 +2238,135 @@ class Solution:
             curr += 1
         
         return worker_ans
+
+################################################
+# 298. Binary Tree Longest Consecutive Sequence
+# 17MAR22
+################################################
+#TLE
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        '''
+        return the length of longest consective path
+        path must be from parent to child node, and it must be strictly increasing
+        dfs carrying the path length, pass path length along
+        only incrment by one if it differs by 1
+        update globally
+        '''
+        self.ans = 1
+        
+        def dfs(parent,child,path_length):
+            if not child:
+                return
+            if parent:
+                if child.val - parent.val == 1:
+                    path_length += 1
+                    self.ans = max(self.ans,path_length)
+                    dfs(child,child.left,path_length)
+                    dfs(child,child.right,path_length)
+
+            dfs(child,child.left,1)
+            dfs(child,child.right,1)
+
+        dfs(None,root,1)
+        return self.ans
+        
+
+#careful not to call the function too many times within it self
+#top down
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        '''
+        return the length of longest consective path
+        path must be from parent to child node, and it must be strictly increasing
+        dfs carrying the path length, pass path length along
+        only incrment by one if it differs by 1
+        update globally
+        '''
+        self.ans = 1
+        
+        def dfs(parent,child,path_length):
+            if not child:
+                return
+            if (parent != None) and (child.val == parent.val + 1):
+                path_length += 1
+            else:
+                path_length = 1
+            self.ans = max(self.ans,path_length)
+            dfs(child,child.left,path_length)
+            dfs(child,child.right,path_length)
+
+
+        dfs(None,root,1)
+        return self.ans
+        
+#bottom up
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        '''
+        no global
+        '''
+        
+        def dfs(parent,child,path_length):
+            #just return what we have so far
+            if not child:
+                return path_length
+            if (parent != None) and (child.val == parent.val + 1):
+                path_length += 1
+            else:
+                path_length = 1
+            left = dfs(child,child.left,path_length)
+            right = dfs(child,child.right,path_length)
+            return max(path_length,max(left,right))
+
+
+        return dfs(None,root,1)
+
+#another way
+
+        # Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        '''
+        bottom up
+        '''
+        self.ans = 0
+        
+        def dfs(node):
+            if not node:
+                return 0
+            left = dfs(node.left) + 1
+            right = dfs(node.right) + 1
+            #check for left if left
+            if node.left != None and node.val + 1 != node.left.val:
+                left = 1
+            if node.right != None and node.val + 1 != node.right.val:
+                right = 1
+            self.ans = max(self.ans, max(left,right))
+            return max(left,right)
+        
+        dfs(root)
+        return self.ans
