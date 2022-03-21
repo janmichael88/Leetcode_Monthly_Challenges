@@ -2370,3 +2370,298 @@ class Solution:
         
         dfs(root)
         return self.ans
+
+##################################
+# 316. Remove Duplicate Letters
+# 18MAR22
+###################################
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        '''
+        this is a confusing problem
+        a string is greater depens on the comparison between the frist unequal corresponding char in the two strings
+        optimal soluiont will have the smallest chars as early as possible
+        
+        1. the left most letter in our solution will be the smallest letter such that the suffix from that letter contains every other, each solution must have one and only one copy of every letter
+        if there are multiple smalelst letter, then we pick the lefmost one, because it gives us the most options
+        
+        2. as we iterate over our string, if char is > than char i+1 and another occurence of char i i in the strin later on, deleting char i will always lead to the optimal solution
+        we choose to minmize the left most char first
+        
+        i.e we greedibly try to remove chars as early as possible, and picking the ebst letter at each step leads to the optimal solution
+        
+        we solve this recusrively
+        
+        We use idea number one from the intuition. In each iteration, we determine leftmost letter in our solution. This will be the smallest character such that its suffix contains at least one copy of every character in the string. We determine the rest our answer by recursively calling the function on the suffix we generate from the original string (leftmost letter is removed).
+        '''
+        
+        #find pos - the idnex of the let most letter in our solution
+        #create counter adn end interation ones the suffix doesnt have a unique char
+        #pos will be the index of the samlelst char we ecnounter before the iteration ends
+        def rec(s):
+            counts = Counter(s)
+            leftmost = 0
+            for i in range(len(s)):
+                if s[i] < s[leftmost]:
+                    #new leftmost
+                    leftmost = i
+                counts[s[i]] -= 1
+                #if this only has a single occurence we are done!
+                if counts[s[i]] == 0:
+                    break
+            
+            return s[leftmost] + rec(s[leftmost:].replace(s[leftmost],"")) if s else ''
+        
+        return rec(s)
+
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        '''
+        we can use a stack to store the solution we have built up so far
+        we delete chars off the stack wehenver it is possible
+        
+        at each iteration we add teh current char to the solution if it hasn't already been used
+        we try to remove as many chars as possible off the stack
+        
+        The conditions for deletion are:
+
+        The character is greater than the current characters
+        The character can be removed because it occurs later on
+
+        '''
+        stack = []
+        
+        seen = set()
+        
+        last_occur = {c:i for i,c in enumerate(s)}
+        
+        for i,c in enumerate(s):
+            #we only ty to add c if it's not already in our solution
+            #this is to maintain only one of each cahr
+            if c not in seen:
+                #if last letter, exists, is greater than current c, so we can make it smalled, its not the last occurence
+                #for the last part, if it's the last occurence, then i need to include it
+                while stack and c < stack[-1] and i < last_occur[stack[-1]]:
+                    removed = stack.pop()
+                    seen.remove(removed) #obie we would have seen this, since we add outside this loop
+                
+                seen.add(c)
+                stack.append(c)
+            
+            
+        return "".join(stack)
+
+#############################
+# 895. Maximum Frequency Stack
+# 20MAR22
+#############################
+#heap solution
+class FreqStack:
+    '''
+    constraints:
+        note that there will be atlmost 10^9 elements
+        and thtat push and pop will be colled at most 10^4 times
+        we need to make this operation fast
+    
+    we can try use a max heap, where we push the (count,index,number)
+    
+    we keep three things
+    heap, count mapp and counter of eleents
+    
+    when we push:
+        increment count map
+        incremant counter
+        push(count,index,number)
+        
+    note: we need to push  count, and the size number to break ties
+    '''
+
+    def __init__(self):
+        self.heap = []
+        self.count_mapp = collections.defaultdict(int)
+        self.counter = 0
+        
+
+    def push(self, val: int) -> None:
+        self.count_mapp[val] += 1
+        #push
+        heapq.heappush(self.heap,(-self.count_mapp[val],-self.counter,val))
+        self.counter += 1
+
+    def pop(self) -> int:
+        (count,size,number) = heapq.heappop(self.heap)
+        #used up an elment
+        self.count_mapp[number] -= 1
+        return number
+        
+
+
+# Your FreqStack object will be instantiated and called as such:
+# obj = FreqStack()
+
+#stack of stacks
+class FreqStack:
+    '''
+    we obvie care about the frequence of each element and the amx freq
+    now we ask:
+        among elements with the same frequency with same element, how do we know which element is the most recent
+        
+    we let grop be a map from frequecne to stack of eleemnts with that frequence
+    '''
+    def __init__(self):
+        #to store counts of each 
+        self.counts = Counter()
+        #elemetns with that count
+        self.group = defaultdict(list)
+        #to query with max freq
+        self.max_freq = 0
+        
+    def push(self, val: int) -> None:
+        #before adding to group, retrieve count + 1 (after adding)
+        f = self.counts[val] + 1
+        #add it in
+        self.counts[val] = f
+        #update
+        if f > self.max_freq:
+            self.max_freq = f
+        #add to groups
+        self.group[f].append(val)
+
+    def pop(self) -> int:
+        #retrieve
+        ans = self.group[self.max_freq].pop()
+        #drecemtn the freq for ans
+        self.counts[ans] -= 1
+        #get read for the next pop
+        if not self.group[self.max_freq]:
+            self.max_freq -= 1
+        
+        return ans
+        
+################################################
+# 1007. Minimum Domino Rotations For Equal Row
+# 20MAR22
+##################################################
+class Solution:
+    def minDominoRotations(self, tops: List[int], bottoms: List[int]) -> int:
+        '''
+        just check if i can flip a domino to the top or bottom for all nums 1-6
+        do the same for the bottom
+        then take the minimum
+        '''
+        N = len(tops)
+        #check tops
+        min_movs = float('inf')
+        
+        for dot in range(1,7):
+            #hold current answers
+            curr_top_ans = 0
+            cant_do_top = False
+            
+            curr_bot_ans = 0
+            cant_do_bot = False
+            
+            #check swapping to top
+            for i in range(N):
+                if tops[i] == dot:
+                    continue
+                if tops[i] != dot and bottoms[i] == dot:
+                    curr_top_ans += 1
+                else:
+                    cant_do_top = True
+                    break
+                    
+            #check bots
+            for i in range(N):
+                if bottoms[i] == dot:
+                    continue
+                if bottoms[i] != dot and tops[i] == dot:
+                    curr_bot_ans += 1
+                else:
+                    cant_do_bot = True
+                    break
+                    
+            if cant_do_top and cant_do_bot:
+                continue
+            else:
+                min_movs = min(curr_top_ans,curr_bot_ans)
+                
+        
+        return min_movs if min_movs != float('inf') else -1
+                    
+
+class Solution:
+    def minDominoRotations(self, tops: List[int], bottoms: List[int]) -> int:
+        '''
+        we have three possibilites, note we do not need to check if we can make each number
+        fore each bot row and top row
+        we only need to check the first!
+        
+        intuition
+        
+        We need the whole row to match. Therefore, if one tile does not match, we cannot have a matching row. We could abitrarily pick any tile, but we pick the 0th tile since it always exists.
+
+In other words, one side of the first tile MUST match at least one side of every single one of the other tiles, or we cannot have an equal row.
+
+only need to check one domino for both top and bot
+        
+        algo:
+            pick up the first element, check if we cna make top A[0] or bottom B[0] by flipping
+        '''
+        self.N = len(tops)
+        rotations = self.check(tops,bottoms,tops[0])
+        #if one could make all elelemtns in A or B equal to A[0]
+        if rotations != -1 or tops[0] == bottoms[0]:
+            return rotations
+        else:
+            return self.check(tops,bottoms,bottoms[0])
+    
+    def check(self,tops,bottoms,x):
+        rotations_to_top = 0
+        rotations_to_bot = 0
+        
+        for i in range(self.N):
+            #how many rotatinos should be done to make it be tops[0]
+            if tops[i] != x and bottoms[i] != x:
+                return -1
+            elif tops[i] != x:
+                rotations_to_top += 1
+            elif bottoms[i] != x:
+                rotations_to_bot += 1
+        
+        return min(rotations_to_top,rotations_to_bot)
+    
+##############################
+# 306. Additive Number
+# 20MAR22
+##############################
+class Solution:
+    def isAdditiveNumber(self, num: str) -> bool:
+        '''
+        this is a backtracking problem
+        keep pointer in num, and if we can advance it through we are done
+        then for all ends j in range(i+1,N) check that there num[j+1:] is the sum
+        
+        similar to #842 (SPlit Array into Fibonnci Sequences)
+        '''
+        self.ans= []
+        
+        def helper(index,nums):
+            if index== len(nums) and len(self.ans)>= 3:
+                return True    
+            for i in range(index,len(nums)):
+                if nums[index] == "0" and i != index : break
+                n= int(nums[index:i +1])
+                
+                if len(self.ans) >=2  and self.ans[-2]+ self.ans[-1] < n: break
+                
+                if len(self.ans) <=1 or self.ans[-2]+ self.ans[-1] == n:
+                    self.ans.append(n)
+                    if helper(i+1,  nums):
+                        return True
+                    self.ans.pop()
+            
+            return False
+    
+        helper(0,num)
+        return len(self.ans)>0
