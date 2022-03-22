@@ -2665,3 +2665,171 @@ class Solution:
     
         helper(0,num)
         return len(self.ans)>0
+
+##############################
+# 763. Partition Labels
+# 21MAR22
+##############################
+class Solution:
+    def partitionLabels(self, s: str) -> List[int]:
+        '''
+        we want to partition s into as many parts as possible so that each letter appears in at most one part
+        
+        naively:
+            generate all possible partitions recursively
+            for each part, check that each letter appears in at more one part
+        
+        which won't work, and that's really hard to code
+        
+        we need to treat this greedily like the capturing intervals problem
+        
+        figure out the rightmost index for ech char
+        then use two pointers, left and rigth
+        we keep advanving right as far as we can
+        then when out current pointer == right most, this is the parition that we want
+        '''
+        
+        rightmost = {char:i for i,char in enumerate(s)}
+        left,right = 0,0
+        sizes = []
+        
+        
+        #keep pushing right as far as we can
+        for i,char in enumerate(s):
+            right = max(right,rightmost[char])
+            
+            #if we have reached our rightmost, this ends the current paritition
+            if i == right:
+                sizes.append(right - left + 1)
+                #catch up left
+                left = right + 1
+                
+        return sizes
+
+class Solution:
+    def partitionLabels(self, s: str) -> List[int]:
+        '''
+        just another way
+        '''
+        L = len(s)
+        
+        rightmost = {s[i]:i for i in range(L)}
+        
+        i = 0
+        sizes = []
+        
+        while i < L:
+            end = rightmost[s[i]]
+            j = i + 1
+            #now try to extend j
+            while j < end:
+                #check candidate part
+                if rightmost[s[j]] > end:
+                    end = rightmost[s[j]]
+                j += 1
+            
+            #gett the current part size
+            sizes.append(end-i+1)
+            i = end + 1
+        
+        return sizes
+
+####################################
+# 311. Sparse Matrix Multiplication
+# 21MAR22
+#####################################
+class Solution:
+    def multiply(self, mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+        '''
+        recall matrix multiplcation is dot product of row and column
+        we assume matrix multiplation is always valid
+        this can still be done naively
+        '''
+        mat1_rows = len(mat1)
+        mat1_cols = len(mat1[0])
+        
+        mat2_rows = len(mat2)
+        mat2_cols = len(mat2[0])
+        
+        ans = [[0]*mat2_cols for _ in range(mat1_rows)]
+        
+        for i in range(mat1_rows):
+            for j in range(mat2_cols):
+                for k in range(mat1_cols):
+                    ans[i][j] += mat1[i][k]*mat2[k][j]
+        
+        return ans
+
+#we can optimze by seeinf if there is a zero in this row
+class Solution:
+    def multiply(self, mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+        '''
+        recall matrix multiplcation is dot product of row and column
+        we assume matrix multiplation is always valid
+        this can still be done naively
+        recall (m by k) times (k by n)
+        
+        ans (m by n) with inner dimension k
+        '''
+        mat1_rows = len(mat1)
+        mat1_cols = len(mat1[0])
+        
+        mat2_rows = len(mat2)
+        mat2_cols = len(mat2[0])
+        
+        ans = [[0]*mat2_cols for _ in range(mat1_rows)]
+        
+        for i in range(mat1_rows):
+            #innder dimension
+            for k in range(mat1_cols):
+                if mat1[i][k]:
+                    for j in range(mat2_cols):
+                        ans[i][j] += mat1[i][k]*mat2[k][j]
+        
+        return ans
+
+#compression
+class Solution:
+    def multiply(self, mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+        '''
+        follow up, is that mat1 and mat2 are spar matrices, so we want to be efficient with storage
+        we can stor the matrix as a list of lists 
+        at each ith row
+        we store values as pairs (value, column index)
+        row i : [(value,j)....(value_n,j_n)] if there are values
+        
+        we first compress each matrix
+        then carry out the multiplation, note, since we are only adding in non zero elements during compression
+        we don't need to check for non zero elements during the multiplcation 
+        so we can carry out the multiplacation normally
+        
+        '''
+        def compress(mat):
+            rows = len(mat)
+            cols = len(mat[0])
+            
+            compressed = [[] for _ in range(rows)]
+            
+            for row in range(rows):
+                for col in range(cols):
+                    if mat[row][col]:
+                        compressed[row].append([mat[row][col],col])
+            
+            return compressed
+        
+        m = len(mat1)
+        k = len(mat1[0])
+        n = len(mat2[0])
+        
+        # Store the non-zero values of each matrix.
+        A = compress(mat1)
+        B = compress(mat2)
+        
+        ans = [[0] * n for _ in range(m)]
+        
+        for mat1_row in range(m):
+            for element1,mat1_col in A[mat1_row]:
+                for element2,mat2_col in B[mat1_col]:
+                    ans[mat1_row][mat2_col] += element1*element2
+        
+        return ans
