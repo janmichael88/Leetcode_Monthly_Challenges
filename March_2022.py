@@ -2833,3 +2833,102 @@ class Solution:
                     ans[mat1_row][mat2_col] += element1*element2
         
         return ans
+
+##################################################
+# 1663. Smallest String With A Given Numeric Value
+# 22MAR22
+###################################################
+#repeat
+class Solution:
+    def getSmallestString(self, n: int, k: int) -> str:
+        '''
+        we can only use chars a to z, and they have values/scores in range [1,26]
+        we want to return the lexicogpahilly smallest string of length n
+        
+        if we think greedily it makes sense to use the smallest chars first
+        it's really just going to be some number of a's, middle chars, and some number of z's
+        
+        we can start off with all a's then just try to max it the last one if we can
+        '''
+        mapp = {}
+        for i in range(26):
+            mapp[i] = chr(ord('a')+i)
+        
+        #initially start with all a scores, or just zeros
+        ans = [0]*n
+        #we've at least use up n from k
+        k -= n
+        right = len(ans) - 1
+        
+        while k >= 0 and right >=0:
+            #try using up all of k
+            if k > 25:
+                ans[right] = 25
+                k -= 25
+            else:
+                #use what's left
+                ans[right] = k
+                k = 0
+            right -= 1
+        
+        return "".join([mapp[num] for num in ans])
+        
+class Solution:
+    def getSmallestString(self, n: int, k: int) -> str:
+        '''
+        going left to right, we need to keep track of the smallest k we can use
+        and also how many spots are left
+        going left to right, we always to to make it the smallest it can be by using a and reserve the last spot for z
+        '''
+        result = ""
+        for i in range(n):
+            #get remainng sports
+            spots_left = n - i - 1
+            #if current k is > the spots_left*26, use the larget you can
+            if k > spots_left*26:
+                score = k -  (spots_left*26)
+                k -= score
+                result += chr(ord('a') + score - 1)
+            #if its less, well just use a
+            else:
+                result += 'a'
+                k -= 1
+        
+        return result
+
+##################################
+# 313. Super Ugly Number
+# 22MAR22
+##################################
+#close one....
+class Solution:
+    def nthSuperUglyNumber(self, n: int, primes: List[int]) -> int:
+        '''
+        we define a super ugly number whose prime factors are in the array of primes
+        return the nth super ugly number
+        
+        for each prime p, to a list of n*p, or rather its multiples, but how far should i go?
+        i can generat the super ugly numbers in order, since the primes p are in order
+        
+        first try generating candidates
+        '''
+        candidates = []
+        N = len(primes)
+        
+        #i need to keep track of the current multiple that i'm on for each prime
+        primes = [[p,1] for p in primes]
+        start = 0 #this gets +1 % N
+        
+        while len(candidates) < n:
+            curr_prime,curr_multiple = primes[start]
+            next_prime,next_multiple = primes[(start+1) % N]
+            while curr_prime*curr_multiple < next_prime*next_multiple:
+                cand = curr_prime*curr_multiple
+                candidates.append(cand)
+                curr_multiple += 1
+            #update curr multiple
+            primes[start][1] = curr_multiple
+            start = (start + 1) % N
+            
+        print(candidates)
+            
