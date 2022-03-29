@@ -2931,4 +2931,370 @@ class Solution:
             start = (start + 1) % N
             
         print(candidates)
+
+class Solution:
+    def nthSuperUglyNumber(self, n: int, primes: List[int]) -> int:
+        '''
+        the idea is to generate the next ugly number in the sequence using the previously genereated ugly number
+        we can get the current smallest ugly number using a min heap, generate it, and add to a list of ugly numbers
+        any ungly number must be in the form p*u where p is a prime from primes and u is the current smallest ugly number
+        
+        initaly heap contains the list of prims p
+        then we pop out the smalles p*u, we add p*u' with the smallest u' that p has yet to use to this list of ugly numbers
+        this ensures that there is no p*u'' that can be samller than p*u'
+        we push back the candidate into primes
+        p generates one specific ugly number x = p * u, and an index i to track the smallest u or ugly[i] that specific p hasn't been multiplied with. Thus each heap element is a triple of (p*u, p, i)
+        '''
+        cand = [(p,p,1) for p in primes]
+        uglies = [1]
+        for _ in range(n-1):
+            #add smallest to list
+            uglies.append(cand[0][0])
+            while cand[0][0] == uglies[-1]:
+                x,p,i = heapq.heappop(cand)
+                #generate next smallest
+                #iwe should break out of this loop after incrementing the index, because we multiplied by the next largest prime
+                heapq.heappush(cand,(p*uglies[i],p,i+1))
+                
+        
+        return uglies[-1]
+
+###################################
+# 991. Broken Calculator
+# 23MAR22
+###################################
+#BFS gets TLE
+class Solution:
+    def brokenCalc(self, startValue: int, target: int) -> int:
+        '''
+        we are given a startvalue and target
+        at any one time, we can multiply it by 2 or subtract from 1
+        return min number of operations to get to target
+        bfs
+        '''
+        q = deque([(startValue,0)])
+        
+        while q:
+            curr,moves = q.popleft()
+            if curr == target:
+                return moves
+            q.append((curr*2,moves+1))
+
+#recursive solution
+class Solution:
+    def brokenCalc(self, X, Y):
+        if X > Y: return X - Y
+        if X == Y: return 0
+        if Y % 2 == 0:
+            return self.brokenCalc(X, Y//2) + 1
+        else:
+            return self.brokenCalc(X, Y + 1) + 1
+
+```
+#cpp version
+class Solution {
+public:
+    int brokenCalc(int startValue, int target) {
+        if(startValue >= target) return startValue - target;
+        if(target % 2 == 0){
+            return 1 + brokenCalc(startValue, target / 2);
+        }
+        return 1 + brokenCalc(startValue, target + 1);
+    }
+};
+```
+
+
+class Solution:
+    def brokenCalc(self, startValue: int, target: int) -> int:
+        '''
+        we can work backwards from the target
+        recall the start value can either by multiplied by 2, which makes it even
+        or we subtract 1 from th number, its inverse operatino would be additiono
+        
+        when our target is even, we would get close to start if we divised by 2
+        
+        why?
+        
+        if target is even, then if we were to perform 2 additions and one divisino, we could instead peform one division and one addtion for less operationos
+            target +1 + 1 == target + 2
+            (target + 2) / 2 vs (target /2) + 1
             
+            adding 2 to an even number then dividing by 2, results in another evne number
+            dividing 2 by an even number results in another odd/even number + 1 results in another even number
+            
+        if target is odd, then if we peform 3 additionos and one divisiono, we coould instead perfoorm 1 addition, 1 divisiono and 1 additionos for less operationos
+            (target + 3) / 2 vs (target + 1) /2 + 1
+            4  operatinos vs 3 opoerations
+            
+        algo,
+            while target > startValue, 
+                add 1 if target is odd, 
+                divided by 2 if target is even
+        
+        after we need to do startValue - target additinoos too reach startValue
+        '''
+        ans = 0
+        while target > startValue:
+            ans += 1
+            #is odd
+            if target % 2 == 1:
+                target += 1
+            else:
+                target //=2
+        
+        return ans + startValue - target
+            q.append((curr - 1,moves+1))   
+
+################################
+# 1029. Two City Scheduling
+# 25MAR22
+################################
+#top down dp, keep tracking of current option, and counts a and b
+class Solution:
+    def twoCitySchedCost(self, costs: List[List[int]]) -> int:
+        '''
+        we are trying to interviw 2n people
+        each ith person in costs has a cost fly to one of two cities a or b
+        return the min cost fly every person to a city that that exactly n people arrive in each city
+        
+        constraints, we have 2n people, and we want n people in each city
+        
+        we can use dp
+        dp(index,count_a,count_b) then we take or don't take knapsack and when we take a person for a or b increment and recuse 
+        '''
+        memo = {}
+        N = len(costs) #multiple of 2*N
+        
+        def dp(i,count_a,count_b):
+            #if we have gotten equal amounts in city a and city b
+            if (count_a) == N//2 and (count_b) == N//2:
+                return 0 #we don't need to take anymmore
+            #if we've gotten to then end, or count_a > count_b or count_b > count_a, this is not a possible path in the recursino tree, so we minimize this by just retuing the max value 
+            if (i == N) or (count_a > N//2) or (count_b > N//2):
+                return float('inf')
+            
+            #retreuve
+            if (i,count_a,count_b) in memo:
+                return memo[(i,count_a,count_b)]
+            
+            #recursive case 
+            else:
+                take_a = costs[i][0] + dp(i+1,count_a + 1,count_b)
+                take_b = costs[i][1] + dp(i+1,count_a,count_b + 1)
+                res = min(take_a,take_b)
+                memo[(i,count_a,count_b)] = res
+                return res
+            
+        return dp(0,0,0)
+
+#reducing states to just a only
+class Solution:
+    def twoCitySchedCost(self, costs: List[List[int]]) -> int:
+        '''
+        we are trying to interviw 2n people
+        each ith person in costs has a cost fly to one of two cities a or b
+        return the min cost fly every person to a city that that exactly n people arrive in each city
+        
+        constraints, we have 2n people, and we want n people in each city
+        
+        we can use dp
+        dp(index,count_a,count_b) then we take or don't take knapsack and when we take a person for a or b increment and recuse 
+        '''
+        memo = {}
+        N = len(costs) #multiple of 2*N
+        
+        def dp(i,count_a):
+            #reached the end, and have have of N we are good
+            if (count_a) == N//2 and i == N:
+                return 0 
+            #haven't reached and yet
+            if (count_a > N//2) or i == N:
+                return float('inf')
+            
+            #retreuve
+            if (i,count_a) in memo:
+                return memo[(i,count_a)]
+            
+            #recursive case 
+            else:
+                take_a = costs[i][0] + dp(i+1,count_a + 1)
+                take_b = costs[i][1] + dp(i+1,count_a)
+                res = min(take_a,take_b)
+                memo[(i,count_a)] = res
+                return res
+            
+        return dp(0,0)
+
+#bottom up dp
+class Solution:
+    def twoCitySchedCost(self, costs: List[List[int]]) -> int:
+        '''
+        translate to bottom up dp
+        need to use dp array of N rows, and N//2 columns
+        '''
+        N = len(costs)
+        dp = [[float('inf')]*((N//2) + 2) for _ in range(N+2)]
+        
+
+        
+        for i in range(N-1,-1,-1):
+            for count_a in range(N//2-1,-1,-1):
+                #base conditions from recurrence relation
+                if i == N and count_a == N//2:
+                    dp[i][count_a] = 0
+                
+                else:
+                    print(i,count_a)
+                    take_a = costs[i][0] + dp[i+1][count_a + 1]
+                    take_b = costs[i][1] + dp[i+1][count_a]
+                    dp[i][count_a] = min(take_a,take_b)
+
+        return dp[1][1]
+
+#greedy
+class Solution:
+    def twoCitySchedCost(self, costs: List[List[int]]) -> int:
+        '''
+        greedy solution, typically problems like this say find min or max, and propose an unsorted input
+        reaclly ideal is to locally pick the most optimal one
+        if we sent a person to city A instead of city B, we lose/gain the difference:
+            priceA - priceB
+        
+        to optimize the cost lets sort by the difference between priceA and priceB
+        and then send the fist n persons to cityA and the rest to city b
+        '''
+        costs.sort(key = lambda x: x[0] - x[1])
+        N = len(costs)
+        
+        ans = 0
+        #first half goes to A
+        for i in range(N//2):
+            ans += costs[i][0]
+            
+        #next half to city B
+        for i in range(N//2,N):
+            ans += costs[i][1]
+            
+        return ans
+
+########################################
+# 81. Search in Rotated Sorted Array II
+# 28MAR22
+########################################
+class Solution:
+    def search(self, nums: List[int], target: int) -> bool:
+        start, end = 0, len(nums) - 1
+        while start <= end:
+            mid = start + (end - start) // 2
+            #found it
+            if nums[mid] == target:
+                return True
+            #dupliates case
+            if (nums[start] == nums[mid]) and (nums[mid] == nums[end]):
+                start += 1
+                end -= 1
+            #in the un roated part of the aray
+            elif nums[mid] >= nums[start]:
+                #in lower half
+                if target >= nums[start] and target < nums[mid]:
+                    end = mid - 1
+                #in upper half
+                else:
+                    start = mid + 1
+            #in rotated part of array
+            else:
+                #in upper half
+                if target <= nums[end] and target > nums[mid]:
+                    start = mid + 1
+                #in lower half
+                else:
+                    end = mid - 1
+        return False
+        
+############################
+# 320. Generalized Abbreviation
+# 28MAR22
+#############################
+#close one
+class Solution:
+    def generateAbbreviations(self, word: str) -> List[str]:
+        '''
+        this is a backtrack problem, we can build up a path, then add to a list
+        
+        note:
+            we can take any number of non-overlapping and non-adjacent substrings
+            i.e we cannot take two adjacent substrings
+            we chose to abbreviate or take the current string
+            so we take or don't take at each node and recurse
+        '''
+        paths = []
+        N = len(word)
+        
+        def dfs(i,path,take):
+            print(path)
+            if i == N:
+                paths.append(path)
+                return
+            if not take:
+                for j in range(i+1,N):
+                    path += str(j-i)
+                    path += word[j:]
+                    dfs(i+j,path,True)
+            else:
+                path += word[i]
+                dfs(i+1,path,False)
+                
+        dfs(0,"",False)
+
+class Solution:
+    def generateAbbreviations(self, word: str) -> List[str]:
+        '''
+        keep index i and count taken for abbreviation
+        '''
+        paths = []
+        N = len(word)
+        
+        def dfs(i,path,count):
+            #gotten to the end, append ans and count
+            if i == N:
+                paths.append(path + str(count) if count > 0 else path)
+            else:
+                #abbreviate, skip current index, and iclude it to count
+                dfs(i+1,path,count+1)
+                #no abbreviate, don't forget to set back to zero
+                dfs(i+1,path +(str(count) if count > 0 else '') + word[i],0)
+                
+        dfs(0,'',0)
+        return paths
+
+class Solution:
+    def generateAbbreviations(self, word: str) -> List[str]:
+        '''
+        keep index i and count taken for abbreviation
+        '''
+        paths = []
+        N = len(word)
+        
+        def dfs(i,path,count):
+            #gotten to the end, append ans and count
+            if i == N:
+                if count:
+                    path.append(str(count))
+                paths.append("".join(path))
+                return
+            
+            #don't abbreviate
+            dfs(i+1,path,count+1)
+            #backtack
+            path.pop()
+            
+            if count:
+                path.append(str(count))
+                
+            dfs(i+1,path + [word[i]],0)
+            
+        
+        dfs(0,[],0)
+        return paths
+                
