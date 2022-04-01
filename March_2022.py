@@ -3298,3 +3298,863 @@ class Solution:
         dfs(0,[],0)
         return paths
                 
+#############################
+# 287. Find the Duplicate Number
+# 29MAR22
+#############################
+#revisit, sorting and using set are trivial
+#negative marking is the next best thing
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        '''
+        for each number, negate the value at its index
+        if we pass this number and see that is index is negative it means we have seen it before and this must be the number
+        all nums in nums should mapp to an index in the array, no corner cases
+        '''
+        for num in nums:
+            #store for index
+            index = abs(num)
+            #if negtaive
+            if nums[index] < 0:
+                duplicate = index
+                break
+            #otherwise mark
+            nums[index] = -nums[index]
+        
+        #restore numbers
+        for i in range(len(nums)):
+            nums[i] = abs(nums[i])
+            
+        return duplicate
+
+
+#recursion, using array as hashmap
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        '''
+        since we are only allowed numbers [1,n]
+        and there are n elements in nums, we can attempt to place each number at its right index
+        i.e, 1 should be at nums[1]
+        this means that nums[0], will never be mapped to anything, so we can start at the zeroth element and maap it to idnex indes
+        it should be out of place
+        
+        we define a function store(nums,curr)
+            which stores this number curr at nums[curr]
+            also stores the next one
+            and calls store(nums,next)
+            
+        base case is when curr == nums[curr], which means we have a duplicate
+        '''
+        def store(curr):
+            if curr == nums[curr]:
+                return curr
+            next = nums[curr]
+            nums[curr] = curr
+            return store(next)
+        
+        return store(0)
+        
+
+#iterative version
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        while nums[0] != nums[nums[0]]:
+            nums[nums[0]], nums[0] = nums[0], nums[nums[0]]
+        return nums[0]
+
+#actual O(1)
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        '''
+        inution, sum of set bits
+        consier array [3,1,3,2,4]
+        we count the number of set bits in the array, since 4 i the largest, 100, we have at most 3 bit positions
+        after set bits we get the counter
+        [1,3,3]
+        compare this to the bit set count with [1,2,3,4]
+        [1,2,2]
+        
+        [1,3,3] - [1,2,2] = [0,1,1], which is 3 in binary
+        
+        nums_count - base_count = ans in binary
+        
+        but what about for numbers appearing more than twice, like [3,1,3,3,3]
+        
+         In that case, think of it as simply replacing the missing numbers with the duplicate number, effectively reducing the count of 1's corresponding to the missing numbers and adding 1's associated with the duplicate number
+         
+          [0,4,5] - [1,2,2] = [−1,2,3]. If we consider just the positive counts (seen at positions 0 and 1), this, again is the equivalent of the number 3, which is the duplicate number.
+
+        Why does only including the bits with a positive count result in the duplicate number?
+
+        consider [3,1,3,2,4]
+        
+        then forget counting set bits, but keep count of numbers
+        
+        so for array [1,2,3,4] -> [1,1,1,1]
+        and for the abover array -> [1,1,2,1]
+        [1,1,2,1] - [1,1,1,1] = [0,0,1,0], third set bit -> 3
+        
+        too meer space requirments, we consider one bit at time
+        
+        notes on bit maniuplation:
+            check if bit a set, use and
+            to set the bit, if set, use or
+            
+        def set_bit(value, bit):
+            return value | (1<<bit)
+
+        def clear_bit(value, bit):
+            return value & ~(1<<bit)
+
+        '''
+        duplicate = 0
+        N = len(nums) - 1
+        bits = N.bit_length()
+        #count for each bit
+        for bit in range(bits):
+            #get current mask
+            mask = 1 << bit
+            base_count = 0
+            nums_count = 0
+            #all positions in nums
+            for i in range(N+1):
+                #if bit i number i is set, get this count
+                if i & mask:
+                    base_count += 1
+                
+                #if bit in nums[i] is set
+                if nums[i] & mask:
+                    nums_count += 1
+            
+            #check the differnce in counts for this iteration, and the bit in this dupliate must be sit
+            if nums_count - base_count > 0:
+                duplicate = duplicate | mask
+        
+        return duplicate
+
+#degenerate the problem in Floyds algorithm
+class Solution:
+    def findDuplicate(self, nums: List[int]) -> int:
+        '''
+        if we define a function f(x) = nums[x]
+        we would get an array [x,nums[x],nums[nums[x]]......]
+        essentially this is a linked list!
+        if there is a repeated element, we could get a cycle!
+        
+        we just need to find the entrance of the cycle -> Linked List Cycle II
+        
+        too advance the hare twice as fast, we doubly nest it 
+        hare = nums[nums[hare]]
+        turtle = nums[turtle]
+        
+        both start at index zero
+        
+        first, pass, keep advnacing until they meet
+        second pass, turtle starts back at zero, hare stays, then advnace until they meet
+        they should meet at the duplicated element
+        '''
+        # Find the intersection point of the two runners.
+        tortoise = hare = nums[0]
+        while True:
+            tortoise = nums[tortoise]
+            hare = nums[nums[hare]]
+            if tortoise == hare:
+                break
+        
+        # Find the "entrance" to the cycle.
+        tortoise = nums[0]
+        while tortoise != hare:
+            tortoise = nums[tortoise]
+            hare = nums[hare]
+        
+        return hare
+
+########################################
+# 1102. Path With Maximum Minimum Value
+# 29MAR22
+########################################
+#TLE, path enumeration fails, duh!
+
+class Solution:
+    def maximumMinimumPath(self, grid: List[List[int]]) -> int:
+        '''
+        i can't just greedily take the largest neighbor from a cell, 
+        ideally we would dfs and explore all possible paths, lets just try this naively first
+        i need to pass a visited set every time too
+        while dfs'ing along a path, we actually don't need the whole path, just the minimum in it
+        when we get m-1,n-1, update min ans globally and return
+        don't forget to backtrack
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        self.ans = float('-inf')
+        
+        def dfs(i,j,seen,score):
+            #edge of grid
+            if (i,j) == (rows-1,cols-1):
+                self.ans = max(self.ans,score)
+                return
+            #add currently
+            seen.add((i,j))
+            #neighbords
+            for dx,dy in [(1,0),(-1,0),(0,1),(0,-1)]:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds check
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #havne't seen it yet
+                    if (neigh_x,neigh_y) not in seen:
+                        #take smallest
+                        res = min(score,grid[neigh_x][neigh_y])
+                        dfs(neigh_x,neigh_y,seen,res)
+            #backtrack once we are done
+            seen.remove((i,j))
+
+        dfs(0,0,set(),grid[0][0])
+        return self.ans
+
+#TLE, bfs and check valid score
+class Solution:
+    def maximumMinimumPath(self, grid: List[List[int]]) -> int:
+        '''
+        before jumping into finding the optimal path, let's ask a question
+        given a value of S, can we make a path whit this S value as the minimum, 
+        if we can't, lets check S-1,
+        if we can make a min path with S-1, let's check S-2.....S-k
+        this is the idea
+        since we want the maximum, once we have found a path, with the curren S, we stop
+        we start with the largest possible S
+        
+        we have know degenerated the optimization problem into a decision problem
+        
+        idea:
+            1. start decreasiling from the largest possible S
+            2. return immediately once we have the largest S
+        
+        we could start with the largest value in the grid, but since our answer must include the top left and bottom right, we start wit the min of these two
+        
+        how can we verify a path exsits, well WE CAN DO BFS!
+        we explore cells >= to the current S
+        
+        validity of path using BFS:
+            for each cell, we only want to progress on to other cells >= the current S
+            if the q is empty before reaching the bottom right cell, we have failed to find a apth
+            otherwise add those candidates to the queue
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        start_score = min(grid[0][0],grid[rows-1][cols-1])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        #helper function to find if path exists with candidate score
+        def path_exists(score):
+            visited = set()
+            visited.add((0,0))
+            
+            q = deque([(0,0)])
+            
+            while q:
+                x,y = q.popleft()
+                #made it to the end
+                if (x,y) == (rows-1,cols-1):
+                    return True
+                
+                for dx,dy in dirrs:
+                    neigh_x = x + dx
+                    neigh_y = y + dy
+                    #bounds check
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        #havne't seen it yet
+                        if (neigh_x,neigh_y) not in visited and grid[neigh_x][neigh_y] >= score:
+                            visited.add((neigh_x,neigh_y))
+                            q.append((neigh_x,neigh_y))
+                            
+            #empty q before reachign end means we cannot do it
+            return False
+        
+        #try all scores
+        while start_score >= 0:
+            if path_exists(start_score):
+                return start_score
+            else:
+                start_score -= 1
+            
+#binary search, BFS
+class Solution:
+    def maximumMinimumPath(self, grid: List[List[int]]) -> int:
+        '''
+        we can use binary search to find the smallest workable solution
+        i.e the largest minimum value for a valid path
+        
+        if we have found the a score S works, then we know that all values < S work!
+        if we have found that a score S does not work, then any value S+1 will not work
+        
+        we do binary seach into we find the boundary point between workable and unworkable solutions
+        we then return the largest on the left side, which at this point should be the left pointer
+        
+        
+        If the current value is a workable score, the maximum workable score should be on its right inclusively. If the current value is an unworkable score, then the maximum workable score should be on its left exclusively.
+
+Therefore, we can use binary search to cut off the search space by half in each step and locate the boundary that separates workable scores and the unworkable scores, which represents the maximum score of all the paths.
+
+        notes on binary search:
+        mid = (left + right + 1) / 2
+        if mid is workable solution then we know this works and every less than mid works, left = mid
+        if it doesnt, we know anything after middle doens't work
+        right = middle - 1
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        start_score = min(grid[0][0],grid[rows-1][cols-1])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        #helper function to find if path exists with candidate score
+        def path_exists(score):
+            visited = set()
+            visited.add((0,0))
+            
+            q = deque([(0,0)])
+            
+            while q:
+                x,y = q.popleft()
+                #made it to the end
+                if (x,y) == (rows-1,cols-1):
+                    return True
+                
+                for dx,dy in dirrs:
+                    neigh_x = x + dx
+                    neigh_y = y + dy
+                    #bounds check
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        #havne't seen it yet
+                        if (neigh_x,neigh_y) not in visited and grid[neigh_x][neigh_y] >= score:
+                            visited.add((neigh_x,neigh_y))
+                            q.append((neigh_x,neigh_y))
+                            
+            #empty q before reachign end means we cannot do it
+            return False
+        
+        left = 0
+        right = min(grid[0][0],grid[rows-1][cols-1])
+        #try all scores
+        while left < right:
+            mid = left + (right - left) //2
+            mid += 1
+            if path_exists(mid):
+                left = mid
+            else:
+                right = mid - 1
+    
+        return left #note we can return left or the right
+
+#dfs wiith binary search
+class Solution:
+    def maximumMinimumPath(self, grid: List[List[int]]) -> int:
+        '''
+        instead of bfs, we can use dfs, 
+        at each call, check if we can actually dfs
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        start_score = min(grid[0][0],grid[rows-1][cols-1])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        #helper function to find if path exists with candidate score
+        def path_exists(curr_row,curr_col,score,visited):
+            visited.add((curr_row,curr_col))
+            
+            if (curr_row,curr_col) == (rows - 1, cols -1):
+                return True
+
+            for dx,dy in dirrs:
+                neigh_x = curr_row + dx
+                neigh_y = curr_col + dy
+                #bounds check
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #havne't seen it yet
+                    if (neigh_x,neigh_y) not in visited and grid[neigh_x][neigh_y] >= score and path_exists(neigh_x,neigh_y,score,visited):
+                        return True
+            #no path
+            return False
+        
+        left = 0
+        right = min(grid[0][0],grid[rows-1][cols-1])
+        #try all scores
+        while left < right:
+            mid = left + (right - left) //2
+            mid += 1
+            if path_exists(0,0,mid,set()):
+                left = mid
+            else:
+                right = mid - 1
+    
+        return left #note we can return left or the right
+
+#gold old djikstras, sorta
+class Solution:
+    def maximumMinimumPath(self, grid: List[List[int]]) -> int:
+        '''
+        we can greedily take the largest neighbor cell from the current cell using a max heap
+        recall python is mean heap
+        
+        we want to choose the largest univisted neighbor cell in logarithmic time
+        
+        its not totally like djikstras, since we want the minimum value path, which we can find greedily
+        we are not finding the shortest path, so we don't need to update the minimum value for all paths
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        seen = set()
+        
+        heap = []
+        #we push as tuple (-value,x,y)
+        heapq.heappush(heap, (-grid[0][0],0,0))
+        seen.add((0,0))
+        
+        ans = grid[0][0]
+        
+        while heap:
+            curr_val,curr_x,curr_y = heapq.heappop(heap)
+            
+            #update ans for min path
+            ans = min(ans,grid[curr_x][curr_y])
+            
+            #if we have gotten to the end
+            if (curr_x,curr_y) == (rows - 1, cols - 1):
+                break
+            
+            for dx,dy in dirrs:
+                neigh_x = curr_x + dx
+                neigh_y = curr_y + dy
+                #bounds check
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #havne't seen it yet
+                    if (neigh_x,neigh_y) not in seen:
+                        heapq.heappush(heap, (-grid[neigh_x][neigh_y],neigh_x,neigh_y))
+                        seen.add((neigh_x,neigh_y))
+        
+        return ans
+
+#union find
+class DSU:
+    def __init__(self,N):
+        #for sizes
+        self.ranks = [1]*N
+        #recall each cell will point to itself, we no longer need to index by (i,j), but rather i*cols + col
+        self.roots = list(range(N))
+        
+    def find(self,x):
+        if x != self.roots[x]:
+            self.roots[x] = self.find(self.roots[x])
+        return self.roots[x]
+    
+    def union(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        if parent_x != parent_y:
+            if self.ranks[parent_x] > self.ranks[parent_y]:
+                self.roots[parent_y] = parent_x
+            elif self.ranks[parent_x] < self.ranks[parent_y]:
+                self.roots[parent_x] = parent_y
+            else:
+                self.ranks[parent_x] += 1
+                self.roots[parent_y] = parent_x
+                
+
+class Solution:
+    def maximumMinimumPath(self, grid: List[List[int]]) -> int:
+        '''
+        finally we can use union find!
+        
+        recally we can maximise the score of a path by always picking the unvisited cell with the largest value
+        to determine what order we should visit cells, we sort them by their values
+        each tim we visit a cell, mark as visited and then use union find to connect this celll with unvisited neighbors!
+        after visitng each cell, we just check it top left and bottomr right are connected, i.e they are part of the same group
+        
+        recall this union by rank and path compression
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        dsu = DSU(rows*cols)
+        
+        seen = set()
+        
+        #sort from cells by value from large to smal
+        vals = [(row, col) for row in range(rows) for col in range(cols)]
+        vals.sort(key = lambda x: grid[x[0]][x[1]], reverse = True)
+        
+        #now go over the cells in values and lets try to union them
+        for curr_row,curr_col in vals:
+            curr_pos = curr_row*cols + curr_col
+            #mark in seen
+            seen.add((curr_row,curr_col))
+            
+            #mark and explore
+            for dx,dy in dirrs:
+                neigh_row = curr_row + dx
+                neigh_col = curr_col + dy
+                next_pos = neigh_row*cols + neigh_col
+                
+                #bounds and not seen
+                if 0 <= neigh_row < rows and 0 <= neigh_col < cols:
+                    if (neigh_row,neigh_col) not in seen:
+                        dsu.union(curr_pos,next_pos)
+                        
+            #able to to bottom right and top left connection
+            if dsu.find(0) == dsu.find(rows*cols - 1):
+                return grid[curr_row][curr_col]
+        
+        return -1
+
+            
+
+#################################
+# 74. Search a 2D Matrix
+# 30MAR22
+#################################
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        '''
+        good enough interview solution would be to just binary searach along each row
+        watch boundy counditions, set right to len instead len - 1, 
+        we never have to index into the right side
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+
+        
+        def binary_search(row,target):
+            left = 0
+            right = cols
+            while left < right:
+                mid = left + (right - left) // 2
+                if row[mid] == target:
+                    return True
+                elif row[mid] < target:
+                    left = mid + 1
+                else:
+                    right = mid
+            
+            return False
+        
+        
+        for row in matrix:
+            if binary_search(row,target):
+                return True
+        
+        return False
+
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        '''
+        notice how we could turn the matrix into an array
+        which we do then just do binary search
+        
+        so how do we index an element into a matrix using (i,j)?
+        we have rows*cols elements
+        
+        its rowindex = idx //n
+        its colindx = idx % n
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        if rows == 0:
+            return False
+        
+        #binary seacrh
+        left = 0
+        right = rows*cols
+        
+        while left < right:
+            #find index as if it were in array form
+            array_index = left + (right - left) //2
+            #get element
+            matrix_element = matrix[array_index // cols][array_index % cols]
+            if target == matrix_element:
+                return True
+            elif target < matrix_element:
+                right = array_index
+            else:
+                left = array_index + 1
+        
+        return False
+
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        '''
+        we can do two binary searches one to find the row where the tagret might be
+        i.e, taget must be in between row[start] and row[end]
+        we can do binary search to find this
+        
+        with the row candidate row found, we binary serch in this row
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        if rows == 0 or cols == 0:
+            return False
+        
+        def bin_search_row(target):
+            left = 0
+            right = rows-1
+            while left <= right:
+                mid = left + (right - left) // 2
+                #in this row
+                if matrix[mid][0] <= target <= matrix[mid][cols-1]:
+                    return mid
+                elif matrix[mid][0] > target:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            return -1
+        
+        def bin_search_col(row_idx,target):
+            left = 0
+            right = cols
+            
+            while left <= right:
+                mid = left + (right - left) // 2
+                if matrix[row_idx][mid] == target:
+                    return mid
+                elif matrix[row_idx][mid] > target:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            return -1
+        
+        
+        row_idx = bin_search_row(target)
+        if row_idx == -1:
+            return False
+        c = bin_search_col(row_idx,target)
+        return c != -1
+
+#saddle back search
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        '''
+        we can also use saddle back search,
+        we just need to start from a corner in the matrix where we can go up or down in value
+        bottom right, or upper left
+        '''
+        start_row = 0
+        start_col = len(matrix[0]) - 1
+        
+        while start_row < len(matrix) and start_col >= 0:
+            if matrix[start_row][start_col] > target:
+                start_col -= 1
+            elif matrix[start_row][start_col] < target:
+                start_row  += 1
+            else:
+                return True
+        
+        return False
+
+#################################
+# 410. Split Array Largest Sum
+# 31MAR22
+#################################
+#top down dp
+class Solution:
+    def splitArray(self, nums: List[int], m: int) -> int:
+        '''
+        we want to minimize the large sum among all the m sub arrays
+        note:
+            if m == len(nums):
+                the answer is just max(nums)
+            if m == 1
+                the answer is the sum of the array
+                
+        thus we are bounded by [max(nums),sum(nums)]
+        
+        note there are (n-1 CHOOSE m-1) possible ways we would split the array nums into m contiguous sub arrays
+        as we are passing the array we either choose to include it, or start a new sub array
+        
+        first lets start building the subarray, so we are at index i, 
+        currently we are at [0,i] now we need tod ecided the vlaue of index i
+        once we have deicded the value of i, we can find the sum for the first sub array sum(nums[0:i])
+        then we can reduce the problem on the nums[i+1:N]
+        
+        we simplify the problem of finding the max value of sum(nums[0:i]) and the largest sum of the subabary in the rang [i+1,n-1] with m-1 sub arrays
+        we try every possible i
+        reccurence
+        rec(curr_index,subarray_count) is the minimum largest subarray sum for the array [curr_index,n-1] with subarrayCount subarrays
+        
+        F[currIndex, subarrayCount] = min( max(sum[currIndex, i], F[i + 1, subarrayCount - 1]) ), For all i in range [currIndex, n - subarrayCount]
+        
+        remember we need to try to reduce the problem to subproblems so we can solve them!
+        
+        notes:
+            f(i+1,subarryCount-1) represents the smallest subarray in the range [i+1,n-1] having subarraucount - 1 subarrayys
+            sum[currindex,i] is sum in nums spanning this range
+            we take the max of these two values
+                the expression as a whole represents the largest sum subarray in the range [currIndex,n-1] with subarrayCount subarrays at splitting on i
+            to fin the optimal split giving the min we minimuze i in the range [currIndex, n-subarraycount]
+        
+        notice we reduce the ending point to n-subarray count instead of n-1
+        if i > n - subarrayCount, we won't be able to make m subarrays 
+        basecase is when subarray count is 1, which is just sum nums
+        
+        algo:
+            1. generate pref sum array to find sums in contant time using indices
+            2. starte with 0 as currIndex and number of subarray as m -> overall problem of finding m subarray in range [0,n-1] such that the minimze the largest sum in the subarrays
+            3. select wich elements go in the current subarray by traversing over the indices starting from currIndex to N-subarraycount
+                * use prefsum to find sum element in current subarray (fristSplitSum)
+                * recurse to fin the min by checking all i in that range
+                * take the max of these two values
+            4. return answer, dont forget to memoize
+            
+        pruning:
+             In the for loop for traversing i, once firstSplitSum is larger than minimumLargestSplitSum it is impossible for us to find a better minimumLargestSplitSum because firstSplitSum will only continue to increase (because all numbers are non-negative) and so does the largestSplitSum.
+        
+        #thoughts on passing an interview
+        for checking of all i, we could just do N-1
+        we don't need to prine
+        '''
+        N = len(nums)
+        pref_sum = [0] + list(itertools.accumulate(nums))
+        
+        memo = {}
+        
+        def dp(curr_index,subarray_count):
+            #basecase ,only 1 subarray, take the whole thing
+            if subarray_count == 1:
+                return pref_sum[N] - pref_sum[curr_index]
+            
+            if (curr_index, subarray_count) in memo:
+                return memo[(curr_index, subarray_count)]
+            #otherwise use recurrence relations
+            minimum_largest_split_sum = pref_sum[N]
+            #check all i
+            for i in range(curr_index,N-subarray_count+1):
+                #get the first split
+                first_split_sum = pref_sum[i+1] - pref_sum[curr_index]
+                #we want the max of this frist split and the next subporblem
+                largest_split_sum = max(first_split_sum, dp(i+1,subarray_count-1))
+                #minimize 
+                minimum_largest_split_sum = min(minimum_largest_split_sum,largest_split_sum)
+                #pruneing, if we can't make a smaller largest split
+                if first_split_sum >= minimum_largest_split_sum:
+                    break
+            
+            memo[(curr_index, subarray_count)] = minimum_largest_split_sum
+            return minimum_largest_split_sum
+        
+        return dp(0,m)
+
+#bottom up dp
+class Solution:
+    def splitArray(self, nums: List[int], m: int) -> int:
+        '''
+        translate to bottom up dp,
+        but start with subaary count 1 and work way up to m+1,
+        we want m, but to index into me need to allow for m+1
+        '''
+        N = len(nums)
+        pref_sum = [0] + list(itertools.accumulate(nums))
+        
+        dp = [[0]*(m+1) for _ in range(N)]
+        
+        
+        for subarray_count in range(1,m+1):
+            for curr_index in range(N):
+                #base case
+                if subarray_count == 1:
+                    dp[curr_index][subarray_count] = pref_sum[N] - pref_sum[curr_index]
+                    continue
+
+                minimum_largest_split_sum = pref_sum[N]
+                #check all i
+                for i in range(curr_index,N-subarray_count+1):
+                    #get the first split
+                    first_split_sum = pref_sum[i+1] - pref_sum[curr_index]
+                    #we want the max of this frist split and the next subporblem
+                    largest_split_sum = max(first_split_sum, dp[i+1][subarray_count-1])
+                    #minimize 
+                    minimum_largest_split_sum = min(minimum_largest_split_sum,largest_split_sum)
+                    #pruneing, if we can't make a smaller largest split
+                    if first_split_sum >= minimum_largest_split_sum:
+                        break
+
+                dp[curr_index][subarray_count] = minimum_largest_split_sum
+
+        return dp[0][m]
+        
+#binary search
+class Solution:
+    def splitArray(self, nums: List[int], m: int) -> int:
+        '''
+        we can us binsry search to solve this problem
+        recall we want to minimze the largest sum having m subarrays
+        if m == len(nums), the anser is just max(nums)
+        if m == 1, the answer is just sum(nums)
+        
+        lets see if we can make m subarrays using a max value S
+        if we can make M subarrays having max value S, then we can check S+1
+        if we can't, then cannot possible make the alrgest value with S+1
+        
+        we degenerate the problem into :
+            given an array of n integers and value X, determine the minimum number of subarrays the array nees to be divided into such that no subarray sum is gretae than X
+            
+        if the minimum number of subarray is less than or reuql to m, then X could be teh largest subarray sum
+        
+        intuition:
+            * first make sure X is >= to the max element in the array
+            * starting rom the 0'th index, keep adding to get a sum, such that when adding an element to this current subarray we are still less than X
+            * if we can't we need to start a split here for a new subarray
+            * once we have traversed the whole array,, return splits + 1, which gives the count of the minimum number of subarrays
+            
+        if we can split the array into m or fewere subarray for a value of X, then we can certainl do it for all values greater than X
+        why? because the number of subarray would have been even less in the cass for a larger value greater than X
+        if we can't make at least m subarray, our X is too big, do so need to try a smaller x
+        '''
+        def count_splits(max_value):
+            curr_subarray_sum = 0
+            curr_splits = 1
+            
+            for num in nums:
+                if num + curr_subarray_sum <= max_value:
+                    curr_subarray_sum += num
+                else:
+                    curr_subarray_sum = num
+                    curr_splits += 1
+            
+            #return the number of subarrays
+            return curr_splits
+        
+        #Define the left and right boundary of binary search
+        left = max(nums)
+        right = sum(nums)
+        while left <= right:
+            # Find the mid value
+            max_sum_allowed = (left + right) // 2
+            
+            # Find the minimum splits. If splits_required is less than
+            # or equal to m move towards left i.e., smaller values
+            if count_splits(max_sum_allowed) <= m:
+                right = max_sum_allowed - 1
+                minimum_largest_split_sum = max_sum_allowed
+            else:
+                # Move towards right if splits_required is more than m
+                left = max_sum_allowed + 1
+        
+        return minimum_largest_split_sum
+                    
