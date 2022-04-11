@@ -599,3 +599,678 @@ class Solution(object):
                 x -= 1
             MAX = max(MAX, area)
         return MAX
+
+##############################
+# 923. 3Sum With Multiplicity
+# 06APR22
+###############################
+#doesn't count all multiplicites
+class Solution:
+    def threeSumMulti(self, arr: List[int], target: int) -> int:
+        '''
+        we can use standard two pointer trick
+        sort, pick all starting,
+        then two pointer from starting when summ == target
+        '''
+        mod = 10**9 + 7
+        N = len(arr)
+        count = 0
+        
+        #sort the array
+        arr.sort()
+        for i in range(N):
+            j = i+1
+            k = N-1
+            while j < k:
+                #matches target
+                if arr[i] + arr[j] + arr[k] == target:
+                    count += 1
+                    j += 1
+                    k -= 1
+                #if less
+                elif arr[i] + arr[j] + arr[k] < target:
+                    j += 1
+                else:
+                    k -= 1
+                
+                count = count % mod
+        
+        return count
+            
+#count combinations
+        mod = 10**9 + 7
+        count = 0 
+        N = len(arr)
+        arr.sort()
+        
+        for i in range(N):
+            #apply two sum with points j and k
+            twoSum = target - arr[i]
+            j = i + 1
+            k = N -1
+            while j < k:
+                if arr[j] + arr[k] < twoSum:
+                    j += 1
+                elif arr[j] + arr[k] > twoSum:
+                    k -= 1
+                #at some point these two will equal twoSum, and case 1 are differnt
+                elif arr[j] != arr[k]:
+                    #cound the number of times weve moved left and riight
+                    left = 1
+                    right = 1
+                    while j + 1 < k and arr[j] == arr[j+1]:
+                        left += 1
+                        j += 1
+                    while k - 1 > j and arr[k] == arr[k-1]:
+                        right += 1
+                        k -= 1
+                    
+                    #how many pairs have we contirbuted
+                    count += left*right #the multiplicities
+                    count %= mod
+                    #from two sum
+                    j += 1
+                    k -= 1
+                else:
+                    #htey are equal and all the same, case 2
+                    M = (k-j+1)
+                    count += M*(M-1) / 2
+                    count %= mod
+                    break
+        return count
+
+#########################
+# 1046. Last Stone Weight
+# 07APR22
+##########################
+class Solution:
+    def lastStoneWeight(self, stones: List[int]) -> int:
+        '''
+        we can just use a a max heap
+        pop two,smash and add back in the reult of the smach
+        keep doing while len(heap) > 1
+        '''
+        
+        stones = [-stone for stone in stones]
+        heapq.heapify(stones)
+        
+        while len(stones) > 1:
+            first = - heapq.heappop(stones)
+            second = - heapq.heappop(stones)
+            if first == second:
+                continue
+            else: 
+                heapq.heappush(stones, -(first-second))
+                
+        return -heappop(stones) if stones else 0
+
+#bucket sort
+class Solution:
+    def lastStoneWeight(self, stones: List[int]) -> int:
+        '''
+        we can use bucket sort so sort the weights of thes stones
+        then we need to start from the max weight
+        if the largest weight can be smashed together, reduce its count
+        '''
+        max_weight = max(stones)
+        buckets = [0]*(max_weight + 1)
+        
+        #bucket sort
+        for weight in stones:
+            buckets[0] += 1
+            
+        #scane through buckets
+        biggest_weight = 0 #we don't have a weight yet
+        curr_weight = max_weight
+        
+        while curr_weight > 0:
+            #if there are no rocks to smash as this weight keep going
+            if buckets[curr_weight] == 0:
+                curr_weight -= 1
+            #othwerwise its not zero, but we need an update to the biggest weight
+            elif biggest_weight == 0:
+                #try to smash
+                buckets[curr_weight] %= 2
+                #if we are left with one, we have a new biggest weight
+                if buckets[curr_weight] == 1:
+                    biggest_weight = curr_weight
+                curr_weight -= 1
+            else:
+                #its one, so use it up
+                buckets[curr_weight] -= 1
+                if biggest_weight - curr_weight <= curr_weight:
+                    #add in a new stone
+                    buckets[biggest_weight - curr_weight] += 1
+                    biggest_weight = 0
+                else:
+                    #this becomes the new biggest stone
+                    biggest_weight -= curr_weight
+                    
+        
+        return biggest_weight
+
+
+#######################################
+# 703. Kth Largest Element in a Stream
+# 08APR22
+#######################################
+from sortedcontainers import SortedList
+class KthLargest():
+
+    def __init__(self, k: int, nums: List[int]):
+        '''
+        we will always have to return the kth largest
+        i can insert every time and sort, but the would be slow since add is called 10**4 times
+        i can use a sorted container
+        '''
+        self.sl = SortedList(nums)
+        self.k = k
+        
+
+    def add(self, val: int) -> int:
+        self.sl.add(val)
+        return self.sl[-self.k]
+
+
+# Your KthLargest object will be instantiated and called as such:
+# obj = KthLargest(k, nums)
+# param_1 = obj.add(val)
+
+#min heap
+class KthLargest:
+
+    def __init__(self, k: int, nums: List[int]):
+        '''
+        i can use a heap to keep only k elements
+        if i ever for more than k, i need to clear them
+        
+        if we only ever have k elements, and of these k we want the kth largest
+        really we just want the minimum of k elements
+        '''
+        #frist heappofy nums
+        self.k = k
+        self.heap = nums
+        heapq.heapify(self.heap)
+        
+        #take only k elements
+        while len(self.heap) > k:
+            heapq.heappop(self.heap)
+
+    def add(self, val: int) -> int:
+        heapq.heappush(self.heap,val)
+        #more than k
+        if len(self.heap) > self.k:
+            heapq.heappop(self.heap)
+        return self.heap[0]
+        
+
+
+# Your KthLargest object will be instantiated and called as such:
+# obj = KthLargest(k, nums)
+# param_1 = obj.add(val)
+
+#########################################
+# 604. Design Compressed String Iterator
+# 08MAR22
+##########################################
+#close one
+class StringIterator:
+
+    def __init__(self, compressedString: str):
+        '''
+        i need a way to get the letter and its number
+        the numbers could be very big, it could Z999999....999999
+        start from the end of the array
+        get the digit, then get the number and put into [char,num times]
+        then ptr manip to read next and has next
+        '''
+        self.char_num = []
+        N = len(compressedString)
+        
+        i = N - 1
+        
+        while i > 0:
+            j = i
+            #start getting the count
+            count = 0
+            while compressedString[j].isdigit():
+                count *= 10
+                count += int(compressedString[j])
+                j -= 1
+            #we now have its count and j is on the letter
+            self.char_num.append([compressedString[j],count])
+            #move over one more
+            i = j - 1
+            
+        #just reverse char num so we don't get fucked up
+        self.char_num = self.char_num[::-1]
+        self.N = len(self.char_num)
+        self.ptr = 0
+
+    def next(self) -> str:
+        if self.ptr < self.N and self.char_num[self.ptr][1] > 0:
+            #take away the count for the curret char
+            self.char_num[self.ptr][1] -= 1
+            ans = self.char_num[self.ptr][0]
+        else:
+            #can't sue this char, go to the next one
+            self.ptr += 1
+            ans = self.char_num[self.ptr][0]
+            self.char_num[self.ptr][1] -= 1
+            
+        return ans
+
+    def hasNext(self) -> bool:
+        return self.ptr < self.N
+        
+
+
+# Your StringIterator object will be instantiated and called as such:
+# obj = StringIterator(compressedString)
+# param_1 = obj.next()
+# param_2 = obj.hasNext()
+
+#better way
+class StringIterator:
+
+    def __init__(self, compressedString: str):
+        '''
+        i need a way to get the letter and its number
+        the numbers could be very big, it could Z999999....999999
+        start from the end of the array
+        get the digit, then get the number and put into [char,num times]
+        then ptr manip to read next and has next
+        '''
+        self.char_num = []
+        N = len(compressedString)
+        i = 0
+        
+        while i < N:
+            char = compressedString[i]
+            i += 1
+            #start getting the count
+            count = 0
+            while i < N and compressedString[i].isdigit():
+                count = count*10 + int(compressedString[i])
+                i += 1
+            #we now have its count and j is on the letter
+            self.char_num.append([char,count])
+
+            
+        #just reverse char num so we don't get fucked up
+        self.N = len(self.char_num)
+        self.ptr = 0
+
+    def next(self) -> str:
+        print(self.char_num)
+        if self.ptr < self.N and self.char_num[self.ptr][1] > 0:
+            #take away the count for the curret char
+            self.char_num[self.ptr][1] -= 1
+            ans = self.char_num[self.ptr][0]
+        else:
+            #can't sue this char, go to the next one
+            self.ptr += 1
+            ans = self.char_num[self.ptr][0]
+            self.char_num[self.ptr][1] -= 1
+            
+        return ans
+
+    def hasNext(self) -> bool:
+        return self.ptr < self.N
+
+#using regex
+import re
+class StringIterator:
+
+    def __init__(self, compressedString: str):
+        '''
+        we can use a regex expression to find the right patterns it would be 'letter' followed by 'num times of letter'
+        we can use the pattern '\D\d+'
+         means a non-digit character, followed by 1 or more digit characters. (The + denotes a kleene plus, a wildcard character meaning "one or more of the preceding match.")
+        '''
+        self.tokens = []
+        pattern = '\D\d+'
+        for token in re.findall(pattern,compressedString):
+            self.tokens.append([token[0],int(token[1:])])
+        #reverse
+        self.tokens = self.tokens[::-1]
+        
+
+    def next(self) -> str:
+        if not self.tokens:
+            return ' '
+        char,count = self.tokens.pop()
+        if count > 1:
+            self.tokens.append([char,count-1])
+        return char
+
+    def hasNext(self) -> bool:
+        return len(self.tokens) > 0
+
+#absorbing cost in the the next call
+class StringIterator:
+
+    def __init__(self, compressedString: str):
+        '''
+        instead of just building out all uncompressed string in the constructor, we can build it in the next call
+        the contstuctor is O(1)
+        next is amortized O(1)
+        '''
+        self.res = compressedString
+        self.ptr = 0
+        self.count = 0
+        self.ch = ' '
+
+    def next(self) -> str:
+        #if there is no next
+        if not self.hasNext:
+            return ' '
+        if self.count == 0:
+            #get the char
+            self.ch = self.res[self.ptr]
+            self.ptr += 1
+            while self.ptr < len(self.res) and self.res[self.ptr].isdigit():
+                self.count = self.count*10 + int(self.res[self.ptr])
+                self.ptr += 1
+        
+        #use up
+        self.count -= 1
+        return self.ch
+        
+    def hasNext(self) -> bool:
+        return self.ptr != len(self.res) or self.count != 0
+
+####################################
+# 09APR22
+# 347. Top K Frequent Elements
+####################################
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        '''
+        i cant count then sort
+        '''
+        counts = Counter(nums)
+        ans = []
+        for num,count in counts.most_common():
+            ans.append(num)
+            k -= 1
+            if k == 0:
+                break
+        
+        return ans
+
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        #special case when k == nums:
+        if k == len(nums):
+            return nums
+        
+        #lets count
+        counts = Counter(nums)
+        
+        #init heap
+        heap = []
+        
+        for num,count in counts.items():
+            heapq.heappush(heap,(-num,count))
+            if len(heap) > k:
+                heapq.heappop(heap)
+        
+        
+        ans = []
+        
+        while heap:
+            temp = heapq.heappop(heap)
+            ans.append(-temp[0])
+        
+        return ans
+
+import heapq
+from collections import Counter
+class Solution:
+    def topKFrequent(self, nums, k):
+        res = []
+        dic = Counter(nums)
+        max_heap = [(-val, key) for key, val in dic.items()]
+        heapq.heapify(max_heap)
+        for i in range(k):
+            res.append(heapq.heappop(max_heap)[1])
+        return res   
+
+#using n largest
+from collections import Counter
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]: 
+        # O(1) time 
+        if k == len(nums):
+            return nums
+        
+        # 1. build hash map : character and how often it appears
+        # O(N) time
+        count = Counter(nums)   
+        # 2-3. build heap of top k frequent elements and
+        # convert it into an output array
+        # O(N log k) time
+        return heapq.nlargest(k, count.keys(), key=count.get) 
+
+#quick select
+class Solution:
+    def topKFrequent(self, nums: List[int], k: int) -> List[int]:
+        '''
+        we can also use quick select here, typically involves choosing the k'th something
+        it was created by Tony Hoare, and is called Hoare's algorithm
+        
+        average O(N), but in the worst case can be O(N**2), but probability is negligible
+        
+        intution:
+        One chooses a pivot and defines its position in a sorted array in a linear time using so-called partition algorithm.
+        count of the counts of each number, then for each numbe place it in in sorted array using the count as the pivot
+        recruse on the left or right parts until we have met N-k condition
+        
+        it would be a quicksort if we recursed on the whole array
+        but we can discard the k-1 part of the k+1 part
+        
+        algo:
+            count the freq count of the array
+            work with unique array, and use partition scheemt to place the pivot into its perfect positiosn in the sorted array
+            move less frequent elements to th left and more frequent elements to the right
+            compare pivot index and N-k
+                if pivot_index == N-k, the pivot is the N-kth most frequent element, so we can everything to the right, inclusive
+                otherrise recuse on the left side
+                
+        partition shcheme: we use a variant of Lomuto
+            * move pivot at the end of the array using swap
+            * set pointer at the beginning of the array : stor_index = left
+            * itratore over teh array and move all less frequent elements to theft left (i.e swap(store_index,i))
+            * move store_inde one steap to the right after each swap
+            * move the pivot to its final place
+        '''
+        count = Counter(nums)
+        unique = list(count.keys())
+        
+        def partition(left, right, pivot_index) -> int:
+            pivot_frequency = count[unique[pivot_index]]
+            # 1. move pivot to end
+            unique[pivot_index], unique[right] = unique[right], unique[pivot_index]  
+            
+            # 2. move all less frequent elements to the left
+            store_index = left
+            for i in range(left, right):
+                if count[unique[i]] < pivot_frequency:
+                    unique[store_index], unique[i] = unique[i], unique[store_index]
+                    store_index += 1
+
+            # 3. move pivot to its final place
+            unique[right], unique[store_index] = unique[store_index], unique[right]  
+            
+            return store_index
+        
+        def quickselect(left, right, k_smallest) -> None:
+            """
+            Sort a list within left..right till kth less frequent element
+            takes its place. 
+            """
+            # base case: the list contains only one element
+            if left == right: 
+                return
+            
+            # select a random pivot_index
+            pivot_index = random.randint(left, right)     
+                            
+            # find the pivot position in a sorted list   
+            pivot_index = partition(left, right, pivot_index)
+            
+            # if the pivot is in its final sorted position
+            if k_smallest == pivot_index:
+                 return 
+            # go left
+            elif k_smallest < pivot_index:
+                quickselect(left, pivot_index - 1, k_smallest)
+            # go right
+            else:
+                quickselect(pivot_index + 1, right, k_smallest)
+        
+        n = len(unique) 
+        # kth top frequent element is (n - k)th less frequent.
+        # Do a partial sort: from less frequent to the most frequent, till
+        # (n - k)th less frequent element takes its place (n - k) in a sorted array. 
+        # All element on the left are less frequent.
+        # All the elements on the right are more frequent.  
+        quickselect(0, n - 1, n - k)
+        # Return top k frequent elements
+        return unique[n - k:]
+
+#using bucket sort
+class Solution:
+    def topKFrequent(self, nums, k):
+        bucket = [[] for _ in range(len(nums) + 1)]
+        Count = Counter(nums).items()  
+        for num, freq in Count: bucket[freq].append(num) 
+        flat_list = list(chain(*bucket))
+        return flat_list[::-1][:k]
+
+##############################
+# 10APR22
+# 682. Baseball Game
+##############################
+class Solution:
+    def calPoints(self, ops: List[str]) -> int:
+        '''
+        we can just use stack to get the operations, kinda like post fix notication
+        just follow the rules
+        '''
+        stack = []
+        for op in ops:
+            if op == '+':
+                stack.append(stack[-1] + stack[-2])
+            elif op == 'C':
+                stack.pop()
+            elif op == 'D':
+                stack.append(2 * stack[-1])
+            else:
+                stack.append(int(op))
+
+        return sum(stack)
+
+###############################################
+# 10APR22
+# 1874. Minimize Product Sum of Two Arrays
+##############################################
+class Solution:
+    def minProductSum(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        i want to return the minimum dot product for nums1 and nums2, where i can have any permutation of nums1
+        brute force would be to examine all permutations of nums1, and take the minimum dot product with nums2
+        elements are always positive
+        
+        given numbes a and b a*b - (a-1)*(b-1)
+        a**2 + b**2 - 2ab - ab
+        a**2 + b**2 - ab > 0 for all a and b that are non negative
+        implying (a-1)*(b-1) > a*b
+        
+        a**2 - ab
+        a(a-b)
+        
+        rather say we have number x, we can get x**2
+        x(x-1) vs x**2
+        x**2 - x 
+        
+        to get the smallest product sum of two arrays we want to multiply two numbers that are far apart
+        
+        the tidbit for saying that we can only permute nums1, really means we can match any element in nums1 to nums2
+        we pair the smallest elemtnet in nums1 to the largetst element in nums2
+        sort nums1, reverse sort nums2, find the dot product
+        '''
+        nums1.sort()
+        nums2.sort(reverse = True)
+        ans = 0
+        for x,y in zip(nums1,nums2):
+            ans += x*y
+        
+        return ans
+
+#using PQ
+class Solution:
+    def minProductSum(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we can use a max heap
+        we sort num1, but push elements of nums2 on to a max heap
+        '''
+        nums1.sort()
+        
+        nums2_heap = [-num for num in nums2]
+        heapq.heapify(nums2_heap)
+        
+        ans = 0
+        
+        for i in range(len(nums2)):
+            ans += nums1[i]*(-heapq.heappop(nums2_heap))
+            
+        return ans
+
+#counting sort
+class Solution:
+    def minProductSum(self, nums1: List[int], nums2: List[int]) -> int:
+        # Initialize counter1 and counter2.
+        counter1, counter2 = [0] * 101, [0] * 101
+
+        # Record the number of occurrence of elements in nums1 and nums2.
+        for num in nums1:
+            counter1[num] += 1
+        for num in nums2:
+            counter2[num] += 1
+        
+        # Initialize two pointers p1 = 1, p2 = 100.
+        # Stands for counter1[1] and counter2[100], respectively.
+        p1, p2 = 1, 100
+        ans = 0
+        
+        # While the two pointers are in the valid range.
+        while p1 <= 100 and p2 > 0:
+
+            # If counter1[p1] == 0, meaning there is no element equals p1 in counter1,
+            # thus we shall increment p1 by 1.
+            while p1 <= 100 and counter1[p1] == 0:
+                p1 += 1
+
+            # If counter2[p2] == 0, meaning there is no element equals p2 in counter2,
+            # thus we shall decrement p2 by 1.
+            while p2 > 0 and counter2[p2] == 0:
+                p2 -= 1
+
+            # If any of the pointer goes beyond the border, we have finished the 
+            # iteration, break the loop.
+            if p1 == 101 or p2 == 0:
+                break
+
+            # Otherwise, we can make at most min(counter1[p1], counter2[p2]) 
+            # pairs {p1, p2} from nums1 and nums2, let's call it occ. 
+            # Each pair has product of p1 * p2, thus the cumulative sum is 
+            # incresed by occ * p1 * p2. Update counter1[p1] and counter2[p2].
+            occ = min(counter1[p1], counter2[p2])
+            ans += occ * p1 * p2
+            counter1[p1] -= occ
+            counter2[p2] -= occ
+        
+        # Once we finish the loop, return ans as the product sum.
+        return ans       
