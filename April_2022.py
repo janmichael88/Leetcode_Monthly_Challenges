@@ -1273,4 +1273,422 @@ class Solution:
             counter2[p2] -= occ
         
         # Once we finish the loop, return ans as the product sum.
-        return ans       
+        return ans
+
+########################
+# 11APR22
+# 1260. Shift 2D Grid
+########################       
+#using space at each iteration
+class Solution:
+    def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        it shifts like an S shape, with wrap around from bottom right to top left
+        brute force would be
+        50*50*100, which isn't too bad
+        
+        basically each elements gets shift over one to the right, if it can
+        if we are in the last col, we move element to the next row first col
+        then bottom right gets sent to top left
+        '''
+        num_rows, num_cols = len(grid), len(grid[0])
+
+        for _ in range(k):
+            # Create a new grid to copy into.
+            new_grid = [[0] * num_cols for _ in range(num_rows)]
+
+            # Case 1: Move everything not in the last column.
+            for row in range(num_rows):
+                for col in range(num_cols - 1):
+                    new_grid[row][col + 1] = grid[row][col]
+
+            # Case 2: Move everything in last column, but not last row.
+            for row in range(num_rows - 1):
+                 new_grid[row + 1][0] = grid[row][num_cols - 1]
+
+            # Case 3: Move the bottom right.
+            new_grid[0][0] = grid[num_rows - 1][num_cols - 1]
+
+            grid = new_grid
+
+        return grid
+
+class Solution:
+    def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        we can swap the value in place
+        in the last approach, we allocated a new 2d array
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        for _ in range(k):
+            prev = grid[-1][-1]
+            
+            for row in range(rows):
+                for col in range(cols):
+                    #save what is curretnly there
+                    temp = grid[row][col]
+                    grid[row][col] = prev
+                    prev = temp
+        
+        return grid
+
+#using modular arithmetic
+class Solution:
+    def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        we can calculate what the final i,j positions will be after k steps using modular arithmetic
+        the value of the column will change k times
+        in fact new_col = (col + k) % num_cols
+        we cant think of modulo as subtracting the number k from col + k until we have less than k left 
+        similar to gcd
+        
+        finding the row is a little trickier
+        notice that the new row value does not change as often as the new col value
+        
+        since the value of the row goes up when we move from the last col to the first col, we need to determine how many times the value moves from the last to first col
+        
+        we look at the quotionet this time
+        
+        new_col = (j + k) % num_cols
+        
+        number_of_increments = (j + k) / num_cols
+        new_row = (i + number_of_increments) % num_rows
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        new_grid = [[0]*rows for _ in range(cols)]
+        
+        for row in range(rows):
+            for col in range(cols):
+                #find new row and new col
+                new_col = (col + k) % cols
+                num_times_around = (col + k) // cols
+                new_row = (row + num_times_around) % rows
+                new_grid[new_row][new_col] = grid[row][col]
+        
+        return new_grid
+
+#another way
+class Solution:
+    def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        another way is think of the grid as 1 1d array, then we just shift k times at most rows*cols
+        convert its position in the array back to it next index
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        N = rows*cols
+        
+        new_grid = [[0]*cols for _ in range(rows)]
+        
+        for i in range(N):
+            #shift i
+            new_i = (i + k) % N
+            #fin back
+            old_row,old_col = divmod(i,cols)
+            #find this column
+            new_row,new_col = divmod(new_i,cols)
+            new_grid[new_row][new_col] = grid[old_row][old_col]
+        
+        return new_grid
+
+#in place
+class Solution:
+    def shiftGrid(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        another way is think of the grid as 1 1d array, then we just shift k times at most rows*cols
+        convert its position in the array back to it next index
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        N = rows*cols
+        
+        count = 0
+        i = 0
+        
+        while count < N:
+            #shift i
+            new_i = (i + k) % N
+            #find old position back
+            old_row,old_col = divmod(i,cols)
+            curr  = grid[old_row][old_col]
+            
+            while True:
+                #find this new row and column
+                new_row,new_col = divmod(new_i,cols)
+                #swap
+                grid[new_row][new_col],curr = curr, grid[new_row][new_col]
+                #increase count
+                count += 1
+                if i == new_i:
+                    break
+                #update new_i
+                new_i = (new_i + k) % N
+            i += 1
+        
+        return grid
+
+################################
+# 289. Game of Life
+# 12APR22
+################################
+class Solution:
+    def gameOfLife(self, board: List[List[int]]) -> None:
+        """
+        Do not return anything, modify board in-place instead.
+        """
+        '''
+        we can make a copy of the board and count of the live cell nieghbors for each cell in the grid
+        we use the copy as the oriignal state, and update new states in the original board
+        
+        we first define a helper function that returns the number of neighboring live counts from the current cell
+        
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        
+        #make copy of board
+        copy_board = [[board[row][col] for col in range(cols)] for row in range(rows)]
+        
+        #generate dx,dy 
+        steps = [0,1,-1]
+        
+        dirrs = []
+        for i in range(len(steps)):
+            for j in range(len(steps)):
+                if (i,j) != (0,0):
+                    dirrs.append([steps[i],steps[j]])
+        
+        def count_live(i,j):
+            count_live = 0
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                
+                #in bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    if copy_board[neigh_x][neigh_y] == 1:
+                        count_live += 1
+            return count_live
+        
+        for row in range(rows):
+            for col in range(cols):
+                count = count_live(row,col)
+                
+                #we can combine rule 1 and 3
+                if copy_board[row][col] == 1 and (count < 2 or count > 3):
+                    board[row][col] = 0
+                #rule 2
+                elif copy_board[row][col] == 1 and (count == 2 or count == 2):
+                    board[row][col] = 1
+                #rule 4
+                elif copy_board[row][col] == 0 and count == 3:
+                    board[row][col] = 1
+
+class Solution:
+    def gameOfLife(self, board: List[List[int]]) -> None:
+        """
+        Do not return anything, modify board in-place instead.
+        """
+        '''
+        to do in place we need to store the 'change in cell state' onto the oriingal boar
+        then pass the board again to apply the changes
+        
+        if cell was originally 1 and become 0, we can change this calue to -1
+        the negative now signigies a dead cell, but the magnitude signifies the cell was alive
+        
+        if cell was originally 0 but become 1 after applying the rule, then we can change the value to 2
+        the positive sign means cell is now alive, but 2 means the cell was oringally dead
+        
+        the update rules are as follows:
+            rule 1: any live cell with < 2 live neigh dies, so we change this to -1
+            rule 2: any live cell with 2 or 3, lives on, so no change
+            rule 3: any live cell with > 3 live neighbores dies, so change value to -1, we don't need to differentiate from rule 3
+            rule 4: any dead cell with == 3 live neighbords, becomes 1, so mark as 2
+            
+            or change values are coded as -1 and 2
+        
+        apply rules:
+            if value is greater than 0, it becomes 1
+            if values i < 0, it becomes 0
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        
+        #generate dx,dy 
+        steps = [0,1,-1]
+        
+        dirrs = []
+        for i in range(len(steps)):
+            for j in range(len(steps)):
+                if (i,j) != (0,0):
+                    dirrs.append([steps[i],steps[j]])
+        
+        def count_live(i,j):
+            count_live = 0
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                
+                #in bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #need original live count
+                    if abs(board[neigh_x][neigh_y]) == 1:
+                        count_live += 1
+            return count_live
+        
+        for row in range(rows):
+            for col in range(cols):
+                count = count_live(row,col)
+                
+                #we can combine rule 1 and 3
+                if board[row][col] == 1 and (count < 2 or count > 3):
+                    board[row][col] = -1
+                #rule 2
+                elif board[row][col] == 1 and (count == 2 or count == 3):
+                    board[row][col] = 1
+                #rule 4
+                elif board[row][col] == 0 and count == 3:
+                    board[row][col] = 2
+        
+        #apply changes
+        for row in range(rows):
+            for col in range(cols):
+                if board[row][col] > 0:
+                    board[row][col] = 1
+                else:
+                    board[row][col] = 0
+
+###############################
+# 617. Merge Two Binary Trees
+#  14APR22
+################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we want to over lap a tree with another tree
+        if nodes in both trees over lap, the new node becomes the sum
+        otherwise place with the exisiting node if there is a node in either of them
+        
+        i can dfs down a tree and mark each node with it index and value
+        dfs the second tree and to it into the dictionary  of index leaf and it value
+        then recreate 
+        
+        using dfs up until the last index
+        '''
+        
+        if not root1 and not root2:
+            return None
+        index_value = defaultdict(int)
+        
+        def dfs(node,index):
+            if not node:
+                return
+            index_value[index] += node.val
+            if node.left:
+                dfs(node.left,index*2)
+            if node.right:
+                dfs(node.right,index*2 + 1)
+        
+        dfs(root1,1)
+        dfs(root2,1)
+        
+        #now i need to build the fucking tree
+        ans = TreeNode(-1) #to return once done
+        #move pointer
+        curr = ans
+        
+        q = deque([(curr,1)])
+        
+        while q:
+            node,index = q.popleft()
+            #if i have this mapped
+            if index in index_value:
+                node.val = index_value[index]
+            #if i can go left
+            if index*2 in index_value:
+                #make a new node, connect left and add it to q
+                new_left = TreeNode(-1)
+                node.left = new_left #this value will be added on the enxt pop
+                q.append([new_left,index*2])
+            #if we can go right
+            if index*2 + 1 in index_value:
+                #make a new right
+                new_right = TreeNode(-1)
+                node.right = new_right
+                q.append([new_right,index*2 + 1])
+        
+        return ans
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can use recursion, 
+        if root1 is empty its obvious we must return root2
+        same goes for the other way
+        
+        otherwise sum up their values, we use the left argument as the main
+        then recurse
+        '''
+        def dfs(r1,r2):
+            if not r1:
+                return r2
+            if not r2:
+                return r1
+            #combine
+            r1.val += r2.val
+            r1.left = dfs(r1.left,r2.left)
+            r1.right = dfs(r1.right,r2.right)
+            return r1
+        
+        return dfs(root1,root2)
+
+class Solution:
+    def mergeTrees(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can also use stack to save on space
+        push two nodes on to stack for every call
+        if nodes exsist increment the sum of the frist 1 by the second one
+        '''
+        if not root1:
+            return root2
+        if not root2:
+            return root1
+        
+        stack = [(root1,root2)]
+        
+        while stack:
+            node1,node2 = stack.pop()
+            #if noth are empty
+            if not node1 or not node2:
+                continue
+            #increment
+            node1.val += node2.val
+            #if there is no left
+            if not node1.left:
+                node1.left = node2.left
+            else:
+                stack.append((node1.left,node2.left))
+                
+            #if there is a right
+            if not node1.right:
+                node1.right = node2.right
+            else:
+                stack.append((node1.right,node2.right))
+        
+        return root1
