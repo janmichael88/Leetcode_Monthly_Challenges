@@ -1692,3 +1692,93 @@ class Solution:
                 stack.append((node1.right,node2.right))
         
         return root1
+
+#################################
+# 669. Trim a Binary Search Tree
+# 15APR22
+#################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def trimBST(self, root: Optional[TreeNode], low: int, high: int) -> Optional[TreeNode]:
+        '''
+        we can do this recursively
+        we just trim if node is too passed it the low or high
+        '''
+        def dfs(node):
+            if not node:
+                return
+            if node.val > high:
+                return dfs(node.left)
+            elif node.val < low:
+                return dfs(node.right)
+            #if we can't trim we need to reconnect
+            else:
+                node.left = dfs(node.left)
+                node.right = dfs(node.right)
+                return node
+        
+        return dfs(root)
+
+#iterative with stack
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def trimBST(self, root: Optional[TreeNode], low: int, high: int) -> Optional[TreeNode]:
+        '''
+        stack implementation is tricker, but we can still do it
+        we keep a global tree answer to which we can return the answer
+        
+        then we break and make connections depending on whehter we discard left or right subtrees, IFF there are subtrees to be discarded
+        '''
+        zero = TreeNode(val=-1, right=root)
+        st = [(root, zero)]
+        while st:
+            node, parent = st.pop()
+            if not node: 
+                continue
+            
+            if node.val < low:
+                if node.right: # left subtree goes away
+                    if node.right.val > parent.val:
+                        parent.right = node.right
+                    else:
+                        parent.left = node.right
+                        
+                    st.append((node.right, parent))
+                else:
+                    if node.val > parent.val:
+                        parent.right = None
+                    else:
+                        parent.left = None
+                    
+                
+                    
+            if node.val > high:
+                if node.left: # right subtree goes away
+                    if node.left.val > parent.val:
+                        parent.right = node.left
+                    else:
+                        parent.left = node.left
+                        
+                    st.append((node.left, parent))
+                else:
+                    if node.val > parent.val:
+                        parent.right = None
+                    else:
+                        parent.left = None
+                        
+                
+            
+            st.append((node.left, node))
+            st.append((node.right, node))
+            
+        return zero.right
