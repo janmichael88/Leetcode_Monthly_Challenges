@@ -50,7 +50,7 @@ class Solution(object):
 
 ################################
 # 1087. Brace Expansion
-# 02MAR22
+# 02APR22
 ################################
 #close one!, almost getting backtracking!
 class Solution:
@@ -147,7 +147,7 @@ class Solution:
 
 ###############################
 # 31. Next Permutation
-# 03MAR22
+# 03APR22
 ###############################
 class Solution:
     def nextPermutation(self, nums: List[int]) -> None:
@@ -811,7 +811,7 @@ class KthLargest:
 
 #########################################
 # 604. Design Compressed String Iterator
-# 08MAR22
+# 08APR22
 ##########################################
 #close one
 class StringIterator:
@@ -1782,3 +1782,388 @@ class Solution:
             st.append((node.right, node))
             
         return zero.right
+
+###################################
+# 538. Convert BST to Greater Tree
+# 16APR22
+###################################
+#recursive
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can solve this recusrively prioritzing the right nodes first! 
+        we get their sums
+        the idea is to visit the nodes in descending order! keeping the sum of all values that we have already visited
+        this is reverse in order , so right, root, left
+        '''
+        self.sum = 0
+        
+        def dfs(node):
+            if not node:
+                return
+            dfs(node.right)
+            self.sum += node.val
+            node.val = self.sum
+            dfs(node.left)
+            return node
+            
+        return dfs(root)
+        
+#iterative with stack
+class Solution:
+    def convertBST(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can do this iteratively with the usual preorder way
+        but we start right first instead of left
+        '''
+        SUM = 0
+        curr = root
+        
+        stack = []
+        
+        while curr != None or len(stack) > 0:
+            #go right as far as we can
+            while curr != None:
+                stack.append(curr)
+                curr = curr.right
+            
+            #no lets process
+            curr = stack.pop()
+            #accumulate the sums
+            SUM += curr.val
+            #change value
+            curr.val = SUM
+            
+            #finall move left
+            curr = curr.left
+        
+        
+        return root
+
+
+#######################################
+# 1586. Binary Search Tree Iterator II
+# 16APR22
+#######################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class BSTIterator:
+
+    def __init__(self, root: Optional[TreeNode]):
+        '''
+        the dumb way to to just unpack the tree in the constructor
+        then just control flow using global pointer back to array of TreeNodes
+        remember this is order, as practive alwasy do in order iteratively
+        '''
+        self.nodes = []
+        curr = root
+        stack = []
+        
+        while curr != None or len(stack) > 0:
+            while curr != None:
+                stack.append(curr)
+                curr = curr.left
+            
+            curr = stack.pop()
+            self.nodes.append(curr.val)
+            curr = curr.right
+        
+        self.N = len(self.nodes)
+        self.ptr = -1
+
+    def hasNext(self) -> bool:
+        return self.ptr  < self.N - 1
+
+    def next(self) -> int:
+        self.ptr += 1
+        ans = self.nodes[self.ptr]
+        return ans
+
+    def hasPrev(self) -> bool:
+        return self.ptr > 0
+
+    def prev(self) -> int:
+        self.ptr -= 1
+        ans = self.nodes[self.ptr]
+        return ans
+
+
+# Your BSTIterator object will be instantiated and called as such:
+# obj = BSTIterator(root)
+# param_1 = obj.hasNext()
+# param_2 = obj.next()
+# param_3 = obj.hasPrev()
+# param_4 = obj.prev()
+
+#iterative
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class BSTIterator:
+    '''
+    the problem is that we parse the whole root at the Constructor level, we want average case to be amotrized O(1)
+    in the worst case, we have an un parsed left subtree that we have to traverse, so next would be worset case O(N)
+    
+    in addition to saving the value of the nodes in an array
+    we save all parsed nodes in a list and then re-use them if we need to return next from the laready parsed area of the tree
+    
+    algo:
+        Constructor
+            initialize last processed node as root, last = root
+            initialize a list to store already processed nodes arr
+            initialize service data structure to  be used during in order
+            init pointer to be -1, serves as indicator to alraeadt parsed area or not, we are only in the parsed area if pointer + 1 < len(arr)
+        
+        hasNext:
+            check if pointer + 1 < len(arr)
+        
+        next:
+            increase pointer by 1
+            if we're not in the precompute part of tree parse the bare minimumu
+                go left until you can
+                    push last node back on to stack
+                    go left
+                pop last node out of stack
+                append this node value to arr
+                go right
+            otherwise, return fro the arr
+        
+        hasPrev
+            compare the pointer to zero, 
+        prev:
+            decrease the pointer by one and return arr[pointer]
+            
+            
+    '''
+
+    def __init__(self, root: Optional[TreeNode]):
+        self.last = root #to get previous node after parsing
+        self.stack = [] #hold traveresd nodes
+        self.arr = [] #holds processed values
+        self.ptr = -1
+
+    def hasNext(self) -> bool:
+        return self.stack or self.last or self.ptr < len(self.arr) - 1
+        
+
+    def next(self) -> int:
+        #advance
+        self.ptr += 1
+        
+        #if we are outside what is left
+        if self.ptr == len(self.arr):
+            #process all predecessors of the last node, i.e go as far left as you can
+            while self.last:
+                self.stack.append(self.last)
+                self.last = self.last.left
+            #finished decesding left, get the last processed node before we invoked next
+            curr = self.stack.pop()
+            self.last = curr.right
+            
+            #add this value to arr as processed
+            self.arr.append(curr.val)
+        
+        return self.arr[self.ptr]
+            
+    def hasPrev(self) -> bool:
+        #check we can return something from the parsed array
+        return self.ptr > 0
+
+    def prev(self) -> int:
+        #go back
+        self.ptr -= 1
+        return self.arr[self.ptr]
+
+
+# Your BSTIterator object will be instantiated and called as such:
+# obj = BSTIterator(root)
+# param_1 = obj.hasNext()
+# param_2 = obj.next()
+# param_3 = obj.hasPrev()
+# param_4 = obj.prev()
+
+##################################
+# 17APR22
+# 897. Increasing Order Search Tree
+###################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def increasingBST(self, root: TreeNode) -> TreeNode:
+        '''
+        we can just unpack using in order tarversal then rebuild
+        '''
+        self.dummy = TreeNode(-1)
+        self.curr = self.dummy
+        def inorder(node):
+            if not node:
+                return
+            inorder(node.left)
+            new_node = TreeNode(node.val)
+            self.curr.right = new_node
+            self.curr = self.curr.right
+            inorder(node.right)
+        
+        inorder(root)
+        return self.dummy.right
+
+#we can use the yeild function in python too
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def increasingBST(self, root: TreeNode) -> TreeNode:
+        def inorder(node):
+            if not node:
+                return
+            yield from inorder(node.left)
+            yield node.val
+            yield from inorder(node.right)
+            
+        ans = TreeNode(-1)
+        curr = ans
+        for v in inorder(root):
+            curr.right = TreeNode(v)
+            curr = curr.right
+        
+        return ans.right
+        
+##############################
+# 17APR22
+# 628. Maximum Product of Three Numbers
+##############################
+#close one, but cant combine this way
+class Solution:
+    def maximumProduct(self, nums: List[int]) -> int:
+        '''
+        for an array of all nums > 0, the answer is trivial, just the top 3
+        if i have negative numbers, i would only want to include the negative if it made a larger product
+        
+        i can pull the largest three, and the smallest three and find the combindations of size 3 that gives the largest
+        this is constant
+        '''
+        N = len(nums)
+        
+        #size 3
+        if N == 3:
+            product = 1
+            for num in nums:
+                product *= num
+            return product
+        
+        
+        #find smalltest three and largest three
+        nums.sort()
+        smallest = nums[:3]
+        largest = nums[-3:]
+        
+        candidates = smallest + largest
+        
+        self.prod = 0
+        def rec(i,path):
+            if len(path) == 3:
+                #print(path)
+                prod = 1
+                for num in path:
+                    prod *= num
+                self.prod = max(self.prod, prod)
+                print(prod,path)
+                return
+            for j in range(i,len(candidates)):
+                path.append(candidates[j])
+                rec(j+1,path)
+                path.pop()
+        rec(0,[])
+        return self.prod
+
+#sorting
+class Solution:
+    def maximumProduct(self, nums: List[int]) -> int:
+        '''
+        sort and just check nums[0]*nums[1]*nums[n-1] or nums[n-3]*nums[n-2]*nums[n-1]
+        '''
+        N = len(nums)
+        nums.sort()
+        return max(nums[0] * nums[1] * nums[N - 1], nums[N - 1] * nums[N - 2] * nums[N - 3])
+
+####################################
+# 230. Kth Smallest Element in a BST
+# 18APR22
+####################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
+        '''
+        return the kth smallest
+        the array is 1 indexded
+        would do an in order traversal and just retun once we hit k using a counter
+        '''
+
+        
+        stack = []
+        step = 1
+        
+        curr = root
+        
+        
+        while curr != None or len(stack) > 0:
+            while curr != None:
+                stack.append(curr)
+                curr = curr.left
+            
+
+            curr = stack.pop()
+            if step == k:
+                return curr.val
+            step += 1
+            curr = curr.right
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def kthSmallest(self, root: Optional[TreeNode], k: int) -> int:
+        '''
+        recursive
+        '''
+        def inorder(node):
+            if not node:
+                return []
+            left = inorder(node.left)
+            right = inorder(node.right)
+            return left + [node.val] + right
+        
+        return inorder(root)[k-1]
+
+#################################
+# 99. Recover Binary Search Tree
+# 19APR22
+#################################
