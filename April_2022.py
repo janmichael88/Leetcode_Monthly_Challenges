@@ -2167,3 +2167,196 @@ class Solution:
 # 99. Recover Binary Search Tree
 # 19APR22
 #################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def recoverTree(self, root: Optional[TreeNode]) -> None:
+        """
+        Do not return anything, modify root in-place instead.
+        """
+        '''
+        only two nodes were swapped by mistake, so there is already a mistake -> no special cases for not having a mistake
+        in order traversal should give nodes in order, but two elements will be out of place
+        i can get the inorder traversal, mark the problematic nodes
+        the pass the tree again updating the values
+        '''
+        in_order_vals = []
+        
+        def inorder(node):
+            if not node:
+                return
+            inorder(node.left)
+            in_order_vals.append(node.val)
+            inorder(node.right)
+        
+        
+        def preorder(node,count):
+            #donesn't matter what order travesal, since we want to touch all nodes
+            if not node:
+                return
+            if node.val == first or node.val == second:
+                if node.val == first:
+                    node.val = second
+                else:
+                    node.val = first
+                count -= 1
+                if count == 0:
+                    return
+            
+            preorder(node.left,count)
+            preorder(node.right,count)
+            
+        inorder(root)
+        #find problematic nodes
+        first = None
+        second = None
+        for i in range(len(in_order_vals)-1):
+            if in_order_vals[i] > in_order_vals[i+1]:
+                first = in_order_vals[i+1]
+                if not second:
+                    second = in_order_vals[i]
+                else:
+                    break
+        
+        preorder(root,2)
+                
+#iterative one pass
+class Solution:
+    def recoverTree(self, root: Optional[TreeNode]) -> None:
+        """
+        Do not return anything, modify root in-place instead.
+        """
+        '''
+        we can find identify the swapped nodes by keeping track if hthe pred in the in-order traversal (i.e the predecessor of the current node)
+        we compare with the curent value
+        if the current node value is smaller than it spred, this is a problematic node
+        since there are only two swapped nodes, we could break after finding the two
+        '''
+        stack = []
+        first = None
+        second = None
+        pred = None
+        
+        while root != None or len(stack) > 0:
+            while root:
+                stack.append(root)
+                root = root.left
+            
+            #find current
+            root = stack.pop()
+            #check, this should be smaller
+            if pred and root.val < pred.val:
+                #first problematic node
+                first = root
+                if second == None:
+                    second = pred
+                else:
+                    break
+            #continue traversal
+            pred = root
+            root = root.right
+        
+        #swap
+        first.val, second.val = second.val, first.val
+
+#recursive one pass
+class Solution:
+    def recoverTree(self, root: Optional[TreeNode]) -> None:
+        """
+        Do not return anything, modify root in-place instead.
+        """
+        self.first = None
+        self.second = None
+        self.pred = None
+        
+        def inorder(node):
+            if not node:
+                return
+            inorder(node.left)
+            if self.pred and node.val < self.pred.val:
+                self.first = node
+                if self.second == None:
+                    self.second = self.pred
+                else:
+                    return
+            
+            self.pred = node
+            inorder(node.right)
+        
+        inorder(root)
+        #swap
+        self.first.val,self.second.val = self.second.val,self.first.val
+
+#inorder traversal
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def recoverTree(self, root: Optional[TreeNode]) -> None:
+        """
+        Do not return anything, modify root in-place instead.
+        """
+        '''
+        this is good time to go over Morris Traversal
+        the idea behind Morris Traversal is to linke the current node and its predessor (i.e pred.right = root)
+        
+        so one starts from the nodes, computes its pred and verifies if the link is present:
+            if there is no link, set it and go left
+            if there is a link, break and go right
+            
+        note inorder pred, go left once and far right
+        '''
+                # predecessor is a Morris predecessor. 
+        # In the 'loop' cases it could be equal to the node itself predecessor == root.
+        # pred is a 'true' predecessor, 
+        # the previous node in the inorder traversal.
+        x = y = predecessor = pred = None
+        
+        while root:
+            # If there is a left child
+            # then compute the predecessor.
+            # If there is no link predecessor.right = root --> set it.
+            # If there is a link predecessor.right = root --> break it.
+            if root.left:       
+                # Predecessor node is one step left 
+                # and then right till you can.
+                predecessor = root.left
+                while predecessor.right and predecessor.right != root:
+                    predecessor = predecessor.right
+                # set link predecessor.right = root
+                # and go to explore left subtree
+                if predecessor.right is None:
+                    predecessor.right = root
+                    root = root.left
+                # break link predecessor.right = root
+                # link is broken : time to change subtree and go right
+                else:
+                    # check for the swapped nodes
+                    if pred and root.val < pred.val:
+                        y = root
+                        if x is None:
+                            x = pred 
+                    pred = root
+                    
+                    predecessor.right = None
+                    root = root.right
+            # If there is no left child
+            # then just go right.
+            else:
+                # check for the swapped nodes
+                if pred and root.val < pred.val:
+                    y = root
+                    if x is None:
+                        x = pred 
+                pred = root
+                
+                root = root.right
+        
+        x.val, y.val = y.val, x.val
