@@ -2360,3 +2360,1766 @@ class Solution:
                 root = root.right
         
         x.val, y.val = y.val, x.val
+
+###################################
+# 173. Binary Search Tree Iterator
+# 20APR22
+##################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class BSTIterator:
+
+    def __init__(self, root: Optional[TreeNode]):
+        '''
+        unpack in O(N) time in the constructor
+        
+        '''
+        self.nodes = []
+        def inorder(node):
+            if not node:
+                return
+            inorder(node.left)
+            self.nodes.append(node.val)
+            inorder(node.right)
+             
+        inorder(root)
+        self.N = len(self.nodes)
+        self.ptr = -1
+
+    def next(self) -> int:
+        self.ptr += 1
+        return self.nodes[self.ptr]
+
+    def hasNext(self) -> bool:
+        return self.ptr < self.N - 1
+
+
+# Your BSTIterator object will be instantiated and called as such:
+# obj = BSTIterator(root)
+# param_1 = obj.next()
+# param_2 = obj.hasNext()
+
+class BSTIterator:
+
+    def __init__(self, root: Optional[TreeNode]):
+        '''
+        we need to use a controller recrsion for 
+        we need to define a helper functions that goes a far left a spossible
+        one we have gone as far left as possible we can begin processing
+        '''
+        self.stack = []
+        
+        #initiate the move to get the first node
+        self.left_most(root)
+
+    def left_most(self,root):
+        while root:
+            self.stack.append(root)
+            root = root.left
+
+    def next(self) -> int:
+        curr = self.stack.pop()
+        #go right
+        if curr.right:
+            #go right then left agaon
+            self.left_most(curr.right)
+        return curr.val
+        
+
+    def hasNext(self) -> bool:
+        return len(self.stack) > 0
+
+
+################################
+# 324. Wiggle Sort II
+# 20APR22
+#################################
+#sort, then fill odd indices first taking form the sorted array
+#then take even indices
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        there always exsists an awnser, i.e we can always convert nums to a wiggle sorted array
+        note that a wiggley sorted array is a permutation of the original nums array
+        i can generate every possible permutation through a series of rotations
+        what rotation/s do i need to make it wigge
+        [1,5,1,1,6,4]
+        
+        '''
+        arr = sorted(nums)
+        for i in range(1, len(nums), 2): 
+            nums[i] = arr.pop() 
+        for i in range(0, len(nums), 2): 
+            nums[i] = arr.pop() 
+
+import random
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        another way would be to treat this like the dutch national flag problem
+        we can use find kth to find the median in linear time - there are variety of algorithms that can do this in average O(N) time
+        median of medians approach guarantees deterministic O(N) time
+        
+        for this problem we can go over the kth or quick select
+        we pick a random pivot, then parition into two lists for elements < pivot element or pivots > element
+        
+        if we have at least N // 2 elements on the lesser side, the median lies there
+        otherwise recurse on the greater side
+        
+        after finding the median we want to wiggle the array
+        we can make a new array, then at the odd indices, take from the elements above the median
+        for even indices, take the smaller elements
+        '''
+        
+        #find median in average linear time
+        N = len(nums)
+        #odd case
+        if N % 2 == 1:
+            median = self.quick_select(nums,len(nums)//2,random.choice)
+        else:
+            lower_median = self.quick_select(nums,len(nums)//2 - 1,random.choice)
+            upper_median = self.quick_select(nums,len(nums)//2,random.choice)
+            median = 0.5*(lower_median + upper_median)
+            
+        #find elemeents larger and smaller than median and equal to median
+        #three way partition
+        smaller = [num for num in nums if num < median]
+        larger = [num for num in nums if num > median]
+        equals = [num for num in nums if num == median]
+        
+        #we then want to wiggle the array such that elements from from larger, equals smaller
+        for i in range(1, len(nums), 2):
+            if larger:
+                nums[i] = larger.pop()
+            elif equals:
+                nums[i] = equals.pop()
+            else:
+                nums[i] = smaller.pop()
+                
+        for i in range(0, len(nums), 2): 
+            if larger:
+                nums[i] = larger.pop()
+            elif equals:
+                nums[i] = equals.pop()
+            else:
+                nums[i] = smaller.pop()
+        
+        
+    def quick_select(self,array,k,pivot_function):
+        #base case
+        if len(array) == 1:
+            return array[0]
+        
+        #find the pivot
+        pivot = pivot_function(array)
+        
+        #partition
+        lows = [num for num in array if num < pivot]
+        highs = [num for num in array if num > pivot]
+        matches = [num for num in array if num == pivot]
+        
+        #it's on the smaller side
+        if k < len(lows):
+            return self.quick_select(lows,k,pivot_function)
+        #if we got lucky at this the median
+        elif k < len(lows) + len(matches):
+            return matches[0]
+        else:
+            return self.quick_select(highs,k - len(lows) - len(matches),pivot_function)
+
+#follow up, determinstic O(N) time requires median of medians apprach, even then median of medians isn't O(1) space
+#need to follow up with virtual indexing
+#check out this article
+
+###########################
+# 705. Design HashSet
+# 21APR22
+###########################
+
+class MyHashSet(object):
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.keyRange = 769
+        self.bucketArray = [Bucket() for i in range(self.keyRange)]
+
+    def _hash(self, key):
+        return key % self.keyRange
+
+    def add(self, key):
+        """
+        :type key: int
+        :rtype: None
+        """
+        bucketIndex = self._hash(key)
+        self.bucketArray[bucketIndex].insert(key)
+
+    def remove(self, key):
+        """
+        :type key: int
+        :rtype: None
+        """
+        bucketIndex = self._hash(key)
+        self.bucketArray[bucketIndex].delete(key)
+
+    def contains(self, key):
+        """
+        Returns true if this set contains the specified element
+        :type key: int
+        :rtype: bool
+        """
+        bucketIndex = self._hash(key)
+        return self.bucketArray[bucketIndex].exists(key)
+
+
+class Node:
+    def __init__(self, value, nextNode=None):
+        self.value = value
+        self.next = nextNode
+
+class Bucket:
+    def __init__(self):
+        # a pseudo head
+        self.head = Node(0)
+
+    def insert(self, newValue):
+        # if not existed, add the new element to the head.
+        if not self.exists(newValue):
+            newNode = Node(newValue, self.head.next)
+            # set the new head.
+            self.head.next = newNode
+
+    def delete(self, value):
+        prev = self.head
+        curr = self.head.next
+        while curr is not None:
+            if curr.value == value:
+                # remove the current node
+                prev.next = curr.next
+                return
+            prev = curr
+            curr = curr.next
+
+    def exists(self, value):
+        curr = self.head.next
+        while curr is not None:
+            if curr.value == value:
+                # value existed already, do nothing
+                return True
+            curr = curr.next
+        return False
+
+#using BST as the API
+class MyHashSet:
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.keyRange = 769
+        self.bucketArray = [Bucket() for i in range(self.keyRange)]
+
+    def _hash(self, key) -> int:
+        return key % self.keyRange
+
+    def add(self, key: int) -> None:
+        bucketIndex = self._hash(key)
+        self.bucketArray[bucketIndex].insert(key)
+
+    def remove(self, key: int) -> None:
+        """
+        :type key: int
+        :rtype: None
+        """
+        bucketIndex = self._hash(key)
+        self.bucketArray[bucketIndex].delete(key)
+
+    def contains(self, key: int) -> bool:
+        """
+        Returns true if this set contains the specified element
+        :type key: int
+        :rtype: bool
+        """
+        bucketIndex = self._hash(key)
+        return self.bucketArray[bucketIndex].exists(key)
+
+class Bucket:
+    def __init__(self):
+        self.tree = BSTree()
+
+    def insert(self, value):
+        self.tree.root = self.tree.insertIntoBST(self.tree.root, value)
+
+    def delete(self, value):
+        self.tree.root = self.tree.deleteNode(self.tree.root, value)
+
+    def exists(self, value):
+        return (self.tree.searchBST(self.tree.root, value) is not None)
+
+class TreeNode:
+    def __init__(self, value):
+        self.val = value
+        self.left = None
+        self.right = None
+
+class BSTree:
+    def __init__(self):
+        self.root = None
+
+    def searchBST(self, root: TreeNode, val: int) -> TreeNode:
+        if root is None or val == root.val:
+            return root
+
+        if val < root.val:
+            return self.searchBST(root.left,val)
+        else:
+            return self.searchBST(root.right,val)
+
+    def insertIntoBST(self, root: TreeNode, val: int) -> TreeNode:
+        if not root:
+            return TreeNode(val)
+
+        if val > root.val:
+            # insert into the right subtree
+            root.right = self.insertIntoBST(root.right, val)
+        elif val == root.val:
+            return root
+        else:
+            # insert into the left subtree
+            root.left = self.insertIntoBST(root.left, val)
+        return root
+
+    def successor(self, root):
+        """
+        One step right and then always left
+        """
+        root = root.right
+        while root.left:
+            root = root.left
+        return root.val
+
+    def predecessor(self, root):
+        """
+        One step left and then always right
+        """
+        root = root.left
+        while root.right:
+            root = root.right
+        return root.val
+
+    def deleteNode(self, root: TreeNode, key: int) -> TreeNode:
+        if not root:
+            return None
+
+        # delete from the right subtree
+        if key > root.val:
+            root.right = self.deleteNode(root.right, key)
+        # delete from the left subtree
+        elif key < root.val:
+            root.left = self.deleteNode(root.left, key)
+        # delete the current node
+        else:
+            # the node is a leaf
+            if not (root.left or root.right):
+                root = None
+            # the node is not a leaf and has a right child
+            elif root.right:
+                #this is the node we want to delete, so we want the node just greater
+                #note, in this implementation we priortize the right subtree
+                root.val = self.successor(root)
+                root.right = self.deleteNode(root.right, root.val)
+            # the node is not a leaf, has no right child, and has a left child
+            #we go on the left side, and this root is the one we want to delte
+            #find the the largest value, less than the root
+            else:
+                root.val = self.predecessor(root)
+                root.left = self.deleteNode(root.left, root.val)
+        #we need to return sometthing
+        return root
+
+# Your MyHashSet object will be instantiated and called as such:
+# obj = MyHashSet()
+# obj.add(key)
+# obj.remove(key)
+# param_3 = obj.contains(key)
+
+############################
+# 706. Design HashMap
+# 22APR22
+#############################
+class Bucket:
+    def __init__(self):
+        self.bucket = []
+
+    def get(self, key):
+        for (k, v) in self.bucket:
+            if k == key:
+                return v
+        return -1
+
+    def update(self, key, value):
+        found = False
+        for i, kv in enumerate(self.bucket):
+            if key == kv[0]:
+                self.bucket[i] = (key, value)
+                found = True
+                break
+
+        if not found:
+            self.bucket.append((key, value))
+
+    def remove(self, key):
+        for i, kv in enumerate(self.bucket):
+            if key == kv[0]:
+                del self.bucket[i]
+
+
+class MyHashMap(object):
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        # better to be a prime number, less collision
+        self.key_space = 2069
+        self.hash_table = [Bucket() for i in range(self.key_space)]
+
+
+    def put(self, key, value):
+        """
+        value will always be non-negative.
+        :type key: int
+        :type value: int
+        :rtype: None
+        """
+        hash_key = key % self.key_space
+        self.hash_table[hash_key].update(key, value)
+
+
+    def get(self, key):
+        """
+        Returns the value to which the specified key is mapped, or -1 if this map contains no mapping for the key
+        :type key: int
+        :rtype: int
+        """
+        hash_key = key % self.key_space
+        return self.hash_table[hash_key].get(key)
+
+
+    def remove(self, key):
+        """
+        Removes the mapping of the specified value key if this map contains a mapping for the key
+        :type key: int
+        :rtype: None
+        """
+        hash_key = key % self.key_space
+        self.hash_table[hash_key].remove(key)
+
+# Your MyHashMap object will be instantiated and called as such:
+# obj = MyHashMap()
+# obj.put(key,value)
+# param_2 = obj.get(key)
+# obj.remove(key)
+
+#using LL
+class Node:
+    def __init__(self,key,value,next):
+        self.key = None
+        self.value = None
+        self.next = None
+
+class Bucket:
+    def __init__(self):
+        #using pseudo head implementation
+        self.head = Node(-1,-1,next=None)
+    
+    def put(self,key,value):
+        #empty LL
+        curr = self.head.next
+        if not curr:
+            newNode = Node(key = key,value = value,next=None)
+            self.head.next = newNode
+        #otherwirse we need to traverse and update
+        prev = self.head
+        while curr:
+            if curr.key == key:
+                curr.val = val
+                break
+            else:
+                prev = curr
+                curr.next
+        #got to the end
+        prev.next = Node(key=key,value=value,next=None)
+        
+        
+    def get(self,key):
+        curr = self.head.next
+        if not curr:
+            return -1
+        pref = self.head
+        while curr:
+            if curr.key == key:
+                return curr.val
+            curr = curr.next
+        
+        return -1
+    
+    def remove(self,key):
+        prev = self.head
+        curr = self.head.next
+        while curr:
+            if curr.val == key:
+                prev.next = curr.next
+                break
+            else:
+                prev = curr
+                curr = curr.next
+
+class MyHashMap:
+
+    def __init__(self):
+        self.modulo = 2069
+        self.hash_table = [Bucket() for _ in range(self.modulo)]
+        
+
+    def put(self, key: int, value: int) -> None:
+        hash_key = key % self.modulo
+        self.hash_table[hash_key].put(key,value)
+        
+
+    def get(self, key: int) -> int:
+        hash_key = key % self.modulo
+        self.hash_table[hash_key].get(key)
+        
+
+    def remove(self, key: int) -> None:
+        hash_key = key % self.modulo
+        self.hash_table[hash_key].remove(key)
+        
+###############################
+# 24APR22
+# 535. Encode and Decode TinyURL
+###############################
+#counter increment per new url
+class Codec:
+
+    def encode(self, longUrl: str) -> str:
+        """Encodes a URL to a shortened URL.
+        """
+        '''
+        i can just assign a new URL to a number and increment a counter for each new one
+        '''
+        self.count = 0
+        self.mapp = {}
+        
+        self.mapp[self.count] = longUrl
+        #generte encoded url
+        encoded_url = "http://tinyurl.com/" + str(self.count)
+        #prep for next one to encode
+        self.count += 1
+        return encoded_url
+
+    def decode(self, shortUrl: str) -> str:
+        """Decodes a shortened URL to its original URL.
+        """
+        #split on delimter 
+        split = shortUrl.split("http://tinyurl.com/")
+        return self.mapp[int(split[1])]
+        
+        
+
+# Your Codec object will be instantiated and called as such:
+# codec = Codec()
+# codec.decode(codec.encode(url))
+
+#variable encoding
+class Codec:
+    '''
+    instead of using count as the key
+    we encound the the int value count using alphanumeric chars
+    
+    again we are limited to overflow in the count variable
+    '''
+    def __init__(self):
+        self.mapp = {}
+        self.count = 0
+        self.chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        self.N = len(self.chars)
+    
+    
+    def getString(self,longUrl):
+        curr_count = self.count
+        encoded = ""
+        while curr_count > 0:
+            encoded += self.chars[curr_count % self.N]
+            curr_count //= 62
+        return encoded
+    
+    def encode(self, longUrl: str) -> str:
+        """Encodes a URL to a shortened URL.
+        """
+        #convert
+        key = self.getString(longUrl)
+        self.mapp[key] = longUrl
+        self.count += 1
+        return "http://tinyurl.com/" + key
+        
+
+    def decode(self, shortUrl: str) -> str:
+        """Decodes a shortened URL to its original URL.
+        """
+        split = shortUrl.split("http://tinyurl.com/")
+        return self.mapp[split[1]]
+
+#using builtin hash
+class Codec:
+    '''
+    we can just use the hash function
+    '''
+    def __init__(self):
+        self.mapp = {}
+
+    def encode(self, longUrl: str) -> str:
+        """Encodes a URL to a shortened URL.
+        """
+        hashcode = hash(longUrl)
+        self.mapp[hashcode] = longUrl
+        return "http://tinyurl.com/" + str(hashcode)
+
+    def decode(self, shortUrl: str) -> str:
+        """Decodes a shortened URL to its original URL.
+        """
+        split = shortUrl.split("http://tinyurl.com/")
+        return self.mapp[int(split[1])] 
+
+'''
+we could also generate a random interger
+if the interger is also in the hash mapp, keep tyring ot generate a new one
+again we are limited to the number of distinct objectes because of the int value's max
+
+'''
+
+```
+public class Codec {
+    Map<Integer, String> map = new HashMap<>();
+    Random r = new Random();
+    int key = r.nextInt(Integer.MAX_VALUE);
+
+    public String encode(String longUrl) {
+        while (map.containsKey(key)) {
+            key = r.nextInt(Integer.MAX_VALUE);
+        }
+        map.put(key, longUrl);
+        return "http://tinyurl.com/" + key;
+    }
+
+    public String decode(String shortUrl) {
+        return map.get(Integer.parseInt(shortUrl.replace("http://tinyurl.com/", "")));
+    }
+```
+
+############################
+# 1166. Design File System
+# 24APR22
+############################
+class FileSystem:
+    '''
+    we can use the .rfind to the find the last occruence of a backslash
+    then we just index everything up that to find the parent
+    
+    we need to check for basic input verificartions
+    
+    note that just checking for the parent is enough because the presence of the parent path ensures that all ancestors of the leafs exist
+    '''
+
+    def __init__(self):
+        self.paths = defaultdict()
+        
+
+    def createPath(self, path: str, value: int) -> bool:
+        #check minimum requirtes
+        if path == '/' or len(path) == 0 or path in self.paths:
+            return False
+        #find parent
+        parent_path = path.rfind('/')
+        parent_path = path[:parent_path]
+        
+        #validation there is an ancestors
+        if len(parent_path) > 1 and parent_path not in self.paths:
+            return False
+        
+        #otherwise put in mapp
+        self.paths[path] = value
+        return True
+    
+    def get(self, path: str) -> int:
+        return self.paths.get(path,-1)
+
+
+# Your FileSystem object will be instantiated and called as such:
+# obj = FileSystem()
+# param_1 = obj.createPath(path,value)
+# param_2 = obj.get(path)
+
+'''
+we can use Trie and store each directory as node
+we can then follow the path down the tree
+'''
+
+class TrieNode:
+    def __init__(self, children = None, value = None):
+        self.children = defaultdict()
+        self.value = value
+
+class FileSystem:
+
+    def __init__(self):
+        #make the root
+        self.root = TrieNode()
+        
+
+    def createPath(self, path: str, value: int) -> bool:
+        #check conditions
+        if not path or path == '/':
+            return False
+        
+        #split, first is empty string
+        curr = self.root
+        children = path.split('/')[1:]
+        
+        for i,child in enumerate(children):
+            #we need to keept track of the index until we get to the alst node
+            if child not in curr.children:
+                #if it's not the last compoenents, return false
+                #only if we had gotten the last part of the path we would add it
+                if i != len(children) - 1:
+                    return False
+                #otherwise move make a new node, otherwise we are at the last level
+                curr.children[child] = TrieNode(value = value)
+                return True
+            curr = curr.children[child]
+        
+        return False #path already exists
+
+    def get(self, path: str) -> int:
+        #split, first is empty string
+        curr = self.root
+        children = path.split('/')[1:]
+        
+        for i,child in enumerate(children):
+            if child not in curr.children:
+                return - 1
+            curr = curr.children[child]
+        
+        return curr.value
+
+
+# Your FileSystem object will be instantiated and called as such:
+# obj = FileSystem()
+# param_1 = obj.createPath(path,value)
+# param_2 = obj.get(path)
+
+#################################
+# 343. Integer Break
+# 25APR22
+#################################
+#TLE
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        we want to break N into  k positive integers, such that the sum of those k == n
+        and the product is maximized
+        i can use backtracking to generate a path
+        termiante when n gets 0
+        
+        '''
+        self.ans = 0
+        
+        def prod(nums):
+            prod = 1
+            for num in nums:
+                prod *= num
+            return prod
+        
+        
+        def dfs(num,path):
+            #check if we have used up sum
+            if num == 0:
+                if len(path) >= 2:
+                    #update max product
+                    self.ans = max(self.ans, prod(path))
+                else:
+                    return
+            #try all possible
+            for i in range(1,num+1):
+                #reduce number
+                reduced = num - i
+                path.append(i)
+                dfs(reduced,path)
+                path.pop()
+                
+        dfs(n,[])
+        return self.ans
+        
+#we can reduce this even more and insteaf of genrate path, just carry rpodcut
+#stillg ets TLE, becase we are bactracking, and this is exponential time still branching factor from each call node
+#is O(N)
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        self.ans = 0
+        
+        def dfs(num,product,k):
+            #check if we have used up sum
+            if num == 0:
+                if k >= 2:
+                    #update max product
+                    self.ans = max(self.ans, product)
+                else:
+                    return
+            #try all possible
+            for i in range(1,num+1):
+                #reduce number
+                reduced = num - i
+                dfs(reduced,product*i,k+1)
+                
+        dfs(n,1,0)
+        return self.ans
+
+#top down
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        lets define dp(n) returns the max product if we can divide n into greater than 2 positive intergers
+        i can break n into two parts
+        for i in range(n):
+            part1 = i
+            part2 = n-i
+            
+            if i knew the the answer at dp(n-i) i can get its product as dp(n-i)*i
+            which is 1 answer
+            the other would be just the number reducded by i....or just n-i
+            max(dp(n-i),n-i)*i
+        
+        base cases:
+            if n is just 1, well there is only 1 answer, max product is 1
+            if n==2, [1,1], this is just product of 1
+            
+        dp(n) = {
+                if n == 1 or n == 2:
+                    max_prod == 1
+                    
+                else:
+                    ans = 0
+                    for i in range(1,n):
+                         take = dp(n-i)
+                         no_take = (n-i)
+                         anx = max(ans,i*(take,no_take))
+        }
+        
+        '''
+        memo = {}
+        
+        def dp(n):
+            if n == 1 or n == 2:
+                return 1
+            if n in memo:
+                return memo[n]
+            
+            ans = 0
+            for i in range(1,n):
+                take = dp(n-i)
+                no_take = n-i
+                ans = max(ans,i*max(take,no_take))
+            
+            memo[n] = ans
+            return ans
+        
+        return dp(n)
+
+#bottom up
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        bottom up
+        '''
+        dp = [0]*(n+1)
+        dp[1] = 1
+        dp[2] = 1
+        
+        for num in range(3,len(dp)):
+            ans = 0
+            for i in range(1,num):
+                take = dp[num-i]
+                no_take = num-i
+                ans = max(ans,i*max(take,no_take))
+            
+            dp[num] = ans
+        
+        return dp[-1]
+
+#cheeky math
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        for they mathy solution, check on this write up
+        #https://leetcode.com/problems/integer-break/discuss/80689/A-simple-explanation-of-the-math-part-and-a-O(n)-solution
+        if we have a number N, we can split n into to factors we choose a number x
+        product = x(N-x)
+        which has a max product at N//2
+        
+        x*N - x^2
+        d/dx = N - 2x
+        x = N // 2
+        
+        we know at least (N/2)*(N/2) would give us the max for just two factors
+        but we could again split into another two
+        (N/4)*(N/4)*(N/4)*(N/4)
+        if N were a power of two, we could keep doing the same pattern
+        
+        for what numbers n has the property (N/2)*(N/2) >= N
+        
+        temp = lambda x:(x/2)*(x/2)
+        
+        for i in range(10):
+            print(i,temp(i))
+            
+        temp2 = lambda N:(N-1)/2 *(N+1)/2
+        
+        for i in range(10):
+            print(i,temp2(i))
+        
+        we only get a >= product of two factors when the number is >=4
+        and for temp2, this product of greater than N for N >=5
+        
+        which means the factors cannot be greater than 4 or 5, if they were, we stand to gain more in product if split N
+
+        
+        '''
+        if n == 2:
+            return 1
+        if n == 3:
+            return 2
+        prod = 1
+        while n > 4:
+            prod *=3
+            n -= 3
+        
+        return prod*n
+
+
+########################################
+# 1584. Min Cost to Connect All Points
+# 26APR22
+#########################################
+#kruskal and Union Find
+class UnionFind:
+    def __init__(self,size):
+        
+        self.group = [i for i in range(size)]
+        self.size = [0]*size
+        
+    def find(self,node):
+        #keep finding the one parent who is the leader for this group, recursively for this node
+        if self.group[node] != node:
+            self.group[node] = self.find(self.group[node])
+        return self.group[node]
+    
+    def join(self,node1,node2):
+        #find their leaders
+        group1 = self.find(node1)
+        group2 = self.find(node2)
+        
+        #if they already belong the same group, we don't need to merger them
+        if group1 == group2:
+            return False
+        
+        #change pointers and size
+        if self.size[group1] > self.size[group2]:
+            self.group[group2] = group1
+            self.size[group1] += self.size[group2]
+            self.size[group2] = 0
+        elif self.size[group1] < self.size[group2]:
+            self.group[group1] = group2
+            self.size[group2] += self.size[group1]
+            self.size[group1] = 0
+        else:
+            self.group[group1] = self.group[group2]
+            self.size[group2] += self.size[group1]
+            self.size[group2] = 0
+        
+        return True
+            
+
+class Solution:
+    def minCostConnectPoints(self, points: List[List[int]]) -> int:
+        '''
+        let's start off using kruskals algo, using Union Find
+        code wout the UF API,
+        the merge on the edgges sorted increasingly
+        keep track of a cost and the number of edges used
+        since there are N nodes, we should use N-1 edges
+        
+        in the join method, return True if the two nodes weren't initally part of the same group
+        which means we used an edge to make them
+        otherwise, they were already part of the same group, so we don't need to count an edge being used up
+        
+        maintain the min cost, and early terminate if we have used up N-1 edges
+        
+        notes in kruskals, we don't want to make a cycle in the connected components
+        '''
+        N = len(points)
+        all_edges = []
+        for curr_node in range(N):
+            for next_node in range(curr_node+1,N):
+                weight = abs(points[curr_node][0] - points[next_node][0]) +\
+                         abs(points[curr_node][1] - points[next_node][1])
+                all_edges.append((weight, curr_node, next_node)) 
+        
+        all_edges.sort()
+        uf = UnionFind(N)
+        
+        cost = 0
+        edges_used = 0
+        for weight,n1,n2 in all_edges:
+            if uf.join(n1,n2):
+                cost += weight
+                edges_used += 1
+                if edges_used == N-1:
+                    break
+        return cost
+
+#primms
+class Solution:
+    def minCostConnectPoints(self, points: List[List[int]]) -> int:
+        '''
+        in Primms algorithm we start with a ranom node, and greedily include min wieght edges to build thre MST
+        we choose the lowest weighted edge that connecta a node present in the MST to a ndoe not present
+        for each current node, calculate the edge weights and push back into a heap
+        '''
+        N = len(points)
+        
+        #heap -> (node,weight)
+        heap = [(0,0)]
+        
+        seen = set()
+        
+        cost = 0
+        edges_used = 0
+        
+        while edges_used < N:
+            weight,curr_node = heapq.heappop(heap)
+            
+            #if i;ve seen this node, skep
+            if curr_node in seen:
+                continue
+            
+            seen.add(curr_node)
+            cost += weight
+            edges_used += 1
+            
+            for next_node in range(N):
+                # If next node is not in MST, then edge from curr node
+                # to next node can be pushed in the priority queue.
+                if next_node not in seen:
+                    next_weight = abs(points[curr_node][0] - points[next_node][0]) +\
+                                  abs(points[curr_node][1] - points[next_node][1])
+                    
+                    heapq.heappush(heap, (next_weight, next_node))
+                    
+        return cost
+
+#primms optimized, DP
+class Solution:
+    def minCostConnectPoints(self, points: List[List[int]]) -> int:
+        '''
+        instead of computing all N**2 distances from a point, then pushnig back on to heap
+        we just use N**2 time again and find the min
+        
+        we in this step we keep a minDist array, where minDist[i] stores the weight of the smallest weighted edge to reach the ith node
+        from any node in the current MST
+        we pass over this minDist array and take the min edge that is not part of the MST and add it to the tree
+        
+        we start with node 0, with a virtual edge of weight 0 (i.e points to itself with no csots)
+        '''
+        N = len(points)
+        cost = 0
+        edges = 0
+        
+        #mark whether or not this node is in the MST
+        in_mst = [False]*N
+        
+        min_dist = [float('inf')]*N
+        min_dist[0] = 0
+        
+        while edges < N:
+            curr_min_edge = float('inf')
+            curr_node = -1
+            
+            #pick least weight node not in BST
+            for node in range(N):
+                if not in_mst[node] and min_dist[node] < curr_min_edge:
+                    curr_min_edge = min_dist[node]
+                    curr_node = node
+                    
+            #update
+            cost += curr_min_edge
+            edges += 1
+            in_mst[curr_node] = True
+            
+            
+            #update adjacent nodes not in MST
+            for next_node in range(N):
+                weight = abs(points[curr_node][0] - points[next_node][0]) + \
+                        abs(points[curr_node][1] - points[next_node][1])
+                
+                #check not in mst and is smaller
+                if not in_mst[next_node] and weight < min_dist[next_node]:
+                    min_dist[next_node] = weight
+        
+        return cost
+        
+###################################
+# 1202. Smallest String With Swaps
+# 27APR22
+###################################
+class Solution:
+    def smallestStringWithSwaps(self, s: str, pairs: List[List[int]]) -> str:
+        '''
+        we are given a string s 
+        and an array of index pairs
+        
+        we can swap the string at these pairs any number of times using any pair
+        we want the smallest lexographically swaped s using these pairs
+        
+        greedy, we can go in the direction of the swap that gives us a smaller s
+        but we would need to scan the array of pairs every time
+        
+        we can treat each index as vertex each pair of indices as an edge
+        these would be connected compoenents, and each index in a conencted component would allow us to order s using any of these indicies
+        
+        find the conected components, then find the smallest ordering for each
+        
+        algo:
+            build graph
+            find connectec componenets
+            sort chars increaslingy based on this index 
+            return the smallest
+            
+        sort the letters increasinly and sort the indices inreasinly per componenet group
+        
+        '''
+        adj_list = defaultdict(list)
+        possible_nodes = set()
+        for a,b in pairs:
+            #add to adj list
+            adj_list[a].append(b)
+            adj_list[b].append(a)
+            #generate possible nodes
+            possible_nodes.add(a)
+            possible_nodes.add(b)
+        
+        def dfs(node,seen,group):
+            #add to seen
+            seen.add(node)
+            #add to connected comps
+            group.append(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,group)
+                    
+        
+        components = []
+        seen = set()
+        for node in possible_nodes:
+            group = []
+            if node not in seen:
+                dfs(node,seen,group)
+            if len(group) != 0:
+                components.append(group)
+                
+        #now that we have found the connect componenets, we need to generate the smallext lexographic string
+        mapp = {i:char for i,char in enumerate(s)}
+        
+        s = list(s)
+        for comp in components:
+            #generate the letters at these indices
+            letters = [mapp[i] for i in comp]
+            #sort the letters
+            letters.sort()
+            #sort the indices
+            comp.sort()
+            for index,char in zip(comp,letters):
+                s[index] = char
+            
+            
+        
+        return "".join(s)
+
+#using UF
+class UnionFind:
+    def __init__(self,size):
+        self.group = [i for i in range(size)]
+        self.size = [1]*size
+    
+    def find(self,x):
+        if self.group[x] != x:
+            self.group[x] = self.find(self.group[x])
+        
+        return self.group[x]
+    
+    def union(self,node1,node2):
+        group1 = self.find(node1)
+        group2 = self.find(node2)
+        
+        
+        #change pointers and size
+        if group1 != group2:
+            if self.size[group1] > self.size[group2]:
+                self.group[group2] = group1
+                self.size[group1] += self.size[group2]
+                self.size[group2] = 0
+            elif self.size[group1] < self.size[group2]:
+                self.group[group1] = group2
+                self.size[group2] += self.size[group1]
+                self.size[group1] = 0
+            else:
+                self.group[group1] = self.group[group2]
+                self.size[group2] += self.size[group1]
+                self.size[group2] = 0
+
+
+class Solution:
+    def smallestStringWithSwaps(self, s: str, pairs: List[List[int]]) -> str:
+        '''
+        we can also use union find to find the connected compoenents instead of doing DFS
+        build the UF API
+        then join each node along its edge
+        pass through the group method in the UF API to find connected comps
+        then sort and create
+        '''
+        possible_nodes = set()
+        for a,b in pairs:
+            #generate possible nodes
+            possible_nodes.add(a)
+            possible_nodes.add(b)
+        
+        N = len(s)
+        uf = UnionFind(N)
+        
+        for a,b in pairs:
+            uf.union(a,b)
+            
+
+        connected = defaultdict(list)
+        for i,group in enumerate(uf.group):
+            connected[group].append(i)
+            
+        mapp = {i:char for i,char in enumerate(s)}
+
+        s = list(s)
+        for _,comp in connected.items():
+            if len(comp) > 0:
+                #generate the letters at these indices
+                letters = [mapp[i] for i in comp]
+                #sort the letters
+                letters.sort()
+                #sort the indices
+                comp.sort()
+                for index,char in zip(comp,letters):
+                    s[index] = char
+            
+            
+        
+        return "".join(s)
+
+##################################
+# 1631. Path With Minimum Effort (REVSISITED)
+# 28APR22
+##################################
+class Solution(object):
+    def minimumEffortPath(self, heights):
+        """
+        :type heights: List[List[int]]
+        :rtype: int
+        """
+        '''
+        we want to find the path with minimum effort
+        we define effort as the maximum absolute difference in heights between two consecutive cells of the route
+        we want to return the minimum effort required to travel from the top left cell to the bottom right cell
+        
+        brute force would be to examine all paths and take find the effor for path
+        then update to find the min effort amongst all paths
+        we make this a little faster by returning the effort so far in this path (carry it along)
+        this way when dfs'ing we can control the direction where we would like to go
+        
+        this is important, if we have already found a path to reach the destination cell with maxSoFar, we wouldn't want to explore paths largest than that
+        '''
+        rows = len(heights)
+        cols = len(heights[0])
+        
+        #keept track fo the largest effort so far
+        self.max_so_far = float('inf')
+        
+        #functions returns the max difference for this (x,y) along this path
+        def dfs(x,y,max_difference):
+            if (x,y) == (rows-1,cols-1):
+                #global path update
+                self.max_so_far = max(self.max_so_far,max_difference)
+                return max_difference
+            #get the current height
+            curr_height = heights[x][y]
+            #mark
+            heights[x][y] = 0
+            #minimuze current effort
+            min_effort = float('inf')
+            for dx, dy in [[0, 1], [1, 0], [0, -1], [-1, 0]]:
+                neigh_x = x + dx
+                neigh_y = y + dy
+                #bounds check
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and heights[neigh_x][neigh_y] != 0:
+                    #scan neighbors for the direction that minimzie effort
+                    candidate_diff = abs(curr_height - heights[neigh_x][neigh_y])
+                    #update to find the max along this path
+                    max_candidate_diff = max(candidate_diff,max_difference)
+                    #the step in the direction must minimze this effort of the paths found so far
+                    if max_candidate_diff < self.max_so_far:
+                        result = dfs(neigh_x,neigh_y,max_candidate_diff)
+                        #minimuze
+                        min_effort = min(min_effort,result)
+                        
+            #backtrack
+            heights[x][y] = curr_height
+            return min_effort
+        
+        return dfs(0,0,0)
+
+class Solution:
+    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+        '''
+        if we treat this like a graph, where (i,j) is a node, then the egde connecting to neihbor node is it's absolute difference
+        we want this minimum edge, or minimum weight -> dijstraks
+        keep in mind we want to find the minimum effort! FOR A FUCKING PATH
+        but for a path, we define it's effort as the maximum absolute different between two conecutvie cells of the route
+        
+        algo:
+            we need to keep a matrix, lets' call it differenrMatrix of same dimensions as board
+            this matrix prepresents the minimum effort reguired to reach that cell for all possible paths, initally all infintiy because we don't know how far they are
+            as we visit each cell, update matrix with weights from adjacent cells, and at the same time, push all adjacent cells onto a PQ, smallest weights at the top of the q
+            start of at the source (0,0) in the q and keep going until we get to the bottom right or q i empty
+            get top
+            for neighboring cells, calculate the madDifferent which is the maximum abs differnt to reach adhacnet cells
+            if current value of adjcent cell in diffmatrix is > than maxdifference, we must update (because there is a smaller edge)
+        '''
+        rows = len(heights)
+        cols = len(heights[0])
+        dirrs = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+        
+        diff_matrix = [[float('inf')]*cols for _ in range(rows)] #holds min effort to get here, we relax these edges during our traversal
+        diff_matrix[0][0] = 0
+        seen = set()
+        
+        q = [(0,0,0)] #difference (or edge weight), x,y
+        
+        while q:
+            diff,x,y = heapq.heappop(q)
+            #mark
+            seen.add((x,y))
+            #check neighbors
+            for dx,dy in dirrs:
+                neigh_x = dx + x
+                neigh_y = dy + dy
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and (neigh_x,neigh_y) not in seen:
+                    #find the edge
+                    curr_diff = abs(heights[x][y] - heights[neigh_x][neigh_y])
+                    #find the max
+                    max_diff = max(curr_diff, diff_matrix[x][y])
+                    #relax the edge if we can find a smaller one
+                    if max_diff < diff_matrix[neigh_x][neigh_y]:
+                        diff_matrix[neigh_x][neigh_y] = max_diff
+                        #add back to heap
+                        heapq.heappush(q,(max_diff,neigh_x,neigh_y))
+        
+        return diff_matrix[-1][-1]
+
+class UnionFind:
+    def __init__(self,size):
+        self.parent = [i for i in range(size)]
+        self.rank = [1]*size
+        
+    def find(self,node):
+        if self.parent[node] != node:
+            self.parent[node] = self.find(self.parent[node])
+        return self.parent[node]
+    
+    def join(self,x,y):
+        p_x = self.find(x)
+        p_y = self.find(y)
+        
+        if p_x != p_y:
+            if self.rank[p_x] > self.rank[p_y]:
+                self.parent[p_y] = p_x
+                self.rank[p_x] += self.rank[p_y]
+                self.rank[p_y] = 0
+            elif self.rank[p_x] < self.rank[p_y]:
+                self.parent[p_x] = p_y
+                self.rank[p_y] += self.rank[p_x]
+                self.rank[p_x] = 0
+            else:
+                self.parent[p_y] = p_x
+                self.rank[p_y] += self.rank[p_x]
+                self.rank[p_x] = 0
+
+class Solution:
+    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+        '''
+        we can also use union find in a really weird way
+        first we flatten the matrix into a 1 d array, so (i,j) becomes (i*col + j) where we have row rows and col cols
+        then we generate the edge list from each node to its neighbor node as the abs diff
+        but insteaf of using the (i,j) indices, use the converted index
+        then sort increasinly
+        join each edge and after each join check that 0 and (rows-1)*(cols-1) belong to the same group
+        if they are connected, the asbolute difference is the result, since we went in order
+        '''
+        rows = len(heights)
+        cols = len(heights[0])
+        dirrs = [[0, 1], [1, 0], [0, -1], [-1, 0]]
+        
+        #edge case
+        if rows == 1 and cols == 1:
+            return 0
+        
+        edge_list = []
+        for i in range(rows):
+            for j in range(cols):
+                node_idx = i*cols + j
+                for dx,dy in dirrs:
+                    neigh_x = dx + i
+                    neigh_y = dy + j
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        node_neigh_idx = neigh_x*cols + neigh_y
+                        edge = abs(heights[i][j] - heights[neigh_x][neigh_y])
+                        edge_list.append((edge,node_idx,node_neigh_idx))
+        edge_list.sort()
+        uf = UnionFind(rows*cols)
+        
+        for edge,x,y in edge_list:
+            uf.join(x,y)
+            if uf.find(0) == uf.find(rows*cols-1):
+                return edge
+        return -1
+                
+##########################
+# 785. Is Graph Bipartite?
+# 29APR22
+##########################
+#recursively
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        '''
+        we are given an undirect graph of N nodes
+        define bipartite as: if the nodes can be partitioned into two independent sets A and B such that every edge in the graph connects a node in set A and a not in set B
+        
+        brute force would be to generate all groups of A and B such that the nodes in A and the nodes in B are not connected
+        then show that there is a mapping from each node a in A to each node b in B
+        
+        O(n*(n-1)/2) -> O(N^2)
+        
+        this is the coloring algorithm from CLRS
+        we traverse the graph and color each node a different color
+        '''
+        colors = {}
+        N = len(graph)
+        
+        def dfs(node):
+            for neigh in graph[node]:
+                #if i've seen this 
+                if neigh in colors:
+                    if colors[neigh] == colors[node]:
+                        return False
+                else:
+                    colors[neigh] = colors[node] ^ 1
+                    #this is important, not only do we color this node, we we need to see if we can dfs from here too
+                    if not dfs(neigh):
+                        return False
+            
+            return True
+        
+        for i in range(N):
+            if i not in colors:
+                colors[i] = 0
+                if not dfs(i):
+                    return False
+        
+        return True
+
+#iteratively
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        '''
+        we are given an undirect graph of N nodes
+        define bipartite as: if the nodes can be partitioned into two independent sets A and B such that every edge in the graph connects a node in set A and a not in set B
+        
+        brute force would be to generate all groups of A and B such that the nodes in A and the nodes in B are not connected
+        then show that there is a mapping from each node a in A to each node b in B
+        
+        O(n*(n-1)/2) -> O(N^2)
+        
+        this is the coloring algorithm from CLRS
+        we traverse the graph and color each node a different color
+        '''
+        colors = {}
+        N = len(graph)
+        
+        def dfs(node):
+            stack = [node]
+            
+            while stack:
+                curr = stack.pop()
+                
+                for neigh in graph[curr]:
+                    if neigh in colors:
+                        if colors[neigh] == colors[curr]:
+                            return False
+                    else:
+                        colors[neigh] = colors[curr] ^ 1
+                        stack.append(neigh)
+            
+            return True
+        
+        for i in range(N):
+            if i not in colors:
+                colors[i] = 0
+                if not dfs(i):
+                    return False
+        
+        return True
+
+##############################
+# 431. Encode N-ary Tree to Binary Tree
+# 30APR22
+##############################
+"""
+# Definition for a Node.
+class Node(object):
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children
+"""
+"""
+# Definition for a binary tree node.
+class TreeNode(object):
+    def __init__(self, x):
+        self.val = x
+        self.left = None
+        self.right = None
+"""
+class Codec:
+    def encode(self, root):
+        """Encodes an n-ary tree to a binary tree.
+        :type root: Node
+        :rtype: TreeNode
+        """
+        if not root:
+            return None
+
+        rootNode = TreeNode(root.val)
+        queue = deque([(rootNode, root)])
+
+        while queue:
+            parent, curr = queue.popleft()
+            prevBNode = None
+            headBNode = None
+            # traverse each child one by one
+            for child in curr.children:
+                newBNode = TreeNode(child.val)
+                if prevBNode:
+                    prevBNode.right = newBNode
+                else:
+                    headBNode = newBNode
+                prevBNode = newBNode
+                queue.append((newBNode, child))
+
+            # use the first child in the left node of parent
+            parent.left = headBNode
+
+        return rootNode
+
+
+    def decode(self, data):
+        """Decodes your binary tree to an n-ary tree.
+        :type data: TreeNode
+        :rtype: Node
+        """
+        if not data:
+            return None
+
+        # should set the default value to [] rather than None,
+        # otherwise it wont pass the test cases.
+        rootNode = Node(data.val, [])
+
+        queue = deque([(rootNode, data)])
+
+        while queue:
+            parent, curr = queue.popleft()
+
+            firstChild = curr.left
+            sibling = firstChild
+
+            while sibling:
+                # Note: the initial value of the children list should not be None, which is assumed by the online judge.
+                newNode = Node(sibling.val, [])
+                parent.children.append(newNode)
+                queue.append((newNode, sibling))
+                sibling = sibling.right
+
+        return rootNode
+
+#recursively
+class Codec:
+
+    def encode(self, root):
+        """Encodes an n-ary tree to a binary tree.
+        :type root: Node
+        :rtype: TreeNode
+        """
+        if not root:
+            return None
+
+        rootNode = TreeNode(root.val)
+        if len(root.children) > 0:
+            firstChild = root.children[0]
+            rootNode.left = self.encode(firstChild)
+
+        # the parent for the rest of the children
+        curr = rootNode.left
+
+        # encode the rest of the children
+        for i in range(1, len(root.children)):
+            curr.right = self.encode(root.children[i])
+            curr = curr.right
+
+        return rootNode
+
+
+    def decode(self, data):
+        """Decodes your binary tree to an n-ary tree.
+        :type data: TreeNode
+        :rtype: Node
+        """
+        if not data:
+            return None
+
+        rootNode = Node(data.val, [])
+
+        curr = data.left
+        while curr:
+            rootNode.children.append(self.decode(curr))
+            curr = curr.right
+
+        return rootNode
+
+##############################
+# 399. Evaluate Division
+# 30APR22
+##############################
+#close one!!
+#this would probably be good enough for an interview
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        '''
+        a/b = 2.0
+        b/c = 3.0
+        
+        the direction of the edge divides the two numbers
+        a to b edge 2.0
+        b to a edge 0.5
+        
+        make the adj list using the equations, then just dfs along the queries for the start to end path
+        '''
+        adj_list = defaultdict(list) #example entry is u:(v,weight)
+        
+        for pair,val in zip(equations,values):
+            forward = val
+            backward = 1 / val
+            adj_list[pair[0]].append((pair[1], forward))
+            adj_list[pair[1]].append((pair[0], backward))
+            #point to itself
+            adj_list[pair[0]].append((pair[0],1))
+            adj_list[pair[1]].append((pair[1],1))
+        
+        def dfs(node,end,seen,product):
+            if node == end:
+                return product
+            seen.add(node)
+            for neigh,edge in adj_list[node]:
+                if neigh not in seen:
+                    return dfs(neigh,end,seen,product*edge)
+            seen.remove(node)
+            return product
+
+            
+        results = []
+        for start,end in queries:
+            if start not in adj_list or end not in adj_list:
+                results.append(-1.0)
+            else:
+                results.append(dfs(start,end,set(),1))
+        
+        return results
+
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+
+        graph = defaultdict(defaultdict)
+
+        def backtrack_evaluate(curr_node, target_node, acc_product, visited):
+            visited.add(curr_node)
+            ret = -1.0
+            neighbors = graph[curr_node]
+            if target_node in neighbors:
+                ret = acc_product * neighbors[target_node]
+            else:
+                for neighbor, value in neighbors.items():
+                    if neighbor in visited:
+                        continue
+                    ret = backtrack_evaluate(
+                        neighbor, target_node, acc_product * value, visited)
+                    if ret != -1.0:
+                        break
+            visited.remove(curr_node)
+            return ret
+
+        # Step 1). build the graph from the equations
+        for (dividend, divisor), value in zip(equations, values):
+            # add nodes and two edges into the graph
+            graph[dividend][divisor] = value
+            graph[divisor][dividend] = 1 / value
+
+        # Step 2). Evaluate each query via backtracking (DFS)
+        #  by verifying if there exists a path from dividend to divisor
+        results = []
+        for dividend, divisor in queries:
+            if dividend not in graph or divisor not in graph:
+                # case 1): either node does not exist
+                ret = -1.0
+            elif dividend == divisor:
+                # case 2): origin and destination are the same node
+                ret = 1.0
+            else:
+                visited = set()
+                ret = backtrack_evaluate(dividend, divisor, 1, visited)
+            results.append(ret)
+
+        return results
