@@ -711,3 +711,152 @@ class Solution:
         
         return False
         
+class Solution:
+    def canMeasureWater(self, x: int, y: int, z: int) -> bool:
+        '''
+        the problem really just aks if z is a multiple of the GCD(x,y)
+        this comes froms bezouts lemma
+        
+        let a and b be non zero intiegers and elt d be their greatest common divisor,
+        then there exist integers x and y such that ax + by = d
+        
+        in addition, the GCD d is the smallest positive integers that can be written as ax + by
+        every integer of the form ax + by is a multiple of the GCD d
+        
+        If a or b is negative this means we are emptying a jug of x or y gallons respectively.
+
+        Similarly if a or b is positive this means we are filling a jug of x or y gallons respectively.
+
+        x = 4, y = 6, z = 8.
+
+        GCD(4, 6) = 2
+
+        8 is multiple of 2
+
+        so this input is valid and we have:
+
+        -1 * 4 + 6 * 2 = 8
+
+        In this case, there is a solution obtained by filling the 6 gallon jug twice and emptying the 4 gallon jug once. (Solution. Fill the 6 gallon jug and empty 4 gallons to the 4 gallon jug. Empty the 4 gallon jug. Now empty the remaining two gallons from the 6 gallon jug to the 4 gallon jug. Next refill the 6 gallon jug. This gives 8 gallons in the end)
+        '''
+        if x + y < z:
+            return False
+        if x == z or y == z or x + y == z:
+            return True
+        
+        while y != 0:
+            print(x,y)
+            #keep trying to see if y can go into x
+            temp = y
+            y = x % y
+            x = temp
+        
+        return z % x == 0
+
+#snippets for finding the GCD
+def gcd(a,b):
+	if b == 0:
+		return a
+	else:
+		return gcd(b, a % b)
+
+def computeGCD(x, y):
+  
+    if x > y:
+        small = y
+    else:
+        small = x
+    for i in range(1, small+1):
+        if((x % i == 0) and (y % i == 0)):
+            gcd = i
+              
+    return gcd
+
+ def computeGCD(x, y):
+  
+   while(y):
+       x, y = y, x % y
+  
+   return x
+
+############################
+# 117. Populating Next Right Pointers in Each Node II (REVISITED)
+# 14MAY22
+###########################
+#covering the second approahc where space is opmtizimed
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val: int = 0, left: 'Node' = None, right: 'Node' = None, next: 'Node' = None):
+        self.val = val
+        self.left = left
+        self.right = right
+        self.next = next
+"""
+
+class Solution:
+    def connect(self, root: 'Node') -> 'Node':
+        '''
+        if we look, the connected nodes at each level form a linked list, 
+        after makgin a connectiong, we go down a level
+        inution: we only move on the level N+1 when we are done
+        
+        algo:
+            1. start at root node, and establich connections
+            2. we want to use contstante space, so we can keep a prev,curr pointer and move through the level 
+            3. to start at a level we just need the current leftmost nodes
+            
+            template
+            leftmost = curr
+            while leftmost is not None:
+                curr = leftmost
+                prev = None
+                while curr is None:
+                    process(left)
+                    process(right)
+                    set leftmost
+                    curr = curr.next
+        
+        process function:
+            1. if prev is assigned a non null value, startwth null, and make left to prev
+            2. no left, child, then set it right
+            3. no children, maintain current prev and advance
+            4. otherwise, we need to update
+        '''
+        if not root:
+            return root
+        
+        #set leftmost for each level
+        leftmost = root
+        
+        #need to keep finding leftmodt
+        while leftmost:
+            #prev tracks latest node on next levle, curr is our pointer on this level
+            prev,curr = None,leftmost
+            
+            #reset we can ALWAYS find a leftmost on the next leftl
+            leftmost = None
+            
+            while curr:
+                prev,leftmost = self.process(curr.left,prev,leftmost)
+                prev,leftmost = self.process(curr.right,prev,leftmost)
+                curr = curr.next
+        
+        return root
+    
+    def process(self, child,prev,leftmost):
+        if child:
+            # If the "prev" pointer is alread set i.e. if we
+            # already found atleast one node on the next level,
+            # setup its next pointer
+            if prev:
+                prev.next = child
+            # Else it means this child node is the first node
+            # we have encountered on the next level, so, we
+            # set the leftmost pointer
+            else:
+                leftmost = child
+            prev = child
+        
+        return prev, leftmost
+        
