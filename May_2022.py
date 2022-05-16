@@ -757,8 +757,12 @@ class Solution:
 def gcd(a,b):
 	if b == 0:
 		return a
+	if a == 0:
+		return b
 	else:
 		return gcd(b, a % b)
+
+
 
 def computeGCD(x, y):
   
@@ -859,4 +863,185 @@ class Solution:
             prev = child
         
         return prev, leftmost
+
+#############################
+# 743. Network Delay Time
+# 14MAY22
+############################
+#close one....
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        '''
+        this is a graph problem
+        we are given a source node, and weighted edge list
+        return the time it takes for all n nodes to recevie the singnal
+        if it is impossible, retyrn -1
         
+        we can check that all the nodes are connected, if they are not connected, return-1
+        the edges are directed
+        
+        '''
+        #generate edge list, u: liist([v,weight])
+        adj_list = defaultdict(list)
+        
+        for u,v,weight in times:
+            adj_list[u].append([v,weight])
+        
+        #dfs function to check if we can at least touch
+        def dfs(node,seen):
+            seen.add(node)
+            for (neigh,weight) in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen)
+        
+        seen = set()
+        dfs(k,seen)
+        if len(seen) != n:
+            return -1
+        
+        #now that graph problem, we know from here the nodes are all connected
+        #bfs, but for each node, update the total time with the max of its neighbors
+        ans = 0
+        seen = set()
+        q = deque([k])
+        
+        while q:
+            curr = q.popleft()
+            seen.add(curr)
+            
+            largest_time = 0
+            for neigh,time in adj_list[curr]:
+                if neigh not in seen:
+                    largest_time = max(largest_time,time)
+                    q.append(neigh)
+            
+            ans += largest_time
+    
+        return ans
+
+#this is stupid, it's really just single shortest path, starting from node k
+#with the added criteria that we touch all n nodes
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        '''
+        well the problem boils down to finding the time required to recieve the signal for allnodes
+        turns out it is the maximum time. why? because we need to find the time at which all nodes receie the signal
+        so the time stamp which the last node receives the signal is the answer!
+        
+        lets explore dfs and bfs first
+        
+        created the edge list in the usual manner,
+        then while doing dfs, we try to visit all the nodes, and try relaxing each edge 
+        we visited and update the edges if when going across that edge, we can reduce the amount of time
+        if so, we update
+        we keep going until we can't 
+        return the max answer
+        
+        we can save time by sorting the edge list by weight
+        '''
+        adj_list = defaultdict(list)
+        for u,v,weight in times:
+            adj_list[u].append((weight,v))
+            
+        #sort edges by weight
+        for v in adj_list:
+            adj_list[v] = sorted(adj_list[v])
+            
+        visited = {}
+        
+        def dfs(node,time):
+            if node in visited and time >= visited[node]:
+                return
+            
+            visited[node] = time
+            
+            if node not in adj_list:
+                return
+            
+            for t,neigh in adj_list[node]:
+                dfs(neigh, time + t)
+        
+        dfs(k,0)
+        return max(visited.values()) if len(visited) == n else -1
+
+#bfs
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        '''
+        well the problem boils down to finding the time required to recieve the signal for allnodes
+        turns out it is the maximum time. why? because we need to find the time at which all nodes receie the signal
+        so the time stamp which the last node receives the signal is the answer!
+        
+        lets explore dfs and bfs first
+        
+        created the edge list in the usual manner,
+        then while doing dfs, we try to visit all the nodes, and try relaxing each edge 
+        we visited and update the edges if when going across that edge, we can reduce the amount of time
+        if so, we update
+        we keep going until we can't 
+        return the max answer
+        
+        we can save time by sorting the edge list by weight
+        '''
+        adj_list = defaultdict(list)
+        for u,v,weight in times:
+            adj_list[u].append((weight,v))
+            
+        #sort edges by weight
+        for v in adj_list:
+            adj_list[v] = sorted(adj_list[v])
+            
+        visited = {}
+        
+        q = deque([(k,0)])
+        
+        while q:
+            node,time = q.popleft()
+
+            if node in visited and time >= visited[node]:
+                continue
+            
+            visited[node] = time
+            
+            if node not in adj_list:
+                continue
+            
+            for t,neigh in adj_list[node]:
+                q.append((neigh, time + t))
+        
+        return max(visited.values()) if len(visited) == n else -1
+            
+
+#insteadf of sorting all the edges initially, we can use a heap
+class Solution:
+    def networkDelayTime(self, times: List[List[int]], n: int, k: int) -> int:
+        '''
+        we can use Dijkstra's algo, and use a heap to keep the smallest edges at each time
+        then just continue to relax the edges
+        '''
+        adj_list = defaultdict(list)
+        for u,v,weight in times:
+            adj_list[u].append((weight,v))
+            
+            
+        visited = {}
+        
+        #keep in mind, python is a min heap
+        heap = [(0,k)]
+        
+        while heap:
+            time,node = heapq.heappop(heap) 
+
+            if node in visited and time >= visited[node]:
+                continue
+            
+            visited[node] = time
+            
+            if node not in adj_list:
+                continue
+            
+            for t,neigh in adj_list[node]:
+                heapq.heappush(heap, ((time + t),neigh))
+        
+        return max(visited.values()) if len(visited) == n else -1
+            
