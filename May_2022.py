@@ -1044,4 +1044,436 @@ class Solution:
                 heapq.heappush(heap, ((time + t),neigh))
         
         return max(visited.values()) if len(visited) == n else -1
+
+#######################################
+# 1091. Shortest Path in Binary Matrix (Revisited)
+# 16MAY22
+#######################################
+#TLE! this is a win in my book
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        '''
+        this is the single source shortes path problem, its kinda like dijsktras but in this case all the edges are on
+        we do try dfs, and try to relax an edge when we see a zero
+        we can create a hash map, and into this hashmap we store (cell) : path length
+        which represents the length to get to that cell, while we dfs, we see if we can get to that path by relaxing it
+        one we are done, we check is the bottom left is in the mapp and return its answer
+        '''
+        
+        if grid[0][0] == 1:
+            return -1
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        
+        dirrs = []
+        for x in [-1,0,1]:
+            for y in [-1,0,1]:
+                if (x,y) != (0,0):
+                    dirrs.append((x,y))
             
+        
+        seen = {} #<cell:path>
+        def dfs(row,col,path):
+            #if already seen
+            if (row,col) in seen and path >= seen[(row,col)]:
+                return
+            #put
+            seen[(row,col)] = path+1
+            #recurse
+            for dx,dy in dirrs:
+                neigh_row = row + dx
+                neigh_col = col + dy
+                if (0 <= neigh_row < rows) and (0 <= neigh_col < cols):
+                    if grid[neigh_row][neigh_col] == 0:
+                        dfs(row+dx,col+dy,path+1)
+                
+        dfs(0,0,0)
+        return seen[(rows-1,cols-1)] if (rows-1,cols-1) in seen else -1
+
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        '''
+        since the edges to each node are at a distnace of 1
+        just use bfs and update distance in each cell accordingly
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = []
+        for x in [-1,0,1]:
+            for y in [-1,0,1]:
+                if (x,y) != (0,0):
+                    dirrs.append((x,y))
+        
+        if grid[0][0] != 0 or grid[-1][-1] != 0:
+            return -1
+        
+        def get_neighbors(row,col):
+            for dx,dy in dirrs:
+                neigh_x = row+dx
+                neigh_y = col+dy
+                if not (0 <= neigh_x < rows) or not (0 <= neigh_y < cols):
+                    continue
+                if grid[neigh_x][neigh_y] != 0: #remember we update in place
+                    continue
+                yield (neigh_x,neigh_y)
+                
+        
+        q = deque([(0,0)])
+        
+        while q:
+            row,col = q.popleft()
+            #get curr_dist
+            distance = grid[row][col]
+            if (row,col) == (rows -1,cols -1):
+                return distance + 1
+            
+            for neigh_x,neigh_y in get_neighbors(row,col):
+                grid[neigh_x][neigh_y] = distance + 1
+                q.append((neigh_x,neigh_y))
+        print(grid)
+        return -1
+
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        '''
+        since the edges to each node are at a distnace of 1
+        just use bfs and update distance in each cell accordingly
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = []
+        for x in [-1,0,1]:
+            for y in [-1,0,1]:
+                if (x,y) != (0,0):
+                    dirrs.append((x,y))
+        
+        if grid[0][0] != 0 or grid[-1][-1] != 0:
+            return -1
+        
+        def get_neighbors(row,col):
+            for dx,dy in dirrs:
+                neigh_x = row+dx
+                neigh_y = col+dy
+                if not (0 <= neigh_x < rows) or not (0 <= neigh_y < cols):
+                    continue
+                if grid[neigh_x][neigh_y] != 0: #remember we update in place
+                    continue
+                yield (neigh_x,neigh_y)
+                
+        
+        q = deque([(0,0,0)])
+        seen = set()
+        
+        while q:
+            row,col,distance = q.popleft()
+            #get curr_dist
+            if (row,col) == (rows -1,cols -1):
+                return distance + 1
+            
+            for neigh_x,neigh_y in get_neighbors(row,col):
+                if (neigh_x,neigh_y) in seen:
+                    continue
+                q.append((neigh_x,neigh_y,distance+1))
+                seen.add((neigh_x,neigh_y))
+        print(grid)
+        return -1
+            
+#using A*
+class Solution:
+    def shortestPathBinaryMatrix(self, grid: List[List[int]]) -> int:
+        '''
+        A* if very similar to BFS, but during path discovery we want to priotize more promising paths
+        we need to define heuristic, a potential function, that measures how much promise the option has
+        then we can priotize the options
+        
+        not only do we priortize by distance traveled so far, but also the most optmistic estiamte how how many more steps it would take to get to the bottom right
+        
+        mathematicaly, the estiamte for the remainder of the path is:
+            the maximmum out of the number of rows and columns remaining
+            and assume that the first path we discoverd into a cell is the best one
+            instead keep track of all the options and then choose the best one when we get to it
+            
+            in each cell, include distance traveled so far and distant traveled so far + max(remianing)
+            if we did revisit a cell, keep all possible value, then take the min
+            
+        one thing to notice too:
+            the A* estimates from a parent cell are never more than its children
+            A "child" cell could never have a lower estimate than a "parent" cell. If it did, this would mean that the "parent" cell's estimate was not the lowest possible
+            No cell can have an estimate lower than that of the top-left cell
+            
+        proof of correctness is still really hard to get
+            The key idea is that the estimates for any given path from the top-left to bottom-right cell are non-decreasing; 
+            proof by contradiction
+            
+        we push on the min heap the A* heuristic and its corresponding cell
+            
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = []
+        for x in [-1,0,1]:
+            for y in [-1,0,1]:
+                if (x,y) != (0,0):
+                    dirrs.append((x,y))
+        
+        if grid[0][0] != 0 or grid[-1][-1] != 0:
+            return -1
+        
+        def get_neighbors(row,col):
+            for dx,dy in dirrs:
+                neigh_x = row+dx
+                neigh_y = col+dy
+                if not (0 <= neigh_x < rows) or not (0 <= neigh_y < cols):
+                    continue
+                if grid[neigh_x][neigh_y] != 0: #remember we update in place
+                    continue
+                yield (neigh_x,neigh_y)
+        
+        #helper functino for A* heuristic
+        def best_case_estimate(row,col):
+            return max(rows - row, cols - col)
+        
+        # Entries on the priority queue are of the form
+        # (total distance estimate, distance so far, (cell row, cell col))
+        pq = [(1 + best_case_estimate(0, 0), 1, (0, 0))]
+        visited = set()
+        
+        while pq:
+            estimate,distance,cell = heapq.heappop(pq)
+            row,col = cell[0],cell[1]
+            if cell in visited:
+                continue
+            if cell == (rows - 1, cols -1):
+                return distance
+            visited.add(cell)
+            for neigh_x,neigh_y in get_neighbors(row,col):
+                if (neigh_x,neigh_y) in visited:
+                    continue
+                #get new A* estimates
+                estimate = best_case_estimate(neigh_x,neigh_y) + distance + 1
+                entry = (estimate,distance + 1, (neigh_x,neigh_y))
+                heapq.heappush(pq,entry)
+                
+        
+        return -1
+
+##############################
+# 694. Number of Distinct Islands (REVISITED)
+# 16MAY22
+##############################
+class Solution:
+    def numDistinctIslands(self, grid: List[List[int]]) -> int:
+        '''
+        we can use dfs
+        add cells to global island path, which we do for each dfs call on each cell
+        after dfsing' we need to check if the island is unique
+        
+        to assist in checking of island unqiqueness, subtract origin cell from all explored cells during dfs
+        once we have an island, check uniqueness:   
+            first ensure lenghts are the same
+            then check cells equivalence
+        '''
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        seen = set()
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        def dfs(row,col):
+            #bounds check
+            if not (0 <= row < rows) or not (0 <= col < cols):
+                return
+            #not a 1 or already seen
+            if (row,col) in seen or not grid[row][col]:
+                return
+            #otherwise it msut be a 1, create
+            #we shoudl talk about this, we could pass all this shit in the function,
+            #but create them globally within the loop (global at loop scope)
+            curr_island.append((row - row_origin,col - col_origin))
+            seen.add((row,col))
+            
+            for dx,dy in dirrs:
+                dfs(row+dx,col+dy)
+                
+        def isUnique():
+            for other_island in unique_islands:
+                if len(other_island) != len(curr_island):
+                    continue #no point in comparing
+                #recall we offsetted from the origin
+                for cell_1,cell_2 in zip(curr_island,other_island):
+                    if cell_1 != cell_2:
+                        break
+                else:
+                    return False
+            return True
+        
+        unique_islands = []
+        for row in range(rows):
+            for col in range(cols):
+                curr_island = []
+                row_origin = row
+                col_origin = col
+                dfs(row,col)
+                if not curr_island or not isUnique():
+                    continue
+                unique_islands.append(curr_island)
+                
+        return len(unique_islands)
+
+#using frozen sets
+class Solution:
+    def numDistinctIslands(self, grid: List[List[int]]) -> int:
+        '''
+        we can also hash by local cooridnates
+        instated of using array to keep an island, we can use a frozen set
+        '''
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        seen = set()
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        def dfs(row,col):
+            #bounds check
+            if not (0 <= row < rows) or not (0 <= col < cols):
+                return
+            #not a 1 or already seen
+            if (row,col) in seen or not grid[row][col]:
+                return
+            #otherwise it msut be a 1, create
+            #we shoudl talk about this, we could pass all this shit in the function,
+            #but create them globally within the loop (global at loop scope)
+            curr_island.add((row - row_origin,col - col_origin))
+            seen.add((row,col))
+            
+            for dx,dy in dirrs:
+                dfs(row+dx,col+dy)
+                
+        
+        unique_islands = set()
+        for row in range(rows):
+            for col in range(cols):
+                curr_island = set()
+                row_origin = row
+                col_origin = col
+                dfs(row,col)
+                if curr_island:
+                    unique_islands.add(frozenset(curr_island))
+                
+        return len(unique_islands)
+
+#hash by path signature
+class Solution:
+    def numDistinctIslands(self, grid: List[List[int]]) -> int:
+        '''
+        another way of uniquely hashing would be to use the directions we go in
+        U,D,L,R
+        which is up,down,left,right
+        
+        don't forget to mark when we bacttracked by adding a speical character
+        '''
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        seen = set()
+        dirrs = [(1,0,'U'),(-1,0,'D'),(0,1,'R'),(0,-1,'L')]
+        def dfs(row,col,direction):
+            #bounds check
+            if not (0 <= row < rows) or not (0 <= col < cols):
+                return
+            #not a 1 or already seen
+            if (row,col) in seen or not grid[row][col]:
+                return
+            #otherwise it msut be a 1, create
+            #we shoudl talk about this, we could pass all this shit in the function,
+            #but create them globally within the loop (global at loop scope)
+            curr_island.append(direction)
+            seen.add((row,col))
+            
+            for dx,dy,d in dirrs:
+                dfs(row+dx,col+dy,d)
+            #backtrack
+            curr_island.append('*')
+                
+        
+        unique_islands = set()
+        for row in range(rows):
+            for col in range(cols):
+                curr_island = []
+                row_origin = row
+                col_origin = col
+                dfs(row,col,'*')
+                if curr_island:
+                    print("".join(curr_island))
+                    unique_islands.add("".join(curr_island))
+                
+        return len(unique_islands)
+
+#################################
+# 351. Android Unlock Patterns
+# 17MAY22
+#################################
+class Solution:
+    def numberOfPatterns(self, m: int, n: int) -> int:
+        '''
+        for a valid unlock pattern
+            all the dots in the sequence are distance
+            if line segment connecting two dots passes through the CENTER of any another dot
+                then the other dot MUST have previously appear in the seqience
+                EXAMPLE:
+                    connecting dots 2 through 9 w/ot 5 or 6 appearing beforehandisvalid because linke from 2 to 9
+                    does not pass through the center of either 5 or 6
+                    CENTER is they key
+        
+        we want the number of valid unlock patterns with at least m keys
+        an at most n keys
+        
+        there is also a recurrence to i think
+        for v value of n, we can sum up values (n=1),(n-2),(n-3)....(n-4) up to n-max(n-1,0))
+        
+        we could use dfs to generate all possible paths, since n can never exceed 9
+        
+        inution:
+            lets call the current number we are on num, and its next number, nextNum
+            to reach nextNum from num we have to pass obstacles
+            and we can only pass this obstalce if we have previously passed it before
+                recall in usual dfs we check all neighbors!
+                instead we keep track of all nums visted so far, and only cross this obstacle if we have seen ti before
+                
+        '''
+        #keep map of edges and along an edge it maps to an obstacle
+        #<edge : cross through number>
+        obstacles = { (1,3): 2, (1,7): 4, (1,9): 5, (2,8): 5, 
+                      (3,7): 5, (3,1): 2, (3,9): 6, (4,6): 5, 
+                      (6,4): 5, (7,1): 4, (7,3): 5, (7,9): 8, 
+                      (8,2): 5, (9,7): 8, (9,3): 6, (9,1): 5
+                    }
+        
+        self.num_patterns = 0
+        
+        def dfs(num,count,m,n):
+            #consider only patterns with count in range [m,n]
+            if m <= count <= n:
+                self.num_patterns += 1
+            #we can have no more than n
+            if count == n:
+                return
+            
+            #add to visited, we recall we dfs from each number between 1 and 0
+            visited.add(num)
+            for next_num in range(1,10):
+                #if we haven't seen this yet
+                if next_num not in visited:
+                    #if edge has obstacle, and if we have yet to meet this obstacle, we cannot consider the path
+                    if (num,next_num) in obstacles and obstacles[(num,next_num)] not in visited:
+                        continue
+                    dfs(next_num,count+1,m,n)
+            #backtrack
+            visited.remove(num)
+            
+        for i in range(1,10):
+            visited = set()
+            dfs(i,1,m,n)
+        return self.num_patterns
