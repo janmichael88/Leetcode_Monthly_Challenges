@@ -1477,3 +1477,155 @@ class Solution:
             visited = set()
             dfs(i,1,m,n)
         return self.num_patterns
+
+###############################
+# 355. Design Twitter
+# 17MAY22
+###############################
+#close one..
+class Twitter:
+
+    def __init__(self):
+        '''
+        we can use two hashmaps
+        one mapping userId to tweets
+        one mapping userId to followers
+        keep global time counter
+        '''
+        self.tweets = defaultdict(list)
+        self.following = defaultdict(set)
+        self.order = 0
+        
+
+    def postTweet(self, userId: int, tweetId: int) -> None:
+        self.tweets[userId].append((self.order,tweetId))
+        self.order += 1
+
+    def getNewsFeed(self, userId: int) -> List[int]:
+        #pull all tweets from user and followers
+        user_tweets = self.tweets[userId]
+        follower_tweets = []
+        for follower in self.following[userId]:
+            follower_tweets += self.tweets[follower]
+        all_tweets = user_tweets + follower_tweets
+        all_tweets.sort(reverse = True)
+        return [tweet for time,tweet in all_tweets[-10:]]
+
+    def follow(self, followerId: int, followeeId: int) -> None:
+        self.following[followerId].add(followeeId)
+
+    def unfollow(self, followerId: int, followeeId: int) -> None:
+        self.following[followerId].discard(followeeId)
+
+
+# Your Twitter object will be instantiated and called as such:
+# obj = Twitter()
+# obj.postTweet(userId,tweetId)
+# param_2 = obj.getNewsFeed(userId)
+
+class Twitter:
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.tweets = collections.defaultdict(list)
+        self.following = collections.defaultdict(set)
+        self.order = 0
+    def postTweet(self, userId, tweetId):
+        """
+        Compose a new tweet.
+        :type userId: int
+        :type tweetId: int
+        :rtype: void
+        """
+        self.tweets[userId] += (self.order, tweetId), 
+        self.order -= 1
+
+    def getNewsFeed(self, userId):
+        """
+        Retrieve the 10 most recent tweet ids in the user's news feed. Each item in the news feed must be posted by users who the user followed or by the user herself. Tweets must be ordered from most recent to least recent.
+        :type userId: int
+        :rtype: List[int]
+        """
+        tw = sorted(tw for i in self.following[userId] | {userId} for tw in self.tweets[i])[:10]
+        return [news for i, news in tw]
+    
+
+    def follow(self, followerId, followeeId):
+        """
+        Follower follows a followee. If the operation is invalid, it should be a no-op.
+        :type followerId: int
+        :type followeeId: int
+        :rtype: void
+        """
+        self.following[followerId].add(followeeId)
+
+    def unfollow(self, followerId, followeeId):
+        """
+        Follower unfollows a followee. If the operation is invalid, it should be a no-op.
+        :type followerId: int
+        :type followeeId: int
+        :rtype: void
+        """
+        self.following[followerId].discard(followeeId)     
+# obj.follow(followerId,followeeId)
+# obj.unfollow(followerId,followeeId)
+
+class Twitter:
+
+    # Each user has a separate min heap
+    # if size of heap is lesser than 10 keep pushing tweets and when it's full, poppush
+    # use a defaultdict to associate user id's to their heaps
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.following = defaultdict(set)
+        self.user_tweets = defaultdict(deque)
+        self.post = 0
+
+    def postTweet(self, userId, tweetId):
+        """
+        Compose a new tweet.
+        """
+        self.post += 1
+        tweets = self.user_tweets[userId]
+        tweets.append(((self.post), tweetId))
+        if len(tweets) > 10:
+            tweets.popleft()
+        
+
+    def getNewsFeed(self, userId):
+        """
+        Retrieve the 10 most recent tweet ids in the user's news feed. Each item in the news feed must be posted by users who the user followed or by the user herself. Tweets must be ordered from most recent to least recent.
+        """
+        h = []
+        u = self.user_tweets[userId]
+		h.extend(u)
+        heapify(h)
+        for user in self.following[userId]:
+            tweets = self.user_tweets[user]
+            for x in range(len(tweets) - 1, -1, -1):
+                if len(h) < 10:
+                    heappush(h, tweets[x])
+                else:
+                    if h[0][0] < tweets[x][0]:
+                        heappushpop(h, tweets[x])
+                    else:
+                        break
+        return [heappop(h)[1] for x in range(len(h))][::-1]
+
+    def follow(self, followerId, followeeId):
+        """
+        Follower follows a followee. If the operation is invalid, it should be a no-op.
+        """
+        if followerId != followeeId:
+            self.following[followerId].add(followeeId)
+
+    def unfollow(self, followerId, followeeId):
+        """
+        Follower unfollows a followee. If the operation is invalid, it should be a no-op.
+        """
+        if followerId != followeeId:
+                self.following[followerId].discard(followeeId)
