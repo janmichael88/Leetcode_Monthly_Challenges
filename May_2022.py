@@ -1629,3 +1629,122 @@ class Twitter:
         """
         if followerId != followeeId:
                 self.following[followerId].discard(followeeId)
+
+#############################################
+# 329. Longest Increasing Path in a Matrix (REVISITED)
+# 19MAY22
+#############################################
+class Solution:
+    def longestIncreasingPath(self, matrix: List[List[int]]) -> int:
+        '''
+        we can use dfs to keep track of the length of the longest path starting from (i,j)
+        dp(i,j) = give max length of path ending at i,j
+        dp(i,j) = {
+            onlf if the the neigh is increasing in value
+            for all neighs from i,j:
+                ans = max(current (i,j), dp(i,j) for all i,j neighbors)
+        }
+        
+        then we invoke dp for all i,j spots in the matrix to get the final answer
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        memo = {}
+        
+        dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dp(i,j):
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = 0
+            for dx,dy in dirs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds check and we can step
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and matrix[neigh_x][neigh_y] > matrix[i][j]:
+                    #maximize from previous computations
+                    if (neigh_x,neigh_y) in memo:
+                        ans = max(ans,memo[(neigh_x,neigh_y)])
+                    #maximize using recursive case
+                    else:
+                        ans = max(ans,dp(neigh_x,neigh_y))
+            #move to next cell increase path length by 1
+            memo[(i,j)] = ans + 1
+            return ans + 1
+        
+        res = 0
+        for i in range(rows):
+            for j in range(cols):
+                res = max(res,dp(i,j))
+        
+        return res
+            
+#peeling an onion
+#find topolical ordering frist
+#then process
+class Solution:
+    def longestIncreasingPath(self, matrix: List[List[int]]) -> int:
+        '''
+        this problem is partifularly painful because we are not given the topological sorted order
+        rather, we do not have a base case
+        we already have defined the recurrence relation as
+        f(i,j)=max{f(x,y)∣(x,y) is a neighbor of(i,j) and matrix[x][y]>matrix[i][j]}+1
+        
+        we can use the peeling onion to try to define the base cases,
+        then establish the ordering
+        then from the ordering we can apply the recurrence
+        
+        the idea is that in a DAG, we will have leaf elements where we can directly comptue an answer
+        we put these leaves in a list, and tehn remove from DAG
+        
+        after the removal, there will be new leaves
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        memo = {}
+        
+        dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        #we need to find the (i,j) cells that do not depend on previous computations, i.e their out degree is zero
+        outDegree = [[0]*(cols) for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                for dx,dy in dirs:
+                    neigh_x = i + dx
+                    neigh_y = j + dy
+                    #bounds, check and icnreasing
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols and matrix[neigh_x][neigh_y] > matrix[i][j]:
+                        outDegree[i][j] += 1
+        
+        #bfs, q up 0 outdegree cells
+        q = deque([])
+        for i in range(rows):
+            for j in range(cols):
+                if outDegree[i][j] == 0:
+                    q.append((i,j))
+                    
+        res = 0
+        while q:
+            #process first layer
+            res += 1
+            N = len(q)
+            for _ in range(N):
+                i,j = q.popleft()
+                for dx,dy in dirs:
+                    neigh_x = i + dx
+                    neigh_y = j + dy
+                    #bounds, check and icnreasing
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        if matrix[neigh_x][neigh_y] > matrix[i][j]:
+                            outDegree[neigh_x][neigh_y] -= 1
+                            if outDegree[neigh_x][neigh_y] == 0:
+                                q.append((neigh_x,neigh_y))
+                    else:
+                        continue
+        
+        return res
+                    
+###################################
+# 10. Regular Expression Matching
+# 19MAY22
+###################################
