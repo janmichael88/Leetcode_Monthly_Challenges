@@ -1748,3 +1748,47 @@ class Solution:
 # 10. Regular Expression Matching
 # 19MAY22
 ###################################
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        '''
+        if we didn't have any Kleene stars and just dots, then we would just pass through both string and pattern
+        continuing only on dots and verifying chars match
+        
+        when a star is present, we need to check different suffixes and see if they match the rest of the pattern
+        
+        w/o kleen star we can have:
+        
+        def match(s,p):
+            if not p:
+                return not s
+            first_match = bool(s) and p[0] in {s[0],'.'}
+            return first_match and match(s[1:],p[1:])
+            
+        inution on match,
+            basicially it's true if we have a first match and we can return true for the rest of the string and the pattern
+            
+        if a * is present in the pattern, it will be in the second position pattern[1]
+        then we can ignore this part of the pattern or delete a amtchine char in the text
+        if we have match on the remaining strings after any of these operatinos, the initial inputs matched
+        
+        '''
+        def rec(s,p):
+            if not p:
+                return not s
+            #find first match
+            first_match = bool(s) and p[0] in {s[0],'.'}
+            #star case, 
+            #note pattern[0] can be a char or dot
+            '''
+            example
+            say we have s = 'aaadddd' and p = 'aaad*'
+            we matched up to aad, then the *implies match any number of times d
+            '''
+            # the kleene * matches any number of times the char predicing char
+            if len(p) >= 2 and p[1] == '*':
+                return rec(s,p[2:]) or first_match and rec(s[1:],p)
+            else:
+                #regular case with no Kleeneww star
+                return first_match and rec(s[1:],p[1:])
+        
+        return rec(s,p)
