@@ -1792,3 +1792,57 @@ class Solution:
                 return first_match and rec(s[1:],p[1:])
         
         return rec(s,p)
+
+#############################
+# 647. Palindromic Substrings (Revisited)
+# 23MAY22
+#############################
+class Solution:
+    def countSubstrings(self, s: str) -> int:
+        '''
+        if we let dp(i,j) return whether s[i:j] is a palindrome or not
+        dp(i,j) is True when dp(i+1,j-1) is true
+        then we just check all i,j substrings and increment a counter
+        
+        
+        '''
+        memo = {}
+        #this is an O(N) operation
+        #but by the time wew compute another i,j we already have previosuly computed its values
+        def isPal(i,j):
+            if i > j:
+                return True
+            if s[i] != s[j]:
+                return False
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = isPal(i+1,j-1)
+            memo[(i,j)] = ans
+            return ans
+        
+        ans = 0
+        N = len(s)
+        for i in range(N):
+            for j in range(i,N):
+                ans += isPal(i,j)
+                
+        return ans
+        
+#fucck this shit
+class Solution:
+    def countSubstrings(self, s: str) -> int:
+        n = len(s)
+        dp = [[False] * n for _ in range(n)]
+
+        ans = 0
+        for i in range(n - 1, -1, -1):
+            for j in range(i, n):
+                if s[i] == s[j]:
+                    if i+1 >= j:
+                        dp[i][j] = True
+                    else:
+                        dp[i][j] = dp[i+1][j-1]
+                        
+                if dp[i][j]:
+                    ans += 1
+        return ans
