@@ -1846,3 +1846,75 @@ class Solution:
                 if dp[i][j]:
                     ans += 1
         return ans
+
+####################################
+# 474. Ones and Zeroes (Revisited)
+# 23MAY22
+####################################
+class Solution:
+    def findMaxForm(self, strs: List[str], m: int, n: int) -> int:
+        '''
+        this is the classical 0/1 knap sack problem
+        let dp(i,m,n) be the maximum size of the subset if we include subsets from strs[i:] having m 0's and n 1's
+        
+        now for the current call at i,m,n we can either choose to include this subet or no include
+        if we do include we need to decrement the count, otherwise we don't and keep going on
+        
+        dp(i,m,n) = {
+            counts_at_strs[i]
+            if counts_at_strs[i] has more than the current m and n
+                dp(i+1,m,n)
+            else:
+                max(1+dp(i+1,m-count zeros,n-count ones),dp(i+1,m,n))
+        }
+        '''
+        memo = {}
+        def calc(strs,idx,zeros,ones):
+            #base case, end of array no options left
+            if idx == len(strs):
+                return 0
+            if zeros == 0 and ones == 0:
+                return 0
+            if (idx,zeros,ones) in memo and memo[(idx,zeros,ones)] != 0:
+                return memo[(idx,zeros,ones)]
+            #current one strs
+            counts = Counter(strs[idx])
+            #keep recursing if we have enought
+            taken = -1
+            if zeros - counts["0"] >= 0  and  ones - counts["1"] >= 0:
+                taken = calc(strs,idx+1,zeros - counts['0'],ones - counts['1']) + 1
+            #take vs not take
+            not_taken = calc(strs,idx+1,zeros,ones)
+            ans = max(taken,not_taken)
+            memo[(idx,zeros,ones)] =  ans
+            return ans
+        
+        return calc(strs,0,m,n)
+
+class Solution:
+    def findMaxForm(self, strs: List[str], m: int, n: int) -> int:
+        '''
+        lets try turning this into bottom up DP, using 3d array
+        '''
+        N = len(strs)
+        
+        dp = [[[0]*(n+1) for _ in range(m+1)] for _ in range(N+1)]
+        
+        #bottom case for recurrcne started at ending of trs
+        for i in range(N,-1,-1):
+            for zeros in range(m+1):
+                for ones in range(n+1):
+                    #bottom cases
+                    if i == N:
+                        dp[i][zeros][ones] = 0
+                    else:
+                        count = Counter(strs[i])
+                        taken = -1
+                        if zeros - count['0'] >= 0 and ones - count['1'] >= 0:
+                            taken = dp[i+1][zeros - count['0']][ones- count['1']] + 1
+                        not_taken = dp[i+1][zeros][ones]
+                        ans = max(taken,not_taken)
+                        dp[i][zeros][ones] = ans
+        
+        return dp[0][m][n]
+
