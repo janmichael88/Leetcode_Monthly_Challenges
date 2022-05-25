@@ -1918,3 +1918,55 @@ class Solution:
         
         return dp[0][m][n]
 
+#################################
+# 32. Longest Valid Parentheses (REVSITED)
+# 24MAY22
+####################################
+#top down still fails some cases
+class Solution:
+    def longestValidParentheses(self, s: str) -> int:
+        '''
+        if we define dp(i) as the number of valid parantheses using s[:i]
+        then we call dp(i) for i in range(len(s))
+            base case
+                i < 0:
+                return 0
+            if s[i] == ')' and s[i-1] == '(', we have ()
+                dp[i] = dp[i-2] + 2
+            for cases like ))
+                we need to check if s[i - dp(i-1)-1] == '('
+                    then dp(i) = dp(i-1) + s[i-dp(i-1) -2] + 2
+        '''
+        memo = {}
+        
+        def dp(i):
+            if i <= 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            #ending
+            ans = 0
+            if s[i] == ')':
+                #case 1, ()
+                if s[i-1] == '(':
+                    if i >= 2:
+                        ans = dp(i-2) + 2
+                    else:
+                        ans = 2
+                #case 2, ))
+                elif (i - dp(i-1) > 0) and (s[i-dp(i-1)-1] == '('):
+                    if (i - dp(i-1)) >= 2:
+                        ans = dp(i-1) + dp(i-dp(i-1)-2) + 2
+                    else:
+                        ans = 2
+                
+            memo[i] = ans
+            return ans
+
+            
+        ans = 0
+        N = len(s)
+        for i in range(N):
+            ans = max(ans,dp(i))
+        
+        return ans
