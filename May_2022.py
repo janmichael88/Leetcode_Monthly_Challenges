@@ -1970,3 +1970,198 @@ class Solution:
             ans = max(ans,dp(i))
         
         return ans
+
+###############################
+# 277. Find the Celebrity
+# 24MAY22
+###############################
+#FUCK
+# The knows API is already defined for you.
+# return a bool, whether a knows b
+# def knows(a: int, b: int) -> bool:
+
+class Solution:
+    def findCelebrity(self, n: int) -> int:
+        '''
+        if this were a graph, the celebrity would be the person that has no outgoing edges and has n-1 in going edges
+        inherently, a persons should know themselves
+        unforuntaely, we do not have access to the graph
+        
+        brute force, just get in and out direction for all n pairs, then check
+        
+        '''
+        graph = defaultdict(set)
+        for i in range(n):
+            for j in range(n):
+                if i != j:
+                    if knows(i,j):
+                        graph[i].add(j)
+                    if knows(j,i):
+                        graph[j].add(i)
+        
+        cand = None
+        
+        for i in range(n):
+            if i not in graph:
+                cand = i
+        
+        if cand:
+            in_direction = 0
+            for i in range(n):
+                if i != cand:
+                    in_direction += knows(i,cand)
+            
+            if in_direction == n-1:
+                return cand
+            else:
+                return -1
+        
+        else:
+            return -1
+                
+class Solution:
+    def findCelebrity(self, n: int) -> int:
+        '''
+        brute force
+        '''
+        def is_celeb(i):
+            for j in range(n):
+                if i != j:
+                    if knows(i,j) or not knows(j,i):
+                        return False
+            return True
+        
+        for i in range(n):
+            if is_celeb(i):
+                return i
+        
+        return -1
+
+class Solution:
+    def findCelebrity(self, n: int) -> int:
+        '''
+        brute force
+        '''
+        def is_celeb(i):
+            for j in range(n):
+                if i != j:
+                    if knows(i,j) or not knows(j,i):
+                        return False
+            return True
+        
+        cand = 0
+        for i in range(1,n):
+            if knows(cand,i):
+                cand = i
+        
+        if is_celeb(cand):
+            return cand
+        return -1
+
+#with caching
+class Solution:
+    def findCelebrity(self, n: int) -> int:
+        '''
+        brute force
+        '''
+        def is_celeb(i):
+            for j in range(n):
+                if i != j:
+                    if knows(i,j) or not knows(j,i):
+                        return False
+            return True
+        
+        cand = 0
+        cached = {}
+        for i in range(1,n):
+            if (cand,i) in cached and cached[(cand,i)]:
+                cand = i
+            elif knows(cand,i):
+                cached[(cand,i)] = 1
+                cand = i
+                
+        
+        if is_celeb(cand):
+            return cand
+        return -1
+
+############################
+# 354. Russian Doll Envelopes (Revisited)
+# 25MAY22
+############################
+#this is a revisited problem
+#this is trivial to convert to a bottom up approach
+
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        '''
+        we can treat this as longest increasing subsequqence 
+        first sort by increasind width and thend decreasing height
+        '''
+        N = len(envelopes)
+        env = sorted(envelopes, key = lambda x: (x[0],-x[1]))
+        
+        memo = {}
+        
+        def dp(i):
+            if i == 0:
+                return 1
+            if i in memo:
+                return memo[i]
+            ans = 1
+            for j in range(i):
+                if env[i][1] > env[j][1] and env[i][0] != env[j][0] :
+                    ans = max(ans,dp(j)+1)
+                    
+            memo[i] = ans
+            return ans
+        
+        ans = 0
+        for i in range(N):
+            ans = max(ans,dp(i))
+        
+        return ans
+
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        '''
+        recall from LIS we can intelligently build the longest increasing subsequence
+        we try to build one with the largest height
+        if we can't we look for a height that is just larger than the current height
+        '''
+        env = sorted(envelopes, key = lambda x: (x[0],-x[1]))
+        
+        dp = []
+        
+        for w,h in env:
+            i,N = 0,len(dp)
+            while i < N:
+                if h <= dp[i]:
+                    break
+                i += 1
+                
+            if i == N:
+                dp.append(h)
+            else:
+                dp[i] = h
+        
+        return len(dp)
+
+class Solution:
+    def maxEnvelopes(self, envelopes: List[List[int]]) -> int:
+        '''
+        note, that when we are contructing the dp array, we are making an increasing sequence
+        we can use binary search to find the the element just greater than the current height
+        '''
+        env = sorted(envelopes, key = lambda x: (x[0],-x[1]))
+        dp = []
+        for w,h in env:
+            i = bisect_left(dp,h)
+
+            if i == len(dp):
+                dp.append(h)
+            else:
+                dp[i] = h
+
+        return len(dp)
+
