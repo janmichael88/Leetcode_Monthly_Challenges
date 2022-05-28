@@ -2165,3 +2165,43 @@ class Solution:
 
         return len(dp)
 
+###########################
+# 356. Line Reflection
+# 28MAY22
+###########################
+#yes!!
+class Solution:
+    def isReflected(self, points: List[List[int]]) -> bool:
+        '''
+        we can only reflect along a line parallel to the y axis
+        reflecting a point over a line parallel to the y has the effect of negating the x coordinate
+        
+        i could check all lines between the min x values and max values
+        after each reflection, we would check if we have the same set but that's would be 10**8 times 10**4 time in the worst case
+        
+        the idea if that if a line exists, it should be in the middle of the smalelst x value and largest x value
+        
+        '''
+        smallest_x = float('inf')
+        largest_x = float('-inf')
+        mapp = {}
+        for x,y in points:
+            smallest_x = min(smallest_x,x)
+            largest_x = max(largest_x,x)
+            mapp[(x,y)] = True
+        
+        
+        candidate_line = smallest_x + (largest_x - smallest_x) /2
+        
+        #now for each point, try flippind and make sure if we flipped, we can still find it
+        for x,y in points:
+            if x < candidate_line:
+                transformed_x = candidate_line + abs(x - candidate_line)
+            else:
+                transformed_x = candidate_line - abs(x - candidate_line)
+            
+            if (transformed_x,y) not in mapp:
+                return False
+        
+        return True
+        
