@@ -2205,3 +2205,43 @@ class Solution:
         
         return True
         
+
+#######################################
+# 318. Maximum Product of Word Lengths (Revisited)
+# 29MAY22
+#######################################
+#precompute hash of each word
+class Solution:
+    def maxProduct(self, words: List[str]) -> int:
+        '''
+        brute force is to check all i,j pairs
+        then if there are no matching chars ineach word
+        
+        convert each word into a hash set for fast comparison
+        '''
+        
+        def no_common(word1,word2):
+            if len(word1) <= len(word2):
+                for ch in word1:
+                    if ch in word2:
+                        return False
+                return True
+            else:
+                return no_common(word2,word1)
+        ans = 0
+        N = len(words)
+        
+        set_words = []
+        
+        for i in range(N):
+            set_words.append(set(words[i]))
+        
+        for i in range(N):
+            for j in range(i+1,N):
+                first = set_words[i]
+                second = set_words[j]
+                if no_common(first,second):
+                    ans = max(ans, len(words[i])*len(words[j]))
+        
+        return ans
+                    
