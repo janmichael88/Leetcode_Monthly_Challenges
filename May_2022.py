@@ -2245,3 +2245,107 @@ class Solution:
         
         return ans
                     
+#############################
+# 1136. Parallel Courses (REVISITED)
+# 29MAY22
+#############################
+#bfs, kahns, top sort
+class Solution:
+    def minimumSemesters(self, n: int, relations: List[List[int]]) -> int:
+        '''
+        bfs layer by layer starting with course that have no prereqs
+        we can define a course having no pre-reqs if their in degree is zero
+        
+        while we bfs maintain the number of course we have taken
+        when taking a course reduce the neighboring coures by zero and add back into the q if this course ind egree is 0
+        '''
+        adj_list = defaultdict(list)
+        in_degree = defaultdict(int)
+        
+        for u,v in relations:
+            adj_list[u].append(v)
+            in_degree[v] += 1
+        
+        #populate q, and add in clasees with zero indegree
+        q = deque([])
+        
+        for course in range(1,n+1):
+            if course not in in_degree:
+                q.append(course)
+                in_degree[course] = 0
+        
+        taken = 0
+        semesters = 0
+        
+        while q:
+            semesters += 1
+            N = len(q)
+            #this is the layer by layer part, comapred to the pop left, append right paradigm
+            for _ in range(N):
+                curr = q.popleft()
+                taken += 1
+                for neigh in adj_list[curr]:
+                    in_degree[neigh] -= 1
+                    if in_degree[neigh] == 0:
+                        q.append(neigh)
+                        
+        
+        return semesters if taken == n else -1
+
+#dfs, cycle detection
+class Solution:
+    def minimumSemesters(self, n: int, relations: List[List[int]]) -> int:
+        '''
+        insight is that the number of semesters taken is the longest path in the dag
+        not withstanding the presence of a cycle
+        
+        we can first detect a cycle, if there is a cycle, return -1
+        otherwise proceed to finding the longest path in the DAG
+        
+        
+        '''
+        adj_list = defaultdict(list)
+        
+        for u,v in relations:
+            adj_list[u].append(v)
+        
+        #check for cycle
+        visited = {}
+
+        def dfs_check_cycle(node: int):
+            # return True if graph has a cycle
+            if node in visited:
+                return visited[node]
+            else:
+                # mark as visiting
+                visited[node] = -1
+            for end_node in adj_list[node]:
+                if dfs_check_cycle(end_node):
+                    # we meet a cycle!
+                    return True
+            # mark as visited
+            visited[node] = False
+            return False
+
+        # if has cycle, return -1
+        for node in range(1,n+1):
+            if dfs_check_cycle(node):
+                return -1
+            
+        #dp to find lengths
+        memo = {}
+        
+        def dp(node):
+            if node in memo:
+                return memo[node]
+            ans = 1
+            for neigh in adj_list[node]:
+                ans = max(ans, dp(neigh) + 1)
+            memo[node] = ans
+            return ans
+        
+        ans = 0
+        for course in range(1,n+1):
+            ans = max(ans,dp(course))
+        
+        return ans
