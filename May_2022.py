@@ -2349,3 +2349,130 @@ class Solution:
             ans = max(ans,dp(course))
         
         return ans
+
+############################
+# 362. Design Hit Counter
+# 30MAY22
+###########################
+class HitCounter:
+    '''
+    the idea is the use a q, keeping only hits within the past 5 minutes
+    when we call getHits, we keep popping left until the timestamp at the beginning is greater than 300 seconds
+    this is because timestamps are motnoically increasing
+    '''
+
+    def __init__(self):
+        self.q = deque()
+        
+
+    def hit(self, timestamp: int) -> None:
+        self.q.append(timestamp)
+
+    def getHits(self, timestamp: int) -> int:
+        while self.q and timestamp - self.q[0] >= 300:
+            self.q.popleft()
+        
+        return len(self.q)
+
+
+# Your HitCounter object will be instantiated and called as such:
+# obj = HitCounter()
+# obj.hit(timestamp)
+# param_2 = obj.getHits(timestamp)
+
+#using hashmap
+class HitCounter:
+    '''
+    we could also use a hasmap
+    keep hashmap of timestamp to number of hits
+    then just find all hits at the timestamp interval
+    '''
+    def __init__(self):
+        self.hits = {}
+        
+
+    def hit(self, timestamp: int) -> None:
+        if timestamp not in self.hits:
+            self.hits[timestamp] = 0
+        self.hits[timestamp] += 1
+
+    def getHits(self, timestamp: int) -> int:
+        ans = 0
+        start = timestamp - 300
+        for t in range(start+1,timestamp+1):
+            if t in self.hits:
+                ans += self.hits[t]
+        
+        return ans
+
+#another way, hashmap is size 300
+class HitCounter:
+    def __init__(self):
+        self.hits = [(0, 0)] * 300
+        
+    def hit(self, timestamp: int) -> None:
+        i = (timestamp-1) % 300
+        t, c = self.hits[i]
+        
+        if timestamp - t < 300: 
+            self.hits[i] = (timestamp, c+1)
+        else:
+            self.hits[i] = (timestamp, 1)
+            
+    def getHits(self, timestamp: int) -> int:
+        count = 0
+        for t, c in self.hits:
+            if timestamp - t < 300:
+                count += c
+        return count
+
+#followup, what if there are a large number of hits for a time stamp?
+class HitCounter:
+    '''
+    what is there are large number of hits per stamp
+    we repeatedly kept removing a larger number of hits at the time stamp from the deque
+    in this case we would want to keep the timestampe and the number of hits at this timestampe
+    
+    algo:
+        if we enctouner the hit for the same timestamp, 
+            instead of appending a new entry in the deque, we smply incremant the count of the last timesatmpe
+        in order to kepe track of the totla number of elements for the last 300 seconds
+            keep global variable total, which is intially zero
+            we keep updating as we add or remove elemnts from the q
+            we incremant the total by 1 when hit is called and decremnt by the count of the timestamp we remove from the q
+    '''
+
+    def __init__(self):
+        '''
+        we keep a deque, where each element in the deque is [timestamp,count]
+        we keep global total answer
+        '''
+        self.total = 0
+        self.hits = deque([])
+        
+
+    def hit(self, timestamp: int) -> None:
+        #new timestamp with count of 1
+        if len(self.hits) == 0 or self.hits[-1][0] != timestamp:
+            self.hits.append([timestamp,1])
+        else:
+            #update latest timestamp by icnremint cont by 1
+            latest_timestamp, latest_count = self.hits.pop()
+            #insert new pait of time stampe
+            self.hits.append([timestamp, latest_count+1])
+        
+        #increment total
+        self.total += 1
+            
+            
+
+    def getHits(self, timestamp: int) -> int:
+        while self.hits:
+            diff = timestamp - self.hits[0][0]
+            if diff >= 300:
+                earliest_timestamp, earliest_count = self.hits.popleft()
+                self.total -= earliest_count
+            else:
+                break
+        
+        return self.total
