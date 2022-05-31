@@ -2622,3 +2622,108 @@ class Solution:
         
         return min(2147483647, max(-quotient if is_negative else quotient, -2147483648))
 
+#################################
+# 547. Number of Provinces
+# 30MAY22
+################################
+#EZ
+class Solution:
+    def findCircleNum(self, isConnected: List[List[int]]) -> int:
+        '''
+        just dfs on each city i, and count of the connectec components
+        '''
+        n = len(isConnected)
+        graph = defaultdict(list)
+        
+        #need both edges
+        for i in range(n):
+            for j in range(i+1,n):
+                if isConnected[i][j]:
+                    graph[i].append(j)
+                    graph[j].append(i)
+        
+        
+        seen = set()
+        
+        def dfs(node,seen,group):
+            if node in seen:
+                return
+            seen.add(node)
+            group.append(node)
+            for neigh in graph[node]:
+                dfs(neigh,seen,group)
+                
+        groups = []
+        for i in range(n):
+            group = []
+            dfs(i,seen,group)
+            if len(group) > 0:
+                groups.append(group)
+        
+        return len(groups)
+
+###############################
+# 1461. Check If a String Contains All Binary Codes of Size K
+# 31MAY22
+###############################
+class Solution:
+    def hasAllCodes(self, s: str, k: int) -> bool:
+        '''
+        we just check all subtrings if size k
+        the number of unique substrings of size k in s should be 2^k
+        if not return false
+        '''
+        unique_substrings = 0
+        seen = set()
+        
+        #check all substrings of size k in s
+        for i in range(len(s)+1-k):
+            substring = s[i:i+k]
+            if substring not in seen:
+                seen.add(substring)
+                unique_substrings += 1
+                
+                if unique_substrings == 1 << k:
+                    return True
+        
+        return False
+
+class Solution:
+    def hasAllCodes(self, s: str, k: int) -> bool:
+        '''
+        technically, we the substrings would have provided their own hashes (keeping them of size k that is)
+        we can map each string of size k to a number in the range [0,2**k - 1]
+        
+        we don't need to compute the hash of each string (i.e we dont need to convert binary to decimal)
+        we can use a rolling hash to to get the hash of the next substring
+        
+        for example, 
+        say we have s = '11010110' and k = 3 
+        we are currently as '110' with hash of 4+2+0 = 6
+        now we go on th next one '101'
+        
+        we keep the first '110' left shift to get '1100' 
+        then we AND with the all ones bit
+        1100 & 111
+        then or with the new bit
+        (1100 & 111) | 1
+        
+        new_hash = ((old_hash << 1) & all_one) | last_digit_of_new_hash
+        '''
+        unique_substrings = 0
+        seen = [False]*(1 << k)
+        all_ones = (1 << k) - 1
+        curr_hash = 0
+        
+        for i in range(len(s)):
+            #compute rolling hash
+            curr_hash = ((curr_hash << 1) & all_ones) | int(s[i])
+            #usuable hash only when we have substring of size k
+            if i >= k - 1 and not seen[curr_hash]:
+                seen[curr_hash] = True
+                unique_substrings += 1
+                
+                if unique_substrings == 1 << k:
+                    return True
+        
+        return False
