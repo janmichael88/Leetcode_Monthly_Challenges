@@ -2476,3 +2476,149 @@ class HitCounter:
                 break
         
         return self.total
+
+#####################################
+# 29. Divide Two Integers (REVISTED)
+# 30MAY22
+#####################################
+class Solution:
+    def divide(self, dividend: int, divisor: int) -> int:
+        '''
+        this is the second time revisiting this problem
+        notes on overflow:
+            we are working with 32 bit signed intergers, all inputs (divident and divisor) and ans
+            but fit in into a 32 bit signed which has the range [-2^32, 2^32 -1]
+            EDGE CASE:
+                For this problem, if the quotient is strictly greater than 2^31 - 1, then return 2^31 - 1, and if the quotient is strictly less than -2^31, then return -2^31.
+                
+            if we have a / b = c, c cammpt be any bigger than a
+            if abs(a) < abs(c), then c will be closer to zero than a will be
+            we need to be careful if one or both are negative, we just take their absolute values and change the sign accordingling
+            
+        the idea is to use repeated subtraction, but this will fail for large test cases
+        dont forget to to adjust the sign accordingly at the beginning
+        
+        the problem is that there are more negative integers in the allowable range than there are positive integers
+        the idea is to start with negative
+        
+        at the start, convert both to negative, then modeify the repeated subtraction so that is subtracts the negative deivors from negative dividend
+        '''
+            # Constants.
+        MAX_INT = 2147483647        # 2**31 - 1
+        MIN_INT = -2147483648       # -2**31
+
+        # Special case: overflow.
+        if dividend == MIN_INT and divisor == -1:
+            return MAX_INT
+
+        # We need to convert both numbers to negatives
+        # for the reasons explained above.
+        # Also, we count the number of negatives signs.
+        negatives = 2
+        if dividend > 0:
+            negatives -= 1
+            dividend = -dividend
+        if divisor > 0:
+            negatives -= 1
+            divisor = -divisor
+
+        # Count how many times the divisor has to be
+        # added to get the dividend. This is the quotient.
+        quotient = 0
+        while dividend - divisor <= 0:
+            quotient -= 1
+            dividend -= divisor
+
+        # If there was originally one negative sign, then
+        # the quotient remains negative. Otherwise, switch
+        # it to positive.
+        return -quotient if negatives != 1 else quotient
+
+#reapted expoenntial search w/o bit shifts
+class Solution:
+    def divide(self, dividend: int, divisor: int) -> int:
+        '''
+        instead of trying to take away the divisor from the dividend, try taking away multiples of if
+        we need to find the highest doublding power of a divisor that can keep taking away from the dividend
+        process is actually called exponenital binary search
+        
+        '''
+        is_negative = (dividend < 0) != (divisor < 0)
+        dividend = abs(dividend)
+        divisor = abs(divisor)
+        
+        quotient = 0
+        while divisor <= dividend:
+            powerOfTwo = 1
+            value = divisor
+            while value + value <= dividend:
+                value += value
+                powerOfTwo += powerOfTwo
+            quotient += powerOfTwo
+            dividend -= value
+        
+        return min(2147483647, max(-quotient if is_negative else quotient, -2147483648))
+            
+
+#using bitshifts
+class Solution:
+    def divide(self, dividend: int, divisor: int) -> int:
+        '''
+        instead of trying to take away the divisor from the dividend, try taking away multiples of if
+        we need to find the highest doublding power of a divisor that can keep taking away from the dividend
+        process is actually called exponenital binary search
+        
+        '''
+        is_negative = (dividend < 0) != (divisor < 0)
+        dividend = abs(dividend)
+        divisor = abs(divisor)
+        
+        quotient = 0
+        while divisor <= dividend:
+            powerOfTwo = 1
+            value = divisor
+            while (value << 1) <= dividend:
+                value = value << 1
+                powerOfTwo = powerOfTwo << 1
+            quotient += powerOfTwo
+            dividend -= value
+        
+        return min(2147483647, max(-quotient if is_negative else quotient, -2147483648))
+
+#caching powers of two
+class Solution:
+    def divide(self, dividend: int, divisor: int) -> int:
+        '''
+        we can save even more time by caching the powers of two for a divisor
+        recall, we computed all powers of two for a divisor
+        
+        intuition:
+            the property if that the difference will always be less than the previous double of the divisor that fits into it
+            if it were equal or bigger, than the largest doubling, then we must have stopped the doubling too sonon
+        '''
+        is_negative = (dividend < 0) != (divisor < 0)
+        dividend = abs(dividend)
+        divisor = abs(divisor)
+        
+        doubles = []
+        powersOfTwo = []
+        
+        powerOfTwo = 1
+        
+        while divisor <= dividend:
+            doubles.append(divisor)
+            powersOfTwo.append(powerOfTwo)
+            divisor = divisor << 1
+            powerOfTwo = powerOfTwo << 1
+        
+        #no go backwards and try seeing if the largest double fits into the divident
+        quotient = 0
+        N = len(doubles)
+        for i in range(N-1,-1,-1):
+            if doubles[i] <= dividend:
+                quotient += powersOfTwo[i]
+                dividend -= doubles[i]
+                
+        
+        return min(2147483647, max(-quotient if is_negative else quotient, -2147483648))
+
