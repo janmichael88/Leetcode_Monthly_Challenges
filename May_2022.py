@@ -2662,6 +2662,59 @@ class Solution:
         
         return len(groups)
 
+#another way, just use the isConnected matrix
+class Solution:
+    def findCircleNum(self, isConnected: List[List[int]]) -> int:
+        '''
+        without having to re make the adj list
+        if/when we can dfs, we incremnt a count
+        '''
+        N = len(isConnected)
+        visited = set()
+        
+        def dfs(i):
+            for j in range(N):
+                if isConnected[i][j] and j not in visited:
+                    visited.add(j)
+                    dfs(j)
+                    
+        
+        count = 0
+        for i in range(N):
+            if i not in visited:
+                dfs(i)
+                count += 1
+        
+        return count
+
+#using bfs
+class Solution:
+    def findCircleNum(self, isConnected: List[List[int]]) -> int:
+        '''
+        without having to re make the adj list
+        if/when we can dfs, we incremnt a count
+        '''
+        N = len(isConnected)
+        visited = set()
+        
+        def bfs(node):
+            q = deque([node])
+            while q:
+                i = q.popleft()
+                for j in range(N):
+                    if isConnected[i][j] and j not in visited:
+                        visited.add(j)
+                        q.append(j)
+                    
+        
+        count = 0
+        for i in range(N):
+            if i not in visited:
+                bfs(i)
+                count += 1
+        
+        return count
+
 ###############################
 # 1461. Check If a String Contains All Binary Codes of Size K
 # 31MAY22
