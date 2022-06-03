@@ -43,6 +43,76 @@ class Solution:
         
         return ans
 
+#another way
+class Solution:
+    def countNumbersWithUniqueDigits(self, n: int) -> int:
+        '''
+        just another way
+        
+        '''
+        MAX = 10**n
+        used = [False]*10
+        
+        def dfs(current):
+            #bottom case, cannott make any digits
+            if current >= MAX:
+                return 0
+            #otherwise we have at least 1 digit
+            count = 1
+            #recursive case
+            for i in range(10):
+                if current == 0 and i == 0: #ignore leading zero
+                    continue
+                #take
+                if not used[i]:
+                    used[i] = True
+                    count += dfs(current*10 + i)
+                    used[i] = False
+            
+            return count
+        
+        return dfs(0)
+
+class Solution:
+    def countNumbersWithUniqueDigits(self, n: int) -> int:
+        '''
+        there is also a recurrence
+        f(1) = 10 digits, just the digits [0 to 9]
+        f(2) = 81 + 10
+        we know ther are 100 possible digits in the range [0 <= x < 100]
+        numbers with at least two digits are:
+         100 - 10 = 90
+        of these, we cannot chose 11,22,33...99, of which there are 9
+        90 - 9 = 81
+            9*(two digits same number)
+        we can write this number as 
+        f(3) = f(2)*8
+
+        dp(n) = dp(n-1)*(10-n-1)
+        base case dp(1) = 10
+        '''
+        if n == 0:
+            return 1
+        
+        memo = {}
+        
+        def dp(n):
+            if n == 1:
+                return 10
+            if n == 2:
+                return 81
+            if n in memo:
+                return memo[n]
+            ans = dp(n-1)*(10-n+1)
+            memo[n] = ans
+            return ans
+        
+        ans = 0
+        for i in range(1,n+1):
+            ans += dp(i)
+        
+        return ans
+        
 
 #################################
 # 643. Maximum Average Subarray I
@@ -115,3 +185,27 @@ class Solution:
             res = max(res,curr_sum)
         
         return res / k
+
+#########################
+# 867. Transpose Matrix
+# 02JUN22
+#########################
+class Solution:
+    def transpose(self, matrix: List[List[int]]) -> List[List[int]]:
+        '''
+        index (i,j) becomes (j,i) if i !+ j
+        which works if rows == cols
+       
+        i can allocate a new matrix with the inverted dimensions
+        then pass the patrix again putting elements in their proper spot
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+       
+        new_matrix = [[0]*rows for _ in range(cols)]
+       
+        for i in range(rows):
+            for j in range(cols):
+                new_matrix[j][i] = matrix[i][j]
+       
+        return new_matrix
