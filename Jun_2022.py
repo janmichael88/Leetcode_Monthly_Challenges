@@ -209,3 +209,28 @@ class Solution:
                 new_matrix[j][i] = matrix[i][j]
        
         return new_matrix
+
+###########################
+# 51. N-Queens (Revisited)
+# 04JUN22
+##########################
+class Solution:
+    def solveNQueens(self, n: int) -> List[List[str]]:
+        q_col_idx = []
+        def dfs(queens,diags,anti_diags):
+            row = len(queens)
+            if row == n:
+                q_col_idx.append(queens[:]) #these are list of indices (col) for each row in order
+                return
+            for col in range(n):
+                if col not in queens and (row - col) not in diags and (row + col) not in anti_diags:
+                    queens.append(col)
+                    diags.append(row-col)
+                    anti_diags.append(row+col)
+                    dfs(queens,diags+[row-col],anti_diags+ [row+col])
+                    queens.pop()
+                    diags.pop()
+                    anti_diags.pop()
+                    
+        dfs([],[],[])
+        return [ ["."*i + "Q" + "."*(n-i-1) for i in sol] for sol in q_col_idx]
