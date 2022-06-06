@@ -234,3 +234,67 @@ class Solution:
                     
         dfs([],[],[])
         return [ ["."*i + "Q" + "."*(n-i-1) for i in sol] for sol in q_col_idx]
+
+
+class Solution:
+    def solveNQueens(self, n: int) -> List[List[str]]:
+        output = []
+        
+        def dfs(solution,excluded):
+            #solution is a list of strings
+            row = len(solution)
+            #we can still go down the board
+            if row < n:
+                #dfs
+                #we are always goind down a row, so go across cols
+                for col in range(n):
+                    if (row,col) in excluded:
+                        continue
+                    #we can place a queen at this col
+                    new_excluded = set()
+                    curr_row_solution = "."*col+"Q"+"."*(n-col-1) #place a queen
+                    #now go down rows
+                    for r in range(row,n):
+                        new_excluded.add((r,col))
+                    #down daig right
+                    row_diag = row_anti_diag = row
+                    col_diag = col_anti_diag = col
+                    
+                    while col_diag < n:
+                        row_diag += 1
+                        col_diag += 1
+                        new_excluded.add((row_diag,col_diag))
+                        
+                    #anti diag
+                    while col_anti_diag > 0:
+                        row_anti_diag += 1
+                        col_anti_diag -= 1
+                        new_excluded.add((row_anti_diag,col_anti_diag))
+                        
+                    solution.append(curr_row_solution)
+                    dfs(solution,excluded | new_excluded)
+                    excluded.discard(new_excluded)
+                    solution.pop()
+                    
+            else:
+                output.append(solution[:])
+        dfs([],set())
+        return output
+
+###############################
+# 360. Sort Transformed Array
+# 04JUN22
+################################
+class Solution:
+    def sortTransformedArray(self, nums: List[int], a: int, b: int, c: int) -> List[int]:
+        '''
+        the stupid way is to apply the the transformation to each element thens sort
+        '''
+        def f(num):
+            return a*num*num + b*num + c
+        
+        for i in range(len(nums)):
+            nums[i] = f(nums[i])
+        
+        nums.sort()
+        return nums
