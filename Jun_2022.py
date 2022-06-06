@@ -281,6 +281,53 @@ class Solution:
         dfs([],set())
         return output
 
+##############################
+# 52. N-Queens II (REVISITED)
+# 05JUN22
+##############################
+class Solution:
+    def totalNQueens(self, n: int) -> int:
+        
+        def dfs(rows,excluded):
+            #we can still go down the board
+            if rows < n:
+                #dfs
+                solutions = 0
+                #we are always goind down a row, so go across cols
+                for col in range(n):
+                    if (rows,col) in excluded:
+                        continue
+                    #we can place a queen at this col
+                    new_excluded = set()
+                    #now go down rows
+                    for r in range(rows,n):
+                        new_excluded.add((r,col))
+                    #down daig right
+                    row_diag = row_anti_diag = rows
+                    col_diag = col_anti_diag = col
+                    
+                    while col_diag < n:
+                        row_diag += 1
+                        col_diag += 1
+                        new_excluded.add((row_diag,col_diag))
+                        
+                    #anti diag
+                    while col_anti_diag > 0:
+                        row_anti_diag += 1
+                        col_anti_diag -= 1
+                        new_excluded.add((row_anti_diag,col_anti_diag))
+                        
+                    rows += 1
+                    solutions += dfs(rows,excluded | new_excluded)
+                    rows -= 1
+                
+                return solutions
+                    
+            else:
+                return 1
+            
+        return dfs(0,set())
+
 ###############################
 # 360. Sort Transformed Array
 # 04JUN22
