@@ -345,3 +345,72 @@ class Solution:
         
         nums.sort()
         return nums
+
+#two pointer
+class Solution:
+    def sortTransformedArray(self, nums: List[int], a: int, b: int, c: int) -> List[int]:
+        '''
+        now can we do this in O(N) time?
+        the function is parabolic, if we find the vertex of the parabola, then to the right can be stricly increasing
+        and to the left it can be striclty decreasing
+        if a > 0, the function is concave uo
+        if a < 0, then the function is concave down
+        
+        things to note,
+            1. the vertex of the parabola is at the point, x = -b/2a, but we don't really need that point
+            if a > 0
+                the points to the right of the vertex are increasing
+                the points to the left are decreasing
+                the ends of the parabola have the largest values
+            if a < 0:
+                the vertex is the largest value
+                the points to the right are decreaing
+                the points to the left are decreasing
+            
+            we can use a two pointer trick (since the array is already sorted)
+            and take the greater of the two elements (or the smaller of the two, depending wheter or a > 0 or a < 0)
+            
+        
+        three scenarios:
+            nums[-1] <= vertex, meaning all values in nums will be on the left side of the center line of the quadratic function graph. (Decreasing side)
+nums[0] >= vertex, meaning all values in nums will be on the right side of the center line of the quadratic function graph. (Increasing side)
+nums[0] <= nums[i] <= vertex <= nums[j] <= nums[-1], meaning some values are on the left and some are on the right.
+
+        intuion:
+            we don't really care what b and c are, because the above two cases catch everything
+        
+        '''
+        def f(x):
+            return a*x*x + b*x + c
+        
+        N = len(nums)
+        
+        index = 0 if a < 0 else N-1 #largest values on the ends, if a > 0, else smallest values on the ends
+        left = 0
+        right = N-1
+        ans = [0]*N
+        
+        while left <= right:
+            l_val, r_val = f(nums[left]), f(nums[right])
+            
+            #concave up, take lrageststart adding answers from the end of the array
+            if a >= 0:
+                if l_val > r_val:
+                    ans[index] = l_val
+                    left += 1
+                else:
+                    ans[index] = r_val
+                    right -= 1
+                index -= 1
+            #concave down, take minimum
+            else:
+                if l_val > r_val:
+                    ans[index] = r_val
+                    right -= 1
+                else:
+                    ans[index] = l_val
+                    left += 1
+                
+                index += 1
+        
+        return ans
