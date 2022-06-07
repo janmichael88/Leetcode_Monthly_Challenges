@@ -414,3 +414,63 @@ nums[0] <= nums[i] <= vertex <= nums[j] <= nums[-1], meaning some values are on 
                 index += 1
         
         return ans
+
+########################################
+# 1197. Minimum Knight Moves (REVISITED)
+# 06JUN22
+#########################################
+class Solution:
+    def minKnightMoves(self, x: int, y: int) -> int:
+        '''
+        note that solutions are symmetric, rather the targer point (x,y) is symmetric about vertical, horizontal, and diagonal axis
+        (x,y) same as (-x,y), (x,-y), (-x,-y)
+        so we an really take abs(x) and abs(y)
+        
+        if we start from the target, there are only two moves that bring us closer to the origin (-1,-2) or (-2,-1)
+        
+        we define dp(x,y) as the min steps to get to the point (x,y)
+        
+        any (x,y) pair who's sum is two, is exactly two moves away from the origin
+        
+        dp(x,y)=min(dp(∣x−2∣,∣y−1∣),dp(∣x−1∣,∣y−2∣))+1
+        
+        '''
+        memo = {}
+        
+        def dp(x,y):
+            if (x,y) == (0,0):
+                return 0
+            if x+y == 2:
+                return 2
+            if (x,y) in memo:
+                return memo[(x,y)]
+            
+            first_move = dp(abs(x-1),abs(y-2))
+            second_move = dp(abs(x-2),abs(y-1))
+            ans = min(first_move,second_move) + 1
+            memo[(x,y)] = ans
+            return ans
+        
+        return dp(abs(x),abs(y))
+
+#there is an O(1) solution
+#https://math.stackexchange.com/questions/1135683/minimum-number-of-steps-for-knight-in-chess
+class Solution:
+    def minKnightMoves(self, x: int, y: int) -> int:
+        x, y = abs(x), abs(y)
+        if (x < y): 
+            x, y = y, x
+        if (x == 1 and y == 0): 
+            return 3        
+        if (x == 2 and y == 2): 
+            return 4        
+        delta = x - y
+        if (y > delta): 
+            return delta - 2 * int((delta - y) // 3);
+        else: 
+            return delta - 2 * int((delta - y) // 4);
+
+##########################
+# 372. Super Pow
+# 05JUN22
+##########################
