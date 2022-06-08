@@ -627,3 +627,39 @@ class Solution:
             return first_part*prev % 1337
         
         return rec(a,b)
+
+#iterative version
+class Solution(object):
+    def superPow(self, a, b):        
+        acc = 1
+        while b: 
+            a, acc = pow(a, 10, 1337), pow(a, b.pop(), 1337) * acc % 1337
+        return acc
+        
+#######################
+# 657. Robot Return to Origin
+# 07JUN22
+#######################
+class Solution:
+    def judgeCircle(self, moves: str) -> bool:
+        '''
+        a move should cancel another move
+        for example UP +1
+        DOWN - 1
+        answer is zero
+        cancel in both directions
+        
+        '''
+        balance_horiz = 0
+        balance_vert = 0
+        for m in moves:
+            if m == 'U':
+                balance_vert += 1
+            elif m == 'D':
+                balance_vert -= 1
+            elif m == 'R':
+                balance_horiz += 1
+            else:
+                balance_horiz -= 1
+        
+        return balance_horiz == 0  and balance_vert == 0
