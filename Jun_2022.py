@@ -470,7 +470,160 @@ class Solution:
         else: 
             return delta - 2 * int((delta - y) // 4);
 
+############################
+# 88. Merge Sorted Array (Revisited)
+# 07JUN22
+############################
+#close one..
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
+        '''
+        we want to modify nums1 in place
+        usual approach involves two points, adavanving both while taking the smaller
+        note,
+        nums1 has been modified to have length m+nn
+        
+        what is put the last n elements of nums2 in the last n spots in nums1
+        then move the two pointers and just swap?
+        '''
+        #put elements ofr nums2 into nums1 at the end
+        p1 = m
+        p2 = 0
+        while p1 < m+n:
+            nums1[p1] = nums2[p2]
+            p1 += 1
+            p2 += 1
+        
+        #two pointers again, but swap
+        p1 = 0
+        p2 = m
+        
+        while p1 < m + n:
+            print(p1,p2)
+            if p1 == p2 and p2 < m+n-1:
+                p2 += 1
+            if  p2 < m+ n and nums1[p1] > nums1[p2]:
+                #swap
+                print('swapped')
+                nums1[p1],nums1[p2] = nums1[p2],nums1[p1]
+                p1 += 1
+                p2 += 1
+            elif nums1[p1] <= nums1[p2]:
+                p1 += 1
+
+#three pointers, copy over nums1
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
+        '''
+        we can make a copy of nums1, then use two pointers to read and another point to write
+        being careful to watch for boundary conditions
+        '''
+        nums1_copy = nums1[:m] #grabbing only first
+        
+        #read pointers
+        p1 = 0
+        p2 = 0
+        
+        for p in range(m+n):
+            if p2 >= n or (p1 < m and nums1_copy[p1] <= nums2[p2]):
+                nums1[p] = nums1_copy[p1]
+                p1 += 1
+            else:
+                nums1[p] = nums2[p2]
+                p2 += 1
+
+#the pointers, start backwards
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
+        '''
+        the idea is to work backwards, this is a good tip for trying to solve in place problems
+        algo:
+            ptr1 starts at m-1
+            ptr2 starts at n-1
+            and ptr3 starts at m+n-1
+            this way it is guaranteed that once we start overwirting the first m values in nums1, we will have alredy written each into 
+            its new positions
+        '''
+        p1 = m - 1
+        p2 = n - 1
+        
+        for p in range(m+n-1,-1,-1):
+            #n < m, so if we exhaust p2, which is smaller, we should b done
+            if p2 < 0:
+                break
+            if p1 >= 0 and nums1[p1] > nums2[p2]:
+                nums1[p] = nums1[p1]
+                p1 -= 1
+            else:
+                nums1[p] = nums2[p2]
+                p2 -= 1
+
+#another way
+class Solution:
+    def merge(self, nums1: List[int], m: int, nums2: List[int], n: int) -> None:
+        """
+        Do not return anything, modify nums1 in-place instead.
+        """
+        '''
+        recall that we can fit n elements into the remaing spots in the nums1 array
+        either we fit all n elements into nums1 from nums2
+        or we use up m elements from nums1 and have remainings elements from nums2
+        '''
+        while m > 0 and n > 0:
+            if nums1[m-1] > nums2[n-1]:
+                nums1[m+n-1] = nums1[m-1]
+                m -= 1
+            else:
+                nums1[m+n-1] = nums2[n-1]
+                n -= 1
+        
+        while n > 0:
+            nums1[m+n-1] = nums2[n-1]
+            n -= 1
+
+
 ##########################
 # 372. Super Pow
 # 05JUN22
-##########################
+##########################class Solution:
+    def superPow(self, a: int, b: List[int]) -> int:
+        '''
+        do as the problem says
+        '''
+        return pow(a, int(''.join(map(str, b))), 1337)
+
+class Solution:
+    def superPow(self, a: int, b: List[int]) -> int:
+        '''
+        we can take advantage of two properties
+        1. x*y % 1337 == (x % 1331)*(y % 1337) % 1337
+        2. if b = m*10 + d, then a**b == (a**d)*(a**10)**m
+        
+        note that for the pow funciton pow(x,y,z) = (x^y) % z
+        
+        so if we want to find:
+            a**b % 1337
+            
+        we can define a recursive function
+        rec(a,b) that returns a**b % 1337
+        rec(a,b) = 
+            (a^(b % 10) % 1337)*rec(a^10 % 1337,b)% 1337 
+        '''
+        def rec(a,b):
+            #base case
+            if not b:
+                return 1
+            first_part = pow(a,b.pop(),1337)
+            prev = rec(pow(a,10,1337),b)
+            return first_part*prev % 1337
+        
+        return rec(a,b)
