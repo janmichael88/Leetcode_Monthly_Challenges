@@ -635,7 +635,7 @@ class Solution(object):
         while b: 
             a, acc = pow(a, 10, 1337), pow(a, b.pop(), 1337) * acc % 1337
         return acc
-        
+
 #######################
 # 657. Robot Return to Origin
 # 07JUN22
@@ -663,3 +663,84 @@ class Solution:
                 balance_horiz -= 1
         
         return balance_horiz == 0  and balance_vert == 0
+
+
+############################################
+# 671. Second Minimum Node In a Binary Tree
+# 08JUN22
+############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findSecondMinimumValue(self, root: Optional[TreeNode]) -> int:
+        '''
+        easiet way is to traverse and sort, and grab the second 
+        without using the special property
+        '''
+        nodes = set()
+        def inorder(node):
+            if not node:
+                return 
+            inorder(node.left)
+            nodes.add(node.val)
+            inorder(node.right)
+        
+        inorder(root)
+        nodes = list(nodes)
+        nodes.sort()
+        
+        if not root:
+            return -1
+        
+        if len(nodes) == 1:
+            return -1
+        
+        return nodes[1]
+
+#using special property
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findSecondMinimumValue(self, root: Optional[TreeNode]) -> int:
+        '''
+        we can assign first min to root.val
+        if when we get to a node in our traversal and wee see that node.val > first_min, it cannot be in that subtree
+        so we do not need to recurse
+        
+        we also only care about the second minimum, so we do not need to record any values > our current canddiate
+        '''
+        self.first_min = root.val
+        self.ans = float('inf')
+        
+        def dfs(node):
+            if node:
+                if (self.first_min < node.val) and (node.val < self.ans):
+                    self.ans = node.val
+                elif self.first_min == node.val:
+                    dfs(node.left)
+                    dfs(node.right)
+        
+        dfs(root)
+        return self.ans if self.ans < float('inf') else -1
+
+#the answer must be greater than the root and smaller than everything else
+class Solution(object):
+    def findSecondMinimumValue(self, root):
+        res = [float('inf')]
+        def traverse(node):
+            if not node:
+                return
+            if root.val < node.val < res[0]:
+                res[0] = node.val
+            traverse(node.left)
+            traverse(node.right)
+        traverse(root)
+        return -1 if res[0] == float('inf') else res[0]
