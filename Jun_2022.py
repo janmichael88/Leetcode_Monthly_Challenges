@@ -744,3 +744,38 @@ class Solution(object):
             traverse(node.right)
         traverse(root)
         return -1 if res[0] == float('inf') else res[0]
+
+##############################################################
+# 1151. Minimum Swaps to Group All 1's Together (REVISTED)
+# 09JUN22
+##############################################################
+class Solution:
+    def minSwaps(self, data: List[int]) -> int:
+        '''
+        we want the the ones grouped together
+        sum(data) gives us the nuber of ones, but also gives us the the size of the necesary aubarray of ones
+        in the subarray, the number of zeros would be the number of swaps
+        we can use a sliding window to find the min number of zeros in a subarray of size sum(data)
+        '''
+        ones = sum(data)
+        
+        if ones == 0:
+            return 0
+        N = len(data)
+        
+        min_swaps = float('inf')
+        
+        left = 0
+        right = 0
+        
+        curr_swaps = 0
+        
+        while right < N:
+            while right - left < ones:
+                curr_swaps += data[right] == 0
+                right += 1
+            min_swaps = min(min_swaps,curr_swaps)
+            curr_swaps -= data[left] == 0
+            left += 1
+        
+        return min_swaps
