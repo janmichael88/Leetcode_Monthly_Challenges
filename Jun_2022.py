@@ -847,3 +847,30 @@ class Solution:
         
         return ans
                          
+###############################################################
+# 3. Longest Substring Without Repeating Characters (Revisited)
+# 10JUN22
+###############################################################
+class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        '''
+        we can just keep a sliding window, and keep expanding it until we find a repeated char
+        if when we see a repeated char, its time to update the disatance
+        but we also need to mapp the char to an index to advance that point in the window
+        
+        '''
+        N = len(s)
+        seen = set()
+        ans = 0
+        
+        left = right = 0
+        
+        while right < N:
+            while right < N and s[right] not in seen:
+                seen.add(s[right])
+                right += 1
+            ans = max(ans,right - left)
+            seen.remove(s[left])
+            left += 1
+        
+        return ans
