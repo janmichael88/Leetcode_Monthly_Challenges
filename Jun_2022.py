@@ -779,3 +779,71 @@ class Solution:
             left += 1
         
         return min_swaps
+
+######################################
+# 373. Find K Pairs with Smallest Sums
+# 09JUN22
+######################################
+#i guess we can't use two pointers here
+class Solution:
+    def kSmallestPairs(self, nums1: List[int], nums2: List[int], k: int) -> List[List[int]]:
+        '''
+        the arrays are sorted in ascenidng order
+        two pointer and keep advance the smaller of the two
+        '''
+        i = j = 0
+        
+        ans = []
+        
+        while i < len(nums1) or j < len(nums2) or k > 0:
+            first = nums1[i] if i < len(nums1) else nums1[i]
+            second = nums2[j] if j < len(nums2) else nums2[-1]
+            
+            pair = [first,second]
+            ans.append(pair)
+            k -= 1
+            
+
+            if (i < len(nums1) and j < len(nums2)):
+                if nums1[i] < nums2[j]:
+                    j += 1
+
+                else:
+                    i += 1
+            else:
+                break
+        
+        return ans
+            
+class Solution:
+    def kSmallestPairs(self, nums1: List[int], nums2: List[int], k: int) -> List[List[int]]:
+        '''
+        the idea is to keep track if the next min sum pair into a min heap
+        since the arrays are sorted we can start by pairing each num in nums1 to nums2[0]
+        onto a heap push entry (sum pair,index into i, and 0)
+        when extract the entry, write pair to answer, but push back the next number in nums2 paired with an entry for nums1
+        
+        phew!
+        '''
+        heap = []
+        ans = []
+        
+        if len(nums1) == 0 or len(nums2) == 0 or k == 0:
+            return res
+        for i in range(len(nums1)):
+            entry = (nums1[i] + nums2[0],i,0)
+            heap.append(entry)
+        
+        heapq.heapify(heap)
+        
+        while heap and k > 0:
+            pair_sum, i,j = heapq.heappop(heap)
+            ans.append([nums1[i],nums2[j]])
+            k -= 1
+            #edge case to stay within num2
+            if j == len(nums2) - 1:
+                continue
+            heapq.heappush(heap,(nums1[i] + nums2[j+1],i,j+1))
+        
+        return ans
+                         
