@@ -874,3 +874,105 @@ class Solution:
             left += 1
         
         return ans
+
+#############################
+# 1695. Maximum Erasure Value (Revisited)
+#  12JUN22
+##############################
+class Solution:
+    def maximumUniqueSubarray(self, nums: List[int]) -> int:
+        '''
+        this is just finding largest subarray with unique values but obtain sum of window
+        '''
+        N = len(nums)
+        max_erasure_value = float('-inf')
+        curr_sum = 0
+        unique = set()
+        left = right = 0
+        
+        while right < N:
+            while right < N and nums[right] not in unique:
+                unique.add(nums[right])
+                curr_sum += nums[right]
+                right += 1
+            
+            max_erasure_value = max(max_erasure_value,curr_sum)
+            unique.remove(nums[left])
+            curr_sum -= nums[left]
+            left += 1
+        
+        return max_erasure_value
+            
+#########################
+# 120. Triangle (REVISTED)
+# 13JUN22
+##########################
+class Solution:
+    def minimumTotal(self, triangle: List[List[int]]) -> int:
+        '''
+        if we define dp(i,j) this represents the the minimum sum to get to dp(i,j)
+        
+        we need to minize this for the current ij we are on
+        
+        dp(i,j) = {
+            triangle(i,j) + min(dp(i-1,j-1),dp(i-1j+1))
+            if i can go left and right
+        }
+        dp(0,0) = triangle[0][0]
+        
+        '''
+        rows = len(triangle)
+        #i would need to call dp for each number on the last row of triangle
+        res = float('inf')
+        memo = {}
+        
+        def dp(i,j):
+            if (i,j) == (0,0):
+                return triangle[0][0]
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #staring cell in row
+            if j == 0:
+                ans = triangle[i][j] + dp(i-1,j)
+                memo[(i,j)] = ans
+                return ans
+            #ending cell in row
+            if j == i:
+                ans = triangle[i][j] + dp(i-1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans = triangle[i][j] + min(dp(i-1,j),dp(i-1,j-1))
+                memo[(i,j)] = ans
+                return ans
+        
+        
+        for j in range(len(triangle[-1])):
+            res = min(res,dp(rows-1,j))
+            #print(triangle[rows-1][j])
+        
+        return res
+
+class Solution:
+    def minimumTotal(self, triangle: List[List[int]]) -> int:
+        '''
+        another way of defining the recurrence is if we let
+        dp(i,j) be the min sum path down to the base
+        then dp(i,j) = triangle[i][j] + min(dp(i+1,j-1),dp(i+1.j))
+        '''
+        memo = {}
+        N = len(triangle)
+        def dp(i,j):
+            if i == N:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            curr_ans = triangle[i][j]
+            right = dp(i+1,j)
+            left = dp(i+1,j+1)
+            curr_ans += min(left,right)
+            memo[(i,j)] = curr_ans
+            return curr_ans
+        
+        return dp(0,0)
+            
