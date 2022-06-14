@@ -975,4 +975,62 @@ class Solution:
             return curr_ans
         
         return dp(0,0)
-            
+
+
+################################
+# 931. Minimum Falling Path Sum
+# 13JUN22
+################################
+#top down
+class Solution:
+    def minFallingPathSum(self, matrix: List[List[int]]) -> int:
+        rows = len(matrix)
+        #i would need to call dp for each number on the last row of triangle
+        res = float('inf')
+        memo = {}
+        
+        def dp(i,j):
+            if i == 0:
+                return matrix[i][j]
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #staring cell in row
+            if j == 0:
+                ans = matrix[i][j] + min(dp(i-1,j),dp(i-1,j+1))
+                memo[(i,j)] = ans
+                return ans
+            #ending cell in row
+            if j == rows-1:
+                ans = matrix[i][j] + min(dp(i-1,j-1),dp(i-1,j))
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans = matrix[i][j] + min(dp(i-1,j),dp(i-1,j-1),dp(i-1,j+1))
+                memo[(i,j)] = ans
+                return ans
+        
+        
+        for j in range(rows):
+            res = min(res,dp(rows-1,j))
+            #print(triangle[rows-1][j])
+        
+        return res
+
+#bottom up in place
+class Solution:
+    def minFallingPathSum(self, matrix: List[List[int]]) -> int:
+        '''
+        we can just overwite the rows with the minimum going down
+        '''
+        rows = len(matrix)
+        for row in range(1,rows):
+            for col in range(rows):
+                #if starting cell in row, i can only take directly above
+                if col == 0:
+                    matrix[row][col] += min(matrix[row-1][col],matrix[row-1][col+1])
+                elif col == rows-1:
+                    matrix[row][col] +=  min(matrix[row-1][col],matrix[row-1][col-1])
+                else:
+                    matrix[row][col] +=  min(matrix[row-1][col],matrix[row-1][col-1],matrix[row-1][col+1])
+        
+        return min(matrix[-1])   
