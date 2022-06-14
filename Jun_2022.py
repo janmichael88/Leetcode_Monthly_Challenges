@@ -1034,3 +1034,109 @@ class Solution:
                     matrix[row][col] +=  min(matrix[row-1][col],matrix[row-1][col-1],matrix[row-1][col+1])
         
         return min(matrix[-1])   
+
+####################################################
+# 583. Delete Operation for Two Strings (REVISITED)
+# 14MAY22
+####################################################
+#indirectly using LCS, top down
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        '''
+        we can just turn this problem into finding the longest common subsequence problem
+        if there exists an LCS between two strings word1 and word2
+        we need to delete everything but the LCS in the two strings
+        so it would be len(word1) + len(word2) - 2*lcs, we double them because they are present in both
+        
+        lcs function
+        
+        let dp(i,j) return the lenght of the lcs for strings word1[:i] and word2[:j]
+        dp(i,j) ={
+            if word1[i] == word2[j]:
+              return 1 + dp(i-1,j-1)
+             else:
+                return max(dp(i-1,j),dp(i,j-1))
+        }
+        
+        base cases, when we we fall out of the index, there isn't an LCS at all, return 0
+        '''
+        memo = {}
+        M = len(word1)
+        N = len(word2)
+        
+        def dp(i,j):
+            if i == 0 or j == 0:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if word1[i-1] == word2[j-1]:
+                ans = 1 + dp(i-1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans =  max(dp(i-1,j),dp(i,j-1))
+                memo[(i,j)] = ans
+                return ans
+        
+        
+        LCS = dp(M,N)
+        return M + N - 2*LCS
+
+#indirectly using LCS bottom up
+#just know that we can reduce space by taking prev row, updating curr row, then swap/reassign
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        '''
+        '''
+        M = len(word1)
+        N = len(word2)
+        
+        dp = [[0]*(N+1) for _ in range(M+1)]
+        
+        for i in range(1,M+1):
+            for j in range(1,N+1):
+                if word1[i-1] == word2[j-1]:
+                    dp[i][j] = 1 + dp[i-1][j-1]
+                else:
+                    dp[i][j] = max(dp[i-1][j],dp[i][j-1])
+        
+        
+        LCS = dp[M][N]
+        return M + N - 2*LCS
+
+
+#directly w/o using LCS
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        '''
+        if we define dp(i,j) as the NUMBER of deletions required to make the strings word1[:i-1] == word2[:j-1]
+        dp(i,j) = {
+            
+            if word1[i-1] == word2[j-1]
+                return dp(i-1,j-1)
+            else:
+                return 1 + min(dp(i-1,j),dp(i,j-1))
+                
+            
+        }
+        base case, if we have gotten down to both i == 0 and j == 0, it means they weren't equal, so we need to delte all
+        '''
+        memo = {}
+        M = len(word1)
+        N = len(word2)
+        
+        def dp(i,j):
+            if i == 0 or j == 0:
+                return i + j
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if word1[i-1] == word2[j-1]:
+                ans = dp(i-1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans = 1 + min(dp(i-1,j),dp(i,j-1))
+                memo[(i,j)] = ans
+                return ans
+        
+        return dp(M,N)
