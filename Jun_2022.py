@@ -1140,3 +1140,125 @@ class Solution:
                 return ans
         
         return dp(M,N)
+
+################################################
+# 712. Minimum ASCII Delete Sum for Two Strings
+# 14JUN22
+#################################################
+#close one...
+class Solution:
+    def minimumDeleteSum(self, s1: str, s2: str) -> int:
+        '''
+        if i let dp(i,j) be the lowest ascii sum of delted chars to make s1[:i] == s2[:j]
+        then dp(i,j) = {
+            if s1[i] == s2[j]:
+                return ord(s1[i]) + dp(i-1,j-1)
+            else:
+                min(s1[i],s2[j]) + min(dp(i-1,j),dp(i,j-1))
+        }
+        
+        call dp(len(s1),len(s2)) to check all i,j, i may have to scan the memo again
+        
+        if i == 0 or j == 0
+            return the asci sum of the other string, i.e we have to delete all of them to get the other onr
+        '''
+        memo = {}
+        M = len(s1)
+        N = len(s2)
+        
+        
+        def dp(i,j):
+            if i < 0 or j < 0:
+                return sum([ord(c) for c in s1[:i]]) or sum([ord(c) for c in s2[:j]])
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if s1[i-1] == s2[j-1]:
+                ans = dp(i-1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans = min(dp(i-1,j) + ord(s1[i-1]) ,dp(i,j-1) + ord(s2[j-1]) )
+                memo[(i,j)] = ans
+                return ans
+        
+        return dp(M,N)
+
+#actrual 
+class Solution:
+    def minimumDeleteSum(self, s1: str, s2: str) -> int:
+        '''
+        we let dp(i,j) be the min sum delete for make strings s1[i:] == s2[:j]
+        
+        dp(i,j) = {
+            if s1[i] == s2[j], there is no cost to delte:
+                return dp(i+1,j+1)
+            else:
+                the letters are different so we take the min
+                first = dp(i+1,j) + ord(s1[i])
+                second = dp(i,j+1) + ord(s2[j])
+                return min(first,second)
+        }
+        
+        base cases:
+            if we have moved them all the way to end, there as no cost anymore
+            i == len(s1) and j == len(s2):
+                return 0
+            if we have the empty string
+                return sum needed for rest of the asci strring
+        '''
+        M = len(s1)
+        N = len(s2)
+        #store answer to subproblems
+        memo = {}
+        #fast loop for base cases
+        s1_deletions = [0]*(M+1)
+        s2_deletions = [0]*(N+1)
+        
+        for i in range(M-1,-1,-1):
+            s1_deletions[i] = s1_deletions[i+1] + ord(s1[i])
+        
+        for i in range(N-1,-1,-1):
+            s2_deletions[i] = s2_deletions[i+1] + ord(s2[i])
+        
+        
+        
+        def dp(i,j):
+            if i == M and j == N:
+                return 0
+            if i == M or j == N:
+                return s1_deletions[i] or s2_deletions[j]
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #mathcing, no cost
+            if s1[i] == s2[j]:
+                ans = dp(i+1,j+1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                first = dp(i+1,j) + ord(s1[i])
+                second = dp(i,j+1) + ord(s2[j])
+                ans = min(first,second)
+                memo[(i,j)] = ans
+                return ans
+        
+        return dp(0,0)
+
+#bottom up dp
+class Solution(object):
+    def minimumDeleteSum(self, s1, s2):
+        dp = [[0] * (len(s2) + 1) for _ in xrange(len(s1) + 1)]
+
+        for i in xrange(len(s1) - 1, -1, -1):
+            dp[i][len(s2)] = dp[i+1][len(s2)] + ord(s1[i])
+        for j in xrange(len(s2) - 1, -1, -1):
+            dp[len(s1)][j] = dp[len(s1)][j+1] + ord(s2[j])
+
+        for i in xrange(len(s1) - 1, -1, -1):
+            for j in xrange(len(s2) - 1, -1, -1):
+                if s1[i] == s2[j]:
+                    dp[i][j] = dp[i+1][j+1]
+                else:
+                    dp[i][j] = min(dp[i+1][j] + ord(s1[i]),
+                                   dp[i][j+1] + ord(s2[j]))
+
+        return dp[0][0]
