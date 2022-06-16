@@ -1246,15 +1246,15 @@ class Solution:
 #bottom up dp
 class Solution(object):
     def minimumDeleteSum(self, s1, s2):
-        dp = [[0] * (len(s2) + 1) for _ in xrange(len(s1) + 1)]
+        dp = [[0] * (len(s2) + 1) for _ in range(len(s1) + 1)]
 
-        for i in xrange(len(s1) - 1, -1, -1):
+        for i in range(len(s1) - 1, -1, -1):
             dp[i][len(s2)] = dp[i+1][len(s2)] + ord(s1[i])
-        for j in xrange(len(s2) - 1, -1, -1):
+        for j in range(len(s2) - 1, -1, -1):
             dp[len(s1)][j] = dp[len(s1)][j+1] + ord(s2[j])
 
-        for i in xrange(len(s1) - 1, -1, -1):
-            for j in xrange(len(s2) - 1, -1, -1):
+        for i in range(len(s1) - 1, -1, -1):
+            for j in range(len(s2) - 1, -1, -1):
                 if s1[i] == s2[j]:
                     dp[i][j] = dp[i+1][j+1]
                 else:
@@ -1262,3 +1262,136 @@ class Solution(object):
                                    dp[i][j+1] + ord(s2[j]))
 
         return dp[0][0]
+
+
+#########################################
+# 1048. Longest String Chain (REVISITED)
+# 15JUN22
+#########################################
+#top down dp
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        '''
+        we define a wordA predecessor as to wordB if:
+            len(wordA) < len(wordB) and wordA is a subsequence of wordB
+        
+        return the longest possible word chain in words
+        then sort the words alphabetically and by increasing length
+        
+        if we let dp(i) be the longest chaining using words[:i]
+        
+        then dp(i) = 1 + dp(i-1) if word[i] is a successor 
+        
+        rather we can use dfs and for each call genearte all its possible subseqences of one less char
+        the answer to each node returns the longest chain maid so far
+        we when dfs on each word and maximize
+        
+        dp(word) = 1 + max(dp(for all words with one char deleted from word))
+        dont forget to backtrack
+        '''
+        words = set(words)
+        memo = {}
+        
+        def dp(word):
+            if word in memo:
+                return memo[(word)]
+            max_length = 1 #at least size 1 for chain with single word
+            #generate neighboring words
+            for i in range(len(word)):
+                neigh_word = word[:i]+word[i+1:]
+                if neigh_word in words:
+                    curr_length = 1 + dp(neigh_word)
+                    max_length = max(max_length,curr_length)
+                    
+            memo[word] = max_length
+            return max_length
+        
+        ans = 0
+        for word in words:
+            ans = max(ans,dp(word))
+        
+        return ans
+
+#translate bottom up
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        '''
+        we can go botom up by sorting and start buulindg up a chain
+        if we knew the previous length, then if we can reach this current word its just prevLength + 1
+        we still use hashmap as memo
+        '''
+        #dp array
+        dp = defaultdict(int)
+        words.sort(key = lambda x: len(x))
+        
+        ans = 0
+        for word in words:
+            max_length = 1
+            for i in range(len(word)):
+                neigh_word = word[:i]+word[i+1:]
+                if neigh_word in words:
+                    curr_length = 1 + dp[neigh_word]
+                    max_length = max(max_length,curr_length)
+                
+            dp[word] = max_length
+            ans = max(ans,dp[word])
+            
+        
+        return ans
+            
+
+#LIS
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        '''
+        we can also treat this as the longest increasing subsequence
+        if we define dp(i) is the longest chain created using the words[:i]
+        then we would have to check for all words before the ith word
+        
+        first sort
+        dp(i) = {
+            min_length = 1
+            for j in range(i-1):
+                if word[j] is pred of word[i]:
+                    min_lenght = min(min_length,dp(j))
+        }
+        
+        to check if word1 is pred of word2:
+            check len(word1) + 1 == len(word2)
+            word1 is subsequence of word2
+        '''
+        def isPred(u,v):
+            if len(u) + 1 != len(v):
+                return False
+            i = 0
+            for ch in v:
+                if i == len(u):
+                    return True
+                if u[i] == ch:
+                    i += 1
+            
+            return i == len(u)
+
+        
+        words.sort(key=len)
+        memo = {}
+        
+        def dp(i):
+            if i < 0:
+                return 1
+            if i in memo:
+                return memo[i]
+            min_length = 1
+            for j in range(i):
+                if isPred(words[j],words[i]):
+                    min_length = max(min_length,dp(j)+1)
+            
+            memo[i] = min_length
+            return min_length
+        
+        ans = 1
+        N = len(words)
+        for i in range(N):
+            ans = max(ans,dp(i))
+        
+        return ans
