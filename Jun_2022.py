@@ -1395,3 +1395,111 @@ class Solution:
             ans = max(ans,dp(i))
         
         return ans
+
+###############################################
+# 5. Longest Palindromic Substring (REVISITED)
+# 16JUN22
+#############################################
+#close one
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        '''
+        a mistake is to think to find the longest common substring between s and s[::-1]
+        but the longest common substring may not be palindromic
+        recall dp transition for longest common substring
+        dp(i,j) = {
+            if s[i] == t[j]:
+                return 1 + dp(i-1,j-1)
+            else:
+                return 0
+        }
+        base case is empty string, no longest common susbtring, return 0
+        
+        now for the actual algo:
+            
+        if we define dp(i,j) as the answer to whether s[i:j] is a palindrome
+        then dp(i,j) = {
+            if s[i] == s[j]:
+                return dp(i+1,j-1)
+            else:
+                return False
+        }
+        base cases
+            single char:
+                i == j:
+                    return True
+                j - i == 1:
+                    return s[i] == s[j]
+        
+        then we call this dp function of all i,j substrings and maximize
+        '''
+        if len(s) == 1:
+            return s
+        N = len(s)
+        memo = {}
+        
+        
+        def dp(i,j):
+            if i == j:
+                return 1
+            if j - i == 1:
+                return s[j] == s[i]
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if s[i] == s[j]:
+                ans = dp(i+1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                memo[(i,j)] = False
+                #dp(i+1,j)
+                #dp(i,j-1)
+                return False
+            
+        ans = ""
+        for i in range(N-1,-1,-1):
+            for j in range(i,N):
+                if dp(i,j) and len(s[i:j+1]) > len(ans):
+                    ans = s[i:j+1]
+        
+        return ans
+        
+                    
+#i don't think traditional dp works here...
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        #matain largest to get it, as well as pointers
+        self.start = 0
+        self.end = 0
+        self.largest = 1
+        memo = {}
+        N = len(s)
+        
+        def dp(i,j):
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if i == j:
+                return True
+            if i > j:
+                return True
+            if s[i] == s[j] and dp(i+1,j-1):
+                ans = True
+                memo[(i,j)] = ans
+                
+                if self.largest < j - i + 1:
+                    self.largest = j -i + 1
+                    self.start = i
+                    self.end = j
+                
+                return ans
+            
+            else:
+                ans = False
+                memo[(i,j)] = ans
+                dp(i+1,j)
+                dp(i,j-1)
+                return ans
+        
+        dp(0,N-1)
+        return s[self.start:self.end+1]
+
