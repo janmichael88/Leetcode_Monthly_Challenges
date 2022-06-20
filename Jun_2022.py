@@ -1503,3 +1503,143 @@ class Solution:
         dp(0,N-1)
         return s[self.start:self.end+1]
 
+
+###############################
+# 968. Binary Tree Cameras (REVISITED)
+# 19JUN22
+###############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def minCameraCover(self, root: Optional[TreeNode]) -> int:
+        '''
+        when we place a camera, the camera can cover the node, the node's parent, and both of its children
+        so really if we new the minimum on the left and right subtrees, we could take the min the answer from both subtrees, assuming they were already minimal, then add to that the coverage of the node we are on
+        but this is hard, because we need to pass informatino about a node, its parent and it's children
+        
+        DP:
+            lets try to cover every node, starting from the top and going down
+            every node considered must be covered by a camera, or an immediate neighbor
+            intuion: since cameras only care about local state, we want to try to take advantage of this
+        
+        we let dp(node) return some information about how many cameras it takes to cover the subtree for this node in differetns states, but what are the states
+        
+            state 1; strict subtree, all the nodes below this node are covered except this node
+            state 2 normal subtree, all nodes below and included this node are covered, but not camera at this node
+            state 3, placed a camera, all the nodes below and including this node are covered, AND there is a camera here
+        
+        transition:
+            to cover a strict subtree, children of this node must be normal
+            to cover a normal subtree without placing a camera here, the children of this node must be in states 1 or 2, and at least one of those chidlren must be in state 2
+            to cover the subtree when placing a camera here, the children can be in any state
+        '''
+        def dp(node):
+            #return statments, return the number of cameras it takes to cover each of the 3 states
+            # 0: Strict ST; All nodes below this are covered, but not this one
+            # 1: Normal ST; All nodes below and incl this are covered - no camera
+            # 2: Placed camera; All nodes below this are covered, plus camera here
+            #base case, no node, 
+            if not node:
+                return 0,0,float('inf')
+            left = dp(node.left)
+            right = dp(node.right)
+            
+            dp0 = left[1] + right[1]
+            dp1 = min(left[2] + min(right[1:]),right[2] + min(left[1:]))
+            dp2 = 1 + min(left) + min(right)
+            
+            return dp0,dp1,dp2
+        
+        return min(dp(root)[1:])
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def minCameraCover(self, root: Optional[TreeNode]) -> int:
+        '''
+        instead of trying to cover every node from the top down, lets try to cover it from the bottom up
+        considering placing a cmcer with the deepest nodes first and working out way up
+        if a node has its children covered and has a parent, then it is stricly better to place a camera at this nodes' parent
+        
+        algo:
+            if a node has chidlren that are not covered by a camcera, then we must place a camera here
+            additionally if a node has no parent and it is not covered, we place a camera here
+        '''
+        self.ans = 0 
+        covered = {None}
+        
+        def dfs(node,parent = None):
+            if node:
+                dfs(node.left,node)
+                dfs(node.right,node)
+                
+                if parent == None and node not in covered or node.left not in covered or node.right not in covered:
+                    self.ans += 1
+                    covered.add(node)
+                    covered.add(parent)
+                    covered.add(node.left)
+                    covered.add(node.right)
+        
+        
+        
+        dfs(root)
+        return self.ans
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def minCameraCover(self, root: Optional[TreeNode]) -> int:
+        '''
+        one last way, good review
+        #https://leetcode.com/problems/binary-tree-cameras/discuss/1211695/JS-Python-Java-C%2B%2B-or-Easy-Recursive-DFS-Solution-w-Explanation
+        intutions:
+            we shouldn't need to place a camera on the leaf nodes, if they are covered from avoer
+            so we can solve this bottom up, dfs
+            dfs on to each node, but have it return SOME kind of information back to the parent
+        
+        needs;
+            nothing below needs monitoring
+            a camera was placed below and can monitor the parent
+            an unmonitored node below needs a camera placed above
+        returns;
+            if no child needs monitoring, we hold off on placing a camera, and indicate that this node is in this state
+            one or more of the children need moniotring, so place here and return that this parent/node will be monitored
+            onfe of hte children has a camera and the toerh child either has a camera or oden'st need moniotring
+            (this tree is fully monitored but has not monitoring to the parent)
+        '''
+        self.ans = 0
+        
+        def _dfs(node: TreeNode):
+            '''
+            Returns:
+                0: Ignore (M)
+                1: Placed camera in child (C)
+                3: Need camera in parent (U)
+            '''
+            if node is None: 
+                return 0
+            
+            val = _dfs(node.left) + _dfs(node.right)
+            if val == 0: 
+                return 3
+            if val < 3:
+                # 0 or 1 or 2
+                return 0
+            
+            # val >= 3 and therefore we need a camera in current node.
+            self.ans += 1
+            return 1
+        
+        return self.ans + 1 if _dfs(root) >= 3 else self.ans
