@@ -1643,3 +1643,178 @@ class Solution:
             return 1
         
         return self.ans + 1 if _dfs(root) >= 3 else self.ans
+
+#############################
+# 361. Bomb Enemy
+# 21JUN22
+#############################
+#TLE brute force, note JAVA passes
+class Solution:
+    def maxKilledEnemies(self, grid: List[List[str]]) -> int:
+        '''
+        we can just check how many soldier we can kill if we place a bomb on this cell (i,j)
+        can only place on a '0' cell
+        '''
+        if len(grid) == 0:
+            return 0
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        def get_kill_count(row,col):
+            enemy_count = 0
+            #look to the left of the cell
+            for c in range(col-1,-1,-1):
+                if grid[row][c] == 'W':
+                    break
+                elif grid[row][c] == 'E':
+                    enemy_count += 1
+            
+            #look to the right
+            for c in range(col+1,cols):
+                if grid[row][c] == 'W':
+                    break
+                elif grid[row][c] == 'E':
+                    enemy_count += 1
+            
+            #look up
+            for r in range(row-1,-1,-1):
+                if grid[r][col] == 'W':
+                    break
+                elif grid[r][col] == 'E':
+                    enemy_count += 1
+            
+            #look down
+            for r in range(row+1,rows):
+                if grid[r][col] == 'W':
+                    break
+                elif grid[r][col] == 'E':
+                    enemy_count += 1
+            
+            return enemy_count
+        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans = max(ans,get_kill_count(i,j))
+        
+        return ans
+
+#consolidate range iterators
+class Solution:
+    def maxKilledEnemies(self, grid: List[List[str]]) -> int:
+        if len(grid) == 0:
+            return 0
+
+        rows, cols = len(grid), len(grid[0])
+
+        def killEnemies(row, col):
+            enemy_count = 0
+            row_ranges = [range(row - 1, -1, -1), range(row + 1, rows, 1)]
+            for row_range in row_ranges:
+                for r in row_range:
+                    if grid[r][col] == 'W':
+                        break
+                    elif grid[r][col] == 'E':
+                        enemy_count += 1
+
+            col_ranges = [range(col - 1, -1, -1), range(col + 1, cols, 1)]
+            for col_range in col_ranges:
+                for c in col_range:
+                    if grid[row][c] == 'W':
+                        break
+                    elif grid[row][c] == 'E':
+                        enemy_count += 1
+
+            return enemy_count
+
+        max_count = 0
+        for row in range(0, rows):
+            for col in range(0, cols):
+                if grid[row][col] == '0':
+                    max_count = max(max_count, killEnemies(row, col))
+
+        return max_count
+
+class Solution:
+    def maxKilledEnemies(self, grid: List[List[str]]) -> int:
+        '''
+        dp is actually pretty tricky, if we define dp(i,j) as the number of hits we get from this cell
+        then it would just be:
+        dp(i,j) = {
+            dp(i,j-1) + dp(i+1,j) + dp(i.j-1) + dp(i,j+1)
+        }
+        since the bomb shoots acrros allrows and columns, we only need two of these answers from previous subproblems, the other two are redundant
+        dp(i,j) = {
+            dp(i-1,j) + dp(i,j+1)
+        }
+        
+        if we knew the number of row hits and col hits obtain from placing a bomb at this cell, we could just sum them up
+        but how do we build up the subproblems to get row hits and col hits
+        
+        case 1:
+            if cell is at beginning, just scan row to get hits until we run into a wall, otherwise reset row hits
+        case 2:
+            if cell is right after a wall, we need to recalculate hits gain starting from this cell
+            
+        we only need to maintain hits along a row, but we need hits for each col
+        '''
+        if len(grid) == 0:
+            return 0
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        row_hits = 0
+        col_hits = [0]*cols
+        
+        ans = 0
+        
+        for row in range(rows):
+            for col in range(cols):
+                #for these two loops, also could have done while loops
+                #getting hit counter for this row
+                if col == 0 or grid[row][col-1] == 'W':
+                    row_hits = 0
+                    for k in range(col,cols):
+                        if grid[row][k] == 'W':
+                            break
+                        elif grid[row][k] == 'E':
+                            row_hits += 1
+                #getting col hits
+                if row == 0 or grid[row-1][col] == 'W':
+                    col_hits[col] = 0
+                    for k in range(row,rows):
+                        if grid[k][col] == 'W':
+                            break
+                        elif grid[k][col] == 'E':
+                            col_hits[col] += 1
+                
+                #get total hits for this cell
+                if grid[row][col] == '0':
+                    total_hits = row_hits + col_hits[col]
+                    ans = max(ans,total_hits)
+        
+
+def maxKilledEnemies(self, grid):
+    if not grid: return 0
+    m, n = len(grid), len(grid[0])
+    result = 0
+    colhits = [0] * n
+    for i, row in enumerate(grid):
+        for j, cell in enumerate(row):
+            if j == 0 or row[j-1] == 'W':
+                rowhits = 0
+                k = j
+                while k < n and row[k] != 'W':
+                    rowhits += row[k] == 'E'
+                    k += 1
+            if i == 0 or grid[i-1][j] == 'W':
+                colhits[j] = 0
+                k = i
+                while k < m and grid[k][j] != 'W':
+                    colhits[j] += grid[k][j] == 'E'
+                    k += 1
+            if cell == '0':
+                result = max(result, rowhits + colhits[j])
+    return result
