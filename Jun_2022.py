@@ -1854,3 +1854,125 @@ class Solution:
                 else: dp[i][j]+=cur
                     
         return max(dp[i][j] for i in range(m) for j in range(n)) 
+
+###########################
+# 22JUN22
+# 1229. Meeting Scheduler (REVISTED)
+###########################
+#close one
+class Solution:
+    def minAvailableDuration(self, slots1: List[List[int]], slots2: List[List[int]], duration: int) -> List[int]:
+        '''
+        we want the earliest time where the intervals capture each other, and is of length duration
+        note:
+            it is guaranteeds that no two availability of time slots of the same perosn intersect with each other
+            that is, for any two time slots [start1,end1] and [start2,end2] of the same person
+            either start1 > end2 or start2 > end1, this just means there are no intersecting time slots for a person
+        
+        i can use two pointers and first check if they capture one another
+        if they do, check that they are at least duration
+            if so, update/record ansswer
+        else:
+            advance
+        '''
+        #sort
+        slots1.sort()
+        slots2.sort()
+        ans = []
+        i = j = 0
+        while i < len(slots1) and j < len(slots2):
+            #get intervals
+            first = slots1[i]
+            second = slots2[j]
+            #if one captures the other
+            if (first[0] <= second[0] and first[1] >= second[1]) or (second[0] <= first[0] and second[1] >= first[1]):
+                #need min start and min end
+                min_start = min(first[0],second[0])
+                min_end = min(first[1],second[1])
+                if min_start + duration <= min_end:
+                    return [min_start,min_start+duration]
+                else:
+                    i += 1
+                    j += 1
+            else:
+                i += 1
+                j += 1
+        
+        return ans
+
+class Solution:
+    def minAvailableDuration(self, slots1: List[List[int]], slots2: List[List[int]], duration: int) -> List[int]:
+        '''
+        sort on start times
+        then find over lapping intervals
+        and check interval is at least duration
+        if not advance the slot the end earlier
+        why?
+        The answer is: we will always move the one that ends earlier. 
+        Assuming that we are comparing slots1[i] and slots2[j] and slots1[i][1] > slots2[j][1], 
+        we would always choose to move the pointer j. The reason is that, as both slots are sorted, if slots1[i][1] > slots2[j][1], 
+        we know slots1[i+1][0] > slots2[j][1] so that there will be no intersection between slots1[i+1] and slots2[j
+        '''
+        slots1.sort()
+        slots2.sort()
+        i = j = 0
+        
+        while i < len(slots1) and j < len(slots2):
+            end = min(slots1[i][1],slots2[j][1])
+            start = max(slots1[i][0],slots2[j][0])
+            #valid duration
+            if end - start >= duration:
+                return [start,start + duration]
+            if slots1[i][1] < slots2[j][1]:
+                i += 1
+            else:
+                j += 1
+        
+        return []
+
+
+class Solution:
+    def minAvailableDuration(self, slots1: List[List[int]], slots2: List[List[int]], duration: int) -> List[int]:
+        '''
+        we can use a heap by maintaing the property that the earliest start times come up first
+        we can push all the intervals onto the heap, and check if we have capturing intervals (overlapping intervals)
+        why? if the inervals overlapped, they must come from two different people
+        '''
+        min_heap = []
+        for start,end in slots1:
+            if end - start >= duration:
+                min_heap.append([start,end])
+        
+        for start,end in slots2:
+            if end - start >= duration:
+                min_heap.append([start,end])
+        
+        heapq.heapify(min_heap)
+        
+        #we need to check two, so keep going until we have 1
+        while len(min_heap) > 1:
+            start1,end1 = heapq.heappop(min_heap)
+            start2,end2 = min_heap[0]
+            if end1 >= start2 + duration:
+                return [start2, start2 + duration]
+        
+        return []
+
+class Solution:
+    def minAvailableDuration(self, slots1: List[List[int]], slots2: List[List[int]], duration: int) -> List[int]:
+        '''
+        using filter and lambda
+        '''
+        #using lammbda, filter, expresions
+        min_heap = list(filter(lambda x: x[1] - x[0] >= duration, slots1 + slots2))
+        
+        heapq.heapify(min_heap)
+        
+        #we need to check two, so keep going until we have 1
+        while len(min_heap) > 1:
+            start1,end1 = heapq.heappop(min_heap)
+            start2,end2 = min_heap[0]
+            if end1 >= start2 + duration:
+                return [start2, start2 + duration]
+        
+        return []
