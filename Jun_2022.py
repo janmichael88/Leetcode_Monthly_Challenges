@@ -1976,3 +1976,109 @@ class Solution:
                 return [start2, start2 + duration]
         
         return []
+
+######################################
+# 375. Guess Number Higher or Lower II
+# 22JUN22
+#######################################
+#article in minimax theory
+#nice try
+class Solution:
+    def getMoneyAmount(self, n: int) -> int:
+        '''
+        now what i let dp(i) be the max cost for starting with i as the first guess
+        base cases i == 0 return 0
+        i > n + 1 
+        return 0
+        
+        costleft dp(i-1) + i
+        costright dp(i+1) + i
+        '''
+        
+        memo = {}
+        
+        def dp_left(i):
+            if i == 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = dp_left(i-1) + i
+            memo[i] = ans
+            return ans
+        
+        def dp_right(i):
+            if i > n+1:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = dp_right(i+1) + i
+            memo[i] = ans
+            return ans
+        
+        for i in range(n+1):
+            print(dp_left(i),dp_right(i))
+
+class Solution:
+    def getMoneyAmount(self, n: int) -> int:
+        '''
+        this is a minimax problem
+        we want to return the minimum amount of money i would need to gurantee a win
+        
+        for every incorrect guess, i lose that amount, and the i am told whether or not this is higher of loser
+        '''
+        #memo = {}
+        @lru_cache(None)
+        def dp(left,right):
+            if left >= right:
+                return 0
+
+            #if (left,right) in memo:
+            #    return memo[(left,right)]
+            
+            ans = float('inf')
+            for pick in range(left,right+1):
+                leftcost = dp(left,pick-1) + pick
+                rightcost = dp(pick+1,right) + pick
+                local_cost = max(leftcost,rightcost)
+                ans = min(ans,local_cost)
+            #memo[(left,right)] = ans
+            return ans
+        
+        return dp(1,n)
+
+class Solution:
+    def getMoneyAmount(self, n: int) -> int:
+        '''
+        translate to dp
+        we started when left passed right
+        for start from n
+        '''
+        dp = [[0]*(n+2) for _ in range(n+2)]
+        
+        for left in range(n,0,-1):
+            for right in range(left+1,n+1):
+                dp[left][right] = float('inf')
+                for pick in range(left,right+1):
+                    leftcost = dp[left][pick-1] + pick
+                    rightcost = dp[pick+1][right] + pick
+                    localcost = max(rightcost,leftcost)
+                    dp[left][right] = min(dp[left][right],localcost)
+        
+        return dp[1][n]
+
+#in expectation
+'''
+Expected Loss
+
+p: Probability that k is the right choice = 1/(hi-lo+1)
+
+1-p: Probability that k is not the right choice = (hi-lo)/(hi-lo+1)
+
+cost[lo, hi] = min(p*cost_success(k) + (1-p)*cost_failure(k)) where k is between [lo, hi]
+
+Now cost_success(k) = 0. When we have a failure, the answer can lie between [lo, k-1] with probability p_1ower or [k+1, hi] with probability p_higher. p_1ower = (k-lo)/(hi-lo+1) and p_higher = (hi-k)/(hi-lo+1).
+
+cost_failure(k) = (cost[lo,k - 1] + k)*p_1ower + (cost[k+1,hi] + k)*p_higher
+
+cost[lo, hi] = min((1-p)((cost[lo,k - 1] + k)((k-lo)/(hi-lo+1)) + (cost[k+1,hi] + k)*((hi-k)/(hi-lo+1)))) where k is between [lo, hi]
+'''
