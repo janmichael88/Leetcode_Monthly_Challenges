@@ -2082,3 +2082,625 @@ cost_failure(k) = (cost[lo,k - 1] + k)*p_1ower + (cost[k+1,hi] + k)*p_higher
 
 cost[lo, hi] = min((1-p)((cost[lo,k - 1] + k)((k-lo)/(hi-lo+1)) + (cost[k+1,hi] + k)*((hi-k)/(hi-lo+1)))) where k is between [lo, hi]
 '''
+##########################
+# 385. Mini Parser
+# 27JUN22
+##########################
+#converting directly using eval, then just do dfs, return class NestedInteger
+# """
+# This is the interface that allows for creating nested lists.
+# You should not implement it, or speculate about its implementation
+# """
+#class NestedInteger:
+#    def __init__(self, value=None):
+#        """
+#        If value is not specified, initializes an empty list.
+#        Otherwise initializes a single integer equal to value.
+#        """
+#
+#    def isInteger(self):
+#        """
+#        @return True if this NestedInteger holds a single integer, rather than a nested list.
+#        :rtype bool
+#        """
+#
+#    def add(self, elem):
+#        """
+#        Set this NestedInteger to hold a nested list and adds a nested integer elem to it.
+#        :rtype void
+#        """
+#
+#    def setInteger(self, value):
+#        """
+#        Set this NestedInteger to hold a single integer equal to value.
+#        :rtype void
+#        """
+#
+#    def getInteger(self):
+#        """
+#        @return the single integer that this NestedInteger holds, if it holds a single integer
+#        Return None if this NestedInteger holds a nested list
+#        :rtype int
+#        """
+#
+#    def getList(self):
+#        """
+#        @return the nested list that this NestedInteger holds, if it holds a nested list
+#        Return None if this NestedInteger holds a single integer
+#        :rtype List[NestedInteger]
+#        """
+
+class Solution:
+    def deserialize(self, s: str) -> NestedInteger:
+        '''
+        we can just use eval function to convert the string into array of ints or array of arrays
+        then use dfs, wehere base case i have to return a NestedInteger
+        '''
+        def dfs(s):
+            if isinstance(s,int):
+                return NestedInteger(s)
+            temp = NestedInteger()
+            for child in s:
+                temp.add(dfs(child))
+            return temp
+        s = eval(s)
+        return dfs(s)
+
+#recursive
+#https://leetcode.com/problems/mini-parser/discuss/2047371/Python-or-Recursion-or-1-Pass-or-Simplest-Solution
+class Solution:
+    def deserialize(self, s: str) -> NestedInteger:
+        '''
+        we need to break this up
+        '''
+        #helper function to parse number
+        def parse(i,isNegative=False):
+            num = 0
+            while i < len(s) and s[i].isdigit():
+                num = num*10 + int(s[i])
+                i += 1
+            #check if negative
+            if isNegative:
+                num = -num
+            #return is going to be the number as a class NestedInteger, and the next idnex
+            return NestedInteger(num),i
+        
+        #actuall recurive helper
+        def dfs(i):
+            curr_nested = NestedInteger()
+            while i < len(s) and s[i] != ']':
+                if s[i].isdigit():
+                    data,i = parse(i)
+                    curr_nested.add(data)
+                elif s[i] == '-':
+                    data,i = parse(i+1,True)
+                    curr_nested.add(data)
+                elif s[i] == '[':
+                    #recuse here
+                    data,i = dfs(i+1)
+                    curr_nested.add(data)
+                else:
+                    i += 1
+            
+            return curr_nested,i+1
+        
+        #the acutal serialize function, cases when to start the recursion
+        if s[0] != '[':
+            if s[0] == '-':
+                nested,_ = dfs(1,True)
+            else:
+                nested,_ = dfs(0)
+        else:
+            nested,_= dfs(1)
+        
+        return nested
+
+class Solution:
+    def deserialize(self, s: str) -> NestedInteger:
+        '''
+        iterative version using a stack
+        we keep the last element on the stack, the last completed nestedInteger
+        if its a digits, keep bulindg it up
+            once we get to a comma, we must have completed an integer, so we add it
+        opening bracket means we start a new nested integer
+        bascially we are creating a nested interger on the stack, and then freeing it up upon closing
+        
+        '''
+        stack = []
+        num = ""
+        last = None
+        for ch in s:
+            #build up the number
+            if ch.isdigit() or ch == '-':
+                num += ch
+            #next number
+            elif ch == ',' and num:
+                stack[-1].add(NestedInteger(int(num)))
+                #rest num
+                num = ""
+            #new level with opening bracket
+            elif ch == '[':
+                next_level = NestedInteger()
+                #add to stack
+                if stack:
+                    stack[-1].add(next_level)
+                stack.append(next_level)
+            elif ch == ']':
+                if num:
+                    stack[-1].add(NestedInteger(int(num)))
+                    num = ""
+                last = stack.pop()
+        
+        return last if last else NestedInteger(int(num))
+
+###############################################################
+# 1647. Minimum Deletions to Make Character Frequencies Unique
+# 28JUN22
+###############################################################
+#close one!!!
+class Solution:
+    def minDeletions(self, s: str) -> int:
+        '''
+        we define a good string as string where no two characters have the same frequency
+        given string s, return number of character you need to delete to make it good
+        example
+        'aaabbbccc', i can delete 1 a, then one c
+        i just really need the counts of chars as an array
+        and just make sure this array has all unique, if not we need to make it unique
+        [3,3,2]
+        [2,3,2]
+        [1,3,2]
+        
+        problem just becomes number of deletions until i can make all counts unique, the counts array will only be as large as 26
+        
+        
+        '''
+        counts = Counter(s)
+        counts = [count for char,count in counts.items()]
+        ans = 0
+        
+        while len(counts) != len(set(counts)):
+            #get count of counts
+            count_of_counts = Counter(counts)
+            for i in range(len(counts)):
+                c = counts[i]
+                if count_of_counts[c] > 1:
+                    #decrement counts by 1
+                    counts[i] -= 1
+                    ans += 1
+                    #update count of counts
+                    count_of_counts[c] -= 1
+                    count_of_counts[count_of_counts[c]-1] += 1
+        
+        return ans
+        
+class Solution:
+    def minDeletions(self, s: str) -> int:
+        '''
+        using hits, sort counts non-increasinly, decsing
+        then keep decrementing until we reach value not seen ebfore
+        
+        notes:
+            keep hash of visited frequencies and keep decrmeting until we haven't seen it before
+
+           time complexity if O(N+K**2), where K is the maximum count of distaint
+           using count map, we define C as the number of unique counts
+           O(N + C*K)
+        '''
+        counts = Counter(s)
+        counts = [count for char,count in counts.items()]
+        
+        deletions = 0
+        seen_counts = set()
+        for c in counts:
+            while c and c in seen_counts:
+                c -= 1
+                deletions += 1
+            seen_counts.add(c)
+        
+        return deletions
+
+#heap solution
+class Solution:
+    def minDeletions(self, s: str) -> int:
+        '''
+        using max heap and count array (just for practice)
+        we push counts on to a max heap, and keep popping and checking top of element to make sure they are not equal
+        '''
+        counts = [0]*26
+        for ch in s:
+            counts[ord(ch) - ord('a')] += 1
+        
+        #make into max_heap, make sure to not include zeros
+        max_heap = [-num for num in counts if num != 0]
+        heapq.heapify(max_heap)
+        
+        deletions = 0
+        while len(max_heap) > 1:
+            largest = -heapq.heappop(max_heap)
+            #if top two are the same
+            if largest == -max_heap[0]:
+                #we only want to push back non zero eleemnts
+                if largest - 1 > 0:
+                    largest -= 1
+                    heapq.heappush(max_heap,-largest)
+                
+                #count as deletion when we have two of the same
+                deletions += 1
+        
+        return deletions
+
+class Solution:
+    def minDeletions(self, s: str) -> int:
+        '''
+        in the last two approached, we decremented by one until it became unique
+        it would be faster to just send this frequency to the next available unique number
+        this would be possible if we know the largest unoccupied number that is less than the current number
+        
+        we can sort the frequencies increasingly and keep tack of the max frequency that is allowed
+        
+        intuition:
+            if we knew the maximum number a frequency can be converted to, then we can simply change any duplicate frequency to that value insteaf of decrementing the frequency one step at a time
+            
+        we keep variable maxFreqAllowed:
+            this is just the maximum possible number that has yet to be occupied
+        
+        if maxFreAllowed >= the current frequencye we are considering,then we don't need to do any deletions
+        else current us biggerL
+            we need to delete the excess characters and add the number of delted chars to count
+        
+        at each step we update maxFreAllowed to be one less than the frequencye we used to the alst element
+        '''
+        counts = Counter(s)
+        counts = [count for k,count in counts.items()]
+        counts.sort(reverse = True)
+        
+        #get max_freq allowed
+        maxFreqAllowed = len(s)
+        deletions = 0
+        
+        for count in counts:
+            #need deletions to get to the max
+            if count > maxFreqAllowed:
+                deletions += count - maxFreqAllowed
+                count = maxFreqAllowed
+            #update max freq
+            maxFreqAllowed = max(0,count-1)
+        
+        return deletions
+
+######################################
+# 406. Queue Reconstruction by Height (Revisited)
+# 29JUN22
+#######################################
+#close one
+class Solution:
+    def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+        '''
+        we are given a container of people where each people[i] has entry [h_i,k_i]
+        where h_i is the height of person i, and k_i repsents the number of of people in front of this person with height >= h_i
+        note, it is guranteed that the queue can be constructed
+        
+        intution:
+            we need to first the shortest person at its position, with position being the number of people in front of it having height >= to this height
+            why can we say this? because every person will be taller than the shortest one! and it is guarnteed that the array can be constructed
+            if we fix the shortest person at its index,k then the condition is statisfied that this shortes person is in the right spot because:
+            1. the array is guarnteeded
+            2. every other person is larger than the shortest person
+        
+        greedily place the shortest person at its spot
+        but we have to sort
+        sort increasing order by height
+        and descneding order number of people, then we just place in the array
+        
+        but what if we try to place a person, where that spot has already been placed,
+        then we take this one that has already been placed and move it to neext bext available spot that is not None
+        '''
+        people.sort(key = lambda x: (x[0],-x[1]))
+        N = len(people)
+        queue = [None]*N
+        print(people)
+        
+        for height,index in people:
+            #spot is available
+            if queue[index] == None:
+                queue[index] = [height,index]
+            #otherwise find next available spot that is None
+            else:
+                next_available_index = index
+                while queue[next_available_index] != None or queue[next_available_index][0] != index:
+                    next_available_index += 1
+                #place
+                queue[next_available_index] = queue[index]
+                #overwritse
+                queue[index] = [height,index]
+        
+        return queue
+
+#watch edge cases when we have already placed a person
+class Solution:
+    def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+        N = len(people)
+        q = [None]*N
+        people.sort(key = lambda x: (x[0],-x[1]))
+        
+        for person in people:
+            people_in_front = person[1]
+            i = 0
+            while people_in_front != 0 and i < N:
+                if q[i] == None or q[i][0] >= person[0]:
+                    people_in_front -= 1
+                i += 1
+            #move to next none posrt
+            while q[i] != None:
+                i += 1
+            q[i] = person
+        
+        return q
+
+class Solution:
+    def reconstructQueue(self, people: List[List[int]]) -> List[List[int]]:
+        '''
+        we can also sort decending by height, and increasing on people in front
+        then just insert into the array at that index
+        '''
+        people.sort(key = lambda x: (-x[0],x[1]))
+        ans = []
+        for height,index in people:
+            ans.insert(index,[height,index])
+        
+        return ans
+
+############################################################
+# 462. Minimum Moves to Equal Array Elements II (Revisited)
+# 30JUN22
+############################################################
+class Solution:
+    def minMoves2(self, nums: List[int]) -> int:
+        '''
+        we can use quick select to find the median
+        if len(nums) is odd we quick select one time to find the median
+        other wise quick select twice to find upper middle and lower middle
+        '''
+        def partition(left,right,pivot_index):
+            pivot_number = nums[pivot_index]
+            #move to end
+            nums[right],nums[pivot_index] = nums[pivot_index],nums[right]
+            
+            #move less frequent
+            store_index = left
+            for i in range(left,right):
+                if nums[i] < pivot_number:
+                    nums[store_index],nums[i] = nums[i],nums[store_index]
+                    store_index += 1
+            #fix array
+            nums[right],nums[store_index] = nums[store_index],nums[right]
+            
+            return store_index
+        
+        def quick_select(left,right,k):
+            if left == right:
+                return nums[left]
+            
+            pivot_index = random.randint(left,right)
+            pivot_index = partition(left,right,pivot_index)
+            
+            if k == pivot_index:
+                return nums[k]
+            elif k < pivot_index:
+                return quick_select(left,pivot_index-1,k)
+            else:
+                return quick_select(pivot_index + 1, right,k) #because k is the median this never chantes
+        
+        
+        N = len(nums)
+        median = quick_select(0,N-1,N//2)
+        ans = 0
+        for num in nums:
+            ans += abs(num-median)
+        
+        return ans
+
+
+################################
+# 386. Lexicographical Numbers
+# 29JUN22
+################################
+#close one
+class Solution:
+    def lexicalOrder(self, n: int) -> List[int]:
+        '''
+        this is bucket sort, we can keep buckets, can use hashmap
+        then just add to each bucket the the first digit of its number
+        then just concat the buckets in order
+        
+        i need a fast way to get the most signifint digit of a number
+        we can keep reuducing by 10, left over is remainder, just take mod the current power of 10
+        '''
+        
+        #helper for getting MS digit
+        def get_leftmost(n):
+            while not (1 <= n <= 9):
+                n //= 10
+            return n
+        buckets = defaultdict(list)
+        power_of_10 = 1
+        for i in range(1,n+1):
+            #adjust power of 10
+            if i // 10 == 0:
+                power_of_10 *= 10
+            #get most siginigicant bit
+            most_sig_bit = get_leftmost(i)
+
+            buckets[most_sig_bit].append(i)
+        
+        ans = []
+        for i in range(1,10):
+            nums = buckets[i]
+            for num in nums:
+                ans.append(num)
+        
+        return ans
+
+#we can just use dfs, and preoder on the n-ary tree
+class Solution:
+    def lexicalOrder(self, n: int) -> List[int]:
+        '''
+        turns out we can just use dfs
+        we root each number as a tree, then add numbers [1,9] to each of the roots
+        then we just preoder travese to get lexgrohpical order
+               1        2        3    ...
+              /\        /\       /\
+           10 ...19  20...29  30...39   ....
+           /\
+      100...109
+        '''
+        ans = []
+        def dfs(curr,n):
+            if curr > n:
+                return
+            ans.append(curr)
+            for i in range(10):
+                #prune
+                if curr*10 + i > n:
+                    return
+                dfs(curr*10 + i,n)
+        
+        for i in range(1,10):
+            dfs(i,n)
+        
+        return ans
+        
+#sort by string length after int to string conversion
+class Solution:
+    def lexicalOrder(self, n: int) -> List[int]:
+        res = []
+        for i in range(1,n+1):
+            res.append(str(i))
+        
+        res.sort()
+        return res
+
+#another way
+class Solution:
+    def lexicalOrder(self, n: int) -> List[int]:
+        '''
+        intelligently build the next number
+        what's the time complexity for this, we know space is O(N)
+        '''
+        #start with 1
+        ans = [1]
+        #need n numbers in the array
+        while len(ans) < n:
+            #we need to add zeros to the next number
+            candidate = ans[-1]*10
+            #if we go over the linit n
+            while candidate > n:
+                #undo
+                canddiate = candidate // 10
+                #proceed to next elemetn
+                candidate += 1
+                #for cases like 199 + 1 = 200, we need to start at w
+                while candidate % 10 == 0:
+                    candidate = candidate // 10
+                #add the nextnumber
+            ans.append(candidate)
+        
+        return ans
+
+############################################
+# 453. Minimum Moves to Equal Array Elements
+# 30JUN22
+############################################
+#nice idea...
+class Solution:
+    def minMoves(self, nums: List[int]) -> int:
+        '''
+        we need to make all elements in nums the same
+        in one move, i can increment n-1 elements by 1
+        which means the sum of the array increase by n-1
+        
+        if the final number is X, then we would have X*len(nums)
+        the sum always has to go up
+        
+        so we need to go up to a sum such that when divide the sum by the number of elements, they are all the same
+        
+        '''
+        increments = len(nums) - 1
+        curr_sum = sum(nums)
+        N = len(nums)
+        moves = 0
+        
+        while curr_sum /  N != N:
+            curr_sum += increments
+            moves += 1
+        
+        return moves
+        
+#O(N*(max(nums) - min(nums)))
+class Solution:
+    def minMoves(self, nums: List[int]) -> int:
+        '''
+        notes on intution/hints:
+            for an array that has all the same elements, the min == max
+
+        note, we need to store the max index, not the max number
+        we keep updating the array by one for any elemen that is not max
+
+        '''
+        N = len(nums)
+        min_index = 0
+        max_index = N-1
+            
+        count = 0
+
+        while True:
+            min_index = 0
+            max_index = N-1
+            for i in range(N):
+                if nums[i] > nums[max_index]:
+                    max_index = i
+                if nums[i] < nums[min_index]:
+                    min_index = i
+            
+            if nums[min_index] == nums[max_index]:
+                return count
+            for i in range(N):
+                if i != max_index:
+                    nums[i] += 1
+            
+            count += 1
+        
+        return count
+
+#O(N*N)
+class Solution:
+    def minMoves(self, nums: List[int]) -> int:
+        '''
+        instead if incrementing by one, increment by the diffenet of MIN and MAX
+
+        '''
+        N = len(nums)
+        min_index = 0
+        max_index = N-1
+            
+        count = 0
+
+        while True:
+            min_index = 0
+            max_index = N-1
+            for i in range(N):
+                if nums[i] > nums[max_index]:
+                    max_index = i
+                if nums[i] < nums[min_index]:
+                    min_index = i
+            
+            if nums[min_index] == nums[max_index]:
+                return count
+            
+            diff = nums[max_index] - nums[min_index]
+            for i in range(N):
+                if i != max_index:
+                    nums[i] += diff
+            
+            count += diff
