@@ -350,8 +350,96 @@ class Solution:
             p = path.split('\t')
             depth, name = len(p) - 1, p[-1]
             l = len(name)
-            while stack and stack[-1][1] >= depth: stack.pop()
-            if not stack: stack.append((l, depth))
-            else: stack.append((l+stack[-1][0], depth))
-            if '.' in name: ans = max(ans, stack[-1][0] + stack[-1][1])   
+            while stack and stack[-1][1] >= depth: 
+            	stack.pop()
+            if not stack: 
+            	stack.append((l, depth))
+            else: 
+            	stack.append((l+stack[-1][0], depth))
+            if '.' in name: 
+            	ans = max(ans, stack[-1][0] + stack[-1][1])   
         return ans
+
+############################
+# 393. UTF-8 Validation
+# 06JUL22
+############################
+class Solution:
+    def validUtf8(self, data: List[int]) -> bool:
+        '''
+        return whether data is a valid UTF-encoding
+        a character in UTF-8 can be from 1 to 4 bytes long
+        for a 1 byte character, the first bit must be 0, followed by its unicode
+        for an n bytes char, the first n bits are all ones, the n + 1 bit is 0, followed by n-1 bytes with the most significant 2 bits being 10
+        
+        1 byte -> 0xxxxxxx
+        2 byte -> 110xxxxx 10xxxxxx
+        3 byte -> 1110xxxx 10xxxxxx 10xxxxxx
+        4 byte -> 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        
+        notes, the data can contain data for multiple characters, all of which can be valid UTF-8 characters and hence that the integers in the array can be larger than 255 as wekk
+        the integers in the array can be larger than 255 as well
+        the highest number that can be represented by 8 bits is 255
+        so what do we do if an interger in the array exceeds 255, say 476, in this cas we only have to consider the 8 least signifiant bits of each integer
+        
+        example = [197,130,1]
+        we can get the binary rep for each number
+        11000101 10000010 00000001
+        
+        the first byte, has its most signifiant 2 bits set to 1, so thi is a valid 2 byte character
+        if this is a valid 2 byte character, then he next byte must followe 10xxxxxx
+        which indeed it does, so [197,130] form a valid 2-byte UTF-8 character
+        the last one is 1, which follows the rule of a 1 byte utf8 char
+        
+        notes:
+            the first byte tells us the length of the UTF8 char and hence the number of bytes we have to process in all in order to completely process a single UTF8 char in the array before moving on to another one
+            This is the first rule in the problem statement and it clearly says that "A valid UTF-8 character can be 1 - 4 bytes long."
+            
+        algo:
+            1. start processing the integers in the givven array one by one
+            2. for every integer obtain the string format for its binary rep - we only need the least significant 8 bits
+            3. There are two scenarios
+                a. we are in hte middle of processing some UTF8 encoded char. in this case we simply need to check if the frist two bits of the string and see of they are 10 (i.e the 2 most signigicnat bits of the integer being 1 and 0)
+                b. the other case is that we already processed some valid utf8 char and we have to start processing a new one
+                in shi case we have to look at a prefix of thes tring rep and look at the numbers of 1' that we encounter
+                this will tell us the ize of the next utf8 char
+            4. we keep on prcessing the integers of the array in this way until we either end up processing all of them or we find an invalid scenario
+        '''
+        # Number of bytes in the current UTF-8 character
+        n_bytes = 0
+
+        # For each integer in the data array.
+        for num in data:
+
+            # Get the binary representation. We only need the least significant 8 bits
+            # for any given number.
+            bin_rep = format(num, '#010b')[-8:]
+
+            # If this is the case then we are to start processing a new UTF-8 character.
+            if n_bytes == 0:
+
+                # Get the number of 1s in the beginning of the string.
+                for bit in bin_rep:
+                    if bit == '0': break
+                    n_bytes += 1
+
+                # 1 byte characters
+                if n_bytes == 0:
+                    continue
+
+                # Invalid scenarios according to the rules of the problem.
+                if n_bytes == 1 or n_bytes > 4:
+                    return False
+            else:
+                # Else, we are processing integers which represent bytes which are a part of
+                # a UTF-8 character. So, they must adhere to the pattern `10xxxxxx`.
+                if not (bin_rep[0] == '1' and bin_rep[1] == '0'):
+                    return False
+
+            # We reduce the number of bytes to process by 1 after each integer.
+            n_bytes -= 1
+
+        # This is for the case where we might not have the complete data for
+        # a particular UTF-8 character.
+        return n_bytes == 0   
+                
