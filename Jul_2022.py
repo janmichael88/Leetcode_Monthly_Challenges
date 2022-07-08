@@ -443,3 +443,88 @@ class Solution:
         # a particular UTF-8 character.
         return n_bytes == 0   
                 
+###############################
+# 97. Interleaving String (REVISITED)
+# 07JUL22
+###############################
+class Solution:
+    def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
+        '''
+        we let dp(i,j) be the answer to the question
+            is this interleaving after processing s1[:i] and s2[:j]
+            so then if we are interleaving up this point, then the string must be interleaving if s1[i+1] or s2[j+1]
+            is equal to the point in s3, which we call k
+            
+        dp(i,j,k ) = {
+            first_match = s1[i] == s3[k] and dp(i+1,j,k+1)
+            second_match = s2[j] == s3[k] and dp(i,j+1,k+1)
+            
+            the answer is if either first or second is true
+        
+        
+        }
+        
+        base cases, when either i or j adanvances all the way, we are then left with an empty string, so compare the remidner of the string with the remainder of s3
+        '''
+        
+        if len(s1) + len(s2) != len(s3):
+            return False
+        
+        memo = {}
+        
+        def dp(i,j,k):
+            if i == len(s1):
+                return s2[j:] == s3[k:]
+            if j == len(s2):
+                return s1[i:] == s3[k:]
+            if (i,j) in memo:
+                return memo[(i,j)]
+            first = s1[i] == s3[k] and dp(i+1,j,k+1)
+            second = s2[j] == s3[k] and dp(i,j+1,k+1)
+            
+            ans = first or second
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,0,0)
+
+class Solution:
+    def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
+        '''
+        we can translate this to bottom up, by starting from the ends of the strings, these were the base cases
+        '''
+        if len(s1) + len(s2) != len(s3):
+            return False
+        
+        dp = [[0]*(len(s2)+1) for _ in range(len(s1) + 1)]
+        for i in range(len(s1),-1,-1):
+            for j in range(len(s2),-1,-1):
+                if i == len(s1):
+                    dp[i][j] = s2[j:] == s3[i+j:]
+                elif j == len(s2):
+                    dp[i][j] = s1[i:] == s3[i+j:]
+                else:
+                    first = s1[i] == s3[i+j] and dp[i+1][j]
+                    second = s2[j] == s3[i+j] and dp[i][j+1]
+                    dp[i][j] = first or second
+        
+        return dp[0][0]
+
+#turns out this is BFS on a 2d grid
+#for s1 and s2 to be an interleaving of s3, there needs to be a path from (0,0) to (len(s1),len(s2))
+#in which case, our moves can only be one step right, or one step down
+class Solution:
+	def isInterleave(self, s1, s2, s3):
+	    r, c, l= len(s1), len(s2), len(s3)
+	    if r+c != l:
+	        return False
+	    queue, visited = [(0, 0)], set((0, 0))
+	    while queue:
+	        x, y = queue.pop(0)
+	        if x+y == l:
+	            return True
+	        if x+1 <= r and s1[x] == s3[x+y] and (x+1, y) not in visited:
+	            queue.append((x+1, y)); visited.add((x+1, y))
+	        if y+1 <= c and s2[y] == s3[x+y] and (x, y+1) not in visited:
+	            queue.append((x, y+1)); visited.add((x, y+1))
+	    return False
