@@ -528,3 +528,271 @@ class Solution:
 	        if y+1 <= c and s2[y] == s3[x+y] and (x, y+1) not in visited:
 	            queue.append((x, y+1)); visited.add((x, y+1))
 	    return False
+
+###############################################
+# 30. Substring with Concatenation of All Words
+# 07JUL22
+###############################################
+#hash map
+class Solution:
+    def findSubstring(self, s: str, words: List[str]) -> List[int]:
+        '''
+        we want to return all the starting indices in s that is a concatenation of each word in words only once
+        brute force way would be to generate all possible concatenations
+        then check for possible concat for it existens in s and mark their indices
+        
+        intuition:  
+            all words have the same length, so a valid substring in length s would be of length words[0]*len*(wrods)
+            so we can check s in this range
+            becaue words can have duplicates, we can use hash table for counting them up
+            also define a helper function that takes an index and returns if a valid string substring starting at this index esists
+            
+        '''
+        N = len(s)
+        k = len(words)
+        word_length = len(words[0])
+        substring_size = word_length*k
+        word_count = Counter(words)
+        
+        #check for a current valid subtring at this index
+        def check(i):
+            #make a copy of the hashmap each time
+            remaining = word_count.copy()
+            words_used = 0
+            
+            #check i range up to length of substrin size, but insteps of word
+            for j in range(i,i+substring_size,word_length):
+                #get current part
+                sub = s[j:j+word_length]
+                #take away from hasmap
+                if remaining[sub] > 0:
+                    remaining[sub] -= 1
+                    words_used += 1
+                else:
+                    break
+            
+            #check valid substring from this index
+            return words_used == k
+        
+        res = []
+        for i in range(N - substring_size +1):
+            if check(i):
+                res.append(i)
+        
+        return res
+
+################################
+# 1473. Paint House III
+# 08JUL22
+################################
+#top down memo
+class Solution:
+    def minCost(self, houses: List[int], cost: List[List[int]], m: int, n: int, target: int) -> int:
+        '''
+        we are given a houses array, where houses[i] represents a color of the house
+        we can only choose from colors [1,n]
+        cost[i][j] is the cost to paint house i color j+1
+        we also have m houses
+        costs is m x n matrix (the cols are 1 indexed, really)
+        
+        intuition:
+            some houses that have been painted last summer should not be painted again
+            meaning, we can only paint the houses such that house[i] == 0
+        
+        we can change the problem, paint the houses at houses[i] == 0, such that we get target neighborhoods with minimum cost, this is an easier problem...
+        
+        hint:
+            Define dp[i][j][k] as the minimum cost where we have k neighborhoods in the first i houses and the i-th house is painted with the color j.
+        
+        intuition 2:
+            starting with the firt house, is it already painted, we skip
+            otherwise chose any color from [1,n] and spend that cost
+            we also need to count the number of neihborhoods, if after visiting a house, we compare it with the previous color, and if its the same, we don't incremnet the neighborhood count
+            and recursively go in to the next house with update values
+            after traversing all the hosues, if the neighborhoods == target, then we can compare the cost wit the minmium cost we have acheived so far
+            
+        track of:
+            we need the current index for the house
+            the color of the previous house
+            the current number of neighborhoods
+        
+        algo:
+            1. curr index is 0, count of neighborhoods is zero, prevhouse color starts at 0, ensures that we pick the first house
+            2. if house at curr index is already painted (not a zero), we recursively move on to the next house, while updating neighborhood count
+            3.if the house is not painted (is 0), iterate over the colors from 1 to n
+                for each color try painting the house at this currindex that color, and recursviely move on the next house with the update valies
+                stor the minimum after tyring all valies from 1 to n
+            4. return the min cost and cache it
+            5. base cases:
+                if we have gone over all the houses and count == target, return 0
+                otherwise, return the max cost
+                if the count of neighborhoods > target, the answer is not possible so return max cost
+        '''
+        memo = {}
+
+        
+        def dp(curr_house, neighCount,prev_color):
+            if curr_house == m:
+                if neighCount == target:
+                    return 0
+                else:
+                    return float('inf')
+            
+            #too many neighborhoods
+            if neighCount > target:
+                return float('inf')
+            
+            if (curr_house,neighCount,prev_color) in memo:
+                return memo[(curr_house,neighCount,prev_color)]
+            
+            min_cost = float('inf')
+            #already painted
+            if houses[curr_house] != 0:
+                #update values
+                min_cost = dp(curr_house + 1, neighCount + (houses[curr_house] != prev_color), houses[curr_house])
+            else:
+                #minimize
+                for color in range(1,n+1):
+                    curr_cost = cost[curr_house][color-1]
+                    curr_cost += dp(curr_house+1,neighCount + (color != prev_color),color)
+                    #minimuze the local answer here, not outside the loop
+                    min_cost = min(min_cost,curr_cost)
+            
+            #cache
+            memo[(curr_house,neighCount,prev_color)] = min_cost
+            return min_cost
+        
+        ans = dp(0,0,0)
+        if ans == float('inf'):
+            return -1
+        else:
+            return ans
+
+#close one for bottom up...
+class Solution:
+    def minCost(self, houses: List[int], cost: List[List[int]], m: int, n: int, target: int) -> int:
+        '''
+        we can translate this to bottom up dp starting from the end
+        '''
+        #reverse nesting from the recursino memoe
+        #index into dp(curr_house,neighCount,prev_color)
+        dp = [[[0]*(n+1) for _ in range(target+1)] for _ in range(m+1)]
+        
+        #for curr house go down to 1
+        for curr_house in range(m,-1,-1):
+            for neighCount in range(target,-1,-1):
+                for prev_color in range(1,n+1):
+                    #check for indexable
+                    #print(dp[curr_house][neighCount][prev_color])
+                    
+                    #base cases, out of bounds and have targets or not
+                    if curr_house == m:
+                        if neighCount == target:
+                            dp[curr_house][neighCount][prev_color] = 0
+                        else:
+                            dp[curr_house][neighCount][prev_color] = float('inf')
+                    
+                    #too many
+                    if neighCount > target:
+                        dp[curr_house][neighCount][prev_color] = float('inf')
+                    
+                    min_cost = float('inf')
+                    #we need to index into the houses array
+                    if houses[curr_house-1] != 0:
+                        min_cost = dp[curr_house-1][neighCount + (houses[curr_house - 1] != prev_color)][houses[curr_house-1]]
+                    else:
+                        for color in range(1,n+1):
+                            curr_cost = cost[curr_house-1][color-1]
+                            curr_cost += dp[curr_house-1][neighCount + (color != prev_color)-1][color]
+                            min_cost = min(min_cost,curr_cost)
+                    dp[curr_house][neighCount][prev_color] = min_cost
+        
+        print(dp)
+
+#actual bottom up,but reframe the subproblems
+class Solution:
+    def minCost(self, houses: List[int], cost: List[List[int]], m: int, n: int, target: int) -> int:
+        '''
+        for bottom up, we reframe the intuition just slighlty
+        intuition:
+            suppose we want to find the minimum cost to paint the first house houses with neigh_count neighborhods
+            
+        if the house at index house is already paintted, and the color of the house != color:
+            do nothing, since it is already painted
+        if the house at index house is not painted yet, or it is painted the same color color
+            if the house is not pained, paint house with thie color
+            if it is alredy painted, the min cost here is 0, since we are trying to minimize the cost for all colors
+                if the color and prevcolor are not the same then the subproblem becomes (house -1, neigh count -1, prevcolor)
+                if color and prevcolor are the same, then the subproblem will be (house -1, neigh count,color)
+        
+        the only case where we don't need to break the problem into subproblems (base cases) is when we only have the frist house
+        for the first house
+            the value of the neigh count will be 1 and we can assign the cost for each color from 1 to n according to the cost to paind the house ad index 0 for that color
+        
+        once we have found the cost for all possible combinations of houses,colors,neighcount, we can find the min cost to pain all the house with target number
+        this will be the minimum answer in the array dp[m-1][target]
+        
+        algo:
+            1. init base cases for house = 0, neighborhoods = 1. iterate over the colors from 1 to n and assing the corresponding cost if the hosue itnot painted, otherwise it if it is painted, no cost incurred
+            2. iterover over hosue inde from hosue [1,m-1] and neighborhood counts from [1,min(house+1),target]
+                if the house at idnex house is alredy painted and color is the same as color, we can continue
+                init cost for current parames to maxcost
+                iterate over color options for prev hosue color from [1,n] for each prevColor
+                
+                    if color and prev color are differnt,
+                        min(currcost, dp[house-1][neigh-1][prevcolor-1]) to curr
+                    if color and prev mathc
+                        curr = min(curr, dp[house-1][neigh][color-1])
+                assign cost to paind the curr house with the ans
+            3. find the min answer at the last house with target number of neighboroods
+            4. return min
+        '''
+        #of the form house, neighborhoods, and color
+        dp = [[[0]*n for _ in range(target+1)] for _ in range(m)]
+        #base cases
+        for i in range(m):
+            for j in range(target+1):
+                dp[i][j][:] = [float('inf')]*n
+        
+        #initialize for house 0, neighborhoods will be 1
+        for color in range(1,n+1):
+            #no cost if same color
+            if houses[0] == color:
+                dp[0][1][color-1] = 0
+            #not yet painted, assing cost with this color
+            elif houses[0] == 0:
+                dp[0][1][color-1] = cost[0][color-1]
+        
+        #traverse houses starting with the second1
+        for house in range(1,m):
+            #we are limited to a certain number of neighborhoods if using the hosues up to this house
+            for neighborhoods in range(1,min(target,house+1)+1):
+                #traverse through colors
+                for color in range(1,n+1):
+                    #house is already painted and different color
+                    if houses[house] != 0 and color != houses[house]:
+                        continue
+                    #minmize along subroblems
+                    currCost = float('inf')
+                    for prevColor in range(1,n+1):
+                        #new neighboord, because different color
+                        if prevColor != color:
+                            currCost = min(currCost,dp[house-1][neighborhoods-1][prevColor-1])
+                        else:
+                            currCost = min(currCost,dp[house-1][neighborhoods][color-1])
+                    #if the house is already painted, cost has to be zero
+                    if houses[house] != 0:
+                        #take the cost to paint this hosue that color
+                        costToPaint = 0
+                    else:
+                        costToPaint = cost[house][color-1]
+                    
+                    #cache
+                    dp[house][neighborhoods][color-1] = costToPaint + currCost
+                    
+        ans = float('inf')
+        #find min cost with m houses and target neighbordshoods by looking at the dp array for that problem taking the min
+        for color in range(1,n+1):
+            ans = min(ans, dp[m-1][target][color-1])
+        
+        return ans if ans != float('inf') else -1
