@@ -796,3 +796,143 @@ class Solution:
             ans = min(ans, dp[m-1][target][color-1])
         
         return ans if ans != float('inf') else -1
+
+##############################
+# 1696. Jump Game VI (REVISITED)
+# 09JUL22
+##############################
+#close one!!!
+class Solution:
+    def maxResult(self, nums: List[int], k: int) -> int:
+        '''
+        we let dp(i) be the max score i can get after jumping through nums[:i]
+        then i want the answer for dp(len(nums)-1)
+        then dp(i) = nums[i] + max{
+                #for all previous jumps before, i could have landed on i from a previous step j#
+                for j in range(i-k,i-1):
+                    dp(j)
+                    
+                    
+        }
+        base case i < 0, return no points
+        '''
+        memo = {}
+        
+        def dp(i):
+            if i < 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = float('-inf')
+            for j in range(i-k,i):
+                ans = max(ans,dp(j))
+            ans += nums[i]
+            memo[i] = ans
+            return ans
+        
+        return dp(len(nums)-1)
+
+class Solution:
+    def maxResult(self, nums: List[int], k: int) -> int:
+        '''
+        the problem with dp is the i take O(Nk) for find the maximum for an answer to dp(i)
+        we can keep a scores array and the recurrence is
+        score[i] = max(score[i-k], ..., score[i-1]) + nums[i]
+        
+        base case where scores[0] = nums[0]
+        
+        we now want to find the maximum for the previous k values from i
+        this is similar to Sliding window maximum, typical monotonic queue problem
+        
+        we store onto a q, (of size k), the possible values, and maintain property do be monotnically decreasing
+        the largest k values will be at the left, the smaller ones at the right
+        and we exchange the smaler values for even larger values
+        
+        '''
+        N = len(nums)
+        scores = [0]*N #scores[i] represents the max scoreing getting here, starting at 0
+        scores[0] = nums[0]
+        
+        deq = deque([0])
+        
+        for i in range(1,N):
+            #ensure k contains allwable previous max jump scores
+            while deq and deq[0] < i - k:
+                deq.popleft()
+            #current max so far
+            scores[i] = nums[i] + scores[deq[0]]
+            #maintain property the deq is striclty decreasing
+            while deq and scores[deq[-1]] <= scores[i]:
+                deq.pop()
+            deq.append(i)
+        
+        return scores[-1]
+
+#pq
+class Solution:
+    def maxResult(self, nums: List[int], k: int) -> int:
+        '''
+        we can also use q max heap to find the max previous scores so far
+        
+        '''
+        N = len(nums)
+        scores = [0]*N #scores[i] represents the max scoreing getting here, starting at 0
+        scores[0] = nums[0]
+        max_heap = []
+        #we entries on the heap are (-nums[i],i)
+        heapq.heappush(max_heap,(-nums[0],0))
+        
+        for i in range(1,N):
+            #maksure max score in heap is withink i-k
+            while max_heap[0][1] < i - k:
+                heapq.heappop(max_heap)
+            scores[i] = nums[i] + scores[max_heap[0][1]]
+            heapq.heappush(max_heap,(-scores[i],i))
+        
+        return scores[-1]
+
+#using deque but compressing states to O(k)
+class Solution:
+    def maxResult(self, nums: List[int], k: int) -> int:
+        '''
+        we can compress the states
+        notice that we do not need all the values from scores[0] to scores[i-1]
+        we only need to loks at values from scores[i-k] to scores[i-1]
+        
+        in the deq array, push the current score as well as the index, then were are in O(k) constant space
+        
+        '''
+        N = len(nums)
+        score = nums[0]
+        
+        deq = deque([(0,score)])
+        
+        for i in range(1,N):
+            #ensure k contains allwable previous max jump scores
+            while deq and deq[0][0] < i - k:
+                deq.popleft()
+            #current max so far
+            score = nums[i] + deq[0][1]
+            #maintain property the deq is striclty decreasing
+            while deq and deq[-1][1] <= score:
+                deq.pop()
+            deq.append((i,score))
+        
+        return score
+
+#same thing with max_heap
+class Solution:
+    def maxResult(self, nums: List[int], k: int) -> int:
+        n = len(nums)
+        score = nums[0]
+        priority_queue = []
+        # since heapq is a min-heap,
+        # we use negative of the numbers to mimic a max-heap
+        heapq.heappush(priority_queue, (-nums[0], 0))
+        for i in range(1, n):
+            # pop the old index
+            while priority_queue[0][1] < i-k:
+                heapq.heappop(priority_queue)
+            score = nums[i]-priority_queue[0][0]
+            heapq.heappush(priority_queue, (-score, i))
+        return score
