@@ -936,3 +936,40 @@ class Solution:
             score = nums[i]-priority_queue[0][0]
             heapq.heappush(priority_queue, (-score, i))
         return score
+
+##############################################
+# 510. Inorder Successor in BST II (Revisited)
+# 11JUL22
+##############################################
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val):
+        self.val = val
+        self.left = None
+        self.right = None
+        self.parent = None
+"""
+
+class Solution:
+    def inorderSuccessor(self, node: 'Node') -> 'Optional[Node]':
+        '''
+        the kicker is we are not given the whole tree
+        but we are given access to a parent node
+        to find the inorder successor node, we go up to the parent
+        
+        if the right subtree of node is not null, then in order succ lies in this right subtree, go right and return its mins
+        if there is no right subtree, then inorder succ is an ancestor:
+            travel up using the parent until we get to a node which is a left child of its parent
+        '''
+        # the successor is somewhere lower in the right subtree
+        if node.right:
+            node = node.right
+            while node.left:
+                node = node.left
+            return node
+        
+        # the successor is somewhere upper in the tree
+        while node.parent and node == node.parent.right:
+            node = node.parent
+        return node.parent
