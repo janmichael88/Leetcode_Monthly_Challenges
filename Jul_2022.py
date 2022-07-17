@@ -1007,3 +1007,276 @@ class Solution:
         while node.parent and node == node.parent.right:
             node = node.parent
         return node.parent
+
+###############################
+# 390. Elimination Game
+# 13JUL22
+###############################
+class Solution:
+    def lastRemaining(self, n: int) -> int:
+        '''
+        rules
+        alternating starting from left to righ at each step
+        for the current step, remove the first number and every other number after that
+        simulating is trivial....
+        
+        '''
+        nums = list(range(1,n+1))
+        step = 0
+        while len(nums) > 1:
+            print(nums)
+            next_nums = []
+            if step % 2 == 0:
+                for i in range(1,len(nums),2):
+                    next_nums.append(nums[i])
+            else:
+                for i in range(0,len(nums),2):
+                    next_nums.append(nums[i])
+            step += 1
+            nums = next_nums
+        
+        return nums[0]
+
+class Solution:
+    def lastRemaining(self, n: int) -> int:
+        '''
+        math problem, turns out to be a variant of the josephus problem
+        '''
+        def helper(n, isLeft):
+            if(n==1): return 1
+            if(isLeft):
+                return 2*helper(n//2, 0)
+    # if started from left side the odd elements will be removed, the only remaining ones will the the even i.e.
+    #       [1 2 3 4 5 6 7 8 9]==   [2 4 6 8]==     2*[1 2 3 4]
+            elif(n%2==1):
+                return 2*helper(n//2, 1)
+    # same as left side the odd elements will be removed
+            else:
+                return 2*helper(n//2, 1) - 1
+    # even elements will be removed and the only left ones will be [1 2 3 4 5 6 ]== [1 3 5]== 2*[1 2 3] - 1
+            
+        return helper(n, 1)
+
+#####################################################
+# 1182. Shortest Distance to Target Color (Revisited)
+# 15JUL22
+#####################################################
+#using binary seach coded out
+class Solution:
+    def shortestDistanceColor(self, colors: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        we can actually use binary seach, 
+        first hash the colors, 1,2,3 to each of their indices
+        then when given a query, since the array is icnreasing, return the the shortes distance
+        '''
+        mapp = defaultdict(list)
+        for i,c in enumerate(colors): 
+            mapp[c].append(i)
+        
+        results = []
+        for target,color in queries:
+            #no color to query
+            if color not in mapp:
+                results.append(-1)
+                continue
+                
+            #check possible indices
+            indices = mapp[color]
+            left,right = 0,len(indices) - 1
+            while left < right:
+                mid = left + (right - left) // 2
+                #too far
+                if indices[mid] > target:
+                    right = mid
+                else:
+                    left = mid + 1
+            
+            left_nearest = abs(indices[max(left-1,0)] - target)               
+            right_nearest = abs(indices[min(left,len(indices)-1)] - target)
+            results.append(min(left_nearest,right_nearest))
+        
+        return results
+
+#using built in
+class Solution:
+    def shortestDistanceColor(self, colors: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        we can actually use binary seach, 
+        first hash the colors, 1,2,3 to each of their indices
+        then when given a query, since the array is icnreasing, return the the shortes distance
+        '''
+        mapp = defaultdict(list)
+        for i,c in enumerate(colors): 
+            mapp[c].append(i)
+        
+        results = []
+        for target,color in queries:
+            #no color to query
+            if color not in mapp:
+                results.append(-1)
+                
+            #check possible indices
+            indices = mapp[color]
+            left,right = 0,len(indices) - 1
+            while left < right:
+                mid = left + (right - left) // 2
+                #too far
+                if indices[mid] > target:
+                    right = mid
+                else:
+                    left = mid + 1
+            
+            left_nearest = abs(indices[max(left-1,0)] - target)               
+            right_nearest = abs(indices[min(left,len(indices)-1)] - target)
+            results.append(min(left_nearest,right_nearest))
+        
+        return results
+
+#precomputing
+
+
+#####################################
+# 576. Out of Boundary Paths (REVISITED)
+# 16JUL22
+#####################################
+#brute force recursion
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        dfs keeping track if the current i,j we are on
+        in this case we are allowed to go out of bounds, once we are out of bounds, increment global counter
+        and return (we do not want to keep going)
+        also don't forget to decrement move counter
+        also we are allowed to revisit cells
+        '''
+        mod = 10**9 + 7
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        self.paths = 0
+        
+        def dfs(i,j,moves):
+            #out of bounds
+            if  i < 0 or i == m or j < 0 or j == n:
+                self.paths += 1
+                self.paths %= mod
+                return
+            #otherwise we would still be traveling and we dont want that
+            if moves == 0:
+                return
+            for dx,dy in dirrs:
+                dfs(i+dx,j+dy,moves-1)
+        
+        dfs(startRow,startColumn,maxMove)
+        return self.paths
+
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        dfs keeping track if the current i,j we are on
+        in this case we are allowed to go out of bounds, once we are out of bounds, increment global counter
+        and return (we do not want to keep going)
+        also don't forget to decrement move counter
+        also we are allowed to revisit cells
+        '''
+        mod = 10**9 + 7
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dfs(i,j,moves):
+            #out of bounds
+            if  i < 0 or i == m or j < 0 or j == n:
+                return 1
+            #otherwise we would still be traveling and we dont want that
+            if moves == 0:
+                return 0
+            ans = 0
+            for dx,dy in dirrs:
+                ans += dfs(i+dx,j+dy,moves-1) % mod
+                ans %= mod
+            return ans
+        
+        return dfs(startRow,startColumn,maxMove)
+
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        in the call tree we are repeatedly calling previous i,j,moves states
+        so we can just cache and retrieve along the way
+        '''
+        mod = 10**9 + 7
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        memo = {}
+        def dfs(i,j,moves):
+            #out of bounds
+            if  i < 0 or i == m or j < 0 or j == n:
+                return 1
+            #otherwise we would still be traveling and we dont want that
+            if moves == 0:
+                return 0
+            if (i,j,moves) in memo:
+                return memo[(i,j,moves)]
+            ans = 0
+            for dx,dy in dirrs:
+                ans += dfs(i+dx,j+dy,moves-1) % mod
+                ans %= mod
+            memo[(i,j,moves)] = ans
+            return ans
+        
+        return dfs(startRow,startColumn,maxMove)
+
+#bottom up tabulatino
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        we can translate this bottom up
+        '''
+        mod = 10**9 + 7
+        dirrs = dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        #index into dp reverse nested
+        dp = [[[0]*(maxMove+1) for _ in range(n+1)] for _ in range(m+1)]
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        #start with moves first
+        for M in range(1,maxMove+1):
+            #then rows
+            for i in range(m):
+                #then cols
+                for j in range(n):
+                    for dx,dy in dirrs:
+                        #out of bounds
+                        if  i + dx < 0 or i + dx == m or j + dy < 0 or j + dy == n:
+                            dp[i][j][M] += 1
+                        #otherwise grab from othe sub problems
+                        else:
+                            dp[i][j][M] += dp[i+dx][j+dy][M-1] % mod
+        
+        return dp[startRow][startColumn][maxMove] % mod
+
+ #space saving O(MN)
+ class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        if we look closer, we only every need the answer from the pervious M-1 move
+        so we only need to keep states for current move and move - 1 (similar to other DP where we keep)
+        
+        neat trick, we can alter between the move states using the and operator with 1
+        
+        '''
+        mod = 10**9 + 7
+        dirrs = dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        #index into dp reverse nested
+        dp = [[[0]*(2) for _ in range(n+1)] for _ in range(m+1)]
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        #start with moves first
+        for M in range(1,maxMove+1):
+            #then rows
+            for i in range(m):
+                #then cols
+                for j in range(n):
+                    for dx,dy in dirrs:
+                        #out of bounds
+                        if  i + dx < 0 or i + dx == m or j + dy < 0 or j + dy == n:
+                            dp[i][j][M & 1] += 1
+                        #otherwise grab from othe sub problems
+                        else:
+                            dp[i][j][M & 1] += dp[i+dx][j+dy][(M-1) & 1] % mod
+        
+        return dp[startRow][startColumn][maxMove & 1] % mod
+        
