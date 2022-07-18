@@ -1317,6 +1317,112 @@ class Solution:
                             dp[i][j][M & 1] += dp[i+dx][j+dy][(M-1) & 1] % mod
         
         return dp[startRow][startColumn][maxMove & 1] % mod
+
+#############################
+# 17JUL22 (REVISITED)
+# 629. K Inverse Pairs Array
+#############################
+#memo
+class Solution:
+    def kInversePairs(self, n: int, k: int) -> int:
+        '''
+        let dp(n,k) be the number of arragnments we can arrange [1..n] having v inverse pairs
+        if we knew the answer at dp(n-1,k)
+        then dp(n,k) = sum(dp(n-1,k-i) for i in range(min(k,n-1)))
+        the transition is very hard to come up with, unfortnualye
+        examine we have the array [1,2,4,3]
+        n = 4, with k = 1
+        from the array [1,2,3,4] we just moved 4 over and got 1 inversion, the number of times we move from right gives as the number of inversions
+        we can add in a new number 5 to get
+        [1,2,3,4,5]
+        but we can make [1,2,3,5,4] 
+        we shfted right 1 time, so we need to add this to the number of inversions for n-1
+        so we can sum through all dp(n-1.k-i) where we examine i as the number of shifts to the right
+        we need to found the upper limit in the sum somehow
+        inution:
+            if we knew the number of inverse pairs (say x) in some abritrary array b with n
+            then we can add in the n+1 at position p from the right to get x + p = k 
+            i.e at a solution of n-1, with counts up to k, count0,count1...countk
+         we bound the summatino to the min(k,n-1) because i > k, and k - i < 0
+         since no arrangement exists with negative number of inverse pairs
+         
+         to generate a new arrangment adding k-i new inverse pairs after adding the nth number we need to add this number at the ith positino from the right, and we are liminted to n-1 shifts
+         
+         
+        '''
+        mod = 10**9 + 7
+        memo = {}
+        def dp(n,k):
+            if n == 0:
+                return 0
+            if k == 0:
+                return 1
+            if (n,k) in memo:
+                return memo[(n,k)]
+            ans = 0
+            for i in range(min(k,n-1)+1):
+                ans += dp(n-1,k-i)
+                ans %= mod
+            memo[(n,k)] = ans
+            return ans
+        
+        return dp(n,k)
+
+#translate
+class Solution:
+    def kInversePairs(self, n: int, k: int) -> int:
+        mod = 10**9 + 7
+        dp = [[0]*(k+1) for _ in range(n+1)]
+        
+        for i in range(1,n+1):
+            for j in range(k+1):
+                if j == 0:
+                    dp[i][j] = 1
+                else:
+                    for p in range(min(j,i-1)):
+                        dp[i][j] += dp[i-1][j-p]
+                        dp[i][j] %= mod
+        
+        return dp[n][k]
+
+#unforuntalye this TLE's because there is one small optimization we can do
+#we repsent the (n,k) state at count(i,j) + sum_{k=0}^{k-1} dp[i][k]
+#each state repersents the cumsum, than we can find the total number in constant time
+#this is because we filling up the dp array by adding
+class Solution:
+    def kInversePairs(self, n: int, k: int) -> int:
+        '''
+        dp(i,j) = count(i,j) + sum_{k=0}^{j-1}
+        count(i,j) refers to the number of arrangments with i elements and j inversinos
+        to obtain elements from dp[i-1][j-i+1] to dp[i-1][j], we can just grab
+        dp[i-1][j] - dp[i-1][j-i]
+        
+        Now, to reflect the condition \text{min}(j, i-1)min(j,i−1) used in the previous approaches, we can note that, we need to take the sum of only ii elements in the previous row, if ii elements exist till we reach the end of the array while traversing backwards.
+        
+        
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        def inversions(n,k):
+            if n== 0:
+                return 0
+            if k == 0:
+                return 1
+            if (n,k) in memo:
+                return memo[(n,k)]
+            if k - n >= 0:
+                val = (inversions(n-1,k) + mod - inversions(n-1,k-n)) % mod
+            else:
+                val = (inversions(n-1,k) + mod) % mod
+            memo[(n,k)] = (inversions(n,k-1) + val) % mod
+            return memo[(n,k)]
+        
+        if k > 0:
+            return (inversions(n,k) + mod - inversions(n,k-1)) % mod
+        else:
+            return (inversions(n,k) + mod) % mod
+
         
 ##############################
 # 396. Rotate Function
