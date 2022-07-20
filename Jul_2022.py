@@ -1428,3 +1428,153 @@ class Solution:
 # 396. Rotate Function
 # 16JUL22
 ##############################
+class Solution:
+    def maxRotateFunction(self, nums: List[int]) -> int:
+        '''
+        simulation would involve applying the rotation for all 0 to n-1 rotations
+        then take the max...
+        
+        example
+        [4,5,3,2,9]
+        
+        listing out the rotation functions
+        F(0) = 4 * 0 + 5 * 1 + 3 * 2 + 2 * 3 + 9 * 4 = 53
+        F(1) = 9 * 0 + 4 * 1 + 5 * 2 + 3 * 3 + 2 * 4 = 31
+        F(2) = 2 * 0 + 9 * 1 + 4 * 2 + 5 * 3 + 3 * 4 = 44
+        F(3) = 3 * 0 + 2 * 1 + 9 * 2 + 4 * 3 + 5 * 4 = 52
+        F(4) = 5 * 0 + 3 * 1 + 2 * 2 + 9 * 3 + 4 * 4 = 50
+        
+        there is a trick to go from F(0) to F(1)
+        intution:
+            all the values except the last one (in this case the last 9) is mulitplies by 1 number +1 higher than the previous 
+        
+        F(0) = 4 * 0 + 5 * 1 + 3 * 2 + 2 * 3 + 9 * 4 = 53
+        F(1) = 4 * 1 + 5 * 2 + 3 * 3 + 2 * 4 + 9 * 0 = 31
+        F(2) = 4 * 2 + 5 * 3 + 3 * 4 + 2 * 0 + 9 * 1 = 44
+        
+        algo:
+            1. calculate the sum of the entire array
+            2. first calculare F(0) = \sum_{i=0}^{len(nums)} i*nums[i], call this sum_of_prods
+            3. to get F(1) from F(0)
+                perform sum_of_prods + arr_sum (equivalent o increment the multiplier of all values in the array)
+                now from the patial sum, substract the last_val * n 
+                the last element in F(0) is supposed to be multiplied by 0
+                however in the previous step, we essentially increaed the multipliers of all the array values, so partial sum relect the last element*n
+            4.reapt start from the last element in the array to thes eocnd elment in the array
+        '''
+        arr_sum = sum(nums)
+        sum_of_prods = 0
+        for i,num in enumerate(nums):
+            sum_of_prods += i*num
+            
+        N = len(nums)
+        max_val = sum_of_prods
+        for i in range(1,N):
+            #increment the sum_of_prods, adding in the arr_sum
+            sum_of_prods += arr_sum
+            #take off the last num
+            sum_of_prods -= nums[N-i]*N
+            max_val = max(max_val,sum_of_prods)
+        
+        return max_val
+
+#also think in dot products
+#<nums> dot  <0...N-1>
+#numss stays constant but the indices rotate\
+#there exists a recurrence to get the rotaion function
+class Solution:
+    def maxRotateFunction(self, nums: List[int]) -> int:
+        '''
+        F(k)    = 0 * Bk[0] + 1 * Bk[1] + ... + (n-1) * Bk[n-1]
+        F(k-1)  = 0 * Bk-1[0] + 1 * Bk-1[1] + ... + (n-1) * Bk-1[n-1]
+                = 0 * Bk[1] + 1 * Bk[2] + ... + (n-2) * Bk[n-1] + (n-1) * Bk[0]
+                
+        F(k) - F(k-1) = Bk[1] + Bk[2] + ... + Bk[n-1] + (1-n)Bk[0]
+              = (Bk[0] + ... + Bk[n-1]) - nBk[0]
+              = sum - nBk[0]
+              
+        F(k) = F(k-1) + sum - nBk[0]
+        
+        k = 0; B[0] = A[0];
+        k = 1; B[0] = A[len-1];
+        k = 2; B[0] = A[len-2];
+        '''
+        memo = {}
+        arr_sum = sum(nums)
+        sum_of_prods = 0
+        
+        for i,num in enumerate(nums):
+            sum_of_prods += i*num
+        N = len(nums)
+        
+        def rec(i):
+            if i == 0:
+                return sum_of_prods
+            if i in memo:
+                return memo[i]
+            ans = rec(i-1) + arr_sum - nums[N-i]*N
+            memo[i] = ans
+            return ans
+        
+        res = sum_of_prods
+        for i in range(N):
+            res = max(res,rec(i))
+        
+        return res
+
+#################################
+# 674. Longest Continuous Increasing Subsequence
+# 18JUL22
+#################################
+class Solution:
+    def findLengthOfLCIS(self, nums: List[int]) -> int:
+        '''
+        its really asking longest strictly increasing substring
+        typical linear scan counting the streaks taking the max along the way
+        
+        '''
+        max_inc = 0
+        curr_inc = 1
+        N = len(nums)
+        for i in range(N-1):
+            if nums[i] < nums[i+1]:
+                curr_inc += 1
+            else:
+                max_inc = max(max_inc,curr_inc)
+                curr_inc = 1
+        
+        return max(max_inc,curr_inc)
+
+##########################################
+# 397. Integer Replacement
+# 19JUL22
+##########################################
+class Solution:
+    def integerReplacement(self, n: int) -> int:
+        '''
+        noticing a pattern with more of these math questions, usually the intutino would be to get simiulate
+        even we have no choice, for odds, we need to bring it to a power of 2 by incrementing or decremeneting
+        i can use recursion
+        let dp(i) be the min number of moves getting to n == 1
+        '''
+        memo = {}
+        def dp(i):
+            if i == 1:
+                return 0
+            if i in memo:
+                return memo[i]
+            if i % 2 == 0:
+                ans = 1 + dp(i//2)
+                memo[i] = ans
+                return ans
+            else:
+                ans = 1 + min(dp(i-1),dp(i+1))
+                memo[i] = ans
+                return ans
+        
+        return dp(n)
+                
+################################
+# 400. Nth Digit
+# 19JUL22
+################################
