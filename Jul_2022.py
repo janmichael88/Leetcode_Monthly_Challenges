@@ -1573,6 +1573,140 @@ class Solution:
                 return ans
         
         return dp(n)
+
+##############################
+# 473. Matchsticks to Square (REVISITED)
+# 12JUL22
+###############################
+#backtracking solution
+class Solution(object):
+    def makesquare(self, matchsticks):
+        """
+        :type matchsticks: List[int]
+        :rtype: bool
+        """
+        '''
+        if i can make a square, then the permiter must be 4*len_of_side
+        so in order to make a square, the sum must be divisible by 4
+        we can use backtracking and try adding matchsticks to each side
+        then once we use up all match sticks, check all sides are the same
+        
+        we also need to reveser sort, examine the case [8,4,4,4]
+        '''
+        if not matchsticks:
+            return False
+        
+        N = len(matchsticks)
+        perim = sum(matchsticks)
+        
+        #check possible side
+        side = perim // 4
+        
+        #check
+        if side*4 != perim:
+            return False
+        
+        matchsticks.sort(reverse=True)
+        
+        sides = [0]*4
+        
+        def backtrack(curr_match):
+            if curr_match == N and all([sides[i] == sides[3] for i in range(3)]):
+                return True
+            #try adding all matchstricks to each side
+            for i in range(4):
+                if sides[i] + matchsticks[curr_match] <= side:
+                    #add it
+                    sides[i] += matchsticks[curr_match]
+                    #check if we can go on
+                    if backtrack(curr_match + 1):
+                        return True
+                    #backtrack
+                    sides[i] -= matchsticks[curr_match]
+            
+            return False
+        
+        return backtrack(0)
+        
+
+class Solution:
+    def makesquare(self, matchsticks: List[int]) -> bool:
+        '''
+        good review on how to take recursive states and turn them into subproblems
+        imagine we have the numbers 3,3,4,4,5,5
+        if we set the side to length 8, then we can pair in different ways
+        (4, 4), (3, 5), (3, 5) -----------> 3 sides fully constructed.
+        (3, 4), (3, 5), (4), (5) ---------> 0 sides completely constructed.
+        (3, 3), (4, 4), (5), (5) ---------> 1 side completely constructed.
+        
+        knowing what index of match sticks we use gives us many different states of complete sides -> not a good way to break into subproblems
+        keeping track of what matching sticks remain, won't define the state
+        we need to keep track of what matchsticks are available, and how sides have been compelted so far
+        not we favor the state that leads to completing the most numbr of sides
+        
+        encode recursion state as matchsticks_used and sides_formed
+        we can use a bit mask to store what match stick we have used -> would use an array but we want an effecient way to store the state
+        also we cannot cache array types
+        
+        N = 15 matchsticks, 2**15 size
+        
+        also, we don't need to make 4 sides, if we get to the third side, then we just use up the remaning matchstikcs to see if their sum is equal to one of sides we already made
+        
+        note, this is a variant of the bin packing problem
+        
+        '''
+        #no matches
+        if not matchsticks:
+            return False
+        #globals
+        L = len(matchsticks)
+        perim = sum(matchsticks)
+        possible_side = perim // 4
+        
+        #if we can't make from the beginning
+        if possible_side*4 != perim:
+            return False
+        
+        memo = {}
+        
+        #matches is a bit mask
+        #1 means not taken, 0 means taken
+        def dp(matches_taken,sides_done):
+            #get sum of matchsticks for this mask up until now
+            total = 0
+            for i in range(L):
+                #check bit position
+                if not (matches_taken & (1 << i)):
+                    #index back into matchsticks
+                    total += matchsticks[i]
+            #if some matchsticks have been used and sum is divisible by side, then we have completed a side
+            if total > 0 and total % possible_side == 0:
+                sides_done += 1
+            #we only need to finish 3 sides
+            if sides_done == 3:
+                return True
+            #retreive
+            if (matches_taken,sides_done) in memo:
+                return memo[(matches_taken,sides_done)]
+            #store curr ans for this state
+            ans = False
+            #get available space in current side
+            c = int(total/possible_side)
+            rem = possible_side*(c+1) - total
+            #pass over matchsticks
+            for i in range(L):
+                #if we can fit this matchstcik and it hasn't been taken
+                if matchsticks[i] <= rem and matches_taken & (1 << i):
+                    #if the recursino after considering this matchstick gives True, then we don't need to decsend any further
+                    #set the ith bit, i.e take the match
+                    if dp(matches_taken ^ (1 << i),sides_done):
+                        ans = True
+                        break
+            #cache
+            memo[(matches_taken,sides_done)] = ans
+            return ans
+        
+        return dp((1 << L) - 1,0)
                 
 ################################
 # 400. Nth Digit
