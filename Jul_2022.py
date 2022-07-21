@@ -1712,3 +1712,185 @@ class Solution:
 # 400. Nth Digit
 # 19JUL22
 ################################
+class Solution:
+    def findNthDigit(self, n: int) -> int:
+        '''
+        this is the same as concating all the digits in the inifinte sequence and return the nth digit
+        need a way to express the number of digits in constant time (near constant)
+        1,2,3...9, each have one digit
+        10,11...99, each have two digits
+        100,101..999 each have three digits
+        
+        we can keep going all the way the last digit that can fit into 2**32-1
+        the first element in each of these groups is 1,10,100....., which can be written in the form 10**(digits-1) where digits is in the range[1,11]
+        11 is big enough to include the 2**32 - 1 digit
+        in each group there are 9,90,900,9000.....elemenets
+        and the total number of digits in each groups are 1*9,2*90,3*900
+        
+        there are three properties for a digits group
+            1. first = the element
+            2. 9*first = the size of the group (the number of the elements)
+            3. 9*first*digits, the number of digits in the group
+            
+        in our loop, we first check if n <= 9 (the size of the current group)
+        if not then decrement by the number of digits
+            i.e n = n-9 {from 1...9}, then test of the new n <= 2*90
+            
+        1. n means our return value is in the n-th digits group, here the order starts from 0
+        2. n/digits = the digits that comes from the n/digits smalelst number in the group
+        3. sinde theg roup starts with "first", first + n/digits = the number where the return value is one of the digits
+        4. the digiet we want is the n%digits in this current number, starting from left
+        5. so the answer is str(fist + n/digits)[n%digits]
+        '''
+        n -= 1 #zero indexing
+        for group in range(1,11):
+            #get the number of eleemnts in each grouping
+            first_element_in_group = 10**(group-1)
+            #store number of elements in group
+            num_elements_in_group = 9*first_element_in_group
+            #get number of digits in group
+            num_digits_in_group = num_elements_in_group*group
+            #if we are in this current nth digit group
+            if n < num_digits_in_group:
+                #find the element in this group
+                element = first_element_in_group + n // group
+                #get the digit from this element
+                digit = str(element)[n % group]
+                return digit
+            #decrement by the number of digits to go to another group
+            n -= num_digits_in_group
+
+#just another way
+class Solution(object):
+    def findNthDigit(self, n):
+        start, size, step = 1, 1, 9
+        while n > size * step:
+            n, size, step, start = n - (size * step), size + 1, step * 10, start * 10
+        return int(str(start + (n - 1) // size)[(n - 1) % size])
+                
+######################################
+# 792. Number of Matching Subsequences (REVISITED)
+# 20JUL22
+######################################
+#brute force TLE
+class Solution:
+    def numMatchingSubseq(self, s: str, words: List[str]) -> int:
+        '''
+        brute force is chekc each word in words
+        '''
+        def isSub(t):
+            if len(t) > len(s):
+                return False
+            i = 0
+            j = 0
+            while i < len(s) and j < len(t):
+                if s[i] == t[j]:
+                    j += 1
+                i += 1
+            return j == len(t)
+        
+        count = 0
+        for w in words:
+            if isSub(w):
+                count += 1
+        
+        return count
+
+#hashing iteraables 
+#O(len(s) + total sum of all word lenghts in words)
+class Solution:
+    def numMatchingSubseq(self, s: str, words: List[str]) -> int:
+        '''
+        hash words by starting char and check letters as we advance along the string
+        good review in turning string into iterable and check if we can still next on it
+        '''
+        count = 0
+        heads = defaultdict(list)
+        
+        for word in words:
+            it = iter(word)
+            #key is next letter to be proccessed : next char after that word
+            heads[next(it)].append(it)
+        
+        
+        for ch in s:
+            #get the current list of words waiting to be processd
+            curr_words = heads[ch]
+            #clear them
+            heads[ch] = []
+            
+            #process these words
+            while curr_words:
+                #get the next words
+                curr_word = curr_words.pop()
+                #get next char
+                next_char = next(curr_word,None)
+                #still parts to process, add them back into map
+                if next_char:
+                    heads[next_char].append(curr_word)
+                else:
+                    count += 1
+        
+        return count
+
+#there is also a binar search solution
+class Solution:
+    def numMatchingSubseq(self, s: str, words: List[str]) -> int:
+        '''
+        we can use binary search 
+        precompute all places for each char in s, i.e mapp to their indices
+        then we can use binary search to find the next char (we do this at most sum len(words) times)
+        '''
+        char_to_idxs = defaultdict(list)
+        for i,char in enumerate(s):
+            char_to_idxs[char].append(i)
+        
+
+        def isSub(word):
+            curr = 0
+            for ch in word:
+                #find the the next largest index of of this char in s
+                idxs = char_to_idxs[ch]
+                left = 0
+                right = len(idxs)
+                #find nearest
+                while left < right:
+                    mid = left + (right - left) // 2
+                    if idxs[mid] < curr:
+                        left = mid + 1
+                    else:
+                        right = mid
+                if left >= len(idxs):
+                    return False
+                curr = idxs[left] + 1
+            
+            return True
+        
+        count = 0
+        for w in words:
+            if isSub(w):
+                count += 1
+        
+        return count
+
+############################################
+# 693. Binary Number with Alternating Bits
+# 21JUL22
+#############################################
+class Solution:
+    def hasAlternatingBits(self, n: int) -> bool:
+        '''
+        just reduce and see if they alternate
+        '''
+        prev_bit = n & 1
+        #reduce
+        n //= 2
+        while n:
+            curr_bit = n & 1
+            if curr_bit == prev_bit:
+                return False
+            else:
+                prev_bit = curr_bit
+                n //= 2
+        
+        return True
