@@ -1894,3 +1894,229 @@ class Solution:
                 n //= 2
         
         return True
+
+#############################
+# 92. Reverse Linked List II (Revisited)
+# 21JUN22
+##############################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def reverseBetween(self, head: Optional[ListNode], left: int, right: int) -> Optional[ListNode]:
+        '''
+        we can do this iteratively, make a new dummy Linked list and keep adding the nodes up to left
+        then reverse the nodes between left and right
+        then reconnect them
+        '''
+        if left == right:
+            return head
+        
+        dummy = ListNode(0)
+        dummy.next = head
+        #always stay 1 back from the actual current node
+        pre = dummy
+        
+        for i in range(left-1):
+            pre = pre.next
+            
+        #reverse
+        curr = pre.next
+        nxt = curr.next
+        
+        #reverse everything in between
+        for i in range(right-left):
+            #temporaliy store the next
+            temp = nxt.next
+            #reverse direction
+            nxt.next = curr
+            curr = nxt
+            nxt = temp
+        
+        #adjust pointers
+        pre.next.next = nxt
+        pre.next = curr
+        return dummy.next
+
+#to avoid swapping at the end, move both prev and curr pointers
+class Solution:
+    def reverseBetween(self, head: Optional[ListNode], left: int, right: int) -> Optional[ListNode]:
+        dummy = ListNode(0)
+        dummy.next = head
+        
+        prev = dummy
+        curr = head
+        
+        for _ in range(left-1):
+            prev = prev.next
+            curr = curr.next
+        
+        for _ in range(right-left):
+            temp = curr.next
+            curr.next = temp.next
+            temp.next = prev.next
+            prev.next = temp
+        
+        return dummy.next
+
+#################################
+# 315. Count of Smaller Numbers After Self (REVISITED)
+# 23JUL22
+#################################
+#building segment tree recursively
+class Solution:
+    def countSmaller(self, nums: List[int]) -> List[int]:
+        '''
+        lets try implementing segment tree using this article
+        https://leetcode.com/articles/a-recursive-approach-to-segment-trees-range-sum-queries-lazy-propagation/
+        the idea is to get the counts of numbers greater than nums[i] laying to the right of nums[i]
+        in the article, they originally build out the whole segment tree using the sum query along an interval
+        we can't just build out the whole tree from the start, because then we'd have know way of knowing what the counts to the rights r (if we we started off just putting them in buckets)
+        so we need to update the tree and query on the fly
+        node representation:
+            each node in the tree represents the number of elemenets greater then nums[i]
+            since we build the tree from right to left, this qives us our query answer
+            so we can degenerate the node represenation into:
+                number of elements greater then this value
+        
+        we query first the tree
+        then update the tree
+            we update going right to left
+            
+        '''
+        offset = 10**4
+        size = 2*offset + 1
+        tree = [0]*(4*size)
+        counts = []
+        
+        def querySegTree(treeIdx,lo,hi,i,j):
+            #query is of the form, for this tree index, get counts from i to j, where i would be -10**4 to nums[i] - 1
+            if lo > j or hi < i:
+                return 0
+            if i <= lo and j >= hi:
+                return tree[treeIdx]
+            mid = lo + (hi - lo) // 2
+            if i > mid:
+                return querySegTree(2*treeIdx + 2,mid+1,hi,i,j)
+            else:
+                return querySegTree(2*treeIdx + 1, lo,mid,i,j)
+            
+            left = querySegTree(2*treeIdx +1,lo,mid,i,mid)
+            right = querySegTree(2*treeIdx + 2,mid+1,hi,mid+1,j)
+            
+            return left + right
+        
+        def updateTree(treeIdx,lo,hi,arrIdx,val):
+            #update this nums count to 1
+            if lo == hi:
+                #print(treeIdx)
+                tree[treeIdx] = val
+                return
+            mid = lo + (hi - lo) // 2
+            if arrIdx > mid:
+                updateTree(2*treeIdx + 2,mid+1,hi,arrIdx,val)
+            elif arrIdx <= mid:
+                updateTree(2*treeIdx + 1,lo,mid,arrIdx,val)
+            #merge updates
+            tree[treeIdx] = tree[2*treeIdx + 1] + tree[2*treeIdx + 2]
+            
+        #traverse nums right to left querying and updating
+        for num in reversed(nums):
+            count_smaller = querySegTree(0,0,size,0,num+offset-1)
+            print(count_smaller)
+            counts.append(count_smaller)
+            updateTree(0,0,size,num+offset,1)
+        
+        return counts
+
+#using fenwick tree, bit trick
+class Solution:
+    def countSmaller(self, nums: List[int]) -> List[int]:
+        # implement Binary Index Tree
+        def update(index, value, tree, size):
+            index += 1  # index in BIT is 1 more than the original index
+            while index < size:
+                tree[index] += value
+                index += index & -index
+
+        def query(index, tree):
+            # return sum of [0, index)
+            result = 0
+            while index >= 1:
+                result += tree[index]
+                index -= index & -index
+            return result
+
+        offset = 10**4  # offset negative to non-negative
+        size = 2 * 10**4 + 2  # total possible values in nums plus one dummy
+        tree = [0] * size
+        result = []
+        for num in reversed(nums):
+            smaller_count = query(num + offset, tree)
+            result.append(smaller_count)
+            update(num + offset, 1, tree, size)
+        return reversed(result)
+
+#merge sort
+class Solution:
+    def countSmaller(self, nums: List[int]) -> List[int]:
+        '''
+        we can also use merge sort
+        during the sorting process, the smaller elements to the right of a number will jump from its right to its left during the sorting process
+        so if we can record the number of those elements during sorting, then the prbolem is solved
+        
+        algo:
+            implement merger sort functions
+            for each element i, the function needs to record the number of elements jumping from i's right to i's left during mersort
+            
+        '''
+        n = len(nums)
+        arr = [[v, i] for i, v in enumerate(nums)]  # record value and index
+        result = [0] * n
+
+        def merge_sort(arr, left, right):
+            # merge sort [left, right) from small to large, in place
+            if right - left <= 1:
+                return
+            mid = (left + right) // 2
+            merge_sort(arr, left, mid)
+            merge_sort(arr, mid, right)
+            merge(arr, left, right, mid)
+
+        def merge(arr, left, right, mid):
+            # merge [left, mid) and [mid, right)
+            i = left  # current index for the left array
+            j = mid  # current index for the right array
+            # use temp to temporarily store sorted array
+            temp = []
+            while i < mid and j < right:
+                if arr[i][0] <= arr[j][0]:
+                    # j - mid numbers jump to the left side of arr[i]
+                    result[arr[i][1]] += j - mid
+                    temp.append(arr[i])
+                    i += 1
+                else:
+                    temp.append(arr[j])
+                    j += 1
+            # when one of the subarrays is empty
+            while i < mid:
+                # j - mid numbers jump to the left side of arr[i]
+                result[arr[i][1]] += j - mid
+                temp.append(arr[i])
+                i += 1
+            while j < right:
+                temp.append(arr[j])
+                j += 1
+            # restore from temp
+            for i in range(left, right):
+                arr[i] = temp[i - left]
+
+        merge_sort(arr, 0, n)
+
+        return result
+#############################
+# 418. Sentence Screen Fitting
+# 21JUL22
+##############################
