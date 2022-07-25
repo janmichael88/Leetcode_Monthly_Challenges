@@ -2116,6 +2116,55 @@ class Solution:
         merge_sort(arr, 0, n)
 
         return result
+
+################################################
+# 1059. All Paths from Source Lead to Destination (REVISTED)
+# 24JUL22
+###############################################
+class Solution:
+    def leadsToDestination(self, n: int, edges: List[List[int]], source: int, destination: int) -> bool:
+        '''
+        brute force would be to generate all paths and check that they ALL reach the end
+        we can accomplish this using dfs
+        what else can we say:
+            the ending node but have outdirection of 0 (this is a directed edge graph)
+            all the nodes must be in a connected component
+            so if there is a cycle, we can return false, so first check for a cycle
+            
+        turns out that we do not need to check all paths, rather that if there is no cycle, and that if there is a leaf node encounter during traversal, that 
+        it is the destination node
+        
+        we cannot simply keep a visited set for cycle detection, i.e we would have no way of reconciling a cross edge as back edge
+        with one visited set, this would mean the cross edge is part of a cycle, which is incorrect
+        we take the three coloring method for cycle detection from CLRS
+        1 - white - not processed yet
+        2 - gray - vertex is being processed (DFS has started, but not finished which means all decendatns in tree are not yet processed)
+        3 - black - vertex and all decenatns have been processed
+        '''
+        adj_list = defaultdict(list)
+        for start,end in edges:
+            adj_list[start].append(end)
+            
+        states = [None]*n #initally all are white, neither visited nor processed
+        def dfs(node):
+            #check if black, i.e if gray and backward edge, this must be a loop
+            if states[node] != None:
+                return states[node] == 3
+            #if leah node, this should be destination
+            if len(adj_list[node]) == 0:
+                return node == destination
+            #we are processing, so color 3
+            states[node] = 2
+            
+            for neigh in adj_list[node]:
+                #if we get False from any recursive call, we don't do it form here
+                if not dfs(neigh):
+                    return False
+            #we are done processing,
+            states[node] = 3
+            return True
+        
+        return dfs(source)
 #############################
 # 418. Sentence Screen Fitting
 # 21JUL22
