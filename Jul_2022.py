@@ -2165,7 +2165,179 @@ class Solution:
             return True
         
         return dfs(source)
+
+##############################
+# 697. Degree of an Array
+# 25JUL22
+###############################
+class Solution:
+    def findShortestSubArray(self, nums: List[int]) -> int:
+        '''
+        an array with degree d, has some element x d times
+        a subarray with degree d, also has some elemnt x times
+        the number of occurences in this subarray would occur between the frist and last occruences of element x
+        
+        for each element, keep track of its first occruing index as well as it last occuring index
+        as well as maintinaing counts
+        
+        then find the degree of the initial array
+        then for each eleemnt x that occurs the max number of times is right[x] - left[x] + 1
+        
+        '''
+        lefts = {}
+        rights = {}
+        counts = {}
+        
+        ans = len(nums)
+        degree = 0
+        for i, num in enumerate(nums):
+            #stor its first occruecnes
+            if num not in lefts:
+                lefts[num] = i
+            rights[num] = i
+            counts[num] = counts.get(num,0) + 1
+            degree = max(degree,counts[num])
+        
+        for num,count in counts.items():
+            if count == degree:
+                ans = min(ans,rights[num] - lefts[num] + 1)
+        
+        return ans
+
 #############################
 # 418. Sentence Screen Fitting
 # 21JUL22
 ##############################
+class Solution:
+    def wordsTyping(self, sentence: List[str], rows: int, cols: int) -> int:
+        '''
+        brute force, fill in row by row
+        rows*cols time complexity
+        '''
+        N = len(sentence)
+        times = 0
+        i = 0 #index into sentence 
+        for _ in range(rows):
+            c = 0 #times we fit into row, reset for every new row
+            while c + len(sentence[i]) <= cols:
+                c += len(sentence[i]) + 1
+                i += 1
+                #if we have used up all the words
+                if i == N:
+                    times += 1
+                    i = 0
+        return times
+
+class Solution:
+    def wordsTyping(self, sentence: List[str], rows: int, cols: int) -> int:
+        '''
+        we can cache
+        we let dp(i) return the number of times the ith word appears at the beginning of the row and gives us the next index of the word to use
+        doesnt quite work
+        '''
+        memo = {}
+        N = len(sentence)
+        def dp(i):
+            if i in memo:
+                return memo[i]
+            c = 0
+            times = 0
+            next_i = i
+            while c + len(sentence[i]) <= cols:
+                c += len(sentence[i]) + 1
+                next_i += 1
+                if next_i == N:
+                    times += 1
+                    next_i = 0
+            memo[i] = [next_i,times]
+            return [next_i,times]
+        
+        ans = 0
+        i = 0
+        for _ in range(rows):
+            ans += dp(i)[1]
+            i = dp(i)[0]
+        return ans
+
+#cache
+class Solution:
+    def wordsTyping(self, sentence: List[str], rows: int, cols: int) -> int:
+        n = len(sentence)
+
+        @lru_cache(None)
+        def dp(i):  # Return (nextIndex, times) if the word at ith is the beginning of the row
+            c = 0
+            times = 0
+            while c + len(sentence[i]) <= cols:
+                c += len(sentence[i]) + 1
+                i += 1
+                if i == n:
+                    times += 1
+                    i = 0
+            return i, times
+
+        ans = 0
+        wordIdx = 0
+        for _ in range(rows):
+            ans += dp(wordIdx)[1]
+            wordIdx = dp(wordIdx)[0]
+        return ans
+
+class Solution:
+    def wordsTyping(self, sentence: List[str], rows: int, cols: int) -> int:
+        '''
+        in the brute force, we kept trying to fill in row by row, and word by word if it would fit
+        the problem is we are recomputing an answer if we start a new line with a word we previosuly used to start a line with
+        if we knew how many times we used up all the words with this ith word starting a new line, we could just increment the number of times and advance to the next word
+        i.e we can cache the results of starting a new lin with any given word in the sentence
+        
+        the cached values will be the first word in the next line, and how many senences e'eve completed in that row
+        
+        the first time we have a sentence start with word i, we need to compute the number of sentences that have been completed on that line
+        and the first on the next line
+        we then cahce the results and use them again whenver we have a line that starts with that given word
+        
+        O(N*cols) where N is the number of words
+        
+        https://leetcode.com/problems/sentence-screen-fitting/discuss/443413/Detailed-Explanation-Python-Dynamic-Programming-Intuition
+        '''
+        x = 0 
+        y = 0 
+        
+        word = 0
+        ans = 0
+        
+        for w in sentence:
+            if len(w) > cols:
+                return 0
+        
+        memo = {}
+        while y < rows:
+            x = 0
+            start_word = word
+            
+            # If the given starting word is not in our cache, compute the results for it
+            if (start_word not in memo):
+                comp_flag = 0
+                # Count the number of completed sentences on this line, and what the starting word on the next line will be
+                while x < cols: 
+                    diff = cols - x 
+                    if (len(sentence[word]) > diff):
+                        break
+                    else:
+                        x += (len(sentence[word])+1)
+                        word += 1
+                        word = word%len(sentence)
+                        if (word == 0):
+                            comp_flag += 1 
+                            ans += 1
+                        # Cache the result
+                        memo[start_word] = [word, comp_flag]
+            else:
+                # If the given word is in our cache, simply updated our answer with the # of completed sentences 
+                word, com = memo[start_word] 
+                ans += com
+            y += 1
+            
+        return ans
+        
