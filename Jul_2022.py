@@ -2340,4 +2340,70 @@ class Solution:
             y += 1
             
         return ans
+
+###########################################################
+# 236. Lowest Common Ancestor of a Binary Tree (REVISITED)
+# 26JUL22
+############################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        '''
+        we need to recurse onto the tree and when we find p and q return some flag
+        the node that returns flags for both searches must be the lca
+        
+        '''
+        self.lca = None
+        
+        def dfs(node):
+            if not node:
+                return False
+            left = dfs(node.left)
+            right = dfs(node.right)
+            #if the current node is either p or q, represent as flag variable
+            mid = node == p or node == q
+            #if left,right,or mid is tree, this is the lca
+            if mid + left + right >= 2:
+                self.lca = node
+            return mid or left or right
+        
+        dfs(root)
+        return self.lca
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        '''
+        we can save parent pointers as we descend until we hit either p or q
+        the first common node we get during this traversal would the LCA
+        save parent pointers into hashmap
+        '''
+        stack = [root]
+        parents = {root:None} #child -> parent
+        while p not in parents or q not in parents:
+            node = stack.pop()
+            
+            if node.left:
+                parents[node.left] = node
+                stack.append(node.left)
+            if node.right:
+                parents[node.right] = node
+                stack.append(node.right)
+        
+        ancestors = set()
+        
+        while p:
+            ancestors.add(p)
+            p = parents[p]
+        
+        while q not in ancestors:
+            q = parents[q]
+        
+        return q
+
         
