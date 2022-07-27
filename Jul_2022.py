@@ -2406,4 +2406,188 @@ class Solution:
         
         return q
 
+##############################
+# 26JUL22
+# 728. Self Dividing Numbers
+###############################
+class Solution:
+    def selfDividingNumbers(self, left: int, right: int) -> List[int]:
+        '''
+        brute force, check each digit in each number in range left to right for self dividing property
+        '''
+        ans = []
         
+        for num in range(left,right+1):
+            curr_num = num
+            while curr_num:
+                digit = curr_num % 10
+                if digit == 0 or num % digit != 0:
+                    break
+                else:
+                    curr_num //= 10
+            
+            if curr_num == 0:
+                ans.append(num)
+        
+        return ans
+
+#############################
+# 477. Total Hamming Distance
+# 26JUL22
+##############################
+#brute force TLE
+class Solution:
+    def totalHammingDistance(self, nums: List[int]) -> int:
+        '''
+        we define hamming distance as the number of positions at which the correspoind bits are different
+        to find the bits that are differnt i can do a^b
+        then reduce this number counting the number of ones
+        '''
+        def numDiffBits(a,b):
+            diff = a ^ b
+            count = 0
+            while diff:
+                count += diff & 1
+                diff >>= 1
+            return count
+        
+        ans = 0
+        N = len(nums)
+        for i in range(N):
+            for j in range(i+1,N):
+                ans += numDiffBits(nums[i],nums[j])
+        
+        return ans
+
+class Solution:
+    def totalHammingDistance(self, nums: List[int]) -> int:
+        '''
+        generating all pairs of nums takes way too long
+        lets for a bit position for all nums we count the number of bits ON for this position
+        for this position lets call it count k
+        then the number of off positions would be n - k
+        
+        we know for each unique pair, it contributes one unit of total hamming distance 
+            at a bit position, one OFF and one ON
+        
+        rather for a bit position, if i have k 1's, then i should n-k 0's
+        then the count of pairs contributing 1 unit of hamming distance is k*(n-k)
+        
+        '''
+        N = len(nums)
+        total_hamming = 0
+        for i in range(32):
+            num_ones = 0
+            for num in nums:
+                num_ones += (num >> i) & 1
+            total_hamming += num_ones*(N-num_ones)
+        
+        return total_hamming
+
+class Solution:
+    def totalHammingDistance(self, nums: List[int]) -> int:
+        N = len(nums)
+        temp = map('{:032b}'.format, nums)
+        total_hamming = 0
+        for b in zip(*temp):
+            ones = b.count('1')
+            total_hamming += ones*(N-ones)
+        return total_hamming
+
+###############################
+# 717. 1-bit and 2-bit Characters 
+# 26JUL22
+###############################
+#cool idea
+class Solution:
+    def isOneBitCharacter(self, bits: List[int]) -> bool:
+        '''
+        we can either encode using a 0
+        or using 10 or 11
+        return true if the last character must be a one bit char,
+        rather determing is the last bit must be 0
+        
+        i can just use recursion and pop off the digits and be encoded
+        '''
+        N = len(bits)
+        def dp(i):
+            if i > N:
+                return False
+            if i == N-1:
+                return True
+            #encode 1
+            first = second = third = None
+            if bits[i] == 0:
+                first = dp(i+1)
+            if bits[i:i+1] == [1,0]:
+                second = dp(i+2)
+            if bits[i:i+1] == [1,1]:
+                third = dp(i+2)
+            return first and second and third
+            
+        
+        return dp(0)
+
+class Solution:
+    def isOneBitCharacter(self, bits: List[int]) -> bool:
+        '''
+        scan through array then just adavance on one char or two char
+        '''
+        N = len(bits)
+        i = 0
+        while i < N -1:
+            if bits[i] == 0:
+                i += 1
+            else:
+                i += 2
+        
+        return i == N-1 and bits[i] == 0
+
+##############################
+# 114. Flatten Binary Tree to Linked List (REVISITED)
+# 27JUL22
+##############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def flatten(self, root: Optional[TreeNode]) -> None:
+        """
+        Do not return anything, modify root in-place instead.
+        """
+        '''
+        we can use morris traversal, 
+        idea, for every node
+            if there is a left substree, find the right most node
+            make this right most nodes' right child, the current right child of the node we are on
+            then make the right child of the current node we are on point to the left child
+            basically we are moving everything to the right
+        
+        algo:
+            we use a pointer for traversing the nodes of our tree stating fromt the root
+            for every node check if it has a left, else we go right
+            if node does have left cild, find right modst node
+            once we find right most node, rewirete moving nodes left or right
+            set left to null
+        
+        possibilty of touching each nodde at least twice
+        '''
+        if not root:
+            return root
+        node = root
+        
+        while node:
+            if node.left:
+                #find right modst
+                rightmost = node.left
+                while rightmost.right:
+                    rightmost = rightmost.right
+                
+                #reconnect
+                rightmost.right = node.right
+                node.right = node.left
+                node.left = None
+            node = node.right
