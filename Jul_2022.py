@@ -2591,3 +2591,65 @@ class Solution:
                 node.right = node.left
                 node.left = None
             node = node.right
+
+###################################
+# 419. Battleships in a Board
+# 27JUL22
+###################################
+#welp dfs works
+class Solution:
+    def countBattleships(self, board: List[List[str]]) -> int:
+        '''
+        traverse the board, then if we hit a cell that is an X, try looking in all four directions
+        if we can go in a direction add the cells to a seen set
+        this would result in N^3 time
+        
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        seen_X = set()
+        
+        dirrs = [[1,0], [-1,0],[0,1],[0,-1]]
+        
+        def dfs(i,j):
+            seen_X.add((i,j))
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    if board[neigh_x][neigh_y] == 'X' and (neigh_x,neigh_y) not in seen_X:
+                        dfs(neigh_x,neigh_y)
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                if board[i][j] == 'X' and (i,j) not in seen_X:
+                    dfs(i,j)
+                    ans += 1
+        
+        return ans
+
+class Solution:
+    def countBattleships(self, board: List[List[str]]) -> int:
+        '''
+        we only need to cont the first cell of hte battle ship, since the ships and only by 1 by k cols or k rows by 1 col
+        we identify a battleship startpoing as the stop left
+        and we check of this X was previously part of a ship we had already counted
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        
+        ships = 0
+        
+        for i in range(rows):
+            for j in range(cols):
+                #empty sspace does not contribute to count
+                if board[i][j] == '.':
+                    continue
+                #is this X was presiously part of a ship
+                if i > 0 and board[i-1][j] == 'X':
+                    continue
+                if j > 0 and board[i][j-1] == 'X':
+                    continue
+                ships += 1
+        
+        return ships
