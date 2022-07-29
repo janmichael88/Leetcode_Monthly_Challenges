@@ -2653,3 +2653,56 @@ class Solution:
                 ships += 1
         
         return ships
+
+###############################
+# 424. Longest Repeating Character Replacement
+# 28JUL22
+###############################
+class Solution:
+    def characterReplacement(self, s: str, k: int) -> int:
+        '''
+        we can pick any char in string s and change that char to any letter at most k times
+        return the length of the the substring with longest repeat character 
+        evidently this is a two pointer problem
+        we need to maintain the frequency counts of the chars in our current window
+        if size(current window) > k + max(current window count)?
+        why, because we can change any character in the string at most k times, we might as well try to change the chars to the most frequent char in the window
+        https://leetcode.com/problems/longest-repeating-character-replacement/discuss/363071/Simple-Python-two-pointer-solution
+        '''
+        ans = 0
+        counts = Counter()
+        left = 0
+        N = len(s)
+        for right in range(N):
+            #add to the current window
+            counts[s[right]] += 1
+            #if we need to shrink the window because we have use to many changes
+            while right - left + 1 - max(counts.values()) > k:
+                counts[s[left]] -= 1
+                left += 1
+            #update the window size, because we are in at least k
+            ans = max(ans,right -left + 1)
+        
+        return ans
+
+class Solution:
+    def characterReplacement(self, s: str, k: int) -> int:
+        '''
+        instead of shinking the window by advancing the left pointer, keep
+        awlays keep track of the largest freq count
+        then just move up the pointer
+        '''
+        ans = 0
+        counts = Counter()
+        left = 0
+        N = len(s)
+        max_freq = 0
+        for right in range(N):
+            counts[s[right]] += 1
+            max_freq = max(max_freq,counts[s[right]])
+            if right - left + 1 > k + max_freq:
+                counts[s[left]] -= 1
+                left += 1
+            ans = max(ans, right - left + 1)
+        
+        return ans
