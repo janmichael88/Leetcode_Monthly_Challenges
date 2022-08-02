@@ -1,4 +1,4 @@
-i# Leetcode_Monthly_Challenges
+ii# Leetcode_Monthly_Challenges
 Just a code dump for all the monthly Leet code solutions. 
 
 # Badges:
@@ -20,10 +20,11 @@ Just a code dump for all the monthly Leet code solutions.
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-4.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-5.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-6.png)
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-7.png)
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-Jul 2022
+Aug 2022
 
 Completed:
 * May 2020
@@ -51,3 +52,4 @@ Completed:
 * Apr 2022
 * May 2022
 * Jun 2022
+* Jul 2022
