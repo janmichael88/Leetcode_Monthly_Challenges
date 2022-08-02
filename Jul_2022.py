@@ -2704,5 +2704,375 @@ class Solution:
                 counts[s[left]] -= 1
                 left += 1
             ans = max(ans, right - left + 1)
+
+        return ans
+
+###########################
+# 916. Word Subsets (REVISITED)
+# 30JUL22
+###########################
+#close one....
+class Solution:
+    def wordSubsets(self, words1: List[str], words2: List[str]) -> List[str]:
+        '''
+        i can make a count object of words2
+        then travrese the words in word1 checking if it is univsrsal from the counts map
+        we need to use up all of words2 count map for a word to be inversial
+        '''
+        counts_words2 = Counter()
+        for w in words2:
+            counts_words2[w] += 1
+        
+        ans = []
+        for w in words1:
+            temp = copy.deepcopy(counts_words2)
+            for ch in w:
+                if ch in temp:
+                    temp[ch] -= 1
+                    if temp[ch] == 0:
+                        del temp[ch]
+                else:
+                    continue
+            if len(temp) == 0:
+                ans.append(w)
         
         return ans
+
+class Solution:
+    def wordSubsets(self, words1: List[str], words2: List[str]) -> List[str]:
+        '''
+        we can define word in words1 a superset if each count of letter in word is >= each count for all in words in words2
+        so we would have to compare each word in words1 with each word in in words2
+        whic would not work, 
+        instead of comparing each word in words1 with each word in words2, we compare the max counts
+        i.r reduce words2 into one
+        '''
+        words2_max = defaultdict(int)
+        for w in words2:
+            #get counts for this current word
+            temp = Counter(w)
+            for ch,count in temp.items():
+                words2_max[ch] = max(words2_max.get(ch,0),count)
+        
+        ans = []
+        for w in words1:
+            temp = Counter(w)
+            check = []
+            for ch,count in temp.items():
+                if ch in words2_max:
+                    check.append(count >= words2_max[ch])
+            if all(check):
+                ans.append(w)
+        
+        return ans
+
+################################
+# 307. Range Sum Query - Mutable (REVISITED)
+# 31JUL22
+#################################
+#segment tree recusring using built in node instead of arrays
+"""
+    The idea here is to build a segment tree. Each node stores the left and right
+    endpoint of an interval and the sum of that interval. All of the leaves will store
+    elements of the array and each internal node will store sum of leaves under it.
+    Creating the tree takes O(n) time. Query and updates are both O(log n).
+"""
+
+#Segment tree node
+class Node(object):
+    def __init__(self, start, end):
+        self.start = start
+        self.end = end
+        self.total = 0
+        self.left = None
+        self.right = None
+        
+
+class NumArray(object):
+    def __init__(self, nums):
+        """
+        initialize your data structure here.
+        :type nums: List[int]
+        """
+        #helper function to create the tree from input array
+        def createTree(nums, l, r):
+            
+            #base case
+            if l > r:
+                return None
+                
+            #leaf node
+            if l == r:
+                n = Node(l, r)
+                n.total = nums[l]
+                return n
+            
+            mid = (l + r) // 2
+            
+            root = Node(l, r)
+            
+            #recursively build the Segment tree
+            root.left = createTree(nums, l, mid)
+            root.right = createTree(nums, mid+1, r)
+            
+            #Total stores the sum of all leaves under root
+            #i.e. those elements lying between (start, end)
+            root.total = root.left.total + root.right.total
+                
+            return root
+        
+        self.root = createTree(nums, 0, len(nums)-1)
+            
+    def update(self, i, val):
+        """
+        :type i: int
+        :type val: int
+        :rtype: int
+        """
+        #Helper function to update a value
+        def updateVal(root, i, val):
+            
+            #Base case. The actual value will be updated in a leaf.
+            #The total is then propogated upwards
+            if root.start == root.end:
+                root.total = val
+                return val
+        
+            mid = (root.start + root.end) // 2
+            
+            #If the index is less than the mid, that leaf must be in the left subtree
+            if i <= mid:
+                updateVal(root.left, i, val)
+                
+            #Otherwise, the right subtree
+            else:
+                updateVal(root.right, i, val)
+            
+            #Propogate the changes after recursive call returns
+            root.total = root.left.total + root.right.total
+            
+            return root.total
+        
+        return updateVal(self.root, i, val)
+
+    def sumRange(self, i, j):
+        """
+        sum of elements nums[i..j], inclusive.
+        :type i: int
+        :type j: int
+        :rtype: int
+        """
+        #Helper function to calculate range sum
+        def rangeSum(root, i, j):
+            
+            #If the range exactly matches the root, we already have the sum
+            if root.start == i and root.end == j:
+                return root.total
+            
+            mid = (root.start + root.end) // 2
+            
+            #If end of the range is less than the mid, the entire interval lies
+            #in the left subtree
+            if j <= mid:
+                return rangeSum(root.left, i, j)
+            
+            #If start of the interval is greater than mid, the entire inteval lies
+            #in the right subtree
+            elif i >= mid + 1:
+                return rangeSum(root.right, i, j)
+            
+            #Otherwise, the interval is split. So we calculate the sum recursively,
+            #by splitting the interval
+            else:
+                return rangeSum(root.left, i, mid) + rangeSum(root.right, mid+1, j)
+        
+        return rangeSum(self.root, i, j)
+                
+
+
+# Your NumArray object will be instantiated and called as such:
+# numArray = NumArray(nums)
+# numArray.sumRange(0, 1)
+# numArray.update(1, 10)
+# numArray.sumRange(1, 2)
+
+#iterative,using buildtin array
+class NumArray(object):
+
+    def __init__(self, nums):
+        self.l = len(nums)
+        self.tree = [0]*self.l + nums
+        for i in range(self.l - 1, 0, -1):
+            self.tree[i] = self.tree[i<<1] + self.tree[i<<1|1]
+    
+    def update(self, i, val):
+        n = self.l + i
+        self.tree[n] = val
+        while n > 1:
+            self.tree[n>>1] = self.tree[n] + self.tree[n^1]
+            n >>= 1
+        
+    
+    def sumRange(self, i, j):
+        m = self.l + i
+        n = self.l + j
+        res = 0
+        while m <= n:
+            if m & 1:
+                res += self.tree[m]
+                m += 1
+            m >>= 1
+            if n & 1 ==0:
+                res += self.tree[n]
+                n -= 1
+            n >>= 1
+        return res
+
+#good write up on segment tree in C++
+#https://leetcode.com/problems/range-sum-query-mutable/discuss/1281195/Clean-Solution-w-Explanation-or-Segment-Tree-or-Beats-100
+
+
+##########################
+# 44. Wildcard Matching
+# 30JUL22
+##########################
+#recursion
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        '''
+        not as bad as you think, similar to other recursive string problems, where wejust keep passing
+        a truncated string into the recursive caller
+        cases:
+            if the strings are equal, i.e p == s, then return True
+            if pattern matches any string, p == '*', return True
+            if p is empty or s is empty, return False
+            if the current chars match (p[0] == s[0] or p[0] == '?') then compare the next ones functions rec(s[1:], p[1:])
+            if the curr pattern is a start p[0] == '*':
+                if start matches no characters, just call rec(s,p[1:])
+                the start matches one ormore, call rec(s[1:])
+            if p[0] != s[0]:
+             return False
+        
+        clean up the input first
+            for patterns like a****bc***cc
+            we can simplify to a*bc*cc, so we can keep the depth of the recurion treee smal
+
+        time complexity is O(S*P * (S+P))
+        space complexity is (S*P)
+        '''
+        def remove_stars(s):
+            new_s = ""
+            for ch in s:
+                if not new_s or ch != '*':
+                    new_s += ch
+                elif new_s[-1] != '*':
+                    new_s += ch
+            
+            return new_s
+        
+        memo = {}
+        
+        def rec(s,p):
+            #retrieve
+            if (s,p) in memo:
+                return memo[(s,p)]
+            #match
+            if p == s or p == '*':
+                memo[(s,p)] = True
+            #empty cases
+            elif p == '' or s == '':
+                memo[(s,p)] = False
+            #first char match, truncate in caller
+            elif p[0] == s[0] or p[0] == '?':
+                memo[(s,p)] = rec(s[1:],p[1:])
+            #single start
+            elif p[0] == '*':
+                memo[(s,p)] = rec(s,p[1:]) or rec(s[1:],p)
+            else:
+                memo[(s,p)] = False
+            
+            return rec(s,p)
+        
+        p = remove_stars(p)
+        return rec(s,p)
+
+#another way
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        @lru_cache(None)
+        def dfs(i, j):
+            if j == len(p):  # Reach full pattern
+                return i == len(s)
+
+            if i < len(s) and (s[i] == p[j] or p[j] == '?'):  # Match Single character
+                return dfs(i + 1, j + 1)
+            
+            if p[j] == '*':
+                return dfs(i, j + 1) or i < len(s) and dfs(i + 1, j)  # Match zero or one or more character
+            
+            return False
+
+        return dfs(0, 0)
+
+class Solution:
+    def isMatch(self, s: str, p: str) -> bool:
+        '''
+        bottom up, very similar to edit distance
+        if we let dp(p_idx,s_idx) be the answer to if p[:p_idx] matches s[:s_idx]
+        if the last characters are the same is there is match at this, then we can get the answer in constant time using the recurrence
+        d[p_idx][s_idx] = d[p_idx - 1][s_idx - 1], if pattern at this char is '?'
+        
+        if the pattern char is '*' and there was match on the previous step d[p_idx-1][s_idx-1] then:
+            the start at the end of the pattner still results in match
+            the star could match as many chars as you wish
+            d[p_idx-1][i] = True, for all i >= s_idx-1
+            make sure to look at the pictures for this solution
+        '''
+        s_len = len(s)
+        p_len = len(p)
+        
+        # base cases
+        if p == s or set(p) == {'*'}:
+            return True
+        if p == '' or s == '':
+            return False
+        
+        # init all matrix except [0][0] element as False
+        d = [[False] * (s_len + 1) for _ in range(p_len + 1)]
+        d[0][0] = True
+        
+        # DP compute 
+        for p_idx in range(1, p_len + 1):
+            # the current character in the pattern is '*'
+            if p[p_idx - 1] == '*':
+                s_idx = 1
+                                        
+                # d[p_idx - 1][s_idx - 1] is a string-pattern match 
+                # on the previous step, i.e. one character before.
+                # Find the first idx in string with the previous math.
+                while not d[p_idx - 1][s_idx - 1] and s_idx < s_len + 1:
+                    s_idx += 1
+    
+                # If (string) matches (pattern), 
+                # when (string) matches (pattern)* as well
+                d[p_idx][s_idx - 1] = d[p_idx - 1][s_idx - 1]
+    
+                # If (string) matches (pattern), 
+                # when (string)(whatever_characters) matches (pattern)* as well
+                while s_idx < s_len + 1:
+                    d[p_idx][s_idx] = True
+                    s_idx += 1
+                                   
+            # the current character in the pattern is '?'
+            elif p[p_idx - 1] == '?':
+                for s_idx in range(1, s_len + 1): 
+                    d[p_idx][s_idx] = d[p_idx - 1][s_idx - 1] 
+                                   
+            # the current character in the pattern is not '*' or '?'
+            else:
+                for s_idx in range(1, s_len + 1): 
+                    # Match is possible if there is a previous match
+                    # and current characters are the same
+                    d[p_idx][s_idx] = d[p_idx - 1][s_idx - 1] and p[p_idx - 1] == s[s_idx - 1]  
+                                                               
+        return d[p_len][s_len]
