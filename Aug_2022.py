@@ -155,3 +155,68 @@ class Solution:
                 end = smaller  # search lower
 
         return start
+
+############################
+# 427. Construct Quad Tree
+# 03AUG22
+#########"""
+# Definition for a QuadTree node.
+class Node:
+    def __init__(self, val, isLeaf, topLeft, topRight, bottomLeft, bottomRight):
+        self.val = val
+        self.isLeaf = isLeaf
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+"""
+
+class Solution:
+    def construct(self, grid: List[List[int]]) -> 'Node':
+        '''
+        a quad tree is a tree struture where each inteal node has four children
+        each node has two attributes
+            val: True if the node representas a grid of 1's or False if node represents a grid of 0s
+            isLeaf: True if the node is a leaf node or False if the nodes had four children
+            
+        algo:
+            if the current grid has the same values (all 1's or all 0's) set isLeaf to True and val to to be the value of the grid and set children to None
+            if the current grid has different values, set isLeaf to false and set val to any value and divide the grid into four
+            recurse on the four
+            
+        Start with the full grid and keep on diving it four parts.
+        Once we have a grid of size 1 then start with merging.
+        Compare if all the leaf nodes,
+        if yes then merge all into a single node.
+        else, return all four nodes separately.
+        
+        each call will define the grid as the top left corner
+        '''
+        
+        def build(row,col,grid_length):
+            #base case, single element
+            if grid_length == 1:
+                val = grid[row][col]
+                node = Node(val,True,None,None,None,None)
+                return node
+            
+            #otherwise recurse, dividing them
+            #represent each grid defined by coordinate in top left
+            topLeft = build(row,col,grid_length //2)
+            topRight = build(row,col + grid_length // 2, grid_length//2)
+            bottomLeft = build(row + grid_length // 2, col, grid_length//2)
+            bottomRight = build(row + grid_length //2, col + grid_length //2, grid_length//2)
+            
+            #check all leaves
+            if topLeft.isLeaf == topRight.isLeaf == bottomLeft.isLeaf == bottomRight.isLeaf == True:
+                #check all valuess are the same
+                if topLeft.val == topRight.val == bottomLeft.val == bottomRight.val:
+                    #build
+                    node = Node(topLeft.val,True,None,None,None,None)
+                    return node
+            
+            #make false node
+            node = Node(-1,False,topLeft,topRight,bottomLeft,bottomRight)
+            return node
+        
+        return build(0,0,len(grid))####################
