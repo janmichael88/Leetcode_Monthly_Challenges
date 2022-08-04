@@ -159,7 +159,8 @@ class Solution:
 ############################
 # 427. Construct Quad Tree
 # 03AUG22
-#########"""
+############################
+"""
 # Definition for a QuadTree node.
 class Node:
     def __init__(self, val, isLeaf, topLeft, topRight, bottomLeft, bottomRight):
@@ -219,4 +220,129 @@ class Solution:
             node = Node(-1,False,topLeft,topRight,bottomLeft,bottomRight)
             return node
         
-        return build(0,0,len(grid))####################
+        return build(0,0,len(grid))
+
+#####################
+# 729. My Calendar I
+# 03AUG22
+#####################
+class MyCalendar:
+
+    def __init__(self):
+        '''
+        we can use binary search to search for the position in the array who's start is just smaller then the start we want to add
+        then we must check that this end is works
+        '''
+        self.intervals = []
+    def book(self, start: int, end: int) -> bool:
+        i = self.binarySearch(start)
+        #i is where we want to insert
+        #check the one previous to it and make sure there is no overlap
+        if i > 0 and self.intervals[i-1][1] > start:
+            return False
+        #check starts
+        if i < len(self.intervals) and end > self.intervals[i][0]:
+            return False
+        self.intervals.insert(i,[start,end])
+        return True
+        
+    def binarySearch(self,target):
+        left = 0
+        right = len(self.intervals)
+        while left < right:
+            mid = left + (right - left) //2
+            if self.intervals[mid][0] >= target:
+                right = mid
+            else:
+                left = mid + 1
+        return left
+
+
+# Your MyCalendar object will be instantiated and called as such:
+# obj = MyCalendar()
+# param_1 = obj.book(start,end)
+
+'''
+using sorted container
+keep track all 2n points
+then binary search twice
+1. make sure that q1 == q2, which is the point we need to insert start and end
+2. also check for q1 % 2 == 0
+    i.e, it lies at an even index, because we alaways need to insert two pointts
+    i the index were odd, it means we over lap on an end
+'''
+from sortedcontainers import SortedList
+
+class MyCalendar:
+    def __init__(self):
+        self.arr = SortedList()
+        
+    def book(self, start, end):
+        #we need to find the index that is just greater than start, and just smaller than end
+        q1 = SortedList.bisect_right(self.arr, start)
+        q2 = SortedList.bisect_left(self.arr, end)
+        if q1 == q2 and q1 % 2 == 0:
+            self.arr.add(start)
+            self.arr.add(end)
+            return True
+        return False
+
+# Your MyCalendar object will be instantiated and called as such:
+# obj = MyCalendar()
+# param_1 = obj.book(start,end)
+
+
+#using balanced binary tree
+'''
+we can use a self balacing binary tree, i don't think you'd be expected
+and build the insertion method recursively
+'''
+
+class Node:
+    def __init__(self,start,end):
+        self.start = start
+        self.end = end
+        self.left = None
+        self.right = None
+    
+    def insert(self,start,end):
+        #if the end we want to insert is bigger then our start
+        if self.start >= end:
+            #put to its left
+            if self.left is None:
+                self.left = Node(start,end)
+                return True
+            else:
+                return self.left.insert(start,end)
+        elif self.end <= start:
+            if self.right is None:
+                self.right = Node(start,end)
+                return True
+            else:
+                return self.right.insert(start,end)
+        else:
+            return False
+
+class MyCalendar:
+
+    def __init__(self):
+        self.root = None
+        
+
+    def book(self, start: int, end: int) -> bool:
+        if not self.root:
+            self.root = Node(start,end)
+            return True
+        else:
+            return self.root.insert(start,end)
+        
+
+
+# Your MyCalendar object will be instantiated and called as such:
+# obj = MyCalendar()
+# param_1 = obj.book(start,end)
+
+###########################
+# 
+#
+###########################
