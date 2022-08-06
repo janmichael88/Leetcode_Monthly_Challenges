@@ -343,6 +343,85 @@ class MyCalendar:
 # param_1 = obj.book(start,end)
 
 ###########################
-# 
-#
+# 858. Mirror Reflection (REVISITED)
+# 04AUG22
 ###########################
+class Solution:
+    def mirrorReflection(self, p: int, q: int) -> int:
+        '''
+        we need to determine the number receptor the ray hits first, either 0,1,or 2    
+    
+        if we were to stack rooms on top of each other multiple times, the laser beam would just keep boucing
+        specifically if we fire from the southwest corner, it will travel up a distance of q to the right wall
+        then up another distance of q to the left well
+        then again to the right wall up a distance of q
+        draw the case for when p = 3 and q = 2
+        we can translate this to m*p = n*q
+        
+        where m is the number of room extensions + 1
+        and q is the number of laser beam reflections+ 1
+        
+        cases
+            1. if the number of light reflections is odd (which mean n is even) the possible corner is on the left hand side, so the possible corner is 2. otherwise the corner is on the right hand side
+            2. if the corner is on the right hand side, 
+                if the number of room extensions is even (implying m is odd) it means the corner is 1
+                else 0
+                
+        we can conclude
+        
+        m is even & n is odd => return 0.
+        m is odd & n is odd => return 1.
+        m is odd & n is even => return 2.
+        
+        Note: The case m is even & n is even is impossible. Because in the equation m * q = n * p, if m and n are even, we can divide both m and n by 2. Then, m or n must be odd.
+
+https://leetcode.com/problems/mirror-reflection/discuss/2377070/Pseudocode-Explain-Why-Odd-and-Even-Matter
+https://leetcode.com/problems/mirror-reflection/discuss/2377070/Pseudocode-Explain-Why-Odd-and-Even-Matter
+        
+        m = the number of rooms after the extension.
+n = the number of laser ray lights traveling inside these rooms before it hits corner 0, 1 or 2.
+
+In the example of p=3 and q=2, we can derive m = 2 and n = 3, i.e. there are two floors for the rooms and there are 3 light turning back and forth to finally reach a corner.
+
+Now, to decide the condition of m and n when deriving the corner, here are the tricks:
+1.1 odd m indicates the light ends up upwards
+1.2 even m indicates the light ends up downwards
+2.1 even n indicates round-trips and it should end up hitting the left wall
+2.2 odd n indicate round-trips+1 trip to the right wall
+
+So we can conclude:
+(m % 2 == 0 && n % 2 == 1) return 0; //downwards and right wall
+(m % 2 == 1 && n % 2 == 1) return 1; // upwards and right wall
+(m % 2 == 1 && n % 2 == 0) return 2; // upwards and left wall
+        '''
+        #solve m*p = n*q
+        m = q
+        n = p
+        
+        while m % 2 == 0 and n % 2 == 0:
+            #reduce away from even
+            m //= 2
+            n //= 2
+        
+        #check the cases
+        if m % 2 == 0 and n % 2 == 1:
+            return 0
+        if m % 2 == 1 and n % 2 == 1:
+            return 1
+        
+        if m % 2 == 1 and n % 2 == 0:
+            return 2
+        
+        return -1
+
+#using lcm
+#https://leetcode.com/problems/mirror-reflection/discuss/2376355/Python3-oror-4-lines-geometry-w-explanation-oror-TM%3A-9281
+class Solution:
+    def mirrorReflection(self, p: int, q: int) -> int:
+
+        L = lcm(p,q)
+
+        if (L//q)%2 == 0:
+            return 2
+
+        return (L//p)%2
