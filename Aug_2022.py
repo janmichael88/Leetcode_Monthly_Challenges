@@ -425,3 +425,37 @@ class Solution:
             return 2
 
         return (L//p)%2
+
+#########################
+# 458. Poor Pigs (REVISITED)
+# 07AUG22
+#########################
+class Solution:
+    def poorPigs(self, buckets: int, minutesToDie: int, minutesToTest: int) -> int:
+        '''
+        there is exactly one poisonus bucket, if the bucket is poisonous, the big will die in minutesToDie
+        we are left with only minutesToTest, we can use and many pigs as we need
+        return the minimum number of pigs need to figure which is poisonous
+        
+        how many states does a pig have?
+        * if there is no time to test, i.e minToTest / minToDie = 0, only one state, alive
+        * if minToTest / minToDie = 1, then the pig has time to die, so it can be alive or dead
+        * if minToTest / minToDie = 2, then there are three states available, alive/dead after first, dead after second
+        
+        number of available states is minToTest / minToDie + 1
+        if one pig has two available states, then x pids can test 2^x buckets, since one pig can test two buckets (find out if one of the two is poisonus)
+        
+        how many buckets could test x pigs with s available states?
+            we can text s^x buckets
+            
+        we degenerate the problem to:
+            find x, such that states^x >= buckets
+            where x is the number of pigs
+            states = minToTest /minToDie + `
+            
+        x = log(buckets) / log(states)
+        '''
+        states = minutesToTest // minutesToDie + 1
+        return math.ceil(math.log(buckets) / math.log(states))
+
+
