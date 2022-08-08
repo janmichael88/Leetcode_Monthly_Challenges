@@ -458,4 +458,56 @@ class Solution:
         states = minutesToTest // minutesToDie + 1
         return math.ceil(math.log(buckets) / math.log(states))
 
-
+##############################
+# 366. Find Leaves of Binary Tree (REVISITED)
+# 08AUG22
+##############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findLeaves(self, root: Optional[TreeNode]) -> List[List[int]]:
+        '''
+        we can use topsort on this problem
+        '''
+        #track indegree and  build graph, we treat the leaf nodes as prereqs meaning we start with them first
+        indegree = defaultdict(int)
+        graph = defaultdict(list)
+        
+        stack = [root]
+        while stack:
+            curr = stack.pop()
+            child = 0
+            if curr.left:
+                stack.append(curr.left)
+                graph[curr.left].append(curr)
+                child += 1
+            if curr.right:
+                stack.append(curr.right)
+                graph[curr.right].append(curr)
+                child += 1
+            indegree[curr] = child
+        
+        #start with leave nodes
+        q = deque([])
+        for node,deg in indegree.items():
+            if deg == 0:
+                q.append(node)
+        
+        #topsort
+        ans = []
+        while q:
+            ans.append([])
+            N = len(q)
+            for i in range(N):
+                curr = q.popleft()
+                ans[-1].append(curr.val)
+                for neigh in graph[curr]:
+                    indegree[neigh] -= 1
+                    if indegree[neigh] == 0:
+                        q.append(neigh)
+        
+        return ans
