@@ -511,3 +511,49 @@ class Solution:
                         q.append(neigh)
         
         return ans
+
+###############################
+# 433. Minimum Genetic Mutation
+# 08AUG22
+###############################
+class Solution:
+    def minMutation(self, start: str, end: str, bank: List[str]) -> int:
+        '''
+        we are given a start string and an end string
+        we want to get from start to end, using the minimum number of muttations,
+        we are only allowed to use mutations in the gene bank
+        we define a mutation a s sinlge char being changed in the string
+        
+        i can treat this as a graph problem, where each node is a mutation (must be a mutation in the gene bank)
+        this then become shortest path from start to end, then i can solve this using bfs
+        '''
+        #if end is not in the bank, we can immmeidatly return a -1
+        #we may also need to add the start gene to the bank
+        bank = set(bank)
+        if end not in bank:
+            return -1
+        
+        #need generationg function for a gene
+        def getAllowedMutations(gene):
+            for i in range(8):
+                ch = gene[i]
+                for mut in ['A','C','G','T']:
+                    if ch != mut:
+                        new = gene[:i]+mut+gene[i+1:]
+                        if new in bank:
+                            yield new
+        
+        #bfs
+        q = deque([(start,0)])
+        
+        while q:
+            curr,path = q.popleft()
+            if curr == end:
+                return path
+            for neigh in getAllowedMutations(curr):
+                q.append((neigh,path+1))
+                #we can prune the space by removing a mutation from the bank#
+                #bank.remove(neigh)
+        
+        return -1
+
