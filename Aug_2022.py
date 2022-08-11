@@ -557,3 +557,117 @@ class Solution:
         
         return -1
 
+###########################
+# 439. Ternary Expression Parser
+# 09AUG22
+###########################
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        '''
+        https://leetcode.com/problems/ternary-expression-parser/discuss/122935/Python-solution-with-detailed-explanation
+        we need to process from right to left
+        use stack and push the digits on to the stack, 
+        we can ignored ':' and when we hit '?' we need to test whehter the char preceeding it is a T or F
+        depending on that, pop values from the stack and eval the exrpession
+        then push the evaluated expression back on to the stack
+        key insight is wwe need to find the first '?' from the right, evaluate it and push it back on the stack
+        return what the expression that is left on the stack at the end
+        '''
+        #starting from the right
+        i = len(expression) - 1
+        
+        stack = []
+        
+        while i >= 0:
+            #push on stack the most recent digit
+            ch = expression[i]
+            if ch.isdigit():
+                stack.append(ch)
+                i -= 1
+            #push T or F
+            elif ch in ['T','F']:
+                stack.append(ch)
+                i -= 1
+            #pass on colon
+            elif ch == ':':
+                i -= 1
+            #we need to eval
+            elif ch == '?':
+                #move one more
+                i -= 1
+                #get the expression for T and F
+                #the string will be guaranteed to be a valid expression, no need to check for edge caes
+                true = stack.pop()
+                false = stack.pop()
+                
+                if expression[i] == 'T':
+                    stack.append(true)
+                else:
+                    stack.append(false)
+                
+                i -= 1
+            
+        
+        return stack[-1]
+
+
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        '''
+        another way
+        '''
+        stack = []
+        
+        for ch in reversed(expression):
+            #if there is something on the stack and is ?
+            if stack and stack[-1] == "?":
+                stack.pop()
+                first = stack.pop()
+                stack.pop()
+                second = stack.pop()
+                #eval
+                if ch == "T":
+                    stack.append(first)
+                else:
+                    stack.append(second)
+            else:
+                stack.append(ch)
+        
+        return stack[0]
+
+
+###################################
+# 748. Shortest Completing Word
+# 09AUG22
+###################################
+class Solution:
+    def shortestCompletingWord(self, licensePlate: str, words: List[str]) -> str:
+        '''
+        clean up license plate to make counter object of on chars only
+        '''
+        counts = Counter()
+        for ch in licensePlate:
+            ch = ch.lower()
+            if ch.isalpha():
+                counts[ch] += 1
+        
+        #sort words based on length and starting index
+        words = [(word,i) for i,word in enumerate(words)]
+        words.sort(key = lambda x: (len(x[0]),x[1]))
+        
+        for word,i in words:
+            temp = copy.deepcopy(counts)
+            for ch in word:
+                if ch in temp and temp[ch] > 0:
+                    temp[ch] -= 1
+                if temp[ch] == 0:
+                    del temp[ch]
+            
+            if len(temp) == 0:
+                return word
+
+#cool way using and operator and lambda filter
+#note, sorting by length would have also sorted by earliest index anyway
+def shortestCompletingWord(self, licensePlate: str, words: List[str]) -> str:
+    pc = Counter(filter(lambda x : x.isalpha(), licensePlate.lower()))
+    return min([w for w in words if Counter(w) & pc == pc], key=len) 
