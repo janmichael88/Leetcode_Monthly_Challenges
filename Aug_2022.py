@@ -635,6 +635,39 @@ class Solution:
         
         return stack[0]
 
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        '''
+        ternary expressions exhibit optimal substructure
+        rather:
+            expr ? expr if true:expr is false
+        
+        so we first need to grab the expression to the left of the question mark (which is always single T or F)
+        and the recursively falle t o the vlaues for expre if trye and expre if false
+        
+        base case:
+            when the next char is a value (T,F, or digit) and not another expression
+            this is determined by checking whaat is next to it
+            if there is a ':' it is a value, else it is another expression
+            each recursive call return the evaluated value and the next position to be processed by the parent call
+        '''
+        self.N = len(expression)
+        
+        def rec(i):
+            #base case, bext char is a value, or we reach the end of the expression
+            #return the the value
+            if (i + 1 >= self.N) or (i + 1 < self.N and expression[i+1] == ':'):
+                return expression[i], i + 2
+            exp = expression[i]
+            left, i = rec(i+2)
+            right,i = rec(i)
+            if exp == 'T':
+                return left,i
+            else:
+                return right,i
+        
+        right,i = rec(0)
+        return right
 
 ###################################
 # 748. Shortest Completing Word
