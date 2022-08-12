@@ -704,3 +704,43 @@ class Solution:
 def shortestCompletingWord(self, licensePlate: str, words: List[str]) -> str:
     pc = Counter(filter(lambda x : x.isalpha(), licensePlate.lower()))
     return min([w for w in words if Counter(w) & pc == pc], key=len) 
+
+##########################
+# 10AUG22
+# 443. String Compression
+##########################
+class Solution:
+    def compress(self, chars: List[str]) -> int:
+        '''
+        we can keep pointers i and j
+        we start by sending j out and we update the chars array in place using i
+        chars[i] = chars[j], then advnace j
+        we keep sending out j if it matches the current char at i
+        and increment the count
+        if the count is greater than 1, we need to update it the following spaces with each string(int)
+        '''
+        left,right = 0,0
+        N = len(chars)
+        
+        while right < N:
+            #set first ocrrurence
+            chars[left] = chars[right]
+            count = 1
+            
+            #try to incrementthe count
+            while right + 1 < N and chars[right] == chars[right+1]:
+                right += 1
+                count += 1
+            
+            #if we have a count larger than 1
+            if count > 1:
+                for c in str(count):
+                    chars[left+1] = c
+                    left += 1
+            
+            left += 1
+            right += 1
+        
+        return left
+
+        
