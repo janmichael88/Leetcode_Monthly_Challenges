@@ -743,4 +743,77 @@ class Solution:
         
         return left
 
+#########################################################
+# 762. Prime Number of Set Bits in Binary Representation
+# 12JUN22
+#########################################################
+class Solution:
+    def countPrimeSetBits(self, left: int, right: int) -> int:
+        '''
+        make helper function to count the number of bits
+        if the largest number is 10**6,
+        then there can only be at most log2(10**6) + 1 bit positions
+        there are only 20 bit positions,
+        how many primes are between 2 and 20
         
+        largest = 10**6
+        num_bit_positions = 0
+        while largest:
+            num_bit_positions += 1
+            largest >>= 1
+        
+        '''
+        possible_primes = set([2,3,5,7,11,13,17,19])
+        
+        def count_bits(num):
+            count = 0
+            while num:
+                count += num & 1
+                num >>= 1
+            return count
+        
+        ans = 0
+        for num in range(left,right+1):
+            count = count_bits(num)
+            if count in possible_primes:
+                ans += 1
+        
+        return ans
+            
+##########################################################
+# 762. Prime Number of Set Bits in Binary Representation
+# 12AUG22
+##########################################################
+class Solution:
+    def countPrimeSetBits(self, left: int, right: int) -> int:
+        '''
+        make helper function to count the number of bits
+        if the largest number is 10**6,
+        then there can only be at most log2(10**6) + 1 bit positions
+        there are only 20 bit positions,
+        how many primes are between 2 and 20
+        
+        largest = 10**6
+        num_bit_positions = 0
+        while largest:
+            num_bit_positions += 1
+            largest >>= 1
+        
+        '''
+        possible_primes = set([2,3,5,7,11,13,17,19])
+        
+        def count_bits(num):
+            count = 0
+            while num:
+                count += num & 1
+                num >>= 1
+            return count
+        
+        ans = 0
+        for num in range(left,right+1):
+            count = count_bits(num)
+            if count in possible_primes:
+                ans += 1
+        
+        return ans
+            
