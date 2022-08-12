@@ -817,3 +817,33 @@ class Solution:
         
         return ans
             
+#########################################
+# 783. Minimum Distance Between BST Nodes
+# 12AUG22
+##########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def minDiffInBST(self, root: Optional[TreeNode]) -> int:
+        '''
+        inorder traversal checking difference each time between prev and curr 
+        then update when new minimum has been reached
+        '''
+        self.prev = float('-inf')
+        self.min_dist = float('inf')
+        
+        def inorder(node):
+            if not node:
+                return
+            inorder(node.left)
+            #update
+            self.min_dist = min(self.min_dist,node.val - self.prev)
+            self.prev = node.val
+            inorder(node.right)
+        
+        inorder(root)
+        return self.min_dist
