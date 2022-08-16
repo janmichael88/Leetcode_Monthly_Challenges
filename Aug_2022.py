@@ -1163,3 +1163,63 @@ class Solution:
         res = dfs(reversedAdj, [], deque([endWord]))
 
         return res
+
+################################
+# 68. Text Justification
+# 15AUG22
+################################
+class Solution:
+    def fullJustify(self, words: List[str], maxWidth: int) -> List[str]:
+        '''
+        we want to format words such that each line has exactly maxWidth characters and is fully (left or right justified)
+        we want to pack words in greedy approach, that is pack as many words as you can in each line
+            * pad extra spaces when necessary so that each line has exactly maxWidth characters
+            
+        notes
+            * extra psaces between words should be distributed as evenly as possible
+            * if the number of spaces on a line does not divide evenly between words, the empty slots on the left will be assigned more spaces than on right
+            * for the last line of text, it should be left justified and no extra space is inserted between words
+            
+        intuition:
+            assigngin extra spaces on the left just really means round robbing
+            
+            for i in range(maxWidth - num_of_letters):
+                cur[i%(len(cur)-1 or 1)] += ' '
+        
+        once you determine that there only k words that can fit on a given line, you know what the total length of those words is num_of_letters
+        then the rest are spaces, and there are (maxWidth - num_of_letters) of spaces
+        the 'or 1' part is for dealing iwth the edge case len(curr) == 1
+        
+        
+        '''
+        result = [] #stores answer
+        curr_line = [] #the current line
+        num_letters = 0 #calculate letters to be put on this line
+        
+        for word in words:
+            #the total number of chars in curr_line _ total number of hcars in word + total number of words
+            #i.e if we cant fit the next word, we need to justify
+            if num_letters + len(word) + len(curr_line) > maxWidth:
+                #we need to adjust
+                #size will be used for round robbing
+                #use max 1, because at least one word would be there
+                size = max(1,len(curr_line)-1)
+                
+                for i in range(maxWidth - num_letters):
+                    #add space to this word at this line
+                    index = i % size
+                    curr_line[index] += ' '
+                
+                #add curr line to ans and reset
+                result.append("".join(curr_line))
+                curr_line = []
+                num_letters = 0
+            
+            #otherwise add word to current line
+            curr_line.append(word)
+            num_letters += len(word)
+        
+        #last line, we need to left justifty
+        curr_line = " ".join(curr_line).ljust(maxWidth)
+        result.append(curr_line)
+        return result
