@@ -1485,3 +1485,58 @@ class SparseVector:
 # v1 = SparseVector(nums1)
 # v2 = SparseVector(nums2)
 # ans = v1.dotProduct(v2)
+
+################################
+# 539. Minimum Time Difference
+# 17AUG22
+################################
+#close one
+class Solution:
+    def findMinDifference(self, timePoints: List[str]) -> int:
+        '''
+        convert the string to minuts past 0, then sort
+        first take the min difference between adjacent intervals
+        but don't forget to do the ends wit the beginning
+        edge case 00:00 must be set to 1440
+        '''
+        times = []
+        for t in timePoints:
+            if t == "00:00":
+                times.append(1440)
+            else:
+                total_mins = 0
+                hr,mins = t.split(":")
+                total_mins += int(hr)*60 + int(mins)
+                times.append(total_mins)
+        
+        times.sort()
+        return min(times[1] - times[0],times[-1] - times[-2])
+
+#what the fuck?!?!?
+class Solution:
+    def findMinDifference(self, timePoints: List[str]) -> int:
+        '''
+        convert the string to minuts past 0, then sort
+        first take the min difference between adjacent intervals
+        but don't forget to do the ends wit the beginning
+        edge case 00:00 must be set to 1440
+        '''
+        times = []
+        for t in timePoints:
+            if t == '00:00':
+                times.append(24*60)
+            else:
+                total_mins = 0
+                hr,mins = t.split(":")
+                total_mins += int(hr)*60 + int(mins)
+                times.append(total_mins)
+        
+        times.sort()
+        ans = float('inf')
+        for i in range(1,len(times)):
+            ans = min(ans, times[i] - times[i-1])
+        
+        #one more final one
+        #minutes from mindnight, plus the first time
+        ans = min(ans,60*24 - times[-1] + times[0])
+        return ans
