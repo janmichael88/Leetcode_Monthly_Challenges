@@ -1223,3 +1223,265 @@ class Solution:
         curr_line = " ".join(curr_line).ljust(maxWidth)
         result.append(curr_line)
         return result
+
+########################
+# 796. Rotate String
+# 16AUG22
+########################
+class Solution:
+    def rotateString(self, s: str, goal: str) -> bool:
+        '''
+        if i simulate shifting, for all possible shifts
+        i can use q to simulate in O(1) time
+        '''
+        s = list(s)
+        q = deque(s)
+        N = len(s)
+        count = 0
+        
+        while count < N:
+            temp = "".join(q)
+            print(temp)
+
+            if temp == goal:
+                return True
+
+            q.append(q.popleft())
+            count += 1
+        
+        return False
+
+class Solution:
+    def rotateString(self, s: str, goal: str) -> bool:
+        '''
+        if we were to concate s with itselft
+        s+s, then we just need to ensure goal in in this substring
+        '''
+        return len(s) == len(goal) and goal in s+s
+
+#rolling hash
+class Solution:
+    def rotateString(self, s: str, goal: str) -> bool:
+        '''
+        our goal is to check whether goal is a substring of s + s
+        we can use a rolling hash to solve this questions
+        idea behind hashing:
+            hash(a substinrg of s + s) is uniformly distributed between [0,1,2...mod-1]
+            and of hash(substring of s) == hash(goal), it is very liekly to be a match
+        
+        recall pow(x,y,z) == x**y mod z
+        
+        first step, get hash of both s and goal then check
+        otherwise we need to go through s again update hash and and check if it matches goal
+        
+        another way would have been to contacte s and then use rolling hash with that
+
+        '''
+        mod = 10**9 + 7
+        prime = 113 #use large prime
+        pinv = pow(prime,mod-2,mod)
+        
+        hash_goal = 0
+        power = 1
+        for ch in goal:
+            code = ord(ch) - ord('a')
+            hash_goal = (hash_goal + power*code) % mod
+            power = power*prime % mod
+        
+        hash_s = 0
+        power = 1
+        for ch in s:
+            code = ord(ch) - ord('a')
+            hash_s += (power*code) % mod
+            power *= prime % mod
+        
+        if hash_s == hash_goal and s == goal:
+            return True
+        
+        for i,ch in enumerate(s):
+            code = ord(ch) - ord('a')
+            hash_s += power*code
+            hash_s -= code
+            hash_s *= pinv
+            hash_s %= mod
+            if hash_s == hash_goal and s[i+1:] + s[:i+1] == goal:
+                return True
+        
+        return False
+
+#kmp
+class Solution:
+    def rotateString(self, s: str, goal: str) -> bool:
+        '''
+        using kmp
+        remember we have degenerated the problem of finding goal in s+s
+        https://web.stanford.edu/class/cs97si/10-string-algorithms.pdf
+        https://www.youtube.com/watch?v=JoF0Z7nVSrA&ab_channel=NeetCode
+        lps, longest prefix also a suffic, that is not the length of the current prefix
+        '''
+        if len(s) != len(goal):
+            return False
+        if len(s) == 0:
+            return True
+        
+        #make strings 1 index
+        N = len(s)
+        s = ' '+s+s
+        goal = ' '+goal
+
+        #caclualte the pi table, i.e longest prefix also a suffic
+        pi = [0]*(N+1)
+        left = -1
+        pi[0] = -1
+        
+        for right in range(1,N+1):
+            while left >= 0 and goal[left+1] != goal[right]:
+                left = pi[left] #recurse
+                #pi[i] answers the question, what it the longest prefix in goal[i] that is also a suffix
+            left += 1
+            pi[right] = left
+            
+        #matching part
+        j = 0
+        for i in range(1,(2*N)+1):
+            #try to match, and when we can't we need to advance our pointer
+            while j >= 0 and goal[j+1] != s[i]:
+                j = pi[j]
+            j += 1
+            if j == N:
+                return True
+        return False
+        
+
+#############################
+# 800. Similar RGB Color 
+# 16AUG22
+#############################
+class Solution:
+    def similarRGB(self, color: str) -> str:
+        '''
+        this is hex
+        can be [0-9,a-f]
+        which is base 16
+        
+        instead of minimzing the squred differnces, we can minimuze the absolute value, 
+        this still gives us the same orerder
+        
+        first find the length 2 pairs [00,11,22....ff]
+        then break apart color in 3 pairs of two
+        caluclate the absolutdifference, and get the minimum
+        '''
+        
+        #function to get closest for a len 2 code
+        def closest(code):
+            possible = ['00', '11', '22', '33', '44', '55', '66', '77', '88', '99', 'aa', 'bb', 'cc', 'dd', 'ee', 'ff']
+            sims = []
+            
+            #get all possible scores
+            for cand in possible:
+                score = abs(int(code,16) - int(cand,16))
+                sims.append((score,cand))
+                
+            #find closest one, through sorting
+            sims.sort(key = lambda x: x[0])
+            return sims[0][1]
+        
+        ans = "#"
+        for i in range(1,len(color),2):
+            ans+= closest(color[i:i+2])
+        
+        return ans
+
+##########################################
+# 1570. Dot Product of Two Sparse Vectors
+# 17AUG22
+##########################################
+#lazy implementation works
+class SparseVector:
+    def __init__(self, nums: List[int]):
+        self.nums = nums
+        
+
+    # Return the dotProduct of two sparse vectors
+    def dotProduct(self, vec: 'SparseVector') -> int:
+        N = len(self.nums)
+        v1 = self.nums
+        v2 = vec.nums
+        ans = 0
+        for a,b in zip(v1,v2):
+            ans += a*b
+        return ans
+            
+# Your SparseVector object will be instantiated and called as such:
+# v1 = SparseVector(nums1)
+# v2 = SparseVector(nums2)
+# ans = v1.dotProduct(v2)
+
+#still slow???
+class SparseVector:
+    def __init__(self, nums: List[int]):
+        self.sparse = {}
+        self.size = len(nums)
+        for i,num in enumerate(nums):
+            if num:
+                self.sparse[i] = num
+        
+
+    # Return the dotProduct of two sparse vectors
+    def dotProduct(self, vec: 'SparseVector') -> int:
+        N = self.size
+        v1 = self.sparse
+        v2 = vec.sparse
+        ans = 0
+        #just take one, it doesn't matter anyway if there is a zero
+        for i, num in v1.items():
+            if i in v2:
+                ans += num*v2[i]
+        
+        return ans
+        
+
+# Your SparseVector object will be instantiated and called as such:
+# v1 = SparseVector(nums1)
+# v2 = SparseVector(nums2)
+# ans = v1.dotProduct(v2)
+
+class SparseVector:
+    def __init__(self, nums: List[int]):
+        '''
+        we can repsresent the array is tuple pairs (index,num)
+        then we can use two pointers to pass them pait
+        also note the time complexity of the hashing function as well
+        and priotrize looping over the sparse vector who's length of non zero values is shorter
+        
+        '''
+        self.pairs = []
+        for i,num in enumerate(nums):
+            if num != 0:
+                self.pairs.append((i,num))
+        
+
+    # Return the dotProduct of two sparse vectors
+    def dotProduct(self, vec: 'SparseVector') -> int:
+        ans = 0
+        i = 0
+        j = 0
+        #i into first, j into second
+        while i < len(self.pairs) and j < len(vec.pairs):
+            if self.pairs[i][0] == vec.pairs[j][0]:
+                ans += self.pairs[i][1]*vec.pairs[j][1]
+                i += 1
+                j += 1
+            #always advance the lagging pointer to catch up
+            elif self.pairs[i][0] < vec.pairs[j][0]:
+                i += 1
+            else:
+                j += 1
+        
+        return ans
+        
+
+# Your SparseVector object will be instantiated and called as such:
+# v1 = SparseVector(nums1)
+# v2 = SparseVector(nums2)
+# ans = v1.dotProduct(v2)
