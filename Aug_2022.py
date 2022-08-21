@@ -1540,3 +1540,205 @@ class Solution:
         #minutes from mindnight, plus the first time
         ans = min(ans,60*24 - times[-1] + times[0])
         return ans
+
+################################################
+# 659. Split Array into Consecutive Subsequences
+# 18AUG22
+################################################
+#close one, 160/187
+#donest quite pass all the cases
+class SubSeq:
+    def __init__(self,start,end,size):
+        #class to store elements in subsequence
+        self.start = start
+        self.end = end
+        self.size = size
+    
+    #comparator
+    def __lt__(self,nxt):
+        #increasing end and increasing size
+        if self.end < nxt.end and self.size < nxt.size:
+            return self.end
+        elif self.end < nxt.end and self.size > nxt.size:
+            return nxt.end
+        else:
+            return self.end
+class Solution:
+    def isPossible(self, nums: List[int]) -> bool:
+        '''
+        we are given a non-decreasing order array
+        we need to determine if it is possible to split nums into one or more subsequences such that:
+            1. each subsequence is a consectuvie increasing sequence (one more than the other)
+            2. all subsequences have length of 3 or more
+            
+        using repeated numbers could not possibly make a subsequence
+        i need to use all the nums, but the order can be shifted around (must maintain relative ordering)
+        
+        intuition:
+            if we have x subsequences, then we simply need to add nums[i] to the right xth subsequence
+            or make a new onw
+            
+            example, in the case there are no repeated numbers
+            [1,2,3,5,6,8,9,10]
+            [1,2,3] [5,6] [8,9,10]
+            
+        we don't need to store all the subsequences, just [first num,last num] in the subsequence onto a heap, and the size of the subsequnce can be deduced
+        [last - first + 1]
+        if we are at nums[i], we need to decide where to put it, greedily add it to the subsequence who's last elements i exactly one less (max heap by last element)
+        [0,1,1,2,2,3]
+        we need to do [0,1,2], [1,2,3]
+            if the last element is the same for two or more subsequences, sort subsenqce on increasing order of their size
+            
+        heap invariant
+            Increasing order of their last element.
+            When the subsequences' last elements are equal, then the two subsequences will be placed in increasing order of length.
+            
+        for each element nums[i] we compare nums[i] with the last element heap[0][1] of the existing subsequence
+        1. nums[i] > last + 1, nums[i] cannot be part of this subsequence, so we rmeot this subseqeunce from the heap and compare to the next one
+        2. nums[i] == last (or heap is empty), nums[i] cannot be part here either
+            since we stored subsequences by increasing order of last element, there will be no other subseqneces in the heap to append to, so we must create a new subseqnece here
+        3. nums[i] == last + 1, add this to that subequence
+        
+
+        '''
+        heap = []
+        for num in nums:
+            #condition 1, remove non qualifying subsequences
+            while len(heap) != 0 and heap[0].end + 1 < num:
+                curr_subseq = heapq.heappop(heap)
+                #check for size requiremnt
+                if curr_subseq.size  < 3:
+                    print(heap)
+                    return False
+            
+            #condition 2, new subsequence
+            if len(heap) == 0 or heap[0].end == num:
+                sub_seq = SubSeq(num,num,1)
+                heapq.heappush(heap,sub_seq)
+            else:
+                #condition three, add to an existing subseqnece
+                curr_subseq = heapq.heappop(heap)
+                sub_seq = SubSeq(curr_subseq.start,num,curr_subseq.size+1)
+                heapq.heappush(heap,sub_seq)
+        
+        while heap:
+            curr_subseq = heapq.heappop(heap)
+            if curr_subseq.size < 3:
+                return False
+        
+        return True
+
+class Solution:
+    def isPossible(self, nums: List[int]) -> bool:
+        '''
+        the easier to way is to implement using hash map
+        
+        '''
+        #map needed val to heap of len(lists)
+        #we want to estend the shortest list of that needed val first
+        ending_num_to_length = defaultdict(list)
+        
+        for num in nums:
+            #look for last possible ending num
+            if num - 1 in ending_num_to_length and len(ending_num_to_length[num-1]) != 0:
+                #add to shorest one
+                prev_length = heapq.heappop(ending_num_to_length[num-1])
+                heapq.heappush(ending_num_to_length[num],prev_length+1)
+            else:
+                #make new entry
+                heapq.heappush(ending_num_to_length[num],1)
+                
+        #check all
+        for lengths in ending_num_to_length.values():
+            if lengths and any([l < 3 for l in lengths]):
+                return False
+        return True
+
+#another way
+class Solution:
+    def isPossible(self, nums: List[int]) -> bool:
+        subsequences = []
+        
+        for num in nums:
+            while subsequences and subsequences[0][0] + 1 < num:
+                sub = heapq.heappop(subsequences)
+                if sub[1] < 3:
+                    return False
+            
+            if not subsequences or subsequences[0][0] == num:
+                heapq.heappush(subsequences, [num, 1]) # end, len
+            else:
+                # Pop and push to maintain order
+                sub = heapq.heappop(subsequences)
+                sub[0] += 1
+                sub[1] += 1
+                heapq.heappush(subsequences, sub)
+                
+        while subsequences:
+            sub = heapq.heappop(subsequences)
+            if sub[1] < 3:
+                return False
+            
+        return True
+
+#greedy using maps
+class Solution:
+    def isPossible(self, nums: List[int]) -> bool:
+        '''
+        now lets try saying that for each element nums[i], we will try to see if is it possible to form a valid subsequence with the reamining elements
+        i.e if we can start of build a subsequence using nums[i]
+        while creating a new subsequence with nums[i] as the starting element, we will check if a vlid subseuence is possible or not with nums[i] as the starting element
+        for nums[i] to be valid, we need at least nums[i] + 1 and nums[i] + 2 in the array (hashmap!!)
+        we can count and make sure they are avilable
+        
+        what if we ant to add nums[i] to one of the existing subequences?
+            when we create a new subseuqnece using nums[i] we ensur that a valid subsequence is possible
+            so we dont need a heap to record the length of sort the subsequences
+            for adding nums[i] to an esiting subseuence we only need to know if such a subequecne exsists == nums[i] - 1 (seen hash set)
+            
+        we just need to store the last element in the subseuence in a set when a subsequence is modified
+        this way if we want to add nums[i] to an exisiting subsequence, we can just check if nums[i] - 1 exists in the set
+        why is a set enough? because we can get the answer in o(1) time
+        if there is more than one subsequence with the same last element, 
+        we can use another count mapp to store the frequency
+        
+        algo:
+        1. init two mapps, one to store the inital counts and the other that store the counts of for subsequences ending with num
+        2. iterate over the nums array and update the frequency map
+            * if the frequency of the current element is 0, that means the num is already consider to be a part of a valid subsequence, continue
+            * check if we can add this current num to an existing subsequence, so we check for nums - 1 in mapp
+                if there exists an entry we can add numt to one of them
+                if no such subseuecne exists, we need to create a new one
+                    before doing so, we need to check if nums + 1 and nums + 2 exists
+                    if the don't its not possbile and reutnr false
+                    otherwise make the changes
+        '''
+        counts = Counter(nums)
+        count_subseqs_ending = Counter()
+        
+        for num in nums:
+            #num already in use
+            if counts[num] == 0:
+                continue
+            
+            #if valid subseq exsits with last elemnt num - 1, we ensure this a valid to being with because of the third rule
+            if count_subseqs_ending[num-1] > 0:
+                #get the current count
+                curr_count = count_subseqs_ending[num-1]
+                # consumer it
+                count_subseqs_ending[num-1] = curr_count - 1
+                #new count ending
+                count_subseqs_ending[num] += 1
+            #if we want to start a new subsequence, chec for num+1 and num+2 and update
+            elif (counts[num+1] > 0) and (counts[num+2] > 0):
+                count_subseqs_ending[num+2] += 1
+                #consume
+                counts[num+1] -= 1
+                counts[num+2] -= 1
+            else:
+                return False
+            
+            counts[num] -= 1
+        
+        return True
+        
