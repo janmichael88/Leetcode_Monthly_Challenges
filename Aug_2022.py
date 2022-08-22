@@ -1741,4 +1741,54 @@ class Solution:
             counts[num] -= 1
         
         return True
+
+#################################
+# 871. Minimum Number of Refueling Stops (REVISITED)
+# 21AUG22
+#################################
+#this is just 0/1 knapsack
+class Solution:
+    def minRefuelStops(self, target: int, startFuel: int, stations: List[List[int]]) -> int:
+        '''
+        this is a 0/1 knapsack problem
+        we let dp(i,j) represent the max fuel we can get when we are at station i and have used j fuel stops
         
+        base cases
+        when (i,j) == (0,0), there is no fuel or stops to be used, return -
+        #if j isn't between 1 and i, return a really larger negative number
+        '''
+        #add start and end conditions to statinos array
+        stations = [[0, startFuel]] + stations + [[target, 0]]
+        
+        # dp(i, j) = maximum amount of fuel we can get when we are at station i and we have used j fuel stops (i not included)
+        
+        # j should be between [1, i]
+        memo = {}
+        def dp(i, j):
+            if i == 0 and j == 0:
+                return 0
+            if not (1 <= j <= i):
+                return float("-inf")
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #take, we need to used up fuel from i-1 to i
+            ans1 = dp(i-1, j) - (stations[i][0]-stations[i-1][0])
+            # don'\ take, we gain fuel from i-1 to i
+            ans2 = dp(i-1, j-1) - (stations[i][0]-stations[i-1][0]) + stations[i-1][1]
+            
+            #check of edge condtions when taking previous subproblems
+            ans = max(ans1, ans2)
+            if ans < 0:
+                ans = float('-inf')
+                memo[(i,j)] = ans
+                return ans
+            else:
+                memo[(i,j)] = ans
+                return ans
+        
+        for j in range(len(stations)):
+            if dp(len(stations)-1, j) >= 0:
+                return j-1  # we return j-1 since first stop (we added the starting point) is mandatory and hence should be removed from final solution 
+            
+        return -1
