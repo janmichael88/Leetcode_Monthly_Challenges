@@ -1792,3 +1792,54 @@ class Solution:
                 return j-1  # we return j-1 since first stop (we added the starting point) is mandatory and hence should be removed from final solution 
             
         return -1
+
+################################
+# 936. Stamping The Sequence (Revisited)
+# 21AUG22
+#################################
+#https://leetcode.com/problems/stamping-the-sequence/discuss/189576/C%2B%2B-simple-greedy
+class Solution:
+    def movesToStamp(self, stamp: str, target: str) -> List[int]:
+        '''
+        recall we want to convert s to target using at most 10*len(target) turns
+        it easier if we were to start from the target
+        say we have target: 'aabccbc'
+        and stamp 'abc'
+        
+        first we try to find subtring abs, and repalce with wildecard
+        after there are no more replacements, we wil try '*bc' and 'ab*' turn by turn
+        
+        idea leads to greedy solution that produces the minimum number of stamps
+        '''
+        res = []
+        cnt = 0
+        #helper function to turn go backwards from current target to wildcarding with temp
+        def f(cnt, target): 
+            for i in range(len(stamp)): 
+                for j in range(i + 1): 
+                    stp = '*' * j + stamp[j: len(stamp) - (i - j)] + (i - j) * '*'
+                    #using walrus operator to help with loop initialization
+                    #could also put k here
+                    #k = target.find(strp)
+                    while (k := target.find(stp)) > -1: 
+                        res.append(k)
+                        target = target[:k] + '*' * len(stamp) + target[k + len(stamp):]
+                        #incremant count for stamp use, each letter replacement counts as a turn
+                        #we are counting the number of times we replaced it with a '*'
+                        cnt += len(stamp) - i
+                        print(k, stp, target,cnt)
+                        #change it again
+                        #k = target.find(stp)
+            return cnt, target
+        
+        while True: 
+            #simulate to try and replace
+            cnt1, target1 = f(cnt, target)
+            #if we couldn't replace it
+            if cnt1 == cnt: 
+                break
+            #reassign
+            cnt = cnt1
+            target = target1
+        #print(target)
+        return res[::-1] if cnt == len(target) else [] #chck if all characters are converted
