@@ -1843,3 +1843,103 @@ class Solution:
             target = target1
         #print(target)
         return res[::-1] if cnt == len(target) else [] #chck if all characters are converted
+
+###############################
+# 562. Longest Line of Consecutive One in Matrix
+# 22AUG22
+###############################
+class Solution:
+    def longestLine(self, mat: List[List[int]]) -> int:
+        '''
+        i really only need to check row,col,diags going down diagnoally
+        just check all rows, cols, diags, and anti diags for streaks
+        for checking diags and anti diags, use hashamp
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        
+        diags = defaultdict(list)
+        anti_diags = defaultdict(list)
+        
+        
+        for i in range(rows):
+            for j in range(cols):
+                diags[i-j].append(mat[i][j])
+                anti_diags[i+j].append(mat[i][j])
+        
+        longest_line = 0
+        
+        #check rows
+        for row in mat:
+            streak = 0
+            for num in row:
+                if num == 1:
+                    streak += 1
+                    longest_line = max(longest_line,streak)
+                else:
+                    streak = 0
+        
+        #check cols
+        for c in range(cols):
+            streak = 0
+            for r in range(rows):
+                if mat[r][c] == 1:
+                    streak += 1
+                    longest_line = max(longest_line,streak)
+                else:
+                    streak = 0
+        
+        #check diags
+        for diag in diags.values():
+            streak = 0
+            for num in diag:
+                if num == 1:
+                    streak += 1
+                    longest_line = max(longest_line,streak)
+                else:
+                    streak = 0
+        
+        #check anti-diags
+        for diag in anti_diags.values():
+            streak = 0
+            for num in diag:
+                if num == 1:
+                    streak += 1
+                    longest_line = max(longest_line,streak)
+                else:
+                    streak = 0
+        return longest_line
+
+#using dp
+class Solution:
+    def longestLine(self, mat: List[List[int]]) -> int:
+        '''
+        we can use dp
+        make memo for rows, cols, diags, and anti diags
+        then update each
+        each dp represetns the longest streak going in that direction
+        then add 1 to each as we traverse if there is a one
+        '''
+        rows = defaultdict(int)
+        cols = defaultdict(int)
+        dds = defaultdict(int)
+        ads = defaultdict(int)
+        
+        longest_line = 0
+        M = len(mat)
+        N = len(mat[0])
+        
+        for i in range(M):
+            for j in range(N):
+                if mat[i][j] == 0:
+                    #reset
+                    rows[i] = cols[j] = ads[j+i] = dds[j-i] = 0
+                else:
+                    #update
+                    rows[i] += 1
+                    cols[j] += 1
+                    ads[j + i] += 1
+                    dds[j - i] += 1
+                    longest_line = max(longest_line, rows[i], cols[j], ads[j+i], dds[j-i])
+        
+        return longest_line
