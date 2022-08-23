@@ -1943,3 +1943,19 @@ class Solution:
                     longest_line = max(longest_line, rows[i], cols[j], ads[j+i], dds[j-i])
         
         return longest_line
+
+############################
+# 342. Power of Four (Revisited)
+# 22AUG22
+############################
+class Solution:
+    def isPowerOfFour(self, num: int) -> bool:
+        '''
+        recall to find power of two,
+        n > 0 and n & (n-1) == 0
+        
+        if we look at the binary rep for powers of 4, the bits are set at even positions
+        if we do bitwise & with (101010....)_2, a power of 4 wouuld give zero
+        so we just check is power of 2 and bitwise and with 0xaaaaaaaa 
+        '''
+        return num > 0 and num & (num-1) == 0 and num & (0xaaaaaaaa) == 0
