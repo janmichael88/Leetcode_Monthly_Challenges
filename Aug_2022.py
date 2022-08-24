@@ -1959,3 +1959,176 @@ class Solution:
         so we just check is power of 2 and bitwise and with 0xaaaaaaaa 
         '''
         return num > 0 and num & (num-1) == 0 and num & (0xaaaaaaaa) == 0
+
+########################
+# 234. Palindrome Linked List (REVISITED)
+# 23AUG22
+########################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def isPalindrome(self, head: Optional[ListNode]) -> bool:
+        '''
+        if we want to print nodes in reverse recursively
+        #funtion to print recursively
+        def rec_print_rev(node):
+            if node:
+                rec_print_rev(node.next)
+                print(node.val)
+                
+        rec_print_rev(head)
+        
+        notice in the algorithm we keep advancine until we  hit the last node
+        where it finally prints
+        
+        algorithm
+            * when given the head node (or another node) referred to a currnode, we first check the rest of the LL
+            * if it discovers further down that the LL is not a palindomr, return false
+            * otherwise move front pointer by 1 and return true
+        '''
+        self.front = head
+        
+        #the function return true whwether or not if the LL is a palindrom from this node
+        def rec_check(node):
+            if node:
+                #first check progress so far
+                if not rec_check(node.next):
+                    return False
+                #check
+                if self.front.val != node.val:
+                    return False
+                #advance
+                self.front = self.front.next
+            
+            return True
+        
+        return rec_check(head)
+            
+###################################################
+# 549. Binary Tree Longest Consecutive Sequence II (REVISITED)
+# 23AUG22
+###################################################
+#close one
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        '''
+        return the length of the longest consecutive path in the tree
+        the path and be in the child-parent-child order
+        
+        i can build the graph from a Tree in O(N) time, this would be an undirected graph
+        degenerate the question to:
+            in an undirected graph,  find the length of the longest consecutive path
+            
+        '''
+        graph = defaultdict(list)
+        
+        def dfs(node,parent=None):
+            if not node:
+                return
+            if parent:
+                graph[parent].append(node)
+                graph[node].append(parent)
+            
+            dfs(node.left,node)
+            dfs(node.right,node)
+        
+        dfs(root)
+        global_seen = set([root])
+        q = deque([(root,1)])
+        longest_path = 1
+        
+        while q:
+            #to keep track at this level
+            local_seen = set()
+            #current size of frontier
+            N = len(q)
+            for _ in range(N):
+                curr_node,path_size = q.popleft()
+                #maximize
+                longest_path = max(longest_path,path_size)
+                #neighbor search
+                for neigh in graph[curr_node]:
+                    #seen updates
+                    if neigh not in global_seen:
+                        if neigh not in local_seen:
+                            #must be increasing
+                            if neigh.val == curr_node.val + 1:
+                                q.append((neigh,path_size+1))
+                                local_seen.add(neigh)
+            #global update
+            global_seen.update(local_seen)
+        
+        return longest_path
+                                
+#using dp
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestConsecutive(self, root: Optional[TreeNode]) -> int:
+        '''
+        imagine we had a function longest(node)
+            which returns an array [inc,dec], where inc is the length of the longest increainsg path below node
+            and dec is the length of the longest decreasing path below node
+            trivial this is [1,1] for a leaf node (or for any node that matter)
+            
+        then we can obtain longest path for left child
+            longest(node.left)
+                if the child's value is one less than the current node, it forms a decreasing sequences with the current node
+                so the dec value for the current node is sortes as the left childs dec value + 1 (because we can extend this decreasing sequence)
+                but if the left child's value is 1 greater,than this forms in increasing sequence with the current node
+                so we update the inc value + 1
+            we do the same for the right
+                BUT: for obtaining the inc and ec value for the current node, we need to consider the maximum value out of the two values obtained from left and right for both the inc and dec
+                
+            further, after we've obtained the final update values of inc and dec, we update the lenght of the longst consective path
+        
+        notes top down, global update solution
+        '''
+        self.ans = 0
+        
+        def dp(node):
+            if not node:
+                return [0,0]
+            #alwasy have at least one node in the sequence for a node
+            inc = 1
+            dec = 1
+            
+            #left side
+            if node.left:
+                left = dp(node.left)
+                #decreasing from above
+                if node.val == node.left.val + 1:
+                    dec = left[1] + 1
+                #inceasing
+                elif node.val == node.left.val - 1:
+                    inc = left[0] + 1
+            
+            #right side
+            if node.right:
+                right = dp(node.right)
+                #decreasing from above
+                if node.val == node.right.val + 1:
+                    dec = max(dec,right[1] + 1)
+                elif node.val == node.right.val - 1:
+                    inc = max(inc,right[0]+1)
+            
+            #global update
+            self.ans = max(self.ans, inc+dec-1)
+            return [inc,dec]
+
+        
+        dp(root)
+        return self.ans
