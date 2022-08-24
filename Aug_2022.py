@@ -2394,3 +2394,44 @@ class SparseVector:
 # v1 = SparseVector(nums1)
 # v2 = SparseVector(nums2)
 # ans = v1.dotProduct(v2)
+
+###########################
+# 326. Power of Three (REVISTED)
+# 24AUG22
+############################
+class Solution:
+    def isPowerOfThree(self, n: int) -> bool:
+        '''
+        we can conver the number to base 3 and check leading 'bit' is 1, whil the rest are 0
+        exmaple
+        27:
+            1*3**3 + 0*3**2 + 0*3**1 + 0*3**0
+        base three conversion:
+            \sum_{i=0}^{len(s)-1} s[i]*3**i
+        '''
+        if n <= 0:
+            return False
+        
+        def numberToBase(n, b):
+            if n == 0:
+                return [0]
+            digits = []
+            while n:
+                digits.append(int(n % b))
+                n //= b
+            return digits[::-1]
+        
+        bits = numberToBase(n,3)
+        if bits[0] != 1:
+            return False
+        for bit in bits[1:]:
+            if bit != 0:
+                return False
+        return True
+
+class Solution:
+    def isPowerOfThree(self, n: int) -> bool:
+        '''
+        The positive divisors of 3**19 are exactly the powers of 3 from 30 to 319. That's all powers of 3 in the possible range here (signed 32-bit integer). So just check whether the number is positive and whether it divides 319.
+        '''
+        return n > 0 and 3**19 % n == 0
