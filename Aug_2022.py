@@ -2435,3 +2435,319 @@ class Solution:
         The positive divisors of 3**19 are exactly the powers of 3 from 30 to 319. That's all powers of 3 in the possible range here (signed 32-bit integer). So just check whether the number is positive and whether it divides 319.
         '''
         return n > 0 and 3**19 % n == 0
+
+############################
+# 806. Number of Lines To Write String
+# 24AUG22
+#############################
+class Solution:
+    def numberOfLines(self, widths: List[int], s: str) -> List[int]:
+        '''
+        we need to write as many as line as we can such that we write all of s
+        widths will always be length 26, and tells us how many pixels wide a char is
+        a = widths[0]
+        b = widths[1]
+        
+        we are limited to using 100 pixels on a line
+        simulate, record each pixel usage on each line
+        
+        '''
+        lines = [] 
+        curr_size = 0
+        for ch in s:
+            #get index into widths
+            idx = ord(ch) - ord('a')
+            #add to curr size if we can
+            if curr_size + widths[idx] <= 100:
+                curr_size += widths[idx]
+            #otherrwise we can't reset and add to lines
+            else:
+                lines.append(curr_size)
+                curr_size = widths[idx]
+        
+        return [len(lines)+1,curr_size]
+
+###################################
+# 807. Max Increase to Keep City Skyline
+# 25AUG22
+###################################
+class Solution:
+    def maxIncreaseKeepingSkyline(self, grid: List[List[int]]) -> int:
+        '''
+        we want to the max total sum we can increase the grid without changing the skyline from any cardinal direction
+        i need a fast way to check each of the cardinal directions' skyline when i update a height
+        i can use montonic stack to find the skyline for each cardinal direction initally
+        
+        the skyline looking from top for each col:
+            col_maxes = [max(col0),max(col1)....]
+        the skyline looking from the left would be L
+            row_maxes = [max(row0),max(row1)...]
+            
+        the skylines are essenciton the same north == south and east == west, except that they are reversed
+        
+        for each building grid[r][c]
+            we can safely raise it to the min(row_maxes[r],col_maxes[c]) without violating the skyline in each of the cardinaly directions
+            
+        '''
+        N = len(grid)
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        row_maxes = [0]*N
+        col_maxes = [0]*N
+        
+        for r in range(rows):
+            for c in range(cols):
+                #find max facing front
+                row_maxes[r] = max(row_maxes[r],grid[r][c])
+                col_maxes[c] = max(col_maxes[c],grid[r][c])
+                
+        ans = 0
+        for r in range(rows):
+            for c in range(cols):
+                ans += min(row_maxes[r],col_maxes[c]) - grid[r][c]
+        
+        return ans
+        
+
+################################
+# 869. Reordered Power of 2 (REVISITED)
+# 26AUG22
+################################
+class Solution:
+    def reorderedPowerOf2(self, n: int) -> bool:
+        '''
+        we want to reorder the digits of n, such that the leading digit is not zero
+        return true of any of the reorderings is a power of two
+        
+        function to generate all possible reording of digits
+        biggest digit is 10**9, where we have at most 10 possible digits
+        '''
+        #first generate powers of two
+        powers_of_two = set()
+        start = 1
+        while start < 10**9:
+            powers_of_two.add(start)
+            start *= 2
+        
+        #function that generates all permutations of a number n
+        def perms(elements):
+            if len(elements) <= 1:
+                return elements
+            ans = []
+            for perm in perms(elements[1:]):
+                for i in range(len(elements)):
+                    temp = perm[:i] + elements[:1] + perm[i:]
+                    ans.append(temp)
+            return ans
+        
+        #check
+        for num in perms(str(n)):
+            #check leading digit
+            if num[0] == '0':
+                continue
+            if int(num) in powers_of_two:
+                return True
+        
+        return False
+
+#optimzing checking power of 2
+class Solution:
+    def reorderedPowerOf2(self, n: int) -> bool:
+        '''
+        we can check a numebr if power of two by checking num and num -1 == 0
+        '''
+
+        #function that generates all permutations of a number n
+        def perms(elements):
+            if len(elements) <= 1:
+                return elements
+            ans = []
+            for perm in perms(elements[1:]):
+                for i in range(len(elements)):
+                    temp = perm[:i] + elements[:1] + perm[i:]
+                    ans.append(temp)
+            return ans
+        
+        #check
+        for num in perms(str(n)):
+            #check leading digit
+            if num[0] == '0':
+                continue
+            num = int(num)
+            if num & num - 1 == 0:
+                return True
+        return False
+            
+class Solution:
+    def reorderedPowerOf2(self, n: int) -> bool:
+        '''
+        we can generate all powers of 2 up to 10**9,
+        then we just compare count objects of the digits
+        '''
+        counts = Counter(str(n))
+        start = 1
+        
+        while start < 10**9:
+            count_candidate = Counter(str(start))
+            if count_candidate == counts:
+                return True
+            start *= 2
+        
+        return False
+
+##############################
+# 444. Sequence Reconstruction 
+# 28AUG22
+###############################
+#top sort
+class Solution:
+    def sequenceReconstruction(self, nums: List[int], sequences: List[List[int]]) -> bool:
+        '''
+        we are givne an array nums len(nums) which is a permutation of intergerts in ragne [1,n]
+        in sequences, each s in sequences is a SUBSEQUENCE of nums
+        
+        we want to check if nums is the shortest possible and the only supersequence
+        the shortest supsersequence is a sequence with the shortest length and has all sequences[i] as subseequences
+        there could be muiltiple valid supersequences, we watnt he shortest and only
+        
+        evidently this is top sort problem????
+         
+        constructor the adjaceny list using seqs
+        then try top sotring on the graph
+            during each step, check whether there is only one option to select the node
+            if there is more thna one option, return False
+        
+        after getting the top sort node list, check whether its lengths is the same with thnumber of distinct values and whether it's the same with nums
+        additional notes:
+        Whenever you see a question with partial ordering (a > b, c >d), you should immediately wonder if topological sort can find a mapping to satisfy that ordering.
+We want a single possible topological sort. So let's check if we have more than one option at every step.
+For a BFS Tpological sort, this means the queue should never have more than one option since more than one option ==> more than one ordering.
+Check if the topological sort you are generating matches the one expected in org.
+Do a bunch of crappy validation in the middle because the input test cases can be entirely nonsensical :(
+
+        '''
+        #hash set for values
+        values = {x for seq in sequences for x in seq}
+        #graph
+        adj_list = {x: [] for x in values}
+        #store in degrees
+        indegree = {x:0 for x in values}
+        
+        #build
+        for seq in sequences:
+            for i in range(len(seq)-1):
+                #make edges between consecutive num in each seq
+                u = seq[i]
+                v = seq[i+1]
+                #draw edge
+                adj_list[u].append(v)
+                #indegree
+                indegree[v] += 1
+        
+        q = deque([])
+        #start with nodes that have 0 as in degree
+        for node,count in indegree.items():
+            if count == 0:
+                q.append(node)
+        
+        res = []
+        while q:
+            #we can only add one at a time
+            if len(q) != 1:
+                return False
+            #we are really just finding the dependency chain
+            source = q.popleft()
+            #build the dependency chaing
+            res.append(source)
+            for neigh in adj_list[source]:
+                #use up an indegree
+                indegree[neigh] -= 1
+                #add in next one if 0
+                if indegree[neigh] == 0:
+                    q.append(neigh)
+        #check, after getting TS list, 
+        return len(res) == len(values) and res == nums
+
+#using stack, note pop for list is O(N) op, and deq is O(1)
+class Solution:
+    def sequenceReconstruction(self, org: List[int], seqs: List[List[int]]) -> bool:
+        values = {val for seq in seqs for val in seq}
+        graphs = {val:[] for val in values}
+        indegrees = {val:0 for val in values}
+        for seq in seqs:
+            for i in range(len(seq)-1):
+                s, t = seq[i], seq[i+1] # source, target
+                graphs[s].append(t)
+                indegrees[t] += 1
+        stack = []
+        for val, degree in indegrees.items():
+            if degree == 0:
+                stack.append(val)
+        res = []
+        while stack:
+            if len(stack) > 1: return False
+            s = stack.pop() # source
+            res.append(s)
+            for t in graphs[s]: # target
+                indegrees[t] -= 1
+                if indegrees[t] == 0:
+                    stack.append(t)
+        return len(res) == len(values) and res == org
+
+#another way
+#there should only be one unique ordering, if there isn't a unique ordring then nums is not the only shortest supsersequence
+class Solution(object):
+    def sequenceReconstruction(self, org, seqs):
+        """
+        :type org: List[int]
+        :type seqs: List[List[int]]
+        :rtype: bool
+        """
+        sortedOrder = []
+        if len(org) <= 0:
+            return False
+
+        # a. Initialize the graph
+        inDegree = {}                                       # count of incoming edges
+        graph = {}                                          # adjacency list graph
+        for seq in seqs:
+            for num in seq:
+                inDegree[num] = 0
+                graph[num] = []
+
+        # b. Build the graph
+        for seq in seqs:
+            for idx in range(0, len(seq) - 1):
+                parent, child = seq[idx], seq[idx + 1]
+                graph[parent].append(child)
+                inDegree[child] += 1
+
+        # if we don't have ordering rules for all the numbers we'll not able to uniquely construct the sequence
+        if len(inDegree) != len(org):
+            return False
+
+        # c. Find all sources i.e., all vertices with 0 in-degrees
+        sources = deque()
+        for key in inDegree:
+            if inDegree[key] == 0:
+                sources.append(key)
+
+        # d. For each source, add it to the sortedOrder and subtract one from all of its children's in-degrees
+        # if a child's in-degree becomes zero, add it to the sources queue
+        while sources:
+            if len(sources) > 1:
+                return False                                # more than one sources mean, there is more than one way to reconstruct the sequence
+            if org[len(sortedOrder)] != sources[0]:
+                return False                                # the next source(or number) is different from the original sequence
+
+            vertex = sources.popleft()
+            sortedOrder.append(vertex)
+            for child in graph[vertex]:                     # get the node's children to decrement their in-degrees
+                inDegree[child] -= 1
+                if inDegree[child] == 0:
+                    sources.append(child)
+
+        # if sortedOrder's size is not equal to original sequence's size, there is no unique way to construct
+        return len(sortedOrder) == len(org)
+
