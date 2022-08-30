@@ -2811,7 +2811,171 @@ class Solution:
                                 uf.union(i*cols + j, neigh_x*cols + j)
         
         return uf.count
-                            
+
+###########################
+# 505. The Maze II (REVISTED)
+# 29AUG22
+###########################
+#dfs gives TLE
+class Solution:
+    def shortestDistance(self, maze: List[List[int]], start: List[int], destination: List[int]) -> int:
+        '''
+        dfs but insted of advancing one step at a time, shoot the ball out using a while loop!
+        we also maintain a distance matrix dist
+        where dist[i][j] represents the minimum distance to get to (i,j) from the start
+        we dfs in all direcitons and update the minimum only if we can get there in a smaller dist[i][j] steps
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        #store distances
+        dist = [[float('inf')]*cols for _ in range(rows)]
+        #first
+        dist[start[0]][start[1]] = 0
+        dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dfs(x,y):
+            for dx,dy in dirs:
+                next_x = dx + x
+                next_y = dy + y
+                #step in each direction and count
+                steps = 0
+                while 0 <= next_x < rows and 0 <= next_y < cols and maze[next_x][next_y] == 0:
+                    next_x += dx
+                    next_y += dy
+                    steps += 1
+            
+                #update, if we got this position in a smaller number of steps
+                #minimze where we came from
+                if dist[x][y] + steps < dist[next_x-dx][next_y-dy]:
+                    dist[next_x-dx][next_y-dy] = dist[x][y] + steps
+                    dfs(next_x-dx,next_y-dy)
+        
+        dfs(start[0],start[1])
+        return dist[destination[0]][destination[1]] if dist[destination[0]][destination[1]] != float('inf') else -1
+
+#djikstras, this implementation TLE's we need to use heap
+class Solution:
+    def shortestDistance(self, maze: List[List[int]], start: List[int], destination: List[int]) -> int:
+        '''
+        review on Dijkstra's
+        algo:
+            1. assign a tentative distance value to every node, set it to zero for the start node, and infinity for all other nodes
+            2. set the start node as currnet node, and mark as visited
+            3. for the current node, consider all of its niehgts and calculate their distances
+                compare the newly calculated distance to the current assigned value and assign the smaller one to all th enighbords
+            4. when we are done considering all of the neighbords of the current node, mark current node as visited
+            5. if the desitination node has been marked visited or if the smallest tentative distance among all the nodes left is infinity (indicating that the desitnation can't be reached) then stop
+            6. otherwise select the node that is makred with the smalelst tentative distance, set it as the new curent ndoe and go back to 3
+        
+        essentially we degnerate this problem to a shortest path problem
+        keep dist array to keep track of the min number of steps needed to reach every (i,j) from start
+        at every step, we choose a positions which has not been visited and which is the shortest distance from the start position
+        we mark this position as visited so that we don't consider this position as the current position again
+        from the curren position, we determing the number of steap required to reach all the positions possible travelling from the current position 
+        if it is possible to reach any position through the current route with a smaller number of steap, than the earlie routes considered, we update the corresponding distance entry
+        we can use a minDist function to traverse over the whole dist array
+        this implementatino doesn't use a heap
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        visited = [[False]*cols for _ in range(rows)]
+        dist = [[float('inf')]*cols for _ in range(rows)]
+        dist[start[0]][start[1]] = 0
+        dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        
+        #reteive min dist from distances array, returns the closest
+        def getMin():
+            min_ = [-1,-1]
+            min_val = float('inf')
+            for i in range(rows):
+                for j in range(cols):
+                    if not visited[i][j] and dist[i][j] < min_val:
+                        min_ = [i,j]
+                        min_val = dist[i][j]
+            
+            return min_
+        
+        #djikstras
+        while True:
+            s = getMin()
+            #no minimum, we must be done
+            if s[0] < 0:
+                break
+            #there is one, mark
+            visited[s[0]][s[1]] = True
+            for dx,dy in dirs:
+                next_x = s[0] + dx
+                next_y = s[1] + dy
+                count = 0
+                while 0 <= next_x < rows and 0 <= next_y < cols and maze[next_x][next_y] == 0:
+                    next_x += dx
+                    next_y += dy
+                    count += 1
+                #update
+                if dist[s[0]][s[1]] + count < dist[next_x - dx][next_y - dy]:
+                    dist[next_x - dx][next_y - dy]  = dist[s[0]][s[1]] + count
+        
+        return dist[destination[0]][destination[1]] if dist[destination[0]][destination[1]] != float('inf') else -1
+    
+#using heap to speed up the min search
+class Solution:
+    def shortestDistance(self, maze: List[List[int]], start: List[int], destination: List[int]) -> int:
+        '''
+        review on Dijkstra's
+        algo:
+            1. assign a tentative distance value to every node, set it to zero for the start node, and infinity for all other nodes
+            2. set the start node as currnet node, and mark as visited
+            3. for the current node, consider all of its niehgts and calculate their distances
+                compare the newly calculated distance to the current assigned value and assign the smaller one to all th enighbords
+            4. when we are done considering all of the neighbords of the current node, mark current node as visited
+            5. if the desitination node has been marked visited or if the smallest tentative distance among all the nodes left is infinity (indicating that the desitnation can't be reached) then stop
+            6. otherwise select the node that is makred with the smalelst tentative distance, set it as the new curent ndoe and go back to 3
+        
+        essentially we degnerate this problem to a shortest path problem
+        keep dist array to keep track of the min number of steps needed to reach every (i,j) from start
+        at every step, we choose a positions which has not been visited and which is the shortest distance from the start position
+        we mark this position as visited so that we don't consider this position as the current position again
+        from the curren position, we determing the number of steap required to reach all the positions possible travelling from the current position 
+        if it is possible to reach any position through the current route with a smaller number of steap, than the earlie routes considered, we update the corresponding distance entry
+        we can use a minDist function to traverse over the whole dist array
+        this implementatino doesn't use a heap
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        dist = [[float('inf')]*cols for _ in range(rows)]
+        dist[start[0]][start[1]] = 0
+        dirs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        min_heap = []
+        heapq.heappush(min_heap,(0,start[0],start[1]))
+        
+        #djikstras
+        while min_heap:
+            curr_dist, a, b = heapq.heappop(min_heap)
+            s = [a,b]
+            #no minimum, we must be done
+            if dist[s[0]][s[1]] < curr_dist:
+                continue
+
+            for dx,dy in dirs:
+                next_x = s[0] + dx
+                next_y = s[1] + dy
+                count = 0
+                while 0 <= next_x < rows and 0 <= next_y < cols and maze[next_x][next_y] == 0:
+                    next_x += dx
+                    next_y += dy
+                    count += 1
+                #update
+                if dist[s[0]][s[1]] + count < dist[next_x - dx][next_y - dy]:
+                    dist[next_x - dx][next_y - dy]  = dist[s[0]][s[1]] + count
+                    heapq.heappush(min_heap,(dist[next_x-dx][next_y-dy],next_x-dx,next_y-dy))
+        
+        return dist[destination[0]][destination[1]] if dist[destination[0]][destination[1]] != float('inf') else -1
+
+
+
+
 ##############################
 # 2271. Maximum White Tiles Covered by a Carpet
 # 28AUG22
