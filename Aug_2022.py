@@ -2751,3 +2751,68 @@ class Solution(object):
         # if sortedOrder's size is not equal to original sequence's size, there is no unique way to construct
         return len(sortedOrder) == len(org)
 
+############################
+# 200. Number of Islands (REVISITED)
+# 29AUG22
+############################
+#union find
+class UnionFind:
+    def __init__(self,grid):
+        self.count = 0
+        self.m = len(grid)
+        self.n = len(grid[0])
+        self.parent = [0]*(self.m*self.n)
+        self.rank = [0]*(self.m*self.n)
+        for i in range(self.m):
+            for j in range(self.n):
+                if grid[i][j] == '1':
+                    self.parent[i*self.n + j] = i*self.n + j
+                    self.count += 1
+    
+    def find(self,i):
+        if self.parent[i] != i:
+            self.parent[i] = self.find(self.parent[i])
+        return self.parent[i]
+    
+    def union(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        if parent_x != parent_y:
+            if self.rank[parent_x] > self.rank[parent_y]:
+                self.parent[parent_y] = parent_x
+            
+            elif self.rank[parent_x] < self.rank[parent_y]:
+                self.parent[parent_x] = parent_y
+            else:
+                self.parent[parent_y] = parent_x
+                self.rank[parent_x] += 1
+                self.count -= 1
+                
+
+class Solution:
+    def numIslands(self, grid: List[List[str]]) -> int:
+        #if there's a 1, initially points to itself
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        uf = UnionFind(grid)
+        rows = len(grid)
+        cols = len(grid[0])
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == '1':
+                    #mark
+                    grid[i][j] == '0'
+                    #check
+                    for dx,dy in dirrs:
+                        neigh_x = i + dx
+                        neigh_y = j + dy
+                        if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                            if grid[neigh_x][neigh_y] == '1':
+                                uf.union(i*cols + j, neigh_x*cols + j)
+        
+        return uf.count
+                            
+##############################
+# 2271. Maximum White Tiles Covered by a Carpet
+# 28AUG22
+##############################
