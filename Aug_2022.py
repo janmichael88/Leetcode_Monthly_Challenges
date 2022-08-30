@@ -2977,6 +2977,60 @@ class Solution:
 
 
 ##############################
-# 2271. Maximum White Tiles Covered by a Carpet
-# 28AUG22
+# 48. Rotate Image (Revisited)
+# 30AUG22
 ##############################
+class Solution:
+    def rotate(self, matrix: List[List[int]]) -> None:
+        """
+        Do not return anything, modify matrix in-place instead.
+        """
+        '''
+        if you notice we swap only the four cornsers at a time
+        and sprial towards the center
+        notice at each iteration, the side of the ring decreased by 2
+            so we perform this process n/2 times, recalling that the center (for odd rings) remains at the center
+            
+        for each ring, we'll need to perform a number of iterations equal to the length of the size minus 1
+            since we will have alteady swapped tehf ar conrer as our first iteations
+            the lenght of the side of a ring is shorted by 2 for each layer (len = n-2*i - 1)
+            inside the nested for loops, we need to perform a four way swap between the linked cells, in order to save on some processing, we can store the value of the opposide side of i (opp = n-1 -i)
+        '''
+        N = len(matrix)
+        rings = N // 2 + N %2
+        for i in range(rings):
+            #for ech ring, we only every have to through half of it
+            for j in range(N//2):
+                #we store the bottomleft corner and swap clockwise, starting bottom left
+                temp = matrix[N-1-j][i]
+                #bottom right to bottom left
+                matrix[N-1-j][i] = matrix[N-1-i][N-j-1]
+                #upper right to bottom right
+                matrix[N-1-i][N-j-1] = matrix[j][N-1-i]
+                #upper right to upper left
+                matrix[j][N-1-i] = matrix[i][j]
+                #bottom left to upper right
+                matrix[i][j] = temp
+
+class Solution:
+    def rotate(self, matrix: List[List[int]]) -> None:
+        """
+        Do not return anything, modify matrix in-place instead.
+        """
+        '''
+        turns out there is property for matrix rotation
+        transpose, then reflect along diagonals
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        #tranpose
+        for i in range(rows):
+            for j in range(i+1,cols):
+                matrix[i][j],matrix[j][i] = matrix[j][i], matrix[i][j]
+                
+        
+        #reverse rows
+        for i in range(rows):
+            for j in range(cols//2):
+                matrix[i][j],matrix[i][cols-j-1] = matrix[i][cols-j-1],matrix[i][j]
