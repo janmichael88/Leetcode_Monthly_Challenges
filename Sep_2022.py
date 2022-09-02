@@ -85,3 +85,45 @@ class Solution:
             res = max(res, preSum[endIdx+1] - preSum[i] - compensate)
             
         return res
+
+#sort and sliding window with two cases
+class Solution:
+    def maximumWhiteTiles(self, tiles: List[List[int]], carpetLen: int) -> int:
+        '''
+        https://leetcode.com/problems/maximum-white-tiles-covered-by-a-carpet/discuss/2038674/Python-Explanation-with-pictures-sliding-window
+        the trick is to realize (rather convince yourself the placing a carpet at the beignning of the range) will give you the maximum size
+        we have two cases
+        1. the right end is in the middle of some tiles
+            covered = pref[j] - pref[i]
+        2. the right end lies in section of tiles
+            covered = pref[j+1] - prev[i] - (ends[j] - j)
+        '''
+        #sort on start
+        tiles.sort(key = lambda x: x[0])
+        #prefsum
+        prefSum = [0]
+        for s,e in tiles:
+            prefSum.append(prefSum[-1] + (e - s) + 1)
+            
+        ends = [e for s,e in tiles]
+        N = len(ends)
+        ans = 0
+        j = 0
+        for i in range(N):
+            #carpet start from the beginning of each range
+            start,end = tiles[i]
+            #the right most index have tiles is ends[-1]
+            right_most = min(ends[-1],start+carpetLen-1)
+            
+            #while the whole current rang is covered by carpet
+            while j < N and ends[j] < right_most:
+                j += 1
+            #two cases
+            #first case, if the right end of the carept doesn't reach the jth rang
+            if tiles[j][0] > right_most:
+                ans = max(ans, prefSum[j] - prefSum[i])
+            #the right end of the carpert covers parrt of it, there is some tiles that are left over
+            else:
+                ans = max(ans, prefSum[j+1] - prefSum[i] - ends[j] + right_most )
+        
+        return ans
