@@ -127,3 +127,163 @@ class Solution:
                 ans = max(ans, prefSum[j+1] - prefSum[i] - ends[j] + right_most )
         
         return ans
+
+############################
+# 637. Average of Levels in Binary Tree (REVISITED)
+# 02SEP22
+############################
+#without having to do second pass
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def averageOfLevels(self, root: Optional[TreeNode]) -> List[float]:
+        '''
+        us bfs then explore level by level
+        '''
+        averages = []
+        q = deque([root])
+        
+        while q:
+            N = len(q)
+            level_sum = 0
+            for _ in range(N):
+                node = q.popleft()
+                level_sum += node.val
+                if node.left:
+                    q.append(node.left)
+                if node.right:
+                    q.append(node.right)
+            
+            averages.append(level_sum / N)
+        
+        return averages
+
+
+################################
+# 2187. Minimum Time to Complete Trips
+# 02SEP22
+################################
+#TLE
+class Solution:
+    def minimumTime(self, time: List[int], totalTrips: int) -> int:
+        '''
+        if i'm givein the time array, example [1,2,3]
+        t = 1
+            [1,0,0], trips = 1
+        t = 2
+            [2,1,0], trips = 3
+        t = 3
+            [3,1,1], trips = 5
+        answer = 3
+        
+        given a time t, i want to compute number of trips in the whole array
+        then use binary search to find the lower bound where num trips for i just less than totalTrips
+        O(len(times)) to compute trips for time t
+        then log(maxtime) for getting the minimu time
+        i'll maximize using 2**32 first
+        '''
+        def getNumTrips(t):
+            trips = 0
+            for i in range(len(time)):
+                trips += (t // time[i])
+            
+            return trips
+        
+        start = 0
+        
+        while getNumTrips(start) < totalTrips:
+            start += 1
+        
+        return start
+    
+#YAYYYY, you just needed to watch the upper bound
+class Solution:
+    def minimumTime(self, time: List[int], totalTrips: int) -> int:
+        '''
+        if i'm givein the time array, example [1,2,3]
+        t = 1
+            [1,0,0], trips = 1
+        t = 2
+            [2,1,0], trips = 3
+        t = 3
+            [3,1,1], trips = 5
+        answer = 3
+        
+        given a time t, i want to compute number of trips in the whole array
+        then use binary search to find the lower bound where num trips for i just less than totalTrips
+        O(len(times)) to compute trips for time t
+        then log(maxtime) for getting the minimu time
+        i'll maximize using 2**32 first
+
+        upper bound is min(time)*totalTrips
+        in the worst caes we only use the fasts bus
+        '''
+        def getNumTrips(t):
+            trips = 0
+            for i in range(len(time)):
+                trips += (t // time[i])
+            
+            return trips
+        
+        
+        start = 0
+        end = min(time)*totalTrips
+        
+        while start < end:
+            mid = start + (end - start) // 2
+            #guess
+            guess = getNumTrips(mid)
+            if guess >= totalTrips:
+                #dont need to look beyond end anymore
+                end = mid
+            else:
+                start = mid+1
+        
+        return start
+
+#one liner solution just to show off
+def minimumTime(self, time: List[int], totalTrips: int) -> int:
+    return bisect_left(range(1, 10**14), totalTrips, key= lambda x: sum(x // t for t in time)) + 1
+####################################
+# 1207. Unique Number of Occurrences
+# 02SEP22
+####################################
+class Solution:
+    def uniqueOccurrences(self, arr: List[int]) -> bool:
+        '''
+        get count mapp the second pass with hashset
+        i could have also sorted the counts and check for repeated values
+        '''
+        counts = Counter(arr)
+        seen = set()
+        
+        for c in counts.values():
+            if c in seen:
+                return False
+            seen.add(c)
+
+        return True
+        
+##############################
+# 1929. Concatenation of Array
+# 02SEP22
+##############################
+class Solution:
+    def getConcatenation(self, nums: List[int]) -> List[int]:
+        '''
+        preallocate the ans array and point two pointers
+        one at i and the other at i+1
+        '''
+        N = len(nums)
+        ans = [0]*(2*N)
+        for i in range(N):
+            ans[i] = nums[i]
+            ans[N+i] = nums[i]
+        
+        return ans
+
+
