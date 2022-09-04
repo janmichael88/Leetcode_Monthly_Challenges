@@ -286,4 +286,98 @@ class Solution:
         
         return ans
 
+############################################################
+# 967. Numbers With Same Consecutive Differences (REVISITED)
+# 03SEP22
+############################################################
+#backtracking, time complexity if O(2**n)
+#from a node in the executino tree, we have at most 2 children, 
+#num + k, and num -k
+#binary stree with depth N-1, and 2 children nodes          
+class Solution:
+    def numsSameConsecDiff(self, n: int, k: int) -> List[int]:
+        '''
+        note the conditions, n is in the closed range [2,9]
+        i can try building a digit
+        for (n = 2, k = 0)
+            [11,22,33,44,55,66,77,88,99]
+        for (n=2, k = 1)
+            [10,12,21,23,32,34,43,45,54,56,65,67,76,78,87,89,98]
+            
+        i need to try building a digit using backtracking, contraints are small enough to allow for this
+        i can start the function offf using each number [0,9] then rebuild
+        just try building the string for now, worry about optimizations later
+        '''
+        paths = []
+        n -= 1
+        
+        def backtrack(n,path):
+            if n == 0:
+                paths.append(int("".join(path)))
+                return
+            last_digit = int(path[-1])
+            for next_digit in range(0,10):
+                if abs(last_digit - next_digit) == k:
+                    path += str(next_digit)
+                    backtrack(n-1,path)
+                    path.pop()
+        
+        for i in range(1,10):
+            backtrack(n,[str(i)])
+        return paths
 
+class Solution:
+    def numsSameConsecDiff(self, n: int, k: int) -> List[int]:
+        '''
+        dfs without backtracking, being explicity when to call
+        '''
+        if n == 1:
+            return [i for i in range(10)]
+        
+        ans = []
+        
+        def dfs(n,num):
+            if n == 0:
+                ans.append(num)
+                return
+            
+            last_digit = num % 10
+            next_digits = set([last_digit+k,last_digit-k])
+            
+            for foo in next_digits:
+                if 0 <= foo < 10:
+                    new_num = num*10 + foo
+                    dfs(n-1,new_num)
+                    
+        
+        for num in range(1,10):
+            dfs(n-1,num)
+        
+        return ans
+            
+#bfs
+class Solution:
+    def numsSameConsecDiff(self, n: int, k: int) -> List[int]:
+        '''
+        we can also use bfs and just generate the numbers layer by layer and returnt he final layer
+        '''
+        if n == 1:
+            return [i for i in range(10)]
+        
+        q = [num for num in range(1,10)]
+        
+        #we have the first level done, so there are at least N-1 levels left
+        for level in range(n-1):
+            next_level = []
+            for num in q:
+                last_digit = num % 10
+                next_digits = set([last_digit+k,last_digit-k])
+            
+                for foo in next_digits:
+                    if 0 <= foo < 10:
+                        new_num = num*10 + foo
+                        next_level.append(new_num)
+            
+            q = next_level
+        
+        return q
