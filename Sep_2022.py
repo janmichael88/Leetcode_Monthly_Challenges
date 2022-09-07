@@ -381,3 +381,200 @@ class Solution:
             q = next_level
         
         return q
+
+###########################
+# 124. Binary Tree Maximum Path Sum
+# 04SEP22
+############################
+#closeeeeee
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxPathSum(self, root: Optional[TreeNode]) -> int:
+        '''
+        at every node, find the max sum path for its left side and the max sum path for its right side
+        then we can just maximize globally at each function call
+        max(left,right,left,right+1)
+        but pass this up
+        '''
+        self.ans = float('-inf')
+        
+        def dp(node):
+            if not node:
+                return 0
+            left = dp(node.left)
+            right = dp(node.right)
+            #update
+            option1 = left + node.val
+            option2 = right + node.val
+            option3 = left + right + node.val
+            option4 = node.val
+            self.ans = max(self.ans, option1,option2,option3,option4)
+            return max(option1,option2,option3,option4)
+        
+        
+        dp(root)
+        return self.ans
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxPathSum(self, root: Optional[TreeNode]) -> int:
+        '''
+        almost had it, we just need to either take the max(left,0) and max(right,0)
+        then calculate adding a new path
+        '''
+        
+        self.ans = float('-inf')
+        
+        def dp(node):
+            if not node:
+                return 0
+            
+            #get max of left and right
+            left = max(dp(node.left),0)
+            right = max(dp(node.right),0)
+            
+            #making a new path rooted at this node
+            new_path = node.val + left + right
+            
+            #maximize
+            self.ans = max(self.ans,new_path)
+            
+            #return the max
+            return node.val + max(left,right)
+        
+        
+        dp(root)
+        return self.ans
+
+#good write up
+# https://leetcode.com/problems/binary-tree-maximum-path-sum/discuss/603423/Python-Recursion-stack-thinking-process-diagram
+#for a tree with all negative numbers, the best path is in face the largest number in the tree, adding negatives only makes it smaller
+
+
+#############################
+# 678. Valid Parenthesis String 
+# 04SEP22
+#############################
+#close one again....
+class Solution:
+    def checkValidString(self, s: str) -> bool:
+        '''
+        i can use the balacne method +1 for ( and -1 for )
+        keep count of stars too, so we can use them to balance the string
+        '''
+        balance = 0
+        count_stars = 0
+        
+        for ch in s:
+            if ch == '(':
+                balance += 1
+            elif ch == ')':
+                balance -= 1
+            else:
+                count_stars += 1
+            
+            if balance < 0:
+                if count_stars > 0:
+                    balance += 1
+                    count_stars -= 1
+                else:
+                    return False
+            
+        return balance == 0
+
+#dp
+class Solution:
+    def checkValidString(self, s: str) -> bool:
+        '''
+        dynamic programming
+        if we let dp(i,j) be true only of s[i:j] is a valid expression
+        then dp(i,j) is true if and only iff:
+            s[i] == '*' and the interval s[i+1:j] is valid
+            or s[i] can be made to be '(' and there is some k in [i+1,j] such that s[k] can be made to be ')' 
+            plus the two itnervals cut by s[k] (s[i+1:k],s[k+1:j+1])
+        
+        
+        '''
+        if not s:
+            return True
+        
+        lefty = '(*'
+        righty = ')*'
+        
+        N = len(s)
+        dp = [[False]*N for _ in range(N)]
+        
+        for i in range(N):
+            #empty string is trivally True
+            if s[i] == '*':
+                dp[i][i] = True
+            #can index into N and one after
+            if i < N-1 and s[i] in lefty and s[i+1] in righty:
+                dp[i][i+1] = True
+        
+        for size in range(2,N):
+            #check all substrings in s for all sizes between 2 and N
+            for i in range(N-size):
+                #can we build up a valid parantheses expression
+                if s[i] == '*' and dp[i+1][i+size] == True:
+                    dp[i][i+size] = True
+                elif s[i] in lefty:
+                    #check in between i and j
+                    for k in range(i+1,i+size+1):
+                        if s[k] in righty and (k == i+1 or dp[i+1][k-1] == True) and (k == i+size or dp[k+1][i+size] == True):
+                            dp[i][i+size] = True
+        
+        return dp[0][N-1]
+
+#greedy
+class Solution:
+    def checkValidString(self, s: str) -> bool:
+        '''
+        we can still follow the balacing principle from previous valid parenthese problems
+        but rather we need to keep track of minimum possible balance and the maximum possible balance
+        for example
+        for '(', the possible values for balance is [1]
+        for '(*', could be [0,1,2]
+        for '(***', could be [0,1,2,3,4]
+        for '(***)' could be [0,1,2,3]
+        
+        rather, it can be proven that each of these states can form a contiguous interval
+        
+        whenever we see an ( incremeant both lo and hi
+        whenever we see a ) decrement both
+        when it's a start, we greedily increment the max, and decrement the min
+        check if the max balance is 0, which means the string could not have been balanced in the first place
+        then at the end, check that min == 0
+        
+    https://leetcode.com/problems/valid-parenthesis-string/discuss/543521/Java-Count-Open-Parenthesis-O(n)-time-O(1)-space-Picture-Explain        
+        
+        '''
+        min_balance = 0
+        max_balance = 0
+        
+        for ch in s:
+            if ch == '(':
+                min_balance += 1
+                max_balance += 1
+            elif ch == ')':
+                min_balance -= 1
+                max_balance -= 1
+            elif ch == '*':
+                max_balance += 1
+                min_balance -= 1
+            
+            if max_balance < 0:
+                return False
+            min_balance = max(min_balance,0)
+        
+        return min_balance == 0
