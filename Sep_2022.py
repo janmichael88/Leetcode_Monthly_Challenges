@@ -613,3 +613,191 @@ class Solution(object):
             lo = max(lo, 0)
 
         return lo == 0
+
+################################
+# 1110. Delete Nodes And Return Forest
+# 06SEP22
+################################
+#close one
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def delNodes(self, root: Optional[TreeNode], to_delete: List[int]) -> List[TreeNode]:
+        '''
+        similar to 814. Binary Tree Pruning
+        use recursino to check if node and any descendant node is in to delete
+        out to global list
+        '''
+        to_delete = set(to_delete)
+        self.ans = []
+        
+        def needs_deletion(node):
+            if not node:
+                return False
+            left = needs_deletion(node.left)
+            right = needs_deletion(node.right)
+            if left:
+                node.left = None
+            if right:
+                node.right = None
+            #add to list 
+            self.ans.append(node)
+            return left or right or node.val in to_delete
+        
+        needs_deletion(root)
+        return self.ans
+
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def delNodes(self, root: Optional[TreeNode], to_delete: List[int]) -> List[TreeNode]:
+        '''
+        https://leetcode.com/problems/delete-nodes-and-return-forest/discuss/328854/Python-Recursion-with-explanation-Question-seen-in-a-2016-interview
+        to remove a node, the child needs to notify the parent about its' exsitence
+        to determine whether a node is a root node in the final forest, we need to know
+            1. wheter the node is removed (pass down whether we delted)
+            2. whteher its parent has been removed
+            
+        recursion intution:
+            pass down deeper into the recurison by passinga arguments
+            return up from below passing in return values
+        '''
+        to_delete = set(to_delete)
+        ans = []
+        
+        def rec(node,parent_exist):
+            #empty node
+            if not node:
+                return None
+            #if we need to delte this node
+            if node.val in to_delete:
+                node.left = rec(node.left,False)
+                node.right = rec(node.right,False)
+                return None
+            else:
+                #if this node's parent didnt' exist, then it must have been deleted and this node is part of the forest
+                if not parent_exist:
+                    ans.append(node)
+                node.left = rec(node.left,True)
+                node.right = rec(node.right,True)
+                return node
+        
+        rec(root,False)
+        return ans
+
+#another solution
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def delNodes(self, root: Optional[TreeNode], to_delete: List[int]) -> List[TreeNode]:
+        '''
+        another solution
+        function that returns the appropiate left and right subtrees after deleting
+        '''
+        to_delete = set(to_delete)
+        ans = []
+        
+        def rec(node,parent_exist):
+            if not node:
+                return None
+            
+            #build the left and right sides
+            node.left = rec(node.left,node.val not in to_delete)
+            node.right = rec(node.right,node.val not in to_delete)
+            
+            #check if we can add to forest
+            #it is in not in delete, but parent is gone
+            if node.val not in to_delete:
+                if parent_exist == False:
+                    ans.append(node)
+                return node
+            else:
+                return None
+            
+            
+        rec(root,False)
+        return ans
+
+#best one so far
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def delNodes(self, root: Optional[TreeNode], to_delete: List[int]) -> List[TreeNode]:
+        '''
+        another solution
+        function that returns the appropiate left and right subtrees after deleting
+        '''
+        to_delete = set(to_delete)
+        ans = []
+        
+        def delete(node):
+            if not node:
+                return None
+            node.left = delete(node.left)
+            node.right = delete(node.right)
+            #if we need to delte
+            if node.val in to_delete:
+                #if there is a left, we want it to be a part of the first
+                if node.left:
+                    ans.append(node.left)
+                if node.right:
+                    ans.append(node.right)
+                #we need to delete this node that we are one
+                return None
+            return node
+        
+        delete(root)
+        #check root
+        if root.val not in to_delete:
+            ans.append(root)
+        return ans
+            
+#iterative solutions using bfs and q
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def delNodes(self, root: TreeNode, to_delete: List[int]) -> List[TreeNode]:
+        queue = collections.deque([(root, False)])
+        res = []
+        deletes = set(to_delete)
+        
+        while queue:
+            node, hasParent = queue.popleft()
+            if not hasParent and node.val not in deletes:
+                res.append(node)
+                
+            hasParent = not node.val in deletes
+            
+            if node.left:
+                queue.append((node.left, hasParent))
+                if node.left.val in deletes:
+                    node.left = None
+            
+            if node.right:
+                queue.append((node.right, hasParent))
+                if node.right.val in deletes:
+                    node.right = None
+        
+        return res
