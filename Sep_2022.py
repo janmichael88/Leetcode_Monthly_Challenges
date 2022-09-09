@@ -801,3 +801,27 @@ class Solution:
                     node.right = None
         
         return res
+
+###########################
+# 94. Binary Tree Inorder Traversal (REVSITED)
+# 08SPE22
+###########################
+class Solution:
+    def inorderTraversal(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        inorder is left,node,right
+        
+        '''
+        def dfs(node):
+            if not node:
+                return []
+            
+            left = dfs(node.left)
+            left.append(node.val)
+            right = dfs(node.right)
+            for num in right:
+                left.append(num)
+            
+            return left
+        
+        return dfs(root)
