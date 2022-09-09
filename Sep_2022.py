@@ -825,3 +825,84 @@ class Solution:
             return left
         
         return dfs(root)
+
+#################################################
+# 1996. The Number of Weak Characters in the Game
+# 08SEP22
+#################################################
+class Solution:
+    def numberOfWeakCharacters(self, properties: List[List[int]]) -> int:
+        '''
+        we are given a prporties array, of length N 
+        where propeties[i] represents the i'th character in the game
+        we define a weak character if any other character has both attack and defences striclty greater than this i'th's attack and defense
+        
+        brute force is to just compare all i and j, which is super slow
+        obvie sorting comes to mind, but how to sort it
+        
+        looked at the hints, sort by attack then group
+        then check the next larget attack group for a character with a larger defense?
+        
+        think of the easier problem, if we were to only have the attack values
+        the number of weak characters would be:
+            number of characters - count(characters with highest attack), [1,2,3,4,5], there are 4 weak characters
+        
+        key:
+            Now once we have the array sorted in ascending order of their attack value, we can iterate over the pairs from right to left keeping the maximum defense value achieved so far. If this maximum defense value is more than the defense value at the current index then it's a weak character.
+            
+        sort on acensding attack, and descending defense
+        
+        algo:
+            1. sort on ascending attack and desending defense
+            2. init max defense to 0
+            3. iterate from right to left
+                update max defense
+                update weak charcters if defense is less than the current max defense
+        
+        '''
+        properties.sort(key = lambda x: (x[0],-x[1]))
+        max_defense = 0
+        weak_chars = 0
+        
+        for attack,defense in properties[::-1]:
+            if defense < max_defense:
+                weak_chars += 1
+            max_defense = max(max_defense,defense)
+        
+        return weak_chars
+
+class Solution:
+    def numberOfWeakCharacters(self, properties: List[List[int]]) -> int:
+        '''
+        intuition:
+            for a pair (a,b) we can say it to be weak if the maximum defense value among all the pais with attack_value >  a is strictly greater than b
+        
+        so we can keep maximum defense value amon all the pairs with an attack value greater than x, for every value of x
+        then the pair (a,b) will be weak of the maximum defense stored at (a+1) > b
+        
+        to find the maximum defense value, we first the max defense for a partifular attack, update max attack's max defense
+        
+        algo:
+            1. Iterate over properties, and store the maximum defense value for attack values in the array maxDefense.
+            2. Iterate over all the possible values of attack from the maximum possible attack value (100000) to 0. Keep the maximum value seen so far, maxDefense[i]                      will represent the maximum value in the suffix [i, maxAttack].
+            3. Iterate over the properties for every pair (attack, defense), increment the counter weakCharacters if the value at maxDefense[attack + 1] is greater than defense.
+            4. Return weakCharacters.
+        '''
+        max_attack = max([a for a,b in properties])
+        
+        #store max defnese for all attacks
+        max_def_for_attack = [0]*(max_attack+2)
+        for attack,defense in properties:
+            max_def_for_attack[attack] = max(max_def_for_attack[attack],defense)
+        
+        #store maximum defense for attack greater >= to attack
+        for i in range(max_attack-1,-1,-1):
+            max_def_for_attack[i] = max(max_def_for_attack[i],max_def_for_attack[i+1])
+        
+        #verify and count weak chars
+        weak_chars = 0
+        for attack,defense in properties:
+            if defense < max_def_for_attack[attack+1]:
+                weak_chars += 1
+        
+        return weak_chars
