@@ -906,3 +906,182 @@ class Solution:
                 weak_chars += 1
         
         return weak_chars
+
+#####################################################
+# 188. Best Time to Buy and Sell Stock IV (REVISITED)
+# 10SEP22
+#####################################################
+#take recursive solution from Stock III and iterate for all possible k
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        '''
+        this is 0/1 knapsack problem
+        we either take or we don't take
+        let dp(i,j) be the max profit we can get after j transactions and after i days
+        
+        dp(i,j) = {
+        max(dp(i-1,k) for k in range(num transactions))
+        }
+        '''
+        memo = {}
+        N = len(prices)
+        
+        def rec(day,own,k):
+            if day >= N or k == 0:
+                return 0
+            if (day,own,k) in memo:
+                return memo[(day,own,k)]
+            #if i had own stack, i can sell or stay, and if sell use up transation
+            #take means i do an action
+            if own:
+                #i can sell and go up in prices
+                take = prices[day] + rec(day+1,0,k-1)
+                #or just hold and go on to the next day
+                no_take = rec(day+1,1,k)
+            else:
+                #i dont own, so i have to buy, but keep k
+                take = -prices[day] + rec(day+1,1,k)
+                #stay but keep k
+                no_take = rec(day+1,0,k)
+            
+            memo[(day,own,k)] = max(take,no_take)
+            return memo[(day,own,k)]
+        
+        ans = float('-inf')
+        for t in range(k+1):
+            ans = max(ans,rec(0,0,t))
+        
+        return ans
+
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        '''
+        another recursive way
+        
+        '''
+        memo = {}
+        N = len(prices)
+        def rec(day,transactionsLeft):
+            if day >= N or transactionsLeft == 0:
+                return 0
+            if (day,transactionsLeft) in memo:
+                return memo[(day,transactionsLeft)]
+
+            #we can always choose to stay
+            ans1 = rec(day+1,transactionsLeft)
+            ans2 = 0
+            #if we can buy
+            buy = (transactionsLeft % 2 == 0)
+            if buy:
+                ans2 = -prices[day] + rec(day+1, transactionsLeft -1)
+            else:
+                ans2 = prices[day] + rec(day+1, transactionsLeft -1)
+
+            memo[(day,transactionsLeft)] = max(ans1,ans2)
+            return memo[(day,transactionsLeft)] 
+        
+        ans = 0
+        for t in range(k+1):
+            ans = max(ans,rec(0,t*2))
+        
+        return ans
+
+#bottom up
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        
+        def dp(k):
+            N = len(prices)
+            dp = [[0]*(2*k+1) for _ in range(N+1)]
+
+            for day in range(N, -1,-1):
+                for trans in range(2*k+1):
+                    if day >= N or trans == 0:
+                        dp[day][trans] = 0
+                    else:
+                        ans1 = dp[day+1][trans]
+                        ans2 = 0
+                        buy = (trans % 2 == 0)
+                        if buy:
+                            ans2 = -prices[day] + dp[day+1][trans -1]
+                        else:
+                            ans2 = prices[day] + dp[day+1][trans-1]
+
+                        dp[day][trans] = max(ans1,ans2)
+
+            return dp[0][-1]
+        
+        ans = 0
+        for t in range(k+1):
+            ans = max(ans,dp(t))
+        
+        return ans
+
+#these solutions are reall O(n*k*k), because the original solution from StockIII was already O(nk)
+class Solution:
+    def maxProfit(self, k: int, prices: List[int]) -> int:
+        '''
+        well firs think of the brute force, a single transaction consists of a buy and sell event
+        if we have k transactions, we need to pick 2*k points on the stock line, can pick at most
+        we would need to find all combinations of 2*k points from length(proces) 
+        N choose 2*k{
+        n! / (2k)!(n-2k)!
+        }
+        special case is when 2k > N, just tak all increasing ones
+        if we has 1 transaction, we just keep carying the previous max and try to maximize by adding the current profix
+        dp(i) = max(dp(i-1) + profit_so_far + prices[i])
+        
+        we need to store three things: the day number, the number of used transactions, and the stock holding status
+        exaples, dp(i,j,1) represents the max profits up to i, j remaining transactions, and if we are currently holding
+        
+        we start with dp[0][0][0] = 0 and dp[0][0][1] = -prices[i]
+        
+        1. keep holding stock:
+            dp[i][j][1] = dp[i-1][j][1]
+        2. keep not holding stock
+            dp[i][j][0] = dp[i-1][j][0]
+        3. buying when j > 0, we have transactions left
+            dp[i][j][1] = dp[i-1][j-1][0] - prices[i]
+        4. selling
+            dp[i][j][0] = dp[i-1][j][1] + prices[i]
+            
+        we can consolidate these:
+            dp[i][j][1]=max(dp[i−1][j][1],dp[i−1][j−1][0]−prices[i])
+
+            dp[i][j][0] = max(dp[i-1][j][0], dp[i-1][j][1]+prices[i])dp[i][j][0]=max(dp[i−1][j][0],dp[i−1][j][1]+prices[i])
+            
+        the take the max at dp[n-1][j][0] for j in range(k+1)
+        '''
+        n = len(prices)
+
+        # solve special cases
+        if not prices or k==0:
+            return 0
+
+        if 2*k > n:
+            res = 0
+            for i, j in zip(prices[1:], prices[:-1]):
+                res += max(0, i - j)
+            return res
+
+        # dp[i][used_k][ishold] = balance
+        # ishold: 0 nothold, 1 hold
+        dp = [[[-math.inf]*2 for _ in range(k+1)] for _ in range(n)]
+
+        # set starting value
+        dp[0][0][0] = 0
+        dp[0][1][1] = -prices[0]
+
+        # fill the array
+        for i in range(1, n):
+            for j in range(k+1):
+                # transition equation
+                dp[i][j][0] = max(dp[i-1][j][0], dp[i-1][j][1]+prices[i])
+                # you can't hold stock without any transaction
+                if j > 0:
+                    dp[i][j][1] = max(dp[i-1][j][1], dp[i-1][j-1][0]-prices[i])
+
+        #get max in last entry
+        res = max(dp[n-1][j][0] for j in range(k+1))
+        return res
+
