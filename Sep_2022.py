@@ -1085,3 +1085,41 @@ class Solution:
         res = max(dp[n-1][j][0] for j in range(k+1))
         return res
 
+################################
+# 447. Number of Boomerangs
+# 11SEP22
+################################
+#https://leetcode.com/problems/number-of-boomerangs/discuss/92868/Short-Python-O(n2)-hashmap-solution
+#i had the right idea!
+#its just a hashamp and combinations problem
+class Solution:
+    def numberOfBoomerangs(self, points: List[List[int]]) -> int:
+        '''
+        we are given a list of points in the 2d plane
+        we define a bommerang as tuple (i,j,k) where dist(i,j) == dist(i,k)
+        brute force would be to examine all possible tuples(i,j,k) and check distances
+        500^3, too big, there must be an O(N^2) solution
+        
+        what if i mapped distances to points?
+        
+        for each point in point, make a count map for all distances
+        then tracrse the count map and count the combinations
+        '''
+        boomerangs = 0
+        for p in points:
+            mapp = Counter()
+            for q in points:
+                x_comp = p[0] - q[0]
+                y_comp = p[1] - q[1]
+                dist = x_comp*x_comp + y_comp*y_comp
+                mapp[dist] += 1
+            #count up paths
+            for d in mapp:
+                #if we have k points that are distance d away from each other
+                #then we need two of these points to make a boomerang
+                #so the number of boomerans is counts[d]*(counts[d]-1) 
+                #rather k*k-1
+                #think permutations, since order matters to give unique set
+                boomerangs += mapp[d]*(mapp[d] - 1)
+        
+        return boomerangs
