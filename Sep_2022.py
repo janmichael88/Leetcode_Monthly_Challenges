@@ -1242,3 +1242,67 @@ class Solution:
             return ans
        
         return dp(n)
+
+#############################
+# 393. UTF-8 Validation (REVISITED)
+# 13SEP22
+#############################
+#using bit shifts instead of string manipulationg
+class Solution:
+    def validUtf8(self, data: List[int]) -> bool:
+        '''
+        lets take a look at what parts of a byte cirrespond to an integer that we need to process
+        1. if the starting byte for a UTF8 char, then we need to process the first N bits, where N is uppper bounded by 4
+        anything more than that and we would have an invalid character
+        2. in the case the byte is part of a utf8 character, then we simply need to check for the first two bits or the most significant bits
+        the most significant bit needs to be a 1 and the second ost needs to be a zero
+        
+        mask = 1 << 7
+        while mask & num:
+            n_bytes += 1
+            mask = mask >> 1
+            
+        to count the set bits in a UTF8 char
+        
+        mask1 = 1 << 7
+        mask2 = 1 << 6
+
+        if not (num & mask1 and not (num & mask2)):
+            return False
+            
+        to check if the most sig bit is 1 and secnod most sig bit is 0
+        '''
+        # Number of bytes in the current UTF-8 character
+        n_bytes = 0
+
+        # Mask to check if the most significant bit (8th bit from the left) is set or not
+        mask1 = 1 << 7
+
+        # Mask to check if the second most significant bit is set or not
+        mask2 = 1 << 6
+        for num in data:
+
+            # Get the number of set most significant bits in the byte if
+            # this is the starting byte of an UTF-8 character.
+            mask = 1 << 7
+            if n_bytes == 0:
+                while mask & num:
+                    n_bytes += 1
+                    mask = mask >> 1
+
+                # 1 byte characters
+                if n_bytes == 0:
+                    continue
+
+                # Invalid scenarios according to the rules of the problem.
+                if n_bytes == 1 or n_bytes > 4:
+                    return False
+            else:
+
+                # If this byte is a part of an existing UTF-8 character, then we
+                # simply have to look at the two most significant bits and we make
+                # use of the masks we defined before.
+                if not (num & mask1 and not (num & mask2)):
+                    return False
+            n_bytes -= 1
+        return n_bytes == 0     
