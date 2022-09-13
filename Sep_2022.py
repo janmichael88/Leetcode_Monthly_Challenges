@@ -1123,3 +1123,122 @@ class Solution:
                 boomerangs += mapp[d]*(mapp[d] - 1)
         
         return boomerangs
+
+################################
+# 948. Bag of Tokens (REVISTED)
+# 11SEP22
+################################
+#nice try with dp though :(
+class Solution:
+    def bagOfTokensScore(self, tokens: List[int], power: int) -> int:
+        '''
+        if current power >= tokens[i]:
+            score += 1
+            power -= tokens[i]
+        if current power >= tokens[i]:
+            score -= 1
+            power += tokens[i]
+        
+        we want the largest score possible
+        
+        '''
+        #try dp
+        #dp(i,power) repersent the max scroe i get using up tokens[i:] and having power
+        memo = {}
+        
+        def dp(i,power):
+            if i < 0:
+                return 0
+            if (i,power) in memo:
+                return memo[(i,power)]
+            #play
+            play = 1 + dp(i-1,power - tokens[i])
+            no_play = dp(i-1,power+tokens[i]) - 1
+            ans = max(play,no_play)
+            memo[(i,power)] = ans
+            return ans
+        
+        return dp(len(tokens))
+
+class Solution:
+    def bagOfTokensScore(self, tokens: List[int], power: int) -> int:
+        '''
+        if current power >= tokens[i]:
+            score += 1
+            power -= tokens[i]
+        if current power >= tokens[i]:
+            score -= 1
+            power += tokens[i]
+        
+        we want the largest score possible
+        two pointers, take from hi and low when we can
+        '''
+        tokens.sort()
+        tokens = deque(tokens)
+        
+        max_score = 0
+        curr_score = 0
+        
+        while tokens and (power >= tokens[0] or curr_score): #the second part just means while we have enough power or we still have a score
+            while tokens and power >= tokens[0]:
+                power -= tokens.popleft()
+                curr_score += 1
+            
+            #update
+            max_score = max(max_score,curr_score)
+            
+            if tokens and curr_score:
+                power += tokens.pop()
+                curr_score -= 1
+        
+        return max_score
+            
+
+##############################
+# 894. All Possible Full Binary Trees
+# 13SEP22
+##############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def allPossibleFBT(self, n: int) -> List[Optional[TreeNode]]:
+        '''
+        are these the catalan numbers? similar to it
+        shoot, i actually need to generate the trees
+        all powers of must return and empty list
+       
+        base case when n == 1
+            return TreeNode(val = 0)
+       
+        if we had a recursive function dp, where dp(N) that return the the list of all possible binary trees
+        and every full binary tree with 3 or more nodes has 2 children, call them left and right
+        then dp(N) = [all trees with child from dp(left) and all trees with dp(right)]
+        '''
+        memo = {}
+       
+        def dp(n):
+            if n == 0:
+                return []
+            if n == 1:
+                return [TreeNode(0)]
+            if n in memo:
+                return memo[n]
+            ans = []
+            for x in range(n):
+                y = n-x-1
+                for left in dp(x):
+                    for right in dp(y):
+                        #made new node
+                        curr = TreeNode(0)
+                        curr.left = left
+                        curr.right = right
+                        ans.append(curr)
+           
+            memo[n] = ans
+            return ans
+       
+        return dp(n)
