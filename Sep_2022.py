@@ -1306,3 +1306,147 @@ class Solution:
                     return False
             n_bytes -= 1
         return n_bytes == 0     
+
+##############################################################
+# 1457. Pseudo-Palindromic Paths in a Binary Tree (Revisited)
+# 14SEP22
+##############################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pseudoPalindromicPaths (self, root: Optional[TreeNode]) -> int:
+        '''
+        the hint gives the solution away
+        if any permuation in a path forms a palindrome, then only one digit ni the path occurs an odd number of times
+        use dfs and pass along a counter object by reference, then update this count object
+        one we get to a leaf check the counter objects for only one digit have an odd occurrence
+        
+        must do at the end
+        '''
+        self.ans = 0
+        
+        def dfs(node,counts):
+            if not node:
+                return
+            #leaf node
+            if not node.left and not node.right:
+                counts[node.val] += 1
+                odd = 0
+                for k,v in counts.items():
+                    if v % 2 == 1:
+                        odd += 1
+                if odd <= 1:
+                    self.ans += odd ==  1
+                return
+            dfs(node.left,counts)
+            counts[node.val] += 1
+            dfs(node.right,counts)
+        
+        
+        dfs(root,Counter())
+        return self.ans
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pseudoPalindromicPaths (self, root: Optional[TreeNode]) -> int:
+        '''
+        the hint gives the solution away
+        if any permuation in a path forms a palindrome, then only one digit ni the path occurs an odd number of times
+        use dfs and pass along a counter object by reference, then update this count object
+        one we get to a leaf check the counter objects for only one digit have an odd occurrence
+        
+        must do at the end
+        '''
+        self.ans = 0
+        
+        def dfs(node,counts):
+            if not node:
+                return
+            #generate new count object
+            new_counts = counts[:]
+            new_counts[node.val] ^= 1
+            if not node.left and not node.right and sum(new_counts) <= 1:
+                self.ans += 1
+            dfs(node.left,new_counts)
+            dfs(node.right,new_counts)
+        
+        dfs(root,[0]*10)
+        return self.ans
+
+#real way is with bitshifting
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pseudoPalindromicPaths (self, root: Optional[TreeNode]) -> int:
+        '''
+        the hint gives the solution away
+        if any permuation in a path forms a palindrome, then only one digit ni the path occurs an odd number of times
+        use dfs and pass along a counter object by reference, then update this count object
+        one we get to a leaf check the counter objects for only one digit have an odd occurrence
+        
+        must do at the end
+        '''
+        self.ans = 0
+        
+        def dfs(node,counts):
+            if not node:
+                return
+            counts = counts ^ (1 << node.val)
+            if not node.left and not node.right:
+                if counts & (counts -1) == 0:
+                    self.ans += 1
+            
+            dfs(node.left,counts)
+            dfs(node.right,counts)
+        
+        dfs(root,0)
+        return self.ans
+            
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pseudoPalindromicPaths (self, root: Optional[TreeNode]) -> int:
+        '''
+        the hint gives the solution away
+        if any permuation in a path forms a palindrome, then only one digit ni the path occurs an odd number of times
+        use dfs and pass along a counter object by reference, then update this count object
+        one we get to a leaf check the counter objects for only one digit have an odd occurrence
+        
+        must do at the end
+        '''
+        count = 0
+        
+        stack = [(root, 0) ]
+        while stack:
+            node, path = stack.pop()
+            if not node:
+                continue
+            # compute occurences of each digit 
+            # in the corresponding register
+            path = path ^ (1 << node.val)
+            # if it's a leaf, check if the path is pseudo-palindromic
+            if node.left is None and node.right is None:
+                # check if at most one digit has an odd frequency
+                if path & (path - 1) == 0:
+                    count += 1
+            stack.append((node.right, path))
+            stack.append((node.left, path))
+        
+        return count
