@@ -1243,6 +1243,32 @@ class Solution:
        
         return dp(n)
 
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def allPossibleFBT(self, N: int) -> List[Optional[TreeNode]]:
+        '''
+        bottom up
+        https://leetcode.com/problems/all-possible-full-binary-trees/discuss/618779/Python-3-solution-(Recursion-Memoization-DP)-with-explantions
+        '''
+        if N % 2 == 0: return []
+        dp = [[] for _ in range(N + 1)]
+        dp[1].append(TreeNode(0))
+        for n in range(3, N + 1, 2):
+            for i in range(1, n, 2):
+                j = n - 1 - i
+                for left in dp[i]:
+                    for right in dp[j]:
+                        root = TreeNode(0)
+                        root.left = left
+                        root.right = right
+                        dp[n].append(root)
+        return dp[N]
+
 #############################
 # 393. UTF-8 Validation (REVISITED)
 # 13SEP22
