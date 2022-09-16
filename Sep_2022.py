@@ -1476,3 +1476,156 @@ class Solution:
             stack.append((node.left, path))
         
         return count
+
+###########################
+# 2007. Find Original Array From Doubled Array
+# 15SEP22
+###########################
+#close one
+class Solution:
+    def findOriginalArray(self, changed: List[int]) -> List[int]:
+        '''
+        changed array comes from original array
+        where every element in original array is doubled and appened, and then randomly shuffling the array
+        its ok to return any permutation of the oriignal array
+        
+        i can traverse changed and its double to a seen set, maybe first sort?
+        changed will always be an even number
+        
+        what if i initally counted the elements in the changed array
+        then retravesre and remove the doubled ounts
+        then grab only elements who's counts are 1
+        '''
+        N = len(changed)
+        #odd length
+        if N % 2 == 1:
+            return []
+        
+        counts = Counter(changed)
+        
+        #re traverse and removed double, 
+        #keep variable of original size to mainint deletion
+        orig_size = N // 2
+        for num in changed:
+            if num*2 in counts and orig_size > 0:
+                orig_size -= 1
+                if counts[num*2] > 0:
+                    counts[num*2] -= 1
+                if counts[num*2] == 0:
+                    del counts[num*2]
+                
+        
+        ans = [k for k,v in counts.items()]
+        #i could do aonther check agian??
+        counts = Counter(changed)
+        for num in ans:
+            if num in counts and counts[num] > 0:
+                counts[num] -= 1
+                if counts[num] == 0:
+                    del counts[num]
+            #for num*2
+            if num in counts and counts[num] > 0:
+                counts[num] -= 1
+                if counts[num] == 0:
+                    del counts[num]
+        
+#counting and using hashmap
+class Solution:
+    def findOriginalArray(self, changed: List[int]) -> List[int]:
+        '''
+        changed array comes from original array
+        where every element in original array is doubled and appened, and then randomly shuffling the array
+        its ok to return any permutation of the oriignal array
+        
+        i can traverse changed and its double to a seen set, maybe first sort?
+        changed will always be an even number
+        
+        what if i initally counted the elements in the changed array
+        then retravesre and remove the doubled ounts
+        then grab only elements who's counts are 
+
+        we need to sort and start with the smallest element
+        '''
+        N = len(changed)
+        #odd length
+        if N % 2 == 1:
+            return []
+        
+        counts = Counter(changed)
+        changed.sort()
+        
+        #re traverse and removed double, 
+        original = []
+
+        
+        for num in changed:
+            #remove ocurrences
+            if num in counts and counts[num] > 0:
+                counts[num] -= 1
+                twiceNum = num*2
+                if  twiceNum in counts and counts[twiceNum] > 0:
+                    #pair up elements and lower count
+                    counts[twiceNum] -= 1
+                    #add this number
+                    original.append(num)
+                else:
+                    return []
+        
+        return original
+
+#counting sort
+class Solution:
+    def findOriginalArray(self, changed: List[int]) -> List[int]:
+        '''
+        we can use counting sort
+        the only diffetence is that for every evelemnt we wil be iterating once, howver there migh be multiple instances of it in the oginral array
+        so we iterate over an element and we decrement the counter to reiterate it
+        '''
+        N = len(changed)
+        #odd length
+        if N % 2 == 1:
+            return []
+
+        max_number = max(changed)
+        counts = [0]*(2*max_number+1)
+        
+        for num in changed:
+            counts[num] += 1
+        
+        original = []
+        #need to use while loop
+        num = 0
+        while num <= max_number:
+            #first pairing
+            if counts[num] > 0:
+                counts[num] -= 1
+                twiceNum = num*2
+                #second pairing
+                if counts[twiceNum] > 0:
+                    counts[twiceNum] -= 1
+                    original.append(num)
+                    num -= 1
+                else:
+                    return []
+            
+            num += 1
+        
+        return original
+
+#using heap
+class Solution:
+    def findOriginalArray(self, changed: List[int]) -> List[int]:
+        '''
+        using a a min heap
+        sort changed and iterate over each element
+        then check if this num and the number at the top of the heap is 2times that number
+        '''
+        changed.sort()
+        heap, ans = [], []
+        for x in changed:
+            if heap and x==heap[0]*2:
+                ans.append(heapq.heappop(heap))
+            else:
+                heapq.heappush(heap, x) 
+        return ans if not heap else []
+
