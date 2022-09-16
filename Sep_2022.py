@@ -1629,3 +1629,62 @@ class Solution:
                 heapq.heappush(heap, x) 
         return ans if not heap else []
 
+################################
+# 159. Longest Substring with At Most Two Distinct Characters (REVISITED)
+# 15SEP22
+################################
+#close one
+class Solution:
+    def lengthOfLongestSubstringTwoDistinct(self, s: str) -> int:
+        '''
+        sliding window with seen hash set problem
+        
+        '''
+        ans = 0
+        N = len(s)
+        left = right = 0
+        
+        seen = set()
+        while right < N:
+            #expand window
+            while len(seen) <= 2 and right < N:
+                seen.add(s[right])
+                right += 1
+            ans = max(ans,right -left - 1)
+            seen.discard(s[left])
+            left += 1
+        
+        return ans
+            
+class Solution:
+    def lengthOfLongestSubstringTwoDistinct(self, s: str) -> int:
+        '''
+        sliding window with seen hash set problem
+        
+        '''
+        n = len(s)
+        if n < 3:
+            return n
+        
+        left = right = 0
+        ans = 0
+        
+        mapp = defaultdict()
+        
+        while right < n:
+            #add to window
+            mapp[s[right]] = right
+            right += 1
+            
+            #if we go over, 
+            if len(mapp) == 3:
+                #delete the character we haven't seen in a while
+                last_recent = min(mapp.values())
+                #delete
+                del mapp[s[last_recent]]
+                #move
+                left = last_recent + 1
+            
+            ans = max(ans, right - left)
+        
+        return ans
