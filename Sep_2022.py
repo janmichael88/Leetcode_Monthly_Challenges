@@ -1688,3 +1688,105 @@ class Solution:
             ans = max(ans, right - left)
         
         return ans
+
+################################
+# 1770. Maximum Score from Performing Multiplication Operations
+# 16SEP22
+################################
+#close one!!!!
+#but we need to reduce to three states
+class Solution:
+    def maximumScore(self, nums: List[int], multipliers: List[int]) -> int:
+        '''
+        we are only allowed m operations, where m is len(multipliers)
+        lets say i knew the max answer already after taking some elements off the from the left and some off from the right
+        call this dp(state), to get the max answer i need
+        dp(state) + max(nums[left]*operation,nums[right]*operation)
+        time complexity for these problems can be dervied by using master theorm and sub problme reduction
+        Thus, the recurrence relation is T(M)=2T(M-1)+O(1)T(M)=2T(M−1)+O(1), which can be solved using Master Theorem and the result is O(2^M)O(2 
+M
+ ).
+
+
+        '''
+        memo = {}
+        n = len(nums)
+        m = len(multipliers)
+        
+        def dp(left,right,operations):
+            if operations == m:
+                return 0
+            if (left,right,operations) in memo:
+                return memo[(left,right,operations)]
+            take_left = dp(left+1,right,operations+1) + nums[left]*multipliers[operations]
+            take_right = dp(left,right -1,operations+1) + nums[right]*multipliers[operations]
+            ans = max(take_left,take_right)
+            memo[(left,right,operations)] = ans
+            return ans
+
+class Solution:
+    def maximumScore(self, nums: List[int], multipliers: List[int]) -> int:
+        '''
+        we need to reduce from three states back
+        it turns out that in the recursion tree, we visit repeated states but going down seperate paths
+        recall in our last soluiton we had three states left,right, ops
+        right = n  - 1 - (ops - left)
+        
+        rather if we have left, then there are ops-left on the right side
+        
+        dp(ops,left) stores the maxi score possible after we have done a total of operations using left numbers
+        
+        dp(left,ops) = max{
+                left = dp(left+1,ops+1) + nums[left]*multipliers[ops]
+                right = dp(left,ops+1) + nums[n - 1 - (ops - left)]*multipliers[ops]
+        } when we have ops available
+        '''
+        # Number of Operations
+        m = len(multipliers)
+
+        # For Right Pointer
+        n = len(nums)
+
+        memo = {}
+
+        def dp(op, left):
+            if op == m:
+                return 0
+
+            # If already computed, return
+            if (op, left) in memo:
+                return memo[(op, left)]
+
+            l = nums[left] * multipliers[op] + dp(op+1, left+1)
+            r = nums[(n-1)-(op-left)] * multipliers[op] + dp(op+1, left)
+
+            memo[(op, left)] = max(l, r)
+
+            return memo[(op, left)]
+
+        # Zero operation done in the beginning
+        return dp(0, 0)
+
+class Solution:
+    def maximumScore(self, nums: List[int], multipliers: List[int]) -> int:
+        '''
+        tranlasting to bottom up
+        '''
+        m = len(multipliers)
+        n = len(nums)
+        
+        #dp array will b m by m, since ops can very up to m and left can veary up to m
+        dp = [[0]*(m+1) for _ in range(m+1)]
+        
+        #start with ops from m-1
+        for ops in range(m-1,-1,-1):
+            for left in range(ops,-1,-1):
+                l = nums[left] * multipliers[ops] + dp[ops+1][left+1]
+                r = nums[(n-1)-(ops-left)] * multipliers[ops] + dp[ops+1][left]
+                
+                dp[ops][left] = max(l,r)
+        
+        return dp[0][0]
+        
+        
+        return dp(0,n-1,0)
