@@ -1724,6 +1724,8 @@ M
             memo[(left,right,operations)] = ans
             return ans
 
+        return dp(0,n-1,0)
+
 class Solution:
     def maximumScore(self, nums: List[int], multipliers: List[int]) -> int:
         '''
@@ -1781,6 +1783,8 @@ class Solution:
         #start with ops from m-1
         for ops in range(m-1,-1,-1):
             for left in range(ops,-1,-1):
+                #if we were to start with left m-1
+                #if ops >= left:
                 l = nums[left] * multipliers[ops] + dp[ops+1][left+1]
                 r = nums[(n-1)-(ops-left)] * multipliers[ops] + dp[ops+1][left]
                 
@@ -1788,5 +1792,99 @@ class Solution:
         
         return dp[0][0]
         
+##############################
+# 336. Palindrome Pairs (REVISITED)
+# 17SEP22
+##############################
+class Solution:
+    def palindromePairs(self, words: List[str]) -> List[List[int]]:
+        '''
+        another way of seeing this problem
+        https://medium.com/@harycane/palindrome-pairs-46c5b8511397
         
-        return dp(0,n-1,0)
+        algo:
+        1 Since we need return a list of lists, containing indices whose words if we combine shall result in a palindrome, it makes intuitive sense to have a mapping between words in the given array and their corresponding indices. Therefore lets populate a hash map with the words and their indices.
+
+2 For each unique word in the words array, consider the word to be divided into two substrings, str1 and str2, with str1 progressively increasing from “” (empty) substring to the entire word while str2 assumes the remaining part of the word. Check if str1 is a palindrome and if so then there is a possibility of it functioning as the pivot around which a palindrome could be formed. In order to determine whether a palindrome could be indeed formed, determine whether the reverse of the str2 exists within the map and does not correspond to the current index in contention (as is the case in case str2 is “aa” in which case reverse of str2 is also “aa” and hence can correspond to the current index in the map), so as to function as a prefix to form a palindrome with str1 as the pivot.
+
+3 If the reversed string is indeed present in the map and does not correspond to the current index, then you have got one pair of palindromes that can be added to the result list of lists. Create a temporary list, and add the prefix reversed string’s index to the temp list first, followed by current index i and add the temp list to the resultant list of lists.
+
+4 Now like wise check if str2 is a palindrome, in which case it can function as a pivot around which a palindrome can be formed. Check if the str1’s reverse is present in the map and does not correspond to the current index. Also in order to consider the corner case of “” empty string being one of the words in the array, there is a need to iterate until the length of word[i] inclusive. But this may lead to empty string “” being considered in str2 as a duplicate in addition to being considered initially in str1. Therefore care must be taken to ensure that str2 is not equal to empty string to avoid duplicates. If all the above checks are satisfied, then create a temp list, add the prefix index i and the suffix index from the map corresponding to the reversed str1, and add the temp list to result list of lists. After iterating through the entire words list, return the result list of lists.
+        '''
+        ans = []
+        N = len(words)
+        
+        if not words or len(words) < 2:
+            return ans
+        
+        #store words to index
+        mapp = {}
+        for i,word in enumerate(words):
+            mapp[word] = i
+        
+        #now go through the words and gerneate substrings of each word
+        for i in range(N):
+            for j in range(len(words[i])+1):
+                #to generate all subtrings and empty string cases, since they could be present
+                str1 = words[i][0:j]
+                str2 = words[i][j:]
+                
+                #if str1 is a palindrom, i can make a pair if the reverse of str2 is in the mapp, and not the current index in contection
+                if str1 == str1[::-1]:
+                    str2_rev = str2[::-1]
+                    if str2_rev in mapp and mapp[str2_rev] != i:
+                        ans.append([mapp[str2_rev],i])
+                
+                #now the revesre case, if str2 is also a palindrome
+                if str2 == str2[::-1]:
+                    str1_rev = str1[::-1]
+                    if str1_rev in mapp and mapp[str1_rev] != i and len(str2) != 0: #we may have already used the empty string on the first time when generating a candidate palindrom
+                        ans.append([i,mapp[str1_rev]])
+        
+        return ans
+
+#Trie solution
+class TrieNode:
+    def __init__(self):
+        self.next = collections.defaultdict(TrieNode)
+        self.ending_word = -1
+        self.palindrome_suffixes = []
+
+class Solution:
+    def palindromePairs(self, words):
+
+        # Create the Trie and add the reverses of all the words.
+        trie = TrieNode()
+        for i, word in enumerate(words):
+            word = word[::-1] # We want to insert the reverse.
+            current_level = trie
+            for j, c in enumerate(word):
+                # Check if remainder of word is a palindrome.
+                if word[j:] == word[j:][::-1]:# Is the word the same as its reverse?
+                    current_level.palindrome_suffixes.append(i)
+                # Move down the trie.
+                current_level = current_level.next[c]
+            current_level.ending_word = i
+
+        # Look up each word in the Trie and find palindrome pairs.
+        solutions = []
+        for i, word in enumerate(words):
+            current_level = trie
+            for j, c in enumerate(word):
+                # Check for case 3.
+                if current_level.ending_word != -1:
+                    if word[j:] == word[j:][::-1]: # Is the word the same as its reverse?
+                        solutions.append([i, current_level.ending_word])
+                if c not in current_level.next:
+                    break
+                current_level = current_level.next[c]
+            else: # Case 1 and 2 only come up if whole word was iterated.
+                # Check for case 1.
+                if current_level.ending_word != -1 and current_level.ending_word != i:
+                    solutions.append([i, current_level.ending_word])
+                # Check for case 2.
+                for j in current_level.palindrome_suffixes:
+                    solutions.append([i, j])
+        return solutions
+
+        
