@@ -1888,3 +1888,105 @@ class Solution:
         return solutions
 
         
+###############################
+# 42. Trapping Rain Water (REVISITED)
+# 18SEP22
+###############################
+class Solution:
+    def trap(self, height: List[int]) -> int:
+        '''
+        lefts array and rights array problem
+        '''
+        #first find max values to the left
+        N = len(height)
+        #don't forget to fill in the base cases
+        max_lefts = [0]*N
+        max_lefts[0] = height[0]
+        max_rights =[0]*N
+        max_rights[-1] = height[-1]
+        
+        #when finding max lefts we start from the beginning of he array
+        for i in range(1,N):
+            #take max of current max or heights
+            max_lefts[i] = max(max_lefts[i-1],height[i])
+        
+        #max to the rights, we start at tned
+        for i in range(N-2,-1,-1):
+            max_rights[i] = max(max_rights[i+1],height[i])
+        
+        #now we just take the min of left and right at each increment by height
+        ans = 0
+        for i in range(N):
+            water_level = min(max_lefts[i],max_rights[i])
+            if water_level > height[i]:
+                ans += water_level - height[i]
+        
+        return 
+
+class Solution:
+    def trap(self, height: List[int]) -> int:
+        '''
+        insteaf of storing the largest bar up to an index, we can keep a montonic stack
+        keep track of bards that are bounded by longer bars
+        
+        we keeps tack and iterate over the array, we then added the idnex of the bar to the stack if the bar is <= to the bar at the top of the stack
+        which means the current bar is bounded by the previous bar in the stack
+        if we found a bar logner than the one at the top, we are sure that the bar at the top of the stack is bounded by the cyrrent bar 
+        so we can pop it and add the resulting trapper water to ans
+        
+        traverse the height array
+        while stack and current bar > top of stack:
+            pop the top
+            find the distance between the current element and the element at the top of the stick, this is the distance to be filled
+            find the bounded height: min(current bar, height[top]) - height top
+            add trapped water to result
+        '''
+        
+        ans = 0
+        current = 0
+        N = len(height)
+        stack = []
+        
+        #keep track of index on the stack
+        while current < N:
+            while len(stack) > 0 and height[current] > height[stack[0]]:
+                #we have a bigger bar
+                top = stack[0]
+                stack.pop()
+                #causes stack to be empty
+                if len(stack) == 0:
+                    break
+                distance = current - stack[0] - 1
+                bounded_height = min(height[current],height[stack[0]] - height[top])
+                ans += distance*bounded_height
+            
+            stack.append(current)
+            current += 1
+        
+        return ans
+
+#two pointers
+class Solution:
+    def trap(self, height):
+        """
+        :type height: List[int]
+        :rtype: int
+        """
+        areas = 0
+        max_l = max_r = 0
+        l = 0
+        r = len(height)-1
+        while l < r:
+            if height[l] < height[r]:
+                if height[l] > max_l:
+                    max_l = height[l]
+                else:
+                    areas += max_l - height[l]
+                l +=1
+            else:
+                if height[r] > max_r:
+                    max_r = height[r]
+                else:
+                    areas += max_r - height[r]
+                r -=1
+        return areas
