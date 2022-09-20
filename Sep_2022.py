@@ -1990,3 +1990,40 @@ class Solution:
                     areas += max_r - height[r]
                 r -=1
         return areas
+
+
+#https://leetcode.com/problems/trapping-rain-water/discuss/1374608/C%2B%2BJavaPython-MaxLeft-MaxRight-so-far-with-Picture-O(1)-space-Clean-and-Concise
+
+#################################
+# 609. Find Duplicate File in System (REVISTED)
+# 19SEP22
+#################################
+#almost had it
+class Solution:
+    def findDuplicate(self, paths: List[str]) -> List[List[str]]:
+        '''
+        i can split on space
+        and then use hashmap to group them by file contencts
+        '''
+        content_to_path = defaultdict(list)
+        
+        for path in paths:
+            path = path.split(' ')
+            #get the root path
+            root_path = path[0]
+            #get contents and firt sub root
+            for file in path[1:]:
+                content = file[file.find('(')+1:file.find(')')]
+                #get path name for first part
+                folder = file[:file.find('(')]
+                full_path = root_path+'/'+folder
+                #put in mapp
+                content_to_path[content].append(full_path)
+        
+        
+        ans = []
+        for k,v in content_to_path.items():
+            if len(v) > 1:
+                ans.append(k)
+        
+        return ans
