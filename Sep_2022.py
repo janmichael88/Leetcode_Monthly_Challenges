@@ -2026,4 +2026,152 @@ class Solution:
             if len(v) > 1:
                 ans.append(k)
         
+        return 
+
+################################
+# 718. Maximum Length of Repeated Subarray (Revisited)
+# 20SEP22
+################################
+#Recursive solution gets MLE, calling it too many times
+class Solution:
+    def findLength(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        from the hint lets use dp
+        dp(i,j) represent the longest repeated subarray using nums1[i:] and nums2[j:]
+        
+        dp(i,j) = if nums1[i] == nums2[j]:
+            1 + max(dp(i-1,j),dp(i))
+        '''
+        memo = {}
+        M = len(nums1)
+        N = len(nums2)
+        
+        def rec(i,j):
+            if i < 0 or j < 0:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if nums1[i] == nums2[j]:
+                res = 1 + rec(i-1,j-1)
+            else:
+                res = 0
+            memo[(i,j)] = res
+            return res
+        
+        
+        ans = 0
+        for i in range(M):
+            for j in range(N):
+                ans = max(ans,rec(i,j))
+        
+        return ans
+
+class Solution:
+    def findLength(self, nums1: List[int], nums2: List[int]) -> int:
+        M = len(nums1)
+        N = len(nums2)
+        
+        dp = [[0]*(N+1) for _ in range(M+1)]
+        ans = 0
+        
+        
+        for i in range(1,M+1):
+            for j in range(1,N+1):
+                if nums1[i-1] == nums2[j-1]:
+                    dp[i][j] = dp[i-1][j-1] + 1
+                else:
+                    dp[i][j] = 0
+                
+                ans = max(ans,dp[i][j])
+        
+        return ans
+
+#cheeky
+class Solution:
+    def findLength(self, nums1: List[int], nums2: List[int]) -> int:
+        #convert to char string, better to use chr than str, to identify repated element of multiple digits
+        strnum2 = ''.join([chr(x) for x in nums2])
+        #we are going to build this string
+        strmax = ''
+        ans = 0
+        for num in nums1:
+            #add the new char character
+            strmax += chr(num)
+            #if its prefext, we have at least len(strmax)
+            if strmax in strnum2:
+                ans = max(ans,len(strmax))
+            #if it's not, we need to move up this prefix
+            else:
+                strmax = strmax[1:]
+        return ans
+
+#rolling hash
+class Solution:
+    def findLength(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we can use rolling hash
+        algo:
+            precompute the rolling hahs of nums1 and nums2
+            when choosing base we pick a larger primer number bigger than the max
+            mod we can choose the largest primer number that fits into a 32 signed bit
+            then binary search to find the maximum size of subarray appearing both nums1 and nums2
+            we just checl all subarrays for all sizes using hashmap
+            we can get the hash of a subarray in O(1) time using the procomputations
+        '''
+        M = len(nums1)
+        N = len(nums2)
+        base = 101 #largest number in either of the two arrays is at least 100
+        mod = 1_000_000_000_001
+        hash1 = [0]*(M+1)
+        hash2 = [0]*(N+1)
+        POW = [1]*(max(M,N)+1)
+        
+        #compute powers for each base
+        for i in range(max(M,N)):
+            POW[i+1] = POW[i]*base % mod
+        #compute hashing for nums1, this is not the hash per se
+        for i in range(M):
+            hash1[i+1] = (hash1[i]*base + nums1[i]) % mod
+        #compute hashing values for nums2
+        for i in range(N):
+            hash2[i+1] = (hash2[i]*base + nums2[i]) % mod
+        
+        #function to get hash for a subarray, 0 based indexing and right inclusive
+        
+        def getHash(h,left,right):
+            return (h[right+1] - h[left]*POW[right - left+1] % mod + mod) % mod
+        
+        #function to find a valid subarray, i.e whos'e hash1 == hash2
+        def foundSubArray(size):
+            seen = defaultdict(list)
+            #get first hash
+            for i in range(M - size + 1):
+                h = getHash(hash1,i,i+size-1)
+                #add the starting index of the subarray
+                seen[h].append(i)
+            #get the second hash
+            for i in range(N - size+1):
+                h = getHash(hash2,i,i+size-1)
+                if h in seen:
+                    for j in seen[h]:
+                        #compare starting index for all j with the current i
+                        if nums1[j:j+size] == nums2[i:i+size]:
+                            return True
+            return False
+        
+        #we can use binary search to find a workable solution for size
+        left = 1
+        right = min(M,N)
+        ans = 0
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if foundSubArray(mid):
+                ans = mid
+                #expand
+                left = mid + 1
+            else:
+                #shrink
+                right = mid - 1
+        
         return ans
