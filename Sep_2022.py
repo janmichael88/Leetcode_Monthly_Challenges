@@ -2175,3 +2175,216 @@ class Solution:
                 right = mid - 1
         
         return ans
+
+############################
+# 985. Sum of Even Numbers After Queries
+# 21SEP22
+############################
+class Solution:
+    def sumEvenAfterQueries(self, nums: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        first try simulating and see if you can spot patterns
+        '''
+        even_vals = []
+        for val,index in queries:
+            nums[index] += val
+            #get sum of even values, this is the bottle neck here
+            curr_sum = 0
+            for num in nums:
+                if num % 2 == 0:
+                    curr_sum += num
+            even_vals.append(curr_sum)
+        
+        return even_vals
+
+#close one
+class Solution:
+    def sumEvenAfterQueries(self, nums: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        i can first find the curr sum of even numbers
+        then alter the sum after i apply the query
+        
+        there are multiple things that could happen
+        the numbs[index] is curetnyl even or its currently odd
+        then we need to reflect this on the current sum
+        '''
+        even_sums = []
+        curr_sum = 0
+        for num in nums:
+            if num % 2 == 0:
+                curr_sum += num
+        
+        
+        for val,index in queries:
+            if nums[index] % 2 == 0:
+                #if adding makes it even
+                cand = nums[index] + val
+                if cand % 2 == 0:
+                    curr_sum += cand - nums[index]
+                    nums[index] = cand
+                else:
+                    curr_sum -= nums[index]
+                    nums[index] = cand
+            else:
+                cand = nums[index] + val
+                if cand % 2 == 0:
+                    curr_sum += cand - nums[index]
+                    nums[index] = cand
+                else:
+                    curr_sum -= nums[index]
+                    nums[index] = cand
+            
+            even_sums.append(curr_sum+1)
+        
+        return even_sums
+
+class Solution:
+    def sumEvenAfterQueries(self, nums: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        when adding to nums[index], the rest of the values of nums remain the same
+        lets remove nums[index] from the current sum if it even
+        make the adjustment
+        then add nums[index] + val back in if it is even
+        
+        think of a few cases
+        If we have A = [2,2,2,2,2], S = 10, and we do A[0] += 4: we will update S -= 2, then S += 6. At the end, we will have A = [6,2,2,2,2] and S = 14.
+
+        If we have A = [1,2,2,2,2], S = 8, and we do A[0] += 3: we will skip updating S (since A[0] is odd), then S += 4. At the end, we will have A = [4,2,2,2,2] and S = 12.
+
+        If we have A = [2,2,2,2,2], S = 10 and we do A[0] += 1: we will update S -= 2, then skip updating S (since A[0] + 1 is odd.) At the end, we will have A = [3,2,2,2,2] and S = 8.
+
+        If we have A = [1,2,2,2,2], S = 8 and we do A[0] += 2: we will skip updating S (since A[0] is odd), then skip updating S again (since A[0] + 2 is odd.) At the end, we will have A = [3,2,2,2,2] and S = 8.
+        
+        '''
+        curr_sum = 0
+        ans = []
+        for num in nums:
+            if num % 2 == 0:
+                curr_sum += num
+                
+        for val,index in queries:
+            #if even take it away
+            if nums[index] % 2 == 0:
+                curr_sum -= nums[index]
+            #make the adjustment
+            nums[index] += val
+            #now if its even again, add it back in, remmeber we initally took it away
+            if nums[index] % 2 == 0:
+                curr_sum += nums[index]
+            ans.append(curr_sum)
+        
+        return ans
+
+#segment tree solution
+class Solution:
+    def sumEvenAfterQueries(self, nums: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        we can use segment tree to answer the querie questino in log(len(nums)) time
+        updates would also happend in log(len(nums)) time
+        '''
+        #use array of 4 times the size
+        N = len(nums)
+        segment_tree = [0]*(4*N)
+        
+        def build_tree(i,left,right):
+            if left == right:
+                if nums[left] % 2 == 0:
+                    segment_tree[i] = nums[left]
+                else:
+                    segment_tree[i] = 0
+                return
+            
+            else:
+                mid = left + (right - left) // 2
+                build_tree(i*2,left,mid)
+                build_tree(i*2 + 1,mid+1,right)
+                segment_tree[i] = segment_tree[i*2] + segment_tree[i*2 + 1]
+        
+        #build_tree(0,0,N-1)
+        #print(segment_tree)
+        
+        def query_sum(v,tl,tr,l,r):
+            #if we go past
+            if l > r:
+                return 0
+            #hit target
+            if l == tl and r == tr:
+                return segment_tree[v]
+            #subproblem summation
+            t_mid = tl + (tr - tl) // 2
+            left = query_sum(v*2, tl, t_mid, l, min(r,t_mid))
+            right = query_sum(v*2 + 1, t_mid+1,tr,max(l,t_mid+1),r)
+            return left + right
+        
+        #print(query_sum(0,0,len(segment_tree),0,N))
+        
+        def update(v,tl,tr,pos,new_val):
+            if tl == tr:
+                segment_tree[v] = new_val
+            else:
+                tm = tl + (tr - tl) // 2
+                if pos <= tm:
+                    update(v*2,tl,tm,pos,new_val)
+                else:
+                    update(v*2 +1,tm+1,tr,pos,new_val)
+            
+            segment_tree[v] = segment_tree[v*2] + segment_tree[v*2+1]
+            
+        ans = []
+        build_tree(0,0,N-1)
+        for val,index in queries:
+            
+            update(0,0,len(segment_tree),index,nums[index]+val)
+            curr_sum = query_sum(0,0,len(segment_tree),0,N)
+            ans.append(curr_sum)
+        
+        return ans
+            
+
+#we actually don't neet to query, just pull the root
+class Solution:
+    def sumEvenAfterQueries(self, nums: List[int], queries: List[List[int]]) -> List[int]:
+        
+        
+        seg = [0]*4*len(nums)
+        def build(idx,lo,hi):
+            if lo == hi:
+                if nums[lo]%2 == 0:
+                    seg[idx] = nums[lo]
+                return
+            mid = (lo+hi)//2
+            build(2*idx+1,lo,mid)
+            build(2*idx+2,mid+1,hi)
+            seg[idx] = seg[2*idx+1]+seg[2*idx+2]
+        def update(idx,lo,hi,i,val):
+            if lo == hi:
+                seg[idx] = val
+                return
+            mid = (lo+hi)//2
+            if i <= mid:
+                update(2*idx+1,lo,mid,i,val)
+            else:
+                update(2*idx+2,mid+1,hi,i,val)
+            seg[idx] = seg[2*idx+1]+seg[2*idx+2]
+            
+        
+        #just for the sake of segment tree completeness
+        def query(idx,lo,hi,l,r):
+            if r < lo or l > hi:
+                return 0
+            if l >= lo and r <= hi:
+                return seg[idx]
+            mid = (lo+hi)//2
+            return query(2*idx+1,lo,mid,l,r)+query(2*idx+2,mid+1,hi,l,r)
+        stored = [0 for _ in range(len(nums))]
+        ans = []
+        build(0,0,len(nums)-1)
+        for i,j in queries:
+            val = nums[j]+i
+            if val%2 == 0:
+                update(0,0,len(nums)-1,j,val)
+            else:
+                update(0,0,len(nums)-1,j,0)
+            ans += [seg[0]]
+            nums[j] += i
+        return ans
