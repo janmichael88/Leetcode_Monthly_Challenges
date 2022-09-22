@@ -2358,7 +2358,7 @@ class Solution:
             seg[idx] = seg[2*idx+1]+seg[2*idx+2]
         def update(idx,lo,hi,i,val):
             if lo == hi:
-                seg[idx] = val
+                seg[idx] = val if val % 2 == 0 else 0
                 return
             mid = (lo+hi)//2
             if i <= mid:
@@ -2387,4 +2387,87 @@ class Solution:
                 update(0,0,len(nums)-1,j,0)
             ans += [seg[0]]
             nums[j] += i
+        return ans
+
+###############################
+# 2161. Partition Array According to Given Pivot
+# 21SEP22
+###############################
+class Solution:
+    def pivotArray(self, nums: List[int], pivot: int) -> List[int]:
+        '''
+        problem sounds easier than written, 
+        every element less than pivot appears before every element greater than pivot
+        every elmeent equal to pivot appears in between the elements less than and greater than pivot
+        
+        example nums = [9,12,5,10,14,3,10], pivot = 10
+        less than [9,5,3]
+        greater than [12,10,10,14]
+        '''
+        equals = []
+        less_than = []
+        greater_than = []
+        
+        for num in nums:
+            if num == pivot:
+                equals.append(num)
+            elif num < pivot:
+                less_than.append(num)
+            else:
+                greater_than.append(num)
+                
+        
+        return less_than + equals + greater_than
+
+#count num of pivots
+class Solution:
+    def pivotArray(self, nums: List[int], pivot: int) -> List[int]:
+        '''
+        another way 
+        first pass to find elements < pivot, and also record frequency of numbers that are == pivot
+        then get numbs greater
+        '''
+        pivotfreq = 0
+        ans = []
+        
+        for num in nums:
+            if num < pivot:
+                ans.append(num)
+            elif num == pivot:
+                pivotfreq += 1
+        
+        ans += [pivot]*pivotfreq
+        
+        #second pass
+        for num in nums:
+            if num > pivot:
+                ans.append(num)
+        
+        return ans
+
+#three pointers
+class Solution:
+    def pivotArray(self, nums: List[int], pivot: int) -> List[int]:
+        '''
+        we can travese from left to right
+        and into a new results array place the elements at their right position using two poiners
+        we can do this in one pass using i and ~i
+        ~i = -i - 1
+        
+        or offset using N
+        
+        '''
+        N = len(nums)
+        ans = [pivot]*N
+        left = 0
+        right = N - 1
+        
+        for i in range(N):
+            if nums[i] < pivot:
+                ans[left] = nums[i]
+                left += 1
+            if nums[N-i-1] > pivot:
+                ans[right] = nums[N-i-1]
+                right -= 1
+        
         return ans
