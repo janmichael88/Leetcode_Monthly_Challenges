@@ -2471,3 +2471,221 @@ class Solution:
                 right -= 1
         
         return ans
+
+##############################
+# 557. Reverse Words in a String III (REVISTED)
+# 22SEP22
+##############################
+#two pointer solution
+class Solution:
+    def reverseWords(self, s: str) -> str:
+        s = list(s)
+        last_space_idx = -1
+        N = len(s)
+        
+        for i in range(N+1):
+            #reached ending or space
+            if i == N or s[i] == ' ':
+                left = last_space_idx + 1
+                right = i - 1
+                while left < right:
+                    s[left],s[right] = s[right],s[left]
+                    left += 1
+                    right -= 1
+                
+                last_space_idx = i
+        
+        return "".join(s)
+
+#################################
+# 622. Design Circular Queue(Revisited)
+# 26SEP22
+#################################
+# Time Complexity: O(1)
+# Space Complexity: O(N)
+class MyCircularQueue:
+
+    def __init__(self, k: int):
+        # the queue holding the elements for the circular queue
+        self.q = [0] * k
+        # the number of elements in the circular queue
+        self.cnt = 0
+        # queue size
+        self.sz = k
+        # the idx of the head element
+        self.headIdx = 0
+        
+
+    def enQueue(self, value: int) -> bool:
+        # handle full case
+        if self.isFull(): return False
+        # Given an array of size of 4, we can find the position to be inserted using the formula
+        # targetIdx = (headIdx + cnt) % sz
+        # e.g. [1, 2, 3, _]
+        # headIdx = 0, cnt = 3, sz = 4, targetIdx = (0 + 3) % 4 = 3
+        # e.g. [_, 2, 3, 4]
+        # headIdx = 1, cnt = 3, sz = 4, targetIdx = (1 + 3) % 4 = 0
+        self.q[(self.headIdx + self.cnt) % self.sz] = value
+        # increase the number of elements by 1
+        self.cnt += 1
+        return True
+
+    def deQueue(self) -> bool:
+        # handle empty case
+        if self.isEmpty(): return False
+        # update the head index
+        self.headIdx = (self.headIdx + 1) % self.sz
+        # decrease the number of elements by 1
+        self.cnt -= 1
+        return True
+
+    def Front(self) -> int:
+        # handle empty queue case
+        if self.isEmpty(): return -1
+        # return the head element
+        return self.q[self.headIdx]
+        
+    def Rear(self) -> int:
+        # handle empty queue case
+        if self.isEmpty(): return -1
+        # Given an array of size of 4, we can find the tail using the formula
+        # tailIdx = (headIdx + cnt - 1) % sz
+        # e.g. [0 1 2] 3
+        # headIdx = 0, cnt = 3, sz = 4, tailIdx = (0 + 3 - 1) % 4 = 2
+        # e.g. 0 [1 2 3]
+        # headIdx = 1, cnt = 3, sz = 4, tailIdx = (1 + 3 - 1) % 4 = 3
+        # e.g. 0] 1 [2 3
+        # headIdx = 2, cnt = 3, sz = 4, tailIdx = (2 + 3 - 1) % 4 = 0
+        return self.q[(self.headIdx + self.cnt - 1) % self.sz]
+
+    def isEmpty(self) -> bool:
+        # no element in the queue
+        return self.cnt == 0
+
+    def isFull(self) -> bool:
+        # return True if the count is equal to the queue size
+        # else return False
+        return self.cnt == self.sz
+
+
+# Your MyCircularQueue object will be instantiated and called as such:
+# obj = MyCircularQueue(k)
+# param_1 = obj.enQueue(value)
+# param_2 = obj.deQueue()
+# param_3 = obj.Front()
+# param_4 = obj.Rear()
+# param_5 = obj.isEmpty()
+# param_6 = obj.isFull()
+
+#using linkedList
+
+class Node:
+    def __init__(self, value, nextNode=None):
+        self.value = value
+        self.next = nextNode
+
+class MyCircularQueue:
+
+    def __init__(self, k: int):
+        """
+        Initialize your data structure here. Set the size of the queue to be k.
+        """
+        self.capacity = k
+        self.head = None
+        self.tail = None
+        self.count = 0
+
+    def enQueue(self, value: int) -> bool:
+        """
+        Insert an element into the circular queue. Return true if the operation is successful.
+        """
+        if self.count == self.capacity:
+            return False
+        
+        if self.count == 0:
+            self.head = Node(value)
+            self.tail = self.head
+        else:
+            newNode = Node(value)
+            self.tail.next = newNode
+            self.tail = newNode
+        self.count += 1
+        return True
+
+
+    def deQueue(self) -> bool:
+        """
+        Delete an element from the circular queue. Return true if the operation is successful.
+        """
+        if self.count == 0:
+            return False
+        self.head = self.head.next
+        self.count -= 1
+        return True
+
+
+    def Front(self) -> int:
+        """
+        Get the front item from the queue.
+        """
+        if self.count == 0:
+            return -1
+        return self.head.value
+
+    def Rear(self) -> int:
+        """
+        Get the last item from the queue.
+        """
+        # empty queue
+        if self.count == 0:
+            return -1
+        return self.tail.value
+    
+    def isEmpty(self) -> bool:
+        """
+        Checks whether the circular queue is empty or not.
+        """
+        return self.count == 0
+
+    def isFull(self) -> bool:
+        """
+        Checks whether the circular queue is full or not.
+        """
+        return self.count == self.capacity
+
+
+###########################################
+# 272. Closest Binary Search Tree Value II
+# 24SEP22
+###########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def closestKValues(self, root: Optional[TreeNode], target: float, k: int) -> List[int]:
+        '''
+        brute force would be to traverse the whole tree and record the distanks from target
+        then sort on their distances away from target and return the first k
+        '''
+        node_dists = []
+        
+        def dfs(node):
+            if not node:
+                return
+            node_dists.append([abs(node.val - target),node.val])
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
+        #sort
+        node_dists.sort()
+        ans = []
+        for i in range(k):
+            ans.append(node_dists[i][1])
+        
+        return ans
+
+#now using property of BSTs
