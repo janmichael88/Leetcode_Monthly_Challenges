@@ -2875,3 +2875,208 @@ class Solution:
             if e[1] == '!' and find(ord(e[0]) - ord('a')) == find(ord(e[3]) - ord('a')):
                 return False
         return True
+
+###############################
+# 838. Push Dominoes (REVISTED)
+# 27SEP22
+###############################
+#start writing solutions in C++
+'''
+class Solution {
+public:
+    string pushDominoes(string s) {
+        //https://leetcode.com/problems/push-dominoes/discuss/2628923/C%2B%2B-or-Two-Pointer-or-Diagram-or-Related-Problems
+        /*
+        two pointer solution, initially set right pointer to -1
+        1. if we encounter . in a string, we do nothing
+        2. if we encounter an L in a string, we need to if index right is -1, and make everythng previous to L
+        3.If we encounter L in string and there is some previous R index, then we simultaneously change string from left and right side till two pointers reach each other. After that right moves back to -1.
+        4. If we encounter R in string, we see if the index of R is not -1, we make all the indices upto that index R.
+        */
+    int N = s.size(), right = -1;
+    for (int i = 0; i < N; ++i) {
+        if (s[i] == 'L') {
+            if (right == -1) { 
+                // Step 2
+                for (int j = i - 1; j >= 0 && s[j] == '.'; --j) {
+                  s[j] = 'L';  
+                } 
+            } else {
+                // Step 8
+                for (int j = right + 1, k = i - 1; j < k; ++j, --k) {
+                    s[j] = 'R';
+                    s[k] = 'L';
+                } 
+                right = -1;
+            }
+        } else if (s[i] == 'R') {
+            if (right != -1) {
+                for (int j = right + 1; j < i; ++j) s[j] = 'R';
+            }
+            right = i;
+        }
+    }
+    if (right != -1) {
+        for (int j = right + 1; j < N; ++j) s[j] = 'R';
+    }
+    return s;
+};
+};
+'''
+#python version
+#https://leetcode.com/problems/push-dominoes/discuss/2628923/C%2B%2B-or-Two-Pointer-or-Diagram-or-Related-Problems
+class Solution:
+    def pushDominoes(self, dominoes: str) -> str:
+        N = len(dominoes)
+        dominoes = list(dominoes)
+        right = -1
+        for i in range(N):
+            #if we hit a left
+            if dominoes[i] == 'L':
+                #if we are anchored right
+                if right == -1:
+                    #change everything in between
+                    j = i -1
+                    while j >=0 and dominoes[j] == '.':
+                        dominoes[j] = 'L'
+                        j -= 1
+                #if we have found a closer right
+                else:
+                    j = right + 1
+                    k = i - 1
+                    while j < k:
+                        dominoes[j] = 'R'
+                        dominoes[k] = 'L'
+                        j += 1
+                        k -= 1
+                #move anchor back
+                right = -1
+            #if we hit an R dominoe
+            elif dominoes[i] == 'R':
+                #if we don't have an earlier right
+                if right != -1:
+                    j = right + 1
+                    while j < i:
+                        dominoes[j] = 'R'
+                        j += 1
+                right = i
+        
+        #change last rights
+        if right != -1:
+            j = right + 1
+            while j < N:
+                dominoes[j] = 'R'
+                j += 1
+        
+        return "".join(dominoes)
+
+#https://leetcode.com/problems/push-dominoes/discuss/2628871/LeetCode-The-Hard-Way-Explained-Line-By-Line
+class Solution:
+    def pushDominoes(self, dominoes: str) -> str:
+        d = list(dominoes)
+        # l is the left pointer
+        l, n = 0, len(dominoes)
+        # r is the right pointer
+        for r in range(n):
+            if d[r] == '.':
+                # case 1. meeting `.`, then skip it
+                continue
+            elif (d[r] == d[l]) or (d[l] == '.' and d[r] == 'L'):
+                # case 2. both end is equal, i.e. d[r] == d[l]
+                # then fill all the dots between both end 
+                # e.g. L....L -> LLLLLL
+                # e.g. R....R -> RRRRRR
+                # case 2.1 if the left end is . and the right end is L, 
+                # i.e. d[l] == '.' && d[r] == 'L'
+                # then we need to fill them from `l` to `r` in this case
+                for k in range(l, r):
+                    # case 3. left end is L and right end is R
+                    # e.g. L.....R
+                    # then do nothing
+                    d[k] = d[r]
+            elif d[l] == 'L' and d[r] == 'R':
+                # case 3. left end is L and right end is R
+                # e.g. L.....R
+                # then do nothing
+                pass
+            elif d[l] == 'R' and d[r] == 'L':
+                # case 4. left end is R and right end is L
+                # if we have odd number of dots between them (let's say m dots), 
+                # then we can only add (m // 2) Ls and (m // 2) Rs. 
+                # p.s // here is integer division. e.g. 3 // 2 = 1
+                # e.g. R...L -> RR.LL 
+                # if we have even number of dots between them (let's say m dots), 
+                # then we can only add (m // 2) Ls and (m // 2) Rs. 
+                # e.g. R....L -> RRRLLL
+                m = (r - l - 1) // 2
+                for k in range(1, m + 1):
+                    d[r - k] = 'L'
+                    d[l + k] = 'R'
+            # update left pointer
+            l = r
+        
+        # case 5. if the left dominoe is `R`, then fill all 'R' till the end
+        # e.g. LL.R. -> LL.RR
+        if d[l] == 'R':
+            for k in range(l, n):
+                d[k] = 'R'
+                
+        return ''.join(d)
+                        
+#forces revisted
+class Solution:
+    def pushDominoes(self, dominoes: str) -> str:
+        '''
+        we can define the net force for every domino
+        we only care about close a dominos is to a leftward R and a rightward L, then the direction of the domino goes to the magnitude
+        
+        algo:
+            going from left to right, our force decays every iteration by 1, or sets back to N when we hit an R
+            samething going right to left, but we are not choosing the L dominoes
+        '''
+        N = len(dominoes)
+        
+        right_forces = [0]*N
+        left_forces = [0]*N
+        sum_forces = [0]*N
+        
+        #going left to right
+        curr_force = 0
+        for i in range(N):
+            if dominoes[i] == 'R':
+                curr_force = N
+            elif dominoes[i] == 'L':
+                curr_force = 0
+            else:
+                curr_force = max(curr_force -1, 0)
+            
+            right_forces[i] = curr_force
+            
+        
+        #right to left
+        curr_force = 0
+        for i in range(N-1,-1,-1):
+            if dominoes[i] == 'L':
+                curr_force = N
+            elif dominoes[i] == 'R':
+                curr_force = 0
+            else:
+                curr_force = max(curr_force -1, 0)
+            
+            left_forces[i] = curr_force
+            
+        #subtract up vectors by element
+        for i in range(N):
+            sum_forces[i] = right_forces[i] - left_forces[i]
+        
+        ans = ""
+        for f in sum_forces:
+            if f > 0:
+                ans += 'R'
+            elif f < 0:
+                ans += 'L'
+            else:
+                ans += '.'
+        
+        return ans
+        
