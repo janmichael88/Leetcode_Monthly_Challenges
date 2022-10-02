@@ -3080,3 +3080,234 @@ class Solution:
         
         return ans
         
+###################################
+# 218. The Skyline Problem (REVISTED)
+# 30SEP22
+###################################
+class Solution:
+    def getSkyline(self, buildings: List[List[int]]) -> List[List[int]]:
+        '''
+        what's also hard about this problem is how to encode/represent the answer
+        the answer should be sorted by their x-coordinate, where each key point is the left endpoint of some horizontal segment
+        the last cooridnate should have a value of zero, which marks the edge of the right most building
+        and ground in between should be part of hte countour and should have height of zero
+        
+        brute force 1
+            intuion: if a building with height h covers indices from x_i to x_j, then all the indices from x_i to x_j, then the height between x_i and x_j is at least h
+            for each building find the boundaries and store the max height at each
+            finally traverse the updaed heights and output all the positions where height changes as skyline key points
+        '''
+        #sort unique positions of all the edges
+        edges = set()
+        for x,y,h in buildings:
+            edges.add(x)
+            edges.add(y)
+        
+        #sort
+        edges = sorted(list(edges))
+        
+        #make mapp, {position:index}
+        edgeIndexMap = {}
+        for i,p in enumerate(edges):
+            edgeIndexMap[p] = i
+        
+        #initilize heights to record max
+        heights = [0]*len(edges)
+        
+        #pass over buildings
+        for left,right,height in buildings:
+            #for each buuilding find where it spans in the heights array
+            #recall we mapped position to index
+            left_idx = edgeIndexMap[left]
+            right_idx = edgeIndexMap[right]
+            
+            #for this current height maximize it
+            #notice we exlucde the right edge
+            for i in range(left_idx,right_idx):
+                heights[i] = max(heights[i],height)
+        
+        ans = []
+        #iterate over the height array to record changes in height, this is the skyline
+        for i in range(len(heights)):
+            curr_height = heights[i]
+            #get current edge, kinda like mapping heights to edgees
+            curr_edge = edges[i]
+            #add to answer
+            if not ans or ans[-1][1] != curr_height:
+                ans.append([curr_edge,curr_height])
+        
+        return ans
+
+#line sweep
+class Solution:
+    def getSkyline(self, buildings: List[List[int]]) -> List[List[int]]:
+        '''
+        we can use line sweep with vertical line passing through each building and record the max at each edge
+        remember the rightmost builindg doesn't count
+        '''
+        positions = sorted(list(set([edge for building in buildings for edge in building[:2]])))
+        
+        ans = []
+        
+        for p in positions:
+            #store curretn max height for this line sweep
+            max_height = 0
+            for left,right,height in buildings:
+                #update
+                if left <= p < right:
+                    max_height = max(max_height,height)
+            
+            #add in
+            if not ans or max_height != ans[-1][-1]:
+                ans.append([p,max_height])
+        
+        return ans
+
+
+#line sweep with pq
+class Solution:
+    def getSkyline(self, buildings: List[List[int]]) -> List[List[int]]:
+        '''
+        line sweep with priority q
+        recall for each edge we previously had to go through the whole buildings array to find the heighest height
+        is there a way to get the height heigt more effeciently, we need to use q priority queue
+        
+        check tallest building in live is past the current building
+        algo:
+            iteratore over buildings and store each building's edges 
+            sort the endges
+            iterate over the sorted edges and for each edge/index:
+                if buildings[0][0] == curr_x, meanings its left edge and tghe building[b] is live, we add (height,right) to live
+                while the tallest building has beend passed, remove it from live
+            
+            once we finish handlgin the edges at the curr_x, move on to the next positions
+        '''
+        #pass over buildgins and for each building store [position,index]
+        edges = []
+        for i,b in enumerate(buildings):
+            edges.append([b[0],i])
+            edges.append([b[1],i])
+        
+        #sort edges
+        edges.sort()
+        
+        ans = []
+        live = []
+        idx = 0
+        
+        #iterate over sorted edges
+        while idx < len(edges):
+            #we may have multiple edges at the same x
+            curr_x = edges[idx][0]
+            
+            #while we are handlingg the edges at 'curr_x'
+            while idx < len(edges) and edges[idx][0] == curr_x:
+                #get the index of this building
+                b = edges[idx][1]
+                
+                #if this is a left edge, building b, meaning we are past, add its (height,right) to live
+                if buildings[b][0] == curr_x:
+                    right = buildings[b][1]
+                    height = buildings[b][2]
+                    heapq.heappush(live,[-height,right])
+            
+                #if the tallest live building has been passed, remove it
+                while live and live[0][1] <= curr_x:
+                    heapq.heappop(live)
+                idx += 1
+            
+            #get the maximum height from live
+            max_height = -live[0][0] if live else 0
+            
+            #change in heights means part of skyling
+            if not ans or max_height != ans[-1][1]:
+                ans.append([curr_x,max_height])
+        
+        return ans
+
+#two pq
+class Solution:
+    def getSkyline(self, buildings: List[List[int]]) -> List[List[int]]:
+        '''
+        instead of keeping track of the building'sindex to retrieve informatino indicating we have we past its right edge
+        we can use to heaps, one for live and one for past
+        whenever we meet the left edge of a building, we just add its height to live
+        
+        question? how do we know if some buildings apart from the top should be removed
+            use another pq, called past to keep all thje buildings that should be removed from live but haven't been uet
+            
+        intuition:
+            live works as a debt card
+                once we are able to pay the debt, that is, when the top building in live == top in past
+                we remove it from past
+                since debt has been cleared, we will remove the top building from past as well
+                
+        we repeated remote top both live and past until:
+            past is empty
+            the top building in live is taller than than the top building in past
+                in this case we may still have some buildings to remove
+        '''
+        # Iterate over the left and right edges of all the buildings, 
+        # If its a left edge, add (left, height) to 'edges'.
+        # Otherwise, add (right, -height) to 'edges'.
+        # to help distinguish between left edge and right edge
+        edges = []
+        for left, right, height in buildings:
+            edges.append([left, height])
+            edges.append([right, -height])
+        edges.sort()
+        
+        # Initailize two empty priority queues 'live' and 'past' 
+        # for the live buildings and the past buildings.
+        live, past = [], []
+        answer = []
+        idx = 0
+        
+        # Iterate over all the sorted edges.
+        while idx < len(edges):
+            # Since we might have multiple edges at same x,
+            # Let the 'curr_x' be the current position.
+            curr_x = edges[idx][0]
+            
+            # While we are handling the edges at 'curr_x':
+            while idx < len(edges) and edges[idx][0] == curr_x:
+                height = edges[idx][1]
+                
+                # If 'height' > 0, meaning a building of height 'height'
+                # is live, push 'height' to 'live'. 
+                # Otherwise, a building of height 'height' is passed, 
+                # push the height to 'past'.
+                if height > 0:
+                    heapq.heappush(live, -height)
+                else:
+                    heapq.heappush(past, height)
+                idx += 1
+            
+            # While the top height from 'live' equals to that from 'past',
+            # Remove top height from both 'live' and 'past'.
+            while past and past[0] == live[0]:
+                heapq.heappop(live)
+                heapq.heappop(past)
+            
+            # Get the maximum height from 'live'.
+            max_height = -live[0] if live else 0
+            
+            # If the height changes at 'curr_x', we add this
+            # skyline key point [curr_x, max_height] to 'answer'.
+            if not answer or answer[-1][1] != max_height:
+                answer.append([curr_x, max_height])
+                
+        # Return 'answer' as the skyline.
+        return answer   
+
+
+
+
+
+
+
+
+
+
+
+
