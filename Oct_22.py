@@ -163,3 +163,58 @@ class Solution:
             curr_max_time = max(curr_max_time,neededTime[i])
         
         return total_time
+
+############################
+# 112. Path Sum (REVISTED)
+# 04OCT22
+############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def hasPathSum(self, root: Optional[TreeNode], targetSum: int) -> bool:
+        '''
+        just dfs carrying sum along the way
+        '''
+        self.ans = False
+        
+        def dfs(node,curr_sum):
+            if not node:
+                return
+            dfs(node.left,curr_sum + node.val)
+            if not node.left and not node.right and curr_sum + node.val == targetSum:
+                self.ans = True
+            dfs(node.right,curr_sum + node.val)
+        
+        
+        dfs(root,0)
+        return self.ans
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def hasPathSum(self, root: Optional[TreeNode], targetSum: int) -> bool:
+        '''
+        let dp(node,sum) return whether or not we have a valid root to leaf == targetsum
+        then dp(node,sum) = dp(node.left,sum+node.val) or dp(node.right,sum_node.val)
+        base case, empty not cannot be an answer
+        '''
+        def dp(node,sum_):
+            if not node:
+                return False
+            if not node.left and not node.right and sum_ + node.val == targetSum:
+                return True
+            left = dp(node.left,sum_ + node.val)
+            right = dp(node.right,sum_ + node.val)
+            return left or right
+        
+        return dp(root,0)
+
+
