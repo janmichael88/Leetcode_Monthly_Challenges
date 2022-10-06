@@ -252,3 +252,78 @@ class Solution:
                         lonely += 1
         
         return lonely
+
+#################################
+# 623. Add One Row to Tree (REVISTED)
+# 06OCT22
+#################################
+#close one....
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def addOneRow(self, root: Optional[TreeNode], val: int, depth: int) -> Optional[TreeNode]:
+        '''
+        dfs but pass in parent and pass in current depth
+        '''
+        #don't forget the depth == 1 case
+        if depth == 1:
+            newNode = TreeNode(val)
+            newNode.left = root
+            return newNode
+        def dfs(node,parent,from_left,from_right,curr_depth):
+            if not node:
+                return
+            if curr_depth == depth:
+                newNode = TreeNode(val)
+                if from_left:
+                    newNode.left = node
+                    parent.left = newNode
+                if from_right:
+                    newNode.right = node
+                    parent.right = newNode
+            
+            dfs(node.left,node,True,False,curr_depth+1)
+            dfs(node.right,node,False,True,curr_depth+1)
+        
+        dfs(root,None,False,False,1)
+        return root
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def addOneRow(self, root: Optional[TreeNode], val: int, depth: int) -> Optional[TreeNode]:
+        '''
+        dfs but pass in parent and pass in current depth
+        '''
+        #don't forget the depth == 1 case
+        if depth == 1:
+            newNode = TreeNode(val)
+            newNode.left = root
+            return newNode
+        
+        def insert(node,curr_depth):
+            if not node:
+                return
+            #stop just before to add in the node
+            if curr_depth == depth - 1:
+                old_left = node.left
+                old_right = node.right
+                node.left = TreeNode(val)
+                node.left.left = old_left
+                node.right = TreeNode(val)
+                node.right.right = old_right 
+            else:
+                insert(node.left,curr_depth+1)
+                insert(node.right,curr_depth+1)
+        
+        insert(root,1)
+        return root
+                
