@@ -218,3 +218,37 @@ class Solution:
         return dp(root,0)
 
 
+##############################
+# 531. Lonely Pixel I
+# 04OCT22
+##############################
+#count em up
+class Solution:
+    def findLonelyPixel(self, picture: List[List[str]]) -> int:
+        '''
+        be careful, we cant just check for neighboring
+        a black lonely pixel is a character 'B' that is located at a specific positions where same row and col don't have any other black pixels
+        i can use hash set for cols and rows and add the i,j part to them respectively
+        then retraverse and check for each black pixel
+        check that counts are 1
+        '''
+        rows = len(picture)
+        cols = len(picture[0])
+        
+        row_counts = [0]*rows
+        col_counts = [0]*cols
+        
+        for i in range(rows):
+            for j in range(cols):
+                if picture[i][j] == 'B':
+                    row_counts[i] += 1
+                    col_counts[j] += 1
+        
+        lonely = 0
+        for i in range(rows):
+            for j in range(cols):
+                if picture[i][j] == 'B':
+                    if row_counts[i] == 1 and col_counts[j] == 1:
+                        lonely += 1
+        
+        return lonely
