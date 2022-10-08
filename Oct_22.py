@@ -327,3 +327,245 @@ class Solution:
         insert(root,1)
         return root
                 
+
+##################################
+# 981. Time Based Key-Value Store
+# 06OCT22
+################################
+#dictionary of dictioanry
+class TimeMap:
+
+    def __init__(self):
+        '''
+        i can use a dictinoary of dictionarys
+        '''
+        self.key_time_map = {}
+        
+
+    def set(self, key: str, value: str, timestamp: int) -> None:
+        if key not in self.key_time_map:
+            self.key_time_map[key] = {}
+        #store
+        self.key_time_map[key][timestamp] = value
+
+    def get(self, key: str, timestamp: int) -> str:
+        #return largest timestamp <= timestampe
+        #if we can't find the key, empty string
+        if key not in self.key_time_map:
+            return ""
+        #retrieve the closest one
+        for curr_time in range(timestamp,0,-1):
+            if curr_time in self.key_time_map[key]:
+                return self.key_time_map[key][curr_time]
+        #otherwise we have no time
+        return ""
+
+# Your TimeMap object will be instantiated and called as such:
+# obj = TimeMap()
+# obj.set(key,value,timestamp)
+# param_2 = obj.get(key,timestamp)
+
+#we can use the sortedconatiner class from python
+from sortedcontainers import SortedDict
+class TimeMap:
+
+    def __init__(self):
+        self.key_time_mapp = {}
+
+    def set(self, key: str, value: str, timestamp: int) -> None:
+        #no key, make new sroteddict at this key
+        if key not in self.key_time_mapp:
+            self.key_time_mapp[key] = SortedDict()
+        #store
+        self.key_time_mapp[key][timestamp] = value
+
+    def get(self, key: str, timestamp: int) -> str:
+        #try to retreive
+        if key not in self.key_time_mapp:
+            return ""
+        
+        #search for upperbound
+        idx = self.key_time_mapp[key].bisect_right(timestamp)
+        
+        #if the upper bound is the first element, them there is nothing to return
+        if idx == 0:
+            return ""
+        
+        idx -= 1
+        #peek item method, grabs the entry at the inex, insorted order
+        return self.key_time_mapp[key].peekitem(idx)[1]
+
+
+# Your TimeMap object will be instantiated and called as such:
+# obj = TimeMap()
+# obj.set(key,value,timestamp)
+# param_2 = obj.get(key,timestamp)
+
+#binary search
+class TimeMap:
+    '''
+    we can also use binary seach, since we just adding timestamps in order
+    '''
+
+    def __init__(self):
+        self.key_time = {}
+
+    def set(self, key: str, value: str, timestamp: int) -> None:
+        if key not in self.key_time:
+            self.key_time[key] = []
+        #add npw
+        self.key_time[key].append([timestamp,value])
+        
+
+    def get(self, key: str, timestamp: int) -> str:
+        #no mwatching key
+        if key not in self.key_time:
+            return ""
+        #if we cannot pull a most recent value
+        if timestamp < self.key_time[key][0][0]:
+            return ""
+        
+        #binary search for upper bound
+        lo = 0
+        hi = len(self.key_time[key])
+        
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            if self.key_time[key][mid][0] <= timestamp:
+                lo = mid + 1
+            else:
+                hi = mid
+        #return the one just before
+        return "" if hi == 0 else self.key_time[key][hi-1][1]
+        
+
+# Your TimeMap object will be instantiated and called as such:
+# obj = TimeMap()
+# obj.set(key,value,timestamp)
+# param_2 = obj.get(key,timestamp)
+
+#############################
+# 732. My Calendar III
+# 07OCT22
+############################
+#right idea
+class MyCalendarThree:
+    '''
+    the crux of the problem lies in effeciently looking for the k in the book function
+    catching intervals really
+    brute force would be add start,end to list,
+    then in book, add, sort, and check intersections
+    '''
+
+    def __init__(self):
+        self.bookings = []
+
+    def book(self, start: int, end: int) -> int:
+        self.bookings.append([start,end])
+        #sort, default is on first
+        self.bookings.sort()
+        k = 1
+        first_start,first_end = self.bookings[0]
+        for s,e in self.bookings[1:]:
+            if first_start <= s < e or first_end <= e
+
+# Your MyCalendarThree object will be instantiated and called as such:
+# obj = MyCalendarThree()
+# param_1 = obj.book(start,end)
+
+#line sweep O(N)**2)
+from sortedcontainers import SortedDict
+
+class MyCalendarThree:
+    '''
+    make sure to revisit My Calendar II after this problem
+    intution:
+        when we assign a booking on the closed interval [start,end] we are essentieally increamenitng the count for every number in that range
+        thus the final result of each book cal is exactly the max count of a single time in the whole range [1,e^9]
+        sweep line, sweep through the range
+    instead of keeping all values of counts in a traditional array,we can use a differential array to represent the change that occurs at each time point
+    we increase the count by 1 at a point start, end decrease the count by 1 at point end
+    after enumerating all booked events and updating the differential array,
+        we can simulate scanning the differential array with a vertical swee from the origin time point 0 to the max number 1e^9 and obtain prefix sum at each time point t, (running sum)
+        this is the event count of time t
+        then we just need to find the maximum value of such counts when we scan the array
+    
+    if i were to have a closed array [1,10] i would need to keep a count at each number, then sweep
+    faster to just increment at start, ane decreemnt at end, then record the max
+    '''
+
+    def __init__(self):
+        self.diffs = SortedDict()
+        
+
+    def book(self, start: int, end: int) -> int:
+        #increament start by 1
+        self.diffs[start] = self.diffs.get(start,0) + 1
+        #decrement by 1, we are free after this booking is done
+        self.diffs[end] = self.diffs.get(end,0) - 1
+        curr = res = 0
+        for time,diff in self.diffs.items():
+            curr += diff
+            res = max(res,curr)
+        
+        return res
+
+
+# Your MyCalendarThree object will be instantiated and called as such:
+# obj = MyCalendarThree()
+# param_1 = obj.book(start,end)
+
+#segment tree but with lazy propgations
+class MyCalendarThree:
+
+    '''
+    we can use segment tree to store the maxinum numb of bookings in the array
+    rather when we query(start,end) this should return the maxnumber of k bookings between start and end
+    we only need query start to end in book, but we update lazily
+    at the leaves we in crement by 1, then we take the max of the left and right subtrees
+    we need to update lazily because we are given the start and ends of an interval and not an actual interval
+    https://www.geeksforgeeks.org/lazy-propagation-in-segment-tree/
+    
+    the idea behind lazy propogations
+        recall when we update a node, we have to update the predecessor nodes too, and this can be very expensive because the segment tree could have many nodes
+        When there are many updates and updates are done on a range, we can postpone some updates (avoid recursive calls in update) and do those updates only when required.
+        come back to this problem later on
+    '''
+    def __init__(self):
+        #instead of nodes, store them in a hashmap
+        self.vals = Counter()
+        self.lazy = Counter()
+        
+    def update(self,start:int, end:int, left:int = 0,right:int = 10**9,idx:int = 1) -> None:
+        #out of bonuds
+        if start > right or end <= left:
+            return
+        #if we require an update
+        if start <= left <= right <= end:
+            self.vals[idx] += 1
+            self.lazy[idx] += 1
+            
+        #recurse left and right
+        else:
+            mid = left + (right - left) // 2
+            self.update(start,end,left,mid,idx*2)
+            self.update(start,end,mid+1,right,idx*2 + 1)
+            #actual updates
+            self.vals[idx] = self.lazy[idx] + max(self.vals[2*idx],self.vals[2*idx+1])
+        
+
+    def book(self, start: int, end: int) -> int:
+        #when we book we need to update
+        self.update(start,end-1)
+        #return the value at the root
+        return self.vals[1]
+        
+
+
+# Your MyCalendarThree object will be instantiated and called as such:
+# obj = MyCalendarThree()
+# param_1 = obj.book(start,end)
+
+
+
+
