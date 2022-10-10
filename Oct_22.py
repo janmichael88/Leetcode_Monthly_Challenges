@@ -560,12 +560,159 @@ class MyCalendarThree:
         #return the value at the root
         return self.vals[1]
         
-
-
 # Your MyCalendarThree object will be instantiated and called as such:
 # obj = MyCalendarThree()
 # param_1 = obj.book(start,end)
 
 
+#############################
+# 716. Max Stack
+# 09SEP22
+#############################
+#nope, dont'est work
+#the problem is that if there is more than on maximum element, i need to remove the topmost one
+class MaxStack:
+
+    def __init__(self):
+        '''
+        probably one of the hardest design questions on LC
+        i could use a stack and a max heap, but the problem would be with popMax
+        i could combine hashmap, maxheap and stack
+        
+        '''
+        self.stack = []
+        self.max_heap = []
+        self.mapp = Counter()
+        
+
+    def push(self, x: int) -> None:
+        #add to each of them
+        self.stack.append(x)
+        heapq.heappush(self.max_heap, -x)
+        self.mapp[x] += 1
+        
+
+    def pop(self) -> int:
+        #only looking at stack part now
+        ans = self.stack.pop()
+        #clear
+        
+
+    def top(self) -> int:
+        return self.stack[-1]
+        
+
+    def peekMax(self) -> int:
+        
+        
+
+    def popMax(self) -> int:
+        
 
 
+# Your MaxStack object will be instantiated and called as such:
+# obj = MaxStack()
+# obj.push(x)
+# param_2 = obj.pop()
+# param_3 = obj.top()
+# param_4 = obj.peekMax()
+# param_5 = obj.popMax()
+
+from sortedcontainers import SortedList
+class MaxStack:
+    '''
+    we maintain two balanced trees, but for each push operation, increment counter and push the counter id to the stack and values balacned tree
+    its a rather tricky implementation, but we need keep track of the opeations using a unique id
+    on stack we keep elements as (id,val)
+    on values we keep elements as (val,id)
+    
+    stack is done by pushing order
+    values is done by value order
+    '''
+
+    def __init__(self):
+        self.stack = SortedList()
+        self.values = SortedList()
+        self.count = 0
+        
+
+    def push(self, x: int) -> None:
+        #add by pushing order
+        self.stack.add((self.count,x))
+        #add by values order
+        self.values.add((x,self.count))
+        #increment
+        self.count += 1
+
+    def pop(self) -> int:
+        #retrieve from stack
+        idx,val = self.stack.pop()
+        #remove from values tree
+        self.values.remove((val,idx))
+        return val
+
+    def top(self) -> int:
+        return self.stack[-1][1]
+        
+
+    def peekMax(self) -> int:
+        return self.values[-1][0]
+
+    def popMax(self) -> int:
+        val,idx = self.values.pop()
+        self.stack.remove((idx,val))
+        return val
+        
+
+
+# Your MaxStack object will be instantiated and called as such:
+# obj = MaxStack()
+# obj.push(x)
+# param_2 = obj.pop()
+# param_3 = obj.top()
+# param_4 = obj.peekMax()
+# param_5 = obj.popMax()
+
+############################
+# 1328. Break a Palindrome (REVISTED)
+# 10OCT22
+############################
+#almost
+class Solution:
+    def breakPalindrome(self, palindrome: str) -> str:
+        '''
+        lexographically smallest means first in alphabetical order
+        we meed to replace a character!
+        brute force would be to try and place each letter starting with a to z and check not palindrome
+        '''
+        palindrome = list(palindrome)
+        N = len(palindrome)
+        def ispal(s):
+            left, right = 0,len(s) - 1
+            while left < right:
+                if s[left] != s[right]:
+                    return False
+                left += 1
+                right -= 1
+            
+            return True
+        
+        #generate letters
+        letters = [chr(num + ord('a') ) for num in range(26) ]
+        
+        #try
+        cands = []
+        for l in letters:
+            for i in range(N):
+                #cache the old one
+                old = palindrome[i]
+                palindrome[i] = l
+                #check
+                if ispal(palindrome) == False:
+                    cands.append( "".join(palindrome))
+                palindrome[i] = old
+        
+        cands.sort()
+        if not cands:
+            return ""
+        return cands[0]
