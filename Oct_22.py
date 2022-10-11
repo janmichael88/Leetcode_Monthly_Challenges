@@ -564,6 +564,45 @@ class MyCalendarThree:
 # obj = MyCalendarThree()
 # param_1 = obj.book(start,end)
 
+#using sortedlist
+from sortedcontainers import SortedList
+class MyCalendarThree:
+    
+    '''
+    we can add the intervals into a sorted container, then when adding an interal we just increment the counts
+    to keep all the intervals we can use sorted list
+        with the time range beings [1,e^9]
+    
+    when we need to book a new event [start,end)
+    1. Binary search all starting points in intervals to find the first interval [L1, R1) that has L1 >= start, then we split the interval into [L1, start) and [start, R1), keep the events in them the same as the origin interval [L1, R1), and put them back in intervals container.
+    2. Similarly, perform a binary search to get the first [L2, R2) that satisfies L2 <= end, split it into[L2, start) and [start, R2) and inserting them into intervals.
+    3. For all non-empty intervals between [start, R1) and [start, R1) inclusively in intervals, increase the events of them by 1 as we added a new event in time [start, end) just now. Because only the number of events in those intervals are updated, to get the max number of events now, we just need to compare the last max number of events with them.
+
+    '''
+    def __init__(self):
+        # only store the starting point and count of events
+        self.starts = SortedList([[0,0]])
+        self.res = 0
+
+    def split(self, x: int) -> None:
+        idx = self.starts.bisect_left([x,0])
+        if idx < len(self.starts) and self.starts[idx][0] == x:
+            return idx
+        self.starts.add([x,self.starts[idx-1][1]])
+
+    def book(self, start: int, end: int) -> int:
+        self.split(start)
+        self.split(end)
+        for interval in self.starts.irange([start,0], [end,0], (True,False)):
+            interval[1] += 1
+            self.res = max(self.res, interval[1])
+        return self.res
+        
+
+
+# Your MyCalendarThree object will be instantiated and called as such:
+# obj = MyCalendarThree()
+# param_1 = obj.book(start,end)
 
 #############################
 # 716. Max Stack
