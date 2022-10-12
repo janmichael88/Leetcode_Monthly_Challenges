@@ -755,3 +755,92 @@ class Solution:
         if not cands:
             return ""
         return cands[0]
+
+###############################
+# 420. Strong Password Checker
+# 10OCT22
+###############################
+#https://leetcode.com/problems/strong-password-checker/discuss/91008/Simple-Python-solution
+class Solution:
+    def strongPasswordChecker(self, password: str) -> int:
+        '''
+        the two easy cases
+            when len < 6, need to add
+            when 6 <= len < 20, we need tp dp len - 20 deletions
+            also we need to to a change for every three repeating characters
+            
+        for any repeasting sequences with len % 3 == 0, we can reduces one replacements by deleting one char
+        
+        for any repeating sequences with len % 3 == 1
+            we can reduce one replacement by deleting to characters
+        
+        When we have > 20 chars, we absolutely must delete (can not insert). There is no way to NOT delete!
+    However, we could use some of the deletions towards resolving 3-char rule violations.
+
+    Case one: aaa ... violation can be resolved by deleting last 'a'. So, we subtract those deletions from the number of needed replacements (line: replace -= min(delete, one) )
+
+    Case two: aaaa ... violation can only be resolved by deleting last 'aa' only. Since, we already used deletions for case one, we subtract those here.
+    The formula min(max(delete - one, 0), two * 2) // 2 is a bit convoluted, but it means if there are still left some deletes max(delete - one, 0), let's use them to resolve the case two violations. Since we must delete 2 chars to resolve each violation, we can only use delete // 2 deletions. if delete//2 < two, we can resolve only delete//2 violations here (no delete's left thereafter). if delete//2 >= two, we can resolve two-number of violations (there will be some delete's left).
+
+    Case 3: aaaaa ... violation can only be resolved by deleting last 'aaa' only. We must again account for case one and case two here: delete - one - 2 * two.
+    So, we are subtracting the number of deletions that we used towards resolving the respective cases.
+    Now, if there are any deletions left, let's use them towards case 3 here! max(delete - one - 2 * two, 0). Again, we can only resolve remaining_delete // 3 number of violations.
+
+    Note that there are no more cases! aaaaaa is just the case one (length%3 == 0) plus case 3 again.
+
+    So, the whole time, we have been reducing the number of change / repeat violations by resolving them with deletions.
+    Once again: we are subtracting cases one and two from repeat/change, so that all the repeat runs would become case 3's. Then, we delete the triples.
+
+    The final answer is delete + max(missing_type, repeat). Here's why:
+
+    If there were enough required deletions, we would take # repeat violations to zero. We would still have missing_type violations to add (impossible to resolve by deleting)!
+    However, If there were not enough deletions to take care of repeat violations, we could combine resolving the remaining repeat violations with
+    missing_type violations by using replacement: max(missing_type, repeat) (as in <= 20).
+
+    What happens when there are more deletes than repeats that are resolved (3 cases)? reapeat variable becomes < 0, deletes absorb all repeats, and we still have to resolve missing_type violations. When the number of deletes is less than repeats, either of 2 may happen: repeat-delete > missing_type (repeat-delete absorbs missing_type) OR repeat-delete < missing_type (missing_type absorbs repeat-delete).
+
+
+        '''
+        #first check for each of the types
+        missing_types = 3
+        #take off 1 for each missing type
+        if any('a' <= c <= 'z' for c in password):
+            missing_types -= 1
+        if any('A' <= c <= 'Z' for c in password):
+            missing_types -= 1
+        if any(c.isdigit() for c in password):
+            missing_types -= 1
+        
+        #now we need to check for repeating sequences
+        change = 0
+        one = two = 0
+        p = 2
+        while p < len(password):
+            #triplet
+            if password[p] == password[p-1] == password[p-2]:
+                length = 2
+                #what the fuck is going on here
+                while p < len(password) and password[p] == password[p-1]:
+                    #advance
+                    length += 1
+                    p += 1
+                change += length // 3
+                if length % 3 == 0:
+                    one += 1
+                elif length % 3 == 1:
+                    two += 1
+            else:
+                p += 1
+        
+        #easy cases
+        if len(password) < 6:
+            return max(missing_types, 6 - len(password))
+        elif len(password) <= 20:
+            return max(missing_types,change)
+        
+        else:
+            delete = len(password) - 20
+            change -= min(delete,one)
+            change -= min(max(delete - one,0),two*2) // 2
+            change -= max(delete - one - 2*two,0) // 3
+            return delete + max(missing_types,change)
