@@ -812,8 +812,9 @@ class Solution:
             missing_types -= 1
         
         #now we need to check for repeating sequences
-        change = 0
-        one = two = 0
+        change = 0 # of replacements to deal with three repeating characters
+        one = 0 # of seqs that can be substituted with 1 deletions, (3k)-seqs
+        two = 0 # of seqs that can be substituted with 2 deletions, (3k + 1)-seqs
         p = 2
         while p < len(password):
             #triplet
@@ -824,7 +825,7 @@ class Solution:
                     #advance
                     length += 1
                     p += 1
-                change += length // 3
+                change += length // 3 #'aaaaaaa' -> 'aaxaaxa'
                 if length % 3 == 0:
                     one += 1
                 elif length % 3 == 1:
@@ -844,3 +845,47 @@ class Solution:
             change -= min(max(delete - one,0),two*2) // 2
             change -= max(delete - one - 2*two,0) // 3
             return delete + max(missing_types,change)
+        
+
+############################
+# 976. Largest Perimeter Triangle
+# 12OCT22
+############################
+#FAIL T.T
+class Solution:
+    def largestPerimeter(self, nums: List[int]) -> int:
+        '''
+        i need to fix two of the largest sides
+        then find the greatest third side that is first <= third <= second
+        '''
+        nums.sort()
+        first = nums[-1]
+        second = nums[-2]
+        #greedy two pointer
+        left = 0
+        right = len(nums) - 3
+        while left <= right:
+            if left == right:
+                third = nums[left]
+                if first <= third <= second:
+                    return first + second + third
+            else:
+                if right > first + second:
+                    right -= 1
+                else:
+                    left += 1
+        
+        return 0
+            
+class Solution:
+    def largestPerimeter(self, nums: List[int]) -> int:
+        '''
+        just check each triplet sucht that
+        fist + second > third
+        after sorting of course
+        '''
+        nums.sort()
+        for i in range(len(nums) - 3, -1, -1):
+            if nums[i] + nums[i+1] > nums[i+2]:
+                return nums[i] + nums[i+1] + nums[i+2]
+        return 0
