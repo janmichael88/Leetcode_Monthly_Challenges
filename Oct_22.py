@@ -761,6 +761,7 @@ class Solution:
 # 10OCT22
 ###############################
 #https://leetcode.com/problems/strong-password-checker/discuss/91008/Simple-Python-solution
+#revisit this fucking problem
 class Solution:
     def strongPasswordChecker(self, password: str) -> int:
         '''
@@ -889,3 +890,43 @@ class Solution:
             if nums[i] + nums[i+1] > nums[i+2]:
                 return nums[i] + nums[i+1] + nums[i+2]
         return 0
+
+#################################
+# 921. Minimum Add to Make Parentheses Valid
+# 12OCT22
+#################################
+class Solution:
+    def minAddToMakeValid(self, s: str) -> int:
+        '''
+        a string is valid of:
+            it is empty
+            it can be written as AB (A concat with B) where A adn B are valid strings
+            it can be written as (A) where A is a valid string
+            
+        can i just use stack to clear out current valid parenthese
+        then return the lenght of the stack
+        '''
+        stack = []
+        
+        for ch in s:
+            if stack and stack[-1] == '(' and ch == ')':
+                stack.pop()
+            else:
+                stack.append(ch)
+        
+        return len(stack)
+
+class Solution:
+    def minAddToMakeValid(self, s: str) -> int:
+        #keeping track of balances
+        ans = 0
+        balance = 0
+        for ch in s:
+            balance += 1 if ch == '(' else -1
+            if balance == -1:
+                ans += 1
+                balance += 1
+        
+        return ans + balance
+
+        
