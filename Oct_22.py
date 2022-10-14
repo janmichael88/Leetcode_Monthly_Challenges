@@ -1001,3 +1001,63 @@ class Solution:
 			return root
 		
 		return build(0,len(preorder)-1,0,len(postorder)-1)
+
+###############################################
+# 2095. Delete the Middle Node of a Linked List
+# 14OCT22
+###############################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteMiddle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        two pass,
+        get the length of the linked list and find the middle
+        advance to just before the middle and set .next to .next.next
+        '''
+        N = 0
+        curr = head
+        
+        while curr:
+            curr = curr.next
+            N += 1
+        
+        if N == 1:
+            return None
+        
+        mid = N // 2
+        curr = head
+        for _ in range(mid-1):
+            curr = curr.next
+            
+        curr.next = curr.next.next
+        
+
+        
+        return head
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteMiddle(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        i can sue slow and fast pointer trick
+        '''
+        if head.next == None:
+            return None
+        slow = head
+        fast = head
+        while fast and fast.next:
+            prev = slow
+            slow = slow.next
+            fast = fast.next.next
+        
+        prev.next = prev.next.next
+        
+        return head
