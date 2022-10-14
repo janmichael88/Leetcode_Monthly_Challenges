@@ -1061,3 +1061,40 @@ class Solution:
         prev.next = prev.next.next
         
         return head
+
+#################################################
+# 1431. Kids With the Greatest Number of Candies
+# 14OCT22
+#################################################
+#brute force works
+class Solution:
+    def kidsWithCandies(self, candies: List[int], extraCandies: int) -> List[bool]:
+        '''
+        given candies array, where each ith kid has candies[i]
+        return boolean array if after givine all extracandies, they would have the greatest
+        
+        well N is smalle so brutforce is ok
+        '''
+        ans = []
+        
+        for c in candies:
+            #if we give them
+            give_them = c + extraCandies
+            ans.append(give_them >= max(candies))
+        
+        return ans
+
+class Solution:
+    def kidsWithCandies(self, candies: List[int], extraCandies: int) -> List[bool]:
+        '''
+        pre compute the max before then check
+        '''
+        curr_max = max(candies)
+        
+        ans = []
+        for c in candies:
+            #give them
+            give_them = c + extraCandies
+            ans.append(give_them >= curr_max)
+        
+        return ans
