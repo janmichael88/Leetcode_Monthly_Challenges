@@ -1153,6 +1153,217 @@ class Solution:
         return ans
 
 ####################################
-# 149. Max Points on a Line
-# 14OCT22
+# 1531. String Compression II
+# 15OCT22
 ####################################
+#close one with backtracking
+class Solution:
+    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:
+        '''
+        we can delete at most k characters and we want to return s such that is has the min run length encoding
+        example
+        s = "aaabcccd", k = 2
+        it doesnt make sense to delete an a or c, since this would get compressed anyway
+        so we delete b and d to get a3b3 which has length 4
+        
+        s = "aabbaa", k = 2
+        delete the two b's to get a4
+        
+        s = "aaaaaaaaaaa", k = 0
+        just the length of the run length encoding
+        a11, which has length 3
+        
+        n is small enough, to allow for ane expensive call (N^2) in the dp function
+        if i let dp(i) be the min length of s if i delete s[i] only if i have deletions
+        knapsack delete or not delete if i still have deletions left
+        
+        first lets track backtracking
+        we need to keep track of the last letter and the last encoding, as well as the current length
+        
+        '''
+        self.ans = float('inf')
+        N = len(s)
+        
+        def backtrack(i,last_char,last_count,curr_len,k):
+            if i == N:
+                self.ans = min(self.ans,curr_len)
+                return
+            if k < 0:
+                return
+            #if i were to delete
+            delete_last_char = last_char
+            delete_last_count = last_count
+            delete_curr_len = curr_len
+            backtrack(i+1,delete_last_char,delete_last_count,delete_curr_len,k-1)
+            #if i were to keep
+            keep_last_char = s[i]
+            keep_last_count = last_count + 1 if last_count == s[i] else 0
+            keep_curr_len = curr_len + len(str(last_count))
+            backtrack(i+1,keep_last_char,keep_last_count,keep_curr_len,k)
+        
+        backtrack(0,"",0,0,k)
+        return self.ans-1
+
+#top down
+class Solution:
+    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:
+        '''
+        we can delete at most k characters and we want to return s such that is has the min run length encoding
+        example
+        s = "aaabcccd", k = 2
+        it doesnt make sense to delete an a or c, since this would get compressed anyway
+        so we delete b and d to get a3b3 which has length 4
+        
+        s = "aabbaa", k = 2
+        delete the two b's to get a4
+        
+        s = "aaaaaaaaaaa", k = 0
+        just the length of the run length encoding
+        a11, which has length 3
+        
+        n is small enough, to allow for ane expensive call (N^2) in the dp function
+        if i let dp(i) be the min length of s if i delete s[i] only if i have deletions
+        knapsack delete or not delete if i still have deletions left
+        
+        we need to keep track of a few things in each caller
+        idx: current index into s
+        lastChar = last symbold we have in compression
+        lastCharCount: number of lastChar we have considered
+        k: remaining deletions
+        
+        at each step we either choose to delete or keep
+        and notince the the length of the string only increase if the current count is 0,1,9,99
+        recall we don't encode 1
+        we can use memeo to keep track of all the states, only because in this problem we are visting repeated states
+        
+        '''
+        memo = {}
+        n = len(s)
+        def dp(idx, last_char, last_char_count, k):
+            if k < 0: 
+                return float('inf')
+            if idx == n: 
+                return 0
+            if (idx, last_char, last_char_count, k) in memo:
+                return memo[(idx, last_char, last_char_count, k)]
+
+            delete_char = dp(idx + 1, last_char, last_char_count, k - 1)
+            if s[idx] == last_char:
+                keep_char = dp(idx + 1, last_char, last_char_count + 1, k) + (last_char_count in [1, 9, 99])
+            else:
+                keep_char = dp(idx + 1, s[idx], 1, k) + 1
+
+            ans = min(keep_char, delete_char)
+            memo[(idx, last_char, last_char_count, k)] = ans
+            return ans
+
+        return dp(0, "", 0, k)
+
+#another way
+#https://leetcode.com/problems/string-compression-ii/discuss/2704470/LeetCode-The-Hard-Way-Explained-Line-By-Line
+class Solution:
+    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:
+        @cache
+        def dp(i, prev, prev_cnt, k):
+            # set it to inf as we will take the min later
+            if k < 0: 
+            	return inf
+            # we delete all characters, return 0
+            if i == len(s): 
+            	return 0
+            # here we can have two choices, we either
+            # 1. delete the current char
+            # 2. keep the current char
+            # we calculate both result and take the min one
+            delete = dp(i + 1, prev, prev_cnt, k - 1)
+            if s[i] == prev:
+                # e.g. a2 -> a3
+                keep = dp(i + 1, prev, prev_cnt + 1, k)
+                # add an extra 1 for the following cases
+                # since the length of RLE will be changed
+                # e.g. prev_cnt = 1: a -> a2
+                # e.g. prev_cnt = 9: a9 -> a10
+                # e.g. prev_cnt = 99: a99 -> a100 
+                # otherwise the length of RLE will not be changed
+                # e.g. prev_cnt = 3: a3 -> a4
+                # e.g. prev_cnt = 8: a8 -> a9
+                # alternative you can calculate `RLE(prev_cnt + 1) - RLE(cnt)`
+                if prev_cnt in [1, 9, 99]:
+                    keep += 1
+            else:
+                # e.g. a
+                keep = dp(i + 1, s[i], 1, k) + 1
+            return min(delete, keep)
+        
+        # dp(i, prev, prev_cnt, k) returns the length of RLE with k characters to be deleted
+        # starting from index i 
+        # with previous character `prev`
+        # with `prev_cnt` times repeated so far
+        return dp(0, "", 0, k)
+
+class Solution:
+    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:
+        '''
+        solutions inspired from this post
+        https://leetcode.com/problems/string-compression-ii/discuss/757506/Detailed-Explanation-Two-ways-of-DP-from-33-to-100
+        '''
+        memo = {}
+        N = len(s)
+        def calcLen(length):
+            if length == 0:
+                return 0
+            elif length == 1:
+                return 1
+            elif length < 10:
+                return 2
+            elif length < 100:
+                return 3
+            else:
+                return 4
+            
+        def dp(i,ch,length,k):
+            if i == N:
+                return calcLen(length)
+            if k < 0:
+                return float('inf')
+            if (i,ch,length,k) in memo:
+                return memo[(i,ch,length,k)]
+            delete_char = dp(i+1,ch,length,k-1)
+            if s[i] == ch:
+                keep_char = dp(i+1,ch,length+1,k)
+            else:
+                keep_char = dp(i+1,s[i],1,k) + 1
+            
+            ans = min(delete_char,keep_char)
+            memo[(i,ch,length,k)] = ans
+            return ans
+        
+        
+        return dp(0,"",0,k)
+
+
+#bottom up
+class Solution:
+    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:
+        def length(x):
+            return 1 if x == 1 else 2 if 1 < x < 10 else 3 if 10 <= x < 100 else 4
+        
+        n = len(s)
+        dp = [[float("inf")] * (k + 1) for _ in range(n + 1)]
+        dp[0][0] = 0
+        
+        for i in range(1, n + 1):
+            for j in range(min(i, k) + 1):
+                if j:
+                    dp[i][j] = dp[i - 1][j - 1]
+                remove = count = 0
+                for l in range(i, 0, -1):
+                    if s[l - 1] == s[i - 1]:
+                        count += 1
+                    else:
+                        remove += 1
+                        if remove > j:
+                            break
+                    dp[i][j] = min(dp[i][j], dp[l - 1][j - remove] + length(count))
+        
+        return dp[-1][-1]
