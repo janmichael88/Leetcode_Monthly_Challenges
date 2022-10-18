@@ -1367,3 +1367,242 @@ class Solution:
                     dp[i][j] = min(dp[i][j], dp[l - 1][j - remove] + length(count))
         
         return dp[-1][-1]
+
+#############################################
+# 1335. Minimum Difficulty of a Job Schedule
+# 16OCT22
+#############################################
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        we want to schedule a list of jobs in d days
+        to work on the ith job, i need to finiish all jobs from 0 to i-1
+        i need to do at least one task every day
+        the difficulty of a job schedule is the sume of all difficulties for each day of the d days
+        the difficulty on a day is the max of the jobs done on that day
+        return the min difficult of a job schedule
+        
+        basically we want to parition dobs into d-1 partitions such that sum of the max of the paritions is minimized
+        the paritions must be non empty
+        
+        advance pointer along and keep track of max of current paritiion and current difficulty
+        then we have include a new job into the parition or make a new partition
+        
+        start with backtracking
+        '''
+        self.ans = float('inf')
+        N = len(jobDifficulty)
+        
+        def backtrack(i,curr_max,curr_difficulty,d):
+            #if i have gotten to the end and used up my days
+            if i == N and d == 0:
+                self.ans = min(self.ans,curr_difficulty+curr_max)
+                return
+            elif d < 0:
+                return
+            elif i == N:
+                return
+            
+            #include
+            backtrack(i+1,max(curr_max,jobDifficulty[i]),curr_difficulty,d)
+            #don't include
+            backtrack(i+1,jobDifficulty[i], curr_difficulty + curr_max,d-1)
+        
+        backtrack(0,0,0,d)
+        return -1 if self.ans == float('inf') else self.ans
+
+#yes!!!!
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        we want to schedule a list of jobs in d days
+        to work on the ith job, i need to finiish all jobs from 0 to i-1
+        i need to do at least one task every day
+        the difficulty of a job schedule is the sume of all difficulties for each day of the d days
+        the difficulty on a day is the max of the jobs done on that day
+        return the min difficult of a job schedule
+        
+        basically we want to parition dobs into d-1 partitions such that sum of the max of the paritions is minimized
+        the paritions must be non empty
+        
+        advance pointer along and keep track of max of current paritiion and current difficulty
+        then we have include a new job into the parition or make a new partition
+        
+        start with backtracking
+        '''
+
+        memo ={}
+        N = len(jobDifficulty)
+        
+        def dp(i,curr_max,d):
+            #if i have gotten to the end and used up my days
+            if d < 0:
+                return float('inf')
+            if i == N:
+                if d == 0:
+                    return curr_max
+                else:
+                    return float('inf')
+            if (i,curr_max,d) in memo:
+                return memo[(i,curr_max,d)]
+            
+            #include
+            include = dp(i+1,max(curr_max,jobDifficulty[i]),d)
+            #don't include
+            dont_include = curr_max + dp(i+1,jobDifficulty[i],d-1)
+            
+            curr_difficulty = min(include,dont_include)
+            memo[(i,curr_max,d)] = curr_difficulty
+            return curr_difficulty
+        
+        ans = dp(0,0,d)
+        return ans if ans != float('inf') else -1
+
+#bottom up
+#i fucking give up, i couldn't translate this stupid shit to bottom up
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        we are translating directly from out top down appaorach
+        '''
+        
+        N = len(jobDifficulty)
+        dp = [[[float('inf')]*d + [0] for _ in range(max(jobDifficulty)+1)] for i in range(N+1)]
+        
+        for i in range(N,-1,-1):
+            for curr_max in range(max(jobDifficulty)+1,-1,-1):
+                for rem in range(d,-1,-1):
+                    #base cases
+                    if i == N:
+                        if rem == 0:
+                            dp[i][curr_max][rem] = curr_max
+                            
+                    #transition cases
+                    include = dp[i-1][max(curr_max,jobDifficulty[i])][rem]
+                    dont_include = curr_max + dp[i-1][jobDifficulty[i]][rem-1]
+                    curr_difficulty = min(include,dont_include)
+                    dp[i][curr_max][rem] = curr_difficulty
+        print(dp)
+
+#actual solutions from LC
+#two state instead of three state
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        let dp(i,d) represent the sub problem for finding the min difficulty starting with index 0 with d days remaning
+        to solve dp(i,d) we need to solve dp(j,d-1) for all j > i then take the min
+        dp(i,d) = {
+        min(dp(j,d-1) for j in range(N to i +1))
+        }
+        when there is only 1 day left, we must comiplete all of the remaining jobs on the final day
+        
+        algo:
+            state defintion:
+                dp(i,d) refers to the minimum difficulty when starting at the ith job with d days left
+                dp(0,d) will be the final answer since it represents the starting at the beginning of the job array and finish all jobs in exactly d days
+                the job at idnex j will be the first task for the upcoming day, thereforce the jobs to be finished are all jobs with indices beteween i and j
+                dp(i,d) = dp(j,d-1) + max(jobDifficulty[i:j] for all j > i)
+            
+            base cases:
+                when there is exactly on day remaining, we need to finish all the unfinished jobs on that day
+        
+        edge cases
+        One edge case that we must consider is if the number of days is more than the number of tasks, then we won't be able to arrange at least one job per day; in this case, we should return -1.
+        '''
+        memo = {}
+        N = len(jobDifficulty)
+        
+        if N < d:
+            return -1
+        
+        def dp(i,d):
+            if d == 1:
+                #finisn the remaining and take the max of the after i
+                #this could be optimized
+                return max(jobDifficulty[i:])
+            if (i,d) in memo:
+                return memo[(i,d)]
+            
+            res = float('inf')
+            #find the max difficulty from [i to N - d]
+            max_difficulty = 0
+            for j in range(i,N-d+1):
+                max_difficulty = max(max_difficulty,jobDifficulty[j] )
+                res = min(res,max_difficulty + dp(j+1,d-1))
+            
+            memo[(i,d)] = res
+            return res
+        return dp(0,d)
+        
+#bottom up
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        bottom up dp
+        tips:
+            when transferring states, we need to ensure there are enough tasks remaining to arrange at least one job per day
+            There is no dependency between dp[d][i] and dp[d][j] if i != j, because the value of dp[d][i] only depends on the results of dp[d - 1][j] when j > i. By identifying such relationships, we can draw viable edges for state transfer between different cells in the DP matrix.
+
+
+        '''
+        n = len(jobDifficulty)
+        # Initialize the min_diff matrix to record the minimum difficulty
+        # of the job schedule        
+        min_diff = [[float('inf')] * n + [0] for i in range(d + 1)]
+        for days_remaining in range(1, d + 1):
+            for i in range(n - days_remaining + 1):
+                daily_max_job_diff = 0
+                for j in range(i + 1, n - days_remaining + 2):
+                    # Use daily_max_job_diff to record maximum job difficulty
+                    daily_max_job_diff = max(daily_max_job_diff, jobDifficulty[j - 1])
+                    min_diff[days_remaining][i] = min(min_diff[days_remaining][i],
+                                                      daily_max_job_diff + min_diff[days_remaining - 1][j])
+        if min_diff[d][0] == float('inf'):
+            return -1
+        return min_diff[d][0]
+
+#using stack (most optimal)
+#come back to this one
+
+#################################
+# 1832. Check if the Sentence Is Pangram
+# 17OCT22
+#################################
+class Solution:
+    def checkIfPangram(self, sentence: str) -> bool:
+        '''
+        put into a hashset all the lower case chars 
+        then as we traverse the sentence remove the char
+        and return whether or not we have an empty set
+        '''
+        to_be_removed = set()
+        for i in range(26):
+            to_be_removed.add(chr(ord('a') + i))
+        
+        for ch in sentence:
+            to_be_removed.discard(ch)
+        
+        return len(to_be_removed) == 0
+
+class Solution:
+    def checkIfPangram(self, sentence: str) -> bool:
+        return len(set(sentence)) == 26
+
+class Solution:
+    def checkIfPangram(self, sentence: str) -> bool:
+        '''
+        we can use bit mask of size 26
+        and set bit with XOR
+        then we just need to check if we have 26 set bits
+        '''
+        seen = 0
+        for ch in sentence:
+            #get inde into bit mask
+            idx = ord(ch) - ord('a')
+            #gut this bit positions
+            curr_bit = 1 << idx
+            #set bit
+            seen |= curr_bit
+        
+        #if we haver all 26 set bits
+        return seen == (1 << 26) - 1
