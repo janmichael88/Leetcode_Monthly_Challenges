@@ -1606,3 +1606,95 @@ class Solution:
         
         #if we haver all 26 set bits
         return seen == (1 << 26) - 1
+
+#################################
+# 800. Similar RGB Color (REVISTED)
+# 17OCT22
+##################################
+class Solution:
+    def similarRGB(self, color: str) -> str:
+        '''
+        for each pair in color try to find the closest shorthand
+        conver to base 16 and compare absolute values
+        '''
+        cand = [str(i)*2 for i in range(10)] + [chr(ord('a') + i)*2 for i in range(6)]
+        
+        def find_closest(code):
+            cands = []
+            for c in cand:
+                #find similarity
+                sim = abs(int(c,16) - int(code,16))
+                cands.append([sim,c])
+            
+            #sort on score
+            cands.sort(key = lambda x: x[0])
+            return cands[0][1]
+        
+        ans = '#'
+        for i in range(1,len(color),2):
+            pair = color[i:i+2]
+            #find closest
+            clos = find_closest(pair)
+            ans += clos
+        
+        return ans
+
+class Solution:
+    def similarRGB(self, color: str) -> str:
+        '''
+        instead of using implicit hex conversion we can use a trick
+        (AB)_{16} = 16*A + B
+        (XX)_{16} = 16*X + X = 17X
+        
+        simliarty for a pair is then −(16⋅A+B−17⋅X)^2
+        where X is any digit fomr 0 to 16
+        '''
+        def findClosest(code):
+            min_diff = float('inf')
+            ans = None
+            
+            for i in range(16):
+                curr_diff = abs(int(code,16) - i*17)
+                #could also use squred difference
+                #curr_diff = abs(int(code,16) - i*17)**2
+                if curr_diff < min_diff:
+                    min_diff = curr_diff
+                    ans = i
+            
+            return hex(ans)[-1]*2
+        
+        ans = "#"
+        for i in range(1,6,2):
+            ans += findClosest(color[i:i+2])
+        
+        return ans
+
+#tricky
+class Solution:
+    def similarRGB(self, color: str) -> str:
+        '''
+        turnst out minimum is at num / 17
+        
+        Expanding f(i) we get:
+        (num^2 -2*num*17*i + (17^2)* i^2)
+
+        We take the derivative with respect to i, and set to the equation to 0
+        0 - (2)*(17)*(num) + 2*(17^2)*i = 0
+
+        Rearranging
+        2*(17^2)*i = (2)*(17)*(num)
+
+        Then solve for i:
+        i = num / 17
+        
+        
+        '''
+        def findClosest(code):
+            ans = round(int(code,16)/17)
+            return hex(ans)[-1]*2
+        
+        ans = "#"
+        for i in range(1,6,2):
+            ans += findClosest(color[i:i+2])
+        
+        return ans
