@@ -1698,3 +1698,86 @@ class Solution:
             ans += findClosest(color[i:i+2])
         
         return ans
+
+##############################
+# 38. Count and Say (REVISTED)
+# 18OCT22
+##############################
+class Solution:
+    def countAndSay(self, n: int) -> str:
+        '''
+        the recursive defintion is already defined for us, we just need to translate it
+        '''
+        memo = {}
+        
+        def rec(n):
+            if n == 1:
+                return '1'
+            if n in memo:
+                return memo[n]
+            #first retrieve the last casll
+            res = ""
+            ct = 1
+            prev = rec(n-1)
+            #say it out by counting, this is the bottle neck here because we need to traverse the whole strin
+            for i in range(len(prev)):
+                #if we reach the end or start a new streak
+                #cool way to count the streaks
+                if  i == len(prev) - 1 or prev[i] != prev[i + 1]:
+                    res += str(ct) + prev[i]
+                    ct = 1
+                else:
+                    ct += 1
+
+            memo[n] = res
+            return res
+        
+        
+        return rec(n)
+                
+#bottom up
+class Solution:
+    def countAndSay(self, n: int) -> str:
+        '''
+        bottom up
+        '''
+        dp = ['1']
+        
+        for _ in range(n-1):
+            prev = dp[-1]
+            res = ""
+            ct = 1
+            #say it out by counting, this is the bottle neck here because we need to traverse the whole strin
+            for i in range(len(prev)):
+                #if we reach the end or start a new streak
+                #cool way to count the streaks
+                if  i == len(prev) - 1 or prev[i] != prev[i + 1]:
+                    res += str(ct) + prev[i]
+                    ct = 1
+                else:
+                    ct += 1
+            
+            dp.append(res)
+        
+        return dp[n-1]
+
+#using two pointers, and updating prev and current strings
+class Solution:
+    def countAndSay(self, n: int) -> str:
+        '''
+        bottom up
+        '''
+        curr_string = '1'
+        
+        for _ in range(n-1):
+            next_string = ""
+            j = k = 0
+            while j < len(curr_string):
+                while k < len(curr_string) and curr_string[j] == curr_string[k]:
+                    k += 1
+                next_string += str(k-j) + curr_string[j]
+                j = k
+            
+            curr_string = next_string
+        
+        return curr_string
