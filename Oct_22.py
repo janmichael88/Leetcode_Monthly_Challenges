@@ -1781,3 +1781,116 @@ class Solution:
             curr_string = next_string
         
         return curr_string
+
+##################################
+# 692. Top K Frequent Words
+# 19OCT22
+##################################
+#asy
+class Solution:
+    def topKFrequent(self, words: List[str], k: int) -> List[str]:
+        counts = Counter(words)
+        #put into list of lists for sorting
+        counts = [[k,v] for k,v in counts.items()]
+        
+        #default sorting string is lexgraphical
+        counts.sort(key = lambda x: (-x[1],x))
+        
+        ans = []
+        for i in range(k):
+            ans.append(counts[i][0])
+        
+        return ans
+
+#i could actually use a heap (max_heap)
+class Solution:
+    def topKFrequent(self, words: List[str], k: int) -> List[str]:
+        counts = Counter(words)
+        
+        return heapq.nsmallest(k,counts.keys(), key = lambda x: (-counts[x],x))
+
+#min heap
+class Pair:
+    def __init__(self,word,freq):
+        self.word = word
+        self.freq = freq
+        
+    def __lt__(self,p):
+        #compare to another pair object p
+        return self.freq < p.freq or (self.freq == p.freq and self.word > p.word)
+    
+
+class Solution:
+    def topKFrequent(self, words: List[str], k: int) -> List[str]:
+        '''
+        we can use a min heap but we need to create the object to compare
+        we need to define it in the __lt__ part of the class
+        '''
+        counts = Counter(words)
+        min_heap = []
+        for word,freq in counts.items():
+            heapq.heappush(min_heap, Pair(word,freq))
+            if len(min_heap) > k:
+                heapq.heappop(min_heap)
+        
+        return [p.word for p in sorted(min_heap,reverse = True)]
+
+
+#bucket sort and trie
+class Solution:
+    def topKFrequent(self, words: List[str], k: int) -> List[str]:
+        '''
+        we can use bucket sort to sort the frequenies for each word
+        but in each bucket we need to store a trie
+        when we do a preoder traversal of the trie, we should get the lexographical order of the words
+        '''
+        N = len(words)
+        counts = Counter(words)
+        buckets = [{} for _ in range(N+1)]
+        self.k = k
+        
+        #helper to add word
+        def add_word(trie: Mapping, word:str) -> None:
+            root = trie
+            for c in word:
+                if c not in root:
+                    root[c] = {}
+                root = root[c]
+            
+            #end of word
+            root['#'] = {}
+        
+        #get words from current trie at the current frequency
+        def get_words(trie: Mapping, prefix: str) -> List[str]:
+            #bacase no k let
+            if self.k == 0:
+                return []
+            res = []
+            #end of word
+            if '#' in trie:
+                self.k -= 1
+                res.append(prefix)
+            #check all roots 
+            for i in range(26):
+                ch = chr(ord('a') + i)
+                #if we ca find it, recurse
+                if ch in trie:
+                    res += get_words(trie[ch], prefix+ch)
+            
+            return res
+        
+        #build
+        for word,freq in counts.items():
+            add_word(buckets[freq],word)
+            
+        res = []
+        #greates frequency first
+        for i in range(N,0,-1):
+            #no more k
+            if self.k == 0:
+                return res
+            #if we have a bucket to process
+            if buckets[i]:
+                res += (get_words(buckets[i],""))
+        
+        return res
