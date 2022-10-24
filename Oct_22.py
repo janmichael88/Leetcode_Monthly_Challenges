@@ -1894,3 +1894,95 @@ class Solution:
                 res += (get_words(buckets[i],""))
         
         return res
+
+########################################
+# 1239. Maximum Length of a Concatenated String with Unique Characters (REVISTED)
+# 24OCT22
+#########################################
+#close one, aye yai yai
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        '''
+        seems to be ok to try all possible concatneations
+        try all of them using dfs
+        '''
+        self.ans = 0
+        N = len(arr)
+        
+        def dfs(i,path,taken):
+            if i == N:
+                self.ans = max(self.ans,len(path))
+                return
+            #take
+            to_take = True
+            for ch in arr[i]:
+                if ch in taken:
+                    to_take = False
+                else:
+                    taken.add(ch)
+            
+            if to_take:
+                dfs(i+1,path+arr[i],taken | set(arr[i]))
+            #bactrack on this part
+            for ch in arr[i]:
+                taken.discard(ch)
+            dfs(i+1,path,taken)
+        
+        dfs(0,"",set())
+        return self.ans
+
+#backtring with countmapp
+class Solution:
+    '''
+    backtracking with mapp
+    
+    '''
+    def maxLength(self, arr: List[str]) -> int:
+        # Use depth first search recursion through arr
+        # with backracking and a map for results
+        return self.backtracking(arr, 0, Counter())
+    
+    def backtracking(self, arr: List[str], pos: int, res_map: Counter[str]) -> int:
+        # Check for duplicate characters
+        if len(res_map) and res_map.most_common(1)[0][1] > 1:
+            return 0
+
+        # Recurse through each possible next option
+        # and find the best answer
+        best = len(res_map)
+        for i in range(pos, len(arr)):
+            # Check for duplicate characters in word
+            # then add the current word to the result map
+            # and recurse to the next position
+            word_map = Counter(arr[i])
+            if len(word_map) != len(arr[i]):
+                 continue
+            res_map.update(word_map)
+            best = max(best, self.backtracking(arr, i + 1, res_map))
+            
+            # Backtrack the result map before continuing
+            for c in word_map:
+                if res_map[c] == word_map[c]:
+                    del res_map[c]
+                else:
+                    res_map[c] -= word_map[c]
+        return best
+
+#checky dp without bit masks
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:        
+        # Use depth first search recursion through arr
+        # building from an initial empty string
+        return self.dfs(arr, 0, "")
+    
+    def dfs(self, arr: List[str], pos: int, res: str) -> int:        
+        # Use a set to check res for duplicate characters
+        if len(res) != len(set(res)):
+            return 0
+
+        # Recurse through each possible next option
+        # and find the best answer
+        best = len(res)
+        for i in range(pos, len(arr)):
+            best = max(best, self.dfs(arr, i + 1, res + arr[i]))
+        return best
