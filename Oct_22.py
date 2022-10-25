@@ -2090,3 +2090,40 @@ class Solution:
             new_res = new_chars + old_chars + (new_len + old_len << 26)
             best = max(best, self.dfs(opt_arr, i + 1, new_res))
         return best
+
+#################################
+# 1662. Check If Two String Arrays are Equivalent
+# 25OCT22
+#################################
+class Solution:
+    def arrayStringsAreEqual(self, word1: List[str], word2: List[str]) -> bool:
+        '''
+        what if we wanted to compare without using up space for integer conversion
+        we would need to concat and compare
+        '''
+        word1_ptr = 0
+        word2_ptr = 0
+        
+        string1_ptr = 0
+        string2_ptr = 0
+        
+        while word1_ptr < len(word1) and word2_ptr < len(word2):
+            #no match
+            if word1[word1_ptr][string1_ptr] != word2[word2_ptr][string2_ptr]:
+                return False
+            else:
+                #advance string pointers
+                string1_ptr += 1
+                string2_ptr += 1
+            
+            #if we have to move to the next pointer
+            if string1_ptr == len(word1[word1_ptr]):
+                word1_ptr += 1
+                string1_ptr = 0
+            
+            if string2_ptr == len(word2[word2_ptr]):
+                word2_ptr += 1
+                string2_ptr = 0
+                
+        
+        return word1_ptr == len(word1) and word2_ptr == len(word2)
