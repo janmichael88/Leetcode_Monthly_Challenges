@@ -2092,7 +2092,7 @@ class Solution:
         return best
 
 #################################
-# 1662. Check If Two String Arrays are Equivalent
+# 1662. Check If Two String Arrays are Equivalent (REVISITED)
 # 25OCT22
 #################################
 class Solution:
@@ -2127,3 +2127,20 @@ class Solution:
                 
         
         return word1_ptr == len(word1) and word2_ptr == len(word2)
+
+##################################
+# 1281. Subtract the Product and Sum of Digits of an Integer
+# 25OCT22
+##################################
+class Solution:
+    def subtractProductAndSum(self, n: int) -> int:
+        SUM = 0
+        PROD = 1
+        
+        while n:
+            digit = n % 10
+            SUM += digit
+            PROD *= digit
+            n //= 10
+        
+        return PROD-SUM
