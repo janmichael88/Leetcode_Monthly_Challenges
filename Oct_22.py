@@ -2144,3 +2144,333 @@ class Solution:
             n //= 10
         
         return PROD-SUM
+
+################################
+# 149. Max Points on a Line
+# 25OCT22
+################################
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        '''
+        we can simplify the problem and search for the maximum number of points on a line passing through the point i
+        
+        notice that we only need to consider the next points i+1....N-1 because the maximum number of points containing the point i-1 was already found through point i-2
+        
+        intution:
+            draw the lines passing through the point i and each of the next points
+            save these lines in a hash table with counter = 2 (if we have a point and a next point, we can get the slope, and for this line we already have two points)
+            then when we encounter another point i + k, and the points i, i+1, and i+k are on the same line,
+            then at that slope we increment by 1
+        
+        how can we save a line?
+            if line is horizontal, y == c, the other lines we can get their slopes
+            problem is with caluclating slopes with floats (1.2 - 1.0)
+            another is the divide by zero with two slopes
+            we beed to use a pair of co-prime integers to get the unique slope, rather the gcd(between two integers must be 1)
+            example, slopes (1/3), (2/6), (3/9) are all the same slope, but the greates common divisor between them is 1 and 3
+            
+        algo:
+            initiate max number of points to at least 1
+            iterate over all points i from 0 to N-2
+                for each point i, find the maximum number of points max_count_i on a line passing through the point i
+                    initiate the max number of points on a linse passing through the the point i: count = 1
+                    iteratoe over the next points from j to (i+1,N-1)
+                        if j is a duplicate of i, update a number of duplicates for poit i
+                        else:
+                            save the line passing through (i,j)
+                            update count
+                    
+                    return max_count_i = count + duplicates
+                
+                update the result
+        
+        '''
+        N = len(points)
+        
+        #edge case
+        if N < 3:
+            return N
+        #helper function to get coprime integers to represent the state of a  line
+        def coprime(p1,p2):
+            x1,y1 = p1
+            x2,y2 = p2
+            
+            delta_x = x1 - x2
+            delta_y = y1 - y2
+            
+            #divide by zero case
+            if delta_x == 0:
+                return (0,0)
+            #horizontal line
+            elif delta_y == 0:
+                return (float('inf'),float('inf'))
+            #negative slope, keep delta_x positive
+            elif delta_x < 0:
+                delta_x = -delta_x
+                delta_y = -delta_y
+            
+            gcd = math.gcd(delta_x,delta_y)
+            slope = (delta_x / gcd, delta_y /gcd)
+            return slope
+        
+        #add a line passing through points i and j
+        #update max number of points on a line containin point i
+        #update a number of duplicate i point
+        #pass by reference for horizontal lines and lines
+        def add_line(i,j,count,duplicates,horizontal_lines,lines):
+            x1,y1 = i
+            x2,y2 = j
+            
+            #add duplicate point
+            if x1 == x2 and y1 == y2:
+                duplicates += 1
+            #horizontal line
+            elif y1 == y2:
+                horizontal_lines += 1
+                count = max(horizontal_lines,count)
+            #add a lines, only slope is needed for hashmap
+            else:
+                slope = coprime(i,j)
+                lines[slope] = lines.get(slope,1) + 1
+                count = max(count,lines[slope])
+            
+            return (count,duplicates)
+        
+        def get_max_points_for_i(i):
+            #init lines for passing through point i
+            lines = {}
+            horizontal_lines = 1
+            #one start with just one point on line
+            count = 1
+            #currently no duplicates
+            duplicates = 0
+            #compute lines passing through fixes point i and the next j
+            #update the number of points on a line
+            for j in range(i+1,N):
+                count,duplicates = add_line(points[i],points[j],count,duplicates,horizontal_lines,lines)
+            return count + duplicates
+        
+        max_count = 1
+        for i in range(N-1):
+            max_count = max(max_count, get_max_points_for_i(i))
+        
+        return max_count
+
+#official solution
+class Solution(object):
+    def maxPoints(self, points):
+        """
+        :type points: List[List[int]]
+        :rtype: int
+        """
+        def max_points_on_a_line_containing_point_i(i):
+            """
+            Compute the max number of points
+            for a line containing point i.
+            """
+            def slope_coprime(x1, y1, x2, y2):
+                """ to avoid the precision issue with the float/double number,
+                    using a pair of co-prime numbers to represent the slope.
+                """
+                delta_x, delta_y = x1 - x2, y1 - y2
+                if delta_x == 0:    # vertical line
+                    return (0, 0)
+                elif delta_y == 0:  # horizontal line
+                    return (sys.maxsize, sys.maxsize)
+                elif delta_x < 0:
+                    # to have a consistent representation,
+                    #   keep the delta_x always positive.
+                    delta_x, delta_y = - delta_x, - delta_y
+                gcd = math.gcd(delta_x, delta_y)
+                slope = (delta_x / gcd, delta_y / gcd)
+                return slope
+
+
+            def add_line(i, j, count, duplicates):
+                """
+                Add a line passing through i and j points.
+                Update max number of points on a line containing point i.
+                Update a number of duplicates of i point.
+                """
+                # rewrite points as coordinates
+                x1 = points[i][0]
+                y1 = points[i][1]
+                x2 = points[j][0]
+                y2 = points[j][1]
+                # add a duplicate point
+                if x1 == x2 and y1 == y2:  
+                    duplicates += 1
+                # add a horisontal line : y = const
+                elif y1 == y2:
+                    nonlocal horizontal_lines
+                    horizontal_lines += 1
+                    count = max(horizontal_lines, count)
+                # add a line : x = slope * y + c
+                # only slope is needed for a hash-map
+                # since we always start from the same point
+                else:
+                    slope = slope_coprime(x1, y1, x2, y2)
+                    lines[slope] = lines.get(slope, 1) + 1
+                    count = max(lines[slope], count)
+                return count, duplicates
+            
+            # init lines passing through point i
+            lines, horizontal_lines = {}, 1
+            # One starts with just one point on a line : point i.
+            count = 1
+            # There is no duplicates of a point i so far.
+            duplicates = 0
+            # Compute lines passing through point i (fixed)
+            # and point j (interation).
+            # Update in a loop the number of points on a line
+            # and the number of duplicates of point i.
+            for j in range(i + 1, n):
+                count, duplicates = add_line(i, j, count, duplicates)
+            return count + duplicates
+            
+        # If the number of points is less than 3
+        # they are all on the same line.
+        n = len(points)
+        if n < 3:
+            return n
+        
+        max_count = 1
+        # Compute in a loop a max number of points 
+        # on a line containing point i.
+        for i in range(n - 1):
+            max_count = max(max_points_on_a_line_containing_point_i(i), max_count)
+        return max_count
+
+#another solution
+#turns out python can handle floats, we could also use the coprimes as the keys
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        if len(points) <= 2:
+            return len(points)
+        
+        def find_slope(p1, p2):
+            x1, y1 = p1
+            x2, y2 = p2
+            if x1-x2 == 0:
+                return inf
+            return (y1-y2)/(x1-x2)
+        
+        ans = 1
+        for i, p1 in enumerate(points):
+            slopes = defaultdict(int)
+            for j, p2 in enumerate(points):
+                if i != j:
+                    slope = find_slope(p1, p2)
+                    slopes[slope] += 1
+                    ans = max(slopes[slope], ans)
+        return ans+1
+
+#we don't have to check all pairs, but just all pairs i with i+1
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        if len(points) <= 2:
+            return len(points)
+        
+        def find_slope(p1, p2):
+            x1, y1 = p1
+            x2, y2 = p2
+            if x1-x2 == 0:
+                return inf
+            return (y1-y2)/(x1-x2)
+        
+        ans = 1
+        for i, p1 in enumerate(points):
+            slopes = defaultdict(int)
+            for j, p2 in enumerate(points[i+1:]):
+                slope = find_slope(p1, p2)
+                slopes[slope] += 1
+                ans = max(slopes[slope], ans)
+        return ans+1
+
+################################
+# 523. Continuous Subarray Sum
+# 26OCT22
+################################
+class Solution:
+    def checkSubarraySum(self, nums: List[int], k: int) -> bool:
+        '''
+        we can use pref sum array here
+        and pref_sum[0] = 0
+        if we have indices l and r
+        (pref_sum[r+1] - pref_sum[l]) % k == 0
+        since the subarray must be a multiple of k
+        then pref_sum[r+1] % k = pref_sum[l] % k
+        
+        we just need to check whether we have already seen a pref_sum % k
+        
+        for an index r, we do not need to check all possible indcies for l, such that l < r
+        we are only intereted in the equality:
+            pref_sum[l] % k = pref_sum[r+1] % k
+        
+        we can use a hasha map storing the leftmost index for each remainder of mod k
+        in other words, the value for a key x is the leftmost index such that pref[i] = x
+        '''
+        mapp = {0:0} #prefsum storing pref_sum at this index
+        curr_sum = 0
+        
+        for i in range(len(nums)):
+            curr_sum += nums[i]
+            #if we have seen the remainder the first time
+            if curr_sum % k not in mapp:
+                mapp[curr_sum % k] = i+1 #the right most part
+            #otherwise try to find its left, which must be less than the right
+            elif mapp[curr_sum % k] < i:
+                return True
+        
+        return False
+
+class Solution:
+    def checkSubarraySum(self, nums: List[int], k: int) -> bool:
+        '''
+        another way to see it
+        if k = 5, the 6 % k = 1
+        if add 5 to this: (6 + 5) % 5 = 1
+        we we just need to check if we have seen the remainder before
+        
+        if we had a contiguous subarray [i,j]
+        then pref_sum[j] - pref_sum[i-1] = n*k
+        
+        then:
+            (pref_sum[j] - pref_sum[i-1]) % k = (n*k) % k
+            
+        sum[j] / k - sum[i - 1] / k = n
+        
+        which means we only need to enumerate the right index and check wheter the left index i has appear before 
+        '''
+        N = len(nums)
+        
+        pref_sum = [0]*(N+1)
+        for i in range(1,N+1):
+            pref_sum[i] = pref_sum[i-1] + nums[i-1]
+        
+        seen = set()
+        
+        for i in range(2,N+1):
+            seen.add(pref_sum[i-2] % k)
+            #must have size at least 2
+            if (pref_sum[i] % k) in seen:
+                return True
+        return False
+
+class Solution():
+    def checkSubarraySum(self, nums, k):
+        '''
+        Idea: if sum(nums[i:j]) % k == 0 for some i < j, then sum(nums[:j]) % k == sum(nums[:i]) % k. So we just need to use a dictionary to keep track of sum(nums[:i]) % k and the corresponding index i. Once some later sum(nums[:i']) % k == sum(nums[:i]) % k and i' - i > 1, we return True.
+
+		Time complexity: O(n), space complexity: O(min(k, n)) if k != 0, else O(n).
+        '''
+        dic = {0:-1}
+        summ = 0
+        for i, n in enumerate(nums):
+                summ = (summ + n) % k
+            if summ not in dic:
+                dic[summ] = i
+            else:
+                if i - dic[summ] >= 2:
+                    return True
+        return False
