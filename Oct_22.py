@@ -2732,3 +2732,53 @@ class Solution:
                 max_overlaps = max(max_overlaps, non_zeros)
 
         return max_overlaps
+
+#############################
+# 1365. How Many Numbers Are Smaller Than the Current Number
+# 28OCT22
+#############################
+class Solution:
+    def smallerNumbersThanCurrent(self, nums: List[int]) -> List[int]:
+        '''
+        i could sort, find the position in the array, call it i
+        then there must b i-1 smaller numbers than it
+        '''
+        N = len(nums)
+        sorted_nums = sorted(nums)
+        ans = [0]*N
+        
+        for i in range(N):
+            curr_num = nums[i]
+            #find it using binary serach
+            index = bisect_left(sorted_nums,curr_num)
+            ans[i] = index
+        
+        return ans
+
+class Solution:
+    def smallerNumbersThanCurrent(self, nums: List[int]) -> List[int]:
+        '''
+        use hashmap to stor number to index in sorted array
+        '''
+        mapp = {}
+        for i,num in enumerate(sorted(nums)):
+            if num not in mapp:
+                mapp[num] = i
+        
+        return [mapp[num] for num in nums]
+
+class Solution:
+    def smallerNumbersThanCurrent(self, nums: List[int]) -> List[int]:
+        '''
+        bucket sort since we know the largest numbers
+        '''
+        buckets = [0]*102
+        #record the number of ocurrences
+        for num in nums:
+            buckets[num+1] += 1
+            
+        #record number less than
+        for i in range(1,len(buckets)):
+            buckets[i] += buckets[i-1]
+        
+        return [buckets[num] for num in nums]
