@@ -2590,3 +2590,145 @@ class Solution:
             result += ' ' if result else ''
             result += three(rest)
         return result
+
+#################################
+# 835. Image Overlap (REVISTED)
+# 27OCT22
+##################################
+class Solution:
+    def largestOverlap(self, img1: List[List[int]], img2: List[List[int]]) -> int:
+        '''
+        we try all posible shifts and try to find the largest overlap
+        one thing to note:
+            shifting a matrix in one direction is the same as shifiting the other matrix in the opposite direction
+            
+        helper function: shift_and_count(x_shift, y_shift,M,R)
+            this shifts the matrix M with referernce to R with shitinf coordinate (x_shift,y_shit)
+            then we count over lapping
+        
+        shifting up-left and up-right M wrt to R is the same is shifint down-left, and down-right R wrt M
+        
+        The algorithm is organized as a loop over all possible combinations of shifting coordinates (x_shift, y_shift).
+
+More specifically, the ranges of x_shift and y_shift are both [0, N-1] where NN is the width of the matrix.
+
+At each iteration, we invoke the function shift_and_count() twice to shift and count the overlapping zone, first with the matrix B as the reference and vice versa.
+
+
+        '''
+        def shift_and_count(x_shift,y_shift,M,R):
+            """ 
+            Shift the matrix M in up-left and up-right directions 
+              and count the ones in the overlapping zone.
+            M: matrix to be moved
+            R: matrix for reference
+
+            moving one matrix up is equivalent to
+            moving the other matrix down
+            """
+            left_shift_count = 0
+            right_shift_count = 0
+            
+            #index for row into R matrix
+            rRow = 0
+            for mRow in range(y_shift,len(M)):
+                rCol = 0
+                for mCol in range(x_shift,len(M)):
+                    #shift up and to the left
+                    if M[mRow][mCol] == 1 and M[mRow][mCol] == R[rRow][rCol]:
+                        left_shift_count += 1
+                    #up and to the right
+                    if M[mRow][rCol] == 1 and M[mRow][rCol] == R[rRow][mCol]:
+                        right_shift_count += 1
+                    
+                    rCol += 1
+                
+                rRow += 1
+            
+            return max(left_shift_count,right_shift_count)
+        
+        max_overlaps = 0
+        for y_shift in range(0,len(img1)):
+            for x_shift in range(0,len(img1)):
+                #shifts can only be from [0,N-1]
+                #print(y_shift,x_shift)
+                
+                #move img1 up right and up left
+                max_overlaps = max(max_overlaps,shift_and_count(x_shift,y_shift,img1,img2))
+                
+                #move img2 up and to the right, which is the same as moving image1 down right and down left
+                max_overlaps = max(max_overlaps,shift_and_count(x_shift,y_shift,img2,img1))
+        
+        return max_overlaps
+
+class Solution:
+    def largestOverlap(self, img1: List[List[int]], img2: List[List[int]]) -> int:
+        '''
+        the other prolem with examining all the shifts is that we would have to scan through zones that are filled with zeros over and over, and the zero zones are not of interest (think sparse matrix)
+        
+        we can filter out cells applying a linear transformatino to align the cells
+        
+        say we have two non zero cells in img1 (x1,y1) and in img2 (x2,y2)
+        to align these would need a transformatino vector
+        V_{12} = (x2 - x1, y2-y1) such that img1 + V_{12} = img2
+        
+        the key insight is that all the cells in the same overlapping zone would share the same linear transformation vector
+        
+        we can use the transformation vector as key to group the non zeor cells betwtween two matrics
+        each group represents an overlapping zone
+        
+        first filter out all non zero cells in each matrix repsctively
+        do cartesian products on the non zero cells
+        for each pair of products, calculate the linear transformation vector
+        then count the number of pairs that have the same transformation vector
+        '''
+        size = len(img1)
+        
+        img1_ones = []
+        img2_ones = []
+        vectors = defaultdict(int)
+        ans = 0
+        
+        for i in range(size):
+            for j in range(size):
+                if img1[i][j] == 1:
+                    img1_ones.append((i,j))
+                if img2[i][j] == 1:
+                    img2_ones.append((i,j))
+        
+        #for the cartesian product find the unqiue transformaiton vector
+        for (x1,y1) in img1_ones:
+            for (x2,y2) in img2_ones:
+                vec = (x2 - x1,y2-y1)
+                vectors[vec] += 1
+                ans = max(ans,vectors[vec])
+        
+        return ans
+
+#convolutions
+class Solution:
+    def largestOverlap(self, img1: List[List[int]], img2: List[List[int]]) -> int:
+        '''
+        turns out the number of overlapping 1's between two images is the convolution of the two images
+        we pad im2 with zeros and for each kernel in the padded img2, find the convolution with img1
+        take the max
+        '''
+        import numpy as np
+        img1 = np.array(img1)
+        img2 = np.array(img2)
+        
+        dim = len(img1)
+        
+        #pad b
+        img2_padded = np.pad(img2,dim, mode='constant', constant_values=(0, 0))
+        
+        max_overlaps = 0
+        for x_shift in range(dim*2):
+            for y_shift in range(dim* 2):
+                # extract a kernel from the padded matrix
+                kernel = img2_padded[x_shift:x_shift+dim, y_shift:y_shift+dim]
+                # convolution between A and kernel
+                non_zeros = np.sum(img1 * kernel)
+                max_overlaps = max(max_overlaps, non_zeros)
+
+        return max_overlaps
