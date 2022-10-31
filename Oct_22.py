@@ -2882,8 +2882,79 @@ class Solution:
             res = max(res, grow) + plant
         return res
 
+#####################################################################
+# 1293. Shortest Path in a Grid with Obstacles Elimination (REVISTED)
+# 30OCT22
+######################################################################
+class Solution:
+    def shortestPath(self, grid: List[List[int]], k: int) -> int:
+        '''
+        we can use A*
+            we priortize options using a given heurtistic (since we start upper left and need to go bottom right)
+            we must give preference to the moves down and right
+        
+        informed search, or best first search
+        minimizes the following function;
+            f(n) = g(n) + h(n)
+        
+        n: is a specific step during the exploration
+        g(n): the cost to reach the step n, here the cost referts to the distance traveled so far 
+        h(n): a heuristic estimation on the cost to reach the destination from step n, in this case it is the distance remaining
+        f(n): the estimated total cost to reach the desitination if on takes the step n
+        
+        function needs to be admissiable:
+            it never overestimates the cost, otherwise it could not gurantee that thepath we find is the shortest one
+        
+        we can continue to use a deque and a seen set, but we make small modificatons
+        
+        1. we use priority qye to store the order of the visits, order of the visited is based on the estiamte total cost function f(n)
+        2. for each element in q, we add one more pice:
+            estimated total cost to reach the destination at each step
+        3. add another heuristic condition that allows us to determine the length of the shortest path without exploration
+            a. at any step, if the remainin quota to eliminate the obstalces is larger then the lgnth of the estimated shortets path, then the lenght of the remaining path is the manhattan distance (duh!)
+            b. the condition can also be interprested as if we have sufficient capacity to remove any obstalce to the desitation
+            c. we apply this check at the beginning of the loop
+            
+        A* is just BFS with pruning
+        '''
+        rows, cols = len(grid), len(grid[0])
+        target = (rows - 1, cols - 1)
 
+        def manhattan_distance(row, col):
+            return target[0] - row + target[1] - col
 
+        # (row, col, remaining_elimination)
+        state = (0, 0, k)
+
+        # (estimation, steps, state)
+        # h(n) = manhattan distance,  g(n) = 0
+        queue = [(manhattan_distance(0, 0), 0, state)]
+        seen = set([state])
+
+        while queue:
+            estimation, steps, (row, col, remain_eliminations) = heapq.heappop(queue)
+
+            # we can reach the target in the shortest path (manhattan distance),
+            #   even if the remaining steps are all obstacles
+            remain_min_distance = estimation - steps
+            if remain_min_distance <= remain_eliminations:
+                return estimation
+
+            # explore the four directions in the next step
+            for new_row, new_col in [(row, col + 1), (row + 1, col), (row, col - 1), (row - 1, col)]:
+                # if (new_row, new_col) is within the grid boundaries
+                if (0 <= new_row < rows) and (0 <= new_col < cols):
+                    new_eliminations = remain_eliminations - grid[new_row][new_col]
+                    new_state = (new_row, new_col, new_eliminations)
+
+                    # if the next direction is worth exploring
+                    if new_eliminations >= 0 and new_state not in seen:
+                        seen.add(new_state)
+                        new_estimation = manhattan_distance(new_row, new_col) + steps + 1
+                        heapq.heappush(queue, (new_estimation, steps + 1, new_state))
+
+        # did not reach the target
+        return -1
 
 
 
