@@ -2780,5 +2780,120 @@ class Solution:
         #record number less than
         for i in range(1,len(buckets)):
             buckets[i] += buckets[i-1]
-        
         return [buckets[num] for num in nums]
+
+#################################
+# 2136. Earliest Possible Day of Full Bloom
+# 29OCT22
+#################################
+'''
+JAVA solution
+class Solution {
+    public int earliestFullBloom(int[] plantTime, int[] growTime) {
+        /*
+        we have N flower seeds
+        we are given plantTimes and blom times
+        we can only plant one seed on a day, you do not have to plan the same seed on consecutive days
+        while planting we cannot plant anothe seed, rather once we try planting a seed, we cannot plant another one until it is planted
+        grow time is the number of days it takes a plant to bloom once planted
+        return the earliest posible day all seeds are blooming
+        
+        hint 1:
+            list planting diagram with rows
+            a row i is above another row j if the last day planting seed i is ahead of the last day for seed j
+        hint 2:
+            it does not have any advantage to plant seed j before completing planting seed i
+            but i could potentailly delay the completion of seed
+        hint 3:
+            sort seeds by their growTime descendingly
+            bloomTime of the seed is the sum of plantTime of all seeds precedeing this seed play the growTime of this seed
+        
+        hint4:
+            the sed to bloom last domniates the final answer
+            exchanging the planting of this seed with another seed with a larger or smaller growTime will result in a potentially worse answer
+            
+        intuition:
+            notice that once we plant a seed, we can continue to plant another seed (the concsecutive part)
+            there always exists an optimal solution with seeds planted during consecutive days
+        so it is always better to plant a seed with a longer growth time before the one with a shorter growtime 
+            it takes time to grow, so we might as well us the time it takes to grow, to plant other seeds
+        
+        let's call the answer t and say we have just planted seed i
+        then the seed has to begin growing no later than t - growTime[i]
+        the larger the growTime the seed has, the sooner 
+        
+        */
+        int N = growTime.length;
+        List<List<Integer>> plant_grow_times = new ArrayList();
+        
+        //add to list as [grow,plant]
+        for (int i = 0; i < N; ++i){
+            //make entry
+            List<Integer> entry =  new ArrayList();
+            entry.add(growTime[i]);
+            entry.add(plantTime[i]);
+            //add
+            plant_grow_times.add(entry);
+                
+        }
+        
+        //sort on growth times deceding, comparator with index
+        Collections.sort(plant_grow_times, Comparator.comparing(x -> -x.get(0)));
+        
+        int ans = 0;
+        int curr_plant_time = 0;
+        
+        for (List<Integer> pair: plant_grow_times){
+            curr_plant_time += pair.get(1);
+            ans = Math.max(ans,curr_plant_time + pair.get(0));
+
+        }
+        return ans;
+        
+        
+    }
+}
+'''
+class Solution:
+    def earliestFullBloom(self, plantTime: List[int], growTime: List[int]) -> int:
+        '''
+        we have N flower seeds
+        we are given plantTimes and blom times
+        we can only plant one seed on a day, you do not have to plan the same seed on consecutive days
+        while planting we cannot plant anothe seed, rather once we try planting a seed, we cannot plant another one until it is planted
+        grow time is the number of days it takes a plant to bloom once planted
+        return the earliest posible day all seeds are blooming
+        '''
+        curr_plant_time = 0
+        res = 0
+        indices = sorted(range(len(plantTime)), key = lambda x: -growTime[x])
+        
+        for i in indices:
+            curr_plant_time += plantTime[i]
+            res = max(res,curr_plant_time+growTime[i])
+        
+        return res
+
+#another way to think is imagine all the plants start growing at the same time
+class Solution:
+    def earliestFullBloom(self, plantTime: List[int], growTime: List[int]) -> int:
+        res = 0
+        for grow, plant in sorted(zip(growTime, plantTime)):
+            res = max(res, grow) + plant
+        return res
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
