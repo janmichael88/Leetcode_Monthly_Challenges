@@ -2956,10 +2956,177 @@ class Solution:
         # did not reach the target
         return -1
 
+##################################
+# 487. Max Consecutive Ones II 
+# 31OCT22
+###################################
+#close one with dp top down
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        use dp?
+        dp(i,False) be the state given the max number of conseuctive ones taking nums[:i] and not deleting
+        then dp(i,False)
+        '''
+        memo = {}
+        
+        def dp(i,num_deletions):
+            if i == 0:
+                return 1 if nums[i] == 1 else 0
+            
+            if (i,num_deletions) in memo:
+                return memo[(i,num_deletions)]
+            #there are going to be at least three chocies
+            ch1 = ch2 = ch3 = 0
+            if nums[i] == 1:
+                ch1 = 1 + dp(i-1,num_deletions)
+            else:
+                if num_deletions == 1:
+                    ch2 = 1 + dp(i-1,1)
+                else:
+                    ch3 = 0
+            
+            ans = max(ch1,ch2,ch3)
+            memo[(i,num_deletions)] = ans
+            return ans
+        
+        
+        return dp(len(nums)-1,1)
 
+#finally
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        use dp?
+        dp(i,False) be the state given the max number of conseuctive ones taking nums[:i] and not deleting
+        then dp(i,False)
+        
+        keep state (i,k,score)
+        where i is the current index, k is the number of deletions left, and score is the current score
+        ''' 
+        N = len(nums)
+        memo = {}
+        
+        def dp(i,k,score):
+            if i >= N:
+                return score
+            if nums[i] == 0 and k <= 0:
+                return score
+            
+            if (i,k,score) in memo:
+                return memo[(i,k,score)]
+            
+            #current number if zero
+            if nums[i] == 0:
+                take = dp(i+1,k-1,score+1)
+                no_take = dp(i+1,k,0)
+            #must be a 1
+            else:
+                take = dp(i+1,k,score+1)
+                no_take = dp(i+1,k,score+1)
+            
+            ans = max(take,no_take)
+            memo[(i,k,score)] = ans
+            return ans
+        
+        return dp(0,1,0)
 
+#brute force
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        brute force would be to examine every possible consecutive subsequence
+        count how many 0's
+        if sequence has 1 or fewer zeros, check if its the lognest
+        '''
+        longest = 0
+        N = len(nums)
+        for left in range(N):
+            num_zeros = 0
+            for right in range(left,N):
+                if num_zeros == 2:
+                    break
+                if nums[right] == 0:
+                    num_zeros += 1
+                if num_zeros <= 1:
+                    longest = max(longest,right - left + 1)
+            
+        
+        return longest
 
+#sliding window
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        we can use sliding window to maintian window such that we have 1 or fewer zeros
+        '''
+        longest = 0
+        left = right = 0
+        num_zeros = 0
+        N = len(nums)
+        
+        while right < N:
+            if nums[right] == 0:
+                num_zeros += 1
+            
+            #we need to sthrinkg
+            while num_zeros == 2:
+                if nums[left] == 0:
+                    num_zeros -= 1
+                left += 1
+            
+            #update max answer
+            longest = max(longest,right - left + 1)
+            right += 1
+        
+        return longest
 
+#if the data are given as a stream
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        we can just track if we have seen a zero, count the current run of ones,
+        the count of hte last run of ones and the maxlength
+        
+        algo:
+            when we see a one, increment the current run count
+            when you see a zerp, note that you have seen one (if you we havent sene one, the max consecutive is just the length of the input array)
+            then update max ttal seen to be mas of current
+            thens et previous run counter to the current run counter and reset the current run back to 0
+            
+            when reaching the end, if we haven't seen a zero, return the max consecutive ones to be the input ength
+            else its the max of max total run seen, and the sum of previous, current, plus one, same as in the iteration.
+        '''
+        seenZero = False
+        curr_streak_ones = 0
+        prev_streak_ones = 0
+        
+        ans = 0
+        
+        for num in nums:
+            if num == 1:
+                curr_streak_ones += 1
+            else:
+                seenZero = True
+                ans = max(ans,prev_streak_ones + 1 + curr_streak_ones)
+                prev_streak_ones = curr_streak_ones
+                curr_streak_ones = 0
+                
+        return len(nums) if not seenZero else max(ans,prev_streak_ones + 1 + curr_streak_ones)
+
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        longest_chain = 0
+        current_chain = 0
+        last_chain = 0 #includes the length of the zero
+        
+        for num in nums:
+          current_chain += 1
+          if num == 0:
+            last_chain = current_chain
+            current_chain = 0
+          longest_chain = max(longest_chain, last_chain + current_chain)
+        return longest_chain
 
 
 
