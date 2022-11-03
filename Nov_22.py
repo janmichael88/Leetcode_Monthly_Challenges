@@ -238,7 +238,7 @@ class Solution:
             temp = temp & set(row)
         
         return min(temp,default=-1)
-        
+
 
 
 
@@ -299,3 +299,42 @@ class Solution:
             return (op1 and op2) or (op3 and op4)
         
         return dp(root1,root2)
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def flipEquiv(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> bool:
+        '''
+        there is actually a characteristic for binary trees where all the nodes have unique values
+        flip each node such that the left child < right child
+            call this the canonical representation
+            all equivlant trees have eactly one
+        
+        preorder both trees, for empty nodes make value -1
+        '''
+        vals1 = []
+        vals2 = []
+        
+        def dfs(node,vals):
+            if node:
+                vals.append(node.val)
+                left = node.left.val if node.left else -1
+                right = node.right.val if node.right else -1
+            
+                if left < right:
+                    dfs(node.left,vals)
+                    dfs(node.right,vals)
+                else:
+                    dfs(node.right,vals)
+                    dfs(node.left,vals)
+            else:
+                vals.append(None)
+                
+        dfs(root1,vals1)
+        dfs(root2,vals2)
+        
+        return vals1 == vals2
