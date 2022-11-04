@@ -338,3 +338,238 @@ class Solution:
         dfs(root2,vals2)
         
         return vals1 == vals2
+
+############################################################
+# 2131. Longest Palindrome by Concatenating Two Letter Words
+# 03NOV22
+#############################################################
+#almost
+class Solution:
+    def longestPalindrome(self, words: List[str]) -> int:
+        '''
+        brute force would be to examine all orderings of words
+        for each ordering check if it is a palindrome and update the longest length found
+        we need to intelligently build a palindrome from scratch
+        
+        if we start with 'ab' we need at least add 'ba'
+        the number of times we can do this is the minimum number of 'ab' and 'ba'
+        for words that are already palindromes
+        
+        ["ab","ty","yt","lc","cl","ab"]
+        
+        first make ty + yt
+        then make lc cl
+        
+        while traversing the words keep track of counts
+        if a word and it reverse are in there we can make a palindrome
+        we can actually just keep track on the size of the currently made palindrom
+        '''
+        counts = {}
+        current_size = 0
+        
+        for w in words:
+            if w not in counts:
+                counts[w] = 1
+            else:
+                counts[w] += 1
+            
+            if w[::-1] in counts:
+                current_size += 4
+            
+            
+        return current_size
+            
+class Solution:
+    def longestPalindrome(self, words: List[str]) -> int:
+        '''
+        if we have a valid palindrome made then the last word is the reverse of the first
+        second to last is reverse of the second and so on.
+        
+        center words, if there is one, must be of the same character
+        if the word is not a palindrome we can make it one with its reverse, we take the min number of times
+        
+        for word the is already a palindrome, it ocurrs an odd number of times in the final string, if and only if it is a centrla word
+        
+        there are two special cases
+        for words that are already palindromes, these must exist as the cetner words
+            for an even number of such words, they can all be the pivot
+            for an odd number, there can be that even number of times plus 1
+            
+        
+        '''
+        #count up the words
+        counts = Counter(words)
+        longest = 0
+        has_center = False
+        
+        for word,count in counts.items():
+            #if the word is a palindrome
+            if word[0] == word[1]:
+                #even occurence
+                if count % 2 == 0:
+                    #we can use them all, doesn't matter what, its jsut that we can
+                    longest += count
+                else:
+                    longest += count - 1
+                    #we can use this is center
+                    has_center = True
+                
+            #otherwise its not
+            elif word[0] < word[1]: #to consider each word once not twice
+                #find the freverse
+                longest += 2*min(count,counts[word[1]+word[0]])
+        
+        #if we have a centre increase by 1
+        if has_center:
+            longest += 1
+        return longest*2
+
+
+#another different way
+'''
+case 1: the word is not same as the reversed self, e.g. "ab" != "ba"
+in this case, we need its reveresd string, i.e. ba to form "abba" as a palindrome
+
+case 2: the word is same as the reversed self, e.g. "aa" == "aa"
+case 2.1: if it is even, we could place it in the middle or on the side
+e.g. [aa]abba[aa]
+case 2.2: if the frequency of "aa" is odd, we could only place it in the middle
+e.g. ab[aa]ba
+since even + 1 = odd, we can put all even "aa" on the side, and put one in the middle
+e.g. [aa]ab[aa]ba[aa]
+'''
+class Solution:
+    def longestPalindrome(self, words: List[str]) -> int:
+        ans = 0
+        middle = 0
+        
+        counts = Counter(words)
+        for word,count in counts.items():
+            #if the words is not a palindrome
+            if word[0] != word[1]:
+                #we can only take the minimum of the count
+                ans += min(counts[word],counts[word[::-1]])
+            #if the word is a palindrome
+            else:
+                #we could add to both sides
+                ans += count
+                if count & 1:
+                    #if odd, we need to compensate, by using once less count of the word
+                    ans -= 1
+                    middle = 1
+        
+        #correct for middle
+        ans += middle
+        return 2*ans
+
+
+'''
+class Solution {
+public:
+    //reverse function
+        string reversed(string s){
+            string t = s;
+            reverse(t.begin(),t.end());
+            return t;
+        };
+    int longestPalindrome(vector<string>& words) {
+        
+        int ans = 0;
+        int middle = 0;
+        
+        //get the word count, just be lazy and use unordered map
+        unordered_map<string,int> counts;
+        
+        for (auto word:words){
+            counts[word]++;
+            //std::cout << counts[word] << '\n';
+        }
+        
+        //go through the mapp
+        for (auto& [word,count]:counts){
+            string reversed_word = reversed(word);
+            //std::cout << reversed_word << '\n';
+            
+            if (word != reversed_word) {
+                if (counts.count(reversed_word)){
+                    ans += min(counts[word],counts[reversed_word]);
+                }
+            }
+            
+            else{
+                ans += count;
+                
+                if (count & 1){
+                    ans -= 1;
+                    middle = 1;
+                }
+            }
+        }
+        
+        ans += middle;
+        
+        return 2*ans;
+    }
+};
+'''
+
+class Solution:
+    def longestPalindrome(self, words: List[str]) -> int:
+        '''
+        we first get the counts of all the words
+        then for words the are already palindromes, we know can stitch these together
+        the problem is the there might be some palindromes that are left unpaired, in which case, this must be the center
+        counts % 2
+        
+        so really we are building in increments of 4
+        and if there is an unapired two length palindrome, it must be the center
+        '''
+        res = 0
+        unpaired_centers = 0
+        
+        counts = Counter(words)
+        
+        for word,count in counts.items():
+            if word[0] == word[1]:
+                unpaired_centers += count % 2
+                #imagine cases for input like ['xx','ll','gg']
+                res += 4*(count // 2)
+            else:
+                #this is important so that we don't compare ab and ba seperately
+                if word[0] < word[1]:
+                    res += 4*min(count,counts[word[1]+word[0]])
+        
+
+        if unpaired_centers > 0:
+            res += 2
+        return res
+
+class Solution:
+    def longestPalindrome(self, words: List[str]) -> int:
+        '''
+        we can use a hashamp to store all possible 2 lenght strings (there will be 26*26 of them)
+        
+        then just use it as that
+        '''
+        counts = Counter(words)
+        answer = 0
+        has_unpaired_center = False
+        
+        for i in range(26):
+            a = chr(ord('a') + i)
+            if counts[a+a] % 2 == 0:
+                answer += counts[a+a]
+            else:
+                answer += counts[a+a]
+                answer -= 1
+                has_unpaired_center = True
+            
+            #check all other pairs from i+1 to 26
+            for j in range(i+1,26):
+                b = chr(ord('a') + j)
+                answer += 2*min(counts[a+b],counts[b+a])
+        
+        if has_unpaired_center:
+            answer += 1
+        return answer*2
+        
