@@ -572,4 +572,47 @@ class Solution:
         if has_unpaired_center:
             answer += 1
         return answer*2
+    
+###################################
+# 273. Integer to English Words
+# 07NOV22
+###################################
+#recursive solution
+class Solution:
+    
+    def __init__(self):
+        #store list of english word numbers, and index into them
+        self.lessThan20 = ["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten","Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen","Eighteen","Nineteen"]
+        self.tens = ["","Ten","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"]
+        self.thousands = ["","Thousand","Million","Billion"]
+
+    def helper(self,num):
+        #we can use a reucrsive function and pass the reduced parts into the function
+        #allowable limit for this function is 2000
+        #in the out function we reduce by the largest divisible unit, in this case it is a thousand
+        if num == 0:
+            return ""
+        elif num < 20:
+            return self.lessThan20[num] + " "
+        elif num < 100:
+            return self.tens[num//10] + " " + self.helper(num % 10)
+        else:
+            return self.lessThan20[num//100] + " Hundred " + self.helper(num % 100)
         
+    def numberToWords(self, num: int) -> str:
+        #store list of english word numbers, and index into them
+        #return self.helper(96)
+        if num == 0:
+            return "Zero"
+        
+        res = ""
+        #start from thousands to bullions
+        for i in range(len(self.thousands)):
+            
+            #if the curr group cannot be divided exactly by 1000, tranlate it
+            #i.e call the function on this part and current suffix
+            if num % 1000 != 0:
+                res = self.helper(num % 1000) + self.thousands[i] + " " + res
+            num //= 1000
+        
+        return res.strip()
