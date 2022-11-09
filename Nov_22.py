@@ -616,3 +616,102 @@ class Solution:
             num //= 1000
         
         return res.strip()
+###############################
+# 1544. Make The String Great
+# 08NOV22
+################################
+#i can't belive this got accepted
+class Solution:
+    def makeGood(self, s: str) -> str:
+        '''
+        we define a good string as a string that does not have two adjacent characets where
+        s[i] is lower case and s[i+1] is the same letter but in upper case
+        
+        
+        '''
+        #function to check == and opposite in case
+        def helper(p,q):
+            #fist check same letter
+            if p.lower() == q.lower():
+                if (p.isupper() and q.islower()) or (p.islower() and q.isupper()):
+                    return True
+            return False
+        
+        def isNotGood(s):
+            N = len(s)
+            for i in range(1,N):
+                first = s[i-1]
+                second = s[i]
+                if helper(first,second):
+                    return True
+            
+            return False
+        
+        s = list(s)
+        while isNotGood(s):
+            N = len(s)
+            i = 1
+            while i < N:
+                first = s[i-1]
+                second = s[i]
+                if helper(first,second):
+                    del s[i]
+                    del s[i-1]
+                    N -= 2
+                i += 1
+        
+        return "".join(s)
+                
+class Solution:
+    def makeGood(self, s: str) -> str:
+        '''
+        to see if adjacent characters are invalid pairs just check that abs(ascii(first - second)) == 32
+        '''
+        while len(s) > 1:
+            isNotGood = False
+            for i in range(len(s)-1):
+                first = s[i]
+                second = s[i+1]
+                
+                if abs(ord(first) - ord(second)) == 32:
+                    #delete and rebuild
+                    s = s[:i] + s[i+2:]
+                    isNotGood = True
+                    break
+            
+            if isNotGood == False:
+                break
+        
+        return s
+
+#recursion
+class Solution:
+    def makeGood(self, s: str) -> str:
+        #we can use recursion
+        def rec(s):
+            for i in range(len(s)-1):
+                first = s[i]
+                second = s[i+1]
+                if abs(ord(first) - ord(second)) == 32:
+                    #delete and rebuild
+                    return rec(s[:i] + s[i+2:])
+            #base case is here in the case we get through the whole thing just return the string
+            return s
+
+        
+        return rec(s)
+                
+class Solution:
+    def makeGood(self, s: str) -> str:
+        '''
+        typical stack solution
+            if element we are are about to add and last eleemtn on stack make an invalid pair, pop it
+        '''
+        stack = []
+        for ch in s:
+            if stack and abs(ord(stack[-1]) - ord(ch)) == 32:
+                stack.pop()
+            else:
+                stack.append(ch)
+        
+        return "".join(stack)
