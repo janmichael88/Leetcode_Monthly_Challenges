@@ -787,7 +787,133 @@ class Solution:
 # 493. Reverse Pairs
 # 08NOV22
 ####################################
+#using merger sort
+class Solution:
+    def reversePairs(self, nums: List[int]) -> int:
+        '''
+        we can just copy merge sort and count the reverse pairs during the merge part
+        '''
+        self.inverse_pairs = 0
+        print(self.merge(nums))
+        return self.inverse_pairs
+    
+    def merge_count(self,left_list,right_list):
+        #modification to count inversions
+        #don't actuall do the merge, just count, when we need to return, use the bultin sort method
+        left_ptr = right_ptr = 0
+        while left_ptr < len(left_list) and right_ptr < len(right_list):
+            #check for no inversions
+            if left_list[left_ptr] <= 2*right_list[right_ptr]:
+                left_ptr += 1
+            #check for inversion
+            else:
+                self.inverse_pairs += len(left_list) - left_ptr
+                right_ptr += 1
+        
+        return sorted(left_list+right_list)
+    
+    def merge(self,nums):
+        if len(nums) <= 1:
+            return nums
+        pivot = len(nums) // 2
+        #recurse
+        left = self.merge(nums[:pivot])
+        right = self.merge(nums[pivot:])
+        return self.merge_count(left,right)
+                
 
+#another way just for fun
+class Soltuion:
+     def reversePairs(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        if len(nums) <= 1:
+            return 0
+        count = [0]
+
+        def merge(nums):
+            if len(nums) <= 1: return nums
+            
+            left, right = merge(nums[:len(nums)//2]), merge(nums[len(nums)//2:])
+            l = r = 0
+            
+            while l < len(left) and r < len(right):
+                if left[l] <= 2 * right[r]:
+                    l += 1
+                else:
+                    count[0] += len(left) - l
+                    r += 1
+            return sorted(left+right)
+
+        merge(nums)
+        return count[0]
+
+
+#bst
+class Node:
+    def __init__(self, val):
+        self.val = val
+        self.ge_cnt = 0
+        self.left = None
+        self.right = None
+
+class Solution:
+    def reversePairs(self, nums: List[int]) -> int:
+        if not nums:
+            return 0
+        
+        root = None
+        ans = 0
+        cp_nums = nums.copy()
+        cp_nums.sort()
+        #make bst using sorted nums first
+        root = self.bst(cp_nums, 0, len(nums) - 1)
+        
+        for num in nums:
+            #in this tree we want to find the value the (num,root) such that there exists an inversion
+            #so we look into the bst fro 2*num+1, since it must be strictly increasing (open interval)
+            #we we search we get the counts, which stores the inversions for each number
+            ans += self.search(root, 2 * num + 1)
+            #we need to update the counts for this number
+            root = self.update(root, num)
+        
+        return ans
+
+    def search(self, root, val):
+        #find node and count inverse pairs
+        if not root:
+            return 0
+        
+        if root.val < val:
+            ans = self.search(root.right, val)
+        elif root.val > val:
+            ans = self.search(root.left, val) + root.ge_cnt
+        else:
+            ans = root.ge_cnt
+        
+        return ans
+    
+    def update(self, root, val):
+        if root.val == val:
+            root.ge_cnt += 1
+        elif root.val < val:
+            root.ge_cnt += 1
+            self.update(root.right, val)
+        else:
+            self.update(root.left, val)
+        return root
+    
+    def bst(self, nums, l, r):
+        if l > r:
+            return None
+        m = l + (r - l) // 2
+        root = Node(nums[m])
+        root.left = self.bst(nums, l, m - 1)
+        root.right = self.bst(nums, m + 1, r)
+        return root
+        
 
 
 ######################################
