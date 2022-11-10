@@ -783,4 +783,67 @@ class Solution:
             ans += dfs(nl,1)
         return ans
 
+###################################
+# 493. Reverse Pairs
+# 08NOV22
+####################################
+
+
+
+######################################
+# 901. Online Stock Span (REVISTED)
+# 09NOV22
+######################################
+#brute force, count the streaks
+class StockSpanner:
+
+    def __init__(self):
+        '''
+        span is max consecutive days for which the stock price was <= than the current price starting from today and going backward
+        i could brute force and just count the streaks
+        break once we can't can't continue a streak
         
+        '''
+        self.stocks = []
+        
+
+    def next(self, price: int) -> int:
+        self.stocks.append(price)
+        N = len(self.stocks)
+        max_span = 0
+        curr_span = 0
+        
+        curr_price = self.stocks[N-1]
+        
+        for i in range(N-1,-1,-1):
+            if self.stocks[i] <= curr_price:
+                curr_span += 1
+            else:
+                max_span = max(max_span,curr_span)
+                break
+        
+        return max(max_span,curr_span)
+            
+
+
+# Your StockSpanner object will be instantiated and called as such:
+# obj = StockSpanner()
+# param_1 = obj.next(price)
+
+
+#montonic stack solution
+class StockSpanner:
+    def __init__(self):
+        self.stack = []
+
+    def next(self, price: int) -> int:
+        ans = 1
+        while self.stack and self.stack[-1][0] <= price:
+            ans += self.stack.pop()[1]
+        
+        self.stack.append([price, ans])
+        return ans
+
+# Your StockSpanner object will be instantiated and called as such:
+# obj = StockSpanner()
+# param_1 = obj.next(price)
