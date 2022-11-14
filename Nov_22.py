@@ -973,3 +973,137 @@ class StockSpanner:
 # Your StockSpanner object will be instantiated and called as such:
 # obj = StockSpanner()
 # param_1 = obj.next(price)
+
+#################################
+# 1021. Remove Outermost Parentheses
+# 10NOV22
+#################################
+class Solution:
+    def removeOuterParentheses(self, s: str) -> str:
+        '''
+        we already know that s is a valid parantheses
+        what if i store the balance so far for each expression
+        
+        a primitive decomposition is whenever we hit a balance of zero
+        find the primitive decompositions and clear the out most
+        '''
+        bal = 0
+        curr_primitive = []
+        primitives = []
+        for ch in s:
+            if ch == '(':
+                bal += 1
+            else:
+                bal -= 1
+            curr_primitive.append(ch)
+            if bal == 0:
+                primitives.append(curr_primitive)
+                curr_primitive = []
+        
+        #for each primitive, clear the outer most
+        ans = []
+        for prim in primitives:
+            stripped = prim[1:-1]
+            ans.append("".join(stripped))
+        
+        return "".join(ans)
+            
+class Solution:
+    def removeOuterParentheses(self, s: str) -> str:
+        '''
+        we already know that s is a valid parantheses
+        what if i store the balance so far for each expression
+        
+        a primitive decomposition is whenever we hit a balance of zero
+        find the primitive decompositions and clear the out most
+        '''
+        bal = 0
+        curr_primitive = ""
+        primitives = ""
+        for ch in s:
+            if ch == '(':
+                bal += 1
+            else:
+                bal -= 1
+            curr_primitive += ch
+            if bal == 0:
+                primitives += curr_primitive[1:-1]
+                curr_primitive = ""
+        
+        return primitives
+
+#########################
+# 731. My Calendar II
+# 12NOV22
+#########################
+class MyCalendarTwo:
+    '''
+    we maintain a list of bookinds AND a list of double bookings
+    when a booking conflicts with andything in the double booking, this cannot be a valid booking
+    othewise, part that overlap the calendar will be a double boking
+    
+    
+    '''
+    def __init__(self):
+        self.calendar = []
+        self.double_bookings = []
+        
+
+    def book(self, start: int, end: int) -> bool:
+        #first check for a violation in the double bookings array
+        for s,e in self.double_bookings:
+            #over lap with a double bookings?
+            if start < e and end > s:
+                return False
+        
+        #update double bookings by going through the whole calendar to find a double booking
+        for s,e in self.calendar:
+            #single overlap with single event?
+            if start < e and end > s:
+                #update double bookings:
+                self.double_bookings.append([max(start,s),min(end,e)])
+            
+        #otherwise add to calendaar
+        self.calendar.append([start,end])
+        return True
+        
+class MyCalendarTwo:
+    '''
+    boundary count
+    for a new booking event on the closed and open interval [start,end)
+    we increment a count for every delta in between start and end
+    if the sum is 3 or more, than that time is triple bookied
+    
+            - We will consider 'start' time as +1 and 'end' time as -1
+            - If we currently only have 'start' and 'end' time
+                - The sum between them will equal to 0, which will balance out
+        - Now, if we add an overlap between the 'start/end' time we will have the following
+            - s0, s1, e0, e1
+        - Then the sum will be
+            - 1   2   1  0
+        - Since, there is an overlap, we can see that our highest sum is equal to 2
+    - We can continue this approach to 3 or more overlaps
+        - Example:
+            - s0, s1, s2, e0, e1, e3
+            - 1   2   3   2   1   0
+        - In this case, our sum has reached 3 and we have found our triple booking
+        
+    we don't have a tree set available in python, so we can mimic that with bisect method and insort
+    '''
+    def __init__(self):
+        self.calendar = []
+
+    def book(self, start, end):
+        bisect.insort(self.calendar, (start, 1))
+        bisect.insort(self.calendar, (end, -1))
+        #print(self.calendar)
+        
+        bookings = 0
+        for time, freq in self.calendar:
+            bookings += freq
+            if bookings == 3:
+                self.calendar.pop(bisect.bisect_left(self.calendar, (start, 1)))
+                self.calendar.pop(bisect.bisect_left(self.calendar, (end, -1)))
+                return False
+        
+        return True
