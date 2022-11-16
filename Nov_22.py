@@ -1107,3 +1107,287 @@ class MyCalendarTwo:
                 return False
         
         return True
+
+class MyCalendarTwo:
+
+    def __init__(self):
+        self.mapp = defaultdict()
+
+    def book(self, start: int, end: int) -> bool:
+        self.mapp[start] = self.mapp.get(start,0) + 1
+        self.mapp[end] = self.mapp.get(end,0) - 1
+        
+        bookings = 0
+        for time,freq in sorted(self.mapp.items()):
+            bookings += freq
+            if bookings == 3:
+                self.mapp[start] = self.mapp.get(start,0) - 1
+                self.mapp[end] = self.mapp.get(end,0) + 1
+                return False
+        
+        return True
+
+##################################################
+# 947. Most Stones Removed with Same Row or Column
+#  14NOV22
+##################################################
+class Solution:
+    def removeStones(self, stones: List[List[int]]) -> int:
+        '''
+        we can treat this is a graph problem
+        stones are connected if they share a row or column with another stone
+        so anye stone with a non zero degree can be removed because it means there exist at least one stone with the same row or column
+         
+        we just need to find the best order for the stone removal
+         
+        the graph that we build could have a number of connected components
+        we need to process each each component seperately
+        for a grouped componnet, we can remove all of but one stone (think going backwards)
+         	 	 
+        DFS
+        we start from any nodes in a compoenent and keep removing stones by visting in topolical order
+        except the one we start with
+         	 	 
+        algo
+        1. make the adjacent list (bidirectional)
+        2. make seen hash set
+        3. dfs each stone and increment count
+        4. return length stones
+        '''
+        adj_list = defaultdict(list)
+        N = len(stones)
+        for i in range(N):
+            #we dont need duplicates
+        	for j in range(i+1,N):
+                #make sure they sure an edge
+        	 	if stones[i][0] == stones[j][0] or stones[i][1] == stones[j][1]:
+        	 	    adj_list[i].append(j)
+        	 	 	adj_list[j].append(i)
+
+        #we dfs on a connected component
+        #we can retun the size of this copmonent, and return 1 less
+
+        def dfs_helper(node,seen):
+            self.size = 0
+            def dfs(node,seen):
+                seen.add(node)
+                self.size += 1
+                for neigh in adj_list[node]:
+                    if neigh not in seen:
+                    dfs(neigh,seen)
+            dfs(node,seen)
+            return self.size - 1
+        	 	 
+        #dfs on each node
+        ans = 0
+        seen = set()
+        for i in range(N):
+            if i not in seen:
+        	   ans += dfs_helper(i,seen)
+
+        return ans
+
+#len(stones) - num components
+class Solution:
+    def removeStones(self, stones: List[List[int]]) -> int:
+        '''
+        instead of counting the number of nodes in a connected component
+        we can just countt up the number of connected components
+        the largest number of stones that can be removed is len(stones) - connected compoenents
+        why? for each componenet, we will be left with one stone, the other stones are to be deletd
+        '''
+        adj_list = defaultdict(list)
+        N = len(stones)
+        
+        for i in range(N):
+            for j in range(i+1,N):
+                if stones[i][0] == stones[j][0] or stones[i][1] == stones[j][1]:
+                    adj_list[i].append(j)
+                    adj_list[j].append(i)
+        
+        def dfs(node,seen):
+            seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen)
+                    
+        num_comps = 0
+        seen = set()
+        for i in range(N):
+            if i not in seen:
+                dfs(i,seen)
+                num_comps += 1
+        
+        return N - num_comps
+
+class UnionFind:
+    def __init__(self,size):
+        self.groups = [i for i in range(size)]
+        self.size = [1 for i in range(size)]
+        
+    def find(self,x):
+        #using path compression
+        if x == self.groups[x]:
+            return x
+        self.groups[x] = self.find(self.groups[x])
+        return self.groups[x]
+        
+    def union(self,x,y):
+        #combine stones, returns 1 if they were not connected
+        x = self.find(x)
+        y = self.find(y)
+        
+        #if they were already connected
+        if x == y:
+            return 0
+        
+        #updates
+        if self.size[x] > self.size[y]:
+            self.size[x] += self.size[y]
+            self.groups[y] = x
+        else:
+            self.size[y] += self.size[x]
+            self.groups[x] = y
+        
+        #we combined so there must be connection
+        return 1
+
+class Solution:
+    def removeStones(self, stones: List[List[int]]) -> int:
+        '''
+        we can use union find,
+        union on all pairs of stones
+        the inital number of connected components is the number of stones
+        every time we perform a union on two stones, we decrement the number of componenets by 1
+        then same as the first part
+        '''
+        N = len(stones)
+        uf = UnionFind(N)
+        
+        comp_size = N
+        for i in range(N):
+            for j in range(i+1,N):
+                if stones[i][0] == stones[j][0] or stones[i][1] == stones[j][1]:
+                    comp_size -= uf.union(i,j)
+        
+        return N - comp_size
+
+
+#optimized DFS
+#adjlist between row to col and col to row
+class Solution:
+    def removeStones(self, stones: List[List[int]]) -> int:
+        '''
+        instead of checking all pairs for generate the adj_list
+        just check all rows and all cols
+        
+        insteaf of making adj list from stone to stone
+        we link a row to a column, but we need a way to differentiate between the same row and same col
+            OFFSET with + 10001
+        
+        we connect all stones with the same x coordiante and all stones with the same y cooridante
+        each row and each col is a vertex
+        
+        inution:
+            a stone at row x, touches stones at col y
+            a stone at col y, touches a stone at row x
+        '''
+        #could also have used array
+        adj_list = defaultdict(list)
+        N = len(stones)
+        K = 10001
+        
+        for i,stone in enumerate(stones):
+            row,col = stone
+            col += K
+            adj_list[row].append(col)
+            adj_list[col].append(row)
+        
+        def dfs(node,seen,adj_list):
+            seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,adj_list)
+                    
+        num_comps = 0
+        seen = set()
+        for i in range(2*K + 1):
+            if i not in seen and len(adj_list[i]) > 0:
+                num_comps += 1
+                dfs(i,seen,adj_list)
+        
+        return N - num_comps
+
+#another solution
+class Solution:
+    def removeStones(self, stones: List[List[int]]) -> int:
+        '''
+        first group by grouping together rows and cols 
+        rows map to stone indices in same row
+        same goes for cols
+        
+        make connections
+        '''
+        
+        N = len(stones)
+        x2n, y2n, adj = defaultdict(list), defaultdict(list), defaultdict(list)
+        visited = set()
+        
+        # group/connect nodes to x-coordinate and y-coordinate [x=0,nodes=1,3,4,5]
+        for n,(x,y) in enumerate(stones):
+            x2n[x].append(n), y2n[y].append(n)
+
+        # build adj_list and connect grouped/connected nodes to the first node in a group
+        # adj list is stone index being connected to other stone indices
+        for n in chain(x2n.values(), y2n.values()):
+            for i in range(1, len(n)):
+                adj[n[0]].append(n[i]), adj[n[i]].append(n[0])
+                
+        
+        def bfs(node):
+            if node in visited: return 0
+            queue = deque([node])
+            visited.add(node)
+            while queue:
+                node = queue.popleft()
+                for nei in adj[node]:
+                    if nei not in visited:
+                        visited.add(nei)
+                        queue.append(nei)
+            return 1
+        
+        def dfs(node):
+            if node in visited: return 0
+            visited.add(node)
+            for nei in adj[node]:
+                if nei not in visited:
+                    dfs(nei)
+            return 1
+        
+        return N - sum(dfs(i) for i in range(N))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
