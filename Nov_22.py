@@ -1366,15 +1366,95 @@ class Solution:
         
         return N - sum(dfs(i) for i in range(N))
 
+################################
+# 503. Next Greater Element II
+# 15NOV22
+################################
+#cheeky O(N^2)
+class Solution:
+    def nextGreaterElements(self, nums: List[int]) -> List[int]:
+        '''
+        brute force, i can concat nums with nums
+        then for each i up to len(nums) check i + len(nums)
+        '''
+        N = len(nums)
+        nums = nums + nums
+        
+        ans = []
+        for i in range(N):
+            next_greater = -1
+            for j in range(i+1,i+N):
+                if nums[j] > nums[i]:
+                    next_greater = nums[j]
+                    break
+            ans.append(next_greater)
+        
+        return ans
 
+class Solution:
+    def nextGreaterElements(self, nums: List[int]) -> List[int]:
+        '''
+        brute force, i can concat nums with nums
+        then for each i up to len(nums) check i + len(nums)
+        
+        we don't need to conct arrays, 
+        when indexing j 
+        do j % N
+        '''
+        N = len(nums)
+        
+        ans = []
+        for i in range(N):
+            next_greater = -1
+            for j in range(i+1,i+N):
+                if nums[j % N] > nums[i]:
+                    next_greater = nums[j % N]
+                    break
+            ans.append(next_greater)
+        
+        return ans
 
-
-
-
-
-
-
-
+#############################
+# 223. Rectangle Area (REVISTED)
+# 17OCT22
+#############################
+class Solution:
+    def computeArea(self, ax1: int, ay1: int, ax2: int, ay2: int, bx1: int, by1: int, bx2: int, by2: int) -> int:
+        '''
+        area is defined as:
+            area1 + area2 - intersection
+            is there is an intersection
+            line sweep?
+            
+        how to find intersection?
+        if there is an overlap along x direction:
+        xOverlap=min(ax2,bx2)−max(ax1,bx1) should be positive
+        
+        if there is an overlap in the y direction
+        yOverlap=min(ay2,by2)−max(ay1,by1)
+        
+        the area of the overlap is:
+        overlap = xOverlap*yOverlap
+        
+        if ther eis no overlap, then both of these would be negtaive
+            
+        very similar to intessection over union
+        '''
+        area1 = (ax2 - ax1)*(ay2 - ay1)
+        area2 = (bx2 - bx1)*(by2 - by1)
+        
+        #find overlap in x direction
+        xOverlap = min(ax2,bx2) - max(ax1,bx1)
+    
+        #find overlap in y direction
+        yOverlap = min(ay2,by2) - max(ay1,by1)
+        
+        #if there is ovalap calculate it
+        overlap = 0
+        if xOverlap > 0 and yOverlap > 0:
+            overlap += xOverlap*yOverlap
+        
+        return area1 + area2 - overlap
 
 
 
