@@ -1456,9 +1456,188 @@ class Solution:
         
         return area1 + area2 - overlap
 
+####################################
+# 552. Student Attendance Record II
+# 17NOV22
+###################################
+#nice try...
+class Solution:
+    def checkRecord(self, n: int) -> int:
+        '''
+        student can get an award if:
+            1. count of absent < 2
+            2. longest consectuive L cannot be more than 3
+            
+        return the number of possible ways a student can get an award for size n
+        base case, i n == 1:
+            there are three ways A,L,P
+        
+        if i knew the number of ways for some number i, call that dp(i)
+        
+        build up from i = 0 to n
+        keeping track of A's used so far, and, first and second L
+        
+        throw in a memo too
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(i,count_A,first_L,second_L):
+            if i == n:
+                return 1
+            if (i,count_A,first_L,second_L) in memo:
+                return memo[(i,count_A,first_L,second_L)]
+            
+            ways = 0
+            for record in ['A','L','P']:
+                #P case is easy
+                if record == 'P': 
+                    if first_L and second_L:
+                        #break it
+                        ways += dp(i+1,count_A,False,False)
+                    else:
+                        ways += dp(i+1,count_A,first_L,second_L)
+                
+                #the A case
+                if record == 'A':
+                    if count_A < 2:
+                        if first_L and second_L:
+                            ways += dp(i+1,count_A +1,False,False)
+                        else:
+                            ways += dp(i+1,count_A +1, first_L,second_L)
+                #L case
+                if record == 'L':
+                    if not first_L and not second_L:
+                        ways += dp(i+1,count_A,True,False)
+                    if first_L and not second_L:
+                        ways += dp(i+1,count_A,True,True)
+            ways %= mod
+            memo[(i,count_A,first_L,second_L)] = ways
+            return ways % mod
+        
+        return dp(0,0,False,False)
 
+class Solution:
+    def checkRecord(self, n: int) -> int:
+        '''
+        lets first examine having a rewardable string of length n using only L and P
+        call this number f(n)
+        if we go to f(n-1) we can have two a string ending with L and a string ending with P
+        a string ending with P is always rewardable, so to all the valid strings at f(n-1), we can get n-1 more, just by adding P
+        (i.e) increase by factor of f(n-1) to f(n)
+        
+        now for the string ending with L,
+        the rewardability is based upon looking at strings for f(n-3), becaise i cannot add a LL
+        
+        for f(n-3), we coudl have
+                LPL
+                PLL
+                PPL
+        but not
+            P LLL
+        BUT, very important BUT
+            since we've considered only rewardable strings of length n-3, for the last string to be rewardable at lenght n-3
+            and unrewardable at length n-1, it must have been preceded by a P before LL
+            
+        so, accounting for the first string again, all the rewardable strings of length n-1, except the string of length n-4
+        followed by PLL, can contribute to a rewardable string of length n
+        
+        so we want to include all strings f(n-1) not including strings at f(n-4)
+        
+        so far
+        f(n) = (including f(n-1) ending with P) + (inclduing f(n-1) ending with L not including f(n-4))
+        f(n) = f(n-1) + f(n-1) - f(n-4)
+        f(n) = 2*f(n-1) - f(n-4)
+        
+        NOTES on the recurrences part for f(n-1)
+            we are saying we having rewardable strings at f(n-1) but by doing so, we incur a violation, i.e we are over counting
+            so we need to adjust this overcount by decrementing by f(n-4)
+            
+        we store all valuies f(n) for i up n
+        
+        now what about inlcuding A
+            only 1 A is allowed
+            
+        two cases
+        1. No A is present, in thie case, the number of rewardblse strings is the same as f(n)
+        2. A single A is present
+            A can be present anywhere in a string of length N
+            [...]A[....]
+            [string[i-1:]]+A[i]+[string[n-i]]
+            so for an A at position i we have an additional
+                f(i-1)*f*(n-1)
+        
+        '''
+        #functino f(n) for string ending in LP
+        memo = {}
+        mod = 10**9 + 7
+        def fn(n):
+            #if there are no days using LP only, we can get a rewardable string
+            if n == 0:
+                return 1
+            #using only L,P, lenght 1 two ways
+            if n == 1:
+                return 2
+            #lenght 2, 4 ways obvie
+            if n == 2:
+                return 4
+            #length 3, well for length 2, we alrady had 4 ways, but only 3 of those 4 can be made rewardeable by adding L or P
+            #so 3 + 4 = 7
+            if n == 3:
+                return 7
+            #memo
+            if n in memo:
+                return memo[n]
+            #recurse
+            ans = (2*fn(n-1) - fn(n-4)) % mod #the mod here fucks everything upppp
+            memo[n] = ans
+            return ans
+        
+        #first find all rewardable strinsg using only LP for all i from 1 to N
+        all_LP_rewardable_strings = [0]*(n+1)
+        all_LP_rewardable_strings[0] = 1
+        
+        for i in range(1,n+1):
+            all_LP_rewardable_strings[i] = fn(i)
+        
+        #to include A, we can place it anways in a rewardable string made up only LP
+        #first we include anwer for all_LP_rewardable_strings
+        #then we need to increment this by using A in all positions for string lengths i to N
+        ans = all_LP_rewardable_strings[-1]
+        for i in range(1,n+1):
+            ans += all_LP_rewardable_strings[i-1]*all_LP_rewardable_strings[n-i]
+            ans %= mod
+        
+        return ans % mod
 
-
+#bottom up
+class Solution:
+    def checkRecord(self, n: int) -> int:
+        '''
+        converting top down to bottom up
+        '''
+        LP_rewardable = [0]*(n+1)
+        mod = 10**9 + 7
+        
+        LP_rewardable[0] = 1
+        
+        for i in range(1,n+1):
+            if i == 1:
+                LP_rewardable[i] = 2
+            if i == 2:
+                LP_rewardable[i] = 4
+            if i == 3:
+                LP_rewardable[i] = 7
+            else:
+                LP_rewardable[i] = (2*LP_rewardable[i-1] - LP_rewardable[i-4]) % mod
+        
+        ans = LP_rewardable[-1]
+        for i in range(1,n+1):
+            ans += LP_rewardable[i-1]*LP_rewardable[n-i]
+            ans %= mod
+        
+        return ans % mod
+            
 
 
 
