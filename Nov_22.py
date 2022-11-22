@@ -1724,9 +1724,82 @@ class Solution:
 
         return res + sign * operand   
 
+##############################
+# 1926. Nearest Exit from Entrance in Maze
+# 21NOV22
+##############################
+#close one
+class Solution:
+    def nearestExit(self, maze: List[List[str]], entrance: List[int]) -> int:
+        '''
+        bfs obvie to find the nearext exit
+        exit is defind as the an empty cell at the border
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        
+        q = deque([(entrance[0],entrance[1],0)]) #store as (i,j) steps to entrance
+        global_seen = set([])
+        global_seen.add((entrance[0],entrance[1]))
+        
+        while q:
+            curr_x,curr_y,steps = q.popleft()
+            #at the border, and it must have been a '.'
+            if curr_x == 0 or curr_x == rows or curr_y == 0 or curr_y == cols:
+                return steps
+            for dx,dy in dirrs:
+                neigh_x = curr_x + dx
+                neigh_y = curr_y + dy
+                #bounds check
+                if 0 <= neigh_x < rows and 0 <= neigh_y <cols:
+                    #empy space
+                    if maze[neigh_x][neigh_y] == '.':
+                        #if i have yet to see it
+                        if (neigh_x,neigh_y) not in global_seen:
+                            global_seen.add((neigh_x,neigh_y))
+                            q.append((neigh_x,neigh_y,steps+1))
+        
+        return -1
+                            
 
-
-
+#think about mutating board next time
+class Solution:
+    def nearestExit(self, maze: List[List[str]], entrance: List[int]) -> int:
+        rows, cols = len(maze), len(maze[0])
+        dirs = ((1, 0), (-1, 0), (0, 1), (0, -1))
+        
+        # Mark the entrance as visited since its not a exit.
+        start_row, start_col = entrance
+        maze[start_row][start_col] = "+"
+        
+        # Start BFS from the entrance, and use a queue `queue` to store all 
+        # the cells to be visited.
+        queue = collections.deque()
+        queue.append([start_row, start_col, 0])
+        
+        while queue:
+            curr_row, curr_col, curr_distance = queue.popleft()
+            
+            # For the current cell, check its four neighbor cells.
+            for d in dirs:
+                next_row = curr_row + d[0]
+                next_col = curr_col + d[1]
+                
+                # If there exists an unvisited empty neighbor:
+                if 0 <= next_row < rows and 0 <= next_col < cols \
+                    and maze[next_row][next_col] == ".":
+                    
+                    # If this empty cell is an exit, return distance + 1.
+                    if 0 == next_row or next_row == rows - 1 or 0 == next_col or next_col == cols - 1:
+                        return curr_distance + 1
+                    
+                    # Otherwise, add this cell to 'queue' and mark it as visited.
+                    maze[next_row][next_col] = "+"
+                    queue.append([next_row, next_col, curr_distance + 1])
+            
+        # If we finish iterating without finding an exit, return -1.
+        return -1
 
 
 
