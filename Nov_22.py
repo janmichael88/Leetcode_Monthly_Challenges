@@ -1801,10 +1801,67 @@ class Solution:
         # If we finish iterating without finding an exit, return -1.
         return -1
 
+###############################
+# 279. Perfect Squares (REVISTED)
+# 22NOV22
+################################
+#yes!!
+#sometimes it passes and sometimes it does not!
+class Solution:
+    def numSquares(self, n: int) -> int:
+        '''
+        i can generate perfect squares up to n
+        then use dp to minimize
+        '''
+        #create list for squares up to n
+        squares = set([1])
+        curr_square = 1
+        while curr_square*curr_square < n:
+            curr_square += 1
+            squares.add(curr_square*curr_square)
+        
+        
+        
+        memo = {}
+        def dp(n):
+            #bottome cases, the number if a square already!
+            if n in squares:
+                return 1
+            if (n) in memo:
+                return memo[(n)]
+            ans = float('inf')
+            for sq in squares:
+                if n - sq >= 0:
+                    ans = min(ans, dp(n-sq) + 1)
+            
+            memo[(n)] = ans
+            return ans
+        
+        return dp(n)
 
-
-
-
+#bfs review
+class Solution:
+    def numSquares(self, n: int) -> int:
+        # list of square numbers that are less than `n`
+        square_nums = [i * i for i in range(1, int(n**0.5)+1)]
+    
+        count = 0
+        q = deque([n])
+        while q:
+            count += 1
+            N = len(q)
+            # construct the queue for the next level
+            for _ in range(N) :
+                curr_n = q.popleft()
+                for square_num in square_nums:    
+                    if curr_n == square_num:
+                        return count  # find the node!
+                    elif curr_n < square_num:
+                        break
+                    else:
+                        q.append(curr_n - square_num)
+        return level
+                
 
 
 
