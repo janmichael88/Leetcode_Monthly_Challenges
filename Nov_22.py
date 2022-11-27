@@ -1863,5 +1863,144 @@ class Solution:
         return level
                 
 
+###############################
+# 907. Sum of Subarray Minimums
+# 26NOV22
+###############################
+#brute force
+class Solution:
+    def sumSubarrayMins(self, arr: List[int]) -> int:
+        '''
+        turns out not to be dp at all but rather a monotoinc stack
+        try out brute force first,
+        we don't need to all subarrays, just all mins between any given i,j
+        '''
+        N = len(arr)
+        ans = 0
+        
+        for i in range(N):
+            curr_min = arr[i]
+            for j in range(i,N):
+                curr_min = min(curr_min,arr[j])
+                ans += curr_min
+                
+        
+        return ans
 
+class Solution:
+    def sumSubarrayMins(self, arr: List[int]) -> int:
+        '''
+        generating ranges is the most expensive part of the algorithm 
+        focus on the current element in the range instead of the range
+        for this element to be a min, every element in this range must be greater than it, otherwise we would have a new min
+        
+        intution:
+            once we have a smallest element in a given range (i,j)
+            we can determing the number of subarrays in this range that contain this element
+            becaue the eleemnt is smalles in the range, it will also be the smallest in all subarrays
+            the count of subarray multiplied by the smallest element in this current range will give us the contribution to the sum
+            
+        
+        so we figure out the count of subarrays with this smallest elemeent
+        
+        example:  [0, 3, 4, 5, 2, 3, 4, 1, 4]
+        question, find number of subarrays with 2 as the samllest interger
+        2 is smallest in the range [3, 4, 5, 2, 3, 4] or (1,6)
+        in the given range (1,6), find the count of subarrays which contain 2
+        
+        Each subarray is a continuous series of elements that contains 2 from the given range. So to count them, we can count every subarray that starts before 2 or at 2, and ends after 2 or at 2.
+        
+        break current subarray into left: less than 2, at 2 and greather than 2
+        to find the count we just do:
+            (index of current min - index of start of left)*(index end of right - index of current min)
+            
+        we can get the total count by multiplying two numbers - the count of elements before (and including) 22 and the count of elements after (and including) 2.
+        
+        So, if we know the count of subarrays where each element is the smallest, we can deduce the amount each element will contribute to the final summation. 
+        
+        Now the only remaining part of the puzzle is how to get the range in which each element is the smallest
+        
+        . For this, we find the nearest element on the left, which is less than itself. Then, find the closest element on the right, which is less than itself. If ii and jj are the indices of these elements on the left and right, then [i + 1, j - 1][i+1,j−1] indices create our range
+        
+        we can use montonic stack to calculate the previous smallest element and th next smallet element (very similary to LC 84)
+        
+        we only care about montonic increasing stack
+        
+        review:
+            keep pushing elements on to stack so lon as they are increasing
+            
+        how does this help:
+            As a new item gets added to the stack, older items are removed from the top if they are bigger. In other words, the items that are getting popped must be greater than or equal to the incoming element. o, every time an item is popped, we get to know about its next smaller item.
+            
+        If the stack becomes empty at the time of removal of an item, it indicates that the outgoing item is the smallest item seen so far.
+            
+        Also note that once the process is complete, the stack contains a series of items sorted in increasing order. These are also the items that have no smaller items after themselves. And their previous smaller items are stored right below them in the stack.
+        
+        edge cases:
+             we should make sure that we don't count the contribution by an element twice. This is possible in the cases such as [2, 2, 2].
+             
+             while finding boundary elements for a range, we look for elemenets that are strictly less than the current element to on the left
+             to decide the right boundary, we look for elemeents which are less than or equal to the current eleemnt
+             
+             
+        algo:
+        Declare a monotonically increasing stack stackstack, and a variable to hold the summation of minimums sumOfMinimumssumOfMinimums.
+
+        Create a monotonically increasing stack. Iterate index ii from 00 to nn (inclusive) where nn is the length of the given array arrarr. While in practice, in a 00-indexed array, index values extend until n - 1n−1 only, we use value nn to indicate that we have reached the end of the array, and everything left in the stack can then be removed.
+
+        Do the following for each index ii in the array arrarr -
+
+        If the stack isn't empty, pop all the items from the top until ii has reached nn or the item at the top of the stack, stackTop <= arr[i]stackTop<=arr[i].
+
+        According to our constraint, the stack can contain only the increasing items. So, before we push the current index ii into the stack, we need to ensure that stackTopstackTop is smaller than the current item, arr[i]arr[i]. So, the items bigger than or equal to the current item, are removed from the stack top.
+
+        Please note that we must be careful about duplicate elements in the array. So, while considering the next smaller items, we also allow equal elements. When it comes to previous smaller items, though, we keep them strictly smaller (not equal).
+
+        For each item midmid, popped from the stack, we get the range in which it is minimum. The range is defined by all the items between the previous smaller item and the next smaller item.
+
+        The next smaller item's index is ii. The previous smaller item's index comes from the current top of stack. If the stack is empty, we consider it -1−1.
+
+        Calculate the contribution of the element as -
+
+        contribution = arr[mid] * (i - mid) * (mid - previousSmallerIndex)contribution=arr[mid]∗(i−mid)∗(mid−previousSmallerIndex)
+
+        When ii reaches nn, we would have pushed all the array elements into the stack. Some of them would have been removed as well. The remaining items are the ones that have no smaller items after them. So we can consider the array's length as the nextSmallerIndexnextSmallerIndex for them. At the same time, the previousSmallerpreviousSmaller index would be the item below them in the stack.
+
+        We can use the same logic as explained in the previous approach to calculate their contribution.
+
+        This contributioncontribution gets added to the running total of minimums. sumOfMinimums += contributionsumOfMinimums+=contribution
+
+        Because all the bigger items have already been removed from the stack, we can now push the index ii into the stack.
+
+        Return the running total sumOfMinimumssumOfMinimums as the final answer (because this number could be huge, return the mod with the given number
+
+            
+        '''
+        mod = 10**9 + 7
+        stack = []
+        sum_of_mins = 0
+        
+        for i in range(len(arr)+ 1): #the case where we have to to the end of the array in which case we have all increaing
+            #when i reach the length of the array
+            #indicates that all the elements have been processed and the rmeaining elements on the stack need to be popped out
+            
+            while stack and (i == len(arr) or arr[stack[-1]] >= arr[i]):
+                
+                 # Notice the sign ">=", This ensures that no contribution
+                # is counted twice. right_boundary takes equal or smaller 
+                # elements into account while left_boundary takes only the
+                # strictly smaller elements into account
+                
+                #do this every time, since the array is montonic increasing, we have found a place where nums[i] can be a minimum
+                mid = stack.pop()
+                left = -1 if not stack else stack[-1]
+                right = i
+                
+                #contribution to min sum
+                count = (mid - left)*(right - mid)
+                sum_of_mins += count*arr[mid]
+            
+            stack.append(i)
+            
+        return sum_of_mins % mod
 
