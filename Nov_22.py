@@ -2004,3 +2004,109 @@ class Solution:
             
         return sum_of_mins % mod
 
+#################################
+# 446. Arithmetic Slices II - Subsequence (REVISTED)
+# 28NOV22
+#################################
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        brute force would use dfs to generate all paths
+        
+        to determine an arithmetic sequence we need the first or last number in the sequecnes, and the common differece d
+        if the elemenet we want to add has common difference d, we can extend it
+        
+        one transition that may work is
+        
+        dp(i,d) = number of arithmetic subsequences ending with A[i] and common diffeerence d
+        
+        note:
+            so we could say the number is sum of dp(i,d) for i in range(N) for d in all possible D
+        
+        further we can say:
+            for all j < i: dp(i,nums[i]-nums[j]) += dp(j,nums[i]-nums[j])
+            
+            but if all dp(i,d) are set to 0, how can we form a new arithmetic subsequence is there no existing ones before
+            
+        we define weak arithmetic subsequences as subseqs that consist of at least two elements and if the difference between any to is the same which have two properties:
+            1. for any pair (i,j) such that i != j nums[i] and nums[j] can always form a weal arithemtic subseq
+            2. if we can append a new element to a weak arithmetic subseq and keep it arithemtic, then this new subsequ must be arithemtic
+            
+        now we can say:
+            dp(i,d) denotes the numebr of weak arithemtic subseqs ending with nums[i] and diffetn d
+            then we can include + 1
+            
+            for all j < i: dp(i,nums[i]-nums[j]) += dp(j,nums[i]-nums[j]) + 1
+            
+            the 1 appears because we have made a new one
+            
+        now the number of all weak arithemtic subseqs is the sum of all dp(i,d), but how canw e get the number of arithmetic subseqs that are not weak?
+        
+            we can directly compute the number of weak arithemtic subseqs, which is just nC2:
+                n*(n-1) / 2
+                
+            
+            
+        '''
+        memo = {}
+        N = len(nums)
+        #use recurrences
+        def dp(i,d):
+            if i == N:
+                return 0
+            if (i,d) in memo:
+                return memo[(i,d)]
+            count = 0
+            for j in range(i):
+                diff = nums[i] - nums[j]
+                count += dp(j,diff) + 1
+            
+            memo[(i,d)] = count
+            return count
+        
+        #find all possible arithmetic inlcuding weak
+        all_counts = 0
+        for i in range(N):
+            all_counts += dp(i,nums[i])
+
+        #remove duplicates from weak
+        return all_counts - (N*(N-1)//2)
+
+#another recursive approach
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        Consider an element to be part of an Arithmetic Progression with
+diffence d. See if the next term(s) exists in the array, get their
+indexes and recursively call for them increasing the count by 1.
+Recursive function will have 3 parameters- index,difference and count.
+Ignore the dp memoization and understand the recursion for better intuition.
+        '''
+        #storing the indexes of the elements in dictionary a with values as a key
+        #to check for elements using indieces
+        N = len(nums)
+        counter = defaultdict(list)
+        for i,num in enumerate(nums):
+            counter[num].append(i)
+                
+        print(counter)
+        dp={}
+        def rec(i,d,c):
+            if (i,d,c) in dp:
+                return dp[(i,d,c)]
+            
+            total=0
+            if c>=3:
+                total+=1
+            if nums[i]+d in counter:
+                for j in counter[nums[i]+d]:
+                    if j>i:
+                        total+=rec(j,d,c+1)
+            dp[(i,d,c)]=total
+            return total
+        ans=0
+        for i in range(len(nums)):
+            for j in range(i+1,len(nums)):
+                #we alwayrs try to extend the current weak arithmetic sequence
+                ans+=rec(j,nums[j]-nums[i],2)
+        return ans
