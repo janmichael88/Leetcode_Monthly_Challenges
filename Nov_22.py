@@ -2110,3 +2110,133 @@ Ignore the dp memoization and understand the recursion for better intuition.
                 #we alwayrs try to extend the current weak arithmetic sequence
                 ans+=rec(j,nums[j]-nums[i],2)
         return ans
+
+############################################
+# 2225. Find Players With Zero or One Losses
+# 28NOV22
+############################################
+class Solution:
+    def findWinners(self, matches: List[List[int]]) -> List[List[int]]:
+        '''
+        we are given a matches history where there are len(matches) matches
+        and each matches[i] indicates that player matches[i][0] won and player matches[i][1] lost
+        
+        we want the indices ot players that have not lost any matches (i.e they won all their matches)
+        we want idncies of players that have lost exactly one match
+        
+        only include players that have played at least one match
+        '''
+        #keep count of winnders and losers
+        winners = Counter([win for win,loss in matches])
+        losers = Counter([loss for win,loss in matches])
+        
+        
+        #losers is easy, just traverse losers and found counts == 1
+        loser_idxs = [index for index,count in losers.items() if count == 1]
+        
+        winner_idxs = []
+        for w in winners:
+            if w not in losers:
+                winner_idxs.append(w)
+        
+        #sort
+        loser_idxs.sort()
+        winner_idxs.sort()
+        
+        return [winner_idxs,loser_idxs]
+
+#one pass three hash sets
+class Solution:
+    def findWinners(self, matches: List[List[int]]) -> List[List[int]]:
+        '''
+        we can do this in one pass
+        just have three buckets
+            1. zero loss, hold player id with only zero losses
+            2. one loss, hold player id with ONLY one loss
+            3. more loss, holds player id's with more than one less
+        '''
+        zero_loss = set()
+        one_loss = set()
+        more_losses = set()
+        
+        for winner, loser in matches:
+            # Add winner
+            if (winner not in one_loss) and (winner not in more_losses):
+                zero_loss.add(winner)
+            # Add or move loser.
+            if loser in zero_loss:
+                zero_loss.remove(loser)
+                one_loss.add(loser)
+            elif loser in one_loss:
+                one_loss.remove(loser)
+                more_losses.add(loser)
+            elif loser in more_losses:
+                continue
+            else:
+                one_loss.add(loser)          
+            
+        return [sorted(list(zero_loss)), sorted(list(one_loss))]
+
+
+class Solution:
+    def findWinners(self, matches: List[List[int]]) -> List[List[int]]:
+        '''
+        keep seen set for all player ids, and count up the losse
+        then second pass look through losses
+        '''
+        seen = set()
+        count_losses = Counter()
+        
+        zero_loss = []
+        one_loss = []
+        
+        for w,l in matches:
+            seen.add(w)
+            seen.add(l)
+            count_losses[l] += 1
+        
+        for player in seen:
+            count = count_losses[player]
+            if count == 0:
+                zero_loss.append(player)
+            elif count == 1:
+                one_loss.append(player)
+        
+        return [sorted(zero_loss),sorted(one_loss)]
+
+#counting sort
+class Solution:
+    def findWinners(self, matches: List[List[int]]) -> List[List[int]]:
+        '''
+        we can us bucket sort, since we know upper and lower limits of a player id
+        this stems from the fact that we only need to count losses
+        a win is a zero loss
+        
+        for count array we initalize each player index to -1
+        -1 means player i has not played yet
+        0 means player i has played and hase no loss
+        1 means player i has played and has 1 loss
+        >1 means player 1 has played an has more than one loss
+        
+        
+        '''
+        loss_count = [-1]*10001
+        
+        for w,l in matches:
+            if loss_count[w] == -1:
+                loss_count[w] = 0
+            if loss_count[l] == -1:
+                loss_count[l] = 1
+            else:
+                loss_count[l] += 1
+        
+        ans = [[],[]]
+        
+        for i in range(10001):
+            if loss_count[i] == 0:
+                ans[0].append(i)
+            if loss_count[i] == 1:
+                ans[1].append(i)
+        
+        return ans
+
