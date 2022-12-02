@@ -2240,3 +2240,121 @@ class Solution:
         
         return ans
 
+#############################################################
+# 1608. Special Array With X Elements Greater Than or Equal X
+# 30NOV22
+#############################################################
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        brute force is to just try all x in range[1,len(nums)]
+        
+        '''
+        N = len(nums)
+        
+        for x in range(1,N+1):
+            count_atLeast_x = 0
+            for num in nums:
+                if num >= x:
+                    count_atLeast_x += 1
+            
+            if count_atLeast_x == x:
+                return x
+        
+        return -1
+
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        we want to find a number x such that there are exactly x numbers >= x
+        we can reverse sort and then for each number i
+        there are at least i numbers greater than or equal to nums[i]
+        
+        we keep going until nums[i] == i
+
+        5,4,3,2,1
+
+        if nums[i] > i and nums is sorted
+        we know nums[i+1] <= nums[i]
+        which means the next number has i + 1 elements greater
+        so we need to find the place where nums[i] == i
+        '''
+        nums.sort(reverse= True)
+        i = 0
+        while i < len(nums) and nums[i] > i:
+            #we can find the upper bound
+            i += 1
+        return -1 if i < len(nums) and nums[i] == i else i
+
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        we can sort and find the uppper bound
+        
+        for this one we have to use left = 0
+        right as the length of nums
+        '''
+        nums.sort(reverse=True)
+        
+        if len(nums) <= nums[0]: 
+            return len(nums) # edge case 
+        left = 0
+        right = len(nums) - 1
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            if nums[mid] > mid:
+                left = mid + 1
+            else:
+                right = mid
+        return -1 if left < len(nums) and nums[left] == left else left
+
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        instead of reverse sorting the array
+        we can sort increasing, then we just take x to be len(nums) - the current i
+        '''
+        nums.sort()
+        N = len(nums)
+        left = 0
+        right = N - 1
+        
+        #if the largest number is at least the N
+        #then we have to use all elements
+        if len(nums) <= nums[0]: 
+            return len(nums) 
+        #we keep going until we cross, if we cross, then there isn't an x that makes the array sepcial
+        while left <= right:
+            mid = left + (right - left) // 2
+            x = N - mid
+            #if we have a potential x
+            if nums[mid] >= x:
+                #edge case
+                if mid == 0 or nums[mid - 1] < x:
+                    return x
+                else:
+                    right = mid - 1
+            else:
+                left = mid + 1
+        
+        return -1
+
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        we know the numbers used in nums, we can count them up
+        then we just backward in the counts and accumalte them
+        at the same time we check that the counts greater at this i == i
+        '''
+        counts = [0]*1001
+        
+        for num in nums:
+            counts[num] += 1
+        
+        for i in range(len(counts)-2,-1,-1):
+            counts[i] = counts[i+1] + counts[i]
+            if counts[i] == i:
+                return i
+        
+        return -1
