@@ -176,3 +176,124 @@ class Solution:
         
         return ans[::-1]
 
+#############################################
+# 1823. Find the Winner of the Circular Game
+# 03DEC22
+#############################################
+#yassss! lets fucking goooooo!
+class Node:
+    def __init__(self,val,next=None):
+        self.val = val
+        self.next = next
+        
+class Solution:
+    def findTheWinner(self, n: int, k: int) -> int:
+        '''
+        i could just simulate the game until there is only one player left
+        i can mimic this with a linked list
+
+        '''
+        #first make the circular linked list
+        dummy = Node(-1)
+        curr = dummy
+        for i in range(1,n+1):
+            newNode = Node(i)
+            curr.next = newNode
+            curr = curr.next
+        
+        curr.next = dummy.next
+        
+        curr = dummy.next
+        
+        #now we can simulate
+        lost = set()
+        
+        while len(lost) < n-1:
+            prev = curr
+            for _ in range(k-1):
+                prev = curr
+                curr = curr.next
+            prev.next = curr.next
+            lost.add(curr)
+            curr = prev.next
+            
+        return curr.val
+
+#with an array
+class Solution:
+    def findTheWinner(self, n: int, k: int) -> int:
+        '''
+        we can also simulate with an array
+        '''
+        
+        circle = [i for i in range(1,n+1)]
+        last_idx = 0
+        
+        while len(circle) > 1:
+            #move index
+            last_idx = (last_idx + k - 1) % len(circle)
+            #remove
+            del circle[last_idx]
+        
+        return circle[0]
+
+class Solution:
+    def findTheWinner(self, n: int, k: int) -> int:
+        '''
+        we can also use a q
+        we shuffle array by moving the first element back to the end for each step k
+        then once are out of steps k, we remove the first element
+        '''
+        q = deque([i for i in range(1,n+1)])
+        
+        while len(q) > 1:
+            x = k
+            print(q)
+            while x > 1:
+                r = q[0]
+                q.popleft()
+                q.append(r)
+                x -= 1
+            q.popleft()
+        
+        return q[0]
+
+#dp
+class Solution:
+    def findTheWinner(self, n: int, k: int) -> int:
+        '''
+        this is the josephus problem
+        to find an O(N) solution we first need to model the recurrent
+        then we can build bottom up dp using constant space
+        
+        recurrence
+        dp(n,k) = (dp(n-1,k) + (k-1)) % n +1
+        
+        After the first person (kth from the beginning) is killed, n-1 persons are left. Make recursive call for Josephus(n – 1, k) to get the position with n-1 persons. But the position returned by Josephus(n – 1, k) will consider the position starting from k%n + 1. So make adjustments to the position returned by Josephus(n – 1, k). 
+        '''
+        memo = {}
+        def dp(n):
+            if n == 1:
+                return 1
+            if (n) in memo:
+                return memo[(n,k)]
+            ans = (dp(n-1) + k - 1) % n + 1
+            memo[(n)] = ans
+            return ans
+        
+        return dp(n)
+
+
+#constant space
+class Solution:
+    def findTheWinner(self, n: int, k: int) -> int:
+        '''
+        constance space
+        '''
+        prev = 1
+        curr = 0
+        for x in range(n+1):
+            curr = (prev + k -1) % n + 1
+            prev = curr
+        
+        return curr
