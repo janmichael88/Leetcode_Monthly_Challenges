@@ -144,3 +144,35 @@ class Solution:
         '''
         return False
 
+###############################################
+# 451. Sort Characters By Frequency (REVISTED)
+# 03NOV22
+##############################################
+class Solution:
+    def frequencySort(self, s: str) -> str:
+        '''
+        we can use a variant of bucket sort
+        first find the max frequency among all the char frequencies
+        then we have buckets for each of the frequencies up to and including the max freq
+        in each bucket we just put the letter
+        then re-traverse the buckets and grab each letter that number of times
+        
+        '''
+        #find max frequqency
+        counts = Counter(s)
+        max_freq = max(counts.values())
+        
+        buckets = [[] for _ in range(max_freq + 1)]
+        
+        #each bucket represents a frequency up to max freq, and for each freq add the letter into it
+        for k,v in counts.items():
+            buckets[v].append(k)
+        
+        #traverse the buckets and add to ans
+        ans = ""
+        for i in range(len(buckets)):
+            for char in buckets[i]:
+                ans += char*i
+        
+        return ans[::-1]
+
