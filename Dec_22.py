@@ -297,3 +297,81 @@ class Solution:
             prev = curr
         
         return curr
+
+
+##################################
+# 2256. Minimum Average Difference
+# 04DEC22
+##################################
+class Solution:
+    def minimumAverageDifference(self, nums: List[int]) -> int:
+        '''
+        we need to calculate the average difference fore ach index i, and return the smallest one
+        
+        averae diferent for an index i is
+            abs different between average of first i+1 elements and average of n-i-1 elements
+        
+        we can use prefix sum array to reduce over head needed then just return the minimum
+        
+        '''
+        pref_sum = [0]
+        for num in nums:
+            pref_sum.append(pref_sum[-1] + num)
+        
+        #to get sum for nums between i and j, we want pref_sum[j+1] - pref_sum[i]
+        
+        avg_diff = float('inf')
+        index = 0
+        N = len(nums)
+        
+        for i in range(N):
+            #need sum from i+1,N
+            right_sum = pref_sum[N] - pref_sum[i+1]
+            left_sum = pref_sum[i+1] - pref_sum[0]
+            
+            #calcualte average difference
+            size_right = N-i-1
+            size_left = i + 1
+            
+            #get avg diff
+            right_avg_diff = right_sum // size_right if size_right != 0 else 0
+            left_avg_diff = left_sum // size_left if size_left != 0 else 0
+            
+            local_avg_diff = abs(left_avg_diff - right_avg_diff)
+            if local_avg_diff < avg_diff:
+                avg_diff = local_avg_diff
+                index = i
+        
+        return index
+
+################################
+# 942. DI String Match
+# 05NOV22
+################################
+class Solution:
+    def diStringMatch(self, s: str) -> List[int]:
+        '''
+        build the string smartly by taking numbers from lo and hi ends
+        i guessed i must alternating taking lo and hi because if i take the lowest low first or the highest hi first
+        im guaranteed to have another avaialble smaller of higher number
+        
+        problem is with logic in taking the last number
+        to s, append the opposite of the last digit
+        '''
+        s += 'I' if s[-1] == 'D' else 'I'
+        N = len(s)
+        nums = [i for i in range(N)]
+        lo = 0
+        hi = len(nums) - 1
+        
+        ans = []
+        
+        for ch in s:
+            if ch == 'I':
+                ans.append(nums[lo])
+                lo += 1
+            else:
+                ans.append(nums[hi])
+                hi -= 1
+        
+        return ans
