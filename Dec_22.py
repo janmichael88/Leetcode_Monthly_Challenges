@@ -375,3 +375,183 @@ class Solution:
                 hi -= 1
         
         return ans
+
+###################################################################
+# 2035. Partition Array Into Two Arrays to Minimize Sum Difference
+# 05DEC22
+####################################################################
+#brute force TLE,build up one paritions and just check
+class Solution:
+    def minimumDifference(self, nums: List[int]) -> int:
+        '''
+        we want to get two subsequences if len(nums) // 2 such that the absolulte diffeence between the sums of the arrays is minimzed
+        we want to return the minimum possible asbsolute difference
+        
+        n is small, whic allows for an expoenential time comleixty
+        
+        first try generating all paritions 
+        
+        if were to generate
+
+        '''
+        sum_nums = sum(nums)
+        N = len(nums)
+        
+        self.ans = float('inf')
+        
+        def rec(i,path):
+            if i == N:
+                return
+            if len(path) == N // 2:
+                #get sum of first partition
+                first = sum(path)
+                second = sum_nums - first
+                self.ans = min(self.ans,abs(first-second))
+                return
+            #take it
+            rec(i+1,path +[nums[i]])
+            rec(i+1,path)
+        rec(0,[])
+        
+        return self.ans
+
+class Solution:
+    def minimumDifference(self, nums: List[int]) -> int:
+        '''
+        this is a very hard problem lets examine the 4 hints
+        1. target sum for the partitions would be sum(nums) /2, obvie to minimize the absolute difference
+        2. abritiraly divides nums into tow halves
+        3. for both halves pre-calculate a 2d array where the kth index wils tore all possible sum values if only k element from this half are added
+        4. For each sum of k elements in the first half, find the best sum of n-k elements in the second half such that the two sums add up to a value closest to the target sum from hint 1. These two subsets will form one array of the partition.
+        
+        https://leetcode.com/problems/partition-array-into-two-arrays-to-minimize-sum-difference/discuss/1515202/Replace-up-to-n-2-elements
+        
+        notes on why dp cannot be useful
+            even with just 30 eleemnts, there are 155,117,520 ways of picking 15 elements out of 30 (15 chose 30)
+            the vaue of range for each num is wide, and so we may not have repeating sums, and we would just be memozing everything
+            
+        inution:
+            we can pick k elements from the first array and try to combine them with n - k elements from the second one
+            this requires to caclcualte the sum of up to n-1 elemeents, and our solutions can contain only n/2 elements
+            
+        range for k?
+            from 0 to n/2
+            say we have only 11 elements in each array, replace 7 elemements in the first array with 7 elements in the second has the same effect as replacing the other 4 eleemnts
+            the sums of the array will swap, but we don't care because their absolute difference will be the same
+            
+        algo:
+            generate all possible sums for the frsit ands econd arrays
+            then for k in range [1, n//2] we pick a sum from the first array and binarys earch for a compelement sum in the second array
+            the complement value is calcualted to minimuze the difference betwen two arrays
+                comp = (sum1 + sum2 ) / 2 - (nsum1 - s1_using_k)
+            half of the array's sum is the ideal state when two array sums are the same and s1; is one of the generated sum of k elemenets in the first array
+            
+        subset generation (which is number of possible sums) is 2**N
+        notes on updating the min
+        (curleftSum + *it) is the sum of one side of our N/2 elements. Consider this as sum A.
+The sum of other N/2 elements would be totalSum - A. Correct?
+Absolute difference would be = abs((totalSum - A) - A) = abs(totalSum - 2*A) = abs(totalSum - 2 * (curleftSum + *it)), same as we want.
+        '''
+        #first generate sums of size N//2 for the left and right parts
+        #for each part mapp a sum to using k elements
+        
+        #precomputations
+        N = len(nums)
+        left_sum = sum(nums[:N//2])
+        right_sum = sum(nums[N//2:])
+        all_sum = left_sum + right_sum
+        
+        left_sums = defaultdict(list)
+        right_sums = defaultdict(list)
+        
+        res = float('inf')
+        
+        def dfs(start,end,k,curr_sum,memo):
+            if start == end or k >= N//2:
+                memo[k].append(curr_sum)
+                return
+            #don't use it
+            dfs(start + 1,end,k,curr_sum,memo)
+            #use it
+            dfs(start+1,end,k+1,curr_sum + nums[start],memo)
+        
+        #leftside
+        dfs(0,N//2,0,0,left_sums)
+        #rightside
+        dfs(N//2, N,0,0,right_sums)
+
+        #for this part we are comparing all all pairs of left_sum and right_sum, regardless if any size is not N//2
+        #it will eventually be minimum when left_sum is as close to right_sum as possible
+
+        #sum using k elements
+        for k in range(N//2 + 1):
+            #start with a left sum and look for a right sum so as to minizise the abs diffeence
+            right_sums[k].sort()
+            #for each left sum using k elements
+            for s1k in left_sums[k]:
+                #complement is sum to seach for in right_sums
+                comp = all_sum // 2 - (left_sum - s1k)
+                #to find the actual absolute difference
+                diff = left_sum - right_sum - s1k * 2
+                j = bisect.bisect_left(right_sums[k], comp)
+                #in the case it is the first sum in right_sums[k]
+                #bisect left works fin even if the lower bound is zero
+                #even at upper bounds we can still index into the right sums array
+                if j < len(right_sums[k]):
+                    res = min(res, abs(diff + right_sums[k][j] * 2))
+        return res
+        
+
+#another, but using i and N//2 - i for using sums of left and righ respecitvely
+class Solution:
+    def minimumDifference(self, nums: List[int]) -> int:
+        '''
+        another way
+        '''
+        #first generate sums of size N//2 for the left and right parts
+        #for each part mapp a sum to using k elements
+        
+        #precomputations
+        N = len(nums)
+        left_sum = sum(nums[:N//2])
+        right_sum = sum(nums[N//2:])
+        all_sum = left_sum + right_sum
+        
+        left_sums = defaultdict(list)
+        right_sums = defaultdict(list)
+        
+        res = float('inf')
+        
+        def dfs(start,end,k,curr_sum,memo):
+            if start == end or k >= N//2:
+                memo[k].append(curr_sum)
+                return
+            #don't use it
+            dfs(start + 1,end,k,curr_sum,memo)
+            #use it
+            dfs(start+1,end,k+1,curr_sum + nums[start],memo)
+        
+        #leftside
+        dfs(0,N//2,0,0,left_sums)
+        #rightside
+        dfs(N//2, N,0,0,right_sums)
+
+        #sum using k elements
+        for k in range(N//2 + 1):
+            #start with a left sum and look for a right sum so as to minizise the abs diffeence
+            #if we are using i elements on the left, we must be using N//2 - i on the right
+            #so get those sumes
+            r = right_sums[N // 2 - k]
+            #sort
+            r.sort()
+            
+            for curr_left_sum in left_sums[k]:
+                needSumFromRight = (all_sum) // 2 - curr_left_sum
+                j = bisect.bisect_left(r,needSumFromRight)
+                if j < len(r):
+                    res = min(res,abs(all_sum - 2*(curr_left_sum + r[j])))
+        
+        return res
+        
+        
+        
