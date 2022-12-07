@@ -552,6 +552,86 @@ class Solution:
                     res = min(res,abs(all_sum - 2*(curr_left_sum + r[j])))
         
         return res
+
+##############################
+# 1528. Shuffle String
+# 06DEC22
+###############################
+class Solution:
+    def restoreString(self, s: str, indices: List[int]) -> str:
+        '''
+        just swap in place
+        '''
+        s = list(s)
+        N = len(indices)
         
+        ans = [0]*N
         
+        for i in range(N):
+            swap_idx = indices[i]
+            ans[swap_idx] = s[i]
+            
+        return "".join(ans)
+
+#sorting
+class Solution:
+    def restoreString(self, s: str, p: List[int]) -> str:
+        return ''.join([v for (_,v) in sorted(zip(p,s))])
+
+
+####################################
+# 938. Range Sum of BST (REVISITED)
+# 07DEC22
+####################################
+#bottom up not using BST propert
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def rangeSumBST(self, root: Optional[TreeNode], low: int, high: int) -> int:
+        '''
+        let dp(node) be the sum nodes whose values are in range
+        dp(node) = dp(node.left) + dp(node.right)
+        '''
+        def dp(node):
+            if not node:
+                return 0
+            
+            to_add = node.val if (low <= node.val <= high) else 0
+            left = dp(node.left)
+            right = dp(node.right)
+            
+            ans = to_add + left + right
+            return ans
         
+        return dp(root)
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def rangeSumBST(self, root: Optional[TreeNode], low: int, high: int) -> int:
+        '''
+        let dp(node) be the sum nodes whose values are in range
+        dp(node) = dp(node.left) + dp(node.right)
+        '''
+        def dp(node):
+            if not node:
+                return 0
+            
+            if node.val < low:
+                return dp(node.right)
+            elif node.val > high:
+                return dp(node.left)
+            else:
+                left = dp(node.left)
+                right = dp(node.right)
+                return left + right + node.val
+            
+        return dp(root)
