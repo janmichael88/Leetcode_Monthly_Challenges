@@ -579,6 +579,35 @@ class Solution:
         return ''.join([v for (_,v) in sorted(zip(p,s))])
 
 
+#cycle sort
+class Solution:
+    def restoreString(self, s: str, indices: List[int]) -> str:
+        '''
+        we can use cyclic sotring
+        we keep swapping until we get back the original index
+        
+        we are essentialy sorting the index mapped to the letters!
+        '''
+        s = list(s)
+        N = len(s)
+        
+        for i in range(N):
+            #while the index doest point to itself
+            #rather we keep swapping until we get back to ouriginal index
+            while i != indices[i]:
+                print(i,indices[i],s)
+                
+                #swap the characters in place
+                s[i],s[indices[i]] = s[indices[i]],s[i]
+                #swap the indices
+                j = indices[i]
+                indices[i], indices[j] = indices[j],indices[i]
+            print(i,indices[i])
+                
+        print(indices)
+        return "".join(s)
+
+
 ####################################
 # 938. Range Sum of BST (REVISITED)
 # 07DEC22
