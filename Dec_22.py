@@ -867,4 +867,82 @@ class Solution:
                 yield from dfs(node.right)
         
         return list(dfs(root1)) == list(dfs(root2))
+
+###################################################################
+# 1026. Maximum Difference Between Node and Ancestor (REIVISTED)
+# 09DEC22
+###################################################################
+#top down
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        we want to find the max value v for which:
+            there exists two different nodes a nad b
+            and v = abs(a.val - b.val)
         
+        a node a is an ancestor of b if either any child of a == b 
+        or any child of a is an ancestory of b
+        
+        the hint says that for each subtree, find the min value and max value of its descendatns
+        if we know the max and mini values for a subtree
+        we would only need to check abs(root.val - min) and abs(root.val - max)
+        so for each subtree, find the max and the min
+        '''
+        self.ans = 0
+        if not root:
+            return 0
+        
+        def dp(node,curr_min,curr_max):
+            if not node:
+                return
+            first = abs(node.val - curr_min)
+            second = abs(node.val - curr_max)
+            self.ans = max(self.ans,first,second)
+            dp(node.left, min(curr_min,node.val),max(curr_max,node.val))
+            dp(node.right, min(curr_min,node.val),max(curr_max,node.val))
+        
+        dp(root,root.val,root.val)
+        return self.ans
+            
+#think about what to return up to the parent
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        for each subtree we want to know the min and the max then
+        we just take the maximim absolute difference
+        if we define
+        dp(node,min,max) is the answer to the largeat maximum differenne for a subtree
+        then
+        dp(node,min,max) =
+            left = dp(node.left, min(min,node.val),max(max,node.val))
+            right = dp(node.right, min(min,node.val),max(max,node.val))
+            
+        base case is empty node
+        so we just return max-min
+        '''
+        
+        if not root:
+            return 0
+        
+        def dp(node,curr_min,curr_max):
+            if not node:
+                return curr_max - curr_min
+            
+            left = dp(node.left,min(curr_min,node.val),max(curr_max,node.val))
+            right = dp(node.right,min(curr_min,node.val),max(curr_max,node.val))
+            return max(left,right)
+        
+        return dp(root,root.val,root.val)
+
