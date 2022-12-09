@@ -664,3 +664,207 @@ class Solution:
                 return left + right + node.val
             
         return dp(root)
+
+############################
+# 690. Employee Importance
+# 07DEC22
+############################
+#close one....
+"""
+# Definition for Employee.
+class Employee:
+    def __init__(self, id: int, importance: int, subordinates: List[int]):
+        self.id = id
+        self.importance = importance
+        self.subordinates = subordinates
+"""
+
+class Solution:
+    def getImportance(self, employees: List['Employee'], id: int) -> int:
+        '''
+        this is just a dfs problem
+        we are given a list of employee classes and we want to return the importance for an employee and all his/her suboorindates
+        it may be the case that the first employee does not much the id, in which case we keep dfsing
+        
+        keep global importance
+        then dfs, once we havefound the id, mark as true, and dfs again
+        if true keep incrementing the importance
+        
+        dang it, suborindates are a list of ints not employees
+        '''
+        #id's may not be in order, so from list of employees, turn into hashmap where (ID mapps to index in employees)
+        mapp = defaultdict()
+        
+        for i,e in enumerate(employees):
+            mapp[e.id]  = i
+        
+        self.ans = 0
+        
+        def dfs(emp,found):
+            if found:
+                self.ans += emp.importance
+            #this is a list of ids
+            for sub in emp.subordinates:
+                #get the object
+                sub_object = employees[mapp[sub]]
+                dfs(sub_object,emp.id == id)
+        
+        for e in employees:
+            if e.id == id:
+                self.ans += e.importance
+                dfs(e,False)
+        
+        return self.ans
+
+
+"""
+# Definition for Employee.
+class Employee:
+    def __init__(self, id: int, importance: int, subordinates: List[int]):
+        self.id = id
+        self.importance = importance
+        self.subordinates = subordinates
+"""
+
+class Solution:
+    def getImportance(self, employees: List['Employee'], id: int) -> int:
+        '''
+        turns out we can just dfs from fromt the given id, and keep icrmenting self.ans
+        '''
+        mapp = defaultdict()
+        
+        for i,e in enumerate(employees):
+            mapp[e.id]  = e
+        
+        self.ans = 0
+        
+        def dfs(emp_id):
+            #get the employee
+            curr_emp = mapp[emp_id]
+            #add its importance
+            self.ans += curr_emp.importance
+            for sub in curr_emp.subordinates:
+                dfs(sub)
+                
+        dfs(id)
+        return self.ans
+
+#bottome up
+"""
+# Definition for Employee.
+class Employee:
+    def __init__(self, id: int, importance: int, subordinates: List[int]):
+        self.id = id
+        self.importance = importance
+        self.subordinates = subordinates
+"""
+
+class Solution:
+    def getImportance(self, employees: List['Employee'], id: int) -> int:
+        '''
+        turns out we can just dfs from fromt the given id, and keep icrmenting self.ans
+        '''
+        mapp = defaultdict()
+        
+        for i,e in enumerate(employees):
+            mapp[e.id]  = e
+        
+        
+        def dfs(emp_id):
+            #get the employee
+            curr_emp = mapp[emp_id]
+            #add its importance
+            curr_importance = curr_emp.importance
+            for sub in curr_emp.subordinates:
+                curr_importance += dfs(sub)
+            
+            return curr_importance
+                
+        return dfs(id)
+
+"""
+# Definition for Employee.
+class Employee:
+    def __init__(self, id: int, importance: int, subordinates: List[int]):
+        self.id = id
+        self.importance = importance
+        self.subordinates = subordinates
+"""
+
+class Solution:
+    def getImportance(self, employees: List['Employee'], id: int) -> int:
+        '''
+        and we can use bfs
+        '''
+        mapp = defaultdict()
+        
+        for i,e in enumerate(employees):
+            mapp[e.id]  = e
+        
+        ans = 0
+        
+        q = deque([id])
+        
+        while q:
+            curr_emp = q.popleft()
+            curr_emp = mapp[curr_emp]
+            ans += curr_emp.importance
+            for sub in curr_emp.subordinates:
+                q.append(sub)
+        
+        return ans
+        
+
+##############################
+# 872. Leaf-Similar Trees
+# 08DEC22
+##############################
+#stupid way
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def leafSimilar(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> bool:
+        '''
+        both trees to get their leaves
+        dump into aux array and check that arrays are euqal
+        '''
+        leaves1 = []
+        leaves2 = []
+        
+        def dfs(node,leaves):
+            if not node:
+                return
+            dfs(node.left,leaves)
+            if not node.left and not node.right:
+                leaves.append(node.val)
+            dfs(node.right,leaves)
+            
+        dfs(root1,leaves1)
+        dfs(root2,leaves2)
+        
+        return leaves1 == leaves2
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def leafSimilar(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> bool:
+        '''
+        don't forget the yeild function!
+        '''
+        def dfs(node):
+            if node:
+                if not node.left and not node.right:
+                    yield node.val
+                yield from dfs(node.left)
+                yield from dfs(node.right)
+        
+        return list(dfs(root1)) == list(dfs(root2))
+        
