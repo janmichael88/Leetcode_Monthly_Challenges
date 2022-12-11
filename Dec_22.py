@@ -946,3 +946,61 @@ class Solution:
         
         return dp(root,root.val,root.val)
 
+#############################
+# 124. Binary Tree Maximum Path Sum (REVISTED)
+# 11DEC22
+##############################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxPathSum(self, root: Optional[TreeNode]) -> int:
+        '''
+        official writeup, turns out to be post order
+        the problem is that a path does not have to be root to leaf,
+        if the path were to include the root:
+            1. it could start at the root and go down through the left child (but would go down to further)
+            2. same for the right
+            3. involces both left and right
+            4. only involves the root itself
+        
+        we can say this about any node
+        we need to find the gain in going left and the gain in going right
+        it makes sense to only go in the direction with the largest gain
+        we examine children first before the node
+            so use post order
+        
+        but what is the path doesn't include this root (or doesn't include the current node for that matter)
+        
+        the path sum contributed by the subtre can be dervied from a path that cinludes at mose one child of the root
+        we cannot include both children, because including both children would have to make a fork
+        and since the root is already included
+        path consists of at most one child of the oort
+        
+        base case, empty node return 0
+        since there is nothing to contribute to the path
+        '''
+        self.ans = float('-inf')
+        
+        def dp(node):
+            if not node:
+                return 0
+            
+            #get the gain from the children
+            left_gain = max(dp(node.left),0)
+            right_gain = max(dp(node.right),0)
+            
+            #find the nex max path
+            new_path = left_gain + right_gain + node.val
+            
+            #updat
+            self.ans = max(self.ans,new_path)
+            
+            #we need to retun the max path for this node
+            return node.val + max(left_gain,right_gain)
+        
+        dp(root)
+        return self.ans
