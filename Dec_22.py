@@ -1004,3 +1004,88 @@ class Solution:
         
         dp(root)
         return self.ans
+
+#########################################################################
+# 323. Number of Connected Components in an Undirected Graph (REVISTED)
+# 12DEC22
+########################################################################
+#just a dsu review
+class DSU:
+    def __init__(self,size):
+        self.parent = [i for i in range(size)]
+        self.size = [1 for _ in range(size)]
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def union(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        #assign to bigger grous
+        if parent_x == parent_y:
+            return
+        if self.size[parent_x] > self.size[parent_y]:
+            self.size[parent_x] += self.size[parent_y]
+            self.parent[parent_y] = parent_x
+            self.size[parent_y] = 0
+        elif self.size[parent_y] > self.size[parent_x]:
+            self.size[parent_y] += self.size[parent_x]
+            self.parent[parent_x] = parent_y
+            self.size[parent_x] = 0
+        else:
+            self.size[parent_x] += self.size[parent_y]
+            self.parent[parent_y] = parent_x
+            self.size[parent_y] = 0
+            
+
+class Solution:
+    def countComponents(self, n: int, edges: List[List[int]]) -> int:
+        ds = DSU(n)
+        for a,b in edges:
+            ds.union(a,b)
+        
+        ans = 0
+        for size in ds.size:
+            if size != 0: 
+                ans += 1
+        
+        return ans
+
+class UnionFind:
+    def __init__(self, n: int) -> None:
+        self.root = [i for i in range(n)]
+        self.rank = [1] * n
+        self.count = n
+        
+    def find(self, x: int) -> int:
+        if x == self.root[x]:
+            return x
+        
+        self.root[x] = self.find(self.root[x])
+        return self.root[x]
+    
+    def union(self, x: int, y: int) -> None:
+        rootx = self.find(x)
+        rooty = self.find(y)
+        if rootx != rooty:
+            self.count -= 1
+            if self.rank[rootx] > self.rank[rooty]:
+                self.root[rooty] = rootx
+            elif self.rank[rootx] < self.rank[rooty]:
+                self.root[rootx] = rooty
+            else:
+                self.root[rooty] = rootx
+                self.rank[rootx] += 1
+        
+        
+
+class Solution:
+    def countComponents(self, n: int, edges: List[List[int]]) -> int:
+        uf = UnionFind(n)
+        for edge in edges:
+            uf.union(*edge)
+            
+        return uf.count
