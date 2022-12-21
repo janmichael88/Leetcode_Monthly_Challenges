@@ -1089,3 +1089,72 @@ class Solution:
             uf.union(*edge)
             
         return uf.count
+
+######################################
+# 1066. Campus Bikes II (REVISTED)
+# 20DEC22
+######################################
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> int:
+        '''
+        we can treat this is djikstras
+        intuition:
+            from the bottom up approach we built each new mask from 0 to 2^M
+            insteaf of traversing mask in sequentnial order, we find masks that have the smallest total ditance
+        
+        to find next mask, we use a prioty queu (heap)
+        
+        algo;
+            inital state (0,0), immplying empty mask has 0 for min dist
+            pop pair from heap
+                discard and continue to the next pair if currmask has already been visited
+            ad next start and min dist
+            return currdsit is workerIndex == n
+        
+        '''
+        def getDist(worker,bike):
+            x = abs(worker[0] - bike[0])
+            y = abs(worker[1] - bike[1])
+            return x + y
+    
+        #brian kernighan, counting ones in bitset
+        def countOnes(mask):
+            count = 0
+            while mask:
+                count += 1
+                mask = mask & (mask-1)
+            return count
+        
+        n = len(workers)
+        m = len(bikes)
+        
+        heap = [(0,0)] #entry is going to be dist and (0,0)
+        visited = set()
+        #python is min heap
+        
+        while heap:
+            dist,mask = heapq.heappop(heap)
+            
+            #if i've already seen this state
+            if mask in visited:
+                continue
+            visited.add(mask)
+            
+            #next worker index is the number of 1's in the mask
+            worker_index = countOnes(mask)
+            
+            #if we have mapped all workers
+            if worker_index == n:
+                return dist
+            
+            for bike in range(m):
+                #check if we have taken this bike
+                if not (mask & (1 << bike)):
+                    #get the next min dist
+                    next_min_dist = dist + getDist(workers[worker_index],bikes[bike])
+                    #get the next maxk
+                    next_mask = mask | (1 << bike)
+                    #push bacnk on to heap
+                    heapq.heappush(heap,(next_min_dist, next_mask))
+        
+        return -1
