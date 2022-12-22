@@ -1158,3 +1158,150 @@ class Solution:
                     heapq.heappush(heap,(next_min_dist, next_mask))
         
         return -1
+
+##################################
+# 886. Possible Bipartition (REVISITED)
+# 21DEC22
+##################################
+#dfs, classical is biparitite question
+class Solution:
+    def possibleBipartition(self, n: int, dislikes: List[List[int]]) -> bool:
+        '''
+        we want to split group of n people (1 to n) into 2 groups of anysize
+        if we were to draw the graph out, we want the nodes such that no two adjacent nodes are the same color
+        basically asking of the graph is bipartite
+        
+        we color node a starting color
+        then dfs until we canpt
+        
+        make the adj_list and determine if there is a cycle
+        '''
+        adj_list = defaultdict(list)
+        
+        for a,b in dislikes:
+            adj_list[a].append(b)
+            adj_list[b].append(a)
+        
+        colors = {}
+        #colors will be 1 and 0, if its not in there we color it the opposite color of the node we are currently on
+        
+        def dfs(node,parent_color):
+            #color the starting node
+            colors[node] = parent_color
+            for neigh in adj_list[node]:
+                #if they are the same color
+                if neigh in colors and colors[node] == colors[neigh]:
+                    return False
+                #if we haven't seen this node
+                if neigh not in colors:
+                    #recurse with the opposite color
+                    if not dfs(neigh,parent_color^1):
+                        return False
+            
+            return True
+        
+        for node in range(1,n+1):
+            if node not in colors:
+                if not dfs(node,0):
+                    return False
+        
+        return True
+
+#bfs
+class Solution:
+    def possibleBipartition(self, n: int, dislikes: List[List[int]]) -> bool:
+        '''
+        we want to split group of n people (1 to n) into 2 groups of anysize
+        if we were to draw the graph out, we want the nodes such that no two adjacent nodes are the same color
+        basically asking of the graph is bipartite
+        
+        we color node a starting color
+        then dfs until we canpt
+        
+        make the adj_list and determine if there is a cycle
+        '''
+        adj_list = defaultdict(list)
+        
+        for a,b in dislikes:
+            adj_list[a].append(b)
+            adj_list[b].append(a)
+        
+        colors = {}
+        #colors will be 1 and 0, if its not in there we color it the opposite color of the node we are currently on
+        
+        def bfs(node,parent_color):
+            q = deque([(node,parent_color)])
+            while q:
+                curr_node,parent_color = q.popleft()
+                #color the starting node
+                colors[curr_node] = parent_color
+                for neigh in adj_list[curr_node]:
+                    #if they are the same color
+                    if neigh in colors and colors[curr_node] == colors[neigh]:
+                        return False
+                    #if we haven't seen this node
+                    if neigh not in colors:
+                        #add the q
+                        q.append((neigh, parent_color ^ 1))
+            
+            return True
+        
+        for node in range(1,n+1):
+            if node not in colors:
+                if not bfs(node,0):
+                    return False
+        
+        return True
+
+#union find
+class DSU:
+    def __init__(self,size):
+        self.parent = [i for i in range(size)]
+        self.rank = [1 for _ in range(size)]
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.parent[x]
+        y_par = self.parent[y]
+        
+        if x_par == y_par:
+            return
+        
+        if self.rank[x_par] < self.rank[y_par]:
+            self.parent[x_par] = y_par
+            #we do'nt need to clear sizes here
+            #otherwise we would have to shift sizes in self.rank
+        elif self.rank[x_par] > self.rank[y_par]:
+            self.parent[y_par] = x_par
+        else:
+            self.parent[y_par] = x_par
+            self.rank[x_par] += 1
+class Solution:
+    def possibleBipartition(self, n: int, dislikes: List[List[int]]) -> bool:
+        '''
+        we can use union find, if two adjacent nodes belong to the same group
+        return false, since this is a violatino of biparitite property
+        
+        build adjlist
+        check for curr node and neighbor belong to same group
+        for each neighbor, make it part of the group for the very first neighbor
+        '''
+        adj_list = defaultdict(list)
+        
+        for a,b in dislikes:
+            adj_list[a].append(b)
+            adj_list[b].append(a)
+            
+        dsu = DSU(n+1)
+        for node in range(1,n+1):
+            for neigh in adj_list[node]:
+                if dsu.find(node) == dsu.find(neigh):
+                    return False
+                #otherwise join with the first niegh
+                dsu.union(adj_list[node][0],neigh)
+        
+        return True
