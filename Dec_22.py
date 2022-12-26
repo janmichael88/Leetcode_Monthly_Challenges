@@ -1305,3 +1305,69 @@ class Solution:
                 dsu.union(adj_list[node][0],neigh)
         
         return True
+
+##################################
+# 2389. Longest Subsequence With Limited Sum
+# 26DEC22
+##################################
+#sort 
+class Solution:
+    def answerQueries(self, nums: List[int], queries: List[int]) -> List[int]:
+        '''
+        for each query[i]
+        find the maximum length subsequence such that the subsequcence is at most queries[i]
+        
+        brute force would be to try all possible subeuences
+         sort and try adding nums to each
+        '''
+        nums.sort()
+        ans = []
+        
+        for q in queries:
+            size = 0
+            for num in nums:
+                if q >= num:
+                    q -= num
+                    size += 1
+                else:
+                    break
+            ans.append(size)
+        
+        return ans
+        
+
+class Solution:
+    def answerQueries(self, nums: List[int], queries: List[int]) -> List[int]:
+        '''
+        we can sort and use binary search to find the index
+        the sum of the subsequence can be at most queries[i]
+        
+        bisect left and right are more than just returning left and right
+        https://svn.python.org/projects/python/branches/pep-0384/Lib/bisect.py
+
+        just to be safe, binarys earch using the left and right limits of the array
+        
+        '''
+        nums.sort()
+        pref_sum = [0]
+        for num in nums:
+            pref_sum.append(pref_sum[-1] + num)
+        
+        print(pref_sum)
+        
+        ans = []
+        
+        for q in queries:
+            target = q
+            left = 0
+            right = len(pref_sum)
+            while left < right:
+                mid = left + (right - left)//2
+                if pref_sum[mid] > target:
+                    right = mid
+                else:
+                    left = mid + 1
+            
+            ans.append(right-1)
+        
+        return ans
