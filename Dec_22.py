@@ -1371,3 +1371,202 @@ class Solution:
             ans.append(right-1)
         
         return ans
+
+###############################
+# 55. Jump Game (REVISITED)
+# 26DEC22
+###############################
+class Solution:
+    def canJump(self, nums: List[int]) -> bool:
+        '''
+        classic dp problem
+        
+        let dp(i) be true if i can reach the end of the array if i'm at index i
+        from each i can i can jump to i + nums[i] index
+        
+        dp(i) =  {
+            true if dp(i+j) for j in range(nums[i])
+        }
+        
+        dp gets TLE
+        
+        only greedy gets accepted
+        
+        
+        '''
+        
+        N = len(nums)
+        memo = {}
+        
+        def dp(i):
+            if i >= N:
+                return False
+            if i == N-1:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            for j in range(i+1,min(i + nums[i],N-1)+1):
+                if dp(j):
+                    memo[i] = True
+                    return True
+            
+            memo[i] = False
+            return False
+        
+        
+        return dp(0)
+
+#######################################
+# 2279. Maximum Bags With Full Capacity of Rocks
+# 27DEC22
+#######################################
+class Solution:
+    def maximumBags(self, capacity: List[int], rocks: List[int], additionalRocks: int) -> int:
+        '''
+        we have n bags
+        each with capacity[i] and currently holding rocks[i]
+        also given additional rocks, numbe of additional rocks i can place in ANY of the bags
+        
+        return the max number of bags that could have full capacity after plaing additions rocks in some bags
+        
+        make array with how many rocks needs to be full capacity
+        
+        '''
+        needed_to_full = []
+        
+        for a,b in zip(capacity,rocks):
+            needed_to_full.append(a-b)
+            
+            
+        #sort increasingly, use fill up smaller bags first
+        needed_to_full.sort()
+        
+        for i in range(len(needed_to_full)):
+            need = needed_to_full[i]
+            #zero is good already
+            if need != 0 and additionalRocks >= need:
+                #send to zero
+                needed_to_full[i] = 0
+                additionalRocks -= need
+        
+        ans = 0
+        for num in needed_to_full:
+            if not num:
+                ans += 1
+        
+        return ans
+
+############################################
+# 1962. Remove Stones to Minimize the Total
+# 28DEC22
+############################################
+#EASYYYY
+class Solution:
+    def minStoneSum(self, piles: List[int], k: int) -> int:
+        '''
+        we are given a list of piles, and each piles[i] has piles[i] stones
+        we can apply an operation :
+            choose any piles[i] -= piles[i] // 2
+            
+        we want the minimum number of stones after applying k operations
+        
+        i can use a max heap to store (piles[i] - piles[i] // 2, piles[i])
+        then keep pushing and popping from the heap greedily until we are are of k moves
+        '''
+        #python is min heap
+        min_heap = [(-1*(stones//2), stones) for stones in piles]
+        heapq.heapify(min_heap)
+        
+        while k > 0:
+            stones_to_remove,curr_stones = heapq.heappop(min_heap)
+            #decrement
+            curr_stones += stones_to_remove
+            #reduce k
+            k -= 1
+            #push back
+            heapq.heappush(min_heap, (-1*(curr_stones//2),curr_stones))
+        
+        ans = 0
+        while min_heap:
+            ans += heapq.heappop(min_heap)[1]
+        
+        return ans
+
+
+class Solution:
+    def minStoneSum(self, piles: List[int], k: int) -> int:
+        '''
+        we can just do it in one pass
+        
+        '''
+        max_heap = [-num for num in piles]
+        heapq.heapify(max_heap)
+        
+        for _ in range(k):
+            #first get the stone we want to reduce
+            stones = -heapq.heappop(max_heap)
+            #reduce
+            to_remove = stones //2
+            #push back
+            heapq.heappush(max_heap,-(stones-to_remove))
+        
+        return -sum(max_heap)
+
+
+###################################
+# 818. Race Car
+# 27DEC22
+###################################
+#not close at all in thiking....
+class Solution:
+    def racecar(self, target: int) -> int:
+        '''
+        car starts at position 0 and speed +1
+        we can either A (acelerate) or R (reverse)
+        
+        when A
+            position += speed
+            speed *= 2
+        
+        when R:
+            if speed is positive
+                speed = -
+            else:
+                speed = 1
+            
+            position stays the same
+            
+        example
+            pos = 0
+            speed = 1
+            
+            first instruction:
+            A
+            
+            pos = 1
+            speed = 2
+            
+            A
+            
+            pos = 3
+            speed = 4
+            
+            R
+            
+            pos = 3
+            speed = - 1
+            
+        given target position, return length of shortest sequecne to get there
+        
+        this is dp
+        the transitions are already there
+        
+        if dp(pos,speed) represents the smallest sequence of A and R to get to pos
+        then dp(pos,speed) =  1 + min ({
+            if previous was an A:
+                dp(pos - speed//2, speed//2)
+            if previous was an R
+                dp(pos,1)
+        })
+        '''
