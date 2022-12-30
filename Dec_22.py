@@ -1513,6 +1513,144 @@ class Solution:
         
         return -sum(max_heap)
 
+#####################################
+# 1834. Single-Threaded CPU
+# 29DEC22
+######################################
+#fuckkkk
+class Solution:
+    def getOrder(self, tasks: List[List[int]]) -> List[int]:
+        '''
+        we can use a heap, entry will be (processingtime, index)
+        invarinat for heap will be shortest processing time and smallest index
+        
+        we load tasks onto the CPU when taks can become available (enqueue time)
+        
+        we want the order where the CPU 'finishes' processing a task
+        top sort?
+        
+        sort taks by enqueueTime, keep aux heap, also keep curr processing time and order
+        '''
+        order = []
+        tasks.sort(key = lambda x: x[0])
+        
+        min_heap = []
+        curr_time = 0
+        N = len(tasks)
+        
+        for i in range(N):
+            enq_time = tasks[i][0]
+            proc_time = tasks[i][1]
+            #queue up
+            heapq.heappush(min_heap,(proc_time,i))
+            while min_heap and min_heap[0][1] >= curr_time:
+                #extrude
+                time,next_task = heapq.heappop(min_heap)
+                order.append(next_task)
+                curr_time += time
+        
+        while min_heap:
+                time,next_task = heapq.heappop(min_heap)
+                order.append(next_task)
+                curr_time += time
+        
+        return order
+
+class Solution:
+    def getOrder(self, tasks: List[List[int]]) -> List[int]:
+        '''
+        almost had it....
+        
+        in CPU scheduling, it it called Shortest Job First (SFF)
+        idea:
+            create list of tasks available at the current time (tasks who's enqueue time are at least curret time)
+            from this list, select task with shortest processing time and idnex
+            after selecting this task, run and compelte and current time gets update
+            after increasing time, we need to find more tasks to complete, so we may need to re sort this next list of avilable tasks
+            
+            we can use a heap
+        
+        intuition:
+            1. insert all the currerntly available tasks in min heap
+            2. pick the task with shortst processing time
+            3. increase the current time by the processing time of the selected task
+            
+        note:
+            if curre time is 0, and there are no task in the heap to enq
+            just advance time to the next enq task time, instead of incrementing by 1 until we hit the next enq time
+            
+        algo:
+            while there are still tasks in the sorted array that have not been added to the min heap, or there taskis reminaing in the min heap
+                check if min heap is empty and if enq time is >= curr_time
+                    if so then update currTime to the time of the next task's enq
+                insert all available taks (those who's enq time is <= curr_time) to the min heap
+                pick task on top of min heap, and process it,
+                increasing currtime by process time
+                and add the index
+        '''
+        next_tasks:  List[Tuple[int,int]] = []
+        order: List[int] = []
+        
+        N = len(tasks)
+        #sort base on enqueue times
+        sorted_tasks = [(enq_time,proc_time,index) for index, (enq_time,proc_time) in enumerate(tasks)]
+        sorted_tasks.sort(key = lambda x: x[0])
+        
+        curr_time = 0
+        task_index = 0
+        
+        #while we still have tasks to or there is stuff in the heap
+        while task_index < N or len(next_tasks) > 0:
+            #if there is onthing in heap, we need to next enq time
+            if len(next_tasks) == 0 and curr_time < sorted_tasks[task_index][0]:
+                curr_time = sorted_tasks[task_index][0]
+            
+            #otherwise we have stuff to process,
+            #push all tasks whose enq times <= cuirrtime
+            while task_index < N and sorted_tasks[task_index][0] <= curr_time:
+                #unpack
+                enq_time,proc_time,index = sorted_tasks[task_index]
+                #push to heap
+                heapq.heappush(next_tasks,(proc_time,index))
+                task_index += 1
+            
+            #now we can process the task
+            proc_time,index = heapq.heappop(next_tasks)
+            
+            #complete 
+            curr_time += proc_time
+            order.append(index)
+        
+        return order
+
+#good write up here
+#https://leetcode.com/problems/single-threaded-cpu/discuss/1163980/Python-Sort-then-Heap
+class Solution:
+    def getOrder(self, tasks: List[List[int]]) -> List[int]:
+        res = []
+        tasks = sorted([(t[0], t[1], i) for i, t in enumerate(tasks)])
+        i = 0
+        h = []
+        time = tasks[0][0]
+        while len(res) < len(tasks):
+            while (i < len(tasks)) and (tasks[i][0] <= time):
+                heapq.heappush(h, (tasks[i][1], tasks[i][2])) # (processing_time, original_index)
+                i += 1
+            if h:
+                t_diff, original_index = heapq.heappop(h)
+                time += t_diff
+                res.append(original_index)
+            elif i < len(tasks):
+                time = tasks[i][0]
+        return res
+
+
+
+
+
+
+
+
 
 ###################################
 # 818. Race Car
