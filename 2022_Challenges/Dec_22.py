@@ -1644,67 +1644,126 @@ class Solution:
                 time = tasks[i][0]
         return res
 
-
-
-
-
-
-
-
-
-###################################
-# 818. Race Car
-# 27DEC22
-###################################
-#not close at all in thiking....
+###############################
+# 980. Unique Paths III (REVISTED)
+# 01JAN22
+##############################
 class Solution:
-    def racecar(self, target: int) -> int:
+    def uniquePathsIII(self, grid: List[List[int]]) -> int:
         '''
-        car starts at position 0 and speed +1
-        we can either A (acelerate) or R (reverse)
-        
-        when A
-            position += speed
-            speed *= 2
-        
-        when R:
-            if speed is positive
-                speed = -
-            else:
-                speed = 1
-            
-            position stays the same
-            
-        example
-            pos = 0
-            speed = 1
-            
-            first instruction:
-            A
-            
-            pos = 1
-            speed = 2
-            
-            A
-            
-            pos = 3
-            speed = 4
-            
-            R
-            
-            pos = 3
-            speed = - 1
-            
-        given target position, return length of shortest sequecne to get there
-        
-        this is dp
-        the transitions are already there
-        
-        if dp(pos,speed) represents the smallest sequence of A and R to get to pos
-        then dp(pos,speed) =  1 + min ({
-            if previous was an A:
-                dp(pos - speed//2, speed//2)
-            if previous was an R
-                dp(pos,1)
-        })
+        we need to touch every non obstalce square in the path in order for it to be a valid path
+        this is just backtracking keep a seen set and progress as far as we can
         '''
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        self.ans = 0
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        
+        #find start cell and end cell
+        #and also the number of cells were we can walk over
+        start = [0,0]
+        end = [0,0]
+        
+        walkable_cells = set()
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    start = [i,j]
+                    walkable_cells.add((i,j))
+                if grid[i][j] == 2:
+                    end = [i,j]
+                    walkable_cells.add((i,j))
+                if grid[i][j] == 0:
+                    walkable_cells.add((i,j))
+        
+        
+        def dfs(i,j):
+            if [i,j] == end and len(walkable_cells) == 1:
+                self.ans += 1
+                return
+            #mark
+            walkable_cells.remove((i,j))
+            #dfs
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #if walkable to
+                    if (neigh_x,neigh_y) in walkable_cells:
+                        dfs(neigh_x,neigh_y)
+            #add back to
+            walkable_cells.add((i,j))
+                        
+                        
+        dfs(start[0],start[1])
+                
+            
+        return self.ans
+
+
+#top down return immediately
+#using recurrence
+class Solution:
+    def uniquePathsIII(self, grid: List[List[int]]) -> int:
+        '''
+        we need to touch every non obstalce square in the path in order for it to be a valid path
+        this is just backtracking keep a seen set and progress as far as we can
+        '''
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        self.ans = 0
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        
+        #find start cell and end cell
+        #and also the number of cells were we can walk over
+        start = [0,0]
+        end = [0,0]
+        
+        walkable_cells = set()
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    start = [i,j]
+                    walkable_cells.add((i,j))
+                if grid[i][j] == 2:
+                    end = [i,j]
+                    walkable_cells.add((i,j))
+                if grid[i][j] == 0:
+                    walkable_cells.add((i,j))
+        
+        
+        def dfs(i,j):
+            if [i,j] == end:
+                if len(walkable_cells) == 1:
+                    return 1
+                else:
+                    return 0 
+            #mark
+            walkable_cells.remove((i,j))
+            ans = 0
+            #dfs
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #if walkable to
+                    if (neigh_x,neigh_y) in walkable_cells:
+                        ans += dfs(neigh_x,neigh_y)
+            #add back to
+            walkable_cells.add((i,j))
+            return ans
+                        
+                        
+        return dfs(start[0],start[1])
