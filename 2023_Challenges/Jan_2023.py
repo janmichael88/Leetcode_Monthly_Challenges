@@ -199,3 +199,29 @@ class Solution(object):
                 #and still not at target
                 if pos + speed < target:
                     q.append((pos, 1, n + 1))
+
+
+###################################
+# 944. Delete Columns to Make Sorted
+# 03JAN23
+###################################
+class Solution:
+    def minDeletionSize(self, strs: List[str]) -> int:
+        '''
+        we just scan down columns and check if they are unsorted
+        '''
+        
+        rows = len(strs)
+        cols = len(strs[0])
+        
+        delete_cols = 0
+        
+        for c in range(cols):
+            for r in range(1,rows):
+                first_char = strs[r-1][c]
+                second_char = strs[r][c]
+                if first_char > second_char:
+                    delete_cols += 1
+                    break
+        
+        return delete_cols
