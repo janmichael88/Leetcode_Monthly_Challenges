@@ -477,3 +477,40 @@ class Solution:
         
         ans = dp(0)
         return ans if ans != float('inf') else -1
+
+#############################################################
+# 452. Minimum Number of Arrows to Burst Balloons (REVISTED)
+# 05JAN23
+#############################################################
+class Solution:
+    def findMinArrowShots(self, points: List[List[int]]) -> int:
+        '''
+        aye yai yai
+        night mare problem
+        
+        if i want to minimize the number of arrows use to pop balloons
+        i want to find the largest number of intersections for the balloong
+        
+        this is really just capturing intervals smartly
+        for a close group of ballongs
+        i want max(all starts) and min(all ends)
+        
+        sort ballons on start, then try to capture as many intervals as you can
+        evidently sort by end
+        
+        no you could do by start
+        '''
+        points.sort()
+        points.sort()
+        curr_start,curr_end = points[0]
+        ans = 0
+        
+        for start, end in points[1:]:
+            if start <= curr_end:
+                curr_start = max(curr_start, start)
+                curr_end = min(curr_end, end)
+            else:
+                ans += 1
+                curr_start,curr_end = start, end
+        
+        return ans + 1
