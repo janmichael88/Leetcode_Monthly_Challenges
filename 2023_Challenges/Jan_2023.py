@@ -200,6 +200,74 @@ class Solution(object):
                 if pos + speed < target:
                     q.append((pos, 1, n + 1))
 
+#another way to use bfs, just build up paths and explore the recursion tree
+#https://leetcode.com/problems/race-car/discuss/124326/Summary-of-the-BFS-and-DP-solutions-with-intuitive-explanation
+class Solution:
+    def racecar(self, T: int) -> int:
+        q = [[0,1,0,[]]]
+        #to the bfs soluitons we can save repated states
+        #if we have seen this state do nothing
+        visited = set()
+        while q:
+            pos,speed,step,op = q.pop(0)
+            if pos==T:
+                print (op)
+                return step
+            if (pos,speed) not in visited:
+                visited.add((pos,speed))
+                q.append([pos+speed,speed*2,step+1,op+['A']])
+                if (speed>0 and pos+speed>T):
+                    q.append([pos,-1,step+1,op+['R']])
+                if (speed<0 and pos+speed<T):
+                    q.append([pos,1,step+1,op+['R']])
+        return -1
+
+#actual write up for top down dp
+class Solution:
+    def racecar(self, target: int) -> int:
+        '''
+        top down dp
+        https://leetcode.com/problems/race-car/discuss/124326/Summary-of-the-BFS-and-DP-solutions-with-intuitive-explanation
+        '''
+        memo = {}
+        
+        def dp(i):
+            #dp(i) returns number of steps remaning to close the gap, or reach i
+            if i == 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            result = float('inf')
+            #case 1: try out all options when moving to the right then move left
+            numStepsRight = 1
+            distRight = 1
+            
+            while distRight < i:
+                numStepsLeft = 0
+                distLeft = 0
+                
+                while numStepsLeft < numStepsRight:
+                    result = min(result, numStepsRight + 1 + numStepsLeft + 1 + dp(i - (distRight - distLeft)) )
+                    numStepsLeft += 1
+                    distLeft = (1 << numStepsLeft) - 1
+                
+                numStepsRight += 1
+                distRight = (1 << numStepsRight) - 1
+                
+            #case 2: we go straight from the current positon to target positiosn
+            if distRight == i:
+                result = min(result,numStepsRight)
+                
+            # Case 3: We go from the current position beyond the target position (we step over it and will need to go in the other direction during the next recursive call).
+            else:
+                result = min(result, numStepsRight + 1 + dp(distRight - i))
+            
+            memo[i] = result
+            return result
+        
+        return dp(target)
+
 
 ###################################
 # 944. Delete Columns to Make Sorted
@@ -225,3 +293,187 @@ class Solution:
                     break
         
         return delete_cols
+
+
+#######################################
+# 2244. Minimum Rounds to Complete All Tasks
+# 04JAN23
+#######################################
+#fucknig edge cases
+class Solution:
+    def minimumRounds(self, tasks: List[int]) -> int:
+        '''
+        want the min number of rounds to complete the tasks
+        it makes sense to complete tasks in three first, then two to get the min number of rounds
+        if we get to a point where there is a count of 1 at all, we can't finish it
+        
+        [2,2,3,3,2,4,4,4,4,4]
+        
+        2:3
+        3:2
+        4:5
+        
+        then traverse then sor the counts and try t0 reduce by three, only if we have have 2 left over
+        same thing with 2
+        '''
+        counts = Counter(tasks)
+        sorted_counts = sorted([v for k,v in counts.items()],reverse = True)
+        
+        rounds = 0
+        final_array = []
+        
+        for count in sorted_counts:
+            #first reduce by three
+            if count % 3 == 0:
+                rounds += count // 3
+                count = 0
+            #use up 3, then 2
+            elif count % 3 == 2:
+                rounds += count // 3
+                rounds += 1
+                count = 0
+            elif count % 2 == 0:
+                rounds += count // 2
+                count = 0
+            final_array.append(count)
+        
+        if all([0 == num for num in final_array]):
+            return rounds
+        else:
+            return -1
+
+#finally
+class Solution:
+    def minimumRounds(self, tasks: List[int]) -> int:
+        '''
+        we don't need to sort, just check and use up as much as we can
+        '''
+        counts = Counter(tasks)
+        
+        rounds = 0
+
+        
+        for task,count in counts.items():
+            if count == 1:
+                return -1
+            elif count % 3 == 2:
+                rounds += (count //3) + 1
+            elif count % 3 == 0:
+                rounds += (count //3)
+            else:
+                #think o flike 4,7,and,10, we left with 2 groups of two
+                count -= 4
+                rounds += (count // 3) + 2
+        
+        return rounds
+
+
+class Solution:
+    def minimumRounds(self, tasks: List[int]) -> int:
+        '''
+        we don't need to sort, just check and use up as much as we can
+        the trick is to realize we need to priotirze reducing by // 3
+        then we can just use the remaining round of 2
+        #think of numbres like 4 and 7
+
+        we can represent the counts of tasks as number n
+        and n can be written as: 3x + 2y
+        where x in the number of groups of 3 and y is the number of groups of 2
+        to minimuze the sum of x + y, we want to maximize x
+        
+        if number is 3*k, we can make k groups of 3
+        if numbers is 3*k + 1, we can make (k-1) groups of 3, and leave 4, which is just 2 groupds of two
+        if number is 3*k + 2, just make k groups of 3, and 1 groupd of 2
+        '''
+        counts = Counter(tasks)
+        
+        rounds = 0
+        
+        for task,count in counts.items():
+            if count == 1:
+                return -1
+            
+            if count % 3 == 0:
+                rounds += count // 3
+            else:
+                rounds += (count // 3) + 1
+        
+        return rounds
+
+#dp using counter
+class Solution:
+    def minimumRounds(self, tasks: List[int]) -> int:
+        '''
+        we can also use dp to solve this, similar to the coin change problem
+        count them up and try use a 2 or 3
+        then take the min
+        dp(i) represents the minunum number of roundsto reduce to 0
+        dp(i) = 1 + min(dp(i-2),dp(i-3))
+        '''
+        counts = Counter(tasks)
+        
+        memo = {}
+        
+        def dp(i):
+            if i == 2:
+                return 1
+            if i == 3:
+                return 1
+            if i == 1:
+                return float('inf')
+            if i in memo:
+                return memo[i]
+            ans = float('inf')
+            if i >= 2:
+                ans = min(ans,1 + dp(i-2))
+            if i >= 3:
+                ans = min(ans,1 + dp(i-3))
+                
+            memo[i] = ans
+            return ans
+        
+        rounds = 0
+        
+        for task,count in counts.items():
+            if count == 1:
+                return -1
+            min_rounds = dp(count)
+            if min_rounds == float('inf'):
+                return -1
+            rounds += min_rounds
+        
+        return rounds
+
+#dp using sorting
+#quite painful to think about recursion for this one
+class Solution:
+    def minimumRounds(self, tasks: List[int]) -> int:
+        '''
+        we can use dynamic programming on the non decreasing sorted array
+        '''
+        tasks.sort()
+        
+        memo = {}
+        
+        def dp(i):
+            #reach beyond end of array, nothing
+            if i == len(tasks):
+                return 0
+            elif i in memo:
+                return memo[i]
+            elif i > len(tasks) or i == len(tasks) - 1:
+                return float('inf')
+            elif tasks[i] != tasks[i+1]:
+                return float('inf')
+
+            
+            elif i + 2 < len(tasks) and tasks[i] == tasks[i+2]:
+                ans = 1 + min(dp(i+2),dp(i+3))
+            else:
+                ans = 1 + dp(i+2)
+            
+            memo[i] = ans
+            return ans
+        
+        ans = dp(0)
+        return ans if ans != float('inf') else -1
