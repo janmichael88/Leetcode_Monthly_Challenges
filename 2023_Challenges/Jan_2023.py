@@ -514,3 +514,135 @@ class Solution:
                 curr_start,curr_end = start, end
         
         return ans + 1
+
+###################################
+# 233. Number of Digit One
+# 05JAN23
+###################################
+class Solution:
+    def countDigitOne(self, n: int) -> int:
+        '''
+        official solution first
+        
+        consider the number of 1's in the ones positions, tens positions, and so on...
+        for the ones places
+        for 
+        0 to 10
+        there can only be 1 one in the ones positions
+        0 to 20
+        there are two ones in the ones place
+        0 to 30
+        there are 3 ones in the one's place
+        
+        nuber of 1's at the ones positosn
+        (n//10) + (n % 10 != 0)
+        
+        now how about the 10's place?
+        up to 100, 10 ones at the 10's place
+        up to 200, 20 ones at the 10's place
+        
+        1600, 160 one's
+        1610, 161 one's
+        
+        number of 1's at the 10s place:
+        (n/100)*10 + min(max(n % 100 - 10 + 1,0),10))
+        
+        for hundred's place
+        (n/1000)*100 + min(max(n % 1000 - 100 + 1,0),100))
+        
+        count is formulated as (n/(i*10))*i
+        
+        we essentially just sum up the ones at each position using the formula
+        it's not easy to come up with
+        '''
+        count = 0
+        i = 1
+        while i <= n:
+            divider = i*10
+            count_at_pos = (n // divider)*i + min(max(n % divider - i + 1,0),i)
+            count += count_at_pos
+            i = i*10
+        
+        return count
+
+##################################
+# 1833. Maximum Ice Cream Bars
+# 06JAN23
+##################################
+class Solution:
+    def maxIceCream(self, costs: List[int], coins: int) -> int:
+        '''
+        uhhhh
+        just sort and by the cheapest ones first
+
+        i also could have sorted, then use pref sum
+        the binary search for the upper bound
+        still NlgN
+        '''
+        costs.sort()
+        ice_cream = 0
+        for c in costs:
+            if c <= coins:
+                ice_cream += 1
+                coins -= c
+            else:
+                break
+        
+        return ice_cream
+
+#binary search
+class Solution:
+    def maxIceCream(self, costs: List[int], coins: int) -> int:
+        '''
+        sorthing then use binary search
+        '''
+        costs.sort()
+        pref_sum = [0]
+        for c in costs:
+            pref_sum.append(c + pref_sum[-1])
+        
+        left = 0
+        right = len(pref_sum)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            if pref_sum[mid] > coins:
+                right = mid
+            else:
+                left = mid + 1
+            
+        return left - 1
+
+#actual way is counting sort
+class Solution:
+    def maxIceCream(self, costs: List[int], coins: int) -> int:
+        '''
+        we can using counting sort
+        make frequqne array showing number of cones at that cost
+        then take as much as we can
+        be careful when trying to take 1 cone at a time for a cost
+        just use division
+        '''
+        n, icecreams = len(costs), 0
+        m = max(costs)
+
+        costsFrequency = [0] * (m + 1)
+        for cost in costs:
+            costsFrequency[cost] += 1
+
+        for cost in range(1, m + 1):
+            # No ice cream is present costing 'cost'.
+            if not costsFrequency[cost]:
+                continue
+            # We don't have enough 'coins' to even pick one ice cream.
+            if coins < cost:
+                break
+            
+            # Count how many icecreams of 'cost' we can pick with our 'coins'.
+            # Either we can pick all ice creams of 'cost' or we will be limited by remaining 'coins'.
+            count = min(costsFrequency[cost], coins // cost)
+            # We reduce price of picked ice creams from our coins.
+            coins -= cost * count
+            icecreams += count
+            
+        return icecreams
