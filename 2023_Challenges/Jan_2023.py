@@ -646,3 +646,108 @@ class Solution:
             icecreams += count
             
         return icecreams
+
+###########################
+# 134. Gas Station (REVISTED)
+# 07JAN23
+###########################
+#brute force
+class Solution:
+    def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
+        '''
+        we want to to find the starting station's gas index if we can make a complete circuit
+        interesting enough, if there is a complete circuit, it can only be started from a unique gas station
+        
+        brute force would be to try each gas station and make it across
+        '''
+        N = len(gas)
+        for i in range(N):
+            curr_station = i
+            tank = gas[curr_station] - cost[curr_station]
+            curr_station = (curr_station + 1) % N
+            while tank > 0 and curr_station != i:
+                #travel
+                tank -= cost[curr_station]
+                tank += gas[curr_station]
+                curr_station = (curr_station + 1) % N
+            
+            if curr_station == i:
+                return curr_station
+        
+        return -1
+
+class Solution:
+    def canCompleteCircuit(self, gas: List[int], cost: List[int]) -> int:
+        '''
+        need to realize that it is impossible to complete the route if sum(gas) < sum(cost)
+        and that it is impossible to start at station i, if gas[i] - cost[i] < 0, because there is not enough in the tank to reach i + 1
+        
+        what can we conclude from these two things?
+        we need to genearlize the second fact
+        
+        for each station i, stat with curr_tank 0, if it ever goes below negative, we can't start here at all
+        our candidate answer will be 0, then we update tank
+        if tank every drops bewlow 0, update tank to zero, and start new candidate answer to i + 1
+        
+        we could also just mimic a circular array and check that we can reach all (i.e i - curr_start >= N)
+
+        https://leetcode.com/problems/gas-station/discuss/42568/Share-some-of-my-ideas.
+
+        This is how I understood and may be it helps others to develop intuition on the O(N) solution.
+
+        A -- x -- x --- x --- x -- B
+        The proof says, let's say we start at A and B is the first station we can not reach. Then we can not reach B from all the stations between A and B. The way to think about it is like this, let's say there was a station C between A and B.
+
+                        fuel >= 0
+        A -- x -- x --- *C --- x -- B
+        When we started from A we had enough fuel to get from A to C and then from C to a station before B. This means that when we reached from A to C we had at least 0 or more fuel in our tank. We refueled at C and then started onward trip.
+
+         fuel = 0
+                *C --- x -- B
+        Now if we were to start at C with 0 capacity, we would not be any better in terms of fuel reserves than a trip that started at A. It's guaranteed that we'd fail to make it to B.
+
+        Hence we start our search at i+1'th index.
+
+        
+        '''
+        start = 0
+        tank = 0
+        N = len(gas)
+        
+        for i in range(2*N):
+            tank += gas[i % N] - cost[i % N]
+            
+            #not enough gas
+            if tank < 0:
+                tank = 0
+                start = i + 1
+                
+            #can rech
+            if i - start == N:
+                return start
+        
+        return -1
+
+#################################
+# 1854. Maximum Population Year
+# 07JAN23
+################################
+#brute force
+class Solution:
+    def maximumPopulation(self, logs: List[List[int]]) -> int:
+        '''
+        similar to capturing intervals
+        want the earliest year with max population
+        
+        brute force first just check all years using countmap
+        then sort
+        '''
+        counts = Counter()
+        for start,end in logs:
+            for year in range(start,end):
+                counts[year] += 1
+        
+        counts = [(k,v) for k,v in counts.items()]
+        counts.sort(key = lambda x: (-x[1],x[0]))
+        print(counts)
+        return counts[0][0]
