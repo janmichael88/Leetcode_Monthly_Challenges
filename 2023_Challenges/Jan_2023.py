@@ -882,3 +882,55 @@ class Solution:
                     ans = max(ans,arc_tans[arc_tan]+1)
         
         return ans
+
+###################################
+# 2214. Minimum Health to Beat Game
+# 06JAN23
+####################################
+#YASSS, 
+#trick was whether we need to decut armor or the damage at i
+#take min
+class Solution:
+    def minimumHealth(self, damage: List[int], armor: int) -> int:
+        '''
+        notice the anser for the question:
+            want min health needed at start of game to beat the game
+            not the number of level we can complete with armor 4
+        
+        we can use armor which shields as from at most armor
+        health must be greater then zero at all times
+        
+        if i have no armor, i need sum(damage) + 1
+        find the point where we can use armor
+        use armor at the highest 
+        '''
+        if armor == 0:
+            return sum(damage) + 1
+        
+        #sort
+        total_damage = sum(damage)
+        damage.sort()
+        N = len(damage)
+        
+        
+
+        for i in range(N):
+            if damage[i] >= armor:
+                break
+        
+        return total_damage - min(armor,damage[i]) + 1
+
+
+#fun problem
+class Solution:
+    def minimumHealth(self, damage: List[int], armor: int) -> int:
+        '''
+        official write up
+        we want to use amore to block the largest damage
+        either it sheilds us from all damage: where armore > maxDamage
+        or it partially sheilds us, where armor < d: and we take d - armor damage
+        '''
+        total_damage = sum(damage)
+        max_damage = max(damage)
+        
+        return total_damage - min(max_damage,armor) + 1
