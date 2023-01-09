@@ -752,6 +752,43 @@ class Solution:
         print(counts)
         return counts[0][0]
 
+#range addition
+#similar concept for my booking calendar problems
+#https://leetcode.com/problems/maximum-population-year/discuss/1198978/JAVA-oror-O(n)-solution-With-Explanation-oror-Range-Addition
+class Solution:
+    def maximumPopulation(self, logs: List[List[int]]) -> int:
+        '''
+        we can use conept of range addition
+        for example, given the long entry [1950,1961] it means there was +1 for every year from 1950 to 1960
+        only at 1961, we -1
+        then for every year after 1950 we can accumlate them
+        we just travere the prex sum array
+        then take the maximum, 
+        we want the earliest year
+        '''
+        year_counts = [0]*2051
+        
+        for start,end in logs:
+            year_counts[start] += 1
+            year_counts[end] -= 1
+            
+        max_pop = year_counts[1950]
+        min_year = 1950
+        
+        # we can find max as we build the prefsum sum array
+        for i in range(1950,len(year_counts)):
+            #accumulate
+            year_counts[i] += year_counts[i-1]
+            
+            #maximum
+            if year_counts[i] > max_pop:
+                max_pop = year_counts[i]
+                min_year = i
+        
+        return min_year
+
+
+
 #######################################
 # 149. Max Points on a Line (REVISTED)
 # 08JAN23
@@ -823,15 +860,25 @@ class Solution:
 #using acrtan trick
 class Solution:
     def maxPoints(self, points: List[List[int]]) -> int:
-        n = len(points)
-        if n == 1:
-            return 1
-        result = 2
-        for i in range(n):
-            cnt = collections.defaultdict(int)
-            for j in range(n):
-                if j != i:
-                    cnt[math.atan2(points[j][1] - points[i][1],
-                                   points[j][0] - points[i][0])] += 1
-            result = max(result, max(cnt.values()) + 1)
-        return result
+        '''
+        instead of using line equation and slopes, we can use arctan between two vectors
+        two points are in the same line, if they have the same arctan, i.e there vectors are aligned
+        i also could have use unit normal vectors too as theri signatures
+        
+        for using arc tans we need to check all of them
+        '''
+        N = len(points)
+        ans = 1
+        
+        for i in range(N):
+            arc_tans = Counter()
+            for j in range(N):
+                if i != j:
+                    xcomp = points[j][0] - points[i][0]
+                    ycomp = points[j][1] - points[i][1]
+
+                    arc_tan = math.atan2(xcomp,ycomp)
+                    arc_tans[arc_tan] += 1
+                    ans = max(ans,arc_tans[arc_tan]+1)
+        
+        return ans
