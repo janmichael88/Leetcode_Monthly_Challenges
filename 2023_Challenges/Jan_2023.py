@@ -708,7 +708,7 @@ class Solution:
 
         Hence we start our search at i+1'th index.
 
-        
+
         '''
         start = 0
         tank = 0
@@ -751,3 +751,87 @@ class Solution:
         counts.sort(key = lambda x: (-x[1],x[0]))
         print(counts)
         return counts[0][0]
+
+#######################################
+# 149. Max Points on a Line (REVISTED)
+# 08JAN23
+#######################################
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        '''
+        for each point, we need to compare it with all the other points
+        then when comparing, find the unique signature for that line
+        
+        increment into a counter using signature
+        then update the current max
+        
+        inf would only show up ince since we do it one point at a time
+        python is is smart enough to handle long floats as unique hahses
+        '''
+        
+        def get_slope(x1,y1,x2,y2):
+            if x1 == x2:
+                return float('inf')
+            return (y1-y2)/(x1-x2)
+        
+        ans = 1 #we will always have at least 1 point
+        N = len(points)
+        
+        for i in range(N):
+            curr_max = 1
+            slopes = Counter()
+            for j in range(i+1,N):
+                x1,y1 = points[i]
+                x2,y2 = points[j]
+                slope = get_slope(x1,y1,x2,y2)
+                slopes[slope] += 1
+                curr_max = max(curr_max, 1 + slopes[slope]) #because we need to include the other point
+            #update globalle
+            ans = max(ans,curr_max)
+        
+        return ans
+
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        '''
+        we can alsoe use the line equation is the signature and store the coefficients as tuple
+        find the slope, y intercept, and x intercept
+        '''
+        n = len(points)
+        def calLine(x1, y1, x2, y2): # calculate the line equation
+            if x1 == x2:
+                return (float('inf'), 0, x1)
+            k = (y1 - y2) / (x1 - x2)
+            b = y1 - k * x1
+            #this is the slope, something, and y intercept
+            return (k, b, x1)
+
+        res = 1
+        for i in range(n):
+            mem = collections.defaultdict(set)
+            x1, y1 = points[i]
+            for j in range(i + 1, n):
+                x2, y2 = points[j]
+                line = calLine(x1, y1, x2, y2)
+                #add the current point and the next point to the set
+                mem[line].add((x1, y1))
+                mem[line].add((x2, y2))
+                #maximize
+                res = max(res, len(mem[line]))
+        return res
+
+#using acrtan trick
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        n = len(points)
+        if n == 1:
+            return 1
+        result = 2
+        for i in range(n):
+            cnt = collections.defaultdict(int)
+            for j in range(n):
+                if j != i:
+                    cnt[math.atan2(points[j][1] - points[i][1],
+                                   points[j][0] - points[i][0])] += 1
+            result = max(result, max(cnt.values()) + 1)
+        return result
