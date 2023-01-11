@@ -565,6 +565,9 @@ class Solution:
         
         return count
 
+#https://leetcode.com/problems/number-of-digit-one/discuss/64382/JavaPython-one-pass-solution-easy-to-understand
+
+
 ##################################
 # 1833. Maximum Ice Cream Bars
 # 06JAN23
@@ -934,3 +937,95 @@ class Solution:
         max_damage = max(damage)
         
         return total_damage - min(max_damage,armor) + 1
+
+###############################################
+# 1525. Number of Good Ways to Split a String
+# 10JAN23
+##############################################
+#close one...
+class Solution:
+    def numSplits(self, s: str) -> int:
+        '''
+        brute force would be check all splits and check distinct counts
+        i can use hashmap to store distinct counts for each part
+        
+        what if i started off with all distinct
+        and just keep count
+        '''
+        ans = 0
+        N = len(s)
+        all_distinct = set(s)
+        count_all = len(all_distinct)
+        
+        curr_distinct = set()
+        curr_count_distinct = 0
+        
+        for i in range(N):
+            char = s[i]
+            if char not in curr_distinct:
+                curr_distinct.add(char)
+                curr_count_distinct += 1
+            
+            if char in all_distinct:
+                all_distinct.remove(char)
+                count_all -= 1
+            
+            if count_all == curr_count_distinct:
+                ans += 1
+        
+        return ans
+
+#yassss!
+class Solution:
+    def numSplits(self, s: str) -> int:
+        '''
+        almost had it
+        we can keep an inital mapp/hashset of the left part
+        then build up the right part, but take away from left as we move along
+        
+        this is really just a two hashmap problem
+        
+        '''
+        right = Counter()
+        left = Counter(s)
+        
+        ans = 0
+        for ch in s:
+            #increment
+            right[ch] += 1
+            #remove from left
+            if ch in left:
+                left[ch] -= 1
+            if left[ch] == 0:
+                del left[ch]
+                
+            if len(right) == len(left):
+                ans += 1
+        
+        return ans
+
+class Solution:
+    def numSplits(self, s: str) -> int:
+        '''
+        we don't need to use two hashmaps for the left and the right
+        we only just need to use one hashmap and a hash set
+        
+        first say that the inital string is entirely on the left
+        '''
+        right = set()
+        left = Counter(s)
+        
+        ans = 0
+        
+        for ch in s:
+            right.add(ch)
+            #iniitally starting this char must have been accounted for
+            left[ch] -= 1
+            #if it dropes to zero
+            if left[ch] == 0:
+                del left[ch]
+                
+            if len(right) == len(left):
+                ans += 1
+        
+        return ans
