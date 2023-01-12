@@ -519,6 +519,44 @@ class Solution:
 # 233. Number of Digit One
 # 05JAN23
 ###################################
+#O(NlgN)
+#TLE unfortunatley
+class Solution:
+    def countDigitOne(self, n: int) -> int:
+        '''
+        first lets try linear dp
+        dp(i) be the number of ones for a number i
+        dp(i) = dp(i-1) + number of ones contributed at i
+        '''
+        
+        memo = {}
+        
+        def dp(i):
+            if i == 0:
+                return 0
+            if i == 1:
+                return 1
+            if i in memo:
+                return memo[i]
+            
+            #find contribution of ones for this current i
+            #this is Olog(N)
+            temp = i
+            count_ones_at_i = 0
+            while temp:
+                if temp % 10 == 1:
+                    count_ones_at_i += 1
+                temp = temp // 10
+            
+            ans = dp(i-1) + count_ones_at_i
+            memo[i] = ans
+            return ans
+        
+        return dp(n)
+
+#dp O(N)
+
+
 class Solution:
     def countDigitOne(self, n: int) -> int:
         '''
@@ -554,13 +592,29 @@ class Solution:
         
         we essentially just sum up the ones at each position using the formula
         it's not easy to come up with
+
+        No of \text{'1'}’1’ in \text{ones}ones place = 1234/101234/10(corresponding to 1,11,21,...1221) + \min(4,1)min(4,1)(corresponding to 1231) =124124
+
+No of \text{'1'}’1’ in \text{tens}tens place = (1234/100)*10(1234/100)∗10(corresponding to 10,11,12,...,110,111,...1919) +\min(21,10)min(21,10)(corresponding to 1210,1211,...1219)=130130
+
+No of \text{'1'}’1’ in \text{hundreds}hundreds place = (1234/1000)*100(1234/1000)∗100(corresponding to 100,101,12,...,199) +\min(135,100)min(135,100)(corresponding to 1100,1101...1199)=200200
+
+No of \text{'1'}’1’ in \text{thousands}thousands place = (1234/10000)*10000(1234/10000)∗10000 +\min(235,1000)min(235,1000)(corresponding to 1000,1001,...1234)=235235
+
+Therefore, Total = 124+130+200+235 = 689124+130+200+235=689.
         '''
         count = 0
         i = 1
         while i <= n:
+            #base at the radix for the 10's position
             divider = i*10
+            #what we can only go up to for this bit position
+            #but need to include the remainder, we cannot add less then zero
+            #and it cannot be more than the current i
             count_at_pos = (n // divider)*i + min(max(n % divider - i + 1,0),i)
+            #increment count
             count += count_at_pos
+            #move to next bit posisiton
             i = i*10
         
         return count
@@ -1029,3 +1083,156 @@ class Solution:
                 ans += 1
         
         return ans
+
+#####################################################
+# 1443. Minimum Time to Collect All Apples in a Tree
+# 11JAN23
+#####################################################
+#fuckkkkkkk
+class Solution:
+    def minTime(self, n: int, edges: List[List[int]], hasApple: List[bool]) -> int:
+        '''
+        each edge has cost of 1, so we can use BFS somehow, no relaxing
+        that fact that i have to go back up an edge would mean i need to usse dfs to return to the parent caller
+        the hint gave it away
+            if a node u contains an apple, then all edges in the path from root to node u have to be used two times
+        '''
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        seen = set()
+        def dfs(node,seen):
+            if node in seen:
+                return 0
+            if hasApple[node]:
+                return 2
+            #visit
+            seen.add(node)
+            ans = 0
+            
+            for neigh in graph[node]:
+                ans += dfs(neigh,seen)
+            seen.remove(node)
+            
+            return ans
+        
+        return dfs(0,seen)
+
+class Solution:
+    def minTime(self, n: int, edges: List[List[int]], hasApple: List[bool]) -> int:
+        '''
+        the idea it visit all children before returning back to the parent
+        then we can just add them up back to the root
+        to avoid going back on an edge we need to take to dfs, you can keep track of a parent and child node in the recursive function
+        
+        example
+            say we are at p, and we have child node c1
+                we first find the time it takes to collect all the pples in the subtree of c1, which we call t
+                if t == 0, there are no apples and that tree, so don't go down that path, return 0
+                
+            otherwise we must visit the subtree and collect all the apples, which would be t + 2, because we have to back up
+            
+        dfs function has paramters node and child
+            for each call we don't know the totalTime or childTime
+            totalTime is time to collect all apples for this subtree
+            childTime is time required to collect all apples for each immediate child of node
+            
+            check all children, and child is equal to parent, skip it (cool way of backtracking)
+            if child is not equal to parent, recurse
+            
+            if child has an apple or there are any apples in he subtree which can be checked if childTime > 0, we must visit this child, which takes one unit of time
+            
+            if neither the child nor the subtree has apples, we don't need to include the time to visit this child
+            as we will consier we never visited this child's subtree
+        '''
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        def dfs(node,parent):
+            totalTime = 0
+            childTime = 0
+            for neigh in graph[node]:
+                #don't go back
+                if neigh == parent:
+                    continue
+                childTime = dfs(neigh,node)
+                #get the mount of time is takes to get apples for this child
+                if childTime > 0 or hasApple[neigh]:
+                    totalTime += childTime + 2
+                    
+            return totalTime
+        
+        return dfs(0,-1)
+            
+#another way
+class Solution:
+    def minTime(self, n: int, edges: List[List[int]], hasApple: List[bool]) -> int:
+        '''
+        just another way 
+        '''
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        def dp(node,parent):
+            ans = 0
+            #graph is a tree so there are no cycles, but the edges are unidrected
+            for neigh in graph[node]:
+                if neigh == parent:
+                    continue
+                #accumlate ansers
+                else:
+                    ans += dp(neigh,node)
+            
+            #if res is not 0, there are still apples down in the tree, so we need to add 2 
+            #if this node has an appler, we add 2 to the result
+            if ans > 0 or hasApple[node]:
+                return ans + 2
+            
+            return ans
+        
+        
+        ans = dp(0,-1) - 2 #when coming back to nodes 0. we over counted by 2 (recall this works when solving the subproblems, but for the root we dont need it)
+        return max(ans,0)
+
+
+#one more way using visited set
+#https://leetcode.com/problems/minimum-time-to-collect-all-apples-in-a-tree/discuss/623686/Java-Detailed-Explanation-Build-Tree-%2B-DFS
+class Solution:
+    def minTime(self, n: int, edges: List[List[int]], hasApple: List[bool]) -> int:
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        seen = set()
+        
+        def dp(node):
+            #add node
+            seen.add(node)
+            totalTime = 0
+            
+            for neigh in graph[node]:
+                if neigh in seen:
+                    continue
+                #get answers to subproblems
+                totalTime += dp(neigh)
+                
+            #if there are apples further down the tree, or this node has an apples
+            if (totalTime > 0) or hasApple[node]:
+                totalTime += 2
+            
+            return totalTime
+        
+        
+        return max(dp(0) -2,0)
+            
