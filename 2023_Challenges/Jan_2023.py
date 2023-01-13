@@ -1235,4 +1235,215 @@ class Solution:
         
         
         return max(dp(0) -2,0)
+
+
+#anothe way is to use kahn's algo
+'''
+First you trim the tree and remove leaf-nodes with edges without apples. In example #1 it will be 3,6. In example #2 - 4,3,6. Now all you need to do is calc remaining edges and x2.
+'''
+class Solution:
+    def minTime(self, n: int, edges: List[List[int]], hasApple: List[bool]) -> int:
+        def kahnsalgo():
+            N = len(hasApple)
+            E = len(edges)
+            indegrees = [0] * N
             
+            for u,v in edges:
+                indegrees[v] += 1
+                indegrees[u] += 1
+            
+            queue = deque()
+            for i,ind in enumerate(indegrees):
+                if ind == 1 and not hasApple[i]: # if there's only 1 in-edge and there's no apple -> empty leaf
+                    queue.append(i) # add for removal
+                    
+            removed_nodes = 0
+            while queue:
+                node = queue.popleft()
+                
+                if node == 0: # we cannot remove root in any case
+                    continue
+                
+                for nei in adj_list[node]:
+                    adj_list[nei].discard(node)
+                    indegrees[nei] -= 1 # remove edge from v,u
+                    if indegrees[nei] == 1 and not hasApple[nei]: # another leaf? add to remove
+                        queue.append(nei)
+                    removed_nodes += 1 # count removed nodes
+            
+            return (E - removed_nodes) * 2 # (all edges - edges_to_empty_nodes) * 2
+        
+        adj_list = defaultdict(set)
+        for u,v in edges: adj_list[u].add(v), adj_list[v].add(u)
+        return kahnsalgo()
+            
+###########################################################
+# 1519. Number of Nodes in the Sub-Tree With the Same Label
+# 12JAN23
+###########################################################
+#close one
+class Solution:
+    def countSubTrees(self, n: int, edges: List[List[int]], labels: str) -> List[int]:
+        '''
+        we have unidrected edge lest, and each node has a label
+        return array of length n where each interger in the array hold the number of occurences for that label
+        
+        leaves will return a value of 1 into the array
+        
+        very similar to what we did yesterday
+        
+        i need to return some vector of counts to each parent
+        then for each call accumulate the counts for that character count
+        '''
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+    
+        
+        seen = set()
+        ans = [0]*n #the nodes are 0 indexed
+        
+        def dp(node):
+            seen.add(node)
+            count = Counter()
+            #first add this node
+            count[labels[node]] += 1
+            
+            for neigh in graph[node]:
+                if neigh in seen:
+                    continue
+                #retrieve the child counts
+                child_counts = dp(neigh)
+                for char,c in child_counts.items():
+                    if char == labels[node]:
+                        count[char] += c
+            
+            #put into answer
+            ans[node] = count[labels[node]]
+            return count
+        
+        temp = dp(0)
+        return ans
+
+#phew! just accumlate all the letters
+class Solution:
+    def countSubTrees(self, n: int, edges: List[List[int]], labels: str) -> List[int]:
+        '''
+        we have unidrected edge lest, and each node has a label
+        return array of length n where each interger in the array hold the number of occurences for that label
+        
+        leaves will return a value of 1 into the array
+        
+        very similar to what we did yesterday
+        
+        i need to return some vector of counts to each parent
+        then for each call accumulate the counts for that character count
+        '''
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+    
+        
+        seen = set()
+        ans = [0]*n #the nodes are 0 indexed
+        
+        def dp(node):
+            seen.add(node)
+            count = Counter(labels[node])
+            
+            for neigh in graph[node]:
+                if neigh in seen:
+                    continue
+                #retrieve the child counts
+                child_counts = dp(neigh)
+                for char,c in child_counts.items():
+                    count[char] += c
+            
+            #put into answer
+            ans[node] = count[labels[node]]
+            return count
+        
+        temp = dp(0)
+        return ans
+
+#bfs, kahsn' prune edges and start from leaves
+class Solution:
+    def countSubTrees(self, n: int, edges: List[List[int]], labels: str) -> List[int]:
+        '''
+        we can also use BFS, but in that case we would need to start from the bottom up
+        start traversal from all the leaf nodes, then move to their parents, then their parents' parents, and so on
+        we can do this because we are given the edge list, and leaves have no out going edges (Kahn's algorithm)
+        
+        also need to keep a count array count[n][26], where count[i] stores the counts for each of its labels
+        
+        bfs traversal:
+            pop from left, fetch parent
+            add count of each lable in the subtree of node to that parent: count[parent] += count[node]
+            then push parent back into the queue
+        
+        at the end re-traverse the count array for counta
+        
+        important, 
+        how to figure out the parent node and how to compute the count of each label in its subtree using children
+        leaf nodes will have have on node in the graph, which is just their immediate parent
+        we bring count of leaf up to the parent
+        
+        then we delete leaf from pop, we can just pop, so we don't go back down then we eventually add the parent back to the queue
+        
+        Create a mapping adj where adj[X] contains a set of all the neighbors of node X.
+        Initialize an array counts[26] for every node, storing the count of each label in the node's subtree. Initialize it with 0 for every node.
+        Initialize a queue.
+        Iterate over all the nodes and for each node mark counts[node][labels[node] - 'a'] = 1. Also, check if node is a leaf node. It is a leaf node, if node != 0 && adj[node].size() == 1. Push node into the queue.
+        Then, while the queue is not empty:
+        Dequeue the first node from the queue.
+        Get the parent of the node from adj[node].
+        For the parent, we remove node from adj[parent] to avoid traversing back to node from parent.
+        Add counts[node] to counts[parent].
+        If the size of adj[parent] == 1 && parent != 0 (root has no parent), which means we added the count of each label in all subtrees of its children and deleted the children. The node present in adj[parent] is its parent. In such a case, push the parent into the queue.
+        Iterate over all the nodes and for each node return counts[node][labels[node] -a].
+        
+        
+            '''
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        counts = [[0]*26 for _ in range(n)]
+        q = deque([])
+        
+        #store inital counts for each node
+        for node in range(n):
+            #get its character
+            char = labels[node]
+            counts[node][ord(char) - ord('a')] = 1
+            #store leaf nodes in queue
+            if node != 0 and len(graph[node]) == 1:
+                q.append(node)
+        
+        #bfs
+        while q:
+            curr = q.popleft()
+            #find parent, but we need to remove this so we don't come back down
+            #we are essentially removing edges by removing nodes when going from the leaves to the root
+            parent = graph[curr].pop()
+            
+            #from the current nodes accumlate into parent
+            for i in range(26):
+                counts[parent][i] += counts[curr][i]
+            
+            #if after remove edges, parent becomes a leaf, push back into q
+            if parent != 0 and len(graph[parent]) == 1:
+                q.append(parent)
+        
+        #get the anser
+        ans = []
+        for node in range(n):
+            ans.append(counts[node][ord(labels[node]) - ord('a')])
+        
+        return ans
