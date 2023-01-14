@@ -1447,3 +1447,166 @@ class Solution:
             ans.append(counts[node][ord(labels[node]) - ord('a')])
         
         return ans
+
+########################################################
+# 2246. Longest Path With Different Adjacent Characters
+# 13JAN23
+#########################################################
+#close one... :(
+class Solution:
+    def longestPath(self, parent: List[int], s: str) -> int:
+        '''
+        we want the longest path in tree such that no pair of adjacent nodes on the path have the same character assigned to them
+        path length can be defined as number of nodes in path + 1
+        
+        notes:
+            keeping parent pointers is another way to construct graph
+        
+        what if were to bfs from the root
+        this is just dp after we get the graph
+        
+        dp(node) gives path for longest in that subtree
+        do(node) = 1 + max(dp(childd) for child in graph[node] of s[child] != s[node])
+        
+        '''
+        #make graph
+        graph = defaultdict(list)
+        n = len(parent)
+        for i in range(1,n):
+            u = i
+            v = parent[i]
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        
+        seen = set()
+        
+        def dp(node):
+            seen.add(node)
+            max_path_from_child = 0
+            
+            for neigh in graph[node]:
+                if neigh in seen:
+                    continue
+                
+                if s[node] != s[neigh]:
+                    max_path_from_child = max(max_path_from_child,1 + dp(neigh))
+            
+            return max_path_from_child
+        
+        return dp(0) + 1
+                    
+
+class Solution:
+    def longestPath(self, parent: List[int], s: str) -> int:
+        '''
+        almost had it
+        for a node we want the first lognest chain, L1 and the second longest chain, L2
+        we can do this for each node, do we need to update globally
+        
+        let dp(node) by longest path at this node
+        then dp(node) = 1 + l1 + l2
+        why do we have to maximize globally?
+        each child is returning to its parent the longest path
+            because we need to return only one chain
+            if each child returned a chain, we could have instants where nodes have > 2 child, and > 2 chains is not a valid path
+        
+        same thing, by in dp function we need to find the frist longest and second longest
+        '''
+        #make graph
+        graph = defaultdict(list)
+        n = len(parent)
+        for i in range(1,n):
+            u = i
+            v = parent[i]
+            graph[v].append(u)
+            graph[u].append(v)
+            
+        #don't use seen set, just keep passing parent and child
+        self.ans = 1
+        
+        def dp(node,parent):
+            first_longest = 0
+            second_longest = 0
+            
+            for neigh in graph[node]:
+                #don't go back up to parent
+                if neigh == parent:
+                    continue
+                #get path for this child
+                longest_from_child = dp(neigh,node)
+                if s[node] != s[neigh]:
+                    if longest_from_child >= first_longest:
+                        second_longest = first_longest
+                        first_longest = longest_from_child
+
+                    elif longest_from_child > second_longest:
+                        second_longest = longest_from_child
+            #get this anyser
+            curr_ans = first_longest + second_longest + 1
+            self.ans = max(self.ans,curr_ans)
+            #return the longest path, not the answer we wishing to maximize!!!
+            return first_longest + 1
+        
+        temp = dp(0,-1)
+        return self.ans
+
+#bottom up bfs
+class Solution:
+    def longestPath(self, parent: List[int], s: str) -> int:
+        '''
+        we need to start from the children and work our way up
+        we can adotop a similar appraoch using Kahn's algrothm
+        then we just need to keep a memo for the two longest chains at each node
+        
+        '''
+        #make graph
+        n = len(parent)
+        graph = defaultdict(list)
+        n = len(parent)
+        for i in range(1,n):
+            u = i
+            v = parent[i]
+            graph[v].append(u)
+            graph[u].append(v)
+        
+        ans = 1
+        longest_two_per_node = [[0]*2 for _ in range(n)]
+        #index[node][0] is longest, index[node][1] is the second longest
+        
+        #queue up leaves
+        q = deque([])
+        
+        for node,children in graph.items():
+            if len(children) == 1:
+                #so far for leaves, we need an iniial anwer to build up our subpobrlme
+                #longest chain for each is size 1
+                longest_two_per_node[node][0] = 1
+                q.append(node)
+                
+        while q:
+            curr_node = q.popleft()
+            #get parent, but remove so we don't visit again
+            parent = graph[curr_node].pop()
+            
+            #subproblem
+            longest_from_child = longest_two_per_node[curr_node][0]
+            
+            if s[curr_node] != s[parent]:
+                #swap direclty in memo
+                if longest_from_child >= longest_two_per_node[parent][0]:
+                    longest_two_per_node[parent][1] = longest_two_per_node[curr_node][0]
+                    longest_two_per_node[parent][0] = longest_from_child
+
+                elif longest_from_child > longest_two_per_node[parent][1]:
+                    longest_two_per_node[parent][1] = longest_from_child
+            
+            #updates, but we update from parent now
+            curr_ans = longest_two_per_node[parent][0] + longest_two_per_node[parent][1] + 1
+            ans = max(ans,curr_ans)
+            
+            #if after remove edges, parent becomes a leaf, push back into q
+            if parent != 0 and len(graph[parent]) == 1:
+                q.append(parent)
+        
+        return ans
