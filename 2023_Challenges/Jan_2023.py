@@ -1743,3 +1743,141 @@ class Solution:
 # 2421. Number of Good Paths
 # 15JAN23
 ####################################
+#phew
+class DSU(object):
+    def __init__(self,size):
+        self.parent = [i for i in range(size)]
+        self.size = [0]*size
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    #union by rank
+    def union(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        #same parent
+        if parent_x == parent_y:
+            return
+        if self.size[parent_x] > self.size[parent_y]:
+            self.size[parent_x] += 1
+            self.parent[parent_y] = parent_x
+        elif self.size[parent_y] > self.size[parent_x]:
+            self.size[parent_y] += 1
+            self.parent[parent_x] = parent_y
+        else:
+            self.size[parent_x] += 1
+            self.parent[parent_y] = parent_x
+            
+            
+        
+
+class Solution:
+    def numberOfGoodPaths(self, vals: List[int], edges: List[List[int]]) -> int:
+        '''
+        truly a hard problem, but not incredibly difficult
+        we define a good path as:
+            1. starting adn ending node are the same value
+            2. all nodes in between starting node and ending node have values <= starting node
+        
+        note:
+            a path and its reverse path are the same path
+        
+        singles nodes are fundamentally a good path, so ans must be >= number of nodes
+        had to use hints 
+        1. build graph with nodes from smallest to largest value
+        2. union find
+        
+        brute force would be to start from a node, and visit is neighboring nodes that have a lower value (do this for all nodes)
+        if we find anothr node with a similar value to the start, this counts as a good path
+        
+        intution:
+            there is no point in traversing from a node to neigh of the neigh has a smaller value (i.e vals[neigh] > vals[node]), hints at sorting
+            so we are at a node X in tree T, we can make a subgraph of all nodes <= vals[X], the new subgraph could be connected, or there could be multiple trees sperate from each other
+            now in this subgraph, say we have trees c1 and c2, there are subgraphs of T
+            imaginge we have 6 nodes with value X, call them a,b,c,d,e, we want to add all of them to the subgraph and find the number ofparths starting and ending with node X
+            lets say a,b,and c connect with some nodes in c1
+            nodes d and e connect with some nodes in c2, node f is by itsetlf
+            c1 = [a,b,c]
+            c2 = [d,e]
+            c3 = [f] 
+            and all these have value X
+            
+            in c1, starting with a, we have three good paths (a, ab, ac)
+                    starting with b, we have (b,bc)
+                    starting with c, we have (c)
+                    6 in total
+            formula for nodes with the same value X and that are connected:
+                count(nodes) * count(nodes) + 1 // 2
+                
+        now we know how to get the paths with value of X, how can we compuet good paths start with value X+1, or X+2...and so on
+        to the subgraph above, we add all the nodes having value X+1 and repeat the same 
+        so we have compute the counts of all good pahts for val = X + 1, then we extend all those paths the counts of good paths for just X
+        count(X+1) + count(X) + count(X-1) .....
+        
+        key: 
+            We can extend the above to start with value 1 first, then add nodes with value 2, then add nodes with value 3, and so on, to the subgraph formed in the previous iteration. 
+            we should begin from lowest and move to higher and higher values
+            for each value we should add all the nodes with the same value to the exsiting subgraph and calculate the number of good paths formed in each componnet
+            
+        use unino find
+        in this apporach, we map a value to all the nodes that have that value, then we can sort the map with respect to the values
+        
+        For each node in nodes[], we check all neighbor. If vals[node] >= vals[neighbor], neighbor is already covered, and it is a node in the subgraph. It can be used as an intermediate node in a good path if formed using it. We perform union (node, neighbor) to add node to the current subgraph. Otherwise, if vals[node] < vals[neighbor], the node is not added to the existing components, and it creates a new component with the node itself.
+        
+        The next step is to compute the number of nodes with the same value added to each component and use the above formula to count the number of good paths. We can do this by using a map, say groups where the key is the unique id of the component (or tree) and the value is the count of nodes from nodes[] in that component. Iterate over all the nodes[] and for each node, we increment group[find(node)] by one. This way, we have the count of nodes in each component.
+        
+        We iterate over the group map, and for each entry id, size, we add size * (size + 1) / 2 to the count of good paths.
+        
+        algo:
+            1. make graph, for the edge list
+            2. create map that groups all the nodes witht same value, we then need to traverse this map in order of by kyes
+            3. implement Union Find
+            4. iterate over each entry value,node in the value to node hahsmap
+                for every node, get the neighbord
+                for each neigh, if vals[node] >= vals[neighbor] we perform a union on the node and the neighbord
+                after itearting throguh thn nodes, create map  called group
+                group[A. contains the number of nodes (form nodes array) that belong to the same component
+                for every node in nodes, finds its componenet, and increment the size of the that compoonenet by 1 ing roups
+                groups[find(node)] = groups[find(node]] + 1
+                iteratre throuhg all the entreis in the group and for each key get the value and add (size(size+1)/2)
+        '''
+        n = len(vals)
+        graph = defaultdict(list)
+        dsu = DSU(n)
+        
+        #make graph
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        #make mapping by value
+        values_to_nodes = defaultdict(list)
+        for i in range(n):
+            value = vals[i]
+            values_to_nodes[value].append(i)
+        
+        good_paths = 0
+        
+        #iterate over values to nodes in sorted order
+        for value,nodes in sorted(values_to_nodes.items()):
+            #for every nodes, combined neighbords if we can
+            for node in nodes:
+                for neighbor in graph[node]:
+                    #only traverse neighbors with a smaller value
+                    if vals[node] >= vals[neighbor]:
+                        dsu.union(node,neighbor)
+            #map to compute the number od nodes under observation
+            group = Counter()
+            for node in nodes:
+                group[dsu.find(node)] += 1
+            
+            #the counting only workds if we go in order
+            for g,size in group.items():
+                good_paths += (size*(size+1) // 2)
+                        
+        
+        return good_paths
