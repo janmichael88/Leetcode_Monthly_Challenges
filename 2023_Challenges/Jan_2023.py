@@ -1610,3 +1610,136 @@ class Solution:
                 q.append(parent)
         
         return ans
+
+######################################################
+# 1061. Lexicographically Smallest Equivalent String
+# 14JAN23
+######################################################
+#FUCK YES!
+class DSU(object):
+    def __init__(self):
+        self.parents = [i for i in range(26)]
+        
+    def find(self,x):
+        if self.parents[x] != x:
+            self.parents[x] = self.find(self.parents[x])
+        return self.parents[x]
+    
+    def union(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        #we want it to put to the smaller character
+        if parent_x == parent_y:
+            return
+        if parent_x < parent_y:
+            self.parents[parent_y] = parent_x
+        if parent_y < parent_x:
+            self.parents[parent_x] = parent_y
+
+class Solution:
+    def smallestEquivalentString(self, s1: str, s2: str, baseStr: str) -> str:
+        '''
+        this is a graph problem
+        we want the lexographicallt smallest equivlanet of baseStr using equivaleny information
+        union find to get the groupings from the edgelist using s1 and s2
+        
+        then we want the lexogrphically smallest base string, which means we want the smallest character in that group
+        in the DSU api, add a step that as we modify parent pointers, we will keep an extra array showing the smallest character so far in that group
+        wait, instead of doing it by largest count for parent, do it by smallest character!
+        
+
+        '''
+        dsu = DSU()
+        for u,v in zip(s1,s2):
+            #convert to index from ord('a')
+            u = ord(u) - ord('a')
+            v = ord(v) - ord('a')
+            
+            dsu.union(u,v)
+        
+        #now go through the baseStre and find the parent, which should be the smallest now
+        ans = ""
+        for ch in baseStr:
+            ch = ord(ch) - ord('a')
+            parent = dsu.find(ch)
+            ans += chr(ord('a') + parent)
+        
+        return ans
+
+#we can also just use DFS
+class Solution:
+    def smallestEquivalentString(self, s1: str, s2: str, baseStr: str) -> str:
+        '''
+        we can just treat this a connected components, then just find the smallest in each connected component
+        first build graph, then dfs to return the minimum in each group
+        '''
+        graph = defaultdict(list)
+        for u,v in zip(s1,s2):
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        def dfs(node,parent,min_char):
+            min_char[0] = min(min_char[0],node)
+            for child in graph[node]:
+                if child == parent:
+                    continue
+                dfs(child,node,min_char)
+        
+        ans = ""
+        
+        for ch in baseStr:
+            min_char = ['z']
+            dfs(ch,'#',min_char)
+            ans += min_char[0]
+        
+        return ans
+            
+class Solution:
+    def smallestEquivalentString(self, s1: str, s2: str, baseStr: str) -> str:
+        '''
+        we can just treat this a connected components, then just find the smallest in each connected component
+        first build graph, then dfs to return the minimum in each group
+        '''
+        graph = defaultdict(set)
+        for u,v in zip(s1,s2):
+            graph[u].add(v)
+            graph[v].add(u)
+        
+        #need temp array to character mappings to minmum
+        min_char_mappings = {}
+        for i in range(26):
+            min_char_mappings[chr(ord('a') + i)] = chr(ord('a') + i)
+        
+        visited = set()
+        
+        def dfs(source,visited,components,min_char):
+            visited.add(source)
+            components.append(source)
+            min_char[0] = min(min_char[0],source)
+            
+            #dfs
+            for i in range(26):
+                char = chr(ord('a') + i)
+                if char not in visited and char in graph[source]:
+                    dfs(char,visited,components,min_char)
+        
+        for i in range(26):
+            char = chr(ord('a') + i)
+            if char not in visited:
+                components = []
+                min_char = ['z']
+                dfs(char,visited,components,min_char)
+                for ch in components:
+                    min_char_mappings[ch] = min_char
+        
+        ans = ""
+        for ch in baseStr:
+            ans += min_char_mappings[ch][0]
+        
+        return ans
+                
+####################################
+# 2421. Number of Good Paths
+# 15JAN23
+####################################
