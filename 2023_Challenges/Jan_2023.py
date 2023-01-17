@@ -1881,3 +1881,32 @@ class Solution:
                         
         
         return good_paths
+
+###################################
+# 57. Insert Interval (REVISITED)
+# 16JAN23
+####################################
+class Solution:
+    def insert(self, intervals: List[List[int]], newInterval: List[int]) -> List[List[int]]:
+        '''
+        insteaf of traversing the list to to find the insert position,
+        we can use binary search
+        but we still have to spend linear time doing the merge
+        just keep updating the ends of the last interval
+        
+        '''
+        # O(logN)
+        position = bisect.bisect_left(intervals, newInterval)
+        # O(N)
+        intervals.insert(position, newInterval)
+
+        answer = []
+        # O(N)
+        for i in range(len(intervals)):
+            if not answer or intervals[i][0] > answer[-1][1]:
+                answer.append(intervals[i])
+            else:
+                answer[-1][1] = max(answer[-1][1], intervals[i][1])
+
+        return answer
+        
