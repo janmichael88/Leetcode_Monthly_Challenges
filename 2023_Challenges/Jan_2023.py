@@ -1910,3 +1910,170 @@ class Solution:
 
         return answer
         
+####################################################
+# 926. Flip String to Monotone Increasing (REVISTED)
+# 17JAN23
+#####################################################
+#dp, knapsack
+class Solution:
+    def minFlipsMonoIncr(self, s: str) -> int:
+        '''
+        we either want all 1's, all 0's, or two groups with 0s on left and 1s on the right
+        says its a DP problem
+        
+        if we let dp(i,prev) give the nin number of flips to make montonize increasein from s[:i-1]
+        then dp(i,prev) = {
+        if we can flip:
+            flipped = 1 + dp(i+1,next_digit)
+        if we cant flip
+            no_flip = dp(i+1,prev)
+            
+        ans = min(flipped,no_flip)
+        }
+        '''
+        
+        memo = {}
+        N = len(s)
+        
+        def dp(i,prev):
+            #cant flip anything
+            if i == N:
+                return 0
+            
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            
+            curr_digit = int(s[i])
+            ans = float('inf')
+            
+            #if we can flip
+            if 1 - curr_digit >= prev:
+                ans = min(ans,1 + dp(i+1, 1 - curr_digit))
+                
+            #if we can't flip, but still monotone increasing
+            if curr_digit >= prev:
+                ans = min(ans,dp(i+1,curr_digit))
+            
+            memo[(i,prev)] = ans
+            return ans
+        
+        return dp(0,0)
+
+#bottom up
+class Solution:
+    def minFlipsMonoIncr(self, s: str) -> int:
+        '''
+        we either want all 1's, all 0's, or two groups with 0s on left and 1s on the right
+        says its a DP problem
+        
+        if we let dp(i,prev) give the nin number of flips to make montonize increasein from s[:i-1]
+        then dp(i,prev) = {
+        if we can flip:
+            flipped = 1 + dp(i+1,next_digit)
+        if we cant flip
+            no_flip = dp(i+1,prev)
+            
+        ans = min(flipped,no_flip)
+        }
+        '''
+
+        N = len(s)
+        dp = [[float('inf')]*2 for _ in range(N+1)]
+        
+        for i in range(N,-1,-1):
+            if i == N:
+                dp[i][0] = 0
+                dp[i][1] = 0
+                continue
+            curr_digit = int(s[i])
+            
+            for prev in range(2):
+                #if we can flip
+                if 1 - curr_digit >= prev:
+                    dp[i][prev] = min(dp[i][prev],1 + dp[i+1][1-curr_digit])
+                #if we can't flip
+                if curr_digit >= prev:
+                    dp[i][prev] = min(dp[i][prev],dp[i+1][curr_digit])
+
+        
+        return dp[0][0]
+
+#official solution
+class Solution:
+    def minFlipsMonoIncr(self, s: str) -> int:
+        '''
+        greedy way, dynamic windows
+        either all of s is just 0s or 1s, or the left part is all 0s and the right parts is all 1s
+        
+        rather we initally start with an empty left window, and the right window contains all of s
+        at each step, the left window's size
+        
+        we enumerate each left-right window configuration, the number of flips to make the string monotone increasing is the sum of the number of 1s in the left window
+        add the number of 0's in the right window and save the smallest value
+        
+        if we let left1, be the number of 1's in the left window, and right0 be the number of 0's in the current right window
+        when the left window increase and the right window shrinks by 1 chracter, it means we move a character from the right window to the left
+        
+        if c == 0, left is unchanged, and we decrease right by 1
+        if c == 1, left increase by 1, and right will be unchanged
+        '''
+        left_ones = 0 #left is initially empty
+        right_zeros = 0
+        
+        #right_zeros is the number of flips needed when the left window is empty and the right window is the whole string
+        #we have to at most flip all these zeros to ones
+        for ch in s:
+            if ch == '0':
+                right_zeros += 1
+        
+        ans = right_zeros
+        
+        for ch in s:
+            if ch == '0': #we don't need to flip
+                right_zeros -= 1
+                #only update herem since this is when the sum drops
+                ans = min(ans,right_zeros + left_ones)
+            elif ch == '1':
+                left_ones += 1
+            
+
+        
+        return ans
+
+#sinlge state dp,linear time
+class Solution:
+    def minFlipsMonoIncr(self, s: str) -> int:
+        '''
+        bottom up, single dp array
+        let dp[i] represent the minimum number of fllips to make the prefix of s of length i, rather s[:i] monton increasing
+        dp[0] = 0, empty string is trivially monotone increasing
+        
+        if s[i-1] == '1', then dp[i] = dp[i-1], sincew we can always append a char of 1 to mianitn montone increasing, recall it was increasing already up to s[:i]
+        
+        if s[i-1] == '0'
+            we need to flip or not flip
+            
+        Let number curr_ones be the number of character 1s in s' prefix of length i:
+        dp[i] = dp[i - 1] if s[i - 1] = '1'
+        dp[i] = min(num, dp[i - 1] + 1) otherwise.
+        '''
+        N = len(s)
+        dp = [float('inf')]*(N+1)
+        dp[0] = 0
+        
+        curr_ones = 0
+        
+        for i in range(N):
+            if s[i] == '1':
+                dp[i+1] = dp[i]
+                curr_ones += 1
+            else:
+                dp[i+1] = min(curr_ones,dp[i] + 1)
+        
+        return dp[N]
+            
+
+############################################
+# 1533. Find the Index of the Large Integer
+# 16JAN23
+############################################
