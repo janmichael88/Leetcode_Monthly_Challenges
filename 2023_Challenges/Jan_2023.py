@@ -2072,6 +2072,201 @@ class Solution:
         
         return dp[N]
             
+###################################################
+# 918. Maximum Sum Circular Subarray (REVISITED)
+# 18JAN23
+#######################################################
+#fuck you...
+class Solution:
+    def maxSubarraySumCircular(self, nums: List[int]) -> int:
+        '''
+        i can concat the nums array twice and use kadanes algo, where i take the maximum
+        then dp(i) = max(dp(i-1) + nums[i],nums[i])
+        then just take the max of the dp array
+        but once we get to N, we need to remove the first number from the sum since it can no longeg be part of the circular sum
+        also need to keep track of rolling sum
+        '''
+        nums = nums + nums
+        N = len(nums)
+        dp = [0]*N
+        
+        curr_sum = nums[0]
+        dp[0] = nums[0]
+        for i in range(1,N):
+            curr_sum += nums[i]
+            dp[i] = max(nums[i],dp[i-1] + nums[i],curr_sum)
+            #if we have gone over N, remove the first part
+            if i >= N // 2:
+                print(nums[i-N])
+                curr_sum -= nums[i-N]
+        
+        return max(dp)
+
+
+#using heap
+class Solution:
+    def maxSubarraySumCircular(self, nums: List[int]) -> int:
+        '''
+        almost had it, but we need keep memory of the prevSums so far
+        we can use a minheap to store the previous maxsums and decremeenet when the size is more than n
+        For each i in range [0..2*n-1], we try to find the maximum sum subarray which ends at i.
+Let preSumSoFar is the prefix sum of subarray nums[0..i].
+We need the minHeap to store previous prefix sums of sub array [0..j], where j < i. We need to store pair of (prefixSum, j) and we must to remove elements from minHeap when it's out of range n, which means when i-j > n.
+We pick the minimum prefix sum previous preSumPrevious from the minHeap, so that we can achieve with maximum sum subarray ends at i by preSumSoFar - preSumPrevious.
+Add the current pair of (preSumSoFar, i) to minHeap.
+https://leetcode.com/problems/maximum-sum-circular-subarray/discuss/1348545/Python-3-solutions-Clean-and-Concise-O(1)-Space
+        '''
+        N = len(nums)
+        prev_sums = [(0,-1)] #keep this trick in mind
+        pref_sum_so_far = 0
+        
+        max_sum = nums[0]
+        
+        for i in range(2*N):
+            #increment pref_sum so far
+            pref_sum_so_far += nums[i % N]
+            #we need to remove prefSums whos's lengths are bigger than N!
+            #this prefix sums are no longser useable
+            #we keep removing this prefix sum until i - j < N, since we are advancing i we are always guarenteed to find a next valid prefix sum
+            while prev_sums and i - prev_sums[0][1] > N:
+                heapq.heappop(prev_sums)
+            #update answer by decrementing pref_sum_so_far by the smallest previous prefSum
+            smallest_prev_sum = prev_sums[0][0]
+            max_sum = max(max_sum,pref_sum_so_far - smallest_prev_sum)
+            #push this on to the heap with the index
+            heapq.heappush(prev_sums,(pref_sum_so_far,i))
+        
+        return max_sum
+
+#using queue instead of heap
+class Solution:
+    def maxSubarraySumCircular(self, nums: List[int]) -> int:
+        '''
+        now instead of storing the previous prefix sums in using a min heap, we can store it in a deque of size N
+        deque is in increaisng order
+            the front of the queue is the minimum prefixSum, the end of the queue is the maximum prefsum
+        
+        now when adding a new prefix sum, into the q
+            remove the font if its indx is out of range n
+            while the max prefix sum >= the current prefix sum, we pop off the maximum pref sum, becase we want to keep a smaller prefSum and the lastest one smallest which is better than the old oness
+            push back on to the front prefSumFar, i
+            
+        
+        '''
+        N = len(nums)
+        prev_prefSums = deque([(0,-1)]) #current prefsum up to index i
+        max_sum = nums[0]
+        
+        pref_sum_so_far = 0
+        
+        for i in range(2*N):
+            pref_sum_so_far += nums[i % N]
+            #remove minmum if prefsum is larger than n, this prefsum is unuseable
+            if i - prev_prefSums[0][1] > N:
+                prev_prefSums.popleft()
+            #get answer by removing minimum prefSum
+            curr_ans = pref_sum_so_far - prev_prefSums[0][0]
+            max_sum = max(max_sum, curr_ans)
+            #we need to maintain the rep invaraint for the increasing order queueu
+            while prev_prefSums and prev_prefSums[-1][0] >= pref_sum_so_far:
+                prev_prefSums.pop()
+            #add back in 
+            prev_prefSums.append((pref_sum_so_far,i))
+        
+        return max_sum
+
+class Solution:
+    def maxSubarraySumCircular(self, nums: List[int]) -> int:
+        '''
+        official solution:
+            in the typical maximum subarray problem, we deinfe the normal sum as the maximum sum subarray
+            for the circulare problem we define a special sum as, the maximum sum of prefsum and a suffix sum where prefix Sum and suffix Sum do not overlap
+             
+        intuition:
+            we can calulate both the normal and the special sum and return the larger one
+            we can get the normal sum using Kadane's but how do we get the special sum
+        
+        len(nums) is n
+        to calculate the special sum, we need to find the maximum sum of aprefix sum and a non overlapping suffix sum
+        the idea is to enumerate a prefix with its sum and add the maximum suffix sum that starts after the prefix so that there is no overlap
+        
+        imagine an array suffixSum where suffixSum[i] represents the ssuffix sum starting startinf from index i
+        rather suffixSum[i] = sum(nums[i:])
+        we can construct an array rightMax, where rightMax[i] = max(suffixSum[i] for i in range(i,N))
+        
+        rather, rightMax[i] is the largest suffus sum of nums coming at or afet i
+        i.e, the max circular sub array is sum of whole array minus min subarray m
+        
+        With rightMax, we can then calculate the special sum by looking at all prefixes. We can easily accumulate the prefix while iterating over the input, and at each index i, we can check rightMax[i + 1] to find the maximum suffix that won't overlap with the current prefix.
+        
+        two parts
+        1. find speical sum
+            create rightMax interger array of length n
+            set rightMax[n-1] = nums[n-1]
+            increemnt suffix sum and store max
+        
+        2. find normal sum
+        3. take the max
+        
+        
+        '''
+        N = len(nums)
+        rightMax = [0]*N
+        rightMax[N-1] = nums[N-1]
+        suffix_sum = nums[N-1]
+        
+        #getting max suffix sums
+        for i in range(N-2,-1,-1):
+            suffix_sum += nums[i]
+            rightMax[i] = max(rightMax[i+1],suffix_sum)
+        
+        
+        #kadanes algorithm to find the regular max sum subarray, since this could be an answer
+        dp = [0]*N
+        dp[0] = nums[0]
+        for i in range(1,N):
+            dp[i] = max(dp[i-1] + nums[i],nums[i])
+        
+        #find max sum subarray
+        max_sum_subarray = max(dp)
+        
+        #now find special sum
+        special_sum = nums[0]
+        pref_sum = 0
+        for i in range(N):
+            pref_sum += nums[i]
+            if i + 1 < N:
+                special_sum = max(special_sum,pref_sum + rightMax[i+1])
+        
+        return max(special_sum,max_sum_subarray)
+        
+
+#if we just find the min sum subarray, then our answer is just max(max_sum_subarray, sum(nums) - min subarray)
+class Solution:
+    def maxSubarraySumCircular(self, nums: List[int]) -> int:
+        def maximumSubArray(nums):
+            ans = nums[0]
+            sumSoFar = 0
+            for num in nums:
+                sumSoFar += num
+                ans = max(ans, sumSoFar)
+                if sumSoFar < 0:
+                    sumSoFar = 0
+            return ans
+        
+        def minimumSubArray(nums):  # the first element and the last element are exclusive!
+            if len(nums) <= 2: return 0
+            ans = nums[1]
+            sumSoFar = 0
+            for i in range(1, len(nums) - 1):
+                sumSoFar += nums[i]
+                ans = min(ans, sumSoFar)
+                if sumSoFar > 0:
+                    sumSoFar = 0
+            return ans
+        
+        return max(maximumSubArray(nums), sum(nums) - minimumSubArray(nums))
+
 
 ############################################
 # 1533. Find the Index of the Large Integer
