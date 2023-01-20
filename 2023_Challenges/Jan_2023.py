@@ -2267,6 +2267,84 @@ class Solution:
         
         return max(maximumSubArray(nums), sum(nums) - minimumSubArray(nums))
 
+############################################
+# 974. Subarray Sums Divisible by K
+# 19JAN23
+############################################
+#literally just modified the solutino from  560. Subarray Sum Equals K
+#take modulo instead of difference
+class Solution:
+    def subarraysDivByK(self, nums: List[int], k: int) -> int:
+        '''
+        we need to borrow the idea from 560. Subarray Sum Equals K
+        if the cum_sum up to two indices is the sum:
+            i.e pref_sum[:i] == pref_sum[:j]
+            then the sum(i:j) is zerp
+            
+        rather if pref_sum[:i] - pref_sum[:j] = k
+        then the sum in between must be k
+        so we just look up the complement counts pref_sum_so_far - k
+        
+        for the divisible by k problem, instead of difference, we can use modulo
+        but what does this work?
+        
+        first:
+            we can store prefix sums in a pref_sum array
+            then we can find the subarray sum between(i,j), where i < j, and check for divisibility by k
+            pref_sum[j] - pref_sum[i] % k == 0, retults in TLE
+            
+        second:
+            examine the eqaulity for an i,j pair, where i < j
+            pref_sum[j] - pref_sum[i] % k = 0
+            pref_sum[j] % k = pref_sum[i] % k
+        
+        third:
+            we can express any number as: number = divisor*quotient + remainder
+            we can also express the prefix_sums in the forms:
+                pref_sum[i] = A*k + R1
+                pref_sum[j] = B*k + R2
+                for some integers A,B,R1,and R2
+        fourth:
+            we can then right pref_sum[j] - pref_sum[i] = k*(B-A) + (R1 - R0), where the first time is also divisible by k
+        
+        fifth:
+            for the entire espression to be divisble by k, the term (R1 - R0) must be divisible by k
+            then we get R1 - R0 = C*k
+            R1 = C*k + R0, the values of R0 and R1, will be in the rannge of 0 to k-1, R1 cannot be greater than k
+        
+        sixth:
+            so the only possible value for C is 0, leading to R0 = R1
+            If C > 0, then the RHS would be at least k, but as stated the LHS (R1) is between 0 and k - 1.
+            
+        examples:
+            nums = [2,3,4,6,-1,2,3]
+            say i = 1, and j = 4, k = 3
+            prefSum[i] = 2 + 3 = 5
+            prefSum[i] % k = 5 % 3 = 2
+            
+            prefSum[j] = 2 + 3 + 4 + 6 + -1 = 14
+            prefSum[j] % k = 14 % 3 = 2
+            
+            we have the same prefSum modes, so the subaray from i+1 to j is also divisble by k
+            
+        '''
+        N = len(nums)
+        sum_mapp = Counter()
+        sum_mapp[0] += 1
+        
+        count = 0
+        curr_sum = 0
+        
+        for num in nums:
+            curr_sum += num
+            #find the modulo complement
+            if curr_sum % k in sum_mapp:
+                count += sum_mapp[curr_sum % k]
+            #otherwise put in ther
+            sum_mapp[curr_sum % k] += 1
+        
+        return count
+
 
 ############################################
 # 1533. Find the Index of the Large Integer
