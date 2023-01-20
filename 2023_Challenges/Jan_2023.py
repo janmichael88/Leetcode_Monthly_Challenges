@@ -2345,6 +2345,77 @@ class Solution:
         
         return count
 
+#####################################
+# 1025. Divisor Game
+# 19JAN23
+#####################################
+#fuck 
+class Solution:
+    def divisorGame(self, n: int) -> bool:
+        '''
+        we can choose any x such that 0 < x < n and n % x == 0
+        replace n with n - x
+        in order for alice to win, alice must make a move such that bob has no turns the next move
+        
+        if alice can get two a 2
+        
+        base case if n == 1:
+            return False
+        if n == 2:
+        return true
+        '''
+        memo = {}
+        
+        def dp(i):
+            if i == 1:
+                return False
+            if i == 2:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            for play in range(1,i):
+                if i % play == 0:
+                    return dp(i-play)
+            return False
+                
+        
+        return dp(n)
+
+#TLE
+
+class Solution:
+    def divisorGame(self, n: int) -> bool:
+        '''
+        say n = 4 alice
+        try = [1,2,3], of these only two works
+        becomes 2 bob
+        try = [1]
+        becomes 1 alice no moves
+        at each one count the number of moves
+        '''
+        memo = {}
+        
+        def dp(i,turns):
+            #alice wins if i == 2 and turns are evern
+            if i == 2 and turns % 2 == 0:
+                return True
+            if i == 1 and turns % 2 == 0:
+                return False
+            
+            if (i,turns) in memo:
+                return memo[(i,turns)]
+            
+            ans = 0
+            for play in range(1,i):
+                if i % play == 0:
+                    ans += dp(i-play,turns + 1)
+            ans = ans >= 1
+            memo[(i,turns)] = ans
+            return ans
+        
+        return dp(n,0)
+
 
 ############################################
 # 1533. Find the Index of the Large Integer
