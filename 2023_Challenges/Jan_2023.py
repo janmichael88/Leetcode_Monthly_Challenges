@@ -2416,8 +2416,270 @@ class Solution:
         
         return dp(n,0)
 
+#correct answer
+class Solution:
+    def divisorGame(self, n: int) -> bool:
+        '''
+        say n = 4 alice
+        try = [1,2,3], of these only two works
+        becomes 2 bob
+        try = [1]
+        becomes 1 alice no moves
+        at each one count the number of moves
+        '''
+        memo = {}
+        
+        def dp(i):
+            if i == 1:
+                return False
+            if i == 2:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            ans = False
+            
+            for play in range(1,i):
+                if i % play == 0:
+                    ans = ans or not dp(i-play) #if alice doesn't lose
+            
+            memo[i] = ans
+            return ans
+                
+        
+        return dp(n)
+
+###################################
+# 491. Non-decreasing Subsequences
+# 20JAN23
+##################################
+class Solution:
+    def findSubsequences(self, nums: List[int]) -> List[List[int]]:
+        '''
+        dp on subsets
+        if i have mask encoding indices of nums to take from num, which already encoded a non-decreasing sequecen
+        then i can add to this sequence of the num to add is greater than or equal to the last number in the sequence
+        we dn't want count, we just want to return all possible non-decreasing sequences
+       
+        doing brute force for now
+        '''
+        paths = set()
+        N = len(nums)
+       
+        def rec(i,path):
+            if len(path) >= 2:
+                paths.add(tuple(path[:]))
+            #pruning
+            if i >= N:
+                return
+           
+            # i need to prune somwhere
+            if not path or path[-1] <= nums[i]:
+                rec(i+1,path + [nums[i]])
+               
+            rec(i+1,path)
+       
+       
+        rec(0,[])
+        return paths
+
+#we can also use backtracking
+#using set in C++ uses redblack tree
+#time complexity is O(2^n * n ) or O(2^n * n*n)
+
+class Solution:
+    def findSubsequences(self, nums: List[int]) -> List[List[int]]:
+        result = set()
+        sequence = []
+
+        def backtrack(index):
+            # if we have checked all elements
+            if index == len(nums):
+                if len(sequence) >= 2:
+                    result.add(tuple(sequence))
+                return
+            # if the sequence remains increasing after appending nums[index]
+            if not sequence or sequence[-1] <= nums[index]:
+                # append nums[index] to the sequence
+                sequence.append(nums[index])
+                # call recursively
+                backtrack(index + 1)
+                # delete nums[index] from the end of the sequence
+                sequence.pop()
+            # call recursively not appending an element
+            backtrack(index + 1)
+        backtrack(0)
+        return result
+
+
+#bit masking review 
+#(maks >> position) & 1
+class Solution:
+    def findSubsequences(self, nums: List[int]) -> List[List[int]]:
+        '''
+        brute force is just subset generation, which will always be 2**n
+        then we we just need to check decreasingly in the subset
+        '''
+        N = len(nums)
+        res = set()
+        #iterate for all bitmasks for 1 to 2^n - 1
+        #we don't want the non empty set for a possible sequence
+        for bitmask in range(1, 1 << N):
+            #build up sequence
+            sequence = []
+            for i in range(N):
+                #if this bit is set
+                if (bitmask >> i) & 1 == 1:
+                    sequence.append(nums[i])
+            
+            if len(sequence) >= 2:
+                if all([sequence[j] <= sequence[j+1] for j in range(len(sequence)-1) ]):
+                    res.add(tuple(sequence))
+        
+        return res
+
+#####################################
+# 93. Restore IP Addresses (REVISTED) 
+# 22JAN23
+######################################
+#dfs
+class Solution:
+    def restoreIpAddresses(self, s: str) -> List[str]:
+        '''
+        backtracking, keep track of index and valid number of digits
+        we need at least four digits, such that each digit is between 0 and 255 and that there are no leading zero digits
+        '''
+        ans = []
+        i = len(s)
+        N = len(s)
+        
+        
+        def backtrack(i,path):
+            if i == N and len(path) == 4:
+                print(path)
+                ans.append(".".join(path)) #convert back to string after
+                return
+            #try to build digit
+            for j in range(3):
+                number = s[i:i+j+1]
+                #careful for leading zeros
+                if len(number) == 1:
+                    backtrack(i+j+1,path + [number])
+                elif len(number) >= 2 and 0 <= int(number) <= 255 and number[0] != '0':
+                    backtrack(i+j+1,path + [number])
+                    
+        
+        backtrack(0,[])
+        return ans
+    
+#backtracking
+class Solution:
+    def restoreIpAddresses(self, s: str) -> List[str]:
+        '''
+        we can also use backtracking
+        go far down as possible, then backtrack
+        '''
+        
+        ips = []
+        N = len(s)
+        
+        def backtrack(start,path):
+            if len(path) == 4 and start == N:
+                ips.append(".".join(path))
+                return
+            for size in range(1,4):
+                number = s[start:start+size]
+                if len(number) > 1 and (number[0] == 0 or int(number) > 255):
+                    continue
+                if len(path) < 4:
+                    path.append(number)
+                    backtrack(start+size,path)
+                    path.pop()
+                    
+        
+        backtrack(0,[])
+        return ips
+
+
 
 ############################################
 # 1533. Find the Index of the Large Integer
 # 16JAN23
 ############################################
+# """
+# This is ArrayReader's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class ArrayReader(object):
+#    # Compares the sum of arr[l..r] with the sum of arr[x..y]
+#    # return 1 if sum(arr[l..r]) > sum(arr[x..y])
+#    # return 0 if sum(arr[l..r]) == sum(arr[x..y])
+#    # return -1 if sum(arr[l..r]) < sum(arr[x..y])
+#    def compareSub(self, l: int, r: int, x: int, y: int) -> int:
+#
+#    # Returns the length of the array
+#    def length(self) -> int:
+#
+
+
+class Solution:
+    def getIndex(self, reader: 'ArrayReader') -> int:
+        '''
+        if our array contains an even number of elements, we can split the array into two parts and get the sums
+        one part should be larger than the other, we move to that part of the array
+        
+        the issue is when there are an odd number of elements in search, one part could be larger sum than the other, but not necessarily have the largest element
+        instead we can keep one element separte then the remaining arrays will become even
+        
+        for a current seach space that has an odd length, we can break the array into 3 parts
+        left,right and extra
+        
+        now there are three possbilites
+        1. if the sum of all eleemnts on left is larger, we can eliminate right and extra
+        2. if sume element on left smaller than right, we can elemnt left and extra
+        3. if sum of all eleemnts left == right, then the extra element is the larger one
+        
+        algo:
+        * set left = 0, length = reader.legnth
+            left if the leftmost index our ours earch space
+            the larger integer's index should always be in [left,left + length)
+        while length > 1, if it hits zero, we know we haver found the largest index given by left
+            reduce search space by half, length // 2
+            set cmp = reader.compareSub(left, left + length - 1, left + length, left + length + length - 1)
+            if comp = 0
+                return left + legnth + lenth, which is the extra selement, case when search space if of odd length
+                if cmp is =1, increase left by length, i.e go right
+                if cmp = 1, don't do anything,since our left bound stays the same, we just want the lenght half
+                    reduce search space by 2
+                    i.e length // 2
+        '''
+        left = 0
+        search_space = reader.length()
+        
+        #while we still hav espace to search
+        while search_space > 1:
+            search_space //= 2
+            
+            cmp = reader.compareSub(left, left + search_space - 1,left + search_space,left+2*search_space - 1)
+            if cmp == 0:
+                #return the extra eleemnt index
+                return left + 2*search_space
+            #go search right
+            if cmp < 0:
+                left += search_space
+            #if 1, since our left stays the same, and we have reduce search space, we can do nothing on this case
+            
+        
+        return left
+
+#formal binary search
+class Solution:
+    def getIndex(self, rd: 'ArrayReader') -> int:
+        l, r = 0, rd.length() - 1
+        while l < r:
+            h = (r - l + 1) // 2  # half, h * 2 <= r - l + 1
+            if rd.compareSub(l, l + h - 1, l + h, l + h * 2 - 1) != 1:
+                l = l + h
+            else:
+                r = l + h - 1
+        return l
