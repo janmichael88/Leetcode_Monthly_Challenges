@@ -620,7 +620,259 @@ Therefore, Total = 124+130+200+235 = 689124+130+200+235=689.
         return count
 
 #https://leetcode.com/problems/number-of-digit-one/discuss/64382/JavaPython-one-pass-solution-easy-to-understand
+#bleagh
+class Solution:
+    def countDigitOne(self, n: int) -> int:
+        '''
+        the idea is to calculate the occurrence of 1 on every digit position
+        
+        if n = xyzdabc
+        
+        then there are theree scenarios
+        
+        (1) xyz * 1000                     if d == 0
+        (2) xyz * 1000 + abc + 1           if d == 1
+        (3) xyz * 1000 + 1000              if d > 1
+        
+        
+        following the rules
+        '''
+        if n <= 0:
+            return 0
+        
+        position = 1
+        count = 0
+        copy_n = n
+        
+        while n > 0:
+            #find the d
+            d = n % 10
+            if d == 0:
+                count += (copy_n // position*10)*position
+            elif d == 1:
+                count += (copy_n // position*10)*position + (n % position*10) + 1
+            elif d > 1:
+                count += (copy_n // position*10) + position
+                
+            position = position*10
+            n = n // 10
+            
+        return count
 
+class Solution:
+    def countDigitOne(self, n: int) -> int:
+        '''
+        the idea is to calculate the occurrence of 1 on every digit position
+        
+        if n = xyzdabc
+        
+        then there are theree scenarios
+        
+        (1) xyz * 1000                     if d == 0
+        (2) xyz * 1000 + abc + 1           if d == 1
+        (3) xyz * 1000 + 1000              if d > 1
+        
+        running through a few examples
+        
+        For people who doesn't understand the author's explanations, just look at some examples:
+
+        Let n = 4560000
+
+        How many nums with "1" at the thousand's position?
+
+        4551000 to 4551999 (1000)
+        4541000 to 4541999 (1000)
+        4531000 to 4531999 (1000)
+        ...
+        1000 to 1999 (1000)
+
+        That's 456 * 1000
+
+        What if n = 4561234?
+
+        4561000-4561234 (1234+1)
+        4551000 to 4551999 (1000)
+        4541000 to 4541999 (1000)
+        4531000 to 4531999 (1000)
+        ...
+        1000 to 1999 (1000)
+
+        That's 456 * 1000 + 1234 + 1
+
+        What if n = 4562345?
+        4561000-4561999 (1000)
+        4551000 to 4551999 (1000)
+        4541000 to 4541999 (1000)
+        4531000 to 4531999 (1000)
+        ...
+        1000 to 1999 (1000)
+
+        That's 456*1000 + 1000
+
+        Same for hundred's position.
+
+        Let n = 4012
+
+        How many nums with "1" at the hundred's position?
+
+        3100-3999 (100)
+        2100-2999 (100)
+        1100-1999 (100)
+        100 to 199 (100)
+        That's 4 * 100
+
+        Let n = 4111
+
+        4100-4111 ( 11 + 1)
+        3100-3999 (100)
+        2100-2999 (100)
+        1100-1999 (100)
+        100 to 199 (100)
+        That's 4 * 100 + 11 + 1
+
+        Let n = 4211
+
+        4100-4199 (100)
+        3100-3999 (100)
+        2100-2999 (100)
+        1100-1999 (100)
+        100 to 199 (100)
+        That's 4 * 100 + 100
+
+        Same for ten's digit
+
+        Let n = 30
+        How many nums with "1" at the ten's position?
+
+        210-219 (10)
+        110-119 (10)
+        10-19 (10)
+
+        That's 3 * 10
+
+        Let n = 312
+
+        310-312 (2 + 1)
+        210-219 (10)
+        110-119 (10)
+        10-19 (10)
+        That's 3 * 10 + 2 + 1
+
+        Let n = 322
+
+        310-319 (10)
+        210-219 (10)
+        110-119 (10)
+        10-19 (10)
+        That's 3 * 10 + 10
+
+        Same for one's digit
+
+        Let n = 30
+        How many nums with "1" at the one's position?
+
+        21 (1)
+        11 (1)
+        1(1)
+        That's 3 * 1
+
+        Let n = 31
+        How many "1" are there at the one's position?
+        31 (1)
+        21 (1)
+        11 (1)
+        1 (1)
+        That's 3 * 1 + 1
+
+        Let n = 32
+        How many "1" are there at the one's position?
+        31 (10)
+        21 (10)
+        11 (10)
+        1 (10)
+        That's 3 * 1 + 1
+
+        Let n = 3
+
+        only 1 (10 of "1" at one's position)
+
+        That's 0 * 1 + 1
+        '''
+        if n <= 0:
+            return 0
+        
+        q = n
+        radix = 1
+        num_ones = 0
+        
+        while q > 0:
+            digit = q % 10
+            q //= 10
+            
+            #increment
+            num_ones += q*radix
+            
+            #additionals
+            if digit == 1:
+                num_ones += n % radix + 1
+            elif digit > 1:
+                num_ones += radix
+            
+            radix = radix*10
+        
+        return num_ones
+
+#digit dp
+class Solution:
+    def countDigitOne(self, n: int) -> int:
+        '''
+        really just digit dp
+        https://www.geeksforgeeks.org/digit-dp-introduction/
+        https://leetcode.com/problems/number-of-digit-one/discuss/908032/Easy-to-understand-Digit-DP-solution(C%2B%2B)
+        '''
+        memo = {}
+        
+        digits = []
+        while n:
+            digits.append(n % 10)
+            n = n // 10
+        
+        digits = digits[::-1] #digits procreed from most sig bit to least sig bit
+        
+        #states
+        #(pos,count,flag), pos = current position from the left side, count = count of 1s so far
+        #flag = the number we are building has already become mssaller than the given number (0 = no, 1 = yes)
+        
+        
+        N = len(digits)
+        
+        def dp(pos,count,flag):
+            if pos == N:
+                return count
+            if (pos,count,flag) in memo:
+                return memo[(pos,count,flag)]
+            
+            #if the number has already become smaller than the given number we can insert any digit we want
+            if flag == 0:
+                limit = digits[pos]
+            else:
+                limit = 9
+            
+            res = 0
+            for i in range(limit+1):
+                #if the digit is 1, we increase count by 1
+                n_count = count + 1 if i == 1 else count
+                #if the digit at the ith position is msaller than the digit at the ith position of the number
+                #then the number has already become smaller, so we can set flag to 1
+                n_flag = flag or i != limit
+                #recurse
+                res += dp(pos+1,n_count,n_flag)
+            
+            memo[(pos,count,flag)] = res
+            return res
+        
+        
+        return dp(0,0,0)
 
 ##################################
 # 1833. Maximum Ice Cream Bars
@@ -2683,3 +2935,75 @@ class Solution:
             else:
                 r = l + h - 1
         return l
+
+
+####################################
+# 131. Palindrome Partitioning (REVISTED)
+# 22JAN23
+####################################
+#barely passes
+class Solution:
+    def partition(self, s: str) -> List[List[str]]:
+        '''
+        try all partitions and check that the substring is a palindrome,
+        then proceed to add
+        '''
+        N = len(s)
+        valids = []
+        
+        def backtrack(i,path):
+            if i == N:
+                valids.append(path[:])
+                return
+            for step in range(1,N+1):
+                substring = s[i:i+step]
+                #check
+                if substring != '' and substring == substring[::-1]:
+                    path.append(substring)
+                    backtrack(i+step,path)
+                    path.pop()
+        
+        backtrack(0,[])
+        return valids
+
+##################################
+# 1592. Rearrange Spaces Between Words 
+# 23JAN22
+##################################
+class Solution:
+    def reorderSpaces(self, text: str) -> str:
+        '''
+        calculate the even spacing
+        any extra spaces will be placed at the end
+        
+        '''
+        words = []
+        N = len(text)
+        spaces = 0
+        i = 0
+        
+
+        
+        while i < N:
+            #if there are spaces
+            while i < N and text[i] == ' ':
+                spaces += 1
+                i += 1
+            #if this is a word:
+            if i < N and text[i] != ' ':
+                j = i
+                while j < N and text[j] != ' ':
+                    j += 1
+                words.append(text[i:j])
+                i = j
+                
+        #calculate even spacing
+        even_spaces = spaces //  (len(words)- 1) if len(words) > 1 else 0
+        left_over = spaces - even_spaces*(len(words)-1)
+        spacing = ""
+        for _ in range(even_spaces):
+            spacing += " "
+        
+        return spacing.join(words)+" "*left_over
+
+
