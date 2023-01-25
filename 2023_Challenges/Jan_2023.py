@@ -2981,9 +2981,7 @@ class Solution:
         N = len(text)
         spaces = 0
         i = 0
-        
-
-        
+    
         while i < N:
             #if there are spaces
             while i < N and text[i] == ' ':
@@ -3007,3 +3005,231 @@ class Solution:
         return spacing.join(words)+" "*left_over
 
 
+##########################################
+# 1088. Confusing Number II
+# 24JAN23
+###########################################
+#bleaghhhh
+class Solution:
+    def confusingNumberII(self, n: int) -> int:
+        '''
+        hint implies backtracking to generate all, since the set of digit used to create is small
+        highest number is 10**9, so at most the length of the digits is 9
+        
+        '''
+        rotations = {'0':'0',
+                     '1':'1',
+                     '6':'9',
+                     '9':'6',
+                     '8':'8'
+                    }
+        
+        self.ans = 0
+        seen = set()
+        
+        def dp(path):
+            if len(path) > 10:
+                return
+            if path and int("".join(path)) > n:
+                return
+            #check valid conufsing number
+            confusing = []
+            for ch in path:
+                confusing.append(rotations[ch])
+                confusing = confusing[::-1]
+            if "".join(confusing) != "".join(path):
+                if "".join(path) not in seen:
+                    seen.add("".join(path))
+                    self.ans += 1
+                    return
+            
+            for possible in ['0','1','6','8','9']:
+                path.append(possible)
+                dp(path)
+                path.pop()
+
+                
+        dp([])
+        return self.ans
+
+
+########################################
+# 909. Snakes and Ladders
+# 24JAN23
+########################################
+#closseeeeee
+#idk why this doesn't pass
+#but good enough
+class Solution:
+    def snakesAndLadders(self, board: List[List[int]]) -> int:
+        '''
+        each move counts as 1, so we can use bfs and return the number of steps to get to the n**2 tile
+        it might be easier to conver the board to its number tile and value
+        then just use bfs
+        
+        hardest part is trying to genearte the board tiles in the boustrophedon style
+        '''
+        N = len(board)
+        board_to_tile = {}
+        
+        tiles = N*N
+        #we can just reverse all the odd numbered rows
+        for i,row in enumerate(board):
+            if i % 2 == 0:
+                for space in row:
+                    board_to_tile[tiles] = space
+                    tiles -= 1
+            else:
+                row = row[::-1]
+                for space in row:
+                    board_to_tile[tiles] = space
+                    tiles -= 1
+        
+        
+        #bfs
+        q = deque([(1,0)])
+        seen = set()
+        
+        while q:
+            tile, steps = q.popleft()
+            if tile == N*N:
+                return steps
+            
+            seen.add(tile)
+            
+            #otherwise neighboard search
+            for neigh in range(tile + 1, min(tile + 6,N**2) + 1):
+                #not visited
+                if neigh not in seen:
+                    #move to that tile
+                    if board_to_tile[neigh] == -1:
+                        q.append((neigh,steps+1))
+                    #take the ladder
+                    else:
+                        if board_to_tile[neigh] not in seen:
+                            q.append((board_to_tile[neigh],steps+1))
+        
+        return -1
+
+#yessss
+class Solution:
+    def snakesAndLadders(self, board: List[List[int]]) -> int:
+        n = len(board)
+        n_squared = n ** 2
+        def convert_to_index(pos: int) -> tuple:
+            # Needs input validation for an interview.
+            pos -= 1 # Convert to zero-based.
+            starts_left: bool = (((pos // n) % 2) == 0)
+            i = (n_squared - pos - 1) // n
+            j = (pos % n) if starts_left else n - (pos % n) - 1
+            return (i, j)
+        
+                #bfs
+        q = deque([(1,0)])
+        seen = set([1])
+        
+        while q:
+            tile, steps = q.popleft()
+            if tile == n_squared:
+                return steps
+
+            #otherwise neighboard search
+            for neigh in range(tile + 1, min(tile + 6,n**2) + 1):
+                #not visited
+                if neigh not in seen:
+                    seen.add(neigh)
+                    #get the corresponding index
+                    i,j = convert_to_index(neigh)
+                    if board[i][j] == -1:
+                        q.append((neigh,steps+1))
+                    else:
+                        q.append((board[i][j],steps+1))
+                        
+        
+        return -1
+
+#keep dist array
+class Solution:
+    def snakesAndLadders(self, board: List[List[int]]) -> int:
+        
+        '''
+        instead of seen set, we can keep dist array for all cells (tiles)
+        then just update the dist array
+        and return dist array at destination
+        
+        '''
+        n = len(board)
+        n_squared = n ** 2
+        def convert_to_index(pos: int) -> tuple:
+            # Needs input validation for an interview.
+            pos -= 1 # Convert to zero-based.
+            #check if this positions starts left
+            starts_left: bool = (((pos // n) % 2) == 0)
+            #rows will be multiple of n
+            i = (n_squared - pos - 1) // n
+            #cols is just the remainder
+            j = (pos % n) if starts_left else n - (pos % n) - 1
+            return (i, j)
+        
+        dist = [-1]*(n_squared+1)
+        #base case, we don't need to travel a distace at the start
+        dist[1] = 0
+        q = deque([1])
+        
+        
+        while q:
+            curr = q.popleft()
+            for neigh in range(curr + 1, min(curr + 6,n**2) + 1):
+                #convert to index
+                i,j = convert_to_index(neigh)
+                destination = board[i][j] if board[i][j] != -1 else neigh
+                #havent gotten here in a short path
+                if dist[destination] == -1:
+                    dist[destination] = dist[curr] + 1
+                    q.append((destination))
+                    
+        return dist[n_squared]
+        
+        
+
+#dijkstras
+class Solution:
+    def snakesAndLadders(self, board: List[List[int]]) -> int:
+        '''
+        we can also use Dijkstra's
+        in the pq, keep (min_dist,to_cell)
+        the only catch is that when we pop from the min_heap (priority queue) we first check that min_dist != dist[curr]
+        if they are unequal the distance is outdated
+        '''
+        n = len(board)
+        n_squared = n ** 2
+        def convert_to_index(pos: int) -> tuple:
+            # Needs input validation for an interview.
+            pos -= 1 # Convert to zero-based.
+            #check if this positions starts left
+            starts_left: bool = (((pos // n) % 2) == 0)
+            #rows will be multiple of n
+            i = (n_squared - pos - 1) // n
+            #cols is just the remainder
+            j = (pos % n) if starts_left else n - (pos % n) - 1
+            return (i, j)
+        
+        dist = [-1]*(n_squared + 1)
+        dist[1] = 0
+        
+        pq = [(0,1)] #min dist, tile
+        while pq:
+            curr_dist, curr_tile = heapq.heappop(pq)
+            if dist[curr_tile] < curr_dist:
+                continue
+            for neigh in range(curr_tile + 1, min(curr_tile + 6,n**2) + 1):
+                #convert to index
+                i,j = convert_to_index(neigh)
+                destination = board[i][j] if board[i][j] != -1 else neigh
+                #if not visited or is smaller
+                if dist[destination] == -1 or dist[curr_tile] + 1 < dist[destination]:
+                    dist[destination] = dist[curr_tile] + 1
+                    heapq.heappush(pq,(dist[destination],destination))
+        
+        return dist[n*n]
+            
