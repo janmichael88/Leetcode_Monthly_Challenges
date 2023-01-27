@@ -3052,6 +3052,67 @@ class Solution:
         dp([])
         return self.ans
 
+class Solution:
+    def confusingNumberII(self, n: int) -> int:
+        '''
+        hint implies backtracking to generate all, since the set of digit used to create is small
+        highest number is 10**9, so at most the length of the digits is 9
+        
+        we can build up a number, digit by digit using only the valid digits
+        when the digit we are building has the same length as n, check valid and return 1
+        else return 0
+        
+        in our recusrive helper keep track of variable smaller
+        this represents whether the current number will always be less than n
+        for example say the first digit that we are building is 8
+        if we use 1 for the first digit, num will always be smaller then s, num < s
+        so this number is currenlty smaller than s
+        
+        
+        notes to memo
+        we need to see often we query repeated subproblems for this to have any benefit
+        '''
+        rotations = {'0':'0',
+                     '1':'1',
+                     '6':'9',
+                     '9':'6',
+                     '8':'8'
+                    }
+        
+        digits = ['0','1','6','8','9']
+
+        
+        s = str(n)
+        
+        def dfs(smaller,num):
+            if len(s) == len(num):
+                #count zeros
+                i = 0
+                while i < len(num) and num[i] == '0':
+                    i += 1
+                #removing leaidng 0's
+                temp = num[i:]
+                #check if valid
+                for j in range(len(temp)):
+                    if temp[j] != rotations[temp[len(temp) -j - 1]]:
+                        return 1
+                return 0
+            
+            
+            #recursive case
+            ans = 0
+            for d in digits:
+                #if we go over n stop
+                if not smaller and d > s[len(num)]:
+                    break
+                num.append(d)
+                ans += dfs(smaller or d < s[len(num)-1],num)
+                #backtrack
+                num.pop()
+
+            return ans
+        
+        return dfs(False,[])
 
 ########################################
 # 909. Snakes and Ladders
@@ -3232,4 +3293,350 @@ class Solution:
                     heapq.heappush(pq,(dist[destination],destination))
         
         return dist[n*n]
+
+#############################################
+# 2359. Find Closest Node to Given Two Nodes
+# 25JAN22
+#############################################
+#yasssss
+class Solution:
+    def closestMeetingNode(self, edges: List[int], node1: int, node2: int) -> int:
+        '''
+        we are given a directed graph (it may contain cycles)
+        we want to retun the index of the node that can be reached from both node1 and node2, such that the maximum
+        distance from node1 to that node AND from node2 to that node is minimized
+        if there are multiple answers with the sam maximum, return the smallest index
+        
+        make the graph
+        us bfs to find the shortest distances for both node1 and node2 to all the nodes in the graph
+        then iterate over all the nodes to find the maximum distance
+        '''
+        #make graph
+        graph = defaultdict(list)
+        N = len(edges)
+        
+        for i in range(N):
+            if edges[i] == -1:
+                continue
+            graph[i].append(edges[i])
             
+        def bfs(start_node,graph):
+            #peform bfs from start node and return distances array
+            dist = [-1]*(N)
+            #initialize
+            dist[start_node] = 0
+            #no need for dijkstra's since its only 1 step away
+            q = deque([start_node])
+            
+            while q:
+                curr_node = q.popleft()
+                for neigh in graph[curr_node]:
+                    if dist[neigh] == -1:
+                        dist[neigh] = dist[curr_node] + 1
+                        q.append((neigh))
+            return dist
+        
+        node1_dists = bfs(node1,graph)
+        node2_dists = bfs(node2,graph)
+        
+        #find index, this is probably the crux of the problem
+        #sort after
+        candidates = []
+        for i in range(N):
+            #this node cannot be reached from either node1 or node2
+            if node1_dists[i] == -1 or node2_dists[i] == -1:
+                continue
+            #get min distance to this node
+            min_distance = max(node1_dists[i],node2_dists[i])
+            #pair with index
+            entry = (min_distance,i)
+            candidates.append(entry)
+        
+        #sort
+        if not candidates:
+            return -1
+        candidates.sort(key = lambda x: (x[0],x[1]))
+        return candidates[0][1]
+            
+
+#the last part is how to efficietly search ofr the maximum of the minimum
+#just take the max of the distances and go in increasing order of index
+class Solution:
+    def closestMeetingNode(self, edges: List[int], node1: int, node2: int) -> int:
+        '''
+        we are given a directed graph (it may contain cycles)
+        we want to retun the index of the node that can be reached from both node1 and node2, such that the maximum
+        distance from node1 to that node AND from node2 to that node is minimized
+        if there are multiple answers with the sam maximum, return the smallest index
+        
+        make the graph
+        us bfs to find the shortest distances for both node1 and node2 to all the nodes in the graph
+        then iterate over all the nodes to find the maximum distance
+        '''
+        #make graph
+        graph = defaultdict(list)
+        N = len(edges)
+        
+        for i in range(N):
+            if edges[i] == -1:
+                continue
+            graph[i].append(edges[i])
+            
+        def bfs(start_node,graph):
+            #peform bfs from start node and return distances array
+            dist = [-1]*(N)
+            #initialize
+            dist[start_node] = 0
+            #no need for dijkstra's since its only 1 step away
+            q = deque([start_node])
+            
+            while q:
+                curr_node = q.popleft()
+                for neigh in graph[curr_node]:
+                    if dist[neigh] == -1:
+                        dist[neigh] = dist[curr_node] + 1
+                        q.append((neigh))
+            return dist
+        
+        node1_dists = bfs(node1,graph)
+        node2_dists = bfs(node2,graph)
+        
+        #find index, this is probably the crux of the problem
+        min_dist_node = -1
+        min_allowed = float('inf')
+        
+        for i in range(N):
+            #this node cannot be reached from either node1 or node2
+            if node1_dists[i] == -1 or node2_dists[i] == -1:
+                continue
+            #if either of the max is smaller
+            if max(node1_dists[i],node2_dists[i]) < min_allowed:
+                min_dist_node = i
+                min_allowed = max(node1_dists[i],node2_dists[i])
+        
+        return min_dist_node
+
+
+#we can also use dfs twice
+class Solution:
+    def closestMeetingNode(self, edges: List[int], node1: int, node2: int) -> int:
+        '''
+        we can also use dfs
+        the problem is unique in that each node has at most 1 outoing edge
+        we only need to check the the single neighbor
+        '''
+        #make graph
+        graph = defaultdict(list)
+        N = len(edges)
+        
+        for i in range(N):
+            if edges[i] == -1:
+                continue
+            graph[i].append(edges[i])
+            
+        def dfs(node,dist,seen,graph):
+            #visit
+            seen.add(node)
+            neigh = graph[node]
+            if not neigh:
+                return
+            if neigh[0] not in seen:
+                dist[neigh[0]] = 1 + dist[node]
+                dfs(neigh[0],dist,seen,graph)
+                
+        seen1 = set()
+        seen2 = set()
+        node1_dists = [-1]*N
+        node2_dists = [-1]*N
+        
+        node1_dists[node1] = 0
+        node2_dists[node2] = 0
+        
+        dfs(node1,node1_dists,seen1,graph)
+        dfs(node2,node2_dists,seen2,graph)
+        
+        #find index, this is probably the crux of the problem
+        min_dist_node = -1
+        min_allowed = float('inf')
+        
+        for i in range(N):
+            #this node cannot be reached from either node1 or node2
+            if node1_dists[i] == -1 or node2_dists[i] == -1:
+                continue
+            #if either of the max is smaller
+            if max(node1_dists[i],node2_dists[i]) < min_allowed:
+                min_dist_node = i
+                min_allowed = max(node1_dists[i],node2_dists[i])
+        
+        return min_dist_node
+
+##################################################
+# 787. Cheapest Flights Within K Stops (REVISTED)
+# 26JAN22
+###################################################
+#dynamic programming, top down
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        '''
+        first try dynamic programming
+        i will be from j will be to
+        
+        let dp(i,j,k) be the cheapest price staring from node i, ending at node k, with k transactions
+        
+        so we want min(dp(src,target,k),dp(src,target,k-1)...dp(src,target,0))
+        we could just loop k from 0 to k and take the min(dp,src,target,k)
+        
+        now for the state transition
+        
+        dp(i,j,k) = take the minimum edege
+        
+        wtf????
+        
+        first part was wrong
+        we define dp(i,k) which give us the minimum cheaptest price for leaving node i with k tranactions
+        if node == dst, we dont need to take any fares
+        if we are out of k transactions, return larger number
+        then we need to minimize
+            we nee to tak the smallest cost for all neighbors from this need
+        '''
+        #make graph
+        #for an i,j element, read as from, to and store the ticket price
+        graph = [[0]*n for _ in range(n)]
+        
+        for u,v,price in flights:
+            graph[u][v] = price
+            
+        memo = {}
+        
+        def dp(node,k): #returns cheapest fair with k transactions
+            if node == dst:
+                return 0
+            if k < 0:
+                return float('inf')
+            
+            if (node,k) in memo:
+                return memo[(node,k)]
+            
+            ans = float('inf')
+            #we want the smallest outgaing edge
+            for neigh in range(n):
+                if graph[node][neigh] == 0:
+                    continue
+                #get child anser, recurse to get the anwer
+                child_ans = dp(neigh,k-1)
+                #minimize
+                ans = min(ans, graph[node][neigh] + child_ans)
+            
+            memo[(node,k)] = ans
+            return ans
+        
+        ans = dp(src,k)
+        return ans if ans != float('inf') else -1
+
+
+
+#bfs
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        '''
+        typically we cannot use BFS in an weighted graph
+        recall the property of BFS is taht the first time a node si reached during the traversal, it must be the minimum
+        but we cannot assume that the first node we visit is the minimum, which usually implies using dijkstras
+        
+        however, we are limited by the number of stops k,
+        we can do bfs in k layers, and stop after k+1
+        
+        while doing bfs, only update the dist arrays when going down this node results in a cheaper fare
+        '''
+        #adj list node: [neigh,cost]
+        adj_list = defaultdict(list)
+        for u,v,price in flights:
+            adj_list[u].append((v,price))
+            
+        costs = [float('inf')]*n
+        costs[src] = 0
+        
+        q = deque([(src,0)])
+        
+        #while there is q and we still have k
+        while q and k >= 0:
+            m = len(q)
+            #explore frontier
+            for _ in range(m):
+                curr, curr_price = q.popleft()
+                #optimize
+                #if costs[curr] < curr_price:
+                #    continue
+                for neigh,price in adj_list[curr]:
+                    if curr_price + price < costs[neigh]:
+                        costs[neigh] = curr_price + price
+                        q.append((neigh,costs[neigh]))
+            k -= 1
+            
+        return costs[dst] if costs[dst] != float('inf') else -1
+
+#dijkstras
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        '''
+        we can use dikstras, maintin min heap of distances
+        and continue when we are out of transactions
+        '''
+        #adj list node: [neigh,cost]
+        adj_list = defaultdict(list)
+        for u,v,price in flights:
+            adj_list[u].append((v,price))
+            
+        costs = [float('inf')]*n
+        costs[src] = 0
+        visited = set()
+        
+        pq = [(0,src,k)]
+        
+        #while there is q and we still have k
+        while pq:
+            curr_dist,curr_node,curr_k = heapq.heappop(pq)
+            if k <= 0:
+                continue
+            if costs[curr_node] < curr_dist:
+                continue
+            #mark
+            visited.add(curr_node)
+            for neigh,price in adj_list[curr_node]:
+                if neigh in visited:
+                    continue
+                new_dist = costs[curr_node] + price
+                #update
+                if new_dist < costs[neigh]:
+                    costs[neigh] = new_dist
+                    heapq.heappush(pq,(new_dist,neigh,curr_k - 1))
+            
+        return costs[dst] if costs[dst] != float('inf') else -1
+
+#another dijkstras way
+class Solution:
+    def findCheapestPrice(self, n, flights, src, dst, k):
+        visited = {}
+        adj = defaultdict(list)
+        for s, d, p in flights:
+            adj[s].append((d, p))
+        pq = [(0, 0, src)]
+        while pq:
+            cost, stops, node = heapq.heappop(pq)
+            if node == dst and stops - 1 <= k:
+                return cost
+            if node not in visited or visited[node] > stops:
+                visited[node] = stops
+                for neighbor, price in adj[node]:
+                    heapq.heappush(pq, (cost + price, stops + 1, neighbor))
+        return -1
+
+
+
+
+
+
+
+
+
+
