@@ -3631,12 +3631,258 @@ class Solution:
                     heapq.heappush(pq, (cost + price, stops + 1, neighbor))
         return -1
 
+#####################################
+# 472. Concatenated Words
+# 27JAN23
+#####################################
+#brute force
+class Solution:
+    def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
+        '''
+        input will never have more than 30 words
+        the entire length of the words will not be more than 10**5
+        
+        brute force is just check if each word can be made from at least two shorter words
+        use python contains, and check if it contains that word and that word is smaller
+        
+        just clear the replace the word with "" and see if we get the empty string
+        '''
+        ans = []
+        
+        for word in words:
+            count = 0
+            copy_word = word
+            for other_word in words:
+                if other_word != word:
+                    if word.__contains__(other_word) and len(other_word) < len(word):
+                        count += 1
+                        copy_word = copy_word.replace(other_word,"")
+            
+            if count >= 2 or copy_word == "":
+                ans.append(word)
+        
+        return answer
+
+#fuck this god damn piece of shit....
+class Solution:
+    def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
+        '''
+        this is a famous reachabilit problem, and it can be solve by DP or DFS/BFS
+        if a given word can be created by concatenating the given words, we can split it into two parts,
+        one prefix and suffix,
+        
+        prefix is a shorted word which can be reached by concatenating the given words and the suffix is the given word
+        
+        rather, word = (another shorter word that can be creatted by conat) + (a given word in the dictionary)
+        we can enumerate the suffix and look it up in the dictionary, and prefix part is just a subproblem
+        
+        for the dp solution, this is just one step further from wordbreak
+        adopt the dp strategy from word break
+        
+        for a word, we define dp(i) is whether word[:i] (the prefix) can be made through concaentation
+        and where word[i+1:] is in the dictionary
+        
+        dp array should be length + 1, and base case is dp[0] = true, which means the empty string can be always be made into a prefix from no words in the dictionary
+        
+        we need to calculate do(i) for i in range(0,len(word))
+        
+        now consider dp[i] for i > 0
+        
+        if dp[i] is true, we can split the words into s[:i] and s[i+1:], where the first part can be created by the words in dictionary, and the maing suffix is just a single word in the dictionary
+        
+        dp[i] is true if and only if there is an integer j, such that 0 <= j < i and the word's substring (index range [j, i - 1]) is in the dictionary.
+        
+        corner case:
+            when i == length, since we don't want to use the word in the dictionary directly, we should check 1 <= j < i instead.
+            
+        algo:
+            Put all the words into a HashSet as a dictionary.
+            Create an empty list answer.
+            For each word in the words create a boolean array dp of length = word.length + 1, and set dp[0] = true.
+            For each index i from 1 to word.length, set dp[i] to true if we can find a value j from 0 (1 if i == word.length) such that dp[j] = true and word.substring(j, i) is in the dictionary.
+            Put word into answer if dp[word.length] = true.
+            After processing all the words, return answer.
+            
+        '''
+        all_words = set(words)
+        res = []
+        #integer break solutions
+        def dp(i,word,memo):
+            if i == 0:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            ans = False
+            for j in range((i == N) and 1 or 0,i):
+                if not dp(i-1,word,memo):
+                    ans = dp(j,word,memo) and word[j:i] in all_words
+            
+            memo[i] = ans
+            return ans
+        
+        for word in words:
+            N = len(word)
+            memo = {}
+            print(dp(N,word,memo))
+
+#dp class Solution:
+    def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
+        '''
+        this is a famous reachabilit problem, and it can be solve by DP or DFS/BFS
+        if a given word can be created by concatenating the given words, we can split it into two parts,
+        one prefix and suffix,
+        
+        prefix is a shorted word which can be reached by concatenating the given words and the suffix is the given word
+        
+        rather, word = (another shorter word that can be creatted by conat) + (a given word in the dictionary)
+        we can enumerate the suffix and look it up in the dictionary, and prefix part is just a subproblem
+        
+        for the dp solution, this is just one step further from wordbreak
+        adopt the dp strategy from word break
+        
+        for a word, we define dp(i) is whether word[:i] (the prefix) can be made through concaentation
+        and where word[i+1:] is in the dictionary
+        
+        dp array should be length + 1, and base case is dp[0] = true, which means the empty string can be always be made into a prefix from no words in the dictionary
+        
+        we need to calculate do(i) for i in range(0,len(word))
+        
+        now consider dp[i] for i > 0
+        
+        if dp[i] is true, we can split the words into s[:i] and s[i+1:], where the first part can be created by the words in dictionary, and the maing suffix is just a single word in the dictionary
+        
+        dp[i] is true if and only if there is an integer j, such that 0 <= j < i and the word's substring (index range [j, i - 1]) is in the dictionary.
+        
+        corner case:
+            when i == length, since we don't want to use the word in the dictionary directly, we should check 1 <= j < i instead.
+            
+        algo:
+            Put all the words into a HashSet as a dictionary.
+            Create an empty list answer.
+            For each word in the words create a boolean array dp of length = word.length + 1, and set dp[0] = true.
+            For each index i from 1 to word.length, set dp[i] to true if we can find a value j from 0 (1 if i == word.length) such that dp[j] = true and word.substring(j, i) is in the dictionary.
+            Put word into answer if dp[word.length] = true.
+            After processing all the words, return answer.
+            
+        '''
+        all_words = set(words)
+        res = []
+        #integer break solutions
+        for word in words:
+            N = len(word)
+            dp = [False]*(N+1)
+            dp[0] = True
+            
+            for i in range(1,N+1):
+                for j in range((i ==N) and 1 or 0,i):
+                    if not dp[i]:
+                        dp[i] = dp[j] and word[j:i] in all_words
+            
+            if dp[N]:
+                res.append(word)
+        
+        return res
+            
+
+#dfs
+#we can just check prefix and suffix in the dictionary of all words
+class Solution:
+    def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
+        '''
+        we can turn the problem into a reachability problem
+        for eafh word, construct graph with all prefixes as nodes
+        
+        the graoh contains (len(word) + 1 nodes) for each word
+        for edges, consider 2 prefixes (i,j) such that 0 <= i < j < len(word)
+        if prefix j can be created by concatenatins prefix i and a word in the dictionary, we add an edge from node i to j
+        
+        When i = 0, we require j < word.length as there should be an edge from node 0 to node word.length. Determining whether a word can be created by concatenating 2 or more words in the dictionary is the same as determining whether there is a path from node 0 to node word.length in the graph.
 
 
+        
+        '''
+        d = set(words)
+        memo = {}
+
+        #dfs returns whether a word can be formed from the concatneatino of other words in dictionary
+        #if we split word into prefix and suffix (examine) all possible
+        #if prefix and suffix can be formed, must be tree
+        #if prefix can made and dp(suffix) must bet rue
+        #if suffix can be made and dp(prefix) must also be true
+        def dfs(word):
+            if word in memo:
+                return memo[word]
+            memo[word] = False
+            for i in range(1, len(word)):
+                prefix = word[:i]
+                suffix = word[i:]
+                if prefix in d and suffix in d:
+                    memo[word] = True 
+                    break
+                if prefix in d and dfs(suffix):
+                    memo[word] = True 
+                    break
+                if suffix in d and dfs(prefix):
+                    memo[word] = True 
+                    break
+            return memo[word] 
+        return [word for word in words if dfs(word)] 
 
 
+#another dfs solution
+class Solution:
+    def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
+        dictionary = set(words)
+        result = []
+        for word in words:
+            visited = [False] * len(word)
+            if self.dfs(word, 0, visited, dictionary):
+                result.append(word)
+        return result
+        
+    def dfs(self, word: str, length: int, visited: List[bool], dictionary: set) -> bool:
+        if length == len(word):
+            return True
+        if visited[length]:
+            return False
+        visited[length] = True
+        for i in range(len(word) - (1 if length == 0 else 0), length, -1):
+            if word[length:i] in dictionary and self.dfs(word, i, visited, dictionary):
+                return True
+        return False
 
+#another dfs solution
+class Solution:
+    def findAllConcatenatedWordsInADict(self, words: List[str]) -> List[str]:
+        visited_indices: set[int] = set()
+        words_set: set[str] = set(words)
+        def dfs_other_words(word: str, start_idx: int):
+            n = len(word)
+            if start_idx == n:
+                # Got past the end - the word is made of multiple words.
+                return True
+            if start_idx in visited_indices:
+                # We already searched from this index.
+                return False
+            
+            visited_indices.add(start_idx)
+            # Go up til the last character in the word if we are starting
+            # from the first index. Otherwise we'll mark single words as results.
+            for i in range(start_idx + 1, (n + 1 if start_idx != 0 else n)):
+                if (word[start_idx:i] in words_set
+                    and dfs_other_words(word, i)):
+                    return True
+            
+            return False
 
+        result: list[str] = []
+        for word in words:
+            visited_indices.clear()
+            if dfs_other_words(word, 0):
+                result.append(word)
+        
+        return result
 
 
 
