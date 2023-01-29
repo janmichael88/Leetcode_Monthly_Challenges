@@ -3884,5 +3884,111 @@ class Solution:
         
         return result
 
+############################################
+# 352. Data Stream as Disjoint Intervals
+# 28JAN23
+############################################
+from sortedcontainers import SortedSet
+class SummaryRanges:
+    '''
+    check questions is to return values in an ordered set
+    then traverse the ordered set in ordr getting the intervals
+    use python sorted containers, sortedSet
+    '''
+
+    def __init__(self):
+        self.ss = SortedSet()
+
+    def addNum(self, value: int) -> None:
+        self.ss.add(value)
+
+    def getIntervals(self) -> List[List[int]]:
+        if len(self.ss) == 0:
+            return []
+        
+        #this part is the hardest part, the merging
+        intervals = []
+        left = right = -1
+        for v in self.ss:
+            if left < 0:
+                left = right = v
+            elif v == right + 1:
+                right = v
+            else:
+                intervals.append([left,right])
+                left = right = v
+        
+        intervals.append([left,right])
+        return intervals
+                
+#we could also just add, and sort every time to find th intervals
+class SummaryRanges:
+    def __init__(self):
+        self.seen=set()
+
+    def addNum(self, val: int) -> None:
+        self.seen.add(val)
+
+    def getIntervals(self) -> List[List[int]]:
+        res=[]
+        #empty list, we need to add, otherwise its disjoint, add [value,value]
+        for v in sorted(self.seen):
+            if not res or v>res[-1][1]+1:
+                res.append([v,v])
+            #we have something in the containter, and the next value we are about to add is just one more than the right bound
+            #increment
+            elif res and v==res[-1][1]+1:
+                res[-1][1]=v
+        return res
 
 
+# Your SummaryRanges object will be instantiated and called as such:
+# obj = SummaryRanges()
+# obj.addNum(value)
+# param_2 = obj.getIntervals()
+
+
+class SummaryRanges(object):
+    '''
+    we also could have used a sorted dictionary, but in the case we didn't have access to the sorted contianer library
+    we need to implement using a min heap
+    '''
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        #keep intevals, and a seen set so we don't repeat
+        self.intervals = []
+        self.seen = set()
+
+    def addNum(self, val):
+        """
+        :type val: int
+        :rtype: None
+        """      
+        #only add when we haven't seen it 
+        #and add as an interval
+        if val not in self.seen:
+            self.seen.add(val)
+            heapq.heappush(self.intervals, [val, val])
+        
+    def getIntervals(self):
+        """
+        :rtype: List[List[int]]
+        """
+        
+        tmp = []
+
+        while self.intervals:
+            cur = heapq.heappop(self.intervals)
+            #merge the interval
+            #currenly have interval in temp, ask if we need to update,
+            #i.e take amx of right bound and current right bound interval
+            if tmp and cur[0] <= tmp[-1][1] + 1:
+                tmp[-1][1] = max(tmp[-1][1], cur[1])
+            else:
+                tmp.append(cur)
+
+        self.intervals = tmp
+        return self.intervals
