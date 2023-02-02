@@ -3992,3 +3992,790 @@ class SummaryRanges(object):
 
         self.intervals = tmp
         return self.intervals
+
+########################################
+# 460. LFU Cache
+# 29JAN23
+#########################################
+#yikesss
+from collections import OrderedDict
+class LFUCache:
+    '''
+    LRU, stands for least frequently used
+    get method: gets the value of the key if the key exsist in cache, else -1
+    put method, update the vlaue of the key if present, or insert if not
+        when cahce reachees capacity, it should invalidate and remove the least frequently use key before inserting new time
+        if there is tie for LRY, the least recently used key would be invalidated
+        
+    ill need a counter object to count the keys for each use
+    ill also need a way to remove the least recently used key
+    
+    intuition:
+        keep hash map storing keys and frequencies (every time a key is accessed)
+        for invalidatino we need to mainint a minimum frequency
+        we can group keys with same frequence dictinoary of type set (frequcny : set(keys))
+        this way we can access the min frequency
+        
+        for the case of a tie, we need to know the least recently used key (the opposite of most recent)
+        i.e we need double linked list to access front and tail (most recent, least recent)
+        in C++, we can use LinkedList HashSet, i python we need to use orded dict
+        
+    easiet way would be to use a doubly linked list
+    
+    globals:
+        hashmap <Integer, Pair<Integer,Integer>> cache, keeyed by oriigna key and (frequency valie pair)
+        hashmap <Integer, LinkedList<Integer>> frequencies, keeyd by freqeucne and values by set of keys having same frequency (but having access to most and least recent key access)
+        minf, which is the minimum freqeuncy at any given time
+        capaciy, size of cahce
+        
+    void insert(int key, int freq, int vallue):
+        insert (freq, pair) into cache for given key
+        get the LinkedHashSet correspoing to the given frequency (default to empty set) and isnet key
+        
+    int get(int key):
+        1. if given key is not in cache, return - 1
+        2. get freq adn value from cache
+        3. get LinkedList HashSet associetd with the frequency and remove key from it, since usage of the current key is increased by the call
+        4. if minf == frequency and the LinkedListHashset is empty, that means there are no more elements used minf times, so icnrease by minf by 1
+        5. call insert(key,freq+1,value), since the current key's usage has increased
+        6. return value
+        
+     void put(int key, int valu):
+        1. if cap <= 0: exit
+        2. if the given key existes in cache, update teh value in the original freq-value , then icnreaemnt the freq by using the get(key)
+        3. if len(cache) == cap, get the least reacently use value in the LL hashset correspsoing to min f, and remove it
+        4. if we didn't exit the funcitonn in step 2, it menas that this element is a new one, so the minimum freq cannot possible by the gearer one, set minf to 1
+        5. call insert (key,1,value)
+    '''
+
+    def __init__(self, capacity: int):
+        self.cache = defaultdict(list)
+        #we need to maintain fast deletion in this hashmap, and keep last item, 
+        #impelement as key : key
+        self.frequencies = defaultdict(lambda x : OrderedDict())
+        self.min_freq = 0
+        self.capacity = capacity
+        
+    def insert(self, key : int, frequency : int, value : int):
+        #put into cache
+        self.cache[key] = [frequency,value]
+        #if frequency is not in frequencies
+        if frequency not in self.frequencies:
+            self.frequencies[frequency] = OrderedDict()
+        #get the freqeucne
+        self.frequencies[frequency][value] = value
+
+    def get(self, key: int) -> int:
+        #first check if in cache
+        if key not in self.cache:
+            return -1
+        
+        #otherwise retrieve
+        freq,value = self.cache[key]
+        #obtain from self.frequencies
+        ordered_dict = self.frequencies[freq]
+        if key in ordered_dict:
+            del ordered_dict[key]
+        if self.min_freq == freq and len(ordered_dict) == 0:
+            self.min_freq += 1
+        
+        #insert
+        self.insert(key,freq + 1,value)
+        return value
+        
+        
+
+    def put(self, key: int, value: int) -> None:
+        if self.capacity <= 0:
+            return
+        #if its already in there
+        if key in self.cache:
+            freq,old_value = self.cache[key]
+            self.cache[key] = [freq,value]
+            #update
+            self.get(key)
+        #cache is too big
+        if self.capacity == len(self.cache):
+            ordered_dict = self.frequencies[self.min_freq]
+            #get key to remove
+            key_to_remove = ordered_dict.popitem(False)
+            if key_to_remove[0] in self.cache:
+                del self.cache[key_to_remove[0]]
+            
+        #reset
+        self.min_freq = 1
+        self.insert(key,1,value)
+        
+# Your LFUCache object will be instantiated and called as such:
+# obj = LFUCache(capacity)
+# param_1 = obj.get(key)
+# obj.put(key,value)
+
+
+#another way
+class LFUCache:
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        #key is freq, value is key
+        #key is key value is freq
+        self.freq_to_key = defaultdict(lambda : OrderedDict())
+        self.key_to_freq = defaultdict(int)
+        self.min_freq = 1
+        
+
+    def get(self, key: int) -> int:
+        #first check
+        if key not in self.key_to_freq:
+            return -1
+        #get the current freq
+        freq = self.key_to_freq[key]
+        #increemnt, access results to an update
+        self.key_to_freq[key] = freq + 1
+        #get the value
+        value = self.freq_to_key[freq][key]
+        #remove the old one
+        del self.freq_to_key[freq][key]
+        #put in the new one
+        self.freq_to_key[freq+1][key] = value
+        #acces to minimum frequencey in O(1) time
+        #i.e this is a neq frequence
+        if self.min_freq == freq and not self.freq_to_key[freq]:
+            self.min_freq += 1
+        #retun the answer
+        return value
+        
+
+    def put(self, key: int, value: int) -> None:
+        #check already there
+        if key in self.key_to_freq:
+            #each check costs a counter icnrease, so call get
+            self.get(key)
+            #update
+            self.freq_to_key[self.key_to_freq[key]][key] = value
+        #not in there
+        else:
+            #reduce the capacity because we have to add a new access
+            self.capacity -= 1
+            #insert
+            #new count for new key
+            self.key_to_freq[key] = 1
+            #update frequency count
+            self.freq_to_key[1][key] = value
+            #if we are outside the cache limit
+            if self.capacity < 0:
+                #increment and delete he least recently used key
+                self.capacity += 1
+                k, v = self.freq_to_key[self.min_freq].popitem(False)
+                del self.key_to_freq[k]
+            #new occurence of key,so min freq is always 1
+            self.min_freq = 1
+
+
+#another way
+from collections import defaultdict
+from collections import OrderedDict
+'''
+A count2node is a dict of OrderedDict, so you can look up like this count2node[count][key] to remove/update the node in O(1), or count2node[count].popitem(last=True) to remove the oldest node in O(1).
+https://leetcode.com/problems/lfu-cache/discuss/166683/Python-only-use-OrderedDict-get-O(1)-put-O(1)-Simple-and-Brief-Explained!!!!!!
+'''
+from collections import defaultdict
+from collections import OrderedDict
+
+#node object
+from collections import defaultdict
+from collections import OrderedDict
+
+#node object
+class Node:
+    def __init__(self, key: int, val : int, count : int):
+        self.key = key
+        self.val = val
+        self.count = count
+
+class LFUCache:
+
+    def __init__(self, capacity: int):
+        self.capacity = capacity
+        self.key_to_node = defaultdict() #the actual cache
+        self.frequencies_to_node = defaultdict(OrderedDict) #object to mape frequencies to keys, needed to remove the minimum
+        self.minCount = None #we need accesss to the min in O(1) time, otherwise we would need to traverse counts
+
+    def get(self, key: int) -> int:
+        #not in cache
+        if key not in self.key_to_node:
+            return -1
+        
+        #retrieve from cache
+        node = self.key_to_node[key]
+        #this count is doing to updated, so its no longer valid, delete the key
+        del self.frequencies_to_node[node.count][key]
+        
+        #clean memeory
+        if not self.frequencies_to_node[node.count]:
+             del self.frequencies_to_node[node.count]
+        
+        #access results in count increase
+        node.count += 1
+        self.frequencies_to_node[node.count][key] = node
+        
+        #min check, i.e if there is no count with the current min
+        if not self.frequencies_to_node[self.minCount]:
+            self.min_count += 1
+        #answer
+        return node.val
+
+    def put(self, key: int, value: int) -> None:
+        if not self.capacity:
+            return
+        
+        #if we alreayd have a key in the hash
+        if key in self.key_to_node:
+            self.key_to_node[key].val = value
+            #accessing a key incremnts a counter
+            self.get(key)
+            return
+        
+        #if we need to clear the cache
+        if len(self.key_to_node) == self.capacity:
+            # popitem(last=False) is FIFO, like queue
+            # it return key and value!!
+            smallest_key, smallest_node = self.frequencies_to_node[self.minCount].popitem(last=False)
+            #clear
+            self.key_to_node[smallest_key]
+        
+        #update, curr min count is 1
+        self.minCount = 1
+        self.frequencies_to_node[self.minCount][key] = self.key_to_node[key] = Node(key,value,1)
+        return
+# param_1 = obj.get(key)
+# obj.put(key,value)
+
+
+#breaking it out into addtinoal helper methods, and doubld linked list api creation
+#https://leetcode.com/problems/lfu-cache/discuss/207673/Python-concise-solution-**detailed**-explanation%3A-Two-dict-%2B-Doubly-linked-list
+
+import collections
+
+class Node:
+    def __init__(self, key, val):
+        self.key = key
+        self.val = val
+        self.freq = 1
+        self.prev = self.next = None
+
+class DLinkedList:
+    """ An implementation of doubly linked list.
+    
+    Two APIs provided:
+    
+    append(node): append the node to the head of the linked list.
+    pop(node=None): remove the referenced node. 
+                    If None is given, remove the one from tail, which is the least recently used.
+                    
+    Both operation, apparently, are in O(1) complexity.
+    """
+    def __init__(self):
+        self._sentinel = Node(None, None) # dummy node
+        self._sentinel.next = self._sentinel.prev = self._sentinel
+        self._size = 0
+    
+    def __len__(self):
+        return self._size
+    
+    def append(self, node):
+        node.next = self._sentinel.next
+        node.prev = self._sentinel
+        node.next.prev = node
+        self._sentinel.next = node
+        self._size += 1
+    
+    def pop(self, node=None):
+        if self._size == 0:
+            return
+        
+        if not node:
+            node = self._sentinel.prev
+
+        node.prev.next = node.next
+        node.next.prev = node.prev
+        self._size -= 1
+        
+        return node
+        
+class LFUCache:
+    def __init__(self, capacity):
+        """
+        :type capacity: int
+        
+        Three things to maintain:
+        
+        1. a dict, named as `self._node`, for the reference of all nodes given key.
+           That is, O(1) time to retrieve node given a key.
+           
+        2. Each frequency has a doubly linked list, store in `self._freq`, where key
+           is the frequency, and value is an object of `DLinkedList`
+        
+        3. The min frequency through all nodes. We can maintain this in O(1) time, taking
+           advantage of the fact that the frequency can only increment by 1. Use the following
+           two rules:
+           
+           Rule 1: Whenever we see the size of the DLinkedList of current min frequency is 0,
+                   the min frequency must increment by 1.
+           
+           Rule 2: Whenever put in a new (key, value), the min frequency must 1 (the new node)
+           
+        """
+        self._size = 0
+        self._capacity = capacity
+        
+        self._node = dict() # key: Node
+        self._freq = collections.defaultdict(DLinkedList)
+        self._minfreq = 0
+        
+        
+    def _update(self, node):
+        """ 
+        This is a helper function that used in the following two cases:
+        
+            1. when `get(key)` is called; and
+            2. when `put(key, value)` is called and the key exists.
+         
+        The common point of these two cases is that:
+        
+            1. no new node comes in, and
+            2. the node is visited one more times -> node.freq changed -> 
+               thus the place of this node will change
+        
+        The logic of this function is:
+        
+            1. pop the node from the old DLinkedList (with freq `f`)
+            2. append the node to new DLinkedList (with freq `f+1`)
+            3. if old DlinkedList has size 0 and self._minfreq is `f`,
+               update self._minfreq to `f+1`
+        
+        All of the above opeartions took O(1) time.
+        """
+        freq = node.freq
+        
+        self._freq[freq].pop(node)
+        if self._minfreq == freq and not self._freq[freq]:
+            self._minfreq += 1
+        
+        node.freq += 1
+        freq = node.freq
+        self._freq[freq].append(node)
+    
+    def get(self, key):
+        """
+        Through checking self._node[key], we can get the node in O(1) time.
+        Just performs self._update, then we can return the value of node.
+        
+        :type key: int
+        :rtype: int
+        """
+        if key not in self._node:
+            return -1
+        
+        node = self._node[key]
+        self._update(node)
+        return node.val
+
+    def put(self, key, value):
+        """
+        If `key` already exists in self._node, we do the same operations as `get`, except
+        updating the node.val to new value.
+        
+        Otherwise, the following logic will be performed
+        
+        1. if the cache reaches its capacity, pop the least frequently used item. (*)
+        2. add new node to self._node
+        3. add new node to the DLinkedList with frequency 1
+        4. reset self._minfreq to 1
+        
+        (*) How to pop the least frequently used item? Two facts:
+        
+        1. we maintain the self._minfreq, the minimum possible frequency in cache.
+        2. All cache with the same frequency are stored as a DLinkedList, with
+           recently used order (Always append at head)
+          
+        Consequence? ==> The tail of the DLinkedList with self._minfreq is the least
+                         recently used one, pop it...
+        
+        :type key: int
+        :type value: int
+        :rtype: void
+        """
+        if self._capacity == 0:
+            return
+        
+        if key in self._node:
+            node = self._node[key]
+            self._update(node)
+            node.val = value
+        else:
+            if self._size == self._capacity:
+                node = self._freq[self._minfreq].pop()
+                del self._node[node.key]
+                self._size -= 1
+                
+            node = Node(key, value)
+            self._node[key] = node
+            self._freq[1].append(node)
+            self._minfreq = 1
+            self._size += 1
+
+############################################
+# 1626. Best Team With No Conflicts
+# 31JAN23
+############################################
+#looks like dp still...
+class Solution:
+    def bestTeamScore(self, scores: List[int], ages: List[int]) -> int:
+        '''
+        we want to make a basketball team, of size n such that the sum of scores on the players on the team is maximized
+        however, we cannot have conflicts
+            a younger player, cannot have a player that has a STRICTLY higher score than an older player
+            a conflict does not occur between players of the same age
+            
+        sort players by age and break ties by their score
+        if you choose to include a player, can only choose players wiith at least the score later on
+        double sort
+        '''
+        entries = []
+        for score,age in zip(scores,ages):
+            entries.append((score,age))
+            
+        #sort on increasing age and increasing score
+        #younger players cannot have a high score than an older player
+        entries.sort(key = lambda x: (x[1],x[0]))
+        
+        team = 0
+        min_score = float('-inf')
+        
+        for score,age in entries:
+            if score >= min_score:
+                min_score = score
+                team += score
+        print(entries)
+        
+        return team
+
+#come onnnnn, top down fails!!
+class Solution:
+    def bestTeamScore(self, scores: List[int], ages: List[int]) -> int:
+        '''
+        we want to make a basketball team, of size n such that the sum of scores on the players on the team is maximized
+        however, we cannot have conflicts
+            a younger player, cannot have a player that has a STRICTLY higher score than an older player
+            a conflict does not occur between players of the same age
+            
+        sort players by age and break ties by their score
+        if you choose to include a player, can only choose players wiith at least the score later on
+        double sort
+        
+        then it becomes dp
+        dp(allowed_score,index)
+        then we just take or we don't take, then take the maximum so get the highest score
+        '''
+        entries = []
+        for age,score in zip(ages,scores):
+            entries.append((age,score))
+            
+        #sort on increasing age and increasing score
+        #younger players cannot have a high score than an older player
+        entries.sort(key = lambda x: (x[0],x[1]))
+        
+        memo = {}
+        N = len(entries)
+        
+        print(entries)
+        
+        def dp(allowed_score,i):
+            if i >= N:
+                return 0
+            if (allowed_score,i) in memo:
+                return memo[(allowed_score,i)]
+            
+            #take or don't take
+            ans = float('-inf')
+            #take
+            if entries[i][1] >= allowed_score:
+                ans = max(ans,entries[i][1] + dp(entries[i][1], i + 1))
+                
+            #don't take
+            dont_take = dp(allowed_score,i+1)
+            ans = max(ans,dont_take)
+            memo[(allowed_score,i)] = ans
+            return ans
+        
+        return dp(-1,0)
+
+
+#i also could have defined the state as prev, player, and curr player
+class Solution:
+    def bestTeamScore(self, scores: List[int], ages: List[int]) -> int:
+        '''
+        we want to make a basketball team, of size n such that the sum of scores on the players on the team is maximized
+        however, we cannot have conflicts
+            a younger player, cannot have a player that has a STRICTLY higher score than an older player
+            a conflict does not occur between players of the same age
+            
+        sort players by age and break ties by their score
+        if you choose to include a player, can only choose players wiith at least the score later on
+        double sort
+        
+        then it becomes dp
+        dp(prev,index)
+        keep track of the current index on the player that we are on as well as the previous
+        then we just take or we don't take, then take the maximum so get the highest score
+        '''
+        entries = []
+        for age,score in zip(ages,scores):
+            entries.append((age,score))
+            
+        #sort on increasing age and increasing score
+        #younger players cannot have a high score than an older player
+        entries.sort(key = lambda x: (x[0],x[1]))
+        
+        memo = {}
+        N = len(entries)
+        
+        
+        def dp(prev,i):
+            if i >= N:
+                return 0
+            if (prev,i) in memo:
+                return memo[(prev,i)]
+            
+            #if prev is -1, meaning the we ar are on the first player
+            #of if we can take this play
+            if prev == -1 or entries[i][1] >= entries[prev][1]:
+                take = entries[i][1] + dp(i,i+1)
+                dont_take = dp(prev,i+1)
+                ans = max(take,dont_take)
+                memo[(prev,i)] = ans
+                return ans
+            #if we don't have the choice
+            else:
+                dont_take = dp(prev,i+1)
+                memo[(prev,i)] = dont_take
+                return dont_take
+        
+        return dp(-1,0)
+
+#thank fucking god
+class Solution:
+    def bestTeamScore(self, scores: List[int], ages: List[int]) -> int:
+        '''
+        if we observe that after sorting on age, then on score
+        we are looking for the a non-decreasing subsequence that that has the maximum score
+        this becomes the lognest increasing subsequence problem
+        
+        but try to convert this to bottom up
+        '''
+        entries = []
+        for age,score in zip(ages,scores):
+            entries.append((age,score))
+            
+        #sort on increasing age and increasing score
+        #younger players cannot have a high score than an older player
+        entries.sort(key = lambda x: (x[0],x[1]))
+        
+        N = len(entries)
+        
+        dp = [[0]*(N+1) for _ in range(N+1)]
+        
+        #start fomr base case
+        ans = 0
+        for i in range(N,-1,-1):
+            for j in range(i,-1,-1):
+                if i == N:
+                    dp[j][i] = 0
+                
+                elif entries[i][1] >= entries[j][1]:
+                    take = entries[i][1] + dp[i][i+1]
+                    dont_take = dp[j][i+1]
+                    dp[j][i] = max(take,dont_take)
+                
+                else:
+                    dont_take = dp[j][i+1]
+                    dp[j][i] = dont_take
+                ans = max(ans,dp[j][i])
+        
+        return ans        
+
+class Solution:
+    def bestTeamScore(self, scores: List[int], ages: List[int]) -> int:
+        '''
+        after sorting by age and then by score, this then becomes #309 Longest Increasing Subsequence
+        where we want to find a non-decreaing subsequence that hax the maximum score
+        
+        state:
+            dp(i) be the maximum score posible by looking at all players up to i
+            each dp(i) is just the score of the player itself
+            then dp(i) = {
+                for j in between 0 and i - 1:
+                    if score of pair at i >= score of pair at j:
+                        #extend the score
+                        dp(i) = max(dp(i), score of pair at i + dp(j))
+            }
+            take max for all i
+            #or just max along the way
+            
+            
+        '''
+        entries = []
+        for age,score in zip(ages,scores):
+            entries.append((age,score))
+            
+        #sort on increasing age and increasing score
+        #younger players cannot have a high score than an older player
+        entries.sort(key = lambda x: (x[0],x[1]))
+        
+        N = len(entries)
+        
+        dp = [0]*N
+        
+        for i in range(N):
+            dp[i] = entries[i][1]
+        
+        for i in range(N):
+            for j in range(i-1,-1,-1):
+                if entries[i][1] >= entries[j][1]:
+                    dp[i] = max(dp[i], entries[i][1] + dp[j])
+        
+        return max(dp)
+
+#########################################
+# 1908. Game of Nim
+# 31JAN23
+#########################################
+#yes! you need to backtrack to examine all possible game states
+#just take from divisor game
+class Solution:
+    def nimGame(self, piles: List[int]) -> bool:
+        '''
+        alice and bob are playing, with alice starting first
+        a turn consists of a player removing any positive number of stones from a non empty piile
+        the first player who cannot make a move loses, and the other player wins
+        
+        simulate and try all possible moves
+        
+        if sum of piles == 1, alice must win
+        just memoize game states as tuples???
+        
+        examine all possible moves
+        '''
+        memo = {}
+        N = len(piles)
+        
+        def dp(state):
+            if sum(state) == 1:
+                return True
+            if tuple(state) in memo:
+                return memo[tuple(state)]
+            ans = False
+            for i in range(N):
+                if state[i] > 0:
+                    for play in range(1,state[i]+1):
+                        state[i] -= play
+                        ans = ans or not dp(state)
+                        #backtrack?
+                        state[i] += play
+                    
+            memo[tuple(state)] = ans
+            return ans
+        
+        return dp(piles)            
+
+#another state repsentation using sorted state as key
+class Solution:
+    def nimGame(self, piles: List[int]) -> bool:
+        '''
+        instead of checking if sum of piles == 1,
+        check if sum == 0, which is a losing positino for Alice
+        insteaf of using all game states, we only need to check the sorted game states
+        example [2,1,2], [2,2,1] and [1,2,2] are all equivalent states
+        '''
+        memo = {}
+        N = len(piles)
+        
+        def dp(state):
+            #alice cannot win here
+            if sum(state) == 0:
+                return False
+            
+            key = "-".join(map(str,state))
+            
+            if key in memo:
+                return memo[key]
+            
+            #examine all movies
+            for i in range(N):
+                for play in range(1,state[i]+1):
+                    state[i] -= play
+                    
+                    #need next state 
+                    next_state = sorted(state)
+                    
+                    #if we cant lose, we must win
+                    if not dp(next_state):
+                        memo[key] = True
+                        return True
+                    
+                    #backtrack
+                    state[i] += play
+            
+            return False
+        
+        
+        return dp(piles)
+
+#nim game formalized
+class Solution:
+    def nimGame(self, piles: List[int]) -> bool:
+        '''
+        charles bouton in 1901
+        turns out the answer is the nim sum of an array
+        i.e bitwise or with all the numbers in piles
+        
+        each state is can be defined as having nim sum of 0 or nim sum not 0
+        
+        game can only be in one of two states
+            zero nim sum
+            non zero nim sum
+        
+        if current state has nim sum of zero, then the current player has a move to go into a state of zero nim sum
+        a player with a zero nim sum current can only move to a non zero nim sum state
+            that from a zero nim-sum state, a player can move only to a non-zero nim-sum state
+            note, zero stones is nim sum zero
+            
+        this means that a player who stats with a non zero nim sum state will always find themselves in a non zero nim sum state after the next players turn
+        i.e stating frim non zero num, results in a win
+        
+        in contrast, the players who start the game IN a zero nim sum state will always find themses in a zero nim sum state
+        and thus will lost the game, recall zero nim sum results in a loss
+        
+        Theorem
+        The winning strategy in the game of nim is to finish every move with a zero nim-sum state.
+        a non zero num sum is a winning state, and a zero nim sum is a losing state
+        
+        SEND game to zero nim-sum state
+        
+        From a winning state, there is always at least one move available to reach a losing state. Similarly, from a losing state, all the moves lead to a winning state. So, if the game starts in a winning state, the first person is also the last to move. The game ends with the first player winning it. If the game begins in a losing state, it ends in a losing state
+        
+        lemma 1: If a player is in a zero nim-sum state, they can move only to a non-zero nim-sum state.
+        
+        
+        '''
+        nim_sum = 0
+        for p in piles:
+            nim_sum = nim_sum ^ p
+        
+        #must be in a non zero nim sum state to start with
+        #thinking like a graph
+        #zero nim sum can move onlt to non zero nim sum
+        #non zero nim sum can move to non zero nim or zero nim sum
+        #more options with non zero, less options with zero nim sum
+        return nim_sum != 0 
