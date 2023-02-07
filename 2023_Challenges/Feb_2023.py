@@ -342,3 +342,342 @@ class Solution:
                     captured_islands += is_Captured
                     
         return captured_islands 
+
+#######################################
+# 6. Zigzag Conversion (REVISTED)
+# 03FEB23
+#######################################
+class Solution:
+    def convert(self, s: str, numRows: int) -> str:
+        '''
+        zigzag pattern goes top to bottom
+        left to right, but with alternatinv top and bottom
+        
+        allocate num rows as list
+        then walk the zigzag pattern in the rows
+        
+        then rebuild
+        '''
+        #cornercase
+        if numRows == 1:
+            return s
+        N = len(s)
+        rows = [[] for _ in range(numRows)]
+        
+        i = 0
+        row_ptr = 0
+        curr_direction = 1 #initially going down
+        #we only reverse direction on row_ptr == 0 and row_ptr == numRows
+        
+        while i < N:
+            
+            if row_ptr == 0:
+                curr_direction = 1
+            if row_ptr == numRows - 1:
+                curr_direction = -1
+            
+            rows[row_ptr].append(s[i])
+            row_ptr += curr_direction
+            i += 1
+            
+        ans = ""
+        for r in rows:
+            ans += "".join(r)
+        
+        return ans
+
+#official solution
+#solving for rows and columns, by examing secitons
+class Solution:
+    def convert(self, s: str, numRows: int) -> str:
+        '''
+        we can make a 2d grid, then walk the zig zag pattern,
+        we know there are at least numRows. but how many columns?
+        there will be at leas (numRows -1) columns in each sectino
+        columns = ceil(n / (2 * numRows - 2)) * (numRows - 1) 
+        
+        grid is : numRows×numCols, where 
+        numCols = ceil(n / (2 * numRows - 2)) * (numRows - 1)
+        
+        each sectino at most numRows + numRows - 2 characters
+        sections =  ceil(n / (2 * numRows - 2))
+
+
+        we first do down the column
+        back up two rows, then over 1 column
+        then diagonally up, then just repeat
+        
+
+        '''
+        if numRows == 1:
+            return s
+        
+        N = len(s)
+        sections = ceil(N / (2* numRows - 2.0))
+        numCols = sections*(numRows-1)
+        
+        grid = [[" "]*(numCols) for _ in range(numRows)]
+        
+        curr_row,curr_col = 0,0
+        i = 0
+        
+        while i < N:
+            #move down
+            while curr_row < numRows and i < N:
+                grid[curr_row][curr_col] = s[i]
+                curr_row += 1
+                i += 1
+            
+            #back up 2 rows, then 1 over
+            curr_row -= 2
+            curr_col += 1
+            
+            #up 1, right 1
+            while curr_row > 0 and curr_col < numCols and i < N:
+                grid[curr_row][curr_col] = s[i]
+                i += 1
+                curr_row -= 1
+                curr_col += 1
+            
+        answer = ""
+        for row in grid:
+            for ch in row:
+                if ch != " ":
+                    answer += ch
+        
+        return answer
+
+##################################
+# 567. Permutation in String (REVISTED)
+# 05FEB23
+##################################
+#count hashmap comparsion, could also have don't sorting
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+         return true if s2 contains a permutation of s1, or false otherwise.
+        first part of the question is misleadin
+        s1's permutations must be a substring in s2
+        
+        permutation if s1 must exist as a substring in s2
+        
+        checkk all substrings of length(s1)
+        but define count mapp first
+        '''
+        
+        counts_s1 = Counter(s1)
+        N = len(s1)
+        M = len(s2)
+        
+        for i in range(M-N+1):
+            substring = s2[i:i+N]
+            #get count map
+            temp = Counter(substring)
+            if temp == counts_s1:
+                return True
+        
+        return False
+
+#sliding window is the true solution
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        this stems from the fact the we don't neeed to generate a new hashmap for every substring in s2
+        we can create the hashmap once for the first window in s2
+        then later when we slide in the window, we remove a char and add a char
+        
+        tricks:
+            we can loop over the entire string s2 and check if current char in counter
+            then we need to make sure the last character is removed
+                we do this by first checking if we have at least len(s1), then decrement
+                as soon as all the counts hit zero, we have a valid perm in s2
+        '''
+        counts_s1 = Counter(s1)
+        
+        for i in range(len(s2)):
+            #remove
+            if s2[i] in counts_s1:
+                counts_s1[s2[i]] -= 1
+            #add back in
+            if i >= len(s1) and  s2[i-len(s1)] in counts_s1:
+                counts_s1[s2[i-len(s1)]] += 1
+            
+            if all([counts_s1[i] == 0 for i in counts_s1]):
+                return True
+        
+        return False
+
+
+###############################################
+# 438. Find All Anagrams in a String (REVISTED)
+# 05FEB23
+###############################################
+#similart to #567
+class Solution:
+    def findAnagrams(self, s: str, p: str) -> List[int]:
+        ans = []
+        
+        #get inital counts for 0
+        counts_p = Counter(p)
+        N = len(s)
+        
+        for i in range(N):
+            if s[i] in counts_p:
+                counts_p[s[i]] -= 1
+                
+            #add back in
+            if i >= len(p) and s[i-len(p)] in counts_p:
+                counts_p[s[i - len(p)]] += 1
+
+                
+            #zero counts meanins this is a valid index
+            if all([count == 0 for ch,count in counts_p.items()]):
+                #want starting index
+                ans.append(i-len(p)+1)
+        
+        return ans
+
+
+###################################################
+# 1105. Filling Bookcase Shelves
+# 05FEB23
+###################################################
+#fuccckkk, close one
+#almost had it
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        '''
+        return the minimum possible height that the total boooksehlf can be after placing shelves in this manner;
+            * choose some of the books to place on this shelf such that the sum of their thickenss <= shelfWidth
+            * then build another level of the sehlf of the bookcase so that the ttal heigh of the bookcase increase by the maximum height 
+                of the books at this level
+            * repeat until there are no more books to place
+            
+        dp using prefixes
+        dp(i) will be the anser to the problem for books[i:]
+        
+        so we want dp(len(books))
+        
+        dp(i) be the min height needed to fit books[i:]
+        if i < 0:
+            return float('inf')
+            
+        if the book we are about to add fits on the shelfWidth and its height is bounded by the largest book on the current shelf
+        then dp(i) = dp(i-1)
+        
+        otherwise we need to start a new row, in which case the height increases by the largest book on this current row
+        dp(i) = dp(i-1) + max(of largest book on this row)
+        
+        keep track of idex, laregest book on shelf, and currshelfwidth
+        '''
+        memo = {}
+        N = len(books)
+        
+        def dp(i,largest_height,curr_row):
+            if i < 0:
+                return largest_height
+            if (i,largest_height,curr_row) in memo:
+                return memo[(i,largest_heigh,curr_row)]
+            
+            first = float('inf')
+            second = float('inf')
+            #1. if we can fit this book on the current row
+            if books[i][0] + curr_row <= shelfWidth:
+                first = dp(i-1,max(largest_height, books[i][1]),books[i][0] + curr_row )
+            #2. we have to make a new row 
+            if books[i][0] + curr_row > shelfWidth:
+                second = largest_height + dp(i-1,books[i][1],0)
+            #take the minimum
+            ans = min(first,second)
+            memo[(i,largest_height,curr_row)] = ans
+            return ans
+        
+        return dp(N-1,0,0)
+
+
+#########################################
+# 1470. Shuffle the Array
+# 06FEB23
+##########################################
+#just get i and i + n
+class Solution:
+    def shuffle(self, nums: List[int], n: int) -> List[int]:
+        '''
+        for and index i, we want [i,i + n]
+        '''
+        ans = []
+        for i in range(n):
+            ans.append(nums[i])
+            ans.append(nums[i+n])
+        
+        return ans
+
+class Solution:
+    def shuffle(self, nums: List[int], n: int) -> List[int]:
+        '''
+        pre allocate results array
+        '''
+        ans = [0]*(2*n)
+        
+        for i in range(n):
+            ans[2*i] = nums[i]
+            ans[2*i + 1] = nums[i+n]
+        
+        return ans
+            
+class Solution:
+    def shuffle(self, nums: List[int], n: int) -> List[int]:
+        '''
+        O(1) solution uses bit shift operators
+        intuition:
+            the largest value in nums array is 10**3, which is 1111101000 in binary
+            each element would take at most 10 bits in a 32 bit interger
+                the remaining bits are 0 and left unused
+            
+            this suggests the diea that in the remaining emptyy unused bits we can store extra inforamtion
+            one possible solutino is toring two numbers togehter
+                1 in the first 10, the other in the next 10
+            in bit config
+                00[bits for fist num].[bits in second num]
+            
+           
+         idea store the last n numbers with thefirt n numbers in the nums array
+            i.e the first n numbers will have their correspsoing first part and second part in one 32 signed in
+            then we pass a second time, pulling apart the numbers in the spots 0 to n
+            and place them at their respective spots (2*i and 2*i + 1)
+            
+        storing, two numbers together
+        let a be the first number, and b the second number
+        e can left shift b by 1- bits and take bitwise OR with a
+            when we take any bitwise-OR with -, it results in the same bit
+            
+        the first 10 bits in are 0, so when we take bitwise OR, the result's first 10 bits will have a's 10 bits
+        and the next 1- bits of a are 0, so the results next 10 will stroed b's 10 bits there
+        
+        the final result has bits of both a and b
+        i.e, rigt shift, and take XOR
+        
+        extracting
+            the new int will have a in the first 10 bits, and b in the second 10 bits, so can we pull it apart
+            we can retreive it by taking bitwise AND with an all ones in the first 1- bits
+            i.e num & 000000000111111111
+        '''
+        #for the first n numbers, encode them first and second
+        #first 10 bits is the second number, next 10 bits is the first number
+        for i in range(n,2*n):
+            second_num = nums[i] << 10
+            nums[i-n] = nums[i-n] | second_num
+        
+        #get the 1s mask in the first 10 bit position
+        mask = (2 << 9) - 1
+        #we start by putting all numbers for the end
+        #i.e start fomr the end of the left half, if we started from the front of the left half, we might have over-written some of the number
+        for i in range(n-1,-1,-1):
+            second_num = nums[i] >> 10
+            first_num = nums[i] & mask
+            #put into position starting from end
+            nums[2*i + 1] = second_num
+            nums[2*i] = first_num
+        
+        return nums
+            
