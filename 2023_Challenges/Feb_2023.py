@@ -594,6 +594,107 @@ class Solution:
         
         return dp(N-1,0,0)
 
+#alsmot had it, in the case, out curr_row goes negative, just return a large int
+#otherwise its knapsack
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        memo = {}
+        N = len(books)
+        
+        def dp(idx: int, curr_height: int, curr_width: int):
+            if curr_width < 0:
+                return float("inf")
+
+            if idx == len(books):
+                return curr_height
+            
+            if (idx,curr_height,curr_width) in memo:
+                return memo[(idx,curr_height,curr_width)]
+
+            thickness, height = books[idx]
+            same_shelf = dp(idx + 1, max(curr_height, height), curr_width - thickness)
+            change_shelf = curr_height + dp(idx + 1, height, shelfWidth - thickness)
+            ans = min(same_shelf, change_shelf)
+            memo[(idx,curr_height,curr_width)] = ans
+            return ans
+        
+        
+        return dp(0, 0, shelfWidth)
+
+#similar to line spacing alignment problem for MS word
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        '''
+        instead of keeping three states (index,curr_heigh,and curr width)
+        we can just use i
+        dp(i) represents the the min height using books [:i]
+        then we need to just examine j for [i,len(books)] and decide what this answer should be
+        we can only update if adding this book doesn't exceed the shelfwidth
+        '''
+        N = len(books)
+        memo = {}
+        
+        def dp(i):
+            if i == N:
+                return 0
+            if i in memo:
+                return memo[i]
+            res = float('inf')
+            curr_row_width = 0
+            curr_max_height = 0
+            #try all j after i
+            for j in range(i,N):
+                jth_thickness, jth_height = books[j]
+                #if we can fit this book on this row
+                if curr_row_width + jth_thickness <= shelfWidth:
+                    curr_row_width += jth_thickness
+                    #update max height
+                    curr_max_height = max(curr_max_height,jth_height)
+                    #update res
+                    res = min(res,curr_max_height + dp(j+1))
+                #we have to broek, eitherwise we cant fit on this shelf, because its books[:i]
+                else:
+                    break
+                    
+            memo[i] = res
+            return res
+        
+        
+        return dp(0)
+
+#rewriting bottom up
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        N = len(books)
+        dp = [0]*(N+1)
+        
+        for i in range(N-1,-1,-1):
+            if i == N:
+                dp[i] = 0
+            else:
+                res = float('inf')
+                curr_row_width = 0
+                curr_max_height = 0
+                #try all j after i
+                for j in range(i,N):
+                    jth_thickness, jth_height = books[j]
+                    #if we can fit this book on this row
+                    if curr_row_width + jth_thickness <= shelfWidth:
+                        curr_row_width += jth_thickness
+                        #update max height
+                        curr_max_height = max(curr_max_height,jth_height)
+                        #update res
+                        res = min(res,curr_max_height + dp[j+1])
+                    #we have to broek, eitherwise we cant fit on this shelf, because its books[:i]
+                    else:
+                        break
+                
+                dp[i] = res
+        
+        return dp[0]
+            
+
+
 
 #########################################
 # 1470. Shuffle the Array
