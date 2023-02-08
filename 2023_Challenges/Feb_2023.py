@@ -781,4 +781,136 @@ class Solution:
             nums[2*i] = first_num
         
         return nums
+
+#################################
+# 904. Fruit Into Baskets
+# 07FEB23
+#################################
+#closeeeeee
+class Solution:
+    def totalFruit(self, fruits: List[int]) -> int:
+        '''
+        we have row of trees, with each tree containing 1 fruit
+            each fruit is a unique number
+        we only have two baskets tht can only hold a single type of fruit
+        we can start from any tree of our choice
+            we must pick exactly one freuit from every t ree while moving to the right
+        one we reach a tree that we cannot fit in any of my baskets, we must stop
+        
+        return maximum number of fruites i can pick
+        
+        sliding window!
+        size of the window is the number of fruits, but we only want to have 2 unique fruits in that window
+        
+        '''
+        N = len(fruits)
+        in_basket = set()
+        max_fruits = 0
+        
+        right = 0
+        
+        while right < N:
+            #if we need to exapnd
+            left = right
+            while right < N and len(in_basket) != 2:
+                in_basket.add(fruits[right])
+                right += 1
+            #we have a valid answer here
+            max_fruits = max(max_fruits,right - left + 1)
             
+            #reset baskset
+            while left < N and len(in_basket) > 2:
+                in_basket.remove(fruits[left])
+                left += 1
+            #advance
+            right += 1
+            
+        
+        return max_fruits
+
+#we need to keep track of the counts in the basket, just a set won't work
+class Solution:
+    def totalFruit(self, fruits: List[int]) -> int:
+        '''
+        almost had it, 
+        instead of keeping a set to show the basket, we need to use a count map
+        then expand until our size of count map becomes > 2
+        then remove
+        '''
+        basket = Counter()
+        left = 0
+        right = 0
+        N = len(fruits)
+        ans = 0
+        
+        while right < N:
+            #add to basket
+            basket[fruits[right]] += 1
+            right += 1 
+            
+            #if we have too many fruits
+            while len(basket) > 2:
+                #remove the left side fuite
+                basket[fruits[left]] -= 1
+                #if this has a zero count, delete it
+                if basket[fruits[left]] == 0:
+                    del basket[fruits[left]]
+                
+                #advance 
+                left += 1
+            
+            #valid subarray where sliding window is in the constraint
+            ans = max(ans, right - left)
+        
+        return ans
+
+class Solution:
+    def totalFruit(self, fruits: List[int]) -> int:
+        '''
+        unoptimized sliding window
+        anchor the left side of the sliding window, try all left in range(N)
+        then we try to expand each possible sliding window
+        
+        we can stop early if the fruit we are trying to add is  not in the current basket, and we are already at capacity
+        '''
+        ans = 0
+        N = len(fruits)
+        
+        for i in range(N):
+            basket = set()
+            j = i
+            
+            while j < N:
+                if fruits[j] not in basket and len(basket) == 2:
+                    break
+                
+                basket.add(fruits[j])
+                j += 1
+            
+            ans = max(ans, j - i) #no plus 1 becase we have gone one more beyong the window
+            
+        return ans
+
+class Solution:
+    def totalFruit(self, fruits: List[int]) -> int:
+        # Hash map 'basket' to store the types of fruits.
+        basket = {}
+        left = 0
+        
+        # Add fruit from the right index (right) of the window.
+        for right, fruit in enumerate(fruits):
+            basket[fruit] = basket.get(fruit, 0) + 1
+
+            # If the current window has more than 2 types of fruit,
+            # we remove one fruit from the left index (left) of the window.
+            if len(basket) > 2:
+                basket[fruits[left]] -= 1
+
+                # If the number of fruits[left] is 0, remove it from the basket.
+                if basket[fruits[left]] == 0:
+                    del basket[fruits[left]]
+                left += 1
+        
+        # Once we finish the iteration, the indexes left and right 
+        # stands for the longest valid subarray we encountered.
+        return right - left + 1
