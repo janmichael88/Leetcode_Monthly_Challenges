@@ -914,3 +914,90 @@ class Solution:
         # Once we finish the iteration, the indexes left and right 
         # stands for the longest valid subarray we encountered.
         return right - left + 1
+
+##################################
+# 45. Jump Game II
+# 08FEB23
+##################################
+#push dp
+class Solution:
+    def jump(self, nums: List[int]) -> int:
+        '''
+        first of all, its always possible to reach nums[n-1]
+        this is dp
+        if dp(i) represents the minimum jumps needed to get to n-1
+        then its just 1 more step away,
+        so try all jumps
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i):
+            if i == N-1:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            ans = float('inf')
+            for jump in range(1,nums[i] + 1):
+                if i + jump < N:
+                    child = 1 + dp(i+jump)
+                    ans = min(ans,child)
+            
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+
+class Solution:
+    def jump(self, nums: List[int]) -> int:
+        '''
+        there exists a greedy solution
+        subtelties
+            since we are guaranteed to reach the last index, the starting range of each jump is always larger than the previous jump
+        inutition
+            we jump as far as we can from the ith position
+            it doesn't make sense for us to go to a position < nums[i] + nums[i]
+            greedy approach that tries to reach each index using the least number of jumps
+        
+        need to keep track of the furthest starting index of the current jump
+        and the furhterst reachable iundex from the current jump
+        
+        once we have finished iterating over the range of the current jump (we reach index end)
+        the next step is to continue iterating over the reachable indexes that are larger than end,
+        which is represented as [end+1,far]
+        
+        in short, we can reach an index using j umps, we will never consider reaching it using more than j jumps
+        Algorithm
+            Initialize curEnd = 0, curFar = 0 and the number of jumps as answer = 0.
+
+            Interate over nums, for each index i, the farthest index we can reach from i is i + nums[i]. We update curFar = max(curFar, i + nums[i]).
+
+            If i = curEnd, it means we have finished the current jump, and should move on to the next jump. Increment answer, and set curFar = curEnd as the furthest we can reach with the next jump. Repeat from step 2.
+            
+        important part is assigning curr_end to curr_far to indicate the finishing of a current jump
+        
+        The main idea is based on greedy. Let's say the range of the current jump is [curBegin, curEnd], curFarthest is the farthest point that all points in [curBegin, curEnd] can reach. Once the current point reaches curEnd, then trigger another jump, and set the new curEnd with curFarthest, then keep the above steps, as the following:
+
+This is an implicit bfs solution. i == curEnd means you visited all the items on the current level. Incrementing jumps++ is like incrementing the level you are on. And curEnd = curFarthest is like getting the queue size (level size) for the next level you are traversing.
+        '''
+        N = len(nums)
+        jumps = 0
+        curr_end = 0
+        curr_furthest = 0
+        
+        for i in range(N):
+            #if we have gotten to the end, we know we can get here using this number of jumps
+            if i == N-1:
+                return jumps
+            #find the furthest range for this position
+            curr_furthest = max(curr_furthest, i + nums[i])
+
+            #if on this jump we reach the end, we need to use a new jump
+            if i == curr_end:
+                jumps += 1
+                curr_end = curr_furthest
+                
+        return jumps
+
+        
