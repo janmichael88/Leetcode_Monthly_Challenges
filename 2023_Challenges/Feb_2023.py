@@ -1000,4 +1000,79 @@ This is an implicit bfs solution. i == curEnd means you visited all the items on
                 
         return jumps
 
+##########################################
+# 2306. Naming a Company
+# 09FEB23
+###########################################
+#TLE
+class Solution:
+    def distinctNames(self, ideas: List[str]) -> int:
+        '''
+        brute force is to examin all (i,j) pairs
+        '''
+        set_ideas = set(ideas)
+        N = len(ideas)
+        names = set()
         
+        for i in range(N):
+            for j in range(N):
+                if i != j:
+                    word1 = list(ideas[i])
+                    word2 = list(ideas[j])
+                    #swap
+                    word1[0],word2[0] = word2[0],word1[0]
+                    #join
+                    if  "".join(word1) not in set_ideas and "".join(word2) not in set_ideas:
+                        cand = "".join(word1)+" "+"".join(word2)
+                        names.add(cand)
+        
+        return len(names)
+
+class Solution:
+    def distinctNames(self, ideas: List[str]) -> int:
+        '''
+        hints
+            * group ideas sharing same suffix (all chars except the first), and notice that a pair of ideas from the same group is invalid 
+            * but what is they come from differnt groups?, they are valid!
+            * the first letter of the idea in the first group must not be the first letter of an idea in the second group
+            * effeciiently cound the valid pairings for an idea of we already know how many ideas starting with letter x are within a group that doest no contain any ideas starting with letter y for all letters a and y
+            
+        notice, if two words are paird together, and have the same first letter, their concatenation will not yeilf a valid campany name
+        inutition:
+            in a hashmap, grou suffixes together key'd by their first letter
+        
+        if we have two starting letters x and y
+            and a suffix is in both suffixes for x and y, swapping cannot result in a valid compnay name
+            it must be the case then that the suffix must not be in either groups with first letter x and first letter y
+            
+        therefaire we need to try every pair of letters (a through z and find the unique suffixes)
+        the number of unique suffixes in the two groups indicates one valid pairing, we can swap the pairing to get another one
+        so times 2
+        '''
+        #group suffixes by index
+        groups = defaultdict(set)
+        
+        for word in ideas:
+            suffix = word[1:]
+            first_letter = word[0]
+            groups[first_letter].add(suffix)
+        
+        valid_pairings = 0
+        for i in range(26):
+            for j in range(i+1,26):
+                first_letter = chr(ord('a') + i)
+                second_letter = chr(ord('a') + j)
+                #using set intserction notation
+                
+                #get nummber of common suffixes
+                common_suffixes = len(groups[first_letter] & groups[second_letter])
+                
+                #unique for each group
+                count_first_unique = len(groups[first_letter]) - common_suffixes
+                count_second_unique = len(groups[second_letter]) - common_suffixes
+                
+                #cartesian product but twice
+                valid_pairings += 2*count_first_unique*count_second_unique
+        
+        return valid_pairings
+                
