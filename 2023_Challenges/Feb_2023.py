@@ -1075,4 +1075,229 @@ class Solution:
                 valid_pairings += 2*count_first_unique*count_second_unique
         
         return valid_pairings
+
+#####################################
+# 1162. As Far from Land as Possible
+# 10FEB23
+#####################################
+#TLE
+class Solution:
+    def maxDistance(self, grid: List[List[int]]) -> int:
+        '''
+        0 is water, 1 is land
+        find a water cell such that its distance to the nearest land cell is maximized
+        if no such land or water exists, return -1
+        use manhat distance
+        
+        brute force, for all zero cells, get distances for all ones cells
+            for this zero cell, find the distances to all ones, then take the min distance
+            update globally on the max
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        zeros = []
+        ones = []
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    ones.append((i,j))
+                else:
+                    zeros.append((i,j))
+        
+        ans = 0
+        for zero in zeros:
+            min_dist = float('inf')
+            for one in ones:
+                #get dist
+                curr_dist = abs(zero[0] - one[0]) + abs(zero[1] - one[1])
+                min_dist = min(min_dist,curr_dist)
+            
+            ans = max(ans,min_dist)
+        
+        if ans == 0 or ans == float('inf'):
+            return -1
+        else:
+            return ans if ans != float('inf') else -1
+
+#damn it
+class Solution:
+    def maxDistance(self, grid: List[List[int]]) -> int:
+        '''
+        bfs for each one cell
+        keep aux 2d array 
+            each (i,j) cell in this 2d array stored the maximum distance from a 1
+            keep seen set to mark each (i,j) cell
+            when we take a bfs step to a zero cell we have not visited, increment step count by 1 and update the max distance in the aux 2d array
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dists = [[-1]*cols for _ in range(rows)]
+        
+        q = deque([])
+        seen = set()
+        dirrs = [(0,1),(0,-1),(1,0),(-1,0)]
+        
+        #q up
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    q.append((i,j,0))
+                    
+        while q:
+            curr_x,curr_y,steps = q.popleft()
+            #visit
+            seen.add((curr_x,curr_y))
+            for dx,dy in dirrs:
+                neigh_x = curr_x + dx
+                neigh_y = curr_y + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #is zero and unvisited
+                    if grid[neigh_x][neigh_y] == 0 and (neigh_x,neigh_y) not in seen:
+                        #add to q
+                        q.append((neigh_x,neigh_y,steps+1))
+                        #maximize
+                        dists[neigh_x][neigh_y] = max(steps+1, dists[neigh_x][neigh_y])
+        
+        #traverse and maximize
+        ans = -1
+        for row in dists:
+            ans = max(ans,max(row))
+        
+        return ans
+
+#multi point bfs
+class Solution:
+    def maxDistance(self, grid: List[List[int]]) -> int:
+        '''
+        bfs from each one cell and get the maximum number of levels
+        because we bfs from a 1 to a zero, we know that this is the minimum number of steps from any 1 to a zero
+        once we have coverd all 0 cells, we return the number of levels we had to do bfs on to
+        inutition:
+            start backwards
+            
+           Essentially we will start with all the 1's, and at each step, we will iterate in all four directions (up, left, right, down) for each 1. 
+           The moment we reach a water cell 0, we can say that the number of steps we have taken so far is the minimum distance of this water cell from any land cell in the matrix. 
+           This way, we will iterate over the whole matrix until all cells are covered; the number of steps we would need to cover the last water cell is the maximum distance we need. 
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(0,1),(0,-1),(1,0),(-1,0)]
+        
+        visited = [[False]*cols for _ in range(rows)]
+        
+        
+        #push all land cells
+        q = deque([])
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    q.append((i,j))
+        
+
+        level = -1
+        #cant just do single point bfs
+        #need visibilty of currently iteration level i am on
+        while q:
+            N = len(q)
+            for _ in range(N):
+                curr_x,curr_y = q.popleft()
+                #mark
+                visited[curr_x][curr_y] = True
+                for dx,dy in dirrs:
+                    neigh_x = curr_x + dx
+                    neigh_y = curr_y + dy
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        #is zero and unvisited
+                        if grid[neigh_x][neigh_y] == 0 and not visited[neigh_x][neigh_y]:
+                            #add to q
+                            q.append((neigh_x,neigh_y))
+            level += 1
+        
+        return -1 if level == 0 else level
+
+class Solution:
+    def maxDistance(self, grid: List[List[int]]) -> int:
+        ROWS, COLS = len(grid), len(grid[0])
+        queue = deque()
+        
+        for r,c in product(range(ROWS), range(COLS)): # prepopulate BFS queue with sources
+            if grid[r][c]: queue.append((r,c))
+
+        if not queue or ROWS * COLS == len(queue): # no land or all land
+            return -1
+        
+        visited = set()
+        level = 0
+        while queue: # count number of BFS layers
+            for _ in range(len(queue)):
+                r,c = queue.popleft()
+                for dr,dc in (0,1),(1,0),(0,-1),(-1,0):
+                    nr,nc = r+dr,c+dc
+                    if ROWS > nr >= 0 <= nc < COLS and not grid[nr][nc] and (nr,nc) not in visited:
+                        visited.add((nr,nc))
+                        queue.append((nr,nc))
+            level += 1
+        return level - 1
+
+class Solution:
+    def maxDistance(self, grid: List[List[int]]) -> int:
+        '''
+        this is also the 01 matrix problem and can be solved using dp
+        
+        intuition:
+            for every 0 cell, we want the distance to the nearest land cell
+            check all four directions
+                take minimum of all four plus 1, if not a 1
+        to find min distance for a cell, we need min distance of all the neighbor cells
+        the catch is that we cannot have the min distance for all the neighbors in a single traversal
+        if we traverse top left to bottom ight, we will have the min distance of the upper left cells as those cells would have already been traverse
+        so we need two traversals
+            first traversal, we do top left to bottom right and store min distance for cells using disance fo cell sin the up and left direction
+            second from bottom right and top left storing min distance on the remaning right and down directions
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        max_distance = rows + cols + 1 #cannot be larger than this
+        dists = [[0]*cols for _ in range(rows)]
+        
+        #first pass check up and to the left, opposting of the goind down and to the right
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    dists[i][j] = 0
+                else:
+                    #if we can go up
+                    up = left = max_distance
+                    if i > 0:
+                        up = min(dists[i][j], dists[i-1][j] + 1,max_distance)
+                    #if we can left
+                    if j > 0:
+                        left = min(dists[i][j],dists[i][j-1] + 1,max_distance)
+                    dists[i][j] = min(up,left)
+        
+        
+        #go in revere
+        for i in range(rows-1,-1,-1):
+            for j in range(cols-1,-1,-1):
+                #check right and down
+                right = down = max_distance
+                if i < rows -1:
+                    right = min(dists[i+1][j] +1,max_distance) 
+                if j < cols - 1:
+                    down = min(dists[j][j+1] + 1,max_distance)
                 
+                dists[i][j] = min(right,down)
+        
+        print(dists)
+        
+        ans = -1
+        for i in range(rows):
+            for j in range(cols):
+                ans = max(ans,dists[i][j])
+        
+        return ans if ans != 0 else -1
