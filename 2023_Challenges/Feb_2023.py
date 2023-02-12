@@ -1301,3 +1301,109 @@ class Solution:
                 ans = max(ans,dists[i][j])
         
         return ans if ans != 0 else -1
+
+#########################################
+# 1129. Shortest Path with Alternating Colors
+# 11FEB23
+#########################################
+#close
+class Solution:
+    def shortestAlternatingPaths(self, n: int, redEdges: List[List[int]], blueEdges: List[List[int]]) -> List[int]:
+        '''
+        given two edges, where each edge is of a different color
+        return an array that gives the minimum path length from node 0 to node x, such that the edges in the shortest path alternate in color
+        bfs from the start node, and keep track of last color taken in path and the current distance
+        then just fill in the ans array
+        '''
+        red = defaultdict(list)
+        blue = defaultdict(list)
+        
+        for u,v in redEdges:
+            red[u].append(v) #its directed
+        
+        for u,v in blueEdges:
+            blue[u].append(v)
+        
+        seen = set()
+        ans = [float('inf')]*n
+        
+        q = deque([(0,0,None)]) #entry is (node,dist,lastedge taken)
+        #1 is red, 0 is blue
+        
+        while q:
+            curr_node,dist,last_edge = q.popleft()
+            #visit
+            seen.add((curr_node,last_edge))
+            #update
+            ans[curr_node] = min(dist,ans[curr_node])
+            #1. no edge taken yet, so check both red and blue
+            if not last_edge:
+                #red edge
+                for neigh in red[curr_node]:
+                    if (neigh,1) not in seen:
+                        q.append((neigh,dist+1,1))
+                #blue edge
+                for neigh in blue[curr_node]:
+                    if (neigh,0) not in seen:
+                        q.append((neigh,dist+1,0))
+            
+            #2.take red edge
+            if last_edge == 0:
+                for neigh in red[curr_node]:
+                    if (neigh,1) not in seen:
+                        q.append((neigh,dist+1,1))
+            
+            #take blue edge
+            if last_edge == 1:
+                for neigh in blue[curr_node]:
+                    if (neigh,0) not in seen:
+                        q.append((neigh,dist+1,0))
+        
+        for i in range(len(ans)):
+            if ans[i] == float('inf'):
+                ans[i] = -1
+        return ans
+                
+                
+
+class Solution:
+    def shortestAlternatingPaths(self, n: int, redEdges: List[List[int]], blueEdges: List[List[int]]) -> List[int]:
+        '''
+        recall bfs gives shortest distance at first occruence of visited
+        however, because we can reach a node via two differetn edges, each node can be visited at most twice
+            once through a red edge and another time through a blue edge
+        
+        we alsot may need to return to the same node using a different color edge than the one we used on the first visit
+        we can then procceed to cover other neighbors who not have been covered during the first visit due to similar color constraints
+        
+        algo:
+            create adj list (recall its directed), but in addition to the node to neigh relatino ship, store 0 for red and 1 for blue
+            the only catch here is that in the visited set for for (node,color) instead of just node
+            update unto ans array of size n
+        '''
+        adj_list = defaultdict(list)
+        for u,v in redEdges:
+            adj_list[u].append((v,0))
+        for u,v in blueEdges:
+            adj_list[u].append((v,1))
+        
+        seen_states = set()
+        ans = [float('inf')]*n
+        
+        q = deque([(0,0,-1)]) #entry is node, steps,and undefined state
+        
+        while q:
+            curr_node,steps,edge = q.popleft()
+            #update and add
+            seen_states.add((curr_node,edge))
+            ans[curr_node] = min(steps,ans[curr_node])
+            for neigh_node,neigh_edge in adj_list[curr_node]:
+                if (neigh_node,neigh_edge) not in seen_states and neigh_edge != edge:
+                    q.append((neigh_node,steps+1,neigh_edge))
+        
+        
+        for i in range(len(ans)):
+            if ans[i] == float('inf'):
+                ans[i] = -1
+        
+        return ans
