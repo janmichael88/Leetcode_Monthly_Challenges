@@ -1407,3 +1407,163 @@ class Solution:
                 ans[i] = -1
         
         return ans
+
+###################################################
+# 2477. Minimum Fuel Cost to Report to the Capital
+# 12FEB23
+####################################################
+#bleghhh, kinda close
+class Solution:
+    def minimumFuelCost(self, roads: List[List[int]], seats: int) -> int:
+        '''
+        ideas:
+            if i had unlimited capacity in each seat,
+            then the answer would be the sum of the lengths of all paths coming from zero
+            but i don't have unlimited capacity
+            
+            say we have a path length of size 5, and seat capacity 1
+            fuel would be sum of 1 to 5, this is the cruz of the problem
+            
+        two parts
+            1. find lengths of each path to zero
+            2. for each path, determine the minimum fuel needed (this problem in itself could be another LC problem)
+            3. for each subtree determin the min number of fuel needed,
+            
+        say path length if 5 and seats is 2
+        min fuel needed is 2 + 4 + 5
+        so for a given path length k, min fuek needed is:
+            sections = k // seats
+            fuel = 0
+            start = seats
+            for i in range(sections):
+                fuel += start*(i+1)
+            
+            #then we want the remainder, each person would have to travel the remainder
+            remainder = k % seats
+            for i in range(remainder):
+                fuel += n - i
+            return fuel
+        '''
+        graph = defaultdict(list)
+        for u,v in roads:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        #keep in mind, when i calculate min fuel, this is going to take up extra time
+        def calc_min_fuel(k,seats):
+            fuel = 0
+            sections,remainder = divmod(k,seats)
+            to_add = k
+            for i in range(sections):
+                fuel += to_add
+                to_add -= seats
+            #now add in remainders
+            return fuel + remainder
+        
+        #dp, sum up the answer for each tree and return to the parent
+        def dp(node,parent):
+            ans = 0
+            for neigh in graph[node]:
+                if neigh != parent:
+                    ans +=1 +  calc_min_fuel(dp(neigh,node),seats) 
+            return ans
+        
+        return dp(0,None) + 1
+
+#dfs global return, don't want global answer from top down return call
+class Solution:
+    def minimumFuelCost(self, roads: List[List[int]], seats: int) -> int:
+        '''
+        intution:
+            it makes sense for a rep to only go from l+1 to l, insteaf of l to l+1 back to l
+            we try to put as many represntatives as possible in the same car to save fuel
+        
+        consider node and parent, and r is the number of representatives in subtree node, that must traverse through parent
+        worst case is that all r represntative just go, which requires r fuel, to cross the edge from node to parent
+        best way is to put the r reps into a car, such that <= seats
+        this would required (ceil(r/seats)) care and an equal amount of fuel
+            take celing
+                ceiling is used to round up the reaminder of reps, in which case, the last group should be <= seats
+            For example, if you have 10 representatives in a subtree and the capacity is 3, then you would need ceil(10 / 3) = 4 cars.
+            regardless of how the representatives arrive at node, there will definitely be at least ceil(r / seats) cars. 
+            This is because all of the representatives in the subtree of node except for the one at node would arrive by using at least ceil((r - 1) / seats)
+        
+        we begin by moving all reps in a node's subtree to that node
+        then calc min fuel getting to that node
+        dfs to count number of reps in a subtree
+        '''
+                
+        self.min_fuel = 0 #global variable    
+        
+        graph = defaultdict(list)
+        for u,v in roads:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        def dfs(node,parent,seats):
+            #function returns number of reps in a subtree
+            reps = 1
+            for child in graph[node]:
+                if child != parent:
+                    reps += dfs(child,node,seats)
+            #we want the min fuel
+            #0 has no parent, and we want min fuel to 0
+            if node != 0:
+                self.min_fuel += math.ceil(reps/seats)
+            
+            return reps
+        
+        dfs(0,-1,seats)
+        return self.min_fuel
+
+#bfs
+class Solution:
+    def minimumFuelCost(self, roads: List[List[int]], seats: int) -> int:
+        '''
+        we can also use bfs
+        we need to traverse from the leaf noces to the root, Kahn's algorithm
+            we move from l + k to l + k -1 ....l i.e bottom to top
+        we also need to keep track of the in and out degree for each node, and another array to store the reps in eacn node
+        
+        start by inserting all leaf nodes into the q, leaf nodes should be a degree at most 1
+        compute the min fuel needed to ferry a rep using ceiling (resp[node]/seats)
+        
+        we do not visite any child of node again while perfoming bfs
+        we only push a need node if when taking that edge, reduces the degree, and that the degree[node] == 1
+        
+        '''
+        graph = defaultdict(list)
+        n = len(roads) + 1
+        degree = [0]*n #edges per node
+        reps = [1]*n #there is at least 1 rep at each node
+        
+        for u,v in roads:
+            graph[u].append(v)
+            graph[v].append(u)
+            #increment degree
+            degree[u] += 1
+            degree[v] += 1
+        
+        #q up leaves
+        q = deque([])
+        for i in range(n):
+            if degree[i] == 1:
+                q.append(i)
+                
+        min_fuel = 0
+        while q:
+            curr_node = q.popleft()
+            
+            #get min fuel neeeded for this node
+            min_fuel += math.ceil(reps[curr_node]/seats)
+            for neigh in graph[curr_node]:
+                #we no longer have an out going edge from this neigh
+                degree[neigh] -= 1
+                #increment the reps, rememebr we are moving bottom up
+                reps[neigh] += reps[curr_node]
+                #add the new leaf
+                if degree[neigh] == 1 and neigh != 0: #is not root
+                    q.append(neigh)
+        
+        return min_fuel
+        
