@@ -1567,3 +1567,113 @@ class Solution:
         
         return min_fuel
         
+##############################################
+# 1523. Count Odd Numbers in an Interval Range
+# 13FEB23
+##############################################
+class Solution:
+    def countOdds(self, low: int, high: int) -> int:
+        '''
+        brute force would be to check parity for all numbers between low and high and the increment a counter
+        better brute force would be to start with the next larget odd number >= low, then move in steps of two
+        
+        intution:
+            say we start with an odd integer x, next odd integer should be n + x
+            there is exactly one even integer between every two odd integers, and hence all odd integers are equally space with a gap on one integer
+            count of odd integers between x and greater integer where x is odd would be (y-x) / 2 + 1
+            
+            proof:
+                if x is odd, then there are y -x /2 integers between x and y (not including y)
+                we can write this as :
+                    (y -x ) /2
+                    the point here is that the number always leaves out the last intger as part of the count
+                    so we need to add 1
+        
+        now the only part is trying to fin the next largest odd integer >= low
+            if low is even, its following number would be odd
+            so check if low is odd
+                if not we can just incremnt it, that would be our next tarting
+        '''
+        #make sure low is odd
+        if not (low & 1):
+            low += 1
+        
+        #make sure to check if low passes high after incrementing
+        if low > high:
+            return 0
+        return (high - low) // 2 + 1
+
+class Solution:
+    def countOdds(self, low: int, high: int) -> int:
+        '''
+        another way is to think about how many odds exists in the range [0,high]
+        then we need to remove the counts from [0,low-1]
+        
+        starting from 0, the counts of any odd up to n is
+            ceil(n/2)
+        '''
+        return math.ceil(high/2) - math.ceil((low - 1) / 2)
+
+##################################
+# 280. Wiggle Sort (REVISTED)
+# 13FEB23
+##################################
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        first sort then wiggle
+        [1,2,3,4,5,6]
+        [1,6,2,5,3,4]
+        take from each end
+        '''
+        sorted_nums = deque(sorted(nums))
+        #then just build a wiggle sort
+        i = 0
+        while len(sorted_nums) > 2:
+            nums[i] = sorted_nums.popleft()
+            i += 1
+            nums[i] = sorted_nums.pop()
+            i += 1
+        
+        while sorted_nums:
+            nums[i] = sorted_nums.popleft()
+            i += 1
+
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        sort and swap
+        for every odd index i, swap with i + 1
+        a <= b <= c <= d <= e.
+        a <= c >= b <= d <= e
+        a <= c >= b <= e >= d
+        '''
+        nums.sort()
+        N = len(nums)
+        for i in range(1,N-1,2):
+            nums[i],nums[i+1] = nums[i+1],nums[i]
+
+class Solution:
+    def wiggleSort(self, nums: List[int]) -> None:
+        """
+        Do not return anything, modify nums in-place instead.
+        """
+        '''
+        for every index i, if i is even nums[i] should be smaller than or equal to nums[i+1]
+        if its larger, we swap nums[i] with nums[i+1]
+        
+        if i is orrd nums[i] should be greater than or equal to nums[i+1]
+        if nums[i] < nums[i+1] we swap
+        
+        i.e we preserve the wiggle invariant through the array, and check of any violations
+        '''
+        N = len(nums)
+        for i in range(N-1):
+            if (i % 2 == 0 and nums[i] > nums[i+1]) or (i % 2 == 1 and nums[i] < nums[i+1]):
+                nums[i],nums[i+1] = nums[i+1],nums[i]
