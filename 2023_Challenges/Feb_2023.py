@@ -1677,3 +1677,142 @@ class Solution:
         for i in range(N-1):
             if (i % 2 == 0 and nums[i] > nums[i+1]) or (i % 2 == 1 and nums[i] < nums[i+1]):
                 nums[i],nums[i+1] = nums[i+1],nums[i]
+
+##########################################
+# 726. Number of Atoms
+# 13FEB23
+##########################################
+#close one
+class Solution:
+    def countOfAtoms(self, formula: str) -> str:
+        '''
+        we just need to count the atoms and return in sorted order by chemical abbreviation and their count
+        similar to valid parentheses, i can use a stack
+        closing bracket means we need to evaluate what is currently on the stack
+        hardest part is trying to figure out what to put on the stack because a chemical abbreviation can be a single or double letter
+        '''
+        N = len(formula)
+        i = 0
+        stack = []
+        while i < N:
+            #first check double abbreviation
+            if i < N-1 and formula[i].isalpha() and formula[i+1].isalpha():
+                stack.append(formula[i:i+2])
+                i += 2
+            #if single abbreviation
+            elif formula[i].isalpha():
+                stack.append(formula[i])
+                i += 1
+            #if number, make sure to advance until we get to the end of the number
+            elif '0' <= formula[i] <= '9':
+                num = ""
+                while '0' <= formula[i] <= '9':
+                    num += formula[i]
+                    i += 1
+                #add to stack
+                stack.append(int(num))
+            # char is (
+            elif formula[i] == '(':
+                stack.append(formula[i])
+                i += 1
+            #else it ), but could be no number after or out of bounds
+            else:
+                #we already know we need to process what's on the stack, lets see if another number if after the )
+                num = "1"
+                i += 1
+                while i < N and  '0' <= formula[i] <= '9':
+                    num += formula[i]
+                    i += 1
+                num = int(num)
+                #go backwards in the stack and if its type int, multiple
+                j = len(stack) - 1
+                while j > 0 and stack[j] != '(': #not the last closing
+                    if isinstance(stack[j],int):
+                        stack[j] *= num
+                    j -= 1
+                #we have arrived at the last 
+                del stack[j]
+        
+        print(stack)
+
+#####################################
+# 989. Add to Array-Form of Integer
+# 15FEB13
+######################################
+class Solution:
+    def addToArrayForm(self, num: List[int], k: int) -> List[int]:
+        '''
+        convert and add then reconvert
+        '''
+        digits = []
+        while k:
+            digits.append(k % 10)
+            k = k // 10
+        
+        #reverse
+        digits = digits[::-1]
+        
+        ans = []
+        carry = 0
+        #this is just add binary now
+        i = len(num) - 1
+        j = len(digits) - 1
+        
+        while i >= 0 or j >= 0:
+            first = num[i] if i >= 0 else 0
+            second = digits[j] if j >= 0 else 0
+            
+            curr_digit = first + second + carry
+            ans.append(curr_digit % 10)
+            carry = curr_digit // 10
+            i -= 1
+            j -= 1
+        
+        #revers again
+        if carry:
+            ans.append(carry)
+        
+        return ans[::-1]
+
+class Solution:
+    def addToArrayForm(self, num: List[int], k: int) -> List[int]:
+        '''
+        we can just carry from the right
+        get entire addend and keep adding right
+        implementing carry each time
+        '''
+        N = len(num)
+        #fist overload the right most spot
+        num[-1] += k
+        
+        for i in range(N-1,-1,-1):
+            carry, num[i] = divmod(num[i],10)
+            #apply carry if we can before advancing
+            if i > 0:
+                num[i-1] += carry
+
+        
+        while carry:
+            num = [carry % 10] + num
+            carry = carry // 10
+        
+        return num
+
+class Solution:
+    def addToArrayForm(self, num: List[int], k: int) -> List[int]:
+        '''
+        since k will alwyas have a smaller number of digits than in num, we can do early termination
+        
+        '''
+        N = len(num)
+        for i in range(N-1,-1,-1):
+            if not k:
+                break
+            k,num[i] = divmod(num[i] + k,10)
+        
+        while k:
+            num = [k % 10] + num
+            k = k // 10
+        
+        return num
+
