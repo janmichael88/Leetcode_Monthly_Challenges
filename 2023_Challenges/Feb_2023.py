@@ -1735,6 +1735,122 @@ class Solution:
         
         print(stack)
 
+#using stack of Counter objects
+class Solution:
+    def countOfAtoms(self, formula: str) -> str:
+        '''
+        we can use a stack
+        for every opening parenthesesis, we need to evalute a new expression by adding to the top of the stack new hashmap
+        for a closing parentehse, evaluate what is currently on the stack and add the previous one
+        
+        '''
+        N = len(formula)
+        stack = [Counter()] #counter holds counts of atoms for each expression
+        i = 0
+        
+        while i < N:
+            #new expression
+            if formula[i] == '(':
+                stack.append(Counter())
+                i += 1
+            #closing parantheses, evalute current exrpession and add to previous expression
+            elif formula[i] == ')':
+                top = stack.pop()
+                #advance 
+                i += 1
+                i_start = i
+                while i < N and formula[i].isdigit():
+                    i += 1
+                #convert to int
+                multiplier = int(formula[i_start:i] or 1) #need at least 1
+                #scale to previous expression
+                for name,v in top.items():
+                    stack[-1][name] += v*multiplier
+            
+            #otherwise its a name of a compound
+            else:
+                i_start = i
+                i += 1
+                while i < N and formula[i].islower():
+                    i += 1
+                #get the name
+                name = formula[i_start:i]
+                #in the case where its a digit after the anem
+                i_start = i
+                while i < N and formula[i].isdigit():
+                    i += 1
+                #again get the multiplier
+                multiplier = int(formula[i_start:i] or 1)
+                #add back in
+                stack[-1][name] += multiplier
+        
+        ans = ""
+        for name,count in sorted(stack[-1].items()):
+            if count == 1:
+                count = ""
+            curr_element_count = name + str(count)
+            ans += curr_element_count
+        
+        return ans
+
+class Solution:
+    def countOfAtoms(self, formula: str) -> str:
+        '''
+        we can also use a deque
+        '''
+        s = deque(formula)
+        stack = []
+        temp = []
+        
+        while s:
+            #if we have a valid chemical name
+            if s[0].isupper():
+                name = s.popleft()
+                while s and s[0].islower():
+                    name += s.popleft()
+                #get number
+                num = self.extract_number(s)
+                stack.append([name,num]) #entry is [chemical,num atomes]
+            
+            elif s[0] == '(':
+                stack.append(s.popleft())
+            
+            elif s[0] == ')':
+                #remove closing
+                s.popleft()
+                #number is shold be followed by closing 
+                num = self.extract_number(s)
+                
+                while stack and stack[-1] != '(':
+                    temp.append(stack.pop()) #aux stack for current evaluation
+                stack.pop() #remove '('
+                while temp:
+                    name,count = temp.pop()
+                    stack.append([name,count*num])
+            
+        counts = Counter()
+        for name,count in stack:
+            counts[name] += count
+        
+        ans = ""
+        for name,count in sorted(counts.items()):
+            if count == 1:
+                count = ""
+            curr_element_count = name + str(count)
+            ans += curr_element_count
+        
+        return ans
+            
+                
+    def extract_number(self,s):
+        #s is a dequre of chars
+        n = 0
+        while s and s[0].isdigit():
+            n = n*10 + int(s.popleft())
+        #edge case when taking empty string
+        n = max(1,n)
+        return n
+
 #####################################
 # 989. Add to Array-Form of Integer
 # 15FEB13
@@ -1816,3 +1932,153 @@ class Solution:
         
         return num
 
+#####################################################
+# 2357. Make Array Zero by Subtracting Equal Amounts
+# 16FEB23
+#####################################################
+#well the hint gave it away
+class Solution:
+    def minimumOperations(self, nums: List[int]) -> int:
+        possible = set()
+        for num in nums:
+            if num != 0:
+                possible.add(num)
+        
+        return len(possible)
+
+class Solution:
+    def minimumOperations(self, nums: List[int]) -> int:
+        '''
+        its just the number of non zero unique values in the array
+        example [1,5,0,3,5]
+        we have to take 1
+        [0,4,0,2,4]
+        we take 2
+        [0,2,0,0,2]
+        we take 2
+        
+        if we keep taking the samllest value x, every x will be reduces to zero
+        then take another smallest y, should reduce every y to zero
+        for every number not equal to x or y, the number becomes n - x - y
+        
+        [a,b,c,d,e]
+        we have a <= b <= c <= d <= e
+        start with a
+        [0, b-a, c-a , d-a, e-a]
+        
+        next smallest is b - a
+        [0,0,c-b,d-b,e-b]
+        
+        next smallest is c - b
+        [0,0,0,d-c,e-c]
+        
+        next smallest is d-c
+        [0,0,0,0,e-d]
+        
+        the numbers a,b,c,d,e were all unique, so it just the number of unique non zeros
+        '''
+        nums = set(nums)
+        nums.discard(0)
+        return len(nums)
+
+###########################################
+# 1376. Time Needed to Inform All Employees
+# 16FEB23
+###########################################
+#nice try
+class Solution:
+    def numOfMinutes(self, n: int, headID: int, manager: List[int], informTime: List[int]) -> int:
+        '''
+        through manager list, we can generate graph
+        with headID as the root
+        for each of the subordinates, we want the minimum time, then just take the minimum time at each level
+        nope, this would work for a complete binary tree, but that might not always be the case
+        what if we assum informtime was a weight edge
+        take minimum at each node?
+        
+        if employee i has no suboridnates, informTime[i] == 0
+        
+        #store for each node, the time needed to be informed, which is just the total time
+        #answer is the max time a leaf node needs to be informed
+        '''
+        graph = defaultdict(list)
+        
+        for i in range(n):
+            if manager[i] == -1:
+                continue
+            else:
+                graph[i].append(manager[i])
+                graph[manager[i]].append(i)
+        
+        #single headnode, no time at all
+        if not graph:
+            return 0
+        
+        times = [0]*n
+        
+        def dfs(node,parent):
+            #increment times
+            times[node] += informTime[parent if parent != None else node]
+            for neigh in graph[node]:
+                if neigh != parent:
+                    dfs(neigh,node)
+                    
+        
+        dfs(headID,None)
+        
+        #take max of leaves
+        ans = 0
+        for i in range(n):
+            if informTime[i] == 0:
+                ans = max(ans,times[i])
+        return ans
+
+class Solution:
+    def numOfMinutes(self, n: int, headID: int, manager: List[int], informTime: List[int]) -> int:
+        '''
+        im dumb, this is a tree structure, so we can only do down, the edges must be directe
+        dp(node) = max(dp(child) + informTime[node] for child in graph)
+        we want the maximum answer for each node
+        '''
+        graph = defaultdict(list)
+        for i in range(len(manager)):
+            #its ok to leave -1 as a node, because we'd never go back to it anywa
+            graph[manager[i]].append(i)
+            
+            
+        def dp(node):
+            ans = 0
+            for neigh in graph[node]:
+                child = informTime[node] + dp(neigh)
+                ans = max(ans,child)
+            
+            return ans
+        
+        return dp(headID)
+
+#bfs
+class Solution:
+    def numOfMinutes(self, n: int, headID: int, manager: List[int], informTime: List[int]) -> int:
+        '''
+        bfs
+        '''
+        graph = defaultdict(list)
+        for i in range(len(manager)):
+            #its ok to leave -1 as a node, because we'd never go back to it anywa
+            graph[manager[i]].append(i)
+            
+            
+        #we can just do bfs and take max at each answer
+        ans = 0
+        
+        q = deque([(headID,0)])
+        
+        while q:
+            curr_emp,curr_time = q.popleft()
+            ans = max(ans,curr_time)
+            for neigh in graph[curr_emp]:
+                neigh_time = informTime[curr_emp] + curr_time
+                q.append((neigh,neigh_time))
+        
+        return ans
+            
