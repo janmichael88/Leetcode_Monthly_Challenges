@@ -2244,6 +2244,88 @@ class Solution:
         
         return ans
 
+#note, need to use i*cols + j to convert an (i,j) tuple to a unique index
+class DSU:
+    def __init__(self,size,):
+        self.parent = [-1]*size
+        self.rank = [0]*size
+        self.count = 0
+        
+    def addLand(self,x):
+        if self.parent[x] >= 0:
+            return
+        #otherwise mark
+        self.parent[x] = x
+        self.count += 1 #new island
+        
+    def isLand(self,x):
+        return self.parent[x] >= 0
+    
+    def getCount(self,):
+        return self.count
+    
+    #find method
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        if parent_x == parent_y:
+            return
+        
+        elif self.rank[parent_x] > self.rank[parent_y]:
+            #size adjustmnet
+            self.rank[parent_x] += self.rank[parent_y]
+            self.rank[parent_y] = 0
+            self.parent[parent_y] = parent_x
+        
+        elif self.rank[parent_y] > self.rank[parent_x]:
+            self.rank[parent_y] += self.rank[parent_x]
+            self.rank[parent_x] = 0
+            self.parent[parent_x] = parent_y
+        else:
+            self.rank[parent_x] += self.rank[parent_y]
+            self.rank[parent_y] = 0
+            self.parent[parent_y] = parent_x
+        
+        self.count -= 1
+        
+            
+            
+        
+class Solution:
+    def numIslands2(self, m: int, n: int, positions: List[List[int]]) -> List[int]:
+        '''
+        almost had it, there are just few things different in the UF api
+            initialize parents all to -1
+            add method that all returns the count of the islands
+            when adding land, first check if parents != -1, otherwise have it point to itself
+        '''
+        size = m*n
+        dsu = DSU(size)
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        ans = []
+        
+        for i,j in positions:
+            idx = i*n + j
+            dsu.addLand(idx)
+            #check the fucking neighbors
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < m and 0 <= neigh_y < n:
+                    neigh_idx = neigh_x*n + neigh_y
+                    if dsu.isLand(neigh_idx):
+                        dsu.union(idx,neigh_idx)
+            ans.append(dsu.getCount())
+        
+        return ans
 
 #######################################
 # 35. Search Insert Position (REVISTED)
