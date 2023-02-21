@@ -2081,4 +2081,239 @@ class Solution:
                 q.append((neigh,neigh_time))
         
         return ans
+
+######################################
+# 226. Invert Binary Tree
+# 18FEB23
+######################################
+#dfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        dfs, just swap left and right
+        invoke to modify then return root
+        '''
+        def dfs(node):
+            if not node:
+                return None
+            node.left,node.right = node.right,node.left
+            dfs(node.left)
+            dfs(node.right)
+        
+        dfs(root)
+        return root
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def invertTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        q = deque([root])
+        
+        while q:
+            curr = q.popleft()
             
+            if not curr:
+                continue
+            curr.left, curr.right = curr.right,curr.left
+            q.append(curr.left)
+            q.append(curr.right)
+        
+        return root
+
+####################################
+# 305. Number of Islands II
+# 17FEB23
+####################################
+#CLOSE ONEEEEE 101/161
+class Solution:
+    def numIslands2(self, m: int, n: int, positions: List[List[int]]) -> List[int]:
+        '''
+        say dp(i,j) returns whether (i,j) is already part of an island
+        if i turn (i,j) into an island, i need to check all neighbors if this (i,j) is already part of is land
+        if any of those return false, its not part of of an island an i can increse the count
+        but the issue comes when i have to sepearate island, and marking this (i,j) makes it an island, 
+        then just reduce the count
+        '''
+        dp = [[False]*n for _ in range(m)]
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        curr_islands = 0
+        ans = []
+        
+        for x,y in positions:
+            #inititally increment
+            curr_islands += 1
+            #add island
+            dp[x][y] = True
+            for dx,dy in dirrs:
+                neigh_x = x + dx
+                neigh_y = y + dy
+                #bounds
+                if 0 <= neigh_x < m and 0 <= neigh_y < n:
+                    #adjust count
+                    curr_islands -= dp[neigh_x][neigh_y]
+            
+            ans.append(curr_islands)
+        
+        return ans
+                
+#its union find
+#fuckkkk, still close
+class DSU:
+    def __init__(self,size,):
+        #size is going to m*n
+        self.islands = [False]*size
+        self.parent = [i for i in range(size)]
+        self.size = [0]*size
+        self.num_islands = 0
+        
+    def mark(self,idx):
+        #alwyas consider making making a new island
+        self.islands[idx] = True
+        self.num_islands += 1
+        
+    def find(self,idx):
+        if self.parent[idx] != idx:
+            self.parent[idx] = self.find(self.parent[idx])
+        
+        return self.parent[idx]
+    
+    def union(self,idx1,idx2):
+        #if these two make an island, we need to join them
+        if self.islands[idx1] == True and self.islands[idx2] == True:
+            #the joining of thes two would automatically make one less island
+            self.num_islands -= 1
+            parent1 = self.find(idx1)
+            parent2 = self.find(idx2)
+            #now make these point to the same parent
+            if parent1 == parent2:
+                return
+            if self.size[parent1] > self.size[parent2]:
+                self.size[parent1] += 1
+                self.parent[parent2] = parent1
+            
+            elif self.size[parent2] > self.size[parent1]:
+                self.size[parent2] += 1
+                self.parent[parent1] = parent2
+            else:
+                self.size[parent1] += 1
+                self.parent[parent2] = parent1
+        else:
+            return
+            
+            
+
+class Solution:
+    def numIslands2(self, m: int, n: int, positions: List[List[int]]) -> List[int]:
+        '''
+        turns out we need to use union find
+        say we have the UF api, for the parent ID, it will i*rows + j
+        but what about the union operation?
+            i first need to check if any of the up,down,left, and right operations are already part of islands
+            check them, and find their parent ids
+            if they are already part of island, then everything should point to that new islanad
+            only perform the union operation if i can find a valid parent?
+        '''
+        size = m*n
+        dsu = DSU(size)
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        ans = []
+        
+        for i,j in positions:
+            #mark initially
+            dsu.mark(i*m + j)
+            #check the fucking neighbors
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < m and 0 <= neigh_y < n:
+                    dsu.union(i*m + j, neigh_x*m + neigh_y)
+            #print(dsu.find(i*m + j))
+            ans.append(dsu.num_islands)
+        
+        return ans
+
+
+#######################################
+# 35. Search Insert Position (REVISTED)
+# 20FEB23
+########################################
+class Solution:
+    def searchInsert(self, nums: List[int], target: int) -> int:
+        '''
+        this is just binary search
+        just find the lower bound
+        
+        recursively
+        '''
+        
+        def search(left,right,target):
+            print(left,right)
+            if left >= right:
+                return left
+            mid = left + (right - left) // 2
+            if nums[mid] == target:
+                return mid
+            elif nums[mid] >= target:
+                return search(left,mid,target)
+            else:
+                return search(mid+1,right,target)
+            
+        
+        return search(0,len(nums),target)
+            
+
+class Solution:
+    def searchInsert(self, nums: List[int], target: int) -> int:
+
+        left = 0
+        right = len(nums)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            #found it
+            if nums[mid] == target:
+                return mid
+            elif nums[mid] >= target:
+                right = mid
+            else:
+                left = mid + 1
+        
+        return left
+
+####################################################
+# 2287. Rearrange Characters to Make Target String
+# 20FEB23
+####################################################
+#fucking easy
+class Solution:
+    def rearrangeCharacters(self, s: str, target: str) -> int:
+        '''
+        count up chars in s and count up chars in target
+        in order for their to be enough chars to make up target, there needs to exsist some multiplicity of say some ch in target also in s
+        
+        brute force is to simulate
+        
+        '''
+        ans = 0
+        count_s = Counter(s)
+        count_t = Counter(target)
+        
+        copies = float('inf')
+        
+        for ch,count in count_t.items():
+            #we are limited by the amount we can take
+            copies = min(copies, count_s[ch] // count)
+        
+        return copies
