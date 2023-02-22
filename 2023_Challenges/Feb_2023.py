@@ -2399,3 +2399,134 @@ class Solution:
             copies = min(copies, count_s[ch] // count)
         
         return copies
+
+#####################################################
+# 540. Single Element in a Sorted Array (revisited)
+# 21FEB23
+#####################################################
+#binary search
+#https://leetcode.com/problems/single-element-in-a-sorted-array/discuss/1587270/C%2B%2BPython-7-Simple-Solutions-w-Explanation-or-Brute-%2B-Hashmap-%2B-XOR-%2B-Linear-%2B2-Binary-Search
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+        '''
+        the array is sorted, every element is written only twice, except for 1, which is written once
+        well the inputs are wrong, len(nums) should never be less than 3
+        i need to use the fact that there is only 1 single element, and the rest are written twice
+        [1,1,2,3,3,4,4,8,8]
+        
+        pick 3
+        [1,1,2,3] [4,4,8,8]
+        looke left and look right
+        looking left we see another 3, we know 3 cannot be the single lemeent
+        now compare the sizes
+        it has to be on the left size
+        [1,1,2,3]
+        pick 1
+        look left and look right
+        cannot be left, go right
+        [2,3]
+        pick 2
+        
+        starting array must be odd lengthed
+        advance to the part of the array that is odd-lenghted, odd lengthed will contain the right answer
+        there are 4 cases to cover
+        '''
+        left = 0
+        right = len(nums)
+        while left < right:
+            
+            mid = left + (right - left) // 2
+            
+            isHalfEven = (mid - left) % 2 == 0 #in order to keep the starting bounds at left = 0 and right = len(nums), we need to find odd/eveness using the lower half
+            
+            #lower half is even length, go right
+            if mid+1 < len(nums) and nums[mid] == nums[mid+1]:
+                if isHalfEven: 
+                    left = mid + 2
+                #left half not even, answer resides on left
+                else: 
+                    right = mid - 1
+            #checek left
+            elif mid and nums[mid] == nums[mid-1]:
+                #must be on left size
+                if isHalfEven: 
+                    right = mid - 2
+                #must be on right side
+                else: 
+                    left = mid + 1
+            #we guessed right and return the middle
+            else: 
+                return nums[mid]
+        
+        return nums[left]
+
+#using upper middle to find mid, but changing initial right bounds to len(nums) - 1
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+
+        left = 0
+        right = len(nums) - 1
+        while left < right:
+            
+            mid = left + (right - left) // 2
+            
+            isHalfEven = (right - mid) % 2 == 0 #this should be lower half, not lengths of each half, 
+            #think about about this would change if we wanted the upper half
+            
+            #lower half is even length, go right
+            if mid+1 < len(nums) and nums[mid] == nums[mid+1]:
+                if isHalfEven: 
+                    left = mid + 2
+                #left half not even, answer resides on left
+                else: 
+                    right = mid - 1
+            #checek left
+            elif mid and nums[mid] == nums[mid-1]:
+                #must be on left size
+                if isHalfEven: 
+                    right = mid - 2
+                #must be on right side
+                else: 
+                    left = mid + 1
+            #we guessed right and return the middle
+            else: 
+                return nums[mid]
+        
+        return nums[right]
+
+#even indices only
+class Solution:
+    def singleNonDuplicate(self, nums: List[int]) -> int:
+        '''
+        we only need use binary search at the even indices, it the single element in the array should occur at the first even index that does
+        not have its pair
+        i.i nums[i] != nums[i+1] for i in range(0,N,2)
+        
+        after the single element, the pattern changes to being odd index4s followed by their pair
+            i.e if we have shot post the even index that does not have a pair, or we are at an odd index, and nums[this odd index + 1] != nums[this odd index] then this must be our value
+            
+        this meants that the single elemnt (an even index) and all elements after it are even indeces not followed by their pair
+        therefore, given any even idnex in the array we can easily determine whether the single element it to the left or to the right
+        
+        algo:
+            set up lo, hi and mid, the usual way, we now need to check parity for the current mid index
+            this is the index in question
+            we need to make mid index even, so if its odd -= 1
+            now of nums[mid] == nums[mid+1], we still havent found the first occurrence of this even index
+            so we can elimnate the left side
+            otherwise we eliminate the right side
+        '''
+        left = 0
+        right = len(nums) - 1
+        while left < right:
+            mid = left + (right - left)  // 2
+            #correct for eveness
+            if mid & 1 == 1:
+                mid -= 1
+            #not on the left side, we still have yet to find the first even index not having its pair
+            if nums[mid] == nums[mid + 1]:
+                left += 2
+            else: 
+                right = mid
+        
+        return nums[left]
