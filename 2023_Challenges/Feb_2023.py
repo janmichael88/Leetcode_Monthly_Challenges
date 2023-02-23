@@ -2530,3 +2530,86 @@ class Solution:
                 right = mid
         
         return nums[left]
+
+###############################################
+# 1011. Capacity To Ship Packages Within D Days
+# 22FEB23
+##############################################
+#damn it, almost had it
+class Solution:
+    def shipWithinDays(self, weights: List[int], days: int) -> int:
+        '''
+        this is similar to koko eating banans
+        we want to find the least weight that can ship the packages in at most days (<=)
+        
+        we know that sum(weights) can be the largest answer
+        brute force would be to check all integers in sum(wegiths) and stop when we can't do it in days
+        
+        '''
+        lo = 0
+        hi = sum(weights)
+        N = len(weights)
+        
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            #mid is the least capacity we are trying out
+            curr_weight = 0
+            curr_days = 1
+            for i in range(N):
+                curr_weight += weights[i]
+                if curr_weight > mid:
+                    curr_days += 1
+                    curr_weight = weights[i]
+            
+            #if we got to the end, every possible weight after should work, larger weight than the current canddiate
+            if curr_days <= days:
+                hi = mid
+            else:
+                lo = mid + 1
+        
+        return lo
+
+class Solution:
+    def shipWithinDays(self, weights: List[int], days: int) -> int:
+        '''
+        this is similar to koko eating banans
+        we want to find the least weight that can ship the packages in at most days (<=)
+        
+        we know that sum(weights) can be the largest answer
+        brute force would be to check all integers in sum(wegiths) and stop when we can't do it in days
+        
+        optimzation:  smallest weight cannot be less than max(weights) / d
+        '''
+        #intereating, our lower bounds must be the maximum of the weight
+        #the highest bound is just the sum
+        #doesn't make
+        #i'm stupid we need to start with the largest weight, i can't ship anything if i use 0 as the carrying capacity
+        lo = max(weights) #doensn't work with 0 or min(weights)
+        hi = sum(weights)
+        N = len(weights)
+        
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            #mid is the least capacity we are trying out
+            curr_weight = 0
+            curr_days = 1 #we need to use at least 1 day anyway if we fit all packages first time around
+            for i in range(N):
+                curr_weight += weights[i]
+                if curr_weight > mid:
+                    curr_days += 1
+                    curr_weight = weights[i]
+            
+            #if we got to the end, every possible weight before should work
+            if curr_days <= days:
+                hi = mid
+            else:
+                lo = mid + 1
+        
+        return lo
+                
+        
+                
+        
+        return lo
+                
+        
