@@ -2607,9 +2607,66 @@ class Solution:
         
         return lo
                 
+##########################################
+# 502. IPO
+# 23FEB23
+###########################################
+class Solution:
+    def findMaximizedCapital(self, k: int, w: int, profits: List[int], capital: List[int]) -> int:
+        '''
+        leetcode wants to work on projects to increase capital before IP
+        but it has limite resources and can only finish at most k distinc projects before the IPO
+        want to maximize total capital after fininshing at most k distinct projects
         
-                
+        profits[i] is what we can gain when finish project
+        and captial[i] is what we need to at least start
         
-        return lo
-                
+        initally we have w capital
+        finishing a project[i] results in total profit += profits[i] and w += capital[i]
         
+        starting a project does not decrease current capital (kinda wierd) so once we gain capital we cannot ever lose it
+        we are not tracking capital, but overall profit
+        
+        if k = 1, we would need to choose the project that yeilds that largest proift, constained by the amount of capital
+        if no project is avilable, we dont have any options but to return 0
+        
+        greedily choose the most profitbale available project
+        then our capital increases by this proift, and some new project that were unavailable might become available now
+        if we choose a project other than the most profitbale one, our capital increases by a value less than the maximum
+        so we need to greedily choose the project with the largest profit, but do this k times
+        
+        1. find new available projects after finishing the previous one  
+        2. finding the most profitibale one
+        
+        when we increase in capital, we have more options to choose from (but how do we effeciently choose)
+        and the smaller capital project becomes available sooner
+        so we can sort projects by increasing capital and keep a poointer to the first unavilable project
+        as we gain more money we move this pointer to unlock projects that require more cpaital
+        
+        algo:
+            1. sort projects by increasing capital but paired with respective profit
+            2. keep pointer to the first unavailable project since we are limited by current capital
+                a. find the first project we can't do for this kth project
+                b. add projects to max heap
+                c. if there a project in the max heap, retreive its profit
+        '''
+        N = len(profits)
+        projects = []
+        for profit,capital in zip(profits,capital):
+            projects.append((profit,capital))
+        
+        #sort on increaing capital
+        projects.sort(key = lambda x: x[1])
+        #entries are (profit,capital)
+        
+        max_profits = [] #this is a max heap
+        i = 0
+        for _ in range(k):
+            #find the first project we can't do but also add profits into q
+            while i < N and projects[i][1] <= w:
+                heapq.heappush(max_profits, -(projects[i][0]))
+                i += 1
+            if max_profits:
+                w += -heapq.heappop(max_profits)
+        
+        return w        
