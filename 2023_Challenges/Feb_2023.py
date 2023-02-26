@@ -2607,10 +2607,10 @@ class Solution:
         
         return lo
                 
-##########################################
+##########
 # 502. IPO
 # 23FEB23
-###########################################
+##########
 class Solution:
     def findMaximizedCapital(self, k: int, w: int, profits: List[int], capital: List[int]) -> int:
         '''
@@ -2669,4 +2669,93 @@ class Solution:
             if max_profits:
                 w += -heapq.heappop(max_profits)
         
-        return w        
+        return w     
+
+
+#######################################
+# 121. Best Time to Buy and Sell Stock (REVISTED)
+# 25FEB23
+########################################
+#top down actually
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        N = len(prices)
+        
+        #keep track of min price and max prof
+        max_prof = 0
+        min_price = float('inf')
+        
+        for p in prices:
+            min_price = min(min_price,p)
+            max_prof = max(max_prof, p - min_price)
+        
+        return max_prof
+        
+        recursively
+        
+        state:
+            dp(i,holding_stock,transactions)
+            transactions must be full, not partial. i.e one buy followed by one sell!
+        '''
+        N = len(prices)
+        memo = {}
+        
+        def dp(i,holding,transactions):
+            if i >= N or transactions == 0:
+                return 0
+            
+            if (i,holding,transactions) in memo:
+                return memo[(i,holding,transactions)]
+            
+            #i can either by holding or not holding
+            res = 0
+            if not holding:
+                take = dp(i+1,True,transactions) - prices[i]
+                dont_take = dp(i+1,False,transactions)
+                res += max(take,dont_take)
+            
+            if holding:
+                take = dp(i+1,False,transactions-1) + prices[i]
+                dont_take = dp(i+1,True,transactions)
+                res += max(take,dont_take)
+            
+            memo[(i,holding,transactions)] = res
+            return res
+        return dp(0,False,1)
+
+#another kadans from the front
+class Solution:
+    def maxProfit(self, prices: List[int]) -> int:
+        '''
+        kadanes algo in the first order diffs
+        '''
+        N = len(prices)
+        if N == 1:
+            return 0
+        
+        diffs = [prices[i+1] - prices[i] for i in range(N-1)]
+
+        
+        memo = {}
+        
+        def dp(i):
+            if i == len(diffs):
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            take = dp(i+1) + diffs[i]
+            no_take = diffs[i]
+            ans = max(take,no_take)
+            memo[i] = ans
+            return ans
+        
+        
+        ans = float('-inf')
+        for i in range(len(diffs)):
+            ans = max(ans,dp(i))
+        
+        return max(ans,0) 
+
+
