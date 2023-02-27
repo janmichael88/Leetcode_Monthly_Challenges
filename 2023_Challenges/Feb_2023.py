@@ -2758,4 +2758,139 @@ class Solution:
         
         return max(ans,0) 
 
+#####################################################
+# 72. Edit Distance (REVISTED)
+# 26FEB23
+#####################################################
+#on strings
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        '''
+        before doing dp, we can just pass in strings and adanvace them
+        for exampel word1 = 'abcd'
+        func('abcd')
+            func('bcd')
+            funct('cd')
+            all the way to the emptry string
+        
+        then for each string, check the first char
+        if they are the same move them up
+        else:
+            inserting: insert char into word1 tp match word2, we have to advance word2
+            delete: remove char from word1, so move up word1
+            replace: advance both
+        
+        for each of these it costs 1 operation
+        then take the min
+        #we can try memozing the strings if we cant toop
+        '''
+        memo = {}
+        
+        def dp(w1,w2):
+            if not w1 and not w2:
+                return 0
+            if not w1:
+                return len(w2)
+            if not w2:
+                return len(w1)
+            
+            if (w1,w2) in memo:
+                return memo[(w1,w2)]
+            if w1[0] == w2[0]:
+                ans = dp(w1[1:],w2[1:])
+                memo[(w1,w2)] = ans
+                return ans
+            else:
+                insert = 1 + dp(w1,w2[1:])
+                delete = 1 + dp(w1[1:],w2)
+                replace = 1 + dp(w1[1:],w2[1:])
+                ans = min(insert,delete,replace)
+                memo[(w1,w2)] = ans
+                return ans
+        
+        return dp(word1,word2)
+            
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        '''
+        if i had 'a' and 'b', the cose is just 1
+        if i had 'a' and 'ab' the cost is also 1
+        
+        if i let dp(i,j) be the min cost to change word1[:i] to word2[:j]
+        then we just take the minimum of the insert,replace or delete operations
+        
+        then we just want the answer for dp(len(word1),len(word2))
+
+        from as doing operation onto word1 to get to word2
+        example if i were to insert a letter into word1 that would make it word2, cost goes up by one, word1 == word2 now, then we just move up the point
+        think about the passings strings option first
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            #if we get to the end of the word, just return the index of the other
+            if i == len(word1) and j == len(word2):
+                return 0
+            #we need what's left to just insert
+            if i == len(word1):
+                return len(word2) - j
+            if j == len(word2):
+                return len(word1) - i
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #if letters are the same, just carry forward
+            ans = 0
+            if word1[i] == word2[j]:
+                ans = dp(i+1,j+1)
+                memo[(i,j)] = ans
+                return ans
+            #otherwise we have optinoes
+            #take the minimum and increase by 1
+            else:
+                #each of these operations results in on more from the previous state
+                #then we just take the minimum
+                insert = dp(i,j+1) + 1
+                delete = dp(i+1,j) + 1
+                replace = dp(i+1,j+1) + 1
+                ans = min(insert,delete,replace)
+                memo[(i,j)] = ans
+                return ans
+        
+        return dp(0,0)
+
+#bottom up
+class Solution:
+    def minDistance(self, word1: str, word2: str) -> int:
+        dp = [[0]*(len(word2) + 1) for _ in range(len(word1) + 1)]
+        
+        
+        for i in range(len(word1), 0,-1):
+            for j in range(len(word2), 0,-1):
+                if i == len(word1) and j == len(word2):
+                    dp[i][j] = 0 
+                
+                elif i == len(word1):
+                    dp[i][j] = len(word2) - j
+                
+                elif j == len(word2):
+                    dp[i][j] = len(word1) - i
+                
+                #if letters are the same, just carry forward
+                elif word1[i-1] == word2[j-1]:
+                    ans = dp[i+1][j+1]
+                    dp[i][j] = ans
+                #otherwise we have optinoes
+                #take the minimum and increase by 1
+                else:
+                    #each of these operations results in on more from the previous state
+                    #then we just take the minimum
+                    insert = dp[i][j+1] + 1
+                    delete = dp[i+1][j] + 1
+                    replace = dp[i+1][j+1] + 1
+                    ans = min(insert,delete,replace)
+                    dp[i][j] = ans
+                    
+            
+        return dp[0][0]
+
 
