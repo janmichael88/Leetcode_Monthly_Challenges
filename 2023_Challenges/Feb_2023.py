@@ -2893,4 +2893,108 @@ class Solution:
             
         return dp[0][0]
 
+#######################################
+# 427. Construct Quad Tree (REVISTED)
+# 28FEB23
+#######################################
+#checking all squares in each recursive call
+"""
+# Definition for a QuadTree node.
+class Node:
+    def __init__(self, val, isLeaf, topLeft, topRight, bottomLeft, bottomRight):
+        self.val = val
+        self.isLeaf = isLeaf
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+"""
 
+class Solution:
+    def construct(self, grid: List[List[int]]) -> 'Node':
+        '''
+        we can define a state as a square, marked in the upper right corner, and current grid size of the parent caller
+        lets call this square (i,j,size)
+        topleft = i,j,size//2
+        topright = i, j + size // 2, size //2
+        bottomleft = i + size // 2, j, size//2
+        bottomright = i + size // 2, j + size // 2, size// 2
+        
+        in each call check if they all the values are the same
+            if so, make this a leaf node
+        else:
+            make new node and recurse on each of the new 4 sections
+        '''
+        def same_value(i,j,size):
+            for new_i in range(i,i+size):
+                for new_j in range(j, j + size):
+                    if grid[new_i][new_j] != grid[i][j]:
+                        return False
+            
+            return True
+        
+        def build(i,j,size):
+            #check current square
+            status = True
+            for new_i in range(i,i+size):
+                for new_j in range(j, j + size):
+                    if grid[new_i][new_j] != grid[i][j]:
+                        status = False       
+                        break
+            if status == True:
+                return Node(val=grid[i][j],isLeaf = True, topLeft = None, topRight = None, bottomLeft = None, bottomRight = None)
+            
+            else:
+                node = Node(val = -1, isLeaf = False,topLeft = None, topRight = None, bottomLeft = None, bottomRight = None)
+                #recurse
+                node.topLeft = build(i,j,size//2)
+                node.topRight = build(i,j + size //2,size//2)
+                node.bottomLeft = build(i + size // 2,j,size//2)
+                node.bottomRight = build(i + size //2, j + size//2,size//2)
+                
+                return node
+        
+        return build(0,0,len(grid))
+            
+"""
+# Definition for a QuadTree node.
+class Node:
+    def __init__(self, val, isLeaf, topLeft, topRight, bottomLeft, bottomRight):
+        self.val = val
+        self.isLeaf = isLeaf
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+"""
+
+class Solution:
+    def construct(self, grid: List[List[int]]) -> 'Node':
+        '''
+        optimized woudl be to not check each square on each recursive call, but to bottom out when the size of the search space is 1
+        then just return the node value, which is a leaf, and should that value at the current (i,j)
+        '''
+        
+        def build(i,j,size):
+            if size == 1:
+                return Node(val = grid[i][j], isLeaf = True, topLeft = None, topRight = None, bottomLeft = None, bottomRight = None)
+            
+            #recurse
+            topLeft = build(i, j, size // 2)
+            topRight = build(i, j + size // 2, size // 2)
+            bottomLeft = build(i + size //2, j, size // 2)
+            bottomRight = build(i + size // 2, j + size // 2, size // 2)
+            
+            #check all leaves
+            if topLeft.isLeaf == topRight.isLeaf == bottomLeft.isLeaf == bottomRight.isLeaf == True:
+                #check all valuess are the same
+                if topLeft.val == topRight.val == bottomLeft.val == bottomRight.val:
+                    #build
+                    return Node(topLeft.val,isLeaf = True, topLeft = None, topRight = None, bottomLeft = None, bottomRight = None)
+            
+            #otherwise make node with pointer
+            #can'at throw else in here, needs to return on both
+            return Node(-1,False,topLeft,topRight,bottomLeft,bottomRight)
+            
+        
+        return build(0,0,len(grid))
