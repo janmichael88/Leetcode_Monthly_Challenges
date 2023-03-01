@@ -26,9 +26,8 @@ Just a code dump for all the monthly Leet code solutions.
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-10.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-11.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-12.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2023-1.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-02.gif)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-01.gif)
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-02.gif)
 
 Also have solutions for premium content in the scripts as well as annotated notes!
 
