@@ -2998,3 +2998,139 @@ class Solution:
             
         
         return build(0,0,len(grid))
+
+######################################
+# 652. Find Duplicate Subtrees
+# 28FEB23
+######################################
+#close one...
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findDuplicateSubtrees(self, root: Optional[TreeNode]) -> List[Optional[TreeNode]]:
+        '''
+        leaf nodes of the same value are dupliates
+        for duplicates we only need to return the root of any one of them
+        i need signature for each subtree, 
+        i can put this signature into a hashset, then from the signatures decord them to get the root
+        use the tree traversal as the signature
+        '''
+        counts = Counter()
+        ans = []
+        
+        def rec(node,path):
+            if not node:
+                return
+            #cache after every call
+            path.append(node.val)
+            sig = "->".join([str(num) for num in path])
+            counts[sig] += 1
+            if counts[sig] > 1:
+                ans.append(node)
+            path.pop()
+            rec(node.left,path)
+            rec(node.right,path)
+        
+        rec(root,[])
+        
+        #i need to remove duplicaes from ans
+        def get_sig(node):
+            if not node:
+                return ""
+            left = get_sig(node.left)
+            right = get_sig(node.right)
+            return str(node.val)+'->'+left+'->'+right
+        
+    
+        #mapp sig to tree
+        mapp = {}
+        
+        for tree in ans:
+            sig = get_sig(tree)
+            if sig not in mapp:
+                mapp[sig] = tree
+        
+        return list(mapp.values())
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findDuplicateSubtrees(self, root: Optional[TreeNode]) -> List[Optional[TreeNode]]:
+        '''
+        we need to reprsent each subtree as a string
+            (string rep of left subtree) node.val (string rep of right subtree)
+            we store these strings into a hashmap,
+            whenvere the ocurrence is a two, this is dupliate, so just save the current node
+        '''
+        ans = []
+        counts = Counter()
+        
+        def build(node):
+            if not node:
+                return ""
+            
+            left = build(node.left)
+            right = build(node.right)
+            sig = "("+left+")"+str(node.val)+"("+right+")"
+            counts[sig] += 1
+            if counts[sig] == 2:
+                ans.append(node)
+            return sig
+        
+        build(root)
+        return ans
+
+#optimized
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findDuplicateSubtrees(self, root: Optional[TreeNode]) -> List[Optional[TreeNode]]:
+        '''
+        instead of using a string signature for the subtrees, we can reprsent each subtree with an id
+        two subtrees are equal when they have equal root vals
+        the signature for a subtree then becomes:
+            (id left, root.val, id right)
+            
+        finding the id:
+            if triplet occurs first time, we assign the smallest available ID to this subtree
+            otherwise the triplet occrued earlier, and we get he ID frm the hasmap
+            
+        empty nodes are just 0 for their id
+        '''
+        counts = Counter()
+        used_triplet_ids = {}
+        ans = []
+        
+        def build(node):
+            if not node:
+                return 0
+            left = build(node.left)
+            right = build(node.right)
+            candidate_id = (left,node.val,right)
+            #if we havent seen this id
+            if candidate_id not in used_triplet_ids:
+                used_triplet_ids[candidate_id] = len(used_triplet_ids) + 1
+            
+            #get the one to use
+            subtree_id = used_triplet_ids[candidate_id]
+            #put into count mapp
+            counts[subtree_id] += 1
+            if counts[subtree_id] == 2:
+                ans.append(node)
+            
+            return subtree_id #use the newly created id
+        
+        build(root)
+        return ans
