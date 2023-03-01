@@ -3134,3 +3134,88 @@ class Solution:
         
         build(root)
         return ans
+
+###########################################
+# 1259. Handshakes That Don't Cross
+# 26FEB23
+###########################################
+class Solution:
+    def numberOfWays(self, numPeople: int) -> int:
+        '''
+        there are always and even number of people, just call it n
+        and only n/2 hand shakes are allowed
+        people are arranged in circle and no hand shakes can cross
+        
+        if n == 2:
+            return 1
+        if n == 4:
+            2 parts of 2
+            1 + 1 = 2
+        
+        if n = 6
+            3 parts of 2
+        
+        from the hint dp(n) is the number of ways to handshale for n people
+        then fix a person as a pivot and turn for every other peron who will have a handshake
+        the answer if the sum of the products of the two new subproblems
+        
+        imagine a circle with 2*i people
+        if we shake hands with person 1 and a person k, we divide the cirlce into 2 smaller circles
+            circle 1 containing persons 1....k-1
+            circle 2 containing perosns k+1...2*i
+        
+        a person from circle 1 cannot shake hands with a person from circle 2, and vice versa
+        for 2*i people
+            count the number of ways we can get shaking hands in circle 1 and circle 2
+            the total number of ways must be the cartesian product
+            (circle1)*(circle2)
+            
+            but we need to this for all partisions for the current i
+        
+        base case, when n = 0, there is only 1 way no handshakes can happen, we can say its a way for 0 handshakes
+        if there are 2*i people and we chose two people to shake hands
+            first_circle = 2*i
+            second_circle = 2*i - 2
+
+
+        to find dp(i)
+            we should try all possible handshakes that split the people into left and right
+            dp(i) = \sum_{j=0}^{i=i-1} dp(j)*dp(i-j-1)
+        let dp(i) be the number of ways to shake hands with 2*i people
+        
+        
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        def dp(n):
+            if n == 0:
+                return 1
+            if n in memo:
+                return memo[n]
+            ans = 0
+            #this is similar to rod cutting
+            for i in range(n):
+                #rule of product for counting items
+                circle1 = dp(i) #ways for 2*i peopl
+                circle2 = dp(n - i - 1) #ways for 2*i - 2 - 2*i people, the rest of the people in the circ le
+                
+                ans += circle1*circle2
+                ans %= mod
+            
+            memo[n] = ans
+            return ans
+        
+        
+        return dp(numPeople//2)
+                
+#bottom up
+class Solution:
+    def numberOfWays(self, numPeople: int) -> int:
+        m = 1000000007
+        dp = [0] * (numPeople // 2 + 1)
+        dp[0] = 1
+        for i in range(1, numPeople // 2 + 1):
+            for j in range(i):
+                dp[i] += dp[j] * dp[i - j - 1]
+                dp[i] %= m
+        return dp[numPeople // 2]
