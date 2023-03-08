@@ -496,3 +496,98 @@ class Solution:
             
         return count
 
+######################################
+# 819. Most Common Word
+# 08MAR23
+######################################
+#bleagh
+class Solution:
+    def mostCommonWord(self, paragraph: str, banned: List[str]) -> str:
+        '''
+        parse string letter by letter to get words
+        put into counter in the fly
+        '''
+        N = len(paragraph)
+        counts = Counter()
+        
+        banned = set(banned)
+        curr_word = ""
+        
+        i = 0
+        max_counts = 0
+        
+        while i < N:
+            #white spaces
+            while i < N and not paragraph[i].isalpha():
+                i += 1
+            
+            #we must be at a word
+            while i < N and paragraph[i].isalpha():
+                curr_word += paragraph[i]
+                i += 1
+            
+            #check banned words
+            if curr_word not in banned:
+                counts[curr_word.lower()] += 1
+                max_counts = max(max_counts,counts[curr_word.lower()]  )
+            
+            curr_word = ""
+            i += 1
+        
+        for k,v in counts.items():
+            if v == max_counts:
+                return k
+        
+    class Solution:
+    def mostCommonWord(self, paragraph: str, banned: List[str]) -> str:
+        '''
+        eaiest to replace special chars with spsace,
+        reduce to lower, split then count
+        '''
+        banned = set(banned)
+        new_string = ""
+        
+        for ch in paragraph:
+            if ch.isalnum():
+                new_string += ch.lower()
+            else:
+                new_string += " "
+        
+        words = new_string.split()
+        counts = Counter()
+        
+        for w in words:
+            if w not in banned:
+                counts[w] += 1
+        
+        return max(counts.items(), key = operator.itemgetter(1))[0]
+        
+#single pass, using buffer
+class Solution:
+    def mostCommonWord(self, paragraph: str, banned: List[str]) -> str:
+
+        banned_words = set(banned)
+        ans = ""
+        max_count = 0
+        word_count = defaultdict(int)
+        word_buffer = []
+
+        for p, char in enumerate(paragraph):
+            #1). consume the characters in a word
+            if char.isalnum():
+                word_buffer.append(char.lower())
+                if p != len(paragraph)-1:
+                    continue
+
+            #2). at the end of one word or at the end of paragraph
+            if len(word_buffer) > 0:
+                word = "".join(word_buffer)
+                if word not in banned_words:
+                    word_count[word] +=1
+                    if word_count[word] > max_count:
+                        max_count = word_count[word]
+                        ans = word
+                # reset the buffer for the next word
+                word_buffer = []
+
+        return ans
