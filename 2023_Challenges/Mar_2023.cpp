@@ -139,3 +139,125 @@ public:
         return left + k; //or just k after the lower bound
     }
 };
+
+///////////////////////////////////////////////
+// 812. Largest Triangle Area
+// 07MAR23
+///////////////////////////////////////////////
+#include <algorithm>
+class Solution {
+public:
+    double largestTriangleArea(vector<vector<int>>& points) {
+        //just try all points?
+        //points i,j,i
+        //i can get the area of a triangle using 1/2 cross product of v1 and v2
+        float ans = INT_MIN;
+        int N = points.size();
+        for (int i = 0; i < N; ++i){
+            for (int j = 0; j < N; ++j){
+                for (int k = 0; k < N; ++k){
+                    if (i != j and i != k and j != k){
+                        //do ij and ik as vectors
+                        int ij[] = {points[j][0] - points[i][0], points[j][1] - points[i][1]};
+                        int ik[] = {points[k][0] - points[i][0], points[k][1] - points[i][1]};
+                        float area = ij[0]*ik[1] - ik[0]*ij[1];
+                        area = area / 2.0;
+                        ans = max(ans,area);
+                    }
+                }
+            }
+        }
+        
+        return ans;
+    }
+};
+
+////////////////////////////////////////
+// 2187. Minimum Time to Complete Trips
+// 07MAR23
+////////////////////////////////////////
+class Solution {
+public:
+    
+    //functino definition outside, must be in under public
+    long long get_time (vector<int>& time, long long test_time){
+            long long num_trips = 0;
+            for (auto t : time){
+                num_trips += test_time / t;
+            }
+            return num_trips;
+        }
+    
+    long long minimumTime(vector<int>& time, int totalTrips) {
+        //for a unit of time t, each bus i, can make time[i] // t trips
+        //if we a given a unit of time, we can calculate how many total trips we can make
+        //if we start with a time k, and we can make get all these stops, then we know anything larger than k will work too
+        //so we don't need to look on that side
+        //binary search
+        //min should be 0, and max should be, the slowest bus, time number of trips
+        
+        long long start = 0;
+        long long end = 1LL * *min(time.begin(),time.end())*totalTrips;
+        
+        
+        while (start < end){
+            long long mid = start + (end - start) / 2;
+            if (get_time(time,mid) >= totalTrips){
+                end = mid;
+            }
+            else{
+                start = mid + 1;
+            }
+        }
+
+        return start;
+    }
+};
+
+///////////////////////////////////////////
+// 875. Koko Eating Bananas (REVISTED)
+// 08MAR23
+///////////////////////////////////////////
+class Solution {
+public:
+    
+    int computeHours(vector<int>& piles, int k){
+        int totalHours = 0;
+        for (int b: piles){
+            if (b < k){
+                totalHours += 1;
+            }
+            else{
+                totalHours += (b / k) + 1;
+            }
+        }
+        
+        return totalHours;
+    }
+    int minEatingSpeed(vector<int>& piles, int h) {
+        /*
+        koko can choose her k, where she eats k banas per hour
+        if the pile is < k, she eats all them and doesn't eat anymore
+        we can try all possible k
+            if koko can eat all possible bannans with the current k, then it would mean anything bigger than k works as well
+            so we can stop seaching at afterk
+        what would be the min and max bounds for the search?
+            min of bananes if left bound
+            
+        */
+        int left = 1;
+        int right = *max(piles.begin(),piles.end());
+        
+        while (left < right){
+            int mid = left + (right - left) / 2;
+            if (computeHours(piles,mid) <= h){
+                right = mid;
+            }
+            else{
+                left = mid + 1;
+            }
+        }
+        
+        return right;
+    }
+};
