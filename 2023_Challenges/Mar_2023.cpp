@@ -261,3 +261,467 @@ public:
         return right;
     }
 };
+
+/////////////////////////////////////
+// 142. Linked List Cycle II (REVISTED)
+// 09MAR23
+//////////////////////////////////////
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode(int x) : val(x), next(NULL) {}
+ * };
+ */
+class Solution {
+public:
+    
+    ListNode *getIntersect(ListNode *node){
+        ListNode *fast = node;
+        ListNode *slow = node;
+        
+        while (fast != NULL and fast->next != NULL){
+            slow = slow->next;
+            fast = fast->next->next;
+            
+            if (slow == fast){
+                return slow;
+            }
+        }
+        
+        return NULL;
+    }
+    ListNode *detectCycle(ListNode *head) {
+        if (head == NULL){
+            return NULL;
+        }
+        
+        ListNode *intersect = getIntersect(head);
+        if (intersect == NULL){
+            return NULL;
+        }
+        
+        ListNode *p1 = head;
+        ListNode *p2 = intersect;
+        
+        while (p1 != p2){
+            p1 = p1->next;
+            p2 = p2->next;
+        }
+        
+        return p1;
+    }
+};
+
+//////////////////////////////////////
+// 11MAR23
+// 382. Linked List Random Node (REVISTED)
+//////////////////////////////////////
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    //outside scope of solution
+    //hashamp, of int valure to the acutal node
+    unordered_map<int,ListNode*> nums;
+    int i = 0;
+    
+    Solution(ListNode* head) {
+        //naive wawy would be to pull ints and pull random index
+        
+        ListNode* temp = head;
+        
+        while (temp){
+            nums[i] = temp;
+            temp = temp->next;
+            i += 1;
+        }
+    }
+    
+    int getRandom() {
+        return nums[rand() % i]->val;
+        
+    }
+};
+
+/**
+ * Your Solution object will be instantiated and called as such:
+ * Solution* obj = new Solution(head);
+ * int param_1 = obj->getRandom();
+ */
+
+/////////////////////////////////////////
+// 382. Linked List Random Node (REVISITED)
+// 11MAR23
+/////////////////////////////////////////
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    //we cab use reservour sampling using size = 1
+    //then we just choost to replace the sample with probbailty 1 / curr_size
+    /*
+    pseudo code for resevoior sampling
+    # S has items to sample, R will contain the result
+def ReservoirSample(S[1..n], R[1..k])
+  # fill the reservoir array
+  for i := 1 to k
+      R[i] := S[i]
+
+  # replace elements with gradually decreasing probability
+  for i := k+1 to n
+    # randomInteger(a, b) generates a uniform integer
+    #   from the inclusive range {a, ..., b} *)
+    j := randomInteger(1, i)
+    if j <= k
+        R[j] := S[i]
+
+    */
+    ListNode *HeadNode;
+    Solution(ListNode* head) {
+        HeadNode = head;
+    }
+    
+    int getRandom() {
+        ListNode* curr = HeadNode;
+        int res;
+        int size = 1;
+        
+        while (curr){
+            float prob = (float) rand() / RAND_MAX;
+            if (prob < (float) 1 / size){
+                res = curr->val;
+            }
+            size += 1;
+            curr = curr->next;
+        }
+        return res;
+    }
+};
+
+/**
+ * Your Solution object will be instantiated and called as such:
+ * Solution* obj = new Solution(head);
+ * int param_1 = obj->getRandom();
+ */
+
+//another way, but if the random number == size, just replace it
+class Solution {
+public:
+    //Note : head is guaranteed to be not null, so it contains at least one node.
+    ListNode* HeadNode;
+    Solution(ListNode* head) {
+       HeadNode = head;
+    }
+    //returns value of a random node
+    int getRandom() {
+        int res, len = 1;
+        ListNode* x = HeadNode;
+        while(x){
+            if(rand() % len == 0){
+                res = x->val;
+            }
+            len++;
+            x = x->next;
+        }
+        return res;
+    }
+};
+
+/////////////////////////////////////////////////////////////
+// 109. Convert Sorted List to Binary Search Tree (REVISTED)
+// 11MAR23
+/////////////////////////////////////////////////////////////
+
+//unpack into array and salve the problem on the array
+ /**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+public:
+    //easiest way would be dump elements into a list
+    //then rebuild recursively
+    //these are just variable defintions, looks like i can't do anything inside the constcutor
+    vector<int> nums;
+    TreeNode* temp = new TreeNode();
+    
+    //recursively build from nums
+    TreeNode* buildTree(vector<int>& nums,int left,int right){
+        if (left > right){
+            return nullptr;
+        }
+        int mid = left + (right - left) / 2;
+        TreeNode* curr_node = new TreeNode();
+        curr_node->left = buildTree(nums,left,mid-1);
+        curr_node->val = nums[mid];
+        curr_node->right = buildTree(nums,mid+1,right);
+        return curr_node;
+
+    }
+
+    
+    TreeNode* sortedListToBST(ListNode* head) {
+        ListNode* curr = head;
+        while (curr){
+            nums.push_back(curr->val);
+            curr = curr->next;
+        }
+        
+        int left = 0;
+        int right = nums.size();
+        
+        TreeNode* ans = buildTree(nums,left,right-1);
+        
+        
+     
+
+        return ans;
+
+    }
+};
+
+//find middle each time
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+/**
+ * Definition for a binary tree node.
+ * struct TreeNode {
+ *     int val;
+ *     TreeNode *left;
+ *     TreeNode *right;
+ *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+ *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+ * };
+ */
+class Solution {
+    /*
+    find middle of linked list 
+    */
+public:
+    //notes on using new
+    //https://stackoverflow.com/questions/679571/when-to-use-new-and-when-not-to-in-c
+    //when recuring and building new objects, or if i need them, just call new
+    //TreeNode* temp =  new TreeNode();
+    TreeNode* sortedListToBST(ListNode* head) {
+        //empty head
+        if (head == nullptr){
+            return nullptr;
+        }
+        
+        ListNode* mid = getMiddle(head);
+        
+        //make new TreeNode
+        TreeNode* node =  new TreeNode();
+        node->val = mid->val;
+        
+        //base case, when mid is just the head
+        if (mid == head){
+            return node;
+        }
+        
+        node->left = sortedListToBST(head);
+        node->right = sortedListToBST(mid->next);
+        return node;
+    }
+    
+    
+    ListNode* getMiddle(ListNode* head){
+        ListNode* prev;
+        ListNode* slow = head;
+        ListNode* fast = head;
+        
+        while (fast != nullptr && fast->next != nullptr){
+            prev = slow;
+            slow = slow->next;
+            fast = fast->next->next;
+            
+        }
+        
+        //handling case when slow == head
+        if (prev != nullptr){
+            prev->next = nullptr;
+        }
+        
+        return slow;
+    }
+    
+    
+};
+
+////////////////////////////////////////////
+// 23. Merge k Sorted Lists
+// 12MAR23
+////////////////////////////////////////////
+//using max heap
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    /*
+    in C++ i need to use a custom comparator if i wanted a pq of vectors
+    make a struct, also PQ in C++ requires three arugments
+    */
+    
+    struct my_comparator
+    {
+        // queue elements are vectors so we need to compare those
+        bool operator()(vector<int>& a, vector<int>& b) 
+        {
+
+            return a[0] > b[0];
+        }
+    };
+
+
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        priority_queue<vector<int>, vector<vector<int>>, my_comparator> pq;
+        int N = lists.size();
+        
+        ListNode* dummy = new ListNode(-1);
+        ListNode* curr = dummy;
+        
+        for (int i = 0; i < N; ++i){
+            if (lists[i] != nullptr){
+                vector<int> entry = {lists[i]->val,i};
+                pq.push(entry);
+            }
+        }
+        
+        while (!pq.empty()){
+            //remove entry
+            vector<int> entry = pq.top();
+            pq.pop();
+            
+            //make new node
+            ListNode* node = new ListNode(entry[0]);
+            curr->next = node;
+            curr = curr->next;
+            
+            //update
+            if (lists[entry[1]]->next != nullptr){
+                lists[entry[1]] = lists[entry[1]]->next;
+                vector<int> entry2 =   {lists[entry[1]]->val,entry[1]};
+                pq.push(entry2);
+            }
+        }
+        
+        return dummy->next;
+        
+    }
+};
+
+//merge one by one
+/**
+ * Definition for singly-linked list.
+ * struct ListNode {
+ *     int val;
+ *     ListNode *next;
+ *     ListNode() : val(0), next(nullptr) {}
+ *     ListNode(int x) : val(x), next(nullptr) {}
+ *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+ * };
+ */
+class Solution {
+public:
+    
+    //merger functino
+    ListNode* mergeLists(ListNode* a, ListNode* b){
+        ListNode* dummy = new ListNode();
+        ListNode* curr = dummy;
+        
+        while (a != nullptr and b != nullptr){
+            if (a->val < b->val){
+                ListNode* node = new ListNode(a->val);
+                curr->next = node;
+                a = a->next;
+            }
+            else{
+                ListNode* node = new ListNode(b->val);
+                curr->next = node;
+                b = b->next;
+            }
+            curr = curr->next;
+        }
+        
+        if (a != nullptr){
+            curr->next = a;
+            
+        }
+        
+        if (b != nullptr){
+            curr->next = b;
+        }
+        
+        return dummy->next;
+    }
+    
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        if (lists.size() == 0){
+            return nullptr;
+        }
+        
+        if (lists.size() == 1){
+            return lists[0];
+        }
+        //merge
+        ListNode* res = lists[0];
+        
+        for (int i = 1; i < lists.size(); ++i){
+            res = mergeLists(res,lists[i]);
+        }
+        
+        return res;
+    }
+};

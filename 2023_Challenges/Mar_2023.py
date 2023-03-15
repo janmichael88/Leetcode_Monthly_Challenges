@@ -591,3 +591,156 @@ class Solution:
                 word_buffer = []
 
         return ans
+
+#####################################
+# 1055. Shortest Way to Form String
+# 15MAR23
+#####################################
+class Solution:
+    def shortestWay(self, source: str, target: str) -> int:
+        '''
+        return minimum number of subsequences from source such that their concatenation == target
+        source = "abc"
+        target = "abcbc"
+        
+        from source we can get
+            a, b, c
+            ab, ac
+            bc
+            abc
+        ans = 2
+        
+        we can rephrase the problem as:
+            return the minimum number of times we need to concat source to get target as a subsequence
+            if we concat source len(target) times, we are sure to get an answer
+            
+        first we try string concat of 1, then 2, then 3...
+        keep going until we cant
+        '''
+        def is_subseq(original,subseq):
+            i,j = 0,0
+            while i < len(original) and j < len(subseq):
+                #same
+                if original[i] == subseq[j]:
+                    i += 1
+                    j += 1
+                else:
+                    i += 1
+            
+            return j == len(subseq)
+        
+        
+        #first check that we can't make targer
+        set_source = set(source)
+        for ch in target:
+            if ch not in set_source:
+                return -1
+        
+        num_concats = 1
+        curr_original = source
+        
+        while not is_subseq(curr_original,target):
+            curr_original += source
+            num_concats += 1
+        
+        return num_concats
+    
+#we can use binary search too
+class Solution:
+    def shortestWay(self, source: str, target: str) -> int:
+        '''
+        return minimum number of subsequences from source such that their concatenation == target
+        source = "abc"
+        target = "abcbc"
+        
+        from source we can get
+            a, b, c
+            ab, ac
+            bc
+            abc
+        ans = 2
+        
+        we can rephrase the problem as:
+            return the minimum number of times we need to concat source to get target as a subsequence
+            if we concat source len(target) times, we are sure to get an answer
+            
+        first we try string concat of 1, then 2, then 3...
+        keep going until we cant
+        '''
+        def is_subseq(original,subseq):
+            i,j = 0,0
+            while i < len(original) and j < len(subseq):
+                #same
+                if original[i] == subseq[j]:
+                    i += 1
+                    j += 1
+                else:
+                    i += 1
+            
+            return j == len(subseq)
+        
+        
+        #first check that we can't make targer
+        set_source = set(source)
+        for ch in target:
+            if ch not in set_source:
+                return -1
+        
+        low = 1
+        high = len(target) #cannot be more than len(target times)
+        
+        
+        while low < high:
+            mid = low + (high - low) // 2
+            can_do = is_subseq(source*mid,target)
+            if can_do:
+                high = mid
+            else:
+                low = mid + 1
+        
+        return low
+    
+#actual answer is two pointers
+class Solution:
+    def shortestWay(self, source: str, target: str) -> int:
+        '''
+        we actually don't need to keep concating source, we just need to keep looping over it
+        but intead of trying all concatentations, we want to find the immediate next occurence of the next char of target in source
+        two points, but one pointer into source just gets modded len(source)
+        if the pointer hits zer0, we have to icnreament the count of concats
+        why?
+            because we have gone through soruce already
+        
+        proof of optmiality
+            we start with the smallest, if we find a new solution, it has to be the smallest solution
+            proof by contradiction
+        '''
+        #first check that we can't make targer
+        set_source = set(source)
+        for ch in target:
+            if ch not in set_source:
+                return -1
+            
+        
+        count = 0
+        source_ptr = 0
+        
+        #loop through target to find the immediate ocurrence
+        for ch in target:
+            #if we have gotten to the beginning of source again
+            if source_ptr == 0:
+                count += 1
+            
+            #find first occruecnce of source in target
+            while source[source_ptr] != ch:
+                source_ptr = (source_ptr + 1) % len(source)
+                
+                #gone aroung again
+                if source_ptr == 0:
+                    count += 1
+            
+            #advance to next char
+            source_ptr = (source_ptr + 1) % len(source)
+        
+        return count
+            
