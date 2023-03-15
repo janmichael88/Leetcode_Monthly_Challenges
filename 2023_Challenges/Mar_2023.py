@@ -743,4 +743,133 @@ class Solution:
             source_ptr = (source_ptr + 1) % len(source)
         
         return count
+
+##########################################
+# 958. Check Completeness of a Binary Tree
+# 15MAR23
+##########################################
+#close one...
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isCompleteTree(self, root: Optional[TreeNode]) -> bool:
+        '''
+        complete binary tree is one where every level is filled as far left as possible (except the last level)
+        and for each level, it can have between 1 and 2^h nodes inclusive
+        
+        first find the depth of tree
+        then level order checking number of nodes between 1 and 2**curr_level
+        '''
+        def get_depth(node):
+            if not node:
+                return 0
+            left = get_depth(node.left)
+            right = get_depth(node.right)
+            return max(left,right) + 1
+        
+        
+        depth = get_depth(root) 
+        curr_level = 0
+        q = deque([root])
+        
+        while curr_level != depth - 1:
+            N = len(q)
+            #check
+            if N > 2**curr_level:
+                return False
+            for _ in range(N):
+                curr = q.popleft()
+                q.append(curr.left)
+                q.append(curr.right)
+            curr_level += 1
+        
+        #we are at the second to last level here
+        for _ in range(len(q)):
+            curr = q.popleft()
+            if not curr.left:
+                return False
+        
+        return True
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isCompleteTree(self, root: Optional[TreeNode]) -> bool:
+        '''
+        we can define a complete binary tree as a tree that  has no node to the right of the first null node
+        and no node at a greater level than the first null node
+        
+        intuitino:
+             The level-order traversal array of a complete binary tree will never have a null node in between non-null nodes.
+        while doing level order, just check if have already scene an empty node before hand
+        the only empty nodes should be on the last level
+        '''
+        if not root:
+            return True
+        
+        found_empty = False
+        
+        q = deque([root])
+        
+        while q:
+            curr = q.popleft()
             
+            if not curr:
+                found_empty = True
+            else:
+                if found_empty:
+                    return False
+
+                q.append(curr.left)
+                q.append(curr.right)
+        
+        return True
+                    
+#dfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isCompleteTree(self, root: Optional[TreeNode]) -> bool:
+        '''
+        recall that in a binary tree
+        given a node at index i
+            we can find its children at 2*i + 1 and 2*i + 2
+        if there n nodes in the tree
+        then an index cannot ever be mofre than n because ti would imply that we have a missing node somewhere
+        
+        intution
+            a nodes index in the binary tree cannot be more than the number of nodes in tree
+        '''
+        def count_nodes(node):
+            if not node:
+                return 0
+            return 1 + count_nodes(node.left) + count_nodes(node.right)
+        
+        N = count_nodes(root)
+        
+        def dp(node,index,N):
+            if not node:
+                return True
+            if index >= N:
+                return False
+            
+            left = dp(node.left,2*index + 1,N)
+            right = dp(node.right,2*index + 2,N)
+            
+            #inorder for this to be true, both left and right must be true
+            return left and right
+        
+        return dp(root,0,N)
+    
