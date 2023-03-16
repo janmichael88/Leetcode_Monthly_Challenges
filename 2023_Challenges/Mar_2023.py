@@ -436,6 +436,83 @@ class Solution:
             if hash_needle == hash_hay:
                 return window_start
         return -1
+    
+#kmp
+class Solution:
+    def strStr(self, haystack: str, needle: str) -> int:
+        '''
+        the problem with rabin-karp, is that we do a lot of repeated comparisions if we had already advanced quite far in needle
+        if there is a mismatch, we only move by 1, rather we would want to advance to the last index in the mismatch
+        but this doesn't always work!!!! good point here
+        
+        recall concept of proper prefix and proper suffix, substrings that can be prefix and suffix of string but != string
+        border, substring of a string that is both proper prefix and proper suffix
+        longest prefix also suffix (pi table, also defined as lps)
+        or somtimes called the n table
+        lps[i] is the lenght of the longest border of the string[0...i]
+        lps[0] = 0 becuase for a single character, the only border is "" whose length is 0
+        lps array naivly takes (N^3) time
+        needed for needle
+        for i = 1 to m-1
+          for k = 0 to i
+             if needle[0..k-1] == needle[i-(k-1)..i]
+               longest_border[i] = k
+                temp = "abcdabeeabf"
+        N = len(temp)
+        for i in range(1,N):
+            for k in range(i+1):
+                pref = temp[0:k]
+                suff = temp[i- (k):i]
+                print("pref is..", pref,"suff is.." ,suff)
+        '''
+        m = len(needle)
+        n = len(haystack)
+        
+        if n < m:
+            return -1
+        
+        #preprocesing, lps array
+        lps = [0]*m
+        #store length of previous border string
+        prev = 0
+        i = 1
+        while i < m:
+            if needle[i] == needle[prev]:
+                #increase length of previous border
+                prev += 1
+                lps[i] = prev
+                i += 1
+            else:
+                #only empty border exists, which has length zero
+                if prev == 0:
+                    lps[i] = 0
+                    i += 1
+                else:
+                    #take previous
+                    prev = lps[prev-1]
+        
+        #searching
+        haystack_ptr = 0
+        needle_ptr = 0
+        
+        while haystack_ptr < n:
+            if haystack[haystack_ptr] == needle[needle_ptr]:
+                #increment both
+                haystack_ptr += 1
+                needle_ptr += 1
+                #if all matche in needle, return
+                if needle_ptr == m:
+                    return haystack_ptr - m
+            else:
+                #no matching yet
+                if needle_ptr == 0:
+                    haystack_ptr += 1
+                else:
+                    #optimally shift left needle , and dont change haystack
+                    #because have the longest border pre calculate
+                    needle_ptr = lps[needle_ptr - 1]
+        
+        return -1
 
 ##########################################
 # 2444. Count Subarrays With Fixed Bounds
