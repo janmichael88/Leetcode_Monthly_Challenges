@@ -950,3 +950,329 @@ class Solution:
         
         return dp(root,0,N)
     
+#######################################
+# 1472. Design Browser History
+# 18MAR23
+#######################################
+#nice idea
+class BrowserHistory:
+    '''
+    after visiting, forward history is cleared
+    try:
+        hashmap:
+            key is current step
+            simple add and increment
+            but when visiting again, i'd have to delete everything greater than the current step if i went back
+    '''
+
+    def __init__(self, homepage: str):
+        self.cache = {}
+        self.curr_step = 0
+        self.max_step = 0
+
+    def visit(self, url: str) -> None:
+        self.cache[self.curr_step] = url
+        self.curr_step += 1
+        self.max_step = max(self.max_step,self.curr_step)
+        #clear everythihng up to max
+        for i in range(self.curr_step,self.max_step):
+            del self.cache[i]
+
+    def back(self, steps: int) -> str:
+        #find go to
+        go_to = self.curr_step - steps
+        if go_to in self.cache:
+            self.curr_step = go_to
+            return 
+
+    def forward(self, steps: int) -> str:
+        
+
+
+# Your BrowserHistory object will be instantiated and called as such:
+# obj = BrowserHistory(homepage)
+# obj.visit(url)
+# param_2 = obj.back(steps)
+# param_3 = obj.forward(steps)
+
+#two stacks
+class BrowserHistory:
+    '''
+    the idea is to use two stack
+        one for future and one for past
+        and variable holding current webpage
+        
+    visit:
+        make new url be the currnet one
+        and store current in history stack, then just clear the future stack
+        
+    back:
+        need to go back steps
+        while we have steps and there is stuff in the history stack, pop and puch current on to furture stafk
+    
+    forward:
+        we need to go forward by ursls
+        while we have steps and while there is forward, push current in the history stack and pop most recenlt visited from forward
+    '''
+
+    def __init__(self, homepage: str):
+        self.history = []
+        self.future = []
+        self.curr_page = homepage
+
+    def visit(self, url: str) -> None:
+        self.history.append(self.curr_page)
+        self.curr_page = url
+        self.future = []
+        
+
+    def back(self, steps: int) -> str:
+        while steps > 0 and self.history:
+            #push current
+            self.future.append(self.curr_page)
+            self.curr_page = self.history.pop()
+            steps -= 1
+        
+        return self.curr_page
+
+    def forward(self, steps: int) -> str:
+        while steps > 0 and self.future:
+            self.history.append(self.curr_page)
+            self.curr_page = self.future.pop()
+            steps -= 1
+        
+        return self.curr_page
+        
+
+
+# Your BrowserHistory object will be instantiated and called as such:
+# obj = BrowserHistory(homepage)
+# obj.visit(url)
+# param_2 = obj.back(steps)
+# param_3 = obj.forward(steps)
+
+#using doubly linked list
+class Node:
+    def __init__(self,data):
+        self.data = data
+        self.prev = None
+        self.next = None
+
+class BrowserHistory:
+    '''
+    we can use a double linked list 
+    node obkcets:
+        url
+        prev
+        none
+    
+    visit we just insert at curr,
+    inserting cuases the previous nodes to disappear
+    careful of the memory leak in C++ implementatino, we need to deallocate
+    
+    '''
+    def __init__(self, homepage: str):
+        self.head = Node(homepage)
+        self.curr = self.head
+        
+
+    def visit(self, url: str) -> None:
+        #prepare new node
+        new_node = Node(url)
+        self.curr.next = new_node
+        new_node.prev = self.curr
+        #advance
+        self.curr = new_node
+
+    def back(self, steps: int) -> str:
+        while steps and self.curr.prev:
+            self.curr = self.curr.prev
+            steps -= 1
+        
+        return self.curr.data
+        
+
+    def forward(self, steps: int) -> str:
+        while steps and self.curr.next:
+            self.curr = self.curr.next
+            steps -= 1
+        
+        return self.curr.data
+        
+
+
+# Your BrowserHistory object will be instantiated and called as such:
+# obj = BrowserHistory(homepage)
+# obj.visit(url)
+# param_2 = obj.back(steps)
+# param_3 = obj.forward(steps)
+
+#############################################
+# 1485. Clone Binary Tree With Random Pointer
+# 18MAR23
+#############################################
+#i liked the idea
+# Definition for Node.
+# class Node:
+#     def __init__(self, val=0, left=None, right=None, random=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+#         self.random = random
+
+class Solution:
+    def copyRandomBinaryTree(self, root: 'Optional[Node]') -> 'Optional[NodeCopy]':
+        '''
+        LMAO! they figured out how to remove the cheaters by making us return a new class
+        insteaf of copy.deepcopy(class)
+        we need to build the tree using recursion
+        randome pointer points to a node
+
+
+        '''
+        def make_copy(node):
+            if not node:
+                return None
+            
+            new_copy = NodeCopy()
+            new_copy.left = make_copy(node.left)
+            new_copy.right = make_copy(node.right)
+            new_copy.random = make_copy(node.random)
+            return new_copy
+        
+        
+        return make_copy(root)
+    
+# Definition for Node.
+# class Node:
+#     def __init__(self, val=0, left=None, right=None, random=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+#         self.random = random
+
+class Solution:
+    def copyRandomBinaryTree(self, root: 'Optional[Node]') -> 'Optional[NodeCopy]':
+        '''
+        LMAO! they figured out how to remove the cheaters by making us return a new class
+        insteaf of copy.deepcopy(class)
+        we need to build the tree using recursion
+        randome pointer points to a node
+
+        hashamp stores node in input and makes a NodeCopy
+        recurse on each node and fetch its copy
+
+        we need to use extra space to save the copies, then swap over
+        this is similar to dfs with a seen set, we don't want to recopy a node we have already copied
+        just fetch the copy from the hashamp
+
+        similar to the way we stop dfs'ing on an already seen node in a graph
+
+        '''
+        clones = {}
+        
+        def make_copy(node):
+            if not node:
+                return 
+            if node in clones:
+                return clones[node]
+            
+            new_node = NodeCopy(node.val)
+            clones[node] = new_node
+            clones[node].left = make_copy(node.left)
+            clones[node].right = make_copy(node.right)
+            clones[node].random = make_copy(node.random)
+            return new_node
+        
+        
+        return make_copy(root)
+    
+# Definition for Node.
+# class Node:
+#     def __init__(self, val=0, left=None, right=None, random=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+#         self.random = random
+
+class Solution:
+    def copyRandomBinaryTree(self, root: 'Optional[Node]') -> 'Optional[NodeCopy]':
+        '''
+        think of the easier problem
+        if we only had left and right, we could dfs, then copy left and right on first pass as nodecopies
+        then on the second pass, traverse the randome but make the connections in the copied tree
+        idea is to keep hashmap of old nodes to copied nodes
+        
+        intuition:
+            we know which node the random pointer of any current node (node of the given tree) points to
+            and if we store what would be the respective new node (the copied node) for any old node (use hashmap)
+            then we can easily tell which node the radnom point of the new should point to
+        '''
+        orig_to_copy = {None:None} #interseting this only works if we init the dictinoat to have none values
+        
+        def copy_left_right(node):
+            if not node:
+                return None
+            new_node = NodeCopy(node.val)
+            new_node.left = copy_left_right(node.left)
+            new_node.right = copy_left_right(node.right)
+            #put into hashsmape
+            orig_to_copy[node] = new_node
+            return new_node
+        
+        #return copy_left_right(root)
+        #notice that we just get the nodes with empty random pointers
+        #now we need to traverse this tree to make the random connections
+        def copy_random_ptrs(node):
+            if not node:
+                return None
+            #first get the copty
+            copied_node = orig_to_copy[node]
+            #get the copy of the random node
+            copied_random_node = orig_to_copy[node.random]
+            #make new connection
+            copied_node.random = copied_random_node
+            copy_random_ptrs(node.left)
+            copy_random_ptrs(node.right)
+            
+        copy = copy_left_right(root)
+        copy_random_ptrs(root) #call this on the original to make connections into copy
+        return copy
+    
+# Definition for Node.
+# class Node:
+#     def __init__(self, val=0, left=None, right=None, random=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+#         self.random = random
+
+class Solution:
+    def __init__(self,):
+        self.already_copied: dict[Node,NodeCopy] = {None:None}
+            
+    #function to make copy
+    def make_copy(self,node):
+        if not node:
+            return None
+        
+        if node in self.already_copied:
+            return self.already_copied.get(node)
+        
+        copied = NodeCopy(node.val)
+        #i have to make a copy first before recusring
+        #but not only make a copy, mark it as already copied
+        #otherwise it will just keep coping beforing finally caching
+        self.already_copied[node] = copied
+        copied.left = self.make_copy(node.left)
+        copied.right = self.make_copy(node.right)
+        copied.random = self.make_copy(node.random)
+        return copied
+        
+    
+    def copyRandomBinaryTree(self, root: 'Optional[Node]') -> 'Optional[NodeCopy]':
+        '''
+        mark node is already seen, rather already copied
+        if node is already coped, fetch it and return it
+        '''
+        return self.make_copy(root)
