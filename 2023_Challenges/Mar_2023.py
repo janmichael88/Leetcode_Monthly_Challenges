@@ -1276,3 +1276,176 @@ class Solution:
         if node is already coped, fetch it and return it
         '''
         return self.make_copy(root)
+    
+############################################################
+# 211. Design Add and Search Words Data Structure (REVISTED)
+# 19MAR23
+#############################################################
+#close one
+class Node:
+    def __init__(self,):
+        self.children = {}
+        self.is_end = False
+
+class WordDictionary:
+
+    def __init__(self):
+        '''
+        the issue is that the dots can be anywhere
+        i can use recursion on the word trie and check all children if at a dot
+        '''
+        self.trie = Node()
+
+    def addWord(self, word: str) -> None:
+        curr = self.trie
+        for ch in word:
+            if ch in curr.children:
+                curr = curr.children[ch]
+            else:
+                new_node = Node()
+                curr.children[ch] = new_node
+                curr = new_node
+        #mark
+        curr.is_end = True
+
+    def search(self, word: str) -> bool:
+        def dfs(word,curr_node):
+            if word[0] not in curr_node.children:
+                return False
+            elif word[0] in curr_node.children:
+                curr_node = curr_node.children[word[0]]
+            #if it's a dot, try all children
+            elif word[0] == '.':
+                for child in curr_node.children:
+                    if dfs(word[1:],curr_node.children[child]):
+                        return True
+                return False
+            return curr_node.is_end
+        
+        return dfs(word,self.trie)
+
+# Your WordDictionary object will be instantiated and called as such:
+# obj = WordDictionary()
+# obj.addWord(word)
+# param_2 = obj.search(word)
+
+#the actual solution
+class WordDictionary:
+
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.trie = {}
+
+
+    def addWord(self, word: str) -> None:
+        """
+        Adds a word into the data structure.
+        """
+        node = self.trie
+
+        for ch in word:
+            if not ch in node:
+                node[ch] = {}
+            node = node[ch]
+        node['$'] = True
+
+    def search(self, word: str) -> bool:
+        """
+        Returns if the word is in the data structure. A word could contain the dot character '.' to represent any letter.
+        """
+        def search_in_node(word, node) -> bool:
+            for i, ch in enumerate(word):
+                if not ch in node:
+                    # if the current character is '.'
+                    # check all possible nodes at this level
+                    if ch == '.':
+                        for x in node:
+                            if x != '$' and search_in_node(word[i + 1:], node[x]):
+                                return True
+                    # if no nodes lead to answer
+                    # or the current character != '.'
+                    return False
+                # if the character is found
+                # go down to the next level in trie
+                else:
+                    node = node[ch]
+            return '$' in node
+
+        return search_in_node(word, self.trie)
+    
+##################################
+# 830. Positions of Large Groups
+# 21MAR23
+###################################
+#works
+class Solution:
+    def largeGroupPositions(self, s: str) -> List[List[int]]:
+        '''
+        this is just 
+        '''
+        curr_char = s[0]
+        curr_count = 1
+        ans = []
+        curr_group = [0]
+        
+        for i in range(1,len(s)):
+            if s[i] == curr_char:
+                curr_count += 1
+            else:
+                if curr_count >= 3:
+                    curr_group.append(i-1)
+                    ans.append(curr_group)
+                    curr_group = [i]
+                    curr_count = 1
+                else:
+                    curr_count = 1
+                    curr_group = [i]
+                curr_char  = s[i]
+        #for the last one        
+        if curr_count >= 3:
+            curr_group.append(i)
+            ans.append(curr_group)  
+        return ans
+    
+#phew
+class Solution:
+    def largeGroupPositions(self, s: str) -> List[List[int]]:
+        '''
+        we can maintain two poiters, left and right
+        keep advancing right until we are no longer in the group
+        once we are out of the group, see is the pointers are 3 away (inclusive)
+        '''
+        N = len(s)
+        indicies = []
+        left, right = 0,0
+        while right < N:
+            while right < N-1 and s[right] == s[right+1]:
+                right += 1
+            if (right - left + 1) >= 3:
+                indicies.append([left,right])
+            
+            right += 1
+            left = right
+        
+        return indicies
+    
+
+#another way using for loop
+class Solution:
+    def largeGroupPositions(self, s: str) -> List[List[int]]:
+        N = len(s)
+        left = 0
+        ans = []
+        
+        for right in range(N):
+            #got to the end or mismtach with adjacent chars
+            if right == N -1 or s[right] != s[right+1]:
+                if right - left + 1 >= 3:
+                    ans.append([left,right])
+                
+                #new group
+                left = right + 1
+        
+        return ans

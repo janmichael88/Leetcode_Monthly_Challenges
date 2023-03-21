@@ -725,3 +725,34 @@ public:
         return res;
     }
 };
+
+///////////////////////////////////////
+// 605. Can Place Flowers (REVISTED)
+// 20MAR23
+////////////////////////////////////////
+class Solution {
+public:
+    bool canPlaceFlowers(vector<int>& flowerbed, int n) {
+        //just check eveyrthing in between, careful for the edge cases on the beginning and at the end
+        int count = 0;
+        for (int i = 0; i < flowerbed.size(); ++i){
+            //variables for left and right
+            if (flowerbed[i] == 0){
+                //if at the beginning, its left is trivially empty
+                //same thing with the end
+                bool empty_left = (i == 0) || (flowerbed[i-1] == 0);
+                //i can index out of bounrds if the previous statement evals to something
+                bool empty_right = (i == flowerbed.size() - 1) || (flowerbed[i+1] == 0);
+                
+                if (empty_left && empty_right){
+                    count += 1;
+                    flowerbed[i] = 1;
+                }
+            }
+        }
+        
+        return count >= n;
+    }
+};
+
+
