@@ -1449,3 +1449,76 @@ class Solution:
                 left = right + 1
         
         return ans
+    
+
+#######################################
+# 2348. Number of Zero-Filled Subarrays
+# 21MAR23
+######################################
+class Solution:
+    def zeroFilledSubarray(self, nums: List[int]) -> int:
+        '''
+        sliding window?
+        keep advancing right pointers until we have zeros, for every advancment of right, increment count
+        when come to a non zero, move left
+        
+        if we have a sub array [0,0,0]
+        we can have  3 [0]
+        we can have 2 [0,0]
+        we can have 1 [0,0,0]
+        
+        total subarrays = 3 + 2 + 1
+        which is just sum of series from 1 to 3
+        
+        so given a lenghth N all zeros, total number of contributinos of subarrays would be
+            count = N*(N+1) / 2
+            
+        now the problem just becomes find all subarray of [0]
+        get the lenght, and return count
+        '''
+        count = 0
+        N = len(nums)
+        zeros = []
+        
+        for num in nums:
+            if num == 0:
+                zeros.append(num)
+            else:
+                if zeros:
+                    count += (len(zeros)*(len(zeros) + 1)) // 2
+                zeros = []
+        
+        if zeros:
+            count += (len(zeros)*(len(zeros) + 1)) // 2
+        return count
+    
+#turn out we just count the streaks
+#but every time we have a zero increment the an by the current streak size
+class Solution:
+    def zeroFilledSubarray(self, nums: List[int]) -> int:
+        '''
+        keep track of curr streak size and incremtn count by the streak size
+        if we have a subarrya of size k and we were to extend this to k + 1,
+        we effectivley incrmenet the count by k + 1 subarrays
+        [0,0,0]
+        we already have
+        [0] 3 times
+        [0,0] 2 times
+        [0,0,0] 1 time
+        
+        going to 4 
+        [0,0,0,0]
+        num arrays increase by 4
+        '''
+        count = 0
+        size = 0
+        
+        for num in nums:
+            if num == 0:
+                size += 1
+            else:
+                size = 0
+            print(size)
+            count += size
+        
+        return count
