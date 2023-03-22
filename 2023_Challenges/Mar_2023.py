@@ -1522,3 +1522,70 @@ class Solution:
             count += size
         
         return count
+
+###########################################
+# 1504. Count Submatrices With All Ones
+# 21MAR23
+############################################
+class Solution:
+    def numSubmat(self, mat: List[List[int]]) -> int:
+        '''
+        i can store in each i,j the number of submatrices who'se left corner ends at i,j
+        then just sum across the whole dp array
+        
+        similar to numer of squares in histogram
+        
+        follow the hints, i dont know exactly why
+        1. for each row i, create an array nums where:
+            if mat[i][j] == 0, then nums[j] = 0 else, nums[j] = nums[j-1] + 1
+        2. in the ith row, the number of rectangles between column j and k (inclusive) and ends in row i is:
+            sum(min(nums[j..idx])) where idx goes from j to k
+            
+        for each row, increment the count by the smallest width
+        on the dp matrix
+            keep going down a column, recording the smallest width as the number of rectangles starting from the left
+            
+        For each row, determine the number of submatrices of all 1's
+        that terminate at each location and begin on the same row.
+        
+        Process the above matrix one row at a time. Moving down each
+        column, determine the number of submatrices of all 1's that
+        start on that row looking left.  Repeat for each row and return
+        the total number of submatrices.
+
+        For each 1 within a row, count the submatrices that contain
+        the 1 and start on the same row either at the 1 or to the
+        left of the 1. Proceed down the column that contains the 1
+        until reaching a 0 or the bottom row of the matrix. While
+        proceeding down a column, the width of the submatrices stays
+        the same or gets thinner.
+        '''
+        
+        rows = len(mat)
+        cols = len(mat[0])
+        
+        dp = [[0]*cols for _ in range(rows)]
+        
+        #base cases
+        for i in range(rows):
+            if mat[i][0] == 1:
+                dp[i][0] = 1
+        
+        for i in range(rows):
+            for j in range(1,cols):
+                if mat[i][j] == 1:
+                    dp[i][j] = dp[i][j-1] + 1
+        
+        submatrices = 0
+        for i in range(rows):
+            for j in range(cols):
+                if dp[i][j] != 0:
+                    curr_row = i
+                    submatrix_width = dp[i][j]
+                    #keep going down
+                    while curr_row < rows and dp[i][j] != 0:
+                        submatrix_width = min(submatrix_width,dp[curr_row][j])
+                        submatrices += submatrix_width
+                        curr_row += 1
+        
+        return submatrices
