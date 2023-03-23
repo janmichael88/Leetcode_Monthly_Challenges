@@ -756,3 +756,49 @@ public:
 };
 
 
+/////////////////////////////////////
+// 1236. Web Crawler
+// 23MAR23
+//////////////////////////////////////
+//you can next functions in C++ in the form of lambdas
+/**
+ * // This is the HtmlParser's API interface.
+ * // You should not implement it, or speculate about its implementation
+ * class HtmlParser {
+ *   public:
+ *     vector<string> getUrls(string url);
+ * };
+ */
+
+class Solution {
+public:
+    vector<string> crawl(string startUrl, HtmlParser htmlParser) {
+        function<string(string)> getHost = [](string url){
+            int pos = min(url.size(),url.find('/',7));
+            
+            return url.substr(7,pos-7);
+        };
+        
+        string hostName = getHost(startUrl);
+        //keep visited set 
+        unordered_set<string> seen;
+        
+        function<void(string)> dfs = [&](string url){
+            seen.insert(url);
+            for (string neigh : htmlParser.getUrls(url)){
+                if (getHost(neigh) == hostName && !seen.count(neigh)){
+                    dfs(neigh);
+                }
+            }
+        };
+        
+        dfs(startUrl);
+        vector<string> ans;
+        for (string url: seen){
+            ans.push_back(url);
+        }
+        
+        return ans;
+    }
+    
+};

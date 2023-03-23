@@ -1760,3 +1760,123 @@ class Solution:
                 ans = min(ans,dist)
         
         return ans
+
+##########################################
+# 1236. Web Crawler
+# 22MAR23
+###########################################
+# """
+# This is HtmlParser's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class HtmlParser(object):
+#    def getUrls(self, url):
+#        """
+#        :type url: str
+#        :rtype List[str]
+#        """
+
+class Solution:
+    def crawl(self, startUrl: str, htmlParser: 'HtmlParser') -> List[str]:
+        '''
+        jesus fuck, 20/21, meh i think i get it :)
+        '''
+        all_urls = set()
+        def get_all(url,parser):
+            #nothing to parse
+            all_urls.add(url)
+            if len(parser.getUrls(url)) == 0:
+                return
+            else:
+                for neigh in parser.getUrls(url):
+                    if neigh not in all_urls:
+                        get_all(neigh,parser)
+                    
+        get_all(startUrl, htmlParser)
+        #find host name from start url, they ust http protocol
+        host = startUrl[:7]
+        i = 7
+        while i < len(startUrl) and startUrl[i] != '/':
+            host += startUrl[i]
+            i += 1
+            
+        ans = []
+        for url in all_urls:
+            if url.startswith(host):
+                ans.append(url)
+        
+        return ans
+
+# """
+# This is HtmlParser's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class HtmlParser(object):
+#    def getUrls(self, url):
+#        """
+#        :type url: str
+#        :rtype List[str]
+#        """
+
+class Solution:
+    def crawl(self, startUrl: str, htmlParser: 'HtmlParser') -> List[str]:
+        '''
+        jesus fuck, 20/21, meh i think i get it :)
+        '''
+        
+        def get_hostname(url):
+            return url.split('/')[2]
+        
+        start_host = get_hostname(startUrl)
+        seen = set()
+        
+        def get_all(url,parser):
+            seen.add(url)
+            #base case
+            if len(parser.getUrls(url)) == 0:
+                return
+            else:
+                for neigh in parser.getUrls(url):
+                    if get_hostname(neigh) == start_host and neigh not in seen:
+                        get_all(neigh,parser)
+                    
+        get_all(startUrl, htmlParser)
+
+        
+        return seen
+    
+#can use bfs
+# """
+# This is HtmlParser's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class HtmlParser(object):
+#    def getUrls(self, url):
+#        """
+#        :type url: str
+#        :rtype List[str]
+#        """
+
+class Solution:
+    def crawl(self, startUrl: str, htmlParser: 'HtmlParser') -> List[str]:
+        '''
+        jesus fuck, 20/21, meh i think i get it :)
+        '''
+        
+        def get_hostname(url):
+            return url.split('/')[2]
+        
+        start_host = get_hostname(startUrl)
+        seen = set()
+        
+        q = deque([startUrl])
+        
+        while q:
+            url = q.popleft()
+            seen.add(url)
+            for neigh in htmlParser.getUrls(url):
+                if get_hostname(neigh) == start_host and neigh not in seen:
+                    q.append(neigh)
+        
+        return seen
+
