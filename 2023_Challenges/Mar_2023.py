@@ -1565,6 +1565,9 @@ class Solution:
         cols = len(mat[0])
         
         dp = [[0]*cols for _ in range(rows)]
+        #dp(i,j) gives the number of rectables in a row ending at [i,j] who's start is at i
+        #and are consective
+
         
         #base cases
         for i in range(rows):
@@ -1589,3 +1592,171 @@ class Solution:
                         curr_row += 1
         
         return submatrices
+    
+####################################################
+# 2492. Minimum Score of a Path Between Two Cities
+# 22MAR23
+#####################################################
+class Solution:
+    def minScore(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        from the hints, if all the cities are connect, i can use any road
+        so the answer is just the minimum dist of all the roads (for that connected compoenent)
+
+        we want the minimum score of all possible paths from 1 to n, we don't necessarily need to vsit all the nodes
+        dfs on each node to find the minimum path
+
+        i have to start at 1 anyway, 
+        addind a new road, may reduce the minimum score
+
+        from the hint, remove nodes not connected to 1
+        then solve the problem on the connected graph
+        '''
+        adj_list = defaultdict(list)
+
+        for u,v,dist in roads:
+            #enetyr is going to be node: (neigh,dist)
+            adj_list[u].append((v,dist))
+            adj_list[v].append((u,dist))
+
+
+        def dfs_connected_to_one(city,seen):
+            seen.add(city)
+            for neigh,dist in adj_list[city]:
+                if neigh not in seen:
+                    dfs_connected_to_one(neigh,seen)
+
+        connected_to_one = set()
+        dfs_connected_to_one(1,connected_to_one)
+
+        #all these are connected to 1 somehow
+        #dfs on these and get the minimum raod for the minimum score
+        self.ans = float('inf')
+
+        def dfs_find_min(city,seen,connected):
+            seen.add(city)
+            for neigh,dist in adj_list[city]:
+                self.ans = min(self.ans,dist)
+                #upaate ans no matter what, and then if its connected dfs on it, because we can go back on the edge
+                if neigh in connected_to_one and neigh not in seen:
+                    dfs_find_min(neigh,seen,connected_to_one)
+
+        seen = set()
+        dfs_find_min(1,seen,connected_to_one)
+        return self.ans
+    
+#single source dfs
+class Solution:
+    def minScore(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        we can also just dfs starting from 1
+        '''
+        adj_list = defaultdict(list)
+        seen = [False]*(n+1)
+        self.ans = float('inf')
+        
+        for u,v,dist in roads:
+            #enetyr is going to be node: (neigh,dist)
+            adj_list[u].append((v,dist))
+            adj_list[v].append((u,dist))
+            
+        
+        def dfs(city):
+            seen[city] = True
+            
+            for neigh,dist in adj_list[city]:
+                self.ans = min(self.ans,dist)
+                if not seen[neigh]:
+                    dfs(neigh)
+                    
+        dfs(1)
+        return self.ans
+    
+#bfs
+class Solution:
+    def minScore(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        bfs
+        '''
+        adj_list = defaultdict(list)
+        seen = [False]*(n+1)
+        self.ans = float('inf')
+        
+        for u,v,dist in roads:
+            #enetyr is going to be node: (neigh,dist)
+            adj_list[u].append((v,dist))
+            adj_list[v].append((u,dist))
+            
+        
+        q = deque([1])
+        
+        while q:
+            city = q.popleft()
+            seen[city] = True
+            
+            for neigh,dist in adj_list[city]:
+                self.ans = min(self.ans,dist)
+                if not seen[neigh]:
+                    q.append(neigh)
+                    
+        return self.ans
+
+#using union find
+class UF:
+    def __init__(self,n):
+        self.size = [1]*(n+1)
+        self.parent = [i for i in range(n+1)] #cities are from 1 to n
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def join(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        if parent_x == parent_y:
+            return
+        elif self.size[parent_x] > self.size[parent_y]:
+            self.parent[parent_y] = parent_x
+            self.size[parent_x] += self.size[parent_y]
+            self.size[parent_y] = 1
+        
+        elif self.size[parent_y] > self.size[parent_x]:
+            self.parent[parent_x] = parent_y 
+            self.size[parent_y] += self.size[parent_x]
+            self.size[parent_x] = 1
+        
+        else:
+            self.parent[parent_y] = parent_x
+            self.size[parent_x] += self.size[parent_y]
+            self.size[parent_y] = 1
+
+class Solution:
+    def minScore(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        how could we use union find?
+        we need to connect each city that is part of the connected component
+        when ever we join an edge and that connecting edge points 1, we can minize this current score by taking the min dist
+        call find on each (a,b)
+        if any of their parents points to 1, they must be connected
+        
+        on the first pass, join each city along an edge (i.e make them connected)
+        the on the second pass, find the representative of city 1, and see if we can get to that through each edge in roads (we only need to check one)
+        minimze along the way
+        '''
+        uf = UF(n)
+        
+        #first pass join
+        for u,v,dist in roads:
+            uf.join(u,v)
+        
+        ans = float('inf')
+        ones_parent = uf.find(1)
+        
+        for u,v,dist in roads:
+            if uf.find(u) == ones_parent:
+                ans = min(ans,dist)
+        
+        return ans
