@@ -1880,3 +1880,148 @@ class Solution:
         
         return seen
 
+########################################################
+# 1319. Number of Operations to Make Network Connected
+# 23MAR23
+#########################################################
+class Solution:
+    def makeConnected(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        well union find scream out obvie for connected reasons
+        use union find to get the connected components
+        
+        first off, 
+            if i have n computers that need to be connected
+            i need at leats n-1 cables
+            
+        count total connected components using dfs
+        LMAOOOO this fucking worked
+
+        imagine that each connected component is simplified to just a single node
+        to connec this grah, we need a minimum of c - 1 edges
+        if we have at least n-1 edges
+        and we have c compoenents
+        there can be at most n compoenents
+        we need to connect the reamining (n-c) componnents, which use (n-c-1) edges
+        (n-1) - (n-c)
+        -1 + c
+        c - 1 edges
+
+        well if we have 1 compoenent, we don't need to use an edge, so it 1 - 1 = 0
+        0 edges
+
+
+
+        im still not sure its just num components less 1
+        '''
+        cables = len(connections)
+        if cables < n - 1:
+            return -1
+        
+        adj_list = defaultdict(list)
+        for u,v in connections:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+            
+        num_components = 0
+        
+        def dfs(node,seen):
+            seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen)
+        
+        seen = set()
+        for i in range(n):
+            if i not in seen:
+                dfs(i,seen)
+                num_components += 1
+        
+        return num_components - 1
+    
+
+#bfs
+class Solution:
+    def makeConnected(self, n: int, connections: List[List[int]]) -> int:
+        cables = len(connections)
+        if cables < n - 1:
+            return -1
+        
+        adj_list = defaultdict(list)
+        for u,v in connections:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+            
+        num_components = 0
+        
+        def bfs(node,seen):
+            seen.add(node)
+            q = deque([node])
+            while q:
+                curr = q.popleft()
+                for neigh in adj_list[curr]:
+                    if neigh not in seen:
+                        seen.add(neigh)
+                        q.append(neigh)
+
+        seen = set()
+        for i in range(n):
+            if i not in seen:
+                bfs(i,seen)
+                num_components += 1
+        
+        return num_components - 1
+    
+#union find
+class UF:
+    def __init__(self,n):
+        self.size = [1]*(n)
+        self.parent = [i for i in range(n)] #cities are from 1 to n
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def join(self,x,y):
+        parent_x = self.find(x)
+        parent_y = self.find(y)
+        
+        if parent_x == parent_y:
+            return
+        elif self.size[parent_x] > self.size[parent_y]:
+            self.parent[parent_y] = parent_x
+            self.size[parent_x] += self.size[parent_y]
+            self.size[parent_y] = 1
+        
+        elif self.size[parent_y] > self.size[parent_x]:
+            self.parent[parent_x] = parent_y 
+            self.size[parent_y] += self.size[parent_x]
+            self.size[parent_x] = 1
+        
+        else:
+            self.parent[parent_y] = parent_x
+            self.size[parent_x] += self.size[parent_y]
+            self.size[parent_y] = 1
+
+class Solution:
+    def makeConnected(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        union on edges,
+        then check the number of disconnected componets
+        for the uf approach, we initally start with n comoennets
+        then traverse the edges, and if the nodes belong to different parents, join them and reduce the components by 1
+        '''
+        
+        cables = len(connections)
+        if cables < n - 1:
+            return -1
+        
+        uf = UF(n)
+        c = n
+        for u,v in connections:
+            if uf.find(u) != uf.find(v):
+                uf.join(u,v)
+                c -= 1
+        
+        return c - 1
