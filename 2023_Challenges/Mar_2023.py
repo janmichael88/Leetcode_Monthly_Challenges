@@ -2025,3 +2025,138 @@ class Solution:
                 c -= 1
         
         return c - 1
+    
+##############################################################
+# 1466. Reorder Routes to Make All Paths Lead to the City Zero
+# 24MAR23
+###############################################################
+#bleagh
+class Solution:
+    def minReorder(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        we have n cities, labeled 0 to n - 1 and we have n -1 road
+        connections is a directed edge
+        we want to reorient the roads such that any city can travel to city 0 (re orient means flip the direction)
+        return the minimum number of edges changed
+        guarnteed to reach city 0, 
+            but people may not be able to get back, keep original config
+        
+        at most we have to reverse all the edges, so our answer can be more than len(connections)
+        if i start going down a path from 0, and couldn't come back, that would mean i need to reverse some edges to get back
+        
+        i can dfs from 0
+        then whil dfsing, if my neighbor's interger is > the current one i'm on, i need to erverse it
+        dfs then count reversals
+        this only worls if for each connection[i]
+            connections[i][0] < connections[i][1]
+        '''
+        adj_list = defaultdict(list)
+        for u,v in connections:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+        
+        
+
+        seen = set()
+        reversals = [0]
+        
+        def dfs(node,seen):
+            seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen)
+                    reversals[0] += node < neigh
+                    
+        dfs(0,seen)
+        return reversals[0]
+    
+#keep state of direction along an edge
+class Solution:
+    def minReorder(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        we have n cities, labeled 0 to n - 1 and we have n -1 road
+        connections is a directed edge
+        we want to reorient the roads such that any city can travel to city 0 (re orient means flip the direction)
+        return the minimum number of edges changed
+        guarnteed to reach city 0, 
+            but people may not be able to get back, keep original config
+        
+        at most we have to reverse all the edges, so our answer can be more than len(connections)
+        if i start going down a path from 0, and couldn't come back, that would mean i need to reverse some edges to get back
+        
+        i can dfs from 0
+        then whil dfsing, if my neighbor's interger is > the current one i'm on, i need to erverse it
+        dfs then count reversals
+        this only worls if for each connection[i]
+            connections[i][0] < connections[i][1]
+            
+        we need to keep record of the direction 
+        for each edge (1 as the forward direction) and (0 as the reverse)
+        if child != parent, do down it and increment by the direction
+        for each forward direction we revrse, we don't need to reverse
+        '''
+        adj_list = defaultdict(list)
+        for u,v in connections:
+            adj_list[u].append((v,1))
+            adj_list[v].append((u,0))
+        
+        
+
+        seen = set()
+        reversals = [0]
+        
+        def dfs(node,seen):
+            seen.add(node)
+            for neigh,dirr in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen)
+                    reversals[0] += dirr
+                    
+        dfs(0,seen)
+        return reversals[0]
+
+#we can also do the parent to child thing inset of keeping a set, so we dont immediatle go back
+class Solution:
+    def minReorder(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        parent to child paradigm
+        '''
+        adj_list = defaultdict(list)
+        for u,v in connections:
+            adj_list[u].append((v,1))
+            adj_list[v].append((u,0))
+        
+        
+        self.reversals = 0
+        
+        def dfs(node,parent):
+            for neigh,dirr in adj_list[node]:
+                if neigh != parent:
+                    dfs(neigh,node)
+                    self.reversals += dirr
+                    
+        dfs(0,-1)
+        return self.reversals
+
+class Solution:
+    def minReorder(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        we can also use bfs
+        '''
+        adj_list = defaultdict(list)
+        for u,v in connections:
+            adj_list[u].append((v,1))
+            adj_list[v].append((u,0))
+        
+        
+        q = deque([(0,-1)])
+        reversals = 0
+        
+        while q:
+            node,parent = q.popleft()
+            for neigh,dirr in adj_list[node]:
+                if neigh != parent:
+                    reversals += dirr
+                    q.append((neigh,node))
+                    
+        return reversals

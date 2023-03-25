@@ -841,3 +841,38 @@ public:
         return numberOfConnectedComponents - 1;
     }
 };
+
+//////////////////////////////////////////////////////////////////
+// 1466. Reorder Routes to Make All Paths Lead to the City Zero
+// 25MAR23
+///////////////////////////////////////////////////////////////////
+class Solution {
+public:
+    int count = 0;
+    void dfs(int node, int parent, vector<vector<pair<int,int>>>& adj_list){
+        for (auto& [neigh,sign] : adj_list[node]){
+            if (neigh != parent){
+                dfs(neigh,node,adj_list);
+                count += sign;
+            }
+        }
+        
+    }
+    int minReorder(int n, vector<vector<int>>& connections) {
+        //make adj_list
+        vector<vector<pair<int,int>>> adj_list(n);
+        
+        for (auto& connection: connections){
+            //forward edge
+            int u = connection[0];
+            int v = connection[1];
+            
+            adj_list[u].push_back({v,1});
+            adj_list[v].push_back({u,0});
+    
+        }
+        
+        dfs(0,-1,adj_list);
+        return count;
+    }
+};
