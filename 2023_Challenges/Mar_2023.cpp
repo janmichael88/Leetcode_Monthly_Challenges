@@ -876,3 +876,109 @@ public:
         return count;
     }
 };
+
+//////////////////////////////////////////////////////////////////
+// 2316. Count Unreachable Pairs of Nodes in an Undirected Graph
+// 25MAR23
+////////////////////////////////////////////////////////////////////
+class Solution {
+public:
+    int dfs(int node, vector<vector<int>>& adj, vector<bool>& visit) {
+        int count = 1;
+        visit[node] = true;
+        for (int neighbor : adj[node]) {
+            if (!visit[neighbor]) {
+                count += dfs(neighbor, adj, visit);
+            }
+        }
+        return count;
+    }
+
+    long long countPairs(int n, vector<vector<int>>& edges) {
+        vector<vector<int>> adj(n);
+        for (auto edge : edges) {
+            adj[edge[0]].push_back(edge[1]);
+            adj[edge[1]].push_back(edge[0]);
+        }
+
+        long long numberOfPairs = 0;
+        long long sizeOfComponent = 0;
+        long long remainingNodes = n;
+        vector<bool> visit(n);
+        for (int i = 0; i < n; i++) {
+            if (!visit[i]) {
+                sizeOfComponent = dfs(i, adj, visit);
+                numberOfPairs += sizeOfComponent * (remainingNodes - sizeOfComponent);
+                remainingNodes -= sizeOfComponent;
+            }
+        }
+        return numberOfPairs;
+    }
+};
+
+class UnionFind {
+private:
+    vector<int> parent, rank;
+
+public:
+    UnionFind(int size) {
+        parent.resize(size);
+        rank.resize(size, 0);
+        for (int i = 0; i < size; i++) {
+            parent[i] = i;
+        }
+    }
+    int find(int x) {
+        if (parent[x] != x) parent[x] = find(parent[x]);
+        return parent[x];
+    }
+    void union_set(int x, int y) {
+        int xset = find(x), yset = find(y);
+        if (xset == yset) {
+            return;
+        } else if (rank[xset] < rank[yset]) {
+            parent[xset] = yset;
+        } else if (rank[xset] > rank[yset]) {
+            parent[yset] = xset;
+        } else {
+            parent[yset] = xset;
+            rank[xset]++;
+        }
+    }
+};
+
+class Solution {
+public:
+    /*
+    for union find, we union along all the edges
+    then for each node, find the parent it belongs to, and store the counts of parents in an unordered ma
+    with the sizes from the map calculate the number of not connective edges
+    */
+    long long countPairs(int n, vector<vector<int>>& edges) {
+        UnionFind UF(n);
+        
+        for (auto edge:edges){
+            int u = edge[0];
+            int v = edge[1];
+            
+            UF.union_set(u,v);
+        }
+        
+        //mapp parentids to size
+        unordered_map<int,int> sizes;
+        for (int i = 0; i < n; ++i){
+            int parent = UF.find(i);
+            sizes[parent] += 1;
+        }
+        
+        long long unreachable_pairs = 0;
+        //just decrement from n
+        for (auto item:sizes){
+            //cout << item.second << '\n';
+            long long curr_size = item.second;
+            unreachable_pairs += curr_size*(n - curr_size);
+            n -= curr_size;
+        }
+        return unreachable_pairs;
+    }
+};

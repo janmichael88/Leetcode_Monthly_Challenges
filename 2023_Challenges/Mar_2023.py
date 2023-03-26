@@ -2160,3 +2160,146 @@ class Solution:
                     q.append((neigh,node))
                     
         return reversals
+
+#################################################################
+# 2316. Count Unreachable Pairs of Nodes in an Undirected Graph 
+# 25MAR23
+#################################################################
+#TLE
+class Solution:
+    def countPairs(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        for a connected component, all pairs are reach able from each other
+        for the second example
+        we have
+            comp = size 4
+            comp = size 2
+            comp = size 1
+            
+            4*2 + 4*1 + 2*1
+            8 + 4 + 2
+            14
+            
+        if we did have the number of component sizes, we just spend 0((num compoenents)^2) time getting the product sums
+        cartesian product between compoennets
+        '''
+        adj_list = defaultdict(list)
+        for u,v in edges:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+            
+        
+        def dfs(node,seen,curr_group):
+            seen.add(node)
+            curr_group.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,curr_group)
+                    
+        
+        seen = set()
+        group_sizes = []
+        for i in range(n):
+            if i not in seen:
+                curr_group = set()
+                dfs(i,seen,curr_group)
+                group_sizes.append(len(curr_group))
+        
+        if len(group_sizes) == 1:
+            return 0
+        
+        ans = 0
+        for i in range(len(group_sizes)):
+            for j in range(i+1,len(group_sizes)):
+                ans += group_sizes[i]*group_sizes[j]
+        
+        return ans
+
+#this is a counting problem
+class Solution:
+    def countPairs(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        for a connected component, all pairs are reach able from each other
+        for the second example
+        we have
+            comp = size 4
+            comp = size 2
+            comp = size 1
+            
+            4*2 + 4*1 + 2*1
+            8 + 4 + 2
+            14
+            
+        if we did have the number of component sizes, we just spend 0((num compoenents)^2) time getting the product sums
+        cartesian product between compoennets
+        
+        from the hint
+        used only two hints
+        for a node u, the number of nodes that are unreachable from u is the number of nodes not in the same compoenent
+        this is a just counting problem
+        '''
+        adj_list = defaultdict(list)
+        for u,v in edges:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+            
+        
+        def dfs(node,seen,curr_group):
+            seen.add(node)
+            curr_group.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,curr_group)
+                    
+        
+        seen = set()
+        ans = 0
+        for i in range(n):
+            if i not in seen:
+                curr_group = set()
+                dfs(i,seen,curr_group)
+                group_size = len(curr_group)
+                ans += (n - group_size)*group_size
+        
+        #we divided by 2 because we dobule count!
+        return ans // 2
+    
+#bfs
+class Solution:
+    def countPairs(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        bfs
+        '''
+        adj_list = defaultdict(list)
+        for u,v in edges:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+            
+        
+        def bfs(node,seen,curr_group):
+            seen.add(node)
+            curr_group.add(node)
+            q = deque([node])
+            while q:
+                node = q.popleft()
+                for neigh in adj_list[node]:
+                    if neigh not in seen:
+                        q.append(neigh)
+                        seen.add(neigh)
+                        curr_group.add(neigh)
+                    
+        
+        seen = set()
+        ans = 0
+        for i in range(n):
+            if i not in seen:
+                curr_group = set()
+                bfs(i,seen,curr_group)
+                group_size = len(curr_group)
+                ans += (n - group_size)*group_size
+        
+        #we divided by 2 because we dobule count!
+        return ans // 2
+    
+#for union find see C++ file
+
