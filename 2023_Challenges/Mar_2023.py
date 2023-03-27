@@ -2303,3 +2303,240 @@ class Solution:
     
 #for union find see C++ file
 
+############################################
+# 2360. Longest Cycle in a Graph
+# 26APR23
+############################################
+#fuck me....
+class Solution:
+    def longestCycle(self, edges: List[int]) -> int:
+        '''
+        graph is directed, in the form of parent points
+        edges[i] means i points to edges[i]
+        n = len(edges) - 1
+        
+        return length of longest cycle
+        
+        if edges[i] == -1:
+            there is no outgoing edge
+        well first check if there is a cycle, if there isn't, return -1
+        
+        start from each node and find the cycle
+        '''
+        adj_list = defaultdict(list)
+        n = len(edges)
+        for i in range(len(edges)):
+            if edges[i] != -1:
+                adj_list[i].append(edges[i])
+        
+        def dfs(node,curr_path,dist):
+            if node in curr_path:
+                return 
+            curr_path.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in curr_path:
+                    dfs(neigh,curr_path,dist+1)
+            
+            
+        
+        global_seen = set()
+        for i in range(n):
+            if i not in global_seen:
+                curr_path = set()
+                size = dfs(i,curr_path,0)
+                print(curr_path)
+                global_seen |= curr_path
+
+
+#dp using dist matrix
+class Solution:
+    def longestCycle(self, edges: List[int]) -> int:
+        '''
+        intuition:
+            if a node is part of a cycle, it cannot be part of another cycle
+            for a node in a cycle, itt would impyl that the only outgoingg edge of node would also be in this cycle
+            in a graph with only one outgoing edge, a node cannot be a part of more than one cycle
+        
+        if we traversed from any node in a cycle, we would eventuallt touch all nodes
+        also there is no point in visint nodes that are not part of a cycle, iterate only on an outgoign edge
+        we need to store distances in hashmap
+            and if we were to visit this node again, we can get the distance
+                dist = dist[curr] - dist[visited again], (where visited again is a node we have already seen)
+                distances actually just store the number of edges, which is just the dist
+                i.e if there is  a cycle, its dist would be:
+                    cycle_dist = dist[curr] - dist[visited again] + 1
+                    we do + 1 to close the cycle
+                    
+        in dfs traversal, we check if the neigh node using edges[node]
+        if neigh is not visted, update
+            dist[neigh] = dist[node] + 1
+            recurse
+        
+        if neigh is already visited, 
+            1.it is part of cycle on the current dfs we are on
+            2. it was touched by a previosu dfs call
+                we can verify if the dist map has the neighbord in it
+                because we create a enw map for every traversal
+        
+        if dist contians neigh:
+            it mena we visited neigh during the current dfs travertsla
+            update maximum cycle longthe globallay
+            ans = max(ans, dist[node] - dist[neigh] + 1)
+        '''
+        self.longest = -1
+        
+        def dfs(node,dist,visted):
+            visted[node] = True
+            neigh = edges[node]
+            
+            if neigh != -1 and not visted[neigh]:
+                dist[neigh] = dist[node] + 1
+                dfs(neigh,dist,visted)
+            #part of the cucle
+            elif (neigh != -1 and neigh in dist):
+                #node would have already been populate with an even greate dist
+                curr_longest_cycle = dist[node] - dist[neigh] + 1
+                self.longest = max(self.longest,curr_longest_cycle)
+                
+        
+        N = len(edges)
+        visited = [False]*N
+        
+        for i in range(N):
+            if not visited[i]:
+                dist = defaultdict()
+                dist[i] = 1
+                dfs(i,dist,visited)
+        
+        return self.longest
+    
+#no dfs
+class Solution:
+    def longestCycle(self, edges: List[int]) -> int:
+        '''
+        we actually do not need to use dfs, becaause there is no more than one outgoing edge
+        for each node, just follow its path, until e haven't seen its neighbor node
+        if we have seen this node, it must have been part of a cycle
+        
+        just walking a linked list
+        '''
+        N = len(edges)
+        #this stores dists node: (neigh,curr_dist), because we have at most 1 out going edge
+        dist = [[0,0] for _ in range(N)] #take and out going edge from i?
+        ans = -1
+        
+        for i in range(N):
+            curr_path = 1
+            curr_node = i
+            
+            while curr_node != -1 and dist[curr_node][1] == 0:
+                dist[curr_node] = [i,curr_path]
+                curr_path += 1
+                curr_node = edges[curr_node]
+            
+            #make sure we have an outgoing edge, and that it is part of the curent cycle
+            if curr_node != -1 and dist[curr_node][0] == i:
+                ans = max(ans, curr_path - dist[curr_node][1])
+        
+        return ans
+    
+#another way, depth of iteration as time, which is just the number of edges, which is just the path length
+class Solution:
+    def longestCycle(self, edges: List[int]) -> int:
+        '''
+        idea,
+            use time a the current distance (or the current depth of the iteration we are on)
+            initally all distances for the nodes are set to 0
+            for each node in the graph, check it has been visited before, i.e the time is > 0
+            set start time to curr time
+            while we have an out going edge, move and update the distnaces by 1
+            otherwise maximize
+        '''
+        ans = -1
+        curr_time = 1
+        N = len(edges)
+        
+        visited_times = [0]*N
+        
+        for i in range(N):
+            #skip nodes that have already been visited
+            if visited_times[i] > 0:
+                continue
+            
+            start_time = curr_time
+            #need to hold start time to find max distance
+            curr_node = i
+            
+            #while we have an out going edge, and it remains unvisited
+            while curr_node != -1 and visited_times[curr_node] == 0:
+                visited_times[curr_node] = curr_time
+                curr_time += 1
+                curr_node = edges[curr_node]
+            
+            #check if cycle has been found and if its longer than the current max cycle
+            #i.e if this current time is larger than what's already there, it must have already been visited, and can be a potential answer for 
+            #the largest cycle
+            if curr_node != -1 and visited_times[curr_node] >= start_time:
+                cycle_length = curr_time - visited_times[curr_node]
+                ans = max(ans, cycle_length)
+        
+        
+        return ans
+
+#kahns algo starting at leaves, then just remove them
+class Solution:
+    def longestCycle(self, edges: List[int]) -> int:
+        '''
+        we can also use kahns algorithm
+        since there is no more than one outgoing edge for each node, we will have nodes that have 0 in degree
+        start with the nodes that have 0 indegree, visit them, then drop edges
+        then visit the next nodes
+        
+        if we do this nodes, in a cycle will be unvisited
+        for all the unvisited nodes, dfs and get the maximum componenet size
+        '''
+        N = len(edges)
+        seen = [False]*N
+        in_degree = defaultdict()
+        
+        for i in range(N):
+            if edges[i] != -1:
+                count = in_degree.get(edges[i],0)
+                in_degree[edges[i]] = count + 1
+        
+        
+        #load up those with 0 in degree
+        q = deque([])
+        visited = [False]*N
+        for i in range(N):
+            if i not in in_degree:
+                q.append(i)
+        
+        #begin kahns
+        while q:
+            curr = q.popleft()
+            visited[curr] = True
+            
+            neigh = edges[curr]
+            if neigh != -1:
+                in_degree[neigh] -= 1
+                if in_degree[neigh] == 0:
+                    q.append(neigh)
+        
+        
+        #follow parent points for all unvisited nodes
+        ans = -1
+        for i in range(N):
+            if not visited[i]:
+                curr = i
+                path_length = 1
+                visited[i] = True
+                #while we don't come back to the original node from where we started
+                while edges[curr] != i:
+                    path_length += 1
+                    visited[edges[curr]] = True
+                    curr = edges[curr]
+                ans = max(ans,path_length)
+                
+        return ans
+                    
