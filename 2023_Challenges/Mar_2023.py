@@ -2539,4 +2539,193 @@ class Solution:
                 ans = max(ans,path_length)
                 
         return ans
-                    
+    
+######################################
+# 64. Minimum Path Sum (REVISTED)
+# 27MAR23
+######################################
+#top down
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        notes to me when solving:
+            when normally thinking about entire path, think about storing smallest path so far 
+            so think dp
+        
+        
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        memo = {}
+        
+        def dp(i,j):
+            if (i,j) == (0,0):
+                return grid[0][0]
+            
+            if i < 0 or j < 0:
+                return float('inf')
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            up = grid[i][j] + dp(i-1,j)
+            left = grid[i][j] + dp(i,j-1)
+            ans = min(up,left)
+            
+            memo[(i,j)] = ans
+            return ans
+            
+        
+        return dp(rows-1,cols-1)
+    
+#bottom up
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        bottom up, we start from 0,0
+        '''
+        n = len(grid)
+        m = len(grid[0])
+        dp=[[0]*m for i in range(n)]
+    
+        for i in range(n):
+            for j in range(m):
+                if i==0 and j==0:
+                    dp[i][j]= grid[i][j]
+
+                else:
+                    up=grid[i][j]
+                    left=grid[i][j]
+
+                    if i>0:
+                        up+= dp[i-1][j]
+                    else:
+                        up+= float('inf')
+                    if j>0:
+                        left+=dp[i][j-1]
+                    else:
+                        left+=float('inf')
+
+                    dp[i][j]= min(up,left)
+
+        return dp[n-1][m-1]
+
+
+#starting from (0,0)
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        i had it
+        dp(i,j) = grid[i][j] + min(dp(i+1,j), dp(i,j+1))
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        memo = {}
+        
+        def dp(i,j):
+            if i == rows or j == cols:
+                return float('inf')
+            if (i,j) == (rows-1,cols-1):
+                return grid[i][j]
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            ans = grid[i][j] + min(dp(i+1,j), dp(i,j+1))
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,0)
+    
+#bottom up another way
+#for the boundary conditions, just check if we are in the last column or row
+#then just limit the states we can take from
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        bottom up
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dp = [[0]*(cols) for _ in range(rows)]
+        
+        for i in range(rows-1, -1,-1):
+            for j in range(cols-1,-1,-1):
+                #if on the last row
+                if (i == rows-1) and (j != cols-1):
+                    dp[i][j] = grid[i][j] + dp[i][j+1]
+                #last col
+                elif (j == cols - 1) and (i != rows -1):
+                    dp[i][j] = grid[i][j] + dp[i+1][j]
+                #transition
+                elif (i,j) != (rows-1,cols-1):
+                    dp[i][j] = grid[i][j] + min(dp[i+1][j], dp[i][j+1])
+                #increment
+                else:
+                    dp[i][j] = grid[i][j]
+        
+        return dp[0][0]
+    
+#keping only one row
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        bottom up 1 row
+        i and i+1 are the same row
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dp = [0]*(cols)
+        
+        for i in range(rows-1, -1,-1):
+            for j in range(cols-1,-1,-1):
+                #if on the last row
+                if (i == rows-1) and (j != cols-1):
+                    dp[j] = grid[i][j] + dp[j+1]
+                #last col
+                elif (j == cols - 1) and (i != rows -1):
+                    dp[j] = grid[i][j] + dp[j]
+                #transition
+                elif (i,j) != (rows-1,cols-1):
+                    dp[j] = grid[i][j] + min(dp[j], dp[j+1])
+                #increment
+                else:
+                    dp[j] = grid[i][j]
+        
+        return dp[0]
+    
+#constant space, in place using grid
+class Solution:
+    def minPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        bottom up 1 row
+        i and i+1 are the same row
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        for i in range(rows-1, -1,-1):
+            for j in range(cols-1,-1,-1):
+                #if on the last row
+                if (i == rows-1) and (j != cols-1):
+                    grid[i][j] = grid[i][j] + grid[i][j+1]
+                #last col
+                elif (j == cols - 1) and (i != rows -1):
+                    grid[i][j] = grid[i][j] + grid[i+1][j]
+                #transition
+                elif (i,j) != (rows-1,cols-1):
+                    grid[i][j] = grid[i][j] + min(grid[i+1][j], grid[i][j+1])
+                #increment
+                else:
+                    grid[i][j] = grid[i][j]
+        
+        return grid[0][0]
+
+
+
+            
+            
