@@ -2725,7 +2725,92 @@ class Solution:
         
         return grid[0][0]
 
-
-
+#############################################
+# 2101. Detonate the Maximum Bombs
+# 28MAR23
+#############################################
+#TLE, but works, 134/140
+class Solution:
+    def maximumDetonation(self, bombs: List[List[int]]) -> int:
+        '''
+        we are given a list of bombs, (x_pos, y_pos, radiuss)
+        when we detonate a bomb, all bombs in its blast radius are detonated
+        return max number of bombs that can be deontated if we fire one bomb
+        
+        try detonating each of bomb, one by one, then see how many bombs get detonated
+        for each bomb detonated, the range could be extended
+        input is smalle enough for N^2 solution
+        i was thinking dfs
+        
+        for each bomb, see if we can reach it with dfs
+        we'll need to dfs for each bomb
+        '''
+        ans = 1
+        
+        def dfs(idx,seen,count):
+            #this gets the count
+            x,y,r = bombs[idx]
+            seen.add(idx)
+            count[0] += 1
+            for j in range(len(bombs)):
+                neigh_x,neigh_y,neigh_r = bombs[j]
+                dist_away = (x - neigh_x)**2 + (y - neigh_y)**2
+                if j not in seen:
+                    #can detonate
+                    if dist_away <= r*r:
+                        dfs(j,seen,count)
+                        
+                        
+        for i in range(len(bombs)):
+            seen = set()
+            count = [0]
+            dfs(i,seen,count)
+            ans = max(ans,count[0])
+        
+        return ans
             
-            
+#turn it into a graph first, then use dfs
+#preprocess
+class Solution:
+    def maximumDetonation(self, bombs: List[List[int]]) -> int:
+        '''
+        we are given a list of bombs, (x_pos, y_pos, radiuss)
+        when we detonate a bomb, all bombs in its blast radius are detonated
+        return max number of bombs that can be deontated if we fire one bomb
+        
+        try detonating each of bomb, one by one, then see how many bombs get detonated
+        for each bomb detonated, the range could be extended
+        input is smalle enough for N^2 solution
+        i was thinking dfs
+        
+        for each bomb, see if we can reach it with dfs
+        we'll need to dfs for each bomb
+        '''
+        ans = 1
+        adj_list = defaultdict(list)
+        N = len(bombs)
+        for i in range(N):
+            for j in range(N):
+                if i != j:
+                    x,y,r = bombs[i]
+                    neigh_x,neigh_y,neigh_r = bombs[j]
+                    dist_away = (x - neigh_x)**2 + (y - neigh_y)**2
+                    if dist_away <= r*r:
+                        adj_list[i].append(j)
+        
+        
+        
+        def dfs(node,seen):
+            #this gets the count
+            seen.add(node)
+            for child in adj_list[node]:
+                if child not in seen:
+                    dfs(child,seen)
+                        
+                        
+        for i in range(len(bombs)):
+            seen = set()
+            dfs(i,seen)
+            ans = max(ans,len(seen))
+        
+        return ans
