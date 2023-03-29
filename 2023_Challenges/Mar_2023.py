@@ -2814,3 +2814,153 @@ class Solution:
             ans = max(ans,len(seen))
         
         return ans
+    
+######################################
+# 983. Minimum Cost For Tickets
+# 28MAR23
+######################################
+#yessss, needed to use days
+#day variant
+class Solution:
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        '''
+        we are traveling on days, each days[i] is  aday we travel
+        train tickets cost:
+            1-day = costs[0]
+            7-day = costs[1]
+            30-day = costs[2]
+            
+        passwed all for that many consective days of travle
+        return minimum number of dollars you need to travel every day in days
+        dp obviosuly
+        
+        prefix dp
+        let dp(d) be the minimut cost traveling days[:i]
+        if we have gotten to the end, we don't need to buy ticket
+        if i'm on days[i], call it d could have gotten here from d-1, or d-7, or d-30
+        
+        
+        
+        dp(d) = {
+            #only on the days we travel
+            min(dp(d+1) + cost to travel 1, dp(d+7) + cost for seven days, dp(d+30) costs for traveling 30)
+            
+            #otherwise we just go on th next day, keeping on to thatt minimum
+        }
+        
+        
+        '''
+        memo = {}
+        days_travled = set(days)
+        
+        def dp(d):
+            if d > 365:
+                #doens't cost me anything
+                return 0
+            if d in memo:
+                return memo[d]
+            #if im' traveling on this day
+            if d in days_travled:
+                first = dp(d+1) + costs[0]
+                second = dp(d+7) + costs[1]
+                third = dp(d+30) + costs[2]
+                ans = min(first,second,third)
+                memo[d] = ans
+                return ans
+            #othewise just wait until we can by
+            else:
+                ans = dp(d+1)
+                memo[d] = ans
+                return ans
+        
+        return dp(1)
+
+#topdown from the end
+class Solution:
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        '''
+        instead of starting from day 1, start from the last day
+        only call on days i have traveled
+        
+        if dp(d) is the min cost for traveling up to day d
+        then check d-1, d-7, d-30, and to each of these add the cost and minimiz
+        '''
+        memo = {}
+        days_traveled = set(days)
+        
+        def dp(d):
+            if d < 1:
+                return 0
+            if d in memo:
+                return memo[d]
+            #if this is a day i'm traveling on
+            if d in days_traveled:
+                first = dp(d-1) + costs[0]
+                second = dp(d-7) + costs[1]
+                third = dp(d-30) + costs[2]
+                ans = min(first,second,third)
+                memo[d] = ans
+                return ans
+            else:
+                ans = dp(d-1)
+                memo[d] = ans
+                return ans
+            
+        
+        return dp(days[-1])
+    
+#bottom up
+class Solution:
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        '''
+        bottom up
+        '''
+        days_traveled = set(days)
+        dp = [0]*(365+1+30) #pad to the largest, many ways to check boundary conditions
+        
+        for d in range(365,0,-1):
+            if d in days_traveled:
+                first = dp[d+1] + costs[0]
+                second = dp[d+7] + costs[1]
+                third = dp[d+30] + costs[2]
+                ans = min(first,second,third)
+                dp[d] = ans
+            else:
+                ans = dp[d+1]
+                dp[d] = ans
+        
+        return dp[1]
+    
+#recursive, index variant
+class Solution:
+    def mincostTickets(self, days: List[int], costs: List[int]) -> int:
+        '''
+        instead of using the days, we can also use the index (i) into the array
+        the only caveat is that we have to keep moving up a day when chevking the current number of days per pass
+        '''
+        memo = {}
+        durations = [1,7,30]
+        
+        def dp(i):
+            #need to allow to fall out of index
+            if i < 0:
+                return 0
+            
+            if i in memo:
+                return memo[i]
+            
+            ans = float('inf')
+            j = i
+            #want to minize for all options
+            #want largest index that its not more than the current days[i] + duration
+            for c,d in zip(costs,durations):
+                while j >= 0 and days[j] > days[i] - d: #as long as we are more than durations days away than the current days[i]
+                    #falling out of index calls dp(out of index), which hits the cases
+                    j -= 1
+                ans = min(ans,dp(j)+c)
+            
+            memo[i] = ans
+            return ans
+        
+        return dp(len(days)-1)
+            
