@@ -2963,4 +2963,107 @@ class Solution:
             return ans
         
         return dp(len(days)-1)
+
+#######################################
+# 836. Rectangle Overlap
+# 28MAR23
+########################################
+#close one
+class Solution:
+    def isRectangleOverlap(self, rec1: List[int], rec2: List[int]) -> bool:
+        '''
+        if there is an overlap
+            left bound of rec2 must be in between the bounds of rec1
+            upper boound must be in the bounds of rec1
+        '''
+        a,b,c,d = rec1
+        w,x,y,z = rec2
+        #there are going to be eight conditions to check for
+        if a < w < c:
+            return True
+        if w < a < y:
+            return True
+        if x < b < z:
+            return True
+        if b < x < d:
+            return True
+        if  w < c < y:
+            return True
+        if a < y < c:
+            return True
+        if x < d < z:
+            return True
+        if b < z < d:
+            return True
+        
+        return False
+
+#close again
+class Solution:
+    def isRectangleOverlap(self, rec1: List[int], rec2: List[int]) -> bool:
+        '''
+        if there is an overlap
+            left bound of rec2 must be in between the bounds of rec1
+            upper boound must be in the bounds of rec1
+        '''
+        a,b,c,d = rec1
+        w,x,y,z = rec2
+        #there are going to be eight conditions to check for
+        if a < w < c and  b < x < d:
+            return True
+        if w < a < y and x < b < z:
+            return True
+        if  w < c < y and  x < d < z:
+            return True
+        if a < y < c and b < z < d:
+            return True
+        
+        return False
+    
+class Solution:
+    def isRectangleOverlap(self, rec1: List[int], rec2: List[int]) -> bool:
+        '''
+        check if coordinates form valid rectablge
+    /**
+        x1y2_____x2y2
+        |         | 
+        |    X1Y2_|_______X2Y2
+        |     |   |         |
+        x1y1__|__x2y1       |
+              |             |
+             X1Y1_________X2Y1
+    **/
+        '''
+        A, B, C, D = rec1[0], rec1[1], rec1[2], rec1[3]
+        E, F, G, H = rec2[0], rec2[1], rec2[2], rec2[3]
+        x1 = max(A, E)
+        y1 = max(B, F)
+        x2 = min(C, G)
+        y2 = min(D, H)
+        if x1 < x2 and y1 < y2:
+            return True
+        return False
+    
+class Solution:
+    def isRectangleOverlap(self, rec1: List[int], rec2: List[int]) -> bool:
+        '''
+        using de mograns law, ask the converse question
+            are rec1 and rec2 not intersection
+            checking for not intersection is easier than checking for an intersection
+            the answer is just not (not intserction)
+            negation
             
+        first check if rectangles make a line then check left, bottom, right, top
+        '''
+        if (rec1[0] == rec1[2]) or (rec1[1] == rec1[3]) or \
+            (rec2[0] == rec2[2]) or (rec2[1] == rec2[3]):
+            return False
+        
+        #comparing rec1 to rec2
+        left = rec1[2] <= rec2[0]
+        bottom = rec1[3] <= rec2[1]
+        right = rec1[0] >= rec2[2]
+        up = rec1[1] >= rec2[3]
+        
+        
+        return not (left or bottom or right or up)
