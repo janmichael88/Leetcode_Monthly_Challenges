@@ -3067,3 +3067,240 @@ class Solution:
         
         
         return not (left or bottom or right or up)
+    
+#we can also just check area
+class Solution(object):
+    '''
+    if there is overlap, there must be postive area
+    so just check the projections of intersection along x and y
+
+    Say the area of the intersection is width * height, where width is the intersection of the rectangles projected onto the x-axis, 
+    and height is the same for the y-axis. We want both quantities to be positive.
+
+The width is positive when min(rec1[2], rec2[2]) > max(rec1[0], rec2[0]), that is when the smaller of (the largest x-coordinates) 
+is larger than the larger of (the smallest x-coordinates). The height is similar.
+    '''
+    def isRectangleOverlap(self, rec1, rec2):
+        def intersect(p_left, p_right, q_left, q_right):
+            return min(p_right, q_right) > max(p_left, q_left)
+        return (intersect(rec1[0], rec1[2], rec2[0], rec2[2]) and # width > 0
+                intersect(rec1[1], rec1[3], rec2[1], rec2[3]))    # height > 0
+    
+####################################
+# 1402. Reducing Dishes
+# 29MAR23
+####################################
+#TLE, subset enumeration, maximize, but floor to 0
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        we want the maximum like-time coefficent
+        which is the largest sum of
+            satisfaction[i]*times[i]
+            
+        we can remove any dishes from satisfaction
+        return maximum like-time coeffificent
+        
+        one way would be to examin all possible subsets of satifcations
+        then just take the dot product with their indices
+        
+        brute force would be to generate all subsets, and find the largest like-time coeffcients
+        '''
+        N = len(satisfaction)
+        self.ans = float('-inf')
+        #can sort before hand
+        satisfaction.sort()
+        
+        def rec(i,path):
+            if i >= N:
+                temp = 0
+                for i in range(len(path)):
+                    temp += (i+1)*path[i]
+                    self.ans = max(self.ans,temp)
+                return
+            rec(i+1,path+[satisfaction[i]])
+            rec(i+1,path)
+        
+        
+        rec(0,[])
+        return max(self.ans,0)
+    
+
+#damn it, i dont what states to cache......
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        we want the maximum like-time coefficent
+        which is the largest sum of
+            satisfaction[i]*times[i]
+            
+        we can remove any dishes from satisfaction
+        return maximum like-time coeffificent
+        
+        one way would be to examin all possible subsets of satifcations
+        then just take the dot product with their indices
+        
+        brute force would be to generate all subsets, and find the largest like-time coeffcients
+        
+        do i need to save, paths? can i just save sums
+        '''
+        N = len(satisfaction)
+        memo = {}
+        #can sort before hand
+        satisfaction.sort()
+        
+        def rec(i,pos,curr_sum):
+            if i >= N:
+                return curr_sum
+            if (i,pos,curr_sum) in memo:
+                return memo[(i,pos,curr_sum)]
+                
+            take = rec(i+1,pos+1,curr_sum+(satisfaction[i]*(pos+1)))
+            no_take = rec(i+1,pos,curr_sum)
+            ans = max(take,no_take)
+            memo[(i,pos,curr_sum)] = ans
+            return ans
+        
+        
+        return max(rec(0,0,0),0)
+    
+#states are position in index and current time
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        hints say keep previous bust time coef and corresponding element sum
+        if adding curr element to previous best time and its correspond best, then go ahead and add it
+        otherwise keep previous
+        '''
+        N = len(satisfaction)
+        memo = {}
+        #can sort before hand
+        satisfaction.sort()
+        
+        def dp(i,time):
+            if i >= N:
+                return 0
+            if (i,time) in memo:
+                return memo[(i,time)]
+            
+            #cook dish at this time and move on to the next index at i + 1
+            take = satisfaction[i]*time + dp(i+1,time+1)
+            no_take = dp(i+1,time)
+            ans = max(take,no_take)
+            memo[(i,time)] = ans
+            return ans
+        
+        
+        return dp(0,1)
+    
+#bottom up
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        bottom up
+        '''
+        N = len(satisfaction)
+        dp = [[0]*(N+2) for _ in range(N+2)]
+        satisfaction.sort()
+        
+        #starting at N
+        for i in range(N-1,-1,-1):
+            #but for time, we need to see all prevtimes up to N
+            #so we go forward in this direction
+            for time in range(1,N+1,1):
+                take = satisfaction[i]*time + dp[i+1][time+1]
+                no_take = dp[i+1][time]
+                ans = max(take,no_take)
+                dp[i][time] = ans
+        
+        
+        return dp[0][1]
+    
+#bottom up space optimized, we only need to save the prev row
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        bottom up, but really we only just need two rows (along with the requisite number of columns)
+        if you don't like this, then just keep two rows instead, but you'd have to update the two rows again
+        think about it this way
+        dp matrix
+        [
+        [..] <- this is i 
+        [..] <- this is i+1
+        ]
+        '''
+        N = len(satisfaction)
+        prev = [0]*(N+2)
+        satisfaction.sort()
+        
+        #starting at N
+        for i in range(N-1,-1,-1):
+            dp = [0]*(N+2)
+            #but for time, we need to see all prevtimes up to N
+            #so we go forward in this direction
+            for time in range(1,N+1,1):
+                take = satisfaction[i]*time + prev[time+1]
+                no_take = prev[time]
+                ans = max(take,no_take)
+                dp[time] = ans
+            prev = dp
+        
+        
+        return prev[1]
+    
+#greedy, stepping stone into intuition
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        if we sorted the array, we essential could just evalute all suffix sums and take the max in O(N**2)
+        '''
+        N = len(satisfaction)
+        ans = 0
+        satisfaction.sort()
+        for i in range(N):
+            curr_sum = 0
+            for j in range(i,N):
+                curr_sum += satisfaction[j]*(j-i+1)
+            
+            ans = max(ans,curr_sum)
+        
+        return max(ans,0)
+
+#true greedy
+class Solution:
+    def maxSatisfaction(self, satisfaction: List[int]) -> int:
+        '''
+        after sorting, we can start from the end of the array, but accumulate like time coefficinets starting with time = 1 at the end
+        consider the total sum for the last element, it would be its satisfaction value
+        then for the next index (i-1), the value goes up by satisfaction[i-1] + 2*satisfaction[i]
+        since we are starting at the end of the array but with time 1, it doesn't releft that would should be at time N
+        
+        example:
+            dishes = [a,b,c,d]
+            like-time-coeffcients = [a+2b+3c+2d,b+2c+3d,c+2d,d,0]
+            the first order differences between these terms is 
+            [a+b+c+d,b+c+d,c+d,d]
+            
+            which is just the individual suffix sums
+        
+        intution:
+            accumualte the suffix sums
+            As an optimization, we can stop iterating early because we have sorted the array in ascending order; 
+            hence the moment the suffix array sum becomes less than zero, we can break and return the current sum, 
+            as adding it would only decrease the sum and the suffix array sum will always be negative after that 
+            because the values would keep decreasing.
+            
+        
+        '''
+        N = len(satisfaction)
+        satisfaction.sort()
+        ans = 0
+        
+        curr_suff_sum = 0
+        for i in range(N-1,-1,-1):
+            curr_suff_sum += satisfaction[i]
+            if curr_suff_sum < 0:
+                return ans
+            ans += curr_suff_sum
+        
+        return ans
