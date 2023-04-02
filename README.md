@@ -28,11 +28,13 @@ Just a code dump for all the monthly Leet code solutions.
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-12.png)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-01.gif)
 ![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-02.gif)
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-03.gif)
+
 
 Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-* Mar 2023
+* Apr 2023
 
 Completed:
 * May 2020
@@ -68,3 +70,4 @@ Completed:
 * Dec 2022
 * Jan 2023
 * Feb 2023
+* Mar 2023
