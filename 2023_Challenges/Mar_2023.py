@@ -3479,3 +3479,132 @@ class Solution:
         
         possible = set(scramble(s1))
         return s2 in possible
+
+#fuck....
+#https://leetcode.com/problems/scramble-string/discuss/3357546/Python3-oror-35ms-oror-Beats-99.38-(recursion-with-memoization)
+class Solution:
+    def isScramble(self,s1, s2):
+        m ={}
+        #cache string states
+        def func(s1, s2):
+            if (s1, s2) in m:
+                return m[(s1, s2)]
+            #cannot possible be srambles of one another
+            if not sorted(s1) == sorted(s2):
+                return False
+            #base case
+            if len(s1) == 1:
+                return True
+            
+            #try all scrambles and check
+            for i in range(1, len(s1)):
+                #scramble cases are:
+                #1. (left part of s1 and right part of s2) and (right part of s1 and left part of 2)
+                #2. (left part of s1 and left part of s2) and (right part of s1 and right part of s2)
+
+                if func(s1[:i], s2[-i:]) and func(s1[i:], s2[:-i]) or func(s1[:i], s2[:i]) and func(s1[i:], s2[i:]):
+                    m[(s1, s2)] = True
+                    return True
+            m[(s1, s2)] = False
+            return False
+        return func(s1, s2)
+    
+
+class Solution:
+    def isScramble(self, s1: str, s2: str) -> bool:
+        '''
+        intution:
+            s can be divided into x and y
+            we can rewrite s as x+ y, y+x, or the scrambles of x and y
+            x' + y' or y' + x'
+        if we are given strings s and t, how can we check of t is a scramble of s
+        s = x + y and t = x' + y'
+        
+        dp(s1,s2) returns whether or not s1 is a scramble of s2
+        partition s1 into all possible paritionts, we can get left and right parts
+        '''
+        memo = {}
+        
+        def dp(s1,s2):
+            #cache string states
+            if (s1,s2) in memo:
+                return memo[(s1,s2)]
+            #strings are equal
+            if s1 == s2:
+                memo[(s1,s2)] = True
+                return True
+            
+            count1 = Counter(s1)
+            count2 = Counter(s2)
+            
+            if count1 != count2:
+                memo[(s1,s2)] = False
+                return False
+            
+            n = len(s1)
+            for i in range(1,n):
+                left = s1[:i]
+                right = s1[i:]
+                #not swapping
+                #we are checking if the scramble of hte left parts of both s1 and s2 and the right parts of s1 and s2 are scrambles of other
+                case1 = dp(left, s2[:i]) and (right, s2[i:])
+                #if we did swap
+                #we swapped the right parts of s1 and s2, and the left parts of s1 and s2, either of these are true results in a scramble
+                case2 = dp(right,s2[:n-i]) and (left, s2[n-i:])
+                if case1 or case2:
+                    memo[(s1,s2)] = True
+                    return True
+            
+            memo[(s1,s2)] = False
+            return False
+        
+        
+        return dp(s1,s2)
+
+class Solution:
+    def isScramble(self, s1: str, s2: str) -> bool:
+        '''
+        s1,s2 is a scramble when
+            s1[0:k],s2[0:k] is scramble and s1[k:n] and s2[k:n] is a scramble
+        or
+        s1[0:k], s2[n-k:n] and s1[k:n],s2[0:n-k] is a scramble
+        
+        base case, is when s1[i] == s2[k] and length == 1
+        
+        states are (i,j,length)
+        
+        1. the first on will be a substring of 1 starting at index i with length == lenght, call this s
+        2. the second one will be a substring of s1, starting at idnex j, with length == length, call this t
+        
+        dp(i,j,length) will be treu of t is a scramble of s
+        
+        base case is when length == 1 and char's at both s1 and s2 are the same
+        
+        at each state, we perform a split on s1, and try all possible splits
+        '''
+        memo = {}
+        def dp(i,j,length):
+            #base case
+            if length == 1:
+                ans = s1[i] == s2[j]
+                memo[(i,j)] = ans
+                return ans
+                
+            if (i,j,length) in memo:
+                return memo[(i,j,length)]
+            
+            #try all k splits for the current length
+            for k in range(1,length):
+                if dp(i,j,k) == True and dp(i+k,j+k,length-k) == True:
+                    memo[(i,j,length)] = True
+                    return True
+                if dp(i,j+length-k,k) == True and dp(i+k,j,length-k) == True:
+                    memo[(i,j,length)] = True
+                    return True
+            
+            memo[(i,j,length)] = False
+            return False
+        
+        
+        return dp(0,0,len(s1))
+        
