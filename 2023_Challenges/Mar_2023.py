@@ -3595,9 +3595,11 @@ class Solution:
             
             #try all k splits for the current length
             for k in range(1,length):
+                # gr|eat and rg|tea
                 if dp(i,j,k) == True and dp(i+k,j+k,length-k) == True:
                     memo[(i,j,length)] = True
                     return True
+                # gr|eat and tea|gr
                 if dp(i,j+length-k,k) == True and dp(i+k,j,length-k) == True:
                     memo[(i,j,length)] = True
                     return True
@@ -3608,3 +3610,204 @@ class Solution:
         
         return dp(0,0,len(s1))
         
+#one more way
+class Solution:
+    def isScramble(self, s: str, t: str) -> bool:
+        @cache
+        def dfs(s1, s2):
+            if s1 == s2:
+                return True
+            if Counter(s1) != Counter(s2):
+                return False
+            
+            N = len(s1)
+            for k in range(1, N):
+                # gr|eat and rg|tea
+                if (dfs(s1[:k], s2[:k]) and dfs(s1[k:], s2[k:]) or
+                    # gr|eat and tea|gr, this is very hard to come up with
+                    dfs(s1[:k], s2[N - k:]) and dfs(s1[k:], s2[:N - k])):
+                    return True
+            return False       
+        return dfs(s,t)
+
+##########################################
+# 1444. Number of Ways of Cutting a Pizza
+# 31MAR23
+###########################################
+#fuck it...
+class Solution:
+    def ways(self, pizza: List[str], k: int) -> int:
+        '''
+        i have to cut the pizza into k pieces using k-1 cuts
+        ok lets try using the hints
+        1. after each cut, the remaining pizza always has the lower right coord (rows -1, cols - 1)
+        2. dp states are : (row1,col1, c) which gives number of ways to cut pizza using c cuts
+            where the current piece of pizza has  upper left cord at (row1,col1) and lower right (rows-1,cols-1)
+        3. for all transitions, try all verti and horiz cuts such that the piece you give to a person has at least 1 apple
+        4. base case is whne c == k - 1
+        
+        let dp(row,col,cuts) = {
+        
+            sum of all ways
+        }
+        '''
+        mod = 10**9 + 7
+        rows = len(pizza)
+        cols = len(pizza[0])
+        
+        memo = {}
+        
+        def dp(row,col,cuts):
+            if row > rows:
+                return 0
+            if col > cols:
+                return 0
+            if cuts == k - 1:
+                return 0
+            ans = 0
+            #try all vertical and horizontal cuts
+            for r in range(row,rows)
+            
+
+class Solution:
+    def ways(self, pizza: List[str], k: int) -> int:
+        '''
+        need to use suffix sums, recall the dp solution from 304. Range Sum Query 2D - Immutable 
+        here's the solution for reference:
+class NumMatrix:
+    
+    #we can dp to solve this problem
+    #dp(i,j) represents the sum of the elements in the rectangle bounded by (0,0) and (i-1,j-1)
+    #if we are asked to find the sum of the elemnets in a sqaure marked by points ABCD
+    #SUM(ABCD) = SUM(OD) - SUM(OB) - SUM(OC) + SUM(OA)
+    
+    #to calculate a subpriblem dp(i,j) = dp(i-1,j) + dp(i,j-1) + matrix(i,j) - dp(i,j)
+    #Try drawing the rectangle. you will see that the dp[r][c] is added twice when adding dp[r+1][c] and dp[r][c+1].
+
+    def __init__(self, matrix: List[List[int]]):
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        if rows == 0 or cols == 0:
+            return
+        
+        self.dp = [[0]*(cols+1) for _ in range(rows+1)]
+        
+        for i in range(rows):
+            for j in range(cols):
+                self.dp[i+1][j+1] = self.dp[i][j+1] + self.dp[i+1][j] + matrix[i][j] - self.dp[i][j]
+
+    def sumRegion(self, row1: int, col1: int, row2: int, col2: int) -> int:
+        OD = self.dp[row2+1][col2+1]
+        OB = self.dp[row1][col2+1]
+        OC = self.dp[row2+1][col1]
+        OA = self.dp[row1][col1]
+        return OD - OB - OC + OA
+
+    we need this to quickly query the number of apples in a cut!
+    otherwise we'd have to dp, count, and increment on each cut
+    
+    intution:
+        we need to know cuts_left
+        we need to know what part of the pizza remains after cutting, since we always give away the top and the left if it contains an apple
+        let left row denote the topmost row, and col denote the leftmost col
+            the remaining pizzal is then pizza[row: rows+1][cols: cols-1]
+            where rows and cls denote the number of rows and columns in the original piza
+            
+    state:
+        (row,col,cuts_left)
+        dp(row,col,cuts_left) be the number of wats to cut the pizza part pizza[row..rows-1][col..cols-1] with remanin cuts
+        we want dp(0,0,k-1)
+        
+        base case is when cuts_left = 0
+        if we are at dp(row,col,0) and there is at least 1 apple in pizze[row..rows-1][cols..cols-1] then dp(row,col,0) = 0
+        because with no cuts, we still get an apple, reulting in a valid way
+        otherwise dp(row,col,0) = 0
+        
+    transition:
+        when we cut hoirzontally, the next row (next_row) must be between row < next_row < rows, 
+        the upper part after the cutt will be pizza[row..next_row-1][cols-1] and the bottom part will be pizza[next_row...rows-1][cols-1]
+            recall we give the top oart to a person if pizza[row...next_row -1][col .. cols -1] has at leat one apple
+        for the vertical cut, the next_col must be between col < next_col < cols
+            the left part of the pissza will be pizza[row..rows-1][col .. next_col-1] and the right part will be pizza[row..rowx-1][next_col..cols-1]
+            there must be an apple in the left part pizzza[row..rows-1][col..next_col-1]
+            
+        say we want to calculate dp(r,c,cuts_left) where cuts_left > 0
+            we need to try all cuts and accumalte the number of ways
+            * for rows, iterate on all row cuts (next_row) where: row < next_row < rows
+                * if pizza[row..next_row-1][col .. cols -1] has at least on apple, we can cut it further, recurse
+            * after this cut, we need to try cutting the pizza gain with cuts_left - 1 and the remaning parts of the pizza
+            * which would be pizza[next_row..rows-1][col..cols-1], this is a subproblem
+            * for cols, tierate on all col cuts (next_col) wher col < next_col < cols
+                if pizza[row..rows-1][col..next_col-1] has an apple, we recurse further
+                    * dp(r,next_col,cuts_left -1 )
+        
+        there is a transition from dp[remain-1][next_row][col] to dp[remain][row][col]
+        same thing with the coltransistion 
+        so: dp(row,col,remain)  = {
+            sum for (next_row) in row < next_row < rows of dp(next_row,col,remain - 1) +
+            sum for (next_col) in col < next_col < col of dp (row,next_col,remain-1)
+        }
+                    
+        we need to quickly verfiy apples in a candidate cutted piece
+        recall 2d range query
+        '''
+        rows = len(pizza)
+        cols = len(pizza[0])
+        
+        apples = [[0]*(cols+1) for _ in range(rows+1)]
+        #we need to start from the end, suffix sums
+        for i in range(rows-1,-1,-1):
+            for j in range(cols-1,-1,-1):
+                apples[i][j] = (pizza[i][j] == 'A') + apples[i+1][j] + apples[i][j+1] - apples[i+1][j+1]
+        
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(r,c,cuts_left):
+            if cuts_left == 0:
+                return apples[r][c] > 0
+            if (r,c,cuts_left) in memo:
+                return memo[(r,c,cuts_left)]
+            ans = 0
+            for row_cut in range(r+1,rows):
+                if apples[r][c] - apples[row_cut][c] > 0:
+                    ans += dp(row_cut,c,cuts_left - 1)
+            
+            for col_cut in range(c+1,cols):
+                if apples[r][c] - apples[r][col_cut] > 0:
+                    ans += dp(r,col_cut,cuts_left - 1)
+            
+            memo[(r,c,cuts_left)] = ans
+            return ans
+        
+        return dp(0,0,k-1) % mod
+        
+#bottom up
+class Solution:
+    def ways(self, pizza: List[str], k: int) -> int:
+        rows = len(pizza)
+        cols = len(pizza[0])
+        apples = [[0] * (cols + 1) for row in range(rows + 1)]
+        for row in range(rows - 1, -1, -1):
+            for col in range(cols - 1, -1, -1):
+                apples[row][col] = ((pizza[row][col] == 'A')
+                                    + apples[row + 1][col]
+                                    + apples[row][col + 1]
+                                    - apples[row + 1][col + 1])
+        dp = [[[0 for col in range(cols)] for row in range(rows)] for remain in range(k)]
+        dp[0] = [[int(apples[row][col] > 0) for col in range(cols)]
+             for row in range(rows)]
+        mod = 1000000007
+        for remain in range(1, k):
+            for row in range(rows):
+                for col in range(cols):
+                    val = 0
+                    for next_row in range(row + 1, rows):
+                        if apples[row][col] - apples[next_row][col] > 0:
+                            val += dp[remain - 1][next_row][col]
+                    for next_col in range(col + 1, cols):
+                        if apples[row][col] - apples[row][next_col] > 0:
+                            val += dp[remain - 1][row][next_col]
+                    dp[remain][row][col] = val % mod
+        return dp[k - 1][0][0]
