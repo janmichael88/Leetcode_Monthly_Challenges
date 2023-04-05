@@ -576,7 +576,7 @@ class StockPrice:
     def __init__(self):
         self.latest_time = 0
         self.price_map = {}
-        self.price_freq = SortedDict()
+        self.price_freq = SortedDict() #essentially a dictionary combined with a binary search tree
         
 
     def update(self, timestamp: int, price: int) -> None:
@@ -614,6 +614,78 @@ class StockPrice:
     def minimum(self) -> int:
         #retriece from beginning of sorted dict
         return self.price_freq.peekitem(0)[0]
+
+
+# Your StockPrice object will be instantiated and called as such:
+# obj = StockPrice()
+# obj.update(timestamp,price)
+# param_2 = obj.current()
+# param_3 = obj.maximum()
+# param_4 = obj.minimum()
+
+#using max heap and min heap
+class StockPrice:
+    '''
+    instead of using sortedicts we can use min and max heaps, this is probably the more important of the two solutions
+    how do we update effecitently?
+        we'd have to keep popping until the old price comes out on top, then push back all the prices back in, which would be very costly
+    
+    idea: every time we get a new price, push into heap
+    and only whule getting the top element we need to verify if the price is outdated
+    
+    how we know its outdates
+    for both hepas store (price,timestamp)
+        if timestamp already exists in the hashmap, overwrite the price
+    
+    when finding max or min, we check to if (price,timesamp) pair on top agrees with the price lists for the timestamp in the hashmap
+    
+    idea
+        we update the most recent stock price given a time
+        when we retrive from either of the heaps, we need to validate if its outdated or not
+        since the true timestamp already exsits in the hashmap, we keep popping until the timestamp matches the price as the timesamp in the heaps
+        doing so liberates outdated items on the heaps
+        we are guarnteed to get the max and mins stil because they are heaps
+        
+        intution; 
+            we have all prices seen in history on heaps, we just need to filter until it matches whats in the hashmap
+    '''
+
+    def __init__(self):
+        self.latest_time = 0
+        self.timePriceMap = {}
+        
+        self.min_heap = []
+        self.max_heap = []
+        
+
+    def update(self, timestamp: int, price: int) -> None:
+        self.timePriceMap[timestamp] = price
+        self.latest_time = max(self.latest_time, timestamp)
+         
+        #add to heaps
+        heapq.heappush(self.min_heap, (price,timestamp))
+        heapq.heappush(self.max_heap, (-price,timestamp))
+
+    def current(self) -> int:
+        return self.timePriceMap[self.latest_time]
+        
+
+    def maximum(self) -> int:
+        price,timestamp = self.max_heap[0]
+        
+        while -price != self.timePriceMap[timestamp]:
+            price,timestamp = heapq.heappop(self.max_heap)
+        
+        return -price
+        
+
+    def minimum(self) -> int:
+        price,timestamp = self.min_heap[0]
+        
+        while price != self.timePriceMap[timestamp]:
+            price,timestamp = heapq.heappop(self.min_heap)
+        
+        return price
 
 
 # Your StockPrice object will be instantiated and called as such:
