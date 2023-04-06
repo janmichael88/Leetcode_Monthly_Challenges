@@ -760,4 +760,297 @@ class Solution:
             last_seen[idx] = i
         
         return count
+
+#####################################
+# 1146. Snapshot Array 
+# 04APR23
+#####################################
+#TLE
+class SnapshotArray:
+
+    def __init__(self, length: int):
+        '''
+        the array can have different states at a certain point in time
+        save arrays into a hashamp
+        '''
+        self.curr_array = [0]*length
+        self.snapped_arrays = {}
+        self.snap_id = 0
+
+    def set(self, index: int, val: int) -> None:
+        self.curr_array[index] = val
+
+    def snap(self) -> int:
+        self.snapped_arrays[self.snap_id] = self.curr_array[:]
+        self.snap_id += 1
+        return self.snap_id -1
+        
+
+    def get(self, index: int, snap_id: int) -> int:
+        return self.snapped_arrays[snap_id][index]
+
+
+# Your SnapshotArray object will be instantiated and called as such:
+# obj = SnapshotArray(length)
+# obj.set(index,val)
+# param_2 = obj.snap()
+# param_3 = obj.get(index,snap_id)
+
+#fuck my life
+class SnapshotArray:
+
+    def __init__(self, length: int):
+        '''
+        hint1: use list of lists adding both element and snap id to each index
+        then use binary search to find the snap_id's value
+        '''
+        self.container = [[0,0] for _ in range(length)] #at the index we have (snap_id,val)
+        self.curr_snap = 0
+        
+
+    def set(self, index: int, val: int) -> None:
+        #first get the entry
+        entry = self.container[index]
+        #updates
+        if entry[0] == self.curr_snap:
+            self.container[index][0] = self.curr_snap
+            self.container[index][1] = val
+        else:
+            #prepare
+            entry = self.container[index]
+            new_entry = [entry[0]+1,entry[1]]
+            self.container[index].append(new_entry)
+    def snap(self) -> int:
+        self.curr_snap += 1
+        return self.curr_snap - 1
+        
+
+    def get(self, index: int, snap_id: int) -> int:
+        return self.container[index][snap_id]
+
+
+# Your SnapshotArray object will be instantiated and called as such:
+# obj = SnapshotArray(length)
+# obj.set(index,val)
+# param_2 = obj.snap()
+# param_3 = obj.get(index,snap_id)
+
+##################################
+# 2439. Minimize Maximum of Array
+# 05APR23
+##################################
+#brute force
+class Solution:
+    def minimizeArrayValue(self, nums: List[int]) -> int:
+        '''
+        brute force solution, find the maximum number in the array
+        then reduce it, then find max, then reduce it again
+        we stop when the number before it decreaes
+        [3,7,1,6] max is 7
+        [4,6,1,6] max is 6
+        [5,5,2,5] max is 5
+        
+        if i do this again
+        [6,4,3,4] max is 6, woops, we can't do this
+        
+        '''
+        prev_max = max(nums)
+        curr_max = None
+        N = len(nums)
+        
+        while True:
+            found_max = False
+            for i in range(1,N):
+                if nums[i] > nums[i-1] and nums[i] == prev_max:
+                    nums[i] -= 1
+                    nums[i-1] += 1
+                    found_max = True
+            if not found_max:
+                return max(nums)
+            #print(nums)
+            
+            #check new max:
+            curr_max = max(nums)
+            if  curr_max < prev_max:
+                prev_max = curr_max
+                curr_max = None
+            
+            #no change
+            elif curr_max > prev_max:
+                return curr_max
+
+#optimized brute force
+class Solution:
+    def minimizeArrayValue(self, nums: List[int]) -> int:
+        '''
+        instead of going in steps of 1, go right to the middle of the difference
+        
+        '''
+        prev_max = max(nums)
+        curr_max = None
+        N = len(nums)
+        
+        while True:
+            found_max = False
+            for i in range(1,N):
+                if nums[i] > nums[i-1] and nums[i] == prev_max:
+                    diff = nums[i] - nums[i-1]
+                    diff = diff // 2 if (diff % 2 == 0) else diff // 2 + 1
+                    nums[i] -= diff
+                    nums[i-1] += diff
+                    found_max = True
+            if not found_max:
+                return max(nums)
+            #print(nums)
+            
+            #check new max:
+            curr_max = max(nums)
+            if  curr_max < prev_max:
+                prev_max = curr_max
+                curr_max = None
+            
+            #no change
+            elif curr_max > prev_max:
+                return curr_max
+        
+#binary search
+class Solution:
+    def minimizeArrayValue(self, nums: List[int]) -> int:
+        '''
+        binary search on prefix sum
+        [3,7,1,6] for an index i we can just increment and decrement by 1
+        [4,6,1,6]
+        [5,5,1,6]
+        [5,5,2,5]
+        [5,5,3,4]
+        [5,5,4,3] we are sorta trying to distribute the sum evenly across all indices
+        
+        in the process we can decrease any index i, at the expense of icnreasing any index less than i
+        we can try raising all indices to a value x
+        and this sum would be x*[0:i], if prefix sum up to i > x*[0:i], then this x value cannot be possible
+        
+        let n = [a,b,c,d,e]
+        
+        [a,b,c,d,e] choose b
+        [a+1,b-1,c,d,e] choose c
+        [a+1,b,c-1,d,e] choose d
+        [a+1,b,c,d-1,e] choose e
+        [a+1,b,c,d,e-1]
+        
+        in all cases sum is still a + b + c + d + e
+        now replace 1 with some number k, which reprsents any number of moves
+        n = [a,b,c,d,e] choose b
+        [a+k,b-k,c,d,e] choose c
+        [a+k,b,c-k,d,e] choose c
+        [a+k,b+k,c-2k,d,e] choose d in steps of three
+        [a+k,b+k,c+k,d-3k,e] choose e in steps of 4
+        [a+k,b+k,c+k,d+k,e-4k]
+        we can call this
+        [a+k,b+k,c+k,d+k,e-(len(n)-1)*k]
+        
+        this implies that we are free to raise any number by whatever k we want to, except the current i
+        rather for an index i, we can raise n[:i-1]'s elements to any number x, except the last one
+        find the lowerbound for the largest x
+        
+        
+        '''
+        def valid_maximum(candidate,nums):
+            pref_sum = 0
+            for i in range(len(nums)):
+                pref_sum += nums[i]
+                #if pref_sum is bigger than the sum of the array using candidate, we can't possible reach this sum
+                if pref_sum > candidate*(i+1):
+                    return False
+            return True
+        
+        
+        left = min(nums)
+        right = max(nums)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            if valid_maximum(mid,nums):
+                right = mid
+            else:
+                left = mid + 1
+        
+        return left
+
+#pref_sum
+class Solution:
+    def minimizeArrayValue(self, nums: List[int]) -> int:
+        '''
+        given array of non negtative
+        in one operation:
+            choose an integer i such that 1 <= i < n and nums[i] > 0
+            decrease nums[i] by i
+            or decrease nums[i-1] by 1
+        
+        return minimum value of the maximum integer of nums after peforming ANY number of operations
+        
+        for each element in nums
+        we can either increment at nums[i] += 1
+        we can either decrement at nums
+        
+        wrong, this must happen at the same time for and index i
+        [3,7,1,6]
+        pick index 1
+        [4,6,1,6]
+        pick index 3
+        [4,6,2,5]
+        pick index 1
+        [5,5,2,5]
+        
+        so i one move, we just move the value 1 over from index i to i-1
+        
+        intuion
+            notice that the sum won't change
+            what if we made each number equal in height
+        
+        sum of current array is [3,7,1,6] = 17
+        if we were to equalize each height
+        17 // 4 = 4.25
+        [4,4,4,5]
+        
+        but this is only the case if we can move values to left and right,
+        here we can only move a value left
+        
+        think of the trapping rain water problem
+        nums = [3,7,1,3], ceil(14/4) = make new one [4,4,3,3]
+        
+        intution;
+            while traversing the array keep track of the current prefix sum up to index i
+            this prefix sum up i mean we can distribute the average to all indices up to i
+            
+        we updadte : answer = max(answer, ceil(prefixSum / (i + 1)))
+        
+        from binary search solution were eseentially solving
+        pref_sum(i) <= (i+1)*x
+
+        solving for x we get (pref_sum(i) / (i+1)) <= x
+        we want to maximize this, so we try all i
+        
+        Without loss of generality, let's say that after reaching nums[i], we have obtained the minimum maximum value as answer_i and the prefix sum prefixSum_i. 
+        Now we take into account the following number nums[i + 1], according to the operation, it can only increase the prefix sum prefixSum_i as well as the answer_i. 
+        Therefore, the newly added number can't reduce the minimum maximum value, so we can't take the smaller one between answer and ceil(prefixSum / (i + 1))
+        '''
+        answer = 0
+        pref_sum = 0
+        for i in range(len(nums)):
+            pref_sum += nums[i]
+            #its rather unintuitve as to why this is max, note cases like [10,0,x,x]
+            answer = max(answer,math.ceil(pref_sum / (i+1)))
+        
+        return answer
                 
+
+#can also do without ceiling function
+class Solution:
+    def minimizeArrayValue(self, nums: List[int]) -> int:
+        answer = 0
+        pref_sum = 0
+        for i in range(len(nums)):
+            pref_sum += nums[i]
+            answer = max(answer,(pref_sum + i) // (i+1))
+        
+        return answer
