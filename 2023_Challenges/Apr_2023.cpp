@@ -161,3 +161,35 @@ Finally, if we are looking for snap 2, upper_bound will return the position of s
  * int param_2 = obj->snap();
  * int param_3 = obj->get(index,snap_id);
  */
+
+///////////////////////////////////////
+// 883. Projection Area of 3D Shapes
+// 06APR23
+///////////////////////////////////////
+//from the python version we can reduce the number of loops
+class Solution {
+public:
+    int projectionArea(vector<vector<int>>& grid) {
+        int N = grid.size();
+        
+        int ans = 0;
+        
+        for (int i = 0; i < N; ++i){
+            int largest_row = 0;
+            int largest_col = 0;
+            
+            for (int j = 0; j < N; ++j){
+                //xy
+                if (grid[i][j] > 0){
+                    ans++;
+                }
+                //other two sides
+                largest_row = max(largest_row,grid[i][j]);
+                largest_col = max(largest_col,grid[j][i]);
+            }
+            
+            ans += largest_row + largest_col;
+        }
+        return ans;
+    }
+};
