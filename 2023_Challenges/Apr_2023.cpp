@@ -103,3 +103,61 @@ public:
         return top.first;
     }
 };
+
+///////////////////////////////////////////
+// 1146. Snapshot Array
+// 06APR23
+////////////////////////////////////////////
+class SnapshotArray {
+    vector<vector<pair<int,int>>> mapp;
+    int curr_snap = 0;
+public:
+    SnapshotArray(int length) {
+        mapp = vector<vector<pair<int,int>>>(length);
+    }
+    
+    void set(int index, int val) {
+        //empty container, or most snap !== currnsap
+        if (mapp[index].empty() || mapp[index].back().first != curr_snap){
+            mapp[index].push_back({curr_snap,val});
+        }
+        else{
+            mapp[index].back().second = val;
+        }
+    }
+    
+    int snap() {
+        
+        return curr_snap++;
+        
+    }
+    
+    int get(int index, int snap_id) {
+        //we don't always snap, and so if we are trying to retrieve an index for a snap we don't have, we just get the most recent
+        /*
+        we trying to find the snap that goes after snap_id. This is because we may or may not have the exact snap_id for a given index. Then we go one step backwards to get the most recent value before the snap that goes after snap_id.
+
+Let's say we have snaps 3, 5, 7, 10 and we are looking for snap 8. upper_bound will point to snap 10. The most recent value before snap 10 is the value for snap 7.
+Now, say we are looking for snap 7. upper_bound will also point to snap 10. And the most recent value before snap 10 is the value for snap 7 as well.
+What if we are looking for snap 12? upper_bound will point to end, and prev(end) is the value for snap 10.
+Finally, if we are looking for snap 2, upper_bound will return the position of snap 3. Now, since the position of snap 3 is the first one in the array (begin), that means that we did not have value for snap 2 and we need to return 0.
+        */
+        auto idx = upper_bound(begin(mapp[index]), end(mapp[index]), pair<int,int>(snap_id,INT_MAX));
+        if (idx == begin(mapp[index])){
+            return 0;
+            
+        }
+        else{
+            return prev(idx)->second; //this is a pointer
+        }
+            
+    }
+};
+
+/**
+ * Your SnapshotArray object will be instantiated and called as such:
+ * SnapshotArray* obj = new SnapshotArray(length);
+ * obj->set(index,val);
+ * int param_2 = obj->snap();
+ * int param_3 = obj->get(index,snap_id);
+ */
