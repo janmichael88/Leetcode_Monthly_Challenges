@@ -835,6 +835,54 @@ class SnapshotArray:
 # param_2 = obj.snap()
 # param_3 = obj.get(index,snap_id)
 
+
+#binary search
+class SnapshotArray:
+
+    def __init__(self, length: int):
+        '''
+        hint1: use list of lists adding both element and snap id to each index
+        '''
+        self.container = [[[0,0]] for _ in range(length)] #at the index we have (snap_id,val)
+        self.curr_snap = 0
+        
+
+    def set(self, index: int, val: int) -> None:
+        #check most recent for updating
+        if self.container[index][-1][0] == self.curr_snap:
+            self.container[index][-1][1] = val
+            return
+        #otherise append
+        self.container[index].append([self.curr_snap,val])
+
+    def snap(self) -> int:
+        self.curr_snap += 1
+        return self.curr_snap - 1
+
+        
+    def get(self, index: int, snap_id: int) -> int:
+        #binary search to find the snap id
+        curr_list = self.container[index]
+        left = 0
+        right = len(curr_list)
+        while left < right:
+            mid = left + (right - left) // 2
+            if curr_list[mid][0] >= snap_id:
+                right = mid
+            else:
+                left = mid+1
+        if right == len(curr_list):
+            return 0
+        return curr_list[right][1]
+
+
+# Your SnapshotArray object will be instantiated and called as such:
+# obj = SnapshotArray(length)
+# obj.set(index,val)
+# param_2 = obj.snap()
+# param_3 = obj.get(index,snap_id)
+
+
 ##################################
 # 2439. Minimize Maximum of Array
 # 05APR23
@@ -1054,3 +1102,137 @@ class Solution:
             answer = max(answer,(pref_sum + i) // (i+1))
         
         return answer
+
+####################################
+# 883. Projection Area of 3D Shapes
+# 06APR23
+####################################
+class Solution:
+    def projectionArea(self, grid: List[List[int]]) -> int:
+        '''
+        v = grid[i][j] menas a tower of v cubes at (i,j)
+        [[1,2],[3,4]]
+        
+        1 cube at (0,0)
+        2 cubes at (0,1)
+        3 cubes at (1,0)
+        4 cubes at (1,1)
+        
+        we just need to look at the projects along xy, xz, and yz
+        then sum them up, we don't want the total area, just the area of the projections
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        #for xy count up bases
+        xy = 0
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] != 0:
+                    xy += 1
+        
+        
+        #just take the largest
+        xz = 0
+        for r in range(rows):
+            largest = 0
+            for c in range(cols):
+                largest = max(largest,grid[r][c])
+            
+            xz += largest
+        
+        yz = 0
+        for c in range(cols):
+            largest = 0
+            for r in range(rows):
+                largest = max(largest,grid[r][c])
+            
+            yz += largest
+        
+        return xy + xz + yz
+            
+############################################
+# 1254. Number of Closed Islands (REVISTED)
+# 06APR23
+#############################################
+#dfs
+class Solution:
+    def closedIsland(self, grid: List[List[int]]) -> int:
+        '''
+        dfs for each cell, 
+        and if we dfs on a cell that hits the bounary, this possible cannot be a closed island
+        keep flag variable indicating if we hit a cell at any point in the dfs that touchs a boundary
+        '''
+        
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs  = [(1,0),(-1,0),(0,1),(0,-1)]
+        seen = set()
+        count = 0
+        
+        def dfs(i,j,seen,contains_edge):
+            seen.add((i,j))
+            if i == 0 or i == rows - 1 or j == 0 or j == cols - 1:
+                contains_edge[0] = True
+                
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #is zero and not seen
+                    if grid[neigh_x][neigh_y] == 0 and (neigh_x,neigh_y) not in seen:
+                        dfs(neigh_x,neigh_y,seen,contains_edge)
+                        
+        for i in range(rows):
+            for j in range(cols):
+                contains_edge = [False]
+                if grid[i][j] == 0 and (i,j) not in seen:
+                    dfs(i,j,seen,contains_edge)
+                
+
+                    if not contains_edge[0]:
+                        count += 1
+                    contains_edge[0] = False
+        
+        return count
+    
+#we can also just  use bfs, with boolean sean array
+class Solution:
+    def closedIsland(self, grid: List[List[int]]) -> int:
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs  = [(1,0),(-1,0),(0,1),(0,-1)]
+        seen = [[False]*cols for _ in range(rows)]
+        count = 0
+        
+        def bfs(i,j,seen,contains_edge):
+            seen[i][j] = True
+            q = deque([(i,j)])
+            while q:
+                (i,j) = q.popleft()
+                if i == 0 or i == rows - 1 or j == 0 or j == cols - 1:
+                    contains_edge = True
+
+                for dx,dy in dirrs:
+                    neigh_x = i + dx
+                    neigh_y = j + dy
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        #is zero and not seen
+                        if grid[neigh_x][neigh_y] == 0 and not seen[neigh_x][neigh_y]:
+                            q.append((neigh_x,neigh_y))
+                            seen[neigh_x][neigh_y] = True
+            
+            return contains_edge
+                        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 0 and not seen[i][j]:
+                    contains_edge = False
+                    temp = bfs(i,j,seen,contains_edge)
+                
+                    if not temp:
+                        count += 1
+        
+        return count
