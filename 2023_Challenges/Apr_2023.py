@@ -1236,3 +1236,125 @@ class Solution:
                         count += 1
         
         return count
+    
+##################################
+# 1020. Number of Enclaves
+# 07APR23
+##################################
+#dfs
+class Solution:
+    def numEnclaves(self, grid: List[List[int]]) -> int:
+        '''
+        flood fill starting from all the boundaries where grid[i][j] == 1
+        then traverse the grid again, each 1 now should be able to hold a move so count them up
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        seen = [[False]*cols for _ in range(rows)]
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        
+        
+        def dfs(i,j,seen):
+            #mutaute grid in place, fuck that aux space shit
+            seen[i][j] = True
+            grid[i][j] = 0
+            
+            for dx,dy in dirrs:
+                neigh_x = dx + i
+                neigh_y = dy + j
+                
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #if 1 and not seen
+                    if grid[neigh_x][neigh_y] == 1 and not seen[neigh_x][neigh_y]:
+                        dfs(neigh_x,neigh_y,seen)
+        
+        #top row
+        for c in range(cols):
+            if grid[0][c] == 1 and not seen[0][c]:
+                dfs(0,c,seen)
+        
+        #bottom row
+        for c in range(cols):
+            if grid[rows-1][c] == 1 and not seen[rows-1][c]:
+                dfs(rows-1,c,seen)
+        
+        #left side
+        for r in range(rows):
+            if grid[r][0] == 1 and not seen[r][0]:
+                dfs(r,0,seen)
+                
+        #right side
+        for r in range(rows):
+            if grid[r][cols-1] == 1 and not seen[r][cols-1]:
+                dfs(r,cols-1,seen)
+                
+        #count
+        count = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    count += 1
+        
+        return count
+
+#bfs, with consolidating the extra two for loops
+class Solution:
+    def numEnclaves(self, grid: List[List[int]]) -> int:
+        '''
+        flood fill starting from all the boundaries where grid[i][j] == 1
+        then traverse the grid again, each 1 now should be able to hold a move so count them up
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        seen = [[False]*cols for _ in range(rows)]
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        
+        
+        def bfs(i,j,seen):
+            
+            q = deque([(i,j)])
+            
+            while q:
+                i,j = q.popleft()
+                #mutaute grid in place, fuck that aux space shit
+                seen[i][j] = True
+                grid[i][j] = 0
+            
+                for dx,dy in dirrs:
+                    neigh_x = dx + i
+                    neigh_y = dy + j
+
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        #if 1 and not seen
+                        if grid[neigh_x][neigh_y] == 1 and not seen[neigh_x][neigh_y]:
+                            q.append((neigh_x,neigh_y,seen))
+        
+        #top row and bottom rows
+        for r in [0,rows-1]:
+            for c in range(cols):
+                if grid[r][c] == 1 and not seen[r][c]:
+                    bfs(r,c,seen)
+        
+
+        #left side and right sides
+        for c in [0,cols-1]:
+            for r in range(rows):
+                if grid[r][c] == 1 and not seen[r][c]:
+                    bfs(r,c,seen)
+
+                
+        #count
+        count = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    count += 1
+        
+        return count
+
+#########################################
+# 2332. The Latest Time to Catch a Bus
+# 06APR23
+#########################################
