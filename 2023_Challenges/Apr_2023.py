@@ -1354,6 +1354,341 @@ class Solution:
         
         return count
 
+###########################################
+# 133. Clone Graph (REVISTED)
+# 09APR23
+###########################################
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val = 0, neighbors = None):
+        self.val = val
+        self.neighbors = neighbors if neighbors is not None else []
+"""
+
+class Solution:
+    def cloneGraph(self, node: 'Node') -> 'Node':
+        '''
+        another clone copy, need to use dfs
+        map nodes to node copies using aux space
+        
+        
+        '''
+        #first try exploring all nodes in graph
+        seen = set()
+        
+        def dfs(node):
+            if node in seen:
+                return
+            seen.add(node)
+            print(node.val)
+            for neigh in node.neighbors:
+                dfs(neigh)
+        
+        #dfs(node)
+        cloned_mapp = {}
+        
+        if not node:
+            return node
+        
+        def clone(node):
+            if node in cloned_mapp:
+                return cloned_mapp[node]
+            #otherwise its not in there
+            new = Node(val= node.val, neighbors = [])
+            #make copy
+            cloned_mapp[node] = new
+            
+            #if there are neighbors recurse
+            for neigh in node.neighbors:
+                #get answer
+                new.neighbors.append(clone(neigh))
+            
+            #otherwise there isn't
+            cloned_mapp[node] = new
+            return new
+        
+        return clone(node)
+    
+################################################
+# 1857. Largest Color Value in a Directed Graph
+# 09APR23
+################################################
+#brute force, all path enumeration, graph could be disconnected
+#dfs each node, get all paths, get counts of chars, get max
+class Solution:
+    def largestPathValue(self, colors: str, edges: List[List[int]]) -> int:
+        '''
+        we are given n nodes, labeld 0 to n-1
+        we have directed edge lists
+        node[i] colored by colors[i]
+        valid path, must be increasing 
+        x1 -> x2 -> x3 -> ... -> xk such that there is a directed edge from xi to xi+1 for every 1 <= i < k
+        the last part stems from the fact that the graph is connected
+        
+        color value of that most is the most freuntly occuring color along the path
+        
+        return largest color of any value in the graph, or is it contains a cycel, return -1 
+        
+        dfs along a paths, but keep color counts in the path,
+        when i cant dfs anymore, update global maximum color value
+
+        '''
+        N = len(colors)
+        graph = defaultdict(list)
+        all_paths = []
+        for u,v in edges:
+            graph[u].append(v)
+            
+        self.ans = 0
+        seen = set()
+        
+        #how would i print all paths
+        seen = set()
+        def dfs(node,path):
+            #can't go anywhere else
+            if len(graph[node]) == 0:
+                all_paths.append(path[:])
+                return
+            #mark
+            seen.add(node)
+            for neigh in graph[node]:
+                if neigh not in seen:
+                    dfs(neigh,path + [neigh])
+                if neigh in seen:
+                    return -1
+            seen.remove(node)
+        
+        for i in range(N):
+            contains_cycle = dfs(i,[i])
+        #the graph could be disconnected
+        
+        if contains_cycle == -1:
+            return contains_cycle
+        
+        #count up paths and get maximum
+        ans = 0
+        for path in all_paths:
+            counts = Counter()
+            for i in path:
+                counts[colors[i]] += 1
+            
+            ans = max(ans, max(counts.values()))
+        
+        return ans
+            
+        
+#dp, top down first, jesus fucking christ
+class Solution:
+    def largestPathValue(self, colors: str, edges: List[List[int]]) -> int:
+        '''
+        from the hints, we define the dp transtion as dp(u,c) be the maximum coount with color c, starting from any vertex u
+        
+        the answer dp(u,c) = max(of all colors c at u)
+        
+        the transition would be
+        dp(u,c) = {
+            for all neighbors v for u:
+                for all colors c
+                    child_ans = max(ans,dp(v,c))
+        }
+                
+        intution:
+            we use the maximum frequencies of all colors across all paths that begin with v to form the maximum frequencies for paths that begin wth u
+            we can update the frequency of colors similar to topsort / kahns algo
+            
+        notes in dp function:
+            for each nodes we start the traversal
+            this returns the maximum frequency of the color of the node that we cang et across all the paths starting from node
+            we aren't in a cycle we try ti update teh frequencies of all the colors stored for node by using 
+            node -> neighbors edge
+            we perform the maximization for all colors in the child ans
+            
+            #important here
+            after we have processed all the outgoing edges od node, we need to increment the count for this nodes' color by 1
+            because we haven't done this yet during the traversal 
+        '''
+        N = len(colors)
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            
+        
+        memo = {} #answers (u,c) to max colors (use index and actual color)
+        seen = set()
+        
+        def dp(node):
+            #if there is a cycle while we dfsing, return -1
+            if node in seen:
+                return -1
+            if (node) in memo:
+                return memo[node]
+            
+            #visit
+            seen.add(node)
+            
+            curr_count = Counter() #need to return count object for each child answer
+            for neigh in graph[node]:
+                #get the next neigh_color from the child
+                child_ans = dp(neigh)
+                #cycle
+                if child_ans == -1:
+                    return -1
+                #from the child answer, update the currount count obkect
+                for color,count in child_ans.items():
+                    #update max counts
+                    curr_count[color] = max(curr_count[color],count)
+            #backtrack
+            seen.remove(node)
+            #increment this curr count color by 1
+            curr_count[colors[node]] += 1
+            
+            #store the count object
+            memo[node] = curr_count
+            return curr_count
+        
+        ans = 0
+        for i in range(N):
+            contains_cycle = dp(i)
+            if contains_cycle == -1:
+                return -1
+            ans = max(ans,max(contains_cycle.values()))
+            
+        return ans
+    
+#keeping dp memo as list of lists and adjacent list as list of lists 
+#so count objects will be size (26), representing a through z
+class Solution:
+    def largestPathValue(self, colors: str, edges: List[List[int]]) -> int:
+        '''
+        dp function returns max frequencye of the color of the current node we are one
+        '''
+        N = len(colors)
+        graph = [[] for _ in range(N)]
+        for u,v in edges:
+            graph[u].append(v)
+        
+        seen = [False]*N
+        memo = [[0]*26 for _ in range(N)]
+        
+        def dp(node):
+            if seen[node] == True:
+                return -1
+            #dont need memo retreival anymore since memo is stored with all zeros
+            #visit
+            seen[node] = True
+            
+            for neigh in graph[node]:
+                if dp(neigh) == -1:
+                    return -1
+                #otherwie maximuze in memo
+                for i in range(26):
+                    memo[node][i] = max(memo[node][i],memo[neigh][i])
+                    
+            #don't forget to increment teh current node
+            #after all the incomind edges to nodes are prcossed, we increment the count of the color for this node itself
+            curr_color = colors[node]
+            color_number = ord(curr_color) - ord('a')
+            memo[node][color_number] += 1
+            
+            #backtrack
+            seen[node] = False
+            return memo[node][color_number]
+        
+        ans = 0
+        for i in range(N):
+            temp = dp(i)
+            if temp == -1:
+                return -1
+            ans = max(ans,temp)
+        
+        return ans
+
+#kahns
+class Solution:
+    def largestPathValue(self, colors: str, edges: List[List[int]]) -> int:
+        '''
+        we can also use kahns algorithm
+        intuition:
+            if we know the maximum frequency of all the colors for path ending at u
+            we can use it to calculate the frequency of all colors for paths that use out edges from you
+            i.e if ther eis an edge u->v, the path ending at v will have the same color ending at us, except incremented by one with color v
+            
+            if we do this for all the nodes that have an incmoing edge to v and take the max freq of each color acorss these edges
+            we will have the max freq of all the colors for paths ending at v
+            afte covering all the edges into v, we can use the max freq of all color stored in v for edges out of v
+        
+       notice that for each edge u->v we must first obtain the maximum frequencey of all the colors for paths ending until u
+       and only then we can from the paths ending at v
+       
+       this leads to a top sort
+       
+       briefly:
+        top sort is order of a directed grpah, we can use kahns algo to get the ordering
+        keeps track of all the number of incoming edges into each node, 
+        repeatedly visitng the nodes with indegreee of zero and deleting the edges associted with it leaving to a decrement
+        of indegree for the ndoes whose incoming edges are deleted
+        
+        if there is a cycle, the nodes will remain unvisited, this solves the cycle part, what about the counting color part?
+        
+        keep count array [n by 26]
+        during kahns
+            a popped out node indicatate that all of its incomnig edges have been processed, and it can no be used to iterate over all out going edges
+            i.e its a leaf, the path ends here so we can start counting. but how do we count
+            So for each node -> neighbor edge, we use count[neighbor][i] = max(count[neighbor][i], count[node][i]) 
+            (we use max here instead of just setting it because there could be multiple ways to reach the neighbor) for all colors i.
+            we also need to increment the count of the color of the node we are one
+            when we pop a ndoe, we incrment the count by 1
+        
+        do kahns for topsort and cycle deteection
+        while doign kahns solve the problems:
+            for a node ending at u, what is the max color for all colors c
+            answer is just the max of he counts matrix if have visited all the nodes
+        '''
+        N = len(colors)
+        graph = [[] for _ in range(N)]
+        counts = [[0]*26 for _ in range(N)] #gives the max counts for each color with paths starting at node
+        in_degree = [0]*N
+        visited_nodes = 0 #we must be able to visit all nodes, otherwise there is a cycle
+        
+        for u,v in edges:
+            graph[u].append(v)
+            #u going into v
+            in_degree[v] += 1
+        
+        #note these are not leaf nodes, but rather root nodes
+        #we start from nodes that have nothing going into them, can only go out
+        q = deque([])
+        for i in range(N):
+            if in_degree[i] == 0:
+                q.append(i)
+        
+        while q:
+            curr_node = q.popleft()
+            curr_color = ord(colors[curr_node]) - ord('a')
+            #update counts
+            counts[curr_node][curr_color] += 1
+            visited_nodes += 1
+            
+            for neigh in graph[curr_node]:
+                for i in range(26):
+                    #update the max frequency for the outgoing edges for this node
+                    counts[neigh][i] = max(counts[curr_node][i],counts[neigh][i])
+                #use up an edge
+                in_degree[neigh] -= 1
+                #no more edges, we q up
+                if in_degree[neigh] == 0:
+                    q.append(neigh)
+                    
+        if visited_nodes < N:
+            return -1
+        ans = 0
+        for i in range(N):
+            ans = max(ans,max(counts[i])) #we also could have maximized during kahns
+        
+        return ans
+
+
 #########################################
 # 2332. The Latest Time to Catch a Bus
 # 06APR23
