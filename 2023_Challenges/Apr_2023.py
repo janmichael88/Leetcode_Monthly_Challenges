@@ -1758,27 +1758,96 @@ class Solution:
         try all times between min(buses) and max(buses)
         if this time works, then anytime after should work 
         '''
+        #sort
         buses.sort()
         passengers.sort()
+        
         m = len(buses)
         n = len(passengers)
         
+        #smallest ans can be at time 1
         ans = 1
-        c = 0
+        curr_cap = 0
+        
+        #pointer into passengers
         j = 0
+        
         for i in range(m):
+            #while there are passengers and curr cap is available and this passenger can tak
             #keep adding people to busses, there are two cases when we can have the latest time
-            while j < n and c < capacity and passengers[j] <= buses[i]:
-                # If one arrives 1 minute earlier than last added (given that the time slot is not occupied by an other passenger), he can get on the bus
-                if passengers[j] - 1 != passengers[j - 1]:
+            while j < n and curr_cap < capacity and passengers[j] <= buses[i]:
+                #we could have several latest answers, so long as the current passenger - 1 is > the previous passenger in line
+                #If one arrives 1 minute earlier than last added (given that the time slot is not occupied by an other passenger), he can get on the bus
+                if passengers[j] - 1 != passengers[j-1]:
+                    #we sorted increasingly, so keep getting the lastest answer
+                    
                     #the one with the earllier time is the latest i can catch the base
                     #we can use the most recent passenger waiting for the bus, less one second
                     ans = passengers[j] - 1
-                c += 1
+                
+                #advance in cinrement capacity
                 j += 1
+                curr_cap += 1
+            
+            #another time we can get is from the buses
             # If the last one added, his arrival is less than bus departure, check capacity, and if not full, we can arrive at the bus departure time.
-            if c < capacity and (j == 0 or passengers[j - 1] < buses[i]):
-                # we can get on this buse
+
+            if curr_cap < capacity and (j == 0 or passengers[j-1] < buses[i]):
                 ans = buses[i]
-            c = 0
+            
+            #reset cap
+            curr_cap = 0
+        
         return ans
+    
+class Solution:
+    def latestTimeCatchTheBus(self, buses: List[int], passengers: List[int], capacity: int) -> int:
+        '''
+        another solution just to hit the concept home
+        https://leetcode.com/problems/the-latest-time-to-catch-a-bus/discuss/2259200/Python-Just-calculate-(faster-than-100.00)
+        
+        The line best = time if cap > 0 else passengers[cur - 1] is inside the for loop,
+        If we have max capacity number of passengers before the i-th bus,
+        The time we choose if we want to catch this bus is at max (passengers[cur - 1] -1). So we try to decrease from passengers[cur - 1].
+
+        If we have empty slot for the best ,we should try to decrease from time, which the latester time to catch the i-th bus
+        
+        We have just exited the for loop, so time refers to the departure time of the bus that is last to leave, while cap refers to the remaining capacity on that bus.
+
+So what the code is essentially saying is:
+
+if there are still seats on that last bus, then all I need to do is to arrive the same time it leaves! (note that there may be existing people who are arriving at that time as well, so you can't return directly, e.g, [2], [2], 2).
+if there are no more seats on the last bus, who is the last guy that managed to get a seat? (note that we still need to check for the above, because it is only when there is no more seat on the last bus, that this piece of information becomes valuable, e.g. [3], [2, 4], 2)
+        '''
+        buses.sort()
+        passengers.sort()
+        
+        #print(buses)
+        #print(passengers)
+        
+        m = len(buses)
+        n = len(passengers)
+        
+        ptr_passengers = 0
+        
+        #try to fit as many people on a bus to find the absolute latest time we can leave
+        for time in buses:
+            curr_cap = capacity
+            while ptr_passengers < n and passengers[ptr_passengers] <= time and curr_cap > 0:
+                curr_cap -= 1
+                ptr_passengers += 1
+            
+        #try to reduce best time so far
+        #we either take the last bus, if we can fit on it
+        #or we be the last person in passengers to take this bus
+        best_time = time if curr_cap > 0 else passengers[ptr_passengers -1]
+        
+        #see if we can go one less?
+        passengers = set(passengers)
+        
+        while best_time in passengers:
+            best_time -= 1
+        
+        return best_time
+        
+        #print(time)
