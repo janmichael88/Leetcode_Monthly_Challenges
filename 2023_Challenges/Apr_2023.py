@@ -1688,8 +1688,97 @@ class Solution:
         
         return ans
 
+#########################################
+# 20. Valid Parentheses (REVSITED)
+# 10APR23
+#########################################
+class Solution:
+    def isValid(self, s: str) -> bool:
+        '''
+        we need to use a stack
+        push open exrpessions on to stack and try to pop them off when we get to a closing one
+        '''
+        stack = []
+        mapp = {")": "(",
+               "]":"[",
+                "}":"{",
+               }
+    
+        
+        for ch in s:
+            #add in opening
+            if ch not in mapp:
+                stack.append(ch)
+            
+            #otherwise we need to close and clear
+            else:
+                if stack and mapp[ch] != stack[-1]:
+                    return False
+                elif not stack:
+                    return False
+                else:
+                    stack.pop()
+        
+        return not stack
+            
+#i thought this was also a cool way
+class Solution:
+    def isValid(self, s: str) -> bool:
+        
+        while ("()" in s) or ("{}" in s) or ("[]" in s):
+            s = s.replace("()","")
+            s = s.replace("{}", "")
+            s = s.replace("[]","")
+        
+        return s == ""
 
 #########################################
 # 2332. The Latest Time to Catch a Bus
 # 06APR23
 #########################################
+class Solution:
+    def latestTimeCatchTheBus(self, buses: List[int], passengers: List[int], capacity: int) -> int:
+        '''
+        i have a list of buses with the times that they leave
+        i have list of passengers with times that they arrive
+        each bus can hold capacitty people (at most)
+        
+        when passenger arrives, they wait in line for next available bus
+        
+        i can get on bus that departs at time x if i arrive at time y, where y <= x, and bus is not full
+        passengers with earliest arrival time get on bus first
+        
+        ground rules:
+            i need to catch a bus
+            my options can be between min(buses) and max(buses), if when i get there, there are not more than capacity people waiting
+            at those times
+            
+            binary search, try to find a workable time??
+            
+        try all times between min(buses) and max(buses)
+        if this time works, then anytime after should work 
+        '''
+        buses.sort()
+        passengers.sort()
+        m = len(buses)
+        n = len(passengers)
+        
+        ans = 1
+        c = 0
+        j = 0
+        for i in range(m):
+            #keep adding people to busses, there are two cases when we can have the latest time
+            while j < n and c < capacity and passengers[j] <= buses[i]:
+                # If one arrives 1 minute earlier than last added (given that the time slot is not occupied by an other passenger), he can get on the bus
+                if passengers[j] - 1 != passengers[j - 1]:
+                    #the one with the earllier time is the latest i can catch the base
+                    #we can use the most recent passenger waiting for the bus, less one second
+                    ans = passengers[j] - 1
+                c += 1
+                j += 1
+            # If the last one added, his arrival is less than bus departure, check capacity, and if not full, we can arrive at the bus departure time.
+            if c < capacity and (j == 0 or passengers[j - 1] < buses[i]):
+                # we can get on this buse
+                ans = buses[i]
+            c = 0
+        return ans
