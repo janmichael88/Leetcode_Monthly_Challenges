@@ -1851,3 +1851,273 @@ if there are no more seats on the last bus, who is the last guy that managed to 
         return best_time
         
         #print(time)
+
+###################################
+# 457. Circular Array Loop
+# 10APR23
+###################################
+class Solution:
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        '''
+        convert to graph and detect cycle
+        cycle has a defintion
+            for every index in a cycles, all numes[index] must be positive or all negative
+            cycle must be greater than 1, i.e size of cycle = k, and k > 1
+        '''
+        N = len(nums)
+        graph = defaultdict(list)
+        
+        for i in range(N):
+            #positive direction
+            if nums[i] >= 0:
+                u = i
+                v = (i + nums[i]) % N
+                graph[u].append(v)
+            else:
+                #careful with negatives and their modulo
+                u = i
+                #still works with negatives, but we want the magnitude devoid of direction
+                v = (i-(-1*nums[i])) % N
+                graph[u].append(v)
+        
+        #cycle detection, with a specific defintino of cycle
+        #keep track of size and counts positive and negatives
+        
+        def dfs(node,seen):
+            if node in seen:
+                return -1
+            seen.add(node)
+            for neigh in graph[node]:
+                dfs(neigh,seen)
+                
+                
+        seen = set()
+        contains_cycle = None
+        for i in range(N):
+            contains_cycle = dfs(i,seen)
+            if contains_cycle:
+                return True
+        
+        return False
+    
+
+#close one 35/44
+class Solution:
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        '''
+        convert to graph and detect cycle
+        cycle has a defintion
+            for every index in a cycles, all numes[index] must be positive or all negative
+            cycle must be greater than 1, i.e size of cycle = k, and k > 1
+        '''
+        N = len(nums)
+        graph = defaultdict(list)
+        
+        for i in range(N):
+            #positive direction
+            if nums[i] >= 0:
+                u = i
+                v = (i + nums[i]) % N
+                graph[u].append(v)
+            else:
+                #careful with negatives and their modulo
+                u = i
+                #still works with negatives, but we want the magnitude devoid of direction
+                v = (i-(-1*nums[i])) % N
+                graph[u].append(v)
+        
+        #cycle detection, with a specific defintino of cycle
+        #keep track of size and counts positive and negatives
+        
+        def dfs(node,seen,size,count_pos,count_neg):
+            seen.add(node)
+            size[0] += 1
+            if nums[node] > 0:
+                count_pos[0] += 1
+            elif nums[node] < 0:
+                count_neg[0] += 1
+
+            #no neigbors
+            for neigh in graph[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,size,count_pos,count_neg)
+                if neigh in seen:
+                    return [size[0],count_pos[0],count_neg[0]]
+            seen.remove(node)
+        
+        seen = set()
+        for i in range(N):
+            temp = dfs(i,seen,[0],[0],[0])
+            size,pos,neg = temp
+            if (size > 1 and pos == size) or (size > 1 and neg == size):
+                return True
+        
+        return False
+    
+#we can use the cyclet detectino algorith, with three states, unvisite, visited, visited during recursion
+#in addition, when making the graph, join edges with the same sign
+class Solution:
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        '''
+        convert to graph and detect cycle
+        cycle has a defintion
+            for every index in a cycles, all numes[index] must be positive or all negative
+            cycle must be greater than 1, i.e size of cycle = k, and k > 1
+        '''
+        N = len(nums)
+        graph = defaultdict(list)
+        
+        for i in range(N):
+            u  = i
+            v = i + nums[i]
+		    #In case of x crosses the range [0,n-1]
+            v = v % N 
+			#Making sure self edges do not form and edges are formed only between elements of same sign
+            if v != i and nums[u]*nums[v]>=0: 
+                graph[u].append(v)
+
+        
+
+        #cycle detection, with a specific defintino of cycle
+        #keep track of size and counts positive and negatives
+        #in visited we need to keep three sateates
+        #0 mean not visited yet, 1 means visited, -1 means visited on this current traversal
+        # In visit list, 0 means unvisited, 1 means visited, -1 means we are currently recursing and encountered this element, 
+	    # so we set -1 to 1 after completely searching through all possibilites from that element without finding a cycle else
+	    # If we encounter an element with -1 value in visit, then it implies we have found a cycle.
+        visited = [0]*N
+        def dfs(curr,visited): #returns whether or not there is a cycle from this curr node
+            if visited[curr] == -1:
+                return True
+            if visited[curr] == 1:
+                return False
+            #mark
+            visited[curr] = -1
+            for neigh in graph[curr]:
+                if dfs(neigh,visited):
+                    return True
+            #complete
+            visited[curr] = 1
+            return False
+        
+        for i in range(N):
+            if dfs(i,visited):
+                return True
+        
+        return False 
+    
+class Solution:
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        '''
+        we dont need to compute the graph before hand
+        '''
+        N = len(nums)
+        visited = [0]*N
+        def dfs(curr,visited): #returns whether or not there is a cycle from this curr node
+            if visited[curr] == -1:
+                return True
+            if visited[curr] == 1:
+                return False
+            #mark
+            visited[curr] = -1
+            neigh = curr + nums[curr]
+            neigh = neigh % N
+            
+            if neigh != curr and nums[neigh]*nums[curr] >= 0:
+                if dfs(neigh,visited):
+                    return True
+            #complete
+            visited[curr] = 1
+            return False
+        
+        for i in range(N):
+            if dfs(i,visited):
+                return True
+        
+        return False 
+            
+#we can also do this iteratvely without using recursion, 
+class Solution:
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        '''
+        we dont need to compute the graph before hand
+        but we need to different seen sets, one for the current traversal, and one to indicate whethr or not to start the traversal
+        '''
+        N = len(nums)
+        visited = set()
+        
+        for i in range(N):
+            curr = i
+            if curr not in visited:
+                local_visited = set()
+                while True:
+                    if curr in local_visited:
+                        return True
+                    if curr in visited:
+                        break
+                    #mark both
+                    visited.add(curr)
+                    local_visited.add(curr)
+                    neigh = (curr + nums[curr]) % N
+                    if neigh != curr and nums[neigh]*nums[curr] >= 0:
+                        curr = neigh
+                    else:
+                        break
+        
+        return False
+                    
+
+##################################
+# 2390. Removing Stars From a String
+# 11APR23
+##################################
+#stack
+class Solution:
+    def removeStars(self, s: str) -> str:
+        '''
+        we have a string s, which contains *
+        in one operation:
+            choose a star in s
+            remove the closes non=start char to its left, as well as the star itself
+        
+        return the string after all stars have been removed
+        that is i use a stack, then just pop the top of the stack on the stars
+        
+        [l,e,c,o,e]
+        '''
+        stack = []
+        for ch in s:
+            if ch != '*':
+                stack.append(ch)
+            else:
+                if stack:
+                    stack.pop()
+        
+        return "".join(stack)
+    
+#on strings
+class Solution:
+    def removeStars(self, s: str) -> str:
+        '''
+        we also don't need to use a stack, we can just keep two pointers,
+        one on the string, and one for the char to take
+        we are essential overwriting the s input
+        '''
+        s_list = list(s)
+        
+        j = 0
+        for ch in s:
+            if ch == '*': # we cant use what j i currently pointing to
+                j -= 1
+            else:
+                #we can use current j and move up
+                s_list[j] = ch
+                j += 1
+    
+        #grab the firstt j chars
+        ans = ""
+        for i in range(j):
+            ans += s_list[i]
+        
+        return ans
+        
