@@ -2066,6 +2066,114 @@ class Solution:
         
         return False
                     
+#cycle detection, slow and fast pointers, 
+#note, doesn't pass all cases
+class Solution:
+    
+    def get_next(self,i: int, nums: List[int],):
+        #moves pointer ahead one interation
+        N = len(nums)
+        #first advance
+        i += nums[i]
+        #if we had gone in the reverse direction
+        if i < 0:
+            i += N
+        #gone out side the range after adding N
+        elif (i > N - 1):
+            i %= N
+        
+        return i
+            
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+        '''
+        we can use a slow and faster pointers, and return true if the cycle lenght is greater than one
+            i.e fast == slow
+        if we meetn element with different directions, then the search fails
+        while traveling we set all elemnts along the way to seen
+        '''
+        if not nums or len(nums) < 2:
+            return False
+        
+        N = len(nums)
+        #check eery possbiles tart locations, we can find a short loop, but the array may have a valid loop
+        for i in range(N):
+            #element sin vsited are known non loop paths, so if we've seen this, we know it doesnt have a lop
+            if nums[i] == 0:
+                continue
+            #otherwise its not visited or we don't know it it has a loop from here,
+            #we need to find out!
+            slow = i
+            fast = self.get_next(slow,nums)
+            
+            #whether i is positive or negative defines our direction, so i
+            #we just need to make sure the signs are the same when advancing
+            while (nums[i]*nums[fast] > 0) and (nums[i]*nums[self.get_next(fast,nums)] > 0): #same sign
+                if slow == fast:
+                    #one elemnt loop check
+                    if (slow == self.get_next(slow,nums)):
+                        break
+                    return True
+                
+                #advance
+                slow = self.get_next(slow,nums)
+                fast = self.get_next(self.get_next(fast,nums),nums)
+                
+            #if we are here we didn't find a loop, so we know this path doesn't have a loop
+            #so we retravesre it untilwe reverse directions or ecnounts it in loops
+            #during the traverse add to seen
+            slow = i
+            sign = nums[i]
+            while (sign*nums[slow] > 0):
+                temp = self.get_next(slow,nums)
+                nums[slow] = 0
+                slow = temp
+        
+        return False
+    
+class Solution:
+    def __init__(self):
+        self.__visited = lambda x: not x # a cell i is visited when nums[i] = 0
+        
+    def __next(self, nums, idx, direction):
+        if idx == -1: # To handle the case of next(next(fast)) = next(-1) = -1
+            return -1
+
+        elif (nums[idx] > 0) != direction: # check the direction
+            return -1
+
+        next_idx = (idx + nums[idx]) % len(nums)
+        if next_idx < 0:
+            next_idx += len(nums)
+
+        return -1 if next_idx == idx else next_idx
+
+    def circularArrayLoop(self, nums: List[int]) -> bool:
+
+            for i in range(len(nums)):
+                if self.__visited(nums[i]):
+                    continue
+
+                direction = nums[i] > 0
+
+                # 1. Check if there is a cycle starting from i
+                slow = fast = i
+                while not (self.__visited(nums[slow]) or self.__visited(nums[fast])):
+
+                    slow = self.__next(nums, slow, direction)
+                    fast = self.__next(nums, self.__next(nums, fast, direction), direction)
+
+                    if slow == -1 or fast == -1:
+                        break
+
+                    elif slow == fast:
+                        return True
+
+                # 2. Mark visited all cells that belong to the path starting from i
+                slow = i
+                while self.__next(nums, slow, direction) != -1:
+                    nums[slow], slow = 0, self.__next(nums, slow, direction)
+
+            return False
 
 ##################################
 # 2390. Removing Stars From a String
