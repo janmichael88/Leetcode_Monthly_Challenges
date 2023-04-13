@@ -2228,4 +2228,231 @@ class Solution:
             ans += s_list[i]
         
         return ans
+
+###########################
+# 464. Can I Win
+# 12APR23
+###########################
+#jesus fuck...
+class Solution:
+    def canIWin(self, maxChoosableInteger: int, desiredTotal: int) -> bool:
+        '''
+        in the original game 100 two players take turns adding intergs from to 10 
+        first person to reach of exceed 100 wins (not we can replace numbers)
         
+        what if we cannot re-use inters?
+        
+        return true if the first person can win assuming both play optimally
+        dp on bit masks to show what numbers haven't been taken 
+        states:
+            (p1_score, p2_score,nums_available_to_take)
+            
+        base case
+            
+        
+        '''
+        memo = {}
+        
+        def dp(p1,p2,nums_to_take):
+            if p1 == desiredTotal:
+                return True
+            
+            if p2 > desiredTotal or p2 > desiredTotal:
+                return False
+            if (p1,p2,nums_to_take) in memo:
+                return memo[(p1,p2,nums_to_take)]
+            
+            #player 1
+            player_1_number = 0
+            for j in range(maxChoosableInteger):
+                num = 1 << j
+                #if we haven't taken it
+                if nums_to_tak & num == 0:
+                    nums_to_take = nums_to_take |  num
+                    player_1_number = j
+                    break
+            
+            #player 2
+            player_2_number = 0
+            for j in range(maxChoosableInteger):
+                num = 1 << j
+                #if we haven't taken it
+                if nums_to_tak & num == 0:
+                    nums_to_take = nums_to_take |  num
+                    player_2_number = j
+                    break
+                    
+            ans = dp()
+
+#finally
+class Solution:
+    def canIWin(self, maxChoosableInteger: int, desiredTotal: int) -> bool:
+        '''
+        dp states:
+            (current score, who's move, numbers taken)
+            we try all moves and backtrack in the process
+            
+            base case, when desied total <= 0
+        easy edge cases
+            if sum of digits < desiredTotal, no one can win
+            if desiredTotal <= maxChooseableInterger, player one just picks on the first move
+            
+        
+            for currs_score, if we get to zero, it means the other peron must have won on the previous turn
+        '''
+        if desiredTotal <= maxChoosableInteger:
+            return True
+        #get sum using Gauss trick
+        if ((maxChoosableInteger)*(1+maxChoosableInteger)) / 2 < desiredTotal:
+            return False
+        
+        memo = {}
+        
+        def dp(curr_score,curr_move,nums_taken):
+            if curr_score <= 0:
+                return False
+            
+            if (curr_score,curr_move,nums_taken) in memo:
+                return memo[(curr_score,curr_move,nums_taken)]
+            
+            #player 1
+            if curr_move == 0:
+                for i in range(1,maxChoosableInteger+1):
+                    #check if taken
+                    if nums_taken & (1 << i):
+                        continue
+                    #otherwise take
+                    nums_taken = nums_taken | (1 << i)
+                    
+                    #can't win from here
+                    if not dp(curr_score - i,1,nums_taken):
+                        memo[(curr_score,curr_move,nums_taken)] = True
+                        #put the number back
+                        nums_taken = nums_taken ^ (1 << i)
+                        return True
+                    
+                nums_taken = nums_taken ^ (1 << i)
+                memo[(curr_score,curr_move,nums_taken)] = False
+                return False
+            
+            #other players move, but swap
+            else:
+                for i in range(1,maxChoosableInteger+1):
+                    #check if taken
+                    if nums_taken & (1 << i):
+                        continue
+                    #otherwise take
+                    nums_taken = nums_taken | (1 << i)
+                    
+                    #can't win from here
+                    if not dp(curr_score - i,0,nums_taken):
+                        memo[(curr_score,curr_move,nums_taken)] = True
+                        #put the number back
+                        nums_taken = nums_taken ^ (1 << i)
+                        return True
+                    
+                nums_taken = nums_taken ^ (1 << i)
+                memo[(curr_score,curr_move,nums_taken)] = False
+                return False
+            
+
+        
+        return dp(0,0,1 << 22)
+                
+
+class Solution:
+    def canIWin(self, maxChoosableInteger: int, desiredTotal: int) -> bool:
+        '''
+        player move is a redudant, we dont need it
+            
+            
+        '''
+        if desiredTotal <= maxChoosableInteger:
+            return True
+        #get sum using Gauss trick
+        if ((maxChoosableInteger)*(1+maxChoosableInteger)) / 2 < desiredTotal:
+            return False
+        
+        memo = {}
+        
+        def dp(curr_score,nums_taken):
+            if curr_score <= 0:
+                return False
+            
+            if (curr_score,nums_taken) in memo:
+                return memo[(curr_score,nums_taken)]
+            
+
+            for i in range(1,maxChoosableInteger+1):
+                #check if taken
+                if (nums_taken & (1 << i)) == 0:
+                    nums_taken = nums_taken | (1 << i)
+                    #can't win from here
+                    if not dp(curr_score - i,nums_taken):
+                        memo[(curr_score,nums_taken)] = True
+                        nums_taken = nums_taken ^ (1 << i)
+                        return True
+            nums_taken = nums_taken ^ (1 << i)
+            memo[(curr_score,nums_taken)] = False
+            return False
+            
+            
+        return dp(0,1 << 22)
+    
+#this is a better solution
+class Solution:
+    def canIWin(self, maxChoosableInteger: int, desiredTotal: int) -> bool:
+        
+        memo = {}
+        def can_player_win_on(target, taken):
+            
+            # Input: target number, current state of available call numbers for current player
+            
+            # Ouput: Return True if current player can win with given parameter.
+            #        Otherwise, return False.
+
+            if target <= 0:
+				## Base case:
+                # Opponent has reach target and won the game on previous round.
+                return False
+            
+            if (target,taken) in memo:
+                return memo[(target,taken)]
+            
+			## General cases:
+            # Current player use all available call number, and try to make a optimal choice
+            for number in range(1, maxChoosableInteger+1):
+                
+                if (taken & (1 << number)): 
+                    # Players cannot reuse the same call number, defined by game rule
+                    continue
+
+                # opponent makes next optimal move after current player
+                # update target and bitflag for opponent
+                if not can_player_win_on(target - number, taken | (1 << number) ):
+                    
+                    # current player can win if opponent lose
+                    memo[(target,taken)] = True
+                    return True
+
+            # current player lose, failed to find a optimal choice to win
+            memo[(target,taken)] = False
+            return False
+        
+        
+        # total number sum = 1 + 2 + ... + max call number = n * (1 + n) // 2
+        S = maxChoosableInteger * (maxChoosableInteger+1) // 2
+        
+        if S < desiredTotal:
+            # max call number is too small, can not reach desired final value
+            return False
+        
+        elif desiredTotal <= 0:
+            # first player already win on game opening
+            return True
+        
+        elif S == desiredTotal and maxChoosableInteger % 2 == 1:
+            # first player always win, because she/he can choose last remaining number from 1 ~ maxChoosableInteger on final round
+            return True
+        
+        return can_player_win_on(desiredTotal, 0 )
