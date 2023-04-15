@@ -2456,3 +2456,311 @@ class Solution:
             return True
         
         return can_player_win_on(desiredTotal, 0 )
+    
+############################################
+# 946. Validate Stack Sequences (REVISTED)
+# 13APR23
+###########################################
+#sheesh, i tried too hard on this one
+class Solution:
+    def validateStackSequences(self, pushed: List[int], popped: List[int]) -> bool:
+        '''
+        simulate and see if we can clear both pushed and popped stacks
+        reverse both
+        [5,4,3,2,1]
+        [1,2,3,5,4]
+        
+        
+        '''
+        pushed = pushed[::-1]
+        popped = popped[::-1]
+        
+        temp = []
+        
+        while pushed and popped:
+            #empty temp or we can't pop
+            while len(temp) == 0 or (len(pushed) > 0 and popped[-1] != temp[-1]):
+                temp.append(pushed.pop())
+            
+            #keep popping
+            while len(temp) > 0 and len(popped) > 0 and temp[-1] == popped[-1]:
+                popped.pop()
+                temp.pop()
+                
+        
+        return len(pushed) == 0 and len(popped) == 0
+            
+
+#####################################
+# 888. Fair Candy Swap
+# 13APR23
+#####################################
+class Solution:
+    def fairCandySwap(self, aliceSizes: List[int], bobSizes: List[int]) -> List[int]:
+        '''
+        find sums of alice and bob,
+        then for each size in alice, decrement it by it size, and try to find bobs new size to swap
+        so that their sums are equal
+        
+        let S_A and S_B be the sums of alice and bob
+        let x and y be the sizes we can swap
+        S_A - x + y = S_B - y + x
+        2*(x-y) = (S_A - S_B)
+        x - y = (S_A - S_B) / 2
+        x = y + (S_A - S_B) / 2
+        '''
+        alice_total = sum(aliceSizes)
+        bob_total = sum(bobSizes)
+        
+        #sort
+        aliceSizes.sort()
+        bobSizes.sort()
+        
+        for num in aliceSizes:
+            #store the swap for alice
+            alice_swap = num
+            left = 0
+            right = len(bobSizes)
+            while left < right:
+                mid = left + (right - left) // 2
+                bob_swap = bobSizes[mid]
+                #update both
+                alice_change = alice_total - alice_swap + bob_swap
+                bob_change = bob_total - bob_swap + alice_swap
+                #bigger
+                if alice_change >= bob_change:
+                    #this swapping value was too big or it worked
+                    right = mid
+                else:
+                    left = mid + 1
+            
+            #checks
+            #boundary condition
+            if left == len(bobSizes):
+                left -= 1
+            #check valid swap
+            if alice_total - alice_swap + bobSizes[left] == bob_total - bobSizes[left] + alice_swap:
+                return [alice_swap,bobSizes[left]]
+            
+        
+        #no answer, but we can't be here anway because there is one
+        return -1
+    
+class Solution:
+    def fairCandySwap(self, aliceSizes: List[int], bobSizes: List[int]) -> List[int]:
+        '''
+        find sums of alice and bob,
+        then for each size in alice, decrement it by it size, and try to find bobs new size to swap
+        so that their sums are equal
+        
+        let S_A and S_B be the sums of alice and bob
+        let x and y be the sizes we can swap
+        S_A - x + y = S_B - y + x
+        2*(x-y) = (S_A - S_B)
+        x - y = (S_A - S_B) / 2
+        x = y + (S_A - S_B) / 2
+        
+        fix alices scores as x, then find y in bobs scores, using binarys search
+        this is an important paradigm
+            find equation, fix one varibale then vary the other
+            
+        '''
+        alice_total = sum(aliceSizes)
+        bob_total = sum(bobSizes)
+        
+        diff = (alice_total - bob_total) / 2
+
+        #sort
+        aliceSizes.sort()
+        bobSizes.sort()
+        
+        for num in aliceSizes:
+            target = num + diff
+            left = 0
+            right = len(bobSizes)
+            while left < right:
+                mid = left + (right - left) // 2
+                #bigger
+                if bobSizes[mid] >= target:
+                    #this swapping value was too big or it worked
+                    right = mid
+                else:
+                    left = mid + 1
+            print(left,right,target)
+            if left == len(bobSizes):
+                left -= 1
+            if target == bobSizes[left]:
+                return [num,bobSizes[left]]
+                
+        
+        return -1
+                
+#######################################
+# 516. Longest Palindromic Subsequence
+# 14APR23
+#######################################
+#fuckkkk
+class Solution:
+    def longestPalindromeSubseq(self, s: str) -> int:
+        '''
+        keep in mind this is a subsequence, not a substring
+        let dp(i,j) be the answer to the longest subsequence using s from i to j
+        
+        if i == j, we just have the single char, so return 1
+        
+        say we are trying to compute dp(i,j)
+        we can extend this to j+1 or we can skeep and extend to j+2
+        if j+1 == i, retreieve the previous answer and increment
+        do the same with j+2
+        if they are different, there is no valid subsequence
+        try all i 
+        '''
+        memo = {}
+        N = len(s)
+        
+        def dp(i,j):
+            if i == j:
+                return 1
+            if j > 0:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            option1 = 0
+            option2 = 0
+            if s[i] == s[j]:
+                option1 = 1 + dp(i,j-1)
+                
+            if s[i] == s[j-1]:
+                option2 = 1 + dp(i,j-2)
+            
+            elif s[i] != s[j]:
+                memo[(i,j)] = 0
+                return 0
+                
+            ans = max(ans,option1,options2)
+            memo[(i,j)] = ans
+            return ans
+        
+        #try all i
+        ans =  0
+        for i in range(N):
+            for j in range(i+1,N):
+                ans = max(ans,dp(i,j))
+        
+        return ans
+    
+class Solution:
+    def longestPalindromeSubseq(self, s: str) -> int:
+        '''
+        keep in mind this is a subsequence, not a substring
+        let dp(i,j) be the answer to the longest subsequence using s from i to j
+        
+        if i == j, we just have the single char, so return 1
+        
+        say we are trying to compute dp(i,j)
+        we can extend this to j+1 or we can skeep and extend to j+2
+        if j+1 == i, retreieve the previous answer and increment
+        do the same with j+2
+        if they are different, there is no valid subsequence
+        try all i 
+        '''
+        memo = {}
+        N = len(s)
+        
+        def dp(i,j):
+            if i == j:
+                return 1
+            if i > j:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            #we can extent
+            if s[i] == s[j]:
+                ans = 2 + dp(i+1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                #move one or the other and take the max
+                first = dp(i+1,j)
+                second = dp(i,j-1)
+                ans = max(first,second)
+                memo[(i,j)] = ans
+                return ans
+        
+        #try all i
+        ans =  0
+        for i in range(N):
+            for j in range(i,N):
+                ans = max(ans,dp(i,j))
+        
+        return ans
+    
+#this is just knapsack
+class Solution:
+    def longestPalindromeSubseq(self, s: str) -> int:
+        '''
+        if s[i] == s[j], then we can extend the answer dp(i+1,j-1) by 2
+        if they aren't the same we need to the max of dp(i+1,j) or dp(i,j-1)
+        '''
+        memo = {}
+        N = len(s)
+        
+        def dp(i,j):
+            if i == j:
+                return 1
+            if i > j:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            #we can extent
+            if s[i] == s[j]:
+                ans = 2 + dp(i+1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                #move one or the other and take the max
+                first = dp(i+1,j)
+                second = dp(i,j-1)
+                ans = max(first,second)
+                memo[(i,j)] = ans
+                return ans
+        
+        #try all i
+        return dp(0,N-1)
+
+#bottom up
+class Solution:
+    def longestPalindromeSubseq(self, s: str) -> int:
+        '''
+        translating to bottom up
+        '''
+        N = len(s)
+        dp = [[0]*(N+1) for _ in range(N+1)] #N+1 becase there are N states we need to index into, and there are N-1 index positions
+        #base cases
+        for i in range(N):
+            for j in range(N):
+                if i == j:
+                    dp[i][j] = 1
+                if i > j:
+                    dp[i][j] = 0
+        
+        
+        #fill dp array starting from bottom right
+        for i in range(N-1,-1,-1):
+            #i already have bases cases for when i == j, so don't start at i
+            for j in range(i+1,N):
+                if s[i] == s[j]:
+                    dp[i][j] = 2 + dp[i+1][j-1]
+                else:
+                    first = dp[i+1][j]
+                    second = dp[i][j-1]
+                    dp[i][j] = max(first,second)
+                    
+        
+        return dp[0][N-1]
+    
+
+

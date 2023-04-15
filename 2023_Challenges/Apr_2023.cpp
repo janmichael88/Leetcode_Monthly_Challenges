@@ -193,3 +193,43 @@ public:
         return ans;
     }
 };
+
+///////////////////////////////////////// 
+// 888. Fair Candy Swap
+// 13APR23
+////////////////////////////////////////
+class Solution {
+public:
+    vector<int> fairCandySwap(vector<int>& aliceSizes, vector<int>& bobSizes) {
+        //use the equation directly and solve
+        //use hashset to check for complement in constantime
+        
+        int S_A = 0;
+        int S_B = 0;
+        
+        for (int num : aliceSizes){
+            S_A += num;
+        }
+        
+        for (int num: bobSizes){
+            S_B += num;
+        }
+        
+        int delta = (S_A - S_B) / 2;
+        //hashbob
+        set<int> setB;
+        for (int num: bobSizes){
+            setB.insert(num);
+        
+        }
+        
+        for (int num: aliceSizes){
+            bool contains = setB.find(num + delta) != setB.end();
+            if (contains == true){
+                return {num,num + delta};
+            }
+        }
+        
+        return {0,0};
+    }
+};
