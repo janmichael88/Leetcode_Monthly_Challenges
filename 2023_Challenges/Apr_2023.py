@@ -2762,5 +2762,266 @@ class Solution:
         
         return dp[0][N-1]
     
+##########################################
+# 2218. Maximum Value of K Coins From Piles
+# 15APR23
+###########################################
+#damn it, close one
+class Solution:
+    def maxValueOfCoins(self, piles: List[List[int]], k: int) -> int:
+        '''
+        each list in piles is a stack of coins in a stack ordered from top to bottom
+        we are given an integer k
+        we want to take from any of the piles to maximize our total value using k transactions
+        dp obvie
+        states:
+            when k hits 0, we can't take anything, so return 0
+        
+        hint 1, 
+            for each i pile, what will be the total value of coins we can collect if we choose the first j coins
+        
+        hint 2,
+            dp, DUH, combine results from different piles in the most optimal mannder
+            we need the largest prefix sum from all the piles!
+            
+        lets say for example i don't what the state is
+        (state), but in this state i have the maximum possible value so far
+        how do i know what coin to take next?
+        well, i want the maximum coin avilable that i can take!
+        in order to answer this, i would need to know what coins are currently at the top of the pile
+        (state) = know coins at the tops of the pile
+        then take the max and move that state!
+        
+        let state be tuple of pointers, initally all are are zero
+        and keeep track of k
 
+
+        this is no different the brute force really, albeit it's not totally right
+        in order the state to work, i would have needed to already be at a maximum, but that isn't the case
+
+        
+        '''
+        memo = {}
+        N = len(piles)
+        
+        def dp(state,k):
+            #no more k
+            if k == 0:
+                return 0
+            if (state,k) in memo:
+                return memo[(state,k)]
+            
+            #unpack states first
+            unpacked_state = list(state)
+            #find the max coin
+            curr_max,pile_of_max = 0,0
+            #local max
+            local_max = 0
+            for i in range(N):
+                #bounds condition in pile, can't take coin
+                if unpacked_state[i] == len(piles[i]):
+                    continue
+                #new max
+                
+                if piles[i][unpacked_state[i]] > curr_max:
+                    #store max and pointer to pile
+                    curr_max = piles[i][unpacked_state[i]] 
+                    pile_of_max = i
+
+                    #move pointer to get new state
+                    unpacked_state[pile_of_max] += 1
+                    local_max = max(local_max,curr_max + dp(tuple(unpacked_state),k-1))
+            #cache
+            memo[(state,k)] = local_max
+            return local_max
+        
+        starting = tuple([0]*N)
+        
+        return dp(starting,k)
+            
+            
+#dp, top down
+class Solution:
+    def maxValueOfCoins(self, piles: List[List[int]], k: int) -> int:
+        '''
+        let dp(i,k) be the answer to getting the max value using k coins
+        using the piles[:i]
+        
+        for example if dp(4,7) is the max total value when one takes at most seven coins using piles[:4]
+        if the 4 piles have seven coins, we just take them all
+        
+        base case is when i == 0, no piles to take from
+        and when k == 0, no more coins are allowed to be taken
+        
+        since we are optimal at dp(i,k), we look back at dp(i-1,k-c) for c being in coins used up in the range [0,k]
+        
+        one may not take any coins from the (i-1) pile and take at most coins from th leftmost (i-1) piles, 
+            i.e don't take from the i-1 pile and take the from the remaining piles
+        
+        rather we take c coins from i-1 and k-c from the rest
+            where c and be in range [0,k]
+        
+        of these choices, we maximuze on each state
+        so dp(i,k) = max{
+            dp(i-1,k-c) for c in range(0,k)
+        }
+        
+        when we choose some number of coins (c) to take from the i-1 pile, we must optimall choose at most coins - c
+        from the rest of ht epiles
+        
+        on the current i-1 pile, we keep tracking to take a coins from this pile and incremnt a runing sum
+        
+        When the value of currentCoins is optimal, dp[i][coins] = dp[i - 1][coins - currentCoins] + currentSum, 
+        because dp[i - 1][coins - currentCoins] gives the optimal answer to the smaller subproblem of size i - 1.
+        
+        There are two constraints for currentCoins: first, one cannot take more coins from the (i - 1)-th pile than the amount of coins the pile has (piles[i - 1].length); 
+        and second, we cannot take more coins than we are allowed, so currentCoins must not exceed coins.
+        
+        Combining these two constraints, one concludes that all values of currentCoins between 0 and min(piles[i - 1].length, coins) inclusively are feasible. 
+        We try all these values to find the optimal one.
+        '''
+        memo = {}
+        N = len(piles)
+        
+        def dp(i,k):
+            if i == 0:
+                return 0
+            if k == 0:
+                return 0
+            if (i,k) in memo:
+                return memo[(i,k)]
+            curr_sum = 0
+            ans = 0
+            #keep trying take coins adding to the previous problem
+            upper_bound = min(len(piles[i-1]),k)
+            for current_coins in range(upper_bound+1):
+                #if we are allowed to take
+                if current_coins > 0:
+                    curr_sum += piles[i-1][current_coins-1]
+                    
+                ans = max(ans, dp(i-1,k-current_coins) + curr_sum)
+            
+            memo[(i,k)] = ans
+            return ans
+        
+        
+        return dp(N,k)
+    
+#dp bottom up
+class Solution:
+    def maxValueOfCoins(self, piles: List[List[int]], k: int) -> int:
+        '''
+        bottom up translation
+        '''
+        N = len(piles)
+        
+        dp = [[0]*(k+1) for _ in range(N+1)]
+        
+        #we alredy have base cases filled out, so start from i = 1 and k = 1
+        #finally!
+        for i in range(1,N+1):
+            for j in range(k+1):
+                curr_sum = 0
+                ans = 0
+                
+                upper_bound = min(len(piles[i-1]),j)
+                for current_coins in range(upper_bound+1):
+                    #if we are allowed to take
+                    if current_coins > 0:
+                        curr_sum += piles[i-1][current_coins-1]
+
+                    ans = max(ans, dp[i-1][j-current_coins]+ curr_sum)
+                
+                dp[i][j] = ans
+
+        return dp[N][k]
+
+#another recursive way
+class Solution:
+    def maxValueOfCoins(self, piles: List[List[int]], k: int) -> int:
+        '''
+        here's another way
+        think of this is not taking from a pile
+        for keep trying to take from a pile
+        '''
+        N = len(piles)
+        memo = {}
+        
+        def dp(i,k):
+            if i < 0 or k == 0:
+                return 0
+            if (i,k) in memo:
+                return memo[(i,k)]
+            
+            #we can either not take, which is always an option
+            not_take = dp(i-1,k)
+            #we need to see how many times we can take from this pile i
+            coins_we_can_take = min(k,len(piles[i]))
+            
+            #store sum we can take from this current pile
+            curr_sum = 0
+            local_ans = 0 #the anwer for this subproblem that we are trying to maxmize
+            for taken_coins in range(coins_we_can_take):
+                curr_sum += piles[i][taken_coins]
+                #maximiz
+                local_ans = max(local_ans,not_take, dp(i-1,k-taken_coins-1)+curr_sum)
+            
+            memo[(i,k)] = local_ans
+            return local_ans
+        
+        
+        return dp(N-1,k)
+    
+
+#using prefix sum, in the search for fiding the maximum answer, we are accumulating sums
+#we can precompute the sum of the piles by generating prefix sums
+class Solution:
+    def maxValueOfCoins(self, piles: List[List[int]], k: int) -> int:
+        '''
+        we can use prefix sum on piles to get the sum at any index in piles[i] for i in range(len(piles))
+        '''
+        N = len(piles)
+        memo = {}
+        
+        #precomputes piles running sums,
+        #store in temp array
+        pref_sum_piles = []
+        for i in range(N):
+            pref_sum = [piles[i][0]]
+            for j in range(1,len(piles[i])):
+                pref_sum.append(pref_sum[-1] + piles[i][j])
+            
+            pref_sum_piles.append(pref_sum)
+            
+
+        
+        def dp(i,k):
+            if i < 0 or k == 0:
+                return 0
+            if (i,k) in memo:
+                return memo[(i,k)]
+            
+            #we can either not take, which is always an option
+            not_take = dp(i-1,k)
+            #we need to see how many times we can take from this pile i
+            coins_we_can_take = min(k,len(pref_sum_piles[i]))
+            
+            #store sum we can take from this current pile
+            local_ans = 0 #the anwer for this subproblem that we are trying to maxmize
+            for taken_coins in range(coins_we_can_take):
+                curr_sum = pref_sum_piles[i][taken_coins]
+                #maximiz
+                local_ans = max(local_ans,not_take, dp(i-1,k-taken_coins-1)+curr_sum)
+            
+            memo[(i,k)] = local_ans
+            return local_ans
+        
+        return dp(N-1,k)
+
+
+
+##############################
+# 214. Shortest Palindrome
+# 14APR23
+##############################
 
