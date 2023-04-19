@@ -2799,7 +2799,6 @@ class Solution:
         this is no different the brute force really, albeit it's not totally right
         in order the state to work, i would have needed to already be at a maximum, but that isn't the case
 
-        
         '''
         memo = {}
         N = len(piles)
@@ -3019,9 +3018,550 @@ class Solution:
         return dp(N-1,k)
 
 
+###################################################################
+# 1639. Number of Ways to Form a Target String Given a Dictionary
+# 16APR23
+####################################################################
+#brute force
+#MAIN TAKEWAY, when think of number of ways, this of the product rule for counting the number of ways to do something
+class Solution:
+    def numWays(self, words: List[str], target: str) -> int:
+        '''
+        given list of words, want to make target using the following words
+            1. target should be formed from left to right
+            2. to form the ith char of target, you can choose a character k from any string in wrods if
+                target[i] = words[j][k]
+            3. once you use the kth char of words[j] i can no loger use the xth char of any string in words
+            wher x<=k
+                i.e all the charcters ti the left of index k become unusable for every string
+            4. repeat until we get target
+        
+        can use multiple character from the same string in words
+        return number of way to form target to words
+        
+        graph problem,
+            number of way is number of paths
+            
+        all words have the same length
+        picking a word[j] and using characater word[j][k], means we can't use any character used at index <= k
+        words = [
+        acca
+        bbbb
+        caca
+        ]
+        
+        brute force is to use dfs, keep advancing pointeers until we get to the end
+        need pointer to index we are currently on in path
+        for each index, check all words in the dictionary
+        '''
+        #do brute force first
+        num_words = len(words)
+        N = len(words[0])
+        M = len(target)
+        self.ways = 0
+        mod = 10**9 + 7
+        
+        def rec(start_pos, pos_in_target,path):
+            #got to the end and have made target, abandon path and increment
+            if path == target:
+                self.ways += 1
+                self.ways %= mod
+                return
+            #no more chacters to use, all words have the same size
+            if start_pos == N:
+                return
+            
+            #loop over words
+            for other_word in range(num_words):
+                #loop over positions
+                for next_pos in range(start_pos,N): #from the starting position to the size of words 
+                    if words[other_word][next_pos] == target[pos_in_target]:
+                        #recurse
+                        rec(next_pos + 1, pos_in_target + 1, path+words[other_word][next_pos])
+        
+        rec(0,0,"")
+        return self.ways % mod
+    
+#better brute force, use pointers into strings and memoize pointers as states
+class Solution:
+    def numWays(self, words: List[str], target: str) -> int:
+        '''
+        adding memoe and storing string stats with expression
+        '''
+        #do brute force first
+        num_words = len(words)
+        N = len(words[0])
+        M = len(target)
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(start_pos, pos_in_target,):
+            #got to the end and have made target, abandon path and increment
+            if pos_in_target == M:
+                return 1
+            #no more chacters to use, all words have the same size
+            if start_pos == N:
+                return 0
+            #retreive
+            if (start_pos,pos_in_target) in memo:
+                return memo[(start_pos,pos_in_target)]
+            
+            #answer for this tree is sum of all other states
+            num_ways = 0
+            #loop over words
+            for other_word in range(num_words):
+                #loop over positions
+                for next_pos in range(start_pos,N): #from the starting position to the size of words 
+                    if words[other_word][next_pos] == target[pos_in_target]:
+                        #recurse
+                        num_ways += dp(next_pos + 1, pos_in_target + 1)
+                        num_ways %= mod
+            
+            #cache
+            memo[(start_pos,pos_in_target)] = num_ways
+            return num_ways
+        
+        return dp(0,0)
+    
+#using count map to get frequency counts for char at each column
+class Solution:
+    def numWays(self, words: List[str], target: str) -> int:
+        '''
+        improving the time complextiy for solving the subproblems in DP is a hard on hard problem
+        but it wont pass unless we can reduce the O(num_words*num_positions)
+        remember this paradigm on hards going forward
+        we need to store a count mapp, where counts[c,j] stores the count of character c in the jth column of the matrix
+
+        An example:
+        target:
+        abc
+        input words:
+        1.a...
+        2.a...
+        3.a...
+        4.a...
+        ...
+        100.a...
+
+        more formally
+        let dp(i,j) be the number of ways we can build prefix of target of length i using the words[:j] #prefix dp
+        base case, when j == 0, there are no columns and so we can't make any prefix if taget
+        rather there is only '1' way to get the null string, so return 1
+        
+        state dp(i,j), for j < k means that
+            we are not considering the jth column of the mateix
+            if i < m, we need to add character target[i] to his current prefix
+            
+        we also store counts
+        counts(c,j) stores the frequency of character c at this column j
+        when we chose a character target[i] from the jth column and add it to the prefix (which has length i) it now becomes i + 1
+        after this we cannot use the jth column anymore and move on the j+1 column
+        so we can move from dp(i,j) to dp(i+1,j+1)
+        
+        how many ways can move in this transition?
+        its just the number of times target[i] appears at column j!
+        dp(i+1,j+1) = counts(target[i],j)*dp(i,j)
+        
+        when we skip the jth column, we do not need to add anything to the current prefix. why?
+        because there isn't a valid way to get here anyway through target[i]
+        i.e there isn't a transisiont, so just move the current number of ways to the next state
+        move dp(i,j) to dp(i+1,j)
+        rather, it represents ONE way to not choose any character fro this column j
+        
+        time complexit is O(n*k + m*k)
+        
+        '''
+        num_words = len(words)
+        N = len(words[0])
+        M = len(target)
+        memo = {}
+        mod = 10**9 + 7
+        
+        #pre process data by counting the counts for each char at each column j
+        count_chars = Counter() 
+        for word in words:
+            for col,ch in enumerate(word):
+                count_chars[(col,ch)] += 1
+        
+        
+        def dp(start_pos, pos_in_target,):
+            #got to the end and have made target, abandon path and increment
+            if pos_in_target == M:
+                return 1
+            #no more chacters to use, all words have the same size
+            if start_pos == N:
+                return 0
+            #retreive
+            if (start_pos,pos_in_target) in memo:
+                return memo[(start_pos,pos_in_target)]
+            
+            #skip this current word's index
+            num_ways = dp(start_pos+1,pos_in_target)
+            #get counts by multiplying multiplicity of next answer
+            curr_char = target[pos_in_target]
+            #to this current number of ways we try to increment by the number of ways we can make a path from start_pos to start_pos + 1
+            num_ways += dp(start_pos+1,pos_in_target+1)*count_chars[(start_pos,curr_char)]
+            num_ways %= mod
+            
+            #cache
+            memo[(start_pos,pos_in_target)] = num_ways
+            return num_ways
+        
+        return dp(0,0) % mod
+
+#bottom up
+class Solution:
+    def numWays(self, words: List[str], target: str) -> int:
+        '''
+        bottom up
+        '''
+        #do brute force first
+        num_words = len(words)
+        N = len(words[0])
+        M = len(target)
+        memo = {}
+        mod = 10**9 + 7
+        
+        #pre process data by counting the counts for each char at each column j
+        count_chars = Counter() 
+        for word in words:
+            for col,ch in enumerate(word):
+                count_chars[(col,ch)] += 1
+        
+        dp = [[0]*(M+1) for _ in range(N+1)]
+        
+        #fill in base cases
+        for start_pos in range(N+1):
+            for pos_in_target in range(M+1):
+                if pos_in_target == M:
+                    dp[start_pos][pos_in_target] = 1
+        
+        
+        for start_pos in range(N-1,-1,-1):
+            for pos_in_target in range(M-1, -1,-1):
+                #skip this current word's index
+                num_ways = dp[start_pos+1][pos_in_target]
+                #get counts by multiplying multiplicity of next answer
+                curr_char = target[pos_in_target]
+                #to this current number of ways we try to increment by the number of ways we can make a path from start_pos to start_pos + 1
+                num_ways += dp[start_pos+1][pos_in_target+1]*count_chars[(start_pos,curr_char)]
+                num_ways %= mod
+                
+                dp[start_pos][pos_in_target] = num_ways
+        
+        return dp[0][0] % mod
+    
+#########################################
+# 1548. The Most Similar Path in a Graph
+# 17APR23
+#########################################
+class Solution:
+    def mostSimilar(self, n: int, roads: List[List[int]], names: List[str], targetPath: List[str]) -> List[int]:
+        '''
+        we have an undirected graph with n-1 nodes
+        we are given the names of nodes in order from 0 to n-1
+        we are given a string array targetPath 
+        need to find a path in graph of same length and with minimum edit distance to targetpath
+        
+        define editDist as {
+            targetPath = List[string]
+            myPath = List[string]
+            
+            if len(targetPath) != len(myPath):
+                return 10000000000 #or just a really big number
+                
+            dist = 0
+            for i in range(len(myPath)):
+                of targetPath[i] != myPath[i]:
+                    dist += 1
+                    
+            return 1
+        }
+        
+        basically just count the differentes at each position in the path
+        hint:
+            dp(i,j) represents the min edit distance for the path starting at node i and compared to index j of the targetPath
+            we are at a minimum here, for any neighbor of i, the out going edge lead to state dp(neigh,j+1)
+            take the minimum of all neighbors
+            i.e let min_cost be the min_cost for dp(i,j):
+                for all neighbors in graph[i]:
+                    if the nodes differe cost += 1
+                min(all choices)
+        https://leetcode.com/problems/the-most-similar-path-in-a-graph/discuss/799773/Python-Top-down-and-bottom-up-DP-both-commented
+        1. build graph from roads
+        2. let dp(i,u) return a tuple (min_edit_dsit, best_sub_path)
+            where the this is the min_edit dist up to targetPath[:i]
+            bust subpath is some path that is the min edit distance so far, that differs minimally by 'edit_distance_nodes'
+        3. u is the i-1th node we just chose immediately before the best sub_path
+        4. dp(i,u) = dp(i+1,v) + (1 if names[v] != targetPath[i] else 0)
+        
+        '''
+        graph = defaultdict(list)
+        for u,v in roads:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        memo = {}
+            
+        def dp(i,u):
+            #base case, when we reach target length, return 0 and empty path
+            if i == len(targetPath):
+                return 0,[]
+            #cache
+            if (i,u) in memo:
+                return memo[(i,u)]
+            
+            #the min cost and subpath we are currently trying to find
+            #i.e we are trying to minimize the min cost, and find the best path with min_cost
+            #the dist function in this case is just the min_edit_distance function
+            min_cost = float('inf')
+            best_path = []
+            
+            
+            #if 'u' is the node we've just chosen fro the bestt path, we then simply add on to this best_path for some neighbor v of u
+            #since we dont which one of the neighbors of u gives the min difference, we need to try them all
+            #if u is None, ti means weve not chosen a previous node, so we need to try all n nodes
+            #this mean v is going to the frist node in the best path
+            #we'll have to start with every node in the graph and see who leads to the best overall path
+            if u == None:
+                neighbors = [i for i in range(n)]
+            else:
+                neighbors = graph[u]
+                
+            for v in neighbors:
+                child_cost,child_path = dp(i+1,v)
+                child_cost += names[v] != targetPath[i] #increment 1 if different, else no difference
+                
+                #update
+                if child_cost < min_cost:
+                    min_cost = child_cost
+                    best_path = [v] + child_path
+                    
+            memo[(i,u)] = (min_cost,best_path)
+            return (min_cost,best_path)
+        
+        cost,path = dp(0,None)
+        return path
+                
+#bottom up
+class Solution:
+    def mostSimilar(self, n: int, roads: List[List[int]], names: List[str], targetPath: List[str]) -> List[int]:
+        '''
+        bottom up, but this time the recurrences id dp(i) = d(i-1) and return dp(len(targetPath-1))
+        we could have also made is so that we we still return dp(0), but we need to start at len(targetPath-1)
+        
+        define dp[i][u] to be the min edit distance of the best path in graph with i+1 nodes
+        where u is the -th node in the best path found so far
+        dp[i][u] = dp[i-1][v] + (1 if names[u] != targetPath[i] else 0) for all v coming out of u
+        '''
+        adj = collections.defaultdict(list)
+        for e in roads:
+            adj[e[0]].append(e[1])
+            adj[e[1]].append(e[0])
+            
+        dp = [[0]*n for _ in range(len(targetPath))]
+        #base cases, initlize with 1 is there is match with the targetPath
+        for v in range(n):
+            #min edit distance for i == 0, can only be 1 or 0 depending on the first node we take
+            #and if it maches targetPath[0]
+            #store min edit distance and current node in path, simialr to prev pointer so we can rebuild path
+            dp[0][v] = (1,v) if names[v] != targetPath[0] else (0,v)
+            
+        #traversal, one away from base case
+        for i in range(1,len(targetPath)):
+            #check all
+            for v in range(n):
+                #inital ansswer is empty and has highest min cost
+                dp[i][v] = (float('inf') , "")
+                #use is the prev hop on min edit dist path (best path) to v
+                for u in adj[v]:
+                    #update cost
+                    cost = dp[i-1][u][0] + (1 if names[v] != targetPath[i] else 0)
+                    if cost < dp[i][v][0]:
+                        dp[i][v] = (cost,u)
+        
+        #find min_edit distance path, as well as the last pointer inpath
+        min_cost = float('inf')
+        best_hop = None
+        for u in range(n):
+            if dp[-1][u][0] < min_cost:
+                min_cost = dp[-1][u][0]
+                best_hop = u
+                
+        best_path = [best_hop]
+        for i in range(len(targetPath) - 1, 0, -1):
+            prev_hop = dp[i][best_hop][1]
+            best_path.append(prev_hop)
+            best_hop = prev_hop
+        return best_path[::-1]
+    
+#official LC solution
+class Solution:
+    def mostSimilar(self, n: int, roads: List[List[int]], names: List[str], targetPath: List[str]) -> List[int]:
+        '''
+        let targetPath[:i] be the prefix of the targetPath ending at the ith element
+        we can define dp[i][v] as the minimum edit dsitance bewteen targetPath[:i] and a path eneindg at the vertex v
+        which means this path has length i+1
+        
+        example:
+            targetPath = ["LAX", "ABC", "LAX", "DEF", "HTU", "XYZ"]
+            v = 1
+            what is the answer to dp[3][1] if we are looking for length of 3+1 prefix
+            of all the paths ending at v = 1, with lenght 3+1, the min edit distance is 2
+            
+        base case is when i = 0 (path length 1) for any v
+        how do we find dp[0][v]
+        i = 0 corresponds to targetPath[0:0] or just the single node at i = 0
+        path must be just [v] and edit distance would be names[0] != targetpath[0]
+        
+        dp[0][v] is then by definition equal toeditDistance([targetPath[0]], [v]). Therefore:
+        dp[0][v] = 0 if names[v] = targetPath[0]
+        dp[0][v] = 1 if names[v] != targetPath[0]
+        for all v in the graph.
+        
+        for i > 0 we want to calculate dp[i][v] from dp[i-1][v]
+        recall dp[i][v] is the min edit distance(targetPath[0:i], path)
+        we just want a neighbor v
+        
+        we iterate over all possible canddiates of u for the second to last vertex of the path
+        update dp[i][v] with dp[i-1][u]
+             if names[v] != targetpath[i] then the current vertex v is a mismatch so we add 1
+             
+        One can imagine the transition from dp[i - 1][u] to dp[i][v] as appending an element targetPath[i] to the target path and appending the vertex v to the current path.
+        
+        dp[i][v] = mismatch + min(dp[i - 1][u]), where u is a neighbor of v and mismatch = 0 if names[v] = targetPath[i], or 1 otherwise.
+        
+        but we want the actual path. remember the technique from djikstras where we keep prev pointers?
+        maintins array p[i][v] which represents the previous vertex before v in the optimal path
+        '''
+        dp = [[float('inf')]*n for _ in range(len(targetPath))]
+        p = [[-1]*n for _ in range(len(targetPath))]
+        
+        adj = collections.defaultdict(list)
+        for e in roads:
+            adj[e[0]].append(e[1])
+            adj[e[1]].append(e[0])
+        
+        #base cases
+        for i in range(n):
+            dp[0][i] = 1 if targetPath[0] != names[i] else 0
+        
+        for i in range(1,len(targetPath)):
+            for v in range(n):
+                for u in adj[v]:
+                    #find min edit distance answer
+                    cur = dp[i-1][u] + (names[v] != targetPath[i])
+                    if cur < dp[i][v]:
+                        dp[i][v] = cur
+                        #to get to v we have to go through u
+                        p[i][v] = u
+        
+        #find min edit distance in last row
+        min_edit = min(dp[-1])
+        #find last vertx in min edit dsit path
+        # the last vertex in the path
+        v = dp[-1].index(min_edit)
+        ans = [v]
+        #follow prev pointers
+        for i in range(len(targetPath) - 1, 0, -1):
+            # the previous vertex in the path
+            v = p[i][v]
+            ans.append(v)
+        return ans[::-1]
+    
+#using dijsktras
+#https://leetcode.com/problems/the-most-similar-path-in-a-graph/discuss/1011732/Python-dijakstra-with-heap-and-set
+class Solution:
+    def mostSimilar(self, n: int, roads: List[List[int]], names: List[str], targets: List[str]) -> List[int]:
+        graph = defaultdict(list)
+        heap = []
+        
+		# building graph with adjencency list 
+        for x, y in roads:      # O(n+e) time, space
+            graph[x] += [y]
+            graph[y] += [x]
+        
+		# adding each node as starting to min heap (by default, all operations done on heapq module (our heap) support min heap)
+		# (0, 0, i, [i]) means (edit_cost, node_nb_in_targets/level, city_nb, [path_so_far])
+        for i in range(n):     # O(n) time
+            heapq.heappush(heap, (0, 0, i, [i]))     # O(logn) time, O(n) space
+			
+        #seen set to prevent recomputing the same entires multiple times
+        seen = set()
+        while heap:    # O(len(t) * n) time, space - for every node in targets we have n-1 ~ n neighbours at most
+            ed, i, city_nb, path = heapq.heappop(heap) O(logn)
+			
+			# -i because when adding to out min heap, we will be using negative indexing. Why? To extract the most possible path with
+			# min edit distanceas soon as possible. Consider 3 following entries in heap:
+			#    (1,-3, _, _)
+			#    (1, -2, _, _)
+			#    (2, -2, _, _)
+			# Entry 1 and2 have the best edit distance so far. They are on 3rd (-3) and 2nd (-2) levels (nodes in target). 
+			# That means we want to process (1,-3, _, _) first because it went further down the target path with the same
+			# edit distance as (1, -2, _, _), so the chance of getting the best result (in our case min edit distance) are
+			# higher in first, rather than second case. Since we use min heap, negative indexing is needed for the best result.
+			
+            if -i == len(targets):
+                return path[:-1] #one last element in path is always redundant as it was added one level before
+				
+			#  if current city we are considering is different that city in targets at corresponding level, edit dist has to be increased
+            if names[city_nb] != targets[-i]: 
+                ed += 1
+            
+            for nbr in graph[city_nb]: 
+			    # if we did not process a node 'nbr' on 'i'th-1 level with 'ed' edit distance, let's add it as a possibilty for a path 
+                if (ed, i-1, nbr) not in seen:
+                    heapq.heappush(heap, (ed, i-1, nbr, path + [nbr])) # add current ed, one level deeper (negative indexing, remember!), neighbouring node, and path so far
+                    seen.add((ed, i-1, nbr))
+        return 0
 
 ##############################
 # 214. Shortest Palindrome
 # 14APR23
 ##############################
+#this was kinda a weird way
+#https://leetcode.com/problems/shortest-palindrome/discuss/2513124/Shortest-and-Easiest-Solution-in-Python
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        '''
+        easy case, just check if palindrom already
+        "abcd"
+        for this one just add s[1:] to the front
+        but will this always work?
+        what if we almost have a palindrome
+        
+        s = aacecaaa
+        this is almost a palindrome
+        we just a to the front
+        
+        we dont know what letter to add, so lets just call it ?
+        ?aacecaaa
+        '''
+        
+        #easy case
+        if s == s[::-1]:
+            return s
+        
+        N = len(s)
+        #find all prefixes (starting wit the longest prefix first)
+        #must be true prefix, i.e any prefix cannot equal to original string x
+        for i in range(N-1,-1,-1):
+            #get all prefixes for this string
+            a = s[:i+1]
+            #get the reverse of this current prefix
+            b = a[::-1]
+            #if they are the same, it means we can form a palindrome around s[i]
+            if a == b:
+                print(a,s[i],b)
+                #get this suffix after i
+                c = s[i+1:]
+                print(i,c)
+                #reverse it
+                c = c[::-1]
+                return c + a + c[::-1]
+            
+        #otherwise we can't use any prefxis to maked it a palindrome
+        #then just take the string from index 1 to the end, reverse and put it in front of c
+        s1 = s[1:]
+        return s1[::-1] +s
 
