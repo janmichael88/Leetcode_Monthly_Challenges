@@ -3565,3 +3565,248 @@ class Solution:
         s1 = s[1:]
         return s1[::-1] +s
 
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        '''
+        another way
+        
+        Example: s = dedcba. Then r = abcded and I try these overlays (the part in (...) is the prefix I cut off, I just include it in the display for better understanding):
+        
+          s          dedcba
+          r[0:]      abcded    Nope...
+          r[1:]   (a)bcded     Nope...
+          r[2:]  (ab)cded      Nope...
+          r[3:] (abc)ded       Yes! Return abc + dedcba
+          
+         recall, we are only allowed to add characters to the beignning of the string
+         so we can find the laregst segment from the beginning that is a palindrome
+         then we can take the end, reverse it and add it to the front
+         exmple:
+         abcbabcab
+         
+         longest prefix that is palindrome
+         abcba
+         
+         remainign segment is bcab
+         then we reverse and add it to the front
+         bacb abcba bcab
+        '''
+        r = s[::-1]
+        for i in range(len(s) + 1):
+            #if beginning part is palindrome
+            if s[:len(s)-i]==r[i:]:
+                return r[:i] + s
+            
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        '''
+        in brute force we found laregst palindrom substring in s which takes O(len(s)) times
+        we could make the process easier if we could reduce the size of thes tring to search for the substring without checeking the complete
+        substring each time
+         
+        example
+        take string abcbabcaba
+        fix 2 poitners, i and j, set i = 0 and move j from n-1 to 0, and increment i if s[i] == s[j]
+        now we justt need to seach in range [0,i)
+        we are just reducing the size of the string to search for the largest palindrome
+        the range [0,i) must always contain the largest palindrom substring
+        proof:
+            say that i was a perfect palindrome, in this case i would moved all the way to n (n times exactly)
+        '''
+        N = len(s)
+        i = 0
+        for j in range(N-1,-1,-1):
+            if s[i] == s[j]:
+                i += 1
+        
+        #complete palindrome
+        #we are just saving time skipping the substring check for palindrome, which is O(N)
+        if i == N:
+            return s
+        
+        remaining_reversed = s[i:][::-1]
+        #the middle part is just the longest palindrome part from approach 1 (betwen 0 and i, non inclusive)
+        return remaining_reversed + self.shortestPalindrome(s[:i])+s[i:]
+    
+#KMP
+
+
+
+#############################################
+# 1372. Longest ZigZag Path in a Binary Tree
+# 18APR23
+#############################################
+#fuckkkk
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestZigZag(self, root: Optional[TreeNode]) -> int:
+        '''
+        just dfs on the tree and keep track of current direction and current size in path
+        update global max
+        keep gone left and gone right
+        i cant reverse the direction here, update global max and reset count
+        '''
+        self.ans = 0
+        
+        def dfs(node,length,went_left,went_right):
+            self.ans = max(self.ans,length)
+            if not node:
+                return
+            if not went_left and not went_right:
+                dfs(node.left,length+1,True,False)
+                dfs(node.right,length+1,False,True)
+            
+            if went_left:
+                #go right and advance
+                dfs(node.right,length+1,False,True)
+                #go left and reset
+                dfs(node.left,0,True,False)
+            
+            if went_right:
+                #go left and advance
+                dfs(node.left,length+1,True,False)
+                #go right and reset
+                dfs(node.right,0,False,True)
+                            
+        dfs(root,0,None,None)
+        return self.ans
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestZigZag(self, root: Optional[TreeNode]) -> int:
+        '''
+        just keep track of the current direction we can go into, lets just check left
+        if we can go left, then we incremenet the current path length and in the next call, we can't fo left
+            and also go right but reset the new count
+        if we can't go left,
+            then we proceeed to go left but stsrt a new count
+            but it also could have been that we go right, so we need to extend the chain
+        
+        update max on the fly
+        on null nodes we just return
+        '''
+        self.ans = 0
+        
+        def dfs(node,canLeft,path):
+            if not node:
+                return
+            
+            #otherwise update
+            self.ans = max(self.ans,path)
+            
+            #if we can go left
+            if canLeft:
+                #extend
+                dfs(node.left,False,path+1)
+                #reset
+                dfs(node.right,True,1)
+            
+            #can only go right while extending
+            else:
+                #reset
+                dfs(node.left,False,1)
+                #reset
+                dfs(node.right,True,path+1)
+        
+        #start twice, once allowing left and once not allowing left
+        dfs(root,False,0)
+        dfs(root,True,0)
+        return self.ans
+    
+#another way
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestZigZag(self, root: Optional[TreeNode]) -> int:
+        '''
+        another way is just keep both pathlengths going left and right in the caller
+        in the function we keep variables left and right
+        left gives us the length of longest zigzag path at that point in the path 
+        same thing with the right
+        we just need to swap the path lengths at each call
+        '''
+        self.ans = 0
+        
+        def dp(node,left,right):
+            if not node:
+                return 
+            self.ans = max(self.ans, max(left,right))
+            
+            #if we are allowed go left
+            if node.left != None:
+                dp(node.left,right+1,0) #swap and reset
+            
+            if node.right != None:
+                dp(node.right,0,left+1)
+        
+        dp(root,0,0)
+        return self.ans
+    
+
+#another way, but just swap in place
+class Solution:
+    def longestZigZag(self, root: Optional[TreeNode]) -> int:
+        self.mx = 0
+        def dfs(node):
+            if node is None:
+                return (0, 0)
+            left = dfs(node.left)[0] 
+            right = dfs(node.right)[1]
+            self.mx = max(self.mx, left, right)
+            return (right + 1, left + 1)
+        dfs(root)
+        return self.mx
+
+#####################################
+# 662. Maximum Width of Binary Tree
+# 20APR23
+######################################
+#DFS solution, BFS is trivial
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def widthOfBinaryTree(self, root: Optional[TreeNode]) -> int:
+        '''
+        to do DFS, keep record of current depth, and index of node
+        into a hashmap, record the depth with this current index
+        
+        if this depth isn't seen yet, add the current index
+        otherwise we've seen this depth before, so find the width
+        because we always go left, we are guaranteed that when we first see a depth, it must be the first index on this depth
+        
+        '''
+        depth_to_index = {}
+        self.ans = 0
+        
+        def dfs(node,depth,index):
+            if not node:
+                return 0
+            if depth not in depth_to_index:
+                depth_to_index[depth] = index
+                
+            #otherwise max it
+            self.ans = max(self.ans, index - depth_to_index[depth] + 1)
+            
+            dfs(node.left,depth+1,index*2)
+            dfs(node.right,depth+1,index*2 + 1)
+        
+        dfs(root,0,0)
+        return self.ans
