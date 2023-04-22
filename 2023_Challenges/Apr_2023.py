@@ -3918,3 +3918,188 @@ class Solution:
             counts[s[i]] = max(longest_streak,counts.get(s[i],0))
     
         return sum(counts.values())
+    
+####################################
+# 879. Profitable Schemes
+# 22APR23
+####################################
+#brute force
+class Solution:
+    def profitableSchemes(self, n: int, minProfit: int, group: List[int], profit: List[int]) -> int:
+        '''
+        for a crime to be profitbale, the subset of indices of profit must be at least min profit
+        for a subset, the sum of the group[i] for indices in chosen must be at least profit
+        i.e, for a subset {i in indices}
+            sum(profit[i] for i in indices) >= minProfit
+            and
+            sum(group[i] for i in idicies) <= n
+            
+        brute force would just be subset generation
+        start with that
+        include or don't include index
+        '''
+        N = len(group) 
+        seen = set()
+        self.ans = 0
+        mod = 10**9 + 7
+        def rec(i,subset):
+            if i > N:
+                return
+            if len(subset) > 0 and tuple(subset) not in seen:
+                seen.add(tuple(subset))
+                prof = 0
+                people = 0
+                for idx in subset:
+                    prof += profit[idx]
+                    people += group[idx]
+                self.ans += (prof >= minProfit) and (people <= n)
+                self.ans %= mod
+            rec(i+1,subset+[i])
+            rec(i+1,subset)
+        
+        rec(0,[])
+        #1 way to make zero profit fucck
+        if minProfit == 0:
+            self.ans += 1
+        return self.ans % mod
+            
+#how can we memozie states
+#will still TLE though, we need to map the pofit state, there could be too many profit states
+#but if know prift + profit[i] is at least min_profit, then we don't actually need to store the profit + min_proft[i] state
+class Solution:
+    def profitableSchemes(self, n: int, minProfit: int, group: List[int], profit: List[int]) -> int:
+        '''
+        states
+            index, the current group we are considering
+            curr profit, profit for this current subset
+            count, the number of people in the current subset
+        
+        base cases
+            we have sent index all the way through, 
+                if curr profit >= min_profit
+                    return 1
+                else return zero
+        then we get the number of ways picking this person
+        and the number of ways not picking this person
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(i,count,curr_prof):
+            if i == len(group):
+                if curr_prof >= minProfit:
+                    #we need to examin all subsets, if we stopped here when curr_proft >= min_profit, we would be missing
+                    #subsets where i > i + 1
+                    #keep going until we get to the end
+                    #we'd eventuallt retrieve a state from the memo
+                    return 1
+                return 0
+            
+            if (i,count,curr_prof) in memo:
+                return memo[(i,count,curr_prof)]
+            
+            #if we can take this person
+            take = 0
+            if count - group[i] >= 0:
+                take = dp(i+1,count - group[i],curr_prof + profit[i])
+            dont_take = dp(i+1,count,curr_prof)
+            ans = (take + dont_take) % mod
+            memo[(i,count,curr_prof)] = ans
+            return ans
+        
+        
+        return dp(0,n,0) % mod
+    
+#capping min profit
+#why?
+'''
+If you just use pick = ...p + profit[i] ... instead of min(minProfit, p + profit[i]) it will TLE.
+Why? your p will have more states: minProfit=5, Δp=1, n=100, p states will be 5,6,7,8...100, repeat for next group and so on. By capping it with `max(minProfit or minProfit + p) you drastically reduce number of states to store.
+
+Q: I did not get the logic behind the min(minProfit, profit[i]+p) why are we doing this and when can we apply the same thing?
+
+A: Imagine this: for 100 groups with 100 profit each you will have in top-down loop:
+10,000 x 100 and x 100 to traverse profits and groups.
+Now the same but with capped by minProfit=5.
+5 x 100 and x 100 to traverse profits and groups.
+'''
+class Solution:
+    def profitableSchemes(self, n: int, minProfit: int, group: List[int], profit: List[int]) -> int:
+        '''
+        states
+            index, the current group we are considering
+            curr profit, profit for this current subset
+            count, the number of people in the current subset
+        
+        base cases
+            we have sent index all the way through, 
+                if curr profit >= min_profit
+                    return 1
+                else return zero
+        then we get the number of ways picking this person
+        and the number of ways not picking this person
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(i,count,curr_prof):
+            if i == len(group):
+                if curr_prof >= minProfit:
+                    #we need to examin all subsets, if we stopped here when curr_proft >= min_profit, we would be missing
+                    #subsets where i > i + 1
+                    #keep going until we get to the end
+                    #we'd eventuallt retrieve a state from the memo
+                    return 1
+                return 0
+            
+            if (i,count,curr_prof) in memo:
+                return memo[(i,count,curr_prof)]
+            
+            #if we can take this person
+            take = 0
+            if count - group[i] >= 0:
+                take = dp(i+1,count - group[i],min(minProfit,curr_prof + profit[i]))
+            dont_take = dp(i+1,count,curr_prof)
+            ans = (take + dont_take) % mod
+            memo[(i,count,curr_prof)] = ans
+            return ans
+        
+        return dp(0,n,0) % mod
+        
+#bottom up, 3D
+#probably one of the harder translations to bottom up, i fucking suck at this
+class Solution:
+    def profitableSchemes(self, n: int, minProfit: int, group: List[int], profit: List[int]) -> int:
+        '''
+        bottom up dp 3d dp
+        start from i == len(group)
+        then try all count and curr_prof scenarios
+        i can ony go up to length group
+        '''
+        group_size = len(group)
+        dp = [[[0]*(minProfit + 1) for _ in range(n+1)] for _ in range(group_size+1)]
+        mod = 10**9 + 7
+        
+        #base cases, need to fill in base cases for all i's
+        #proabablty could have done this better
+        for i in range(group_size+1):
+            for count in range(n+1):
+                for curr_prof in range(minProfit+1):
+                    if i == group_size:
+                        if curr_prof >= minProfit:
+                            dp[i][count][curr_prof] = 1
+                        else:
+                            dp[i][count][curr_prof] = 0
+        
+        #loop through all states, but must start with i == len(group) but one away
+        for i in range(group_size-1,-1,-1):
+            for count in range(0,n+1):
+                for curr_prof in range(0,minProfit+1):
+                    take = 0
+                    if count - group[i] >= 0:
+                        take = dp[i+1][count-group[i]][min(minProfit,curr_prof + profit[i])]
+                    dont_take = dp[i+1][count][curr_prof]
+                    ans = (take + dont_take) % mod
+                    dp[i][count][curr_prof] = ans
+        
+        return dp[0][n][0] % mod
