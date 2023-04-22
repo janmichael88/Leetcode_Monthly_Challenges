@@ -3629,7 +3629,61 @@ class Solution:
         return remaining_reversed + self.shortestPalindrome(s[:i])+s[i:]
     
 #KMP
-
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        '''
+        we can use KMP, which uses the pi table, also known as proper prefix that is also a suffix
+        idea:
+            say we have proper prefix that is also a suffix
+            if we are trying to match a text string for the past prefix and we have matched the first s positions, but whenw e fail
+            the value of the lookup table for s is the lgonest prefix taht could possibly match
+            so we don't need to start all over again
+            
+        lps array
+        f(0) = 0
+        for (i = 1; i < n; i++) {
+            t = f(i-1)
+            while (t > 0 && b[i] != b[t]) {
+                t = f(t-1)
+            }
+            if (b[i] == b[t]) {
+                ++t
+            }
+            f(i) = t
+        }
+        
+        in approache 1 , we stored reverse s
+        then we tierated over from 0 to n-1 and checked s[:n-i] == rev[i:]
+        make s as s + s[::-1]
+        then look for the longest prefix that is also the suffix
+        
+        algo:
+        We use the KMP lookup table generation
+        Create new_s as s + "#" + reverse(s) and use the string in the lookup-generation algorithm
+        The "#" in the middle is required, since without the #, the 2 strings could mix with each ther, producing wrong answer. For example, take the string 
+        "aaaa"
+        "aaaa". Had we not inserted "#" in the middle, the new string would be 
+        "aaaaaaaa"
+        "aaaaaaaa" and the largest prefix size would be 7 corresponding to "aaaaaaa" which would be obviously wrong. Hence, a delimiter is required at the middle.
+        Return reversed string after the largest palindrome from beginning length(given by 
+        f[n_new-1]
+        n−f[n_new-1]) + original string
+        '''
+        N = len(s)
+        rev_s = s[::-1]
+        new_s = s + "#" + rev_s
+        new_N = len(new_s)
+        lps = [0]*new_N
+        
+        for i in range(1,new_N):
+            t = lps[i-1]
+            while t > 0 and new_s[i] != new_s[t]:
+                t = lps[t-1]
+            if new_s[i] == new_s[t]:
+                t += 1
+            lps[i] = t
+        
+        return rev_s[:N - lps[new_N-1]]+s
 
 
 #############################################
@@ -3810,3 +3864,57 @@ class Solution:
         
         dfs(root,0,0)
         return self.ans
+
+##############################################
+# 467. Unique Substrings in Wraparound String
+# 20APR23
+##############################################
+class Solution:
+    def findSubstringInWraproundString(self, s: str) -> int:
+        '''
+        there are only so many viable substrings in s that are in the wrap around base
+        example
+        zab, 
+        is already a substring of the wrap around base, which means all substrinsg of zab are also going to be in wraparound base
+        
+        say we are at z
+        z is substring we have 1
+        now we consider za
+        a is a substring
+        but so is za
+        
+        if we let dp(i) be the number of unique substrings using s[:i]
+        then dp(i+1) = dp(i) + number of substrings if s[:i+1] make a susbtring
+        z = 1
+        za = 2 + 1 = 3
+        zab = 3 + 3 = 6
+        zabc = 6 + 4 = 10
+        zabce = zabce not as substring so take 10 + 1
+        
+        the problem is checking if s[:i+1] is a unique substring of s
+        and substrings must be unique
+        
+        store the number of substrings ending with char s
+        abcd
+        ending with a, a
+        ending wih b, ab,b
+        ending with c, abc, bc, c
+        ending with d, abcd, bcd, cd, d
+        
+        keep track of the logngest contiguous string we can make, must be at least 1 away, for in the case za, they are 26 away
+        must be ending in char, be are testing the next substring
+        coud you do it with starting with a char
+        '''
+        counts = {}
+        longest_streak = 0
+        N = len(s)
+        for i in range(N):
+            if (i > 0) and ((ord(s[i]) - ord(s[i-1]) == 1) or (ord(s[i-1]) - ord(s[i]) == 25)):
+                longest_streak += 1
+            else:
+                longest_streak = 1
+            
+            #put in coutns and store lognest
+            counts[s[i]] = max(longest_streak,counts.get(s[i],0))
+    
+        return sum(counts.values())
