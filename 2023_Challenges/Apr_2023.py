@@ -4103,3 +4103,223 @@ class Solution:
                     dp[i][count][curr_prof] = ans
         
         return dp[0][n][0] % mod
+    
+
+############################################################
+# 1312. Minimum Insertion Steps to Make a String Palindrome
+# 22APR23
+#############################################################
+class Solution:
+    def minInsertions(self, s: str) -> int:
+        '''
+        in one step, i can insert any character at any index
+        return the minimum nuber of steps to s a palindrome
+        
+        this just longest palindromic subsequence
+        find lps, then return len(s) - lps
+        indirectly solving
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            if i == j:
+                return 1
+            if i > j:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            if s[i] == s[j]:
+                ans = 2 + dp(i+1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            
+            else:
+                ans = max(dp(i+1,j), dp(i,j-1))
+                memo[(i,j)] = ans
+                return ans
+        
+        lps = dp(0,len(s)-1)
+        return len(s) - lps
+    
+#bottom up
+class Solution:
+    def minInsertions(self, s: str) -> int:
+        '''
+        in one step, i can insert any character at any index
+        return the minimum nuber of steps to s a palindrome
+        
+        find lps, then return len(s) - lps
+        indirectly solving
+        '''
+        N = len(s)
+        dp = [[0]*(N+1) for _ in range(N+1)]
+        
+        #base cases
+        for i in range(N+1):
+            for j in range(N+1):
+                if i == j:
+                    dp[i][j] = 1
+                if i > j:
+                    dp[i][j] = 0
+        
+        #start one away from the base case
+        for i in range(N-1,-1,-1):
+            for j in range(i+1,N):
+                if s[i] == s[j]:
+                    dp[i][j] = 2 + dp[i+1][j-1]
+                else:
+                    dp[i][j] = max(dp[i+1][j],dp[i][j-1])
+        
+        lps = dp[0][len(s)-1]
+        return len(s) - lps
+
+
+#####################################
+# 1416. Restore The Array
+# 23APR23
+#####################################
+#brute force TLES
+#now how can use keep track of states
+class Solution:
+    def numberOfArrays(self, s: str, k: int) -> int:
+        '''
+        s was supposed to be an array, but program prints it as string with white spaces
+        so we don't know where to split
+        all we know is that the intergers were supposed to be in range [1,k]
+        
+        brute force by trying all splits, then see what we can do
+        
+        with no leading zeros in the array
+        
+        '''
+        self.ans = 0
+        mod = 10**9 + 7
+        
+        
+        def rec(start,path):
+            if start == len(s):
+                self.ans += 1
+                self.ans %= mod
+                return
+            for end in range(start+1,len(s)+1):
+                #starting with zero we can't do
+                next_int = s[start:end]
+                if next_int.startswith('0'):
+                    continue
+                if 1 <= int(next_int) <= k:
+                    rec(end,path+[int(next_int)])
+        
+        rec(0,[])
+        return self.ans % mod
+    
+#right idea but still TLE, we need to speed up the inner part
+class Solution:
+    def numberOfArrays(self, s: str, k: int) -> int:
+        '''
+        just store start indices
+        
+        '''
+        self.ans = 0
+        mod = 10**9 + 7
+        
+        memo = {}
+        
+        def rec(start):
+            if start == len(s):
+                return 1
+            
+            if start in memo:
+                return memo[start]
+            
+            num_ways = 0
+            for end in range(start+1,len(s)+1):
+                #starting with zero we can't do
+                next_int = s[start:end]
+                if next_int.startswith('0'):
+                    continue
+                if 1 <= int(next_int) <= k:
+                    num_ways +=rec(end)
+            
+            num_ways %= mod
+            memo[start] = num_ways
+            return num_ways
+                    
+        return rec(0)
+    
+#FUCK YEAH!
+class Solution:
+    def numberOfArrays(self, s: str, k: int) -> int:
+        '''
+        just store start indices
+        
+        '''
+        self.ans = 0
+        mod = 10**9 + 7
+        
+        memo = {}
+        
+        def rec(start):
+            if start == len(s):
+                return 1
+            
+            if start in memo:
+                return memo[start]
+            
+            #case for when we start with 0
+            if s[start] == '0':
+                return 0
+            
+            num_ways = 0
+            for end in range(start+1,len(s)+1):
+                #starting with zero we can't do
+                next_int = s[start:end]
+                if 1 <= int(next_int) <= k:
+                    num_ways +=rec(end)
+                #we need to break to stop immediately from going down this path!
+                #no point in adding a number outside the range
+                else:
+                    break
+            
+            num_ways %= mod
+            memo[start] = num_ways
+            return num_ways
+                    
+        return rec(0) % mod
+    
+#bottom up
+#fuck yeah!
+class Solution:
+    def numberOfArrays(self, s: str, k: int) -> int:
+        '''
+        just store start indices
+        
+        '''
+        N = len(s)
+        dp = [0]*(N+1)
+        mod = 10**9 + 7
+        
+        #base case
+        dp[N] = 1
+        
+        #start one away from base case
+        for start in range(N-1,-1,-1):
+            if s[start] == '0':
+                dp[start] = 0
+            else:
+                num_ways = 0
+                for end in range(start+1,N+1):
+                    next_int = s[start:end]
+                    if 1 <= int(next_int) <= k:
+                        num_ways += dp[end]
+                    #we need to break to stop immediately from going down this path!
+                    #no point in adding a number outside the range
+                    else:
+                        break
+                
+                dp[start] = num_ways % mod
+        
+        return dp[0] % mod
+    
+
+    
