@@ -4321,5 +4321,264 @@ class Solution:
         
         return dp[0] % mod
     
+#############################################
+# 892. Surface Area of 3D Shapes
+# 23APR23
+############################################
+class Solution:
+    def surfaceArea(self, grid: List[List[int]]) -> int:
+        '''
+        for each tower get the surface area as if it weren't touch any other cube
+        then look in all allowable directions and reduce the surface area by the amount of touches with other cubes
+        surface area of tower if size k is:
+            6*(k) - 2*(k-1)
+        '''
+        def surface_area(k):
+            if k == 0:
+                return 0
+            return 6*k - 2*(k-1)
+        
+        
+        total_area = 0
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        dirrs = [(0,1),(0,-1),(1,0),(-1,0)]
+        
+        for i in range(rows):
+            for j in range(cols):
+                #first get area as if standing alone
+                curr_tower = surface_area(grid[i][j])
+                #reduce area by neighboring towers
+                for dx,dy in dirrs:
+                    neigh_x = i + dx
+                    neigh_y = j + dy
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        #careful when taking away area
+                        curr_tower -= min(grid[neigh_x][neigh_y],grid[i][j])
+                
+                total_area += curr_tower
+        
+        return total_area
+
+#############################################
+# 2336. Smallest Number in Infinite Set
+# 24APR23
+############################################
+class SmallestInfiniteSet:
+    '''
+    use heap to keep track of the minimum and hashset
+    dang, it alreayd have in in this numbers [1,2,3,4]
+    keep track of the ones we have removed
+    '''
+
+    def __init__(self):
+        self.removed = set()
+        self.smallest = 1
+        
+    def popSmallest(self) -> int:
+        #holy shit ballz i can't belive this worked
+        while self.smallest in self.removed:
+            self.smallest += 1
+        
+        self.removed.add(self.smallest)
+        return self.smallest
+
+    def addBack(self, num: int) -> None:
+        #if this hasn't been removed, it must still be in the set
+        if num not in self.removed:
+            return
+        else:
+            self.removed.remove(num)
+            #need to adjust new smallest
+            self.smallest = min(self.smallest,num)
+
+# Your SmallestInfiniteSet object will be instantiated and called as such:
+# obj = SmallestInfiniteSet()
+# param_1 = obj.popSmallest()
+# obj.addBack(num)
+
+#heap solution
+class SmallestInfiniteSet:
+    '''
+    intution, if were given a stream and only the popsmalelst, 
+    we just keep track of the current smallest, which is just 1 in this case, 
+    all we need to do is kee track of the current smallest and advance one at a time
+    
+    problem is add back, we could just insert again and resort
+    we only need to keep integers smaller than the current integer
+    
+    we need to keep track of added back integers
+    and store them in a min heap (store both in min heap and in hashset)
+    '''
+
+    def __init__(self):
+        #lets just use explicit typing for this solution
+        self.added_back_set: {int} = set()
+        self.added_back_array: [int] = []
+        self.curr_smallest = 1
+
+    def popSmallest(self) -> int:
+        #fist check if we have numbers that were added back
+        if len(self.added_back_set) > 0:
+            ans = heapq.heappop(self.added_back_array)
+            self.added_back_set.remove(ans)
+        #otherwise its just the current smallest
+        else:
+            ans = self.curr_smallest
+            self.curr_smallest += 1
+        
+        return ans
+
+    def addBack(self, num: int) -> None:
+        #if the num we are adding back if smaller than the curr smallest or has already been added back in 
+        #we do onthing, the first case is important
+        if self.curr_smallest <= num or num in self.added_back_set:
+            return
+        #other wise add them in
+        heapq.heappush(self.added_back_array, num)
+        self.added_back_set.add(num)
+
+
+# Your SmallestInfiniteSet object will be instantiated and called as such:
+# obj = SmallestInfiniteSet()
+# param_1 = obj.popSmallest()
+# obj.addBack(num)
+
+#sorted set
+from sortedcontainers import SortedSet
+
+class SmallestInfiniteSet:
+    #we can combine heap and set in sorted set
+
+    def __init__(self):
+        self.container = SortedSet()
+        self.curr_smallest = 1
+        
+
+    def popSmallest(self) -> int:
+        #fist check if we have numbers that were added back
+        if len(self.container) > 0:
+            ans = self.container[0]
+            self.container.discard(ans)
+        #otherwise its just the current smallest
+        else:
+            ans = self.curr_smallest
+            self.curr_smallest += 1
+        
+        return ans
+        
+    def addBack(self, num: int) -> None:
+        #if the num we are adding back if smaller than the curr smallest or has already been added back in 
+        #we do onthing, the first case is important
+        if self.curr_smallest <= num or num in self.container:
+            return
+        #other wise add them in
+        self.container.add(num)
+
+
+# Your SmallestInfiniteSet object will be instantiated and called as such:
+# obj = SmallestInfiniteSet()
+# param_1 = obj.popSmallest()
+# obj.addBack(num)
+
 
     
+##########################################
+# 727. Minimum Window Subsequence
+# 23APR23
+##########################################
+class Solution:
+    def minWindow(self, s1: str, s2: str) -> str:
+        '''
+        we want the the minimum continguous subtring in s1, such that this substring can make s2
+        if there are multiple recturn the left-most starting index
+        
+        lets define dp(i,j) as the minimum length of a substring of s1 ending at index i-1
+        that contains s2[:j] as a substring
+        
+        if s1[:i] doest not contain b[:j], then there is no way this subtring can be an answer, so return float('inf')
+        otherwise
+            dp(i,j) = k, where the substring of s1[i-k:i] contains s2[:j]
+            and k is the smallest so far
+            
+        notice if j = len(s2), we are looking for the original s2 (the whole string)
+        so the anser to the original problem is dp(i,m) whe we need to search all values of i as the aswer could end at an abritray index
+            but we want the leftmost i
+        
+        base cases;
+            dp(i,0) and dp(0,j)
+            for j = 0, we consider the empty prefix of s2, empty prefix has not length, dp(i,0) = 0
+            for i = 0 and j > 0
+                consider an empty string of s1 and a non empty prefix of s2
+                this i cannot contain an answer so dp(0,j) = float('inf') for j > 0
+                
+        transistions
+            consider i > 0 and j > 0, and we have prefixes s1[:i] and s2[:j] both of which are non empty
+            by defintino we need to find the smallest length k, such that the substring of s1 of length k ending at i-1 contains s2[:j]
+            since the substring we're looking at ends at i-1, the last character is at s1[i-1]
+            
+        consider p, the substring of s1 with length k-1 and ending at index i-2 (the transition just before our answer)
+        example:
+             s1="abcdebdde", s2="bde"
+             now consinder i=5, and j = 2, dp(5,2) = k = 4
+            abcdeb
+            the last substring here is bcde, its last character is s1[4] = 'e' and its prefix p containing all the characters for the last one is bcd
+            which is a substring of s1 of length 3, ending at position 3
+        
+        the last character of prefix b[j] (the prefix of s2 of length j) is s2[j-1]
+        similarily, letspslit this prefx into b[j-1] s2[j-1] (this is just geting the oriingal b[j] plust its last character
+        
+        the substring p + s1[i-1] must contains b[j-1] + s2[j-1] and we wannt the length of p + s1[i-1] to be a small as possible
+        since len(p + s1[i-1]) = len(p) + 1, we want to minimzie len(p)
+        
+        there are two possibilties for (i,j)
+            1. if the last character that we removed from each of the two strings is the same (i.e s1[i-1] == s2[j-1])
+                the condition p + s1[i-1] contains b[j-1] + s2[j-1] == p contains b[j-1]
+                remember that b is a subtring of s1 ending at i-2 and we want to minimze its length
+                by defifinition of dp, the smallest substring ending at position i-2 contains b[j-1] is dp[i-1][j-1]
+                therefore dp(i,j) = dp[i-1][j-1] + 1
+            2. if the last character that we removed from each of the two strings is not the same s[i-1] != s2[j-1] 
+            the condition p + s1[i-1] contains b[j-1] + s2[j-1] == p contains b[j-1] + s[j-1]
+            since s1[i-1] is useless. note that b[j-1] + s2[j-1] = b[j]
+            therefore we have the condition p contains b[j], this is the same as the previous case, but now we are looking at b[j] instead of b[j-1]
+            dp(i,j) = dp(i-1,j) + 1
+        
+        we need to try all i, find the minimum length, but we want the left most starting one
+        '''
+        n = len(s1)
+        m = len(s2)
+        memo = {}
+        
+        def dp(i,j):
+            if j == 0:
+                return 0
+            if i == 0 and j > 0:
+                return float('inf')
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            if s1[i-1] == s2[j-1]:
+                ans = 1 + dp(i-1,j-1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans = 1 + dp(i-1,j)
+                memo[(i,j)] = ans
+                return ans
+        
+        smallest_k = float('inf')
+        #n+1 to get all prefixes of s1, otherwise it won't work
+        for i in range(n+1):
+            smallest_k = min(smallest_k,dp(i,m))
+        
+        if smallest_k == float('inf'):
+            return ""
+        else:
+            for i in range(n+1):
+                if dp(i,m) == smallest_k:
+                    return s1[i-smallest_k:i]
+                
+#translating to bottom up
