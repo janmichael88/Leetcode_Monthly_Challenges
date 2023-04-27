@@ -4483,8 +4483,49 @@ class SmallestInfiniteSet:
 # param_1 = obj.popSmallest()
 # obj.addBack(num)
 
-
+#############################################
+# 896. Monotonic Array
+# 26APR23
+############################################
+class Solution:
+    def isMonotonic(self, nums: List[int]) -> bool:
+        '''
+        just check increasing and decreasing
+        '''
+        #first check increasing
+        is_increasing_montonic = 0
+        N = len(nums)
+        for i in range(1,N):
+            if nums[i] >= nums[i-1]:
+                is_increasing_montonic += 1
+        
+        #now creasing
+        is_decreasing_montonic = 0
+        for i in range(1,N):
+            if nums[i] <= nums[i-1]:
+                is_decreasing_montonic += 1
+                
+        return (is_increasing_montonic == N - 1) or (is_decreasing_montonic == N - 1)
     
+#oh i can combine into just one pass
+class Solution:
+    def isMonotonic(self, nums: List[int]) -> bool:
+        '''
+        just check increasing and decreasing
+        '''
+        #first check increasing
+        is_increasing_montonic = 0
+        is_decreasing_montonic = 0
+        N = len(nums)
+        for i in range(1,N):
+            if nums[i] >= nums[i-1]:
+                is_increasing_montonic += 1
+            if nums[i] <= nums[i-1]:
+                is_decreasing_montonic += 1
+
+                
+        return (is_increasing_montonic == N - 1) or (is_decreasing_montonic == N - 1)
+
 ##########################################
 # 727. Minimum Window Subsequence
 # 23APR23
@@ -4582,3 +4623,43 @@ class Solution:
                     return s1[i-smallest_k:i]
                 
 #translating to bottom up
+class Solution:
+    def minWindow(self, s1: str, s2: str) -> str:
+        '''
+        bottom up
+        '''
+        n = len(s1)
+        m = len(s2) #swapped m an n stupidly in the last solution
+        
+        dp = [[0]*(m+1) for _ in range(n+1)]
+        
+        #base cases
+        for i in range(n+1):
+            for j in range(m+1):
+                if j == 0:
+                    dp[i][j] = 0
+                if i == 0 and j > 0:
+                    dp[i][j] = float('inf')
+                    
+
+        for i in range(1,n+1):
+            for j in range(1,m+1):
+                if s1[i-1] == s2[j-1]:
+                    ans = 1 + dp[i-1][j-1]
+                    dp[i][j] = ans
+                else:
+                    ans = 1 + dp[i-1][j]
+                    dp[i][j] = ans
+            
+        
+        smallest_k = float('inf')
+        #n+1 to get all prefixes of s1, otherwise it won't work
+        for i in range(n+1):
+            smallest_k = min(smallest_k,dp[i][m])
+        
+        if smallest_k == float('inf'):
+            return ""
+        else:
+            for i in range(n+1):
+                if dp[i][m] == smallest_k:
+                    return s1[i-smallest_k:i]

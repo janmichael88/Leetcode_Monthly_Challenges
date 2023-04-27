@@ -233,3 +233,98 @@ public:
         return {0,0};
     }
 };
+
+///////////////////////////////////
+// 727. Minimum Window Subsequence
+// 26APR23
+//////////////////////////////////
+class Solution {
+    /*
+        greedy
+        intution, we can try all values of start, and for each of them find the smallest end value such that s2 is a subsequence
+        of s1[start:end]
+        if m == len(s2), we want to find a sequence of indices in s1, i_0,i_1,..i_{m-1}
+        such that start - 1 < i_0 < i_1 < ... i_{m-1}
+        and s1[i_0] == s2[0], s1[i_1] == s2[1].....s1[i_{m-1}] == s2[m-1]
+        
+        we can greedily find the indices one bye one
+        find the first index i_0, that has property start -1 < i_0
+        then find i_1, where i_0 < i_1....and so on
+        
+        preprocess:
+        for each char in s1, keep motonic array of indices
+        example: s1 = "abcdebdde", indices['d'] = [3, 6, 7], because s1[3] = s1[6] = s1[7] = 'd'.
+        
+        finding the smallest i_0 > start such that s1[i_0] = s2[0] is the same as finding the smallest element >= start in the array
+        indices[s2[0]]
+        
+        let ind_0 denote the index of the element at i_0 in s1
+        indices[s2[0]][ind_0] = i_0
+        
+        since indices[s2[0]] is increasing, we can also say indices[s2[0]][ind_0] > start - 1
+        
+        similarily we find the smallest i_1 > i_0 in the array indices[s2[1]] by finding the smallest ind1 such that indices[s2[0]][ind_1] > i_0
+        
+        same for i_2....i_{m-1}
+        
+        Algorithm
+        1. Let n be the length of s1 and m be the length of s2.
+        2. Initialize the answer with an empty string.
+        3. For each letter c, find all its occurrences in the string s1 and add them to indices[c].
+        4. Initialize an array ind of size m with zeros.
+        5. Iterate start from 0 to n - 1.
+            Initialize prev with start - 1.
+            Iterate j from 0 to m - 1. This variable is iterating over the characters of s2.
+                Let curIndices be indices[s2[j]]. These are all the indices where the current character in s2 appears in s1.
+                While ind[j] < len(curIndices) and curIndices[ind[j]] <= prev
+                    Increment ind[j].
+                If ind[j] = len(curIndices) (we could not find an element greater than last), there is no valid window starting at start, we can immediately return the answer, since all future values of start will be greater and there will also be no valid window.
+                Set prev to curIndices[ind[j]].
+            At this point, prev = end. Our candidate string is s1[start..prev]. If answer is empty or this candidate has a shorter length, update answer with the candidate.
+        6. Return the answer
+    */
+public:
+    string minWindow(string s1, string s2) {
+        int n = s1.size();
+        int m = s2.size();
+        
+        string ans = "";
+        
+        //char tp indx map
+        unordered_map<char, vector<int>> chars_to_idx;
+        
+        for (int i = 0; i < n; i++){
+            chars_to_idx[s1[i]].push_back(i);
+        }
+        vector<int> indices(m);
+        
+        //try all starts
+        for (int start = 0; start < n; start++){
+            int prev = start - 1;
+            for (int j = 0; j < m; j++){
+                if (!chars_to_idx.count(s2[j])){
+                    return "";
+                }
+                //reference but just lock it
+                const vector<int>& curr_indices = chars_to_idx[s2[j]];
+                //try to find the next i_0
+                while (indices[j] < curr_indices.size() && curr_indices[indices[j]] <= prev){
+                    indices[j]++;
+                }
+                
+                //if we have gotten to the end of all the indices for this current char, we can do no better than the current answer
+                if (indices[j] == curr_indices.size()){
+                    return ans;
+                }
+                
+                prev = curr_indices[indices[j]];
+                
+            }
+            
+            if (ans == "" || prev - start + 1 < ans.size()){
+                ans = s1.substr(start,prev-start+1);
+            }
+        }
+        return ans;
+    }
+};
