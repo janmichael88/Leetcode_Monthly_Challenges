@@ -4663,3 +4663,111 @@ class Solution:
             for i in range(n+1):
                 if dp[i][m] == smallest_k:
                     return s1[i-smallest_k:i]
+                
+#############################################
+# 319. Bulb Switcher
+# 27APR23
+############################################
+class Solution:
+    def bulbSwitch(self, n: int) -> int:
+        '''
+        try finding patterns
+        we have n bulds and want n rounds
+        n = 6
+        [0,0,0,0,0,0] start
+        [1,1,1,1,1,1] 1
+        [1,0,1,0,1,0] 2
+        [1,0,0,0,1,1] 3
+        [1,0,0,1,1,1] 4
+        [1,0,0,1,0,1] 5
+        [1,0,0,1,0,0] 6
+        
+        initially at round 1, we have all n bullbs
+        n - (n/2) second round
+        n - (n/2) - (n/3) + (n/6) third round
+        for each round we turn off, but we also turn on the bulbs that were previosuly turned off
+        1 will never get altered after the first round
+        
+        n
+        round 2, every second bulb toggle
+        n - (n/2)
+        round 3 every third bulb
+        n - (n/2) - (n/3) + (n/6)
+        round 4 every fouth bulb
+        n - (n/2) - (n/3) + (n/6) +
+        
+        rather at roud i, we need to toggle bulbs tht have a factor i
+        we keep track of the number of toggles for each round, and the bulbs that are on at the final round will have an odd number of toggles
+        turns out if a number if a perfect square, it will have an odd number of factors
+        
+        when we factorize a number y, with a factor x, we get another factor y/x
+        if y is a perfect square , y = a*a, and it a possible that x == a == y/x
+        if y is not a perfect square, we will have a unique y/x factors, and will exsist in pairs, so the numbe of factors is even
+        except for 1 case 
+        16 -> 1 x 16, 2 x 8, 4 x 4 
+        (4 is paired with itself, it has three factor pairs, but one pair has both numbers same, so total 5 factors))
+        
+        we just need to find the number of perfect sqaures from 1 to n
+        
+        perfect squares have an odd number of factors because they can be composed into other factors and possibly another perfect sqaure
+        since a perfect square can be paired with itself, we won't have an even number of actors
+        
+        brute force would be to cout all perfect squares
+        We can iterate on each number and check if it's a perfect square or not, (i.e. floor(sqrt(i)) * floor(sqrt(i)) == i)
+        
+        number of perfect squares is just floor(sqrt(n))
+        '''
+        return int(sqrt(n))
+
+#######################################
+# 469. Convex Polygon
+# 28APR23
+#######################################
+class Solution:
+    def isConvex(self, points: List[List[int]]) -> bool:
+        '''
+        polygon is convex if all line segments between any two points is contained in the boundary of the polygon
+        note, we ensure that exactly two edges intersect at each vertex and that the edges otherwise don't intsersect each other
+            i.e there is a vertex for each pair of edges
+        another thing to note is that the points are sequential
+        get the angle for each edge
+        
+        turns out we just need to get the turning direction, and make sure we keep turning in that direction
+        Polygon is convex if we travel along its edges, and always turn to the same direction, either left or right.
+        to find the turning angle, if positive or negative, cos won't help as it is symmetrical,
+        so we need sin which is anti symmetrical.
+        we can use cross product which is a vector perependicaul to X-Y plane,
+        in the size of |a|*|b|*sin(alpha), so we just need to take it's sign
+        
+        so we just need to cross product of two vectors to determin the sign
+        '''
+        def get_direction(a,b,c): #1 if left, -1 if right, 0 for striaght line
+            #get the two vectors
+            ab_x, ab_y = b[0] - a[0], b[1] - a[1]
+            bc_x, bc_y = c[0] - b[0], c[1] - b[1]
+            #only need sign, cross product, otherwise we could use to get the angle
+            mag = (ab_x*bc_y - ab_y*bc_x)
+            dirr = 0
+            if mag > 0:
+                dirr = 1
+            elif mag < 0:
+                dirr = -1
+            
+            return dirr
+        
+        #initialize sign
+        sign = 0
+        for i in range(len(points)): #the array wraps arround
+            a,b,c = points[i-2],points[i-1],points[i]
+            new_sign = get_direction(a,b,c)
+            
+            #new sign
+            if sign == 0:
+                sign = new_sign
+            #straight line
+            elif new_sign == 0:
+                continue
+            elif sign != new_sign:
+                return False
+        
+        return True
