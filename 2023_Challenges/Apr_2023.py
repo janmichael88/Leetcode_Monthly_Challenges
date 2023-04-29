@@ -4771,3 +4771,310 @@ class Solution:
                 return False
         
         return True
+    
+#############################################
+# 839. Similar String Groups
+# 28APR23
+############################################
+#TLE
+class Solution:
+    def numSimilarGroups(self, strs: List[str]) -> int:
+        '''
+        two strings are similar if we can swap two letters in one string so that it equals the other string
+        tars and rats are similar, we can turn tars into rats, by swapping r an t
+        but start is not similar to tars, rats, or arts
+        
+        we can make two groups: {"tars", "rats", "arts"} and {"start"}
+        tars -> rats -> arts
+        
+        any strings on the same path can be grouped together
+        dfs on each string, and generate all possible swaps
+        '''
+        #function to generate steps
+        def get_neighbors(string):
+            N = len(string)
+            list_string = list(string)
+            for i in range(N):
+                for j in range(i+1,N):
+                    #swap
+                    list_string[i],list_string[j] = list_string[j],list_string[i]
+                    yield list_string
+                    #swap back
+                    list_string[i],list_string[j] = list_string[j],list_string[i]
+        
+        #convert words to set
+        strs = set(strs)
+        num_groups = 0
+        visited = set()
+        
+        def dfs(word,visited):
+            visited.add(word)
+            for neigh in get_neighbors(word):
+                neigh_word = "".join(neigh)
+                if neigh_word in strs and neigh_word not in visited:
+                    dfs(neigh_word,visited)
+                    
+        for word in strs:
+            if word not in visited:
+                dfs(word,visited)
+                num_groups += 1
+        
+        return num_groups
+    
+class Solution:
+    def numSimilarGroups(self, strs: List[str]) -> int:
+        '''
+        two strings are similar if we can swap two letters in one string so that it equals the other string
+        tars and rats are similar, we can turn tars into rats, by swapping r an t
+        but start is not similar to tars, rats, or arts
+        
+        we can make two groups: {"tars", "rats", "arts"} and {"start"}
+        tars -> rats -> arts
+        
+        any strings on the same path can be grouped together
+        dfs on each string, and generate all possible swaps, this is the slowest part, 
+        note, words are same length and are anagrams of each other
+        
+        im stupid precompute the graph first instread of generating neighbors in the flly!
+        '''
+        #function to generate steps
+        def get_neighbors(string):
+            N = len(string)
+            list_string = list(string)
+            for i in range(N):
+                for j in range(i+1,N):
+                    #swap
+                    list_string[i],list_string[j] = list_string[j],list_string[i]
+                    yield "".join(list_string)
+                    #swap back
+                    list_string[i],list_string[j] = list_string[j],list_string[i]
+        
+        #i need the graph first, but this might take even longer to generate the graph
+        adj_list = defaultdict(set)
+        strs = set(strs)
+        for word in strs:
+            for neigh in get_neighbors(word):
+                if neigh in strs:
+                    adj_list[word].add(neigh)
+                    adj_list[neigh].add(word)
+        
+        num_groups = 0
+        visited = set()
+        
+        def dfs(word,visited):
+            visited.add(word)
+            for neigh in adj_list[word]:
+                if neigh not in visited:
+                    dfs(neigh,visited)
+                    
+        for word in strs:
+            if word not in visited:
+                dfs(word,visited)
+                num_groups += 1
+        
+        return num_groups
+    
+class Solution:
+    def numSimilarGroups(self, strs: List[str]) -> int:
+        '''
+        precomputing by checking all swaps is still two long
+        by the rules, if strings a and b are similar, they will be different at two spots or at 0 spots
+        0 sports mean they are the same string
+        '''
+        #function to generate steps
+        def is_similar(a,b):
+            N = len(a)
+            diffs = 0
+            for i in range(N):
+                if a[i] != b[i]:
+                    diffs += 1
+            
+            return diffs == 0 or diffs == 2
+        
+        #i need the graph first, but this might take even longer to generate the graph
+        adj_list = defaultdict(list)
+        N = len(strs)
+        
+        for i in range(N):
+            for j in range(N):
+                if i != j:
+                    a = strs[i]
+                    b = strs[j]
+                    if is_similar(a,b):
+                        adj_list[a].append(b)
+                        adj_list[b].append(a)
+        
+        
+        num_groups = 0
+        visited = set()
+        
+        def dfs(word,visited):
+            visited.add(word)
+            for neigh in adj_list[word]:
+                if neigh not in visited:
+                    dfs(neigh,visited)
+                    
+        for word in strs:
+            if word not in visited:
+                dfs(word,visited)
+                num_groups += 1
+
+#no need to check all (i,j) matrix is symmetric
+class Solution:
+    def numSimilarGroups(self, strs: List[str]) -> int:
+        '''
+        precomputing by checking all swaps is still two long
+        by the rules, if strings a and b are similar, they will be different at two spots or at 0 spots
+        0 sports mean they are the same string
+        '''
+        #function to generate steps
+        def is_similar(a,b):
+            N = len(a)
+            diffs = 0
+            for i in range(N):
+                if a[i] != b[i]:
+                    diffs += 1
+            
+            return diffs == 0 or diffs == 2
+        
+        #i need the graph first, but this might take even longer to generate the graph
+        adj_list = defaultdict(list)
+        N = len(strs)
+        
+        for i in range(N):
+            for j in range(i+1,N):
+                if is_similar(a,b):
+                    adj_list[a].append(b)
+                    adj_list[b].append(a)
+        
+        
+        num_groups = 0
+        visited = set()
+        
+        def dfs(word,visited):
+            visited.add(word)
+            for neigh in adj_list[word]:
+                if neigh not in visited:
+                    dfs(neigh,visited)
+                    
+        for word in strs:
+            if word not in visited:
+                dfs(word,visited)
+                num_groups += 1
+
+#bfs
+class Solution:
+    def numSimilarGroups(self, strs: List[str]) -> int:
+        '''
+        precomputing by checking all swaps is still two long
+        by the rules, if strings a and b are similar, they will be different at two spots or at 0 spots
+        0 sports mean they are the same string
+        '''
+        #function to generate steps
+        def is_similar(a,b):
+            N = len(a)
+            diffs = 0
+            for i in range(N):
+                if a[i] != b[i]:
+                    diffs += 1
+            
+            return diffs == 0 or diffs == 2
+        
+        #i need the graph first, but this might take even longer to generate the graph
+        adj_list = defaultdict(list)
+        N = len(strs)
+        
+        for i in range(N):
+            for j in range(i+1,N):
+                a = strs[i]
+                b = strs[j]
+                if is_similar(a,b):
+                    adj_list[a].append(b)
+                    adj_list[b].append(a)
+        
+        
+        num_groups = 0
+        visited = set()
+        
+        def bfs(word,visited):
+            q = deque([word])
+            while q:
+                curr_word = q.popleft()
+                visited.add(curr_word)
+                for neigh in adj_list[curr_word]:
+                    if neigh not in visited:
+                        q.append(neigh)
+                    
+        for word in strs:
+            if word not in visited:
+                bfs(word,visited)
+                num_groups += 1
+                
+        return num_groups
+    
+#union find
+class UF:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.sizes = [1 for _ in range(n)]
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if self.sizes[x_par] > self.sizes[y_par]:
+            self.sizes[x_par] += self.sizes[y_par]
+            self.sizes[y_par] = 0
+            self.parent[y_par] = x_par
+        elif self.sizes[y_par] > self.sizes[x_par]:
+            self.sizes[y_par] += self.sizes[x_par]
+            self.sizes[x_par] = 0
+            self.parent[x_par] = y_par
+        else:
+            #give it x
+            self.sizes[x_par] += self.sizes[y_par]
+            self.sizes[y_par] = 0
+            self.parent[y_par] = x_par
+            
+        
+        
+
+class Solution:
+    def numSimilarGroups(self, strs: List[str]) -> int:
+        '''
+        we can use union find, we only do the unino operation on similar strings
+        we intially start of with N separate componenets, but when we join on a similar string, we reduce this count by 1
+        reduce group sizes by 1 for each join
+        
+        '''
+        n = len(strs)
+        uf = UF(n)
+        
+        def is_similar(a,b):
+            N = len(a)
+            diffs = 0
+            for i in range(N):
+                if a[i] != b[i]:
+                    diffs += 1
+            
+            return diffs == 0 or diffs == 2
+        
+        for i in range(n):
+            for j in range(i+1,n):
+                a = strs[i]
+                b = strs[j]
+                if is_similar(a,b) and uf.find(i) != uf.find(j):
+                    uf.union(i,j)
+                    #could also do size -= 1
+        
+        ans = 0
+        for size in uf.sizes:
+            ans += size != 0
+        
+        return ans
