@@ -5388,15 +5388,17 @@ class Solution:
         
         #compre with zero and 4
         f(query0123 == query1234,4)
+
+        #compare 0 with 1,2,3
+        f(reader.query(0, 2, 3, 4) == query1234, 1)
+        f(reader.query(0, 1, 3, 4) == query1234, 2)
+        f(reader.query(0, 1, 2, 4) == query1234, 3)
         
         #compare indices 5 to n-1 with 0
         for i in range(5,self.N):
             f(query0123 == reader.query(1,2,3,i),i)
         
-        #compare 0 with 1,2,3
-        f(reader.query(0, 2, 3, 4) == query1234, 1)
-        f(reader.query(0, 1, 3, 4) == query1234, 2)
-        f(reader.query(0, 1, 2, 4) == query1234, 3)
+        
         if self.count_equal > self.count_diff:
             return 0
         elif self.count_diff > self.count_equal:
