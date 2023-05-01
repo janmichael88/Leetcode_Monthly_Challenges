@@ -5078,3 +5078,328 @@ class Solution:
             ans += size != 0
         
         return ans
+
+#######################################################
+# 1697. Checking Existence of Edge Length Limited Paths
+# 29APR23
+#######################################################
+#yesssss!
+#union find
+class UF:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.sizes = [1 for _ in range(n)]
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if self.sizes[x_par] > self.sizes[y_par]:
+            self.sizes[x_par] += self.sizes[y_par]
+            self.sizes[y_par] = 0
+            self.parent[y_par] = x_par
+        elif self.sizes[y_par] > self.sizes[x_par]:
+            self.sizes[y_par] += self.sizes[x_par]
+            self.sizes[x_par] = 0
+            self.parent[x_par] = y_par
+        else:
+            #give it x
+            self.sizes[x_par] += self.sizes[y_par]
+            self.sizes[y_par] = 0
+            self.parent[y_par] = x_par
+    
+    def are_connected(self,x,y):
+        return self.find(x) == self.find(y)
+
+class Solution:
+    def distanceLimitedPathsExist(self, n: int, edgeList: List[List[int]], queries: List[List[int]]) -> List[bool]:
+        '''
+        for each query, find path from p to q, where each edge is < limit
+        but we as try to find, keep track of the edges less then the limit
+        then we can sort the queries based on limit size, increasinly in fact
+        
+        example
+        [[0,1,2],[0,2,5]]
+        for the first one, we want to find a path between 0 and 1, where each edge is less than 2
+        while finding this path, we can keep another array of the form dp(start,edge < curr_limit)
+            this will mean for path starting at start, all edges in the path will be less than the curr limit?
+           
+        we need to use union find on the edgeList
+            for an edgeist[i] defined by u to v, if u to v < current limit of the query we can combine them into one group
+            for a query with a givine limit,
+                we union all edges that are less than the limit
+                once we have done all the unions for this equery, we check if there is a path for the current u and v on this query
+                    we can do this be calling the find operation
+                    then we dump the answer into the array
+        '''
+        uf = UF(n)
+        ans = [False]*(len(queries))
+        #sort edges increasin by distance
+        edgeList.sort(key = lambda x: x[2])
+        
+        #sort queries on increasing limit, but keep original index to put bacn in ans array
+        new_queries = [[] for _ in range(len(queries))]
+        for i,q in enumerate(queries):
+            new_queries[i] = q
+            new_queries[i].append(i)
+            
+        new_queries.sort(key = lambda x: x[2])
+        
+        edge_idx = 0
+        #traverse neq queries
+        for u,v,limit,index in new_queries:
+            #union all edges less than this current limit
+            while edge_idx < len(edgeList) and edgeList[edge_idx][2] < limit:
+                #get the nodes
+                a = edgeList[edge_idx][0]
+                b = edgeList[edge_idx][1]
+                #we can join them
+                uf.union(a,b)
+                #move up
+                edge_idx += 1
+            #check
+            ans[index] = uf.are_connected(u,v)
+        
+        return ans
+
+#####################################################################
+# 1579. Remove Max Number of Edges to Keep Graph Fully Traversable
+# 30APR23
+#####################################################################
+class UF:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.sizes = [1 for _ in range(n)]
+        self.components = n
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        #we need to return here to check if they are already connected
+        if x_par == y_par:
+            return 0
+        
+        elif self.sizes[x_par] > self.sizes[y_par]:
+            self.sizes[x_par] += self.sizes[y_par]
+            self.sizes[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.sizes[y_par] += self.sizes[x_par]
+            self.sizes[x_par] = 0
+            self.parent[x_par] = y_par
+        
+        #one less component
+        self.components -= 1
+        #if we make a connection
+        return 1
+    
+    def are_connected(self,x,y):
+        return self.components == 1
+
+class Solution:
+    def maxNumEdgesToRemove(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        alice can traverse all edges of all nodes are part of the same componenet, same thing with bob
+        ideas, try union find for both alice and bob
+        use type three edges first, and connect the still isolate ones using the other edges
+        then when checking an edge that is of type 1 or 2, first check that we can reach it because we have already unioned with type 3
+        when doing type 3 apply to both alice an bob UF structures
+        
+        when doing type 1 and 2, firs check that the components are unnoected
+        if they are unconected make the connection for the respective alice and bob
+        so this is an edge we can drop
+            += can drop
+        before returning can drop, ensure that they the nodes are connected
+        type 1 = alice
+        type 2 = bob
+        type 3 = both
+        '''
+        structs: dict[int,UF] = {1 : UF(n+1), 2 : UF(n+1)}
+        #needed_edges
+        needed_edges: int = 0
+        
+        for typ, u, v in edges:
+            if typ == 3:
+                #union in both
+                alice_edge = structs[1].union(u,v)
+                bob_edge = structs[2].union(u,v)
+                #this edge needs to exists
+                if alice_edge or bob_edge:
+                    needed_edges += 1
+        for typ, u,v in edges:
+            if typ == 1:
+                alice_edge = structs[1].union(u,v)
+                if alice_edge:
+                    needed_edges += 1
+            elif typ == 2:
+                bob_edge = structs[2].union(u,v)
+                if bob_edge:
+                    needed_edges += 1
+        
+        #first check all connected in alice and bob
+        if structs[1].are_connected and structs[2].are_connected:
+            return len(edges) - needed_edges
+        return -1    
+
+#another union find
+class UnionFind:
+    def __init__(self, n: int):
+        self.parent = list(range(n + 1))
+        self.size = [1] * (n + 1)
+        self.components = n
+    def find(self, x: int) -> int:
+        if self.parent[x] == x:
+            return x
+        self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    def union(self, x: int, y: int) -> int:
+        x = self.find(x)
+        y = self.find(y)
+        if x == y:
+            return 0
+        if self.size[x] > self.size[y]:
+            self.size[x] += self.size[y]
+            self.parent[y] = x
+        else:
+            self.size[y] += self.size[x]
+            self.parent[x] = y
+        self.components -= 1
+        return 1
+
+
+class Solution:
+    def maxNumEdgesToRemove(self, n: int, edges: List[List[int]]) -> int:
+        alice = UnionFind(n)
+        bob = UnionFind(n)
+        remove = 0
+        for t, u, v in edges:
+            if t == 3:
+                remove += alice.union(u, v) 
+                bob.union(u, v)
+        for t, u, v in edges:
+            if t == 1:
+                remove += alice.union(u, v)
+            else:
+                remove += bob.union(u, v)
+        if alice.components == bob.components == 1:
+            return len(edges) - remove
+        return -1
+
+
+#############################################
+# 1538. Guess the Majority in a Hidden Array
+# 29APR23
+#############################################
+# """
+# This is the ArrayReader's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class ArrayReader(object):
+#	 # Compares 4 different elements in the array
+#	 # return 4 if the values of the 4 elements are the same (0 or 1).
+#	 # return 2 if three elements have a value equal to 0 and one element has value equal to 1 or vice versa.
+#	 # return 0 : if two element have a value equal to 0 and two elements have a value equal to 1.
+#    def query(self, a: int, b: int, c: int, d: int) -> int:
+#
+#	 # Returns the length of the array
+#    def length(self) -> int:
+#
+
+class Solution:
+    def guessMajority(self, reader: 'ArrayReader') -> int:
+        '''
+        so we can get access to the size
+        we can only check 4 elements at a time, query gives us the majority count of 4 chosen elements, but not exactly what the elemnt is
+        returns 4, means they are all the same, so return 4
+        returns 2, means exactly 3 of a kind
+        returns 0, exactly two of a kind
+        what if i try sliding in steps of 4
+        [0,0,1,0,1,1,1,1]
+        [0,0,1,0] 3 count
+          [0,1,0,1], 2 count
+          
+         case 1: [1,1,1,1] or [0,0,0,0] returns 4
+         case 2: [0,1,1,1] or [1,0,0,0] or [0,1,0,0] or [1,0,1,1] or [0,0,1,0] or [1,1,0,1] or [1,1,1,0] or [0,0,0,1] return 2
+         case 3: etc...
+         
+        can i get anything from this?
+        removing index 1 and adding index 4 cause it to change from 3 to 2, which means whatever was at index 1 must have been part of the majority
+        
+        hint 1, if i already know that two indices are a certain value, lets just say they are indices i and j, have values [x,x]
+        dont know what they are but they are equal
+        [x,x,0,0] if x == 0, then this would return 4
+        [x,x,1,1] if x == 1, then this would return 2
+        
+        exmaple array:
+         [0,0,1,0,1,1,0]
+         query(0,1,2,3) != query(0,1,2,4)
+         query(0,1,3,4) != query(0,1,3,6)
+         query(0,1,2,4) != query(0,1,2,5)
+         
+         general formula query(a,b,c,i) = query(a,b,c,j) iff nums[i] == nums[j]
+         for any triplet (a,b,c) and a < b < c < i < j
+         so we can compare two elements in the array using the equaility above
+         when we want to know whether nums[i] == nums[j], we first choose any (a,b,c) and compare query(a,b,c,i) and query(a,b,c,j)
+         quadraplets must be in increasing order
+         
+        algo:
+            we choose to compare all the elements of the array with nums[0] and keep track of the number of eleemnts that are == to nums[0]
+            and the number of elements that are different the nums[0]
+            
+        cases:
+            if countEqual > countDifft, then nums[0] is the most frequent element
+            if countDiffer > countEqual, we need to return the index of any element different from nums[0]
+            if countDiffer == countEqual, there is not majority, return -1
+            
+        In the implementation, we will use a helper function f(equal, i). 
+        When we call this function with equal = true, we will increment cntEqual. 
+        When we call this function with equal = false, we will increment cntDiffer, and set indexDiffer = i.
+        
+        
+        '''
+        self.N = reader.length()
+        self.count_equal = 1 #count of elements == nums[0]
+        self.count_diff = 0 #count of elements != nums[0]
+        self.index_diff = -1 #index of different element that is majority
+        
+        def f(equal,i):
+            #compares query results and increment counts or find index
+            if equal:
+                self.count_equal += 1
+            else:
+                self.count_diff += 1
+                self.index_diff = i
+                
+        query0123 = reader.query(0,1,2,3)
+        query1234 = reader.query(1,2,3,4)
+        
+        #compre with zero and 4
+        f(query0123 == query1234,4)
+        
+        #compare indices 5 to n-1 with 0
+        for i in range(5,self.N):
+            f(query0123 == reader.query(1,2,3,i),i)
+        
+        #compare 0 with 1,2,3
+        f(reader.query(0, 2, 3, 4) == query1234, 1)
+        f(reader.query(0, 1, 3, 4) == query1234, 2)
+        f(reader.query(0, 1, 2, 4) == query1234, 3)
+        if self.count_equal > self.count_diff:
+            return 0
+        elif self.count_diff > self.count_equal:
+            return self.index_diff
+        else:
+            return -1
