@@ -444,3 +444,59 @@ class Solution:
             return "Dire"
         else:
             return "Radiant"
+        
+################################################################
+# 1456. Maximum Number of Vowels in a Substring of Given Length
+# 05MAY23
+################################################################
+class Solution:
+    def maxVowels(self, s: str, k: int) -> int:
+        '''
+        careful here, k could == len(s)
+        for the window keep count of the current number of vowels
+        i can keep count mapp of current vowels in window (sum in constant time)
+        then slide one at a time
+        '''
+        vowel_counts = {'a' : 0, 'e' : 0, 'i' : 0, 'o': 0, 'u': 0}
+        #populate first substring k
+        for i in range(k):
+            if s[i] in vowel_counts:
+                vowel_counts[s[i]] += 1
+        
+        ans = sum(vowel_counts.values())
+        #mas this along the way
+        left = 0
+        
+        for right in range(k,len(s)):
+            if s[left] in vowel_counts:
+                vowel_counts[s[left]] -= 1
+            left += 1
+            
+            if s[right] in vowel_counts:
+                vowel_counts[s[right]] += 1
+            
+            ans = max(ans, sum(vowel_counts.values()))
+        
+        return ans
+    
+class Solution:
+    def maxVowels(self, s: str, k: int) -> int:
+        '''
+        we dont need to keep count map, just count of current chars in this window
+        we don't need aux pointer for left, just do i -k
+        '''
+        vowels = {'a','e','i','o','u'}
+        
+        count_vowels = 0
+        for i in range(k):
+            count_vowels += s[i] in vowels
+        
+        
+        ans = count_vowels
+        
+        for right in range(k,len(s)):
+            count_vowels += s[right] in vowels
+            count_vowels -= s[right - k] in vowels
+            ans = max(ans,count_vowels)
+        
+        return ans
