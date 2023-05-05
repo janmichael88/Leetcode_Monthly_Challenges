@@ -185,3 +185,262 @@ class Solution:
             res = max(res, abs(heaters[heater] - h))        # Update its range to house
         
         return res
+
+#############################################
+# 649. Dota2 Senate
+# 04MAY23
+############################################
+#almost 72/80
+class Solution:
+    def predictPartyVictory(self, senate: str) -> str:
+        '''
+        game theory problem
+        two parties, R and D,
+        each senator has one of two rights:
+            ban, make sentator lose all his rights and this following round
+            announce victory, if senator found that the remaining senators are still from the same party, he can immediately announce the winnder
+        
+        each round consists of moving through the whole senate, and who every is left goes on to the next round
+        
+        get initailly counts, then q up,
+        if there is a majority for this current senator's party, accnoune winnder, otherwise just ban an opposing member of the senator
+        but who do they ban? does it make sense just to ban the next one coming in?, banning different senators will can give different final answers
+        we need to ban the next closes opposing senator
+        
+        how many 
+        '''
+        count_radiant = 0
+        count_dire = 0
+        for vote in senate:
+            count_radiant += vote == 'R'
+            count_dire += vote == 'D'
+        
+        
+        if count_radiant > count_dire:
+            return "Radiant"
+        elif count_dire > count_radiant:
+            return "Dire"
+        else:
+            if senate[0] == 'R':
+                return "Radiant"
+            else:
+                return "Dire"
+
+#ummmm the brute force still passes
+class Solution:
+    def predictPartyVictory(self, senate: str) -> str:
+        '''
+        game theory problem
+        two parties, R and D,
+        each senator has one of two rights:
+            ban, make sentator lose all his rights and this following round
+            announce victory, if senator found that the remaining senators are still from the same party, he can immediately announce the winnder
+        
+        each round consists of moving through the whole senate, and who every is left goes on to the next round
+        
+        get initailly counts, then q up,
+        if there is a majority for this current senator's party, accnoune winnder, otherwise just ban an opposing member of the senator
+        but who do they ban? does it make sense just to ban the next one coming in?, banning different senators will can give different final answers
+        we need to ban the next closes opposing senator
+        why? when we ban the next closes opposing senator, we are restricting one senator from the other party
+        think about it what if we were to ban the opposing senator at the end, we leave the other previous senators to ban senators on our party. so, it doesn't make sense to ban the last opposing senator, what about the second to last? same reason as the last
+        
+        how many rounds?
+        for each senator, we can ban another sentor, so number of senators goes down by N/2, N/4....until N = 0, or N == 1, log_2(N) rounds
+        
+        how many votes? rather how many actions...
+        N/2 actions, N/4 actions....
+        sum_{i = 0}^{N} N*(1/2)^i convergent, geometric series to N
+        
+        approach 1: greedy
+        * strategy is to best the next closes opposing senator
+        * function ban(toBan, startAt), bans the closes oposing senator, starting at startAt, keep track if we looped round the whole seantor as a round
+        * keep track of turn variable, which will keep track of current senator
+        * while we have senators we keep banning
+        * banning decrements count of senators
+        * if senator was banned before  this index, it means the senator having the turn will be the senator at the same index, decremtn turn by 1
+        * you can ban any senator, senate is a circular array
+        
+        '''
+        senate = list(senate)
+        counts = Counter(senate)
+        
+        def ban(to_ban, start_at):
+            #ban starting at next index, we looped around the whole senate, it means the the next trun will be at the senator that started it
+            loop = False
+            ptr = start_at
+            
+            while True:
+                if ptr == 0:
+                    loop = True
+                if senate[ptr] == to_ban:
+                    senate.pop(ptr)
+                    break
+                ptr = (ptr + 1) % len(senate)
+            
+            return loop
+        
+        curr_senator = 0
+        
+        #while we have senators
+        while counts['R'] > 0 and counts['D'] > 0:
+            #ban phase
+            if senate[curr_senator] == 'R':
+                banned_senator = ban('D', (curr_senator + 1) % len(senate))
+                counts['D'] -= 1
+            else:
+                banned_senator = ban('R', (curr_senator + 1) % len(senate))
+                counts['R'] -= 1
+            
+            if banned_senator:
+                curr_senator -= 1
+            curr_senator = (curr_senator + 1) % len(senate)
+        
+        if counts['D'] == 0:
+            return 'Radiant'
+        else:
+            return 'Dire'
+        
+#approach 2: boolean array
+class Solution:
+    def predictPartyVictory(self, senate: str) -> str:
+        '''
+        insteaf of looping around senatore, and keeping turn variable, keep boolean array of senators that are not banned
+        
+        '''
+        N = len(senate)
+        senate = list(senate)
+        counts = Counter(senate)
+        
+        banned = [False]*N
+        
+        
+        def ban(to_ban, start_at):
+            #keep banning in ptr array
+            ptr = start_at
+            
+            while True:
+                #the one we need to ban and not banned, we ban them
+                if senate[ptr] == to_ban and banned[ptr] == False:
+                    banned[ptr] = True
+                    break
+                ptr = (ptr + 1) % len(senate)
+        
+        #we only need to keep track of current senator
+        curr_senator = 0
+        
+        #while we have senators
+        while counts['R'] > 0 and counts['D'] > 0:
+            #ban phase
+            if not banned[curr_senator]:
+                if senate[curr_senator] == 'R':
+                    ban('D', (curr_senator + 1) % len(senate))
+                    counts['D'] -= 1
+                else:
+                    ban('R', (curr_senator + 1) % len(senate))
+                    counts['R'] -= 1
+
+            curr_senator = (curr_senator + 1) % len(senate)
+        
+        if counts['D'] == 0:
+            return 'Radiant'
+        else:
+            return 'Dire'
+        
+#approach 3: binary search
+class Solution:
+    def predictPartyVictory(self, senate: str) -> str:
+        '''
+        we can use binary search to find the earliet opposing senator to ban
+        since we always ban the next closest opposing, if we pick an index that has not been banned, we know that
+        everything to the right, must not have been banned yet, so we discard the right
+        same thing with the left
+        
+        maintin to two lists of eligible senators, to ban from
+        then when we call, pass by reference the array we want to ban from,
+        then binary search on that array
+            in the case we cannot find the next senator to ban using binary search, we have to loop around and ban the first elibile senator
+        
+        keep banned boolean array, but for the eligible ones
+        keep only the indices we want to ban from, for seperate radiant and dire
+        
+        then we just keep doing the rounds until we run out of eligible senators, no need to count
+        '''
+        N = len(senate)
+        senate = list(senate)
+        banned = [False]*N
+        
+        eligible_radiants = [i for i in range(N) if senate[i] == "R"]
+        eligible_dires = [i for i in range(N) if senate[i] == 'D']
+        
+        def ban(eligible, start_at):
+            #find next opposing senator to ban
+            #i.e the inserction point one greater than the current idnex
+            to_ban = bisect.bisect_left(eligible,start_at)
+            
+            #if we have gone around
+            if to_ban == len(eligible):
+                to_ban = eligible.pop(0)
+                banned[to_ban] = True
+            else:
+                to_ban = eligible.pop(to_ban)
+                banned[to_ban] = True
+
+        #we only need to keep track of current senator
+        curr_senator = 0
+        
+        #while we have senators
+        while eligible_radiants and eligible_dires:
+            #ban phase
+            if not banned[curr_senator]:
+                if senate[curr_senator] == 'R':
+                    ban(eligible_dires, curr_senator)
+                else:
+                    ban(eligible_radiants,curr_senator)
+
+            curr_senator = (curr_senator + 1) % len(senate)
+        
+        if eligible_radiants:
+            return 'Radiant'
+        else:
+            return 'Dire'
+        
+#approch 4, two queues
+class Solution:
+    def predictPartyVictory(self, senate: str) -> str:
+        '''
+        recall we stored the eligible sentor indices in two arrays, which we sorted
+        at any one time, current turn would have been the minimum of these, and on that turn we would ban the next senator of the opposing party
+        we can insteaf keep two queues for raditn and dire
+        we popleft from both, the current turn is the minimum, 
+        this senator cannot currently be banned, but would be banned in later rounds, so we put him back in the respective queue
+        but + n, its next turn will be + n after moving through senate
+        to create the effect of banning, we simly don't enque the larger to the two indices
+        not en-queuing means this senator becomes banned
+        '''
+        N = len(senate)
+        eligible_radiants = deque([])
+        eligible_dires = deque([])
+        
+        for i,senator in enumerate(senate):
+            #queue up the indices
+            if senator == 'R':
+                eligible_radiants.append(i)
+            else:
+                eligible_dires.append(i)
+                
+        while eligible_radiants and eligible_dires:
+            curr_radiant = eligible_radiants.popleft()
+            curr_dire = eligible_dires.popleft()
+            
+            #the curr turn is the min turn
+            if curr_radiant < curr_dire:
+                eligible_radiants.append(curr_radiant + N)
+            else:
+                eligible_dires.append(curr_dire + N)
+                
+        
+        if not eligible_radiants:
+            return "Dire"
+        else:
+            return "Radiant"
