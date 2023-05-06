@@ -500,3 +500,125 @@ class Solution:
             ans = max(ans,count_vowels)
         
         return ans
+    
+######################################################################
+# 1498. Number of Subsequences That Satisfy the Given Sum Condition
+# 06MAY23
+#####################################################################
+#edge cases suck on this one
+class Solution:
+    def numSubseq(self, nums: List[int], target: int) -> int:
+        '''
+        return number of subsequences such that the sum of the min and max element in it <= target
+        sor the nums array, then fix index i, for all possible left bounds of a subsequence
+        use binary search to find the index j, such that nums[i] + nums[j] <= target
+        the number of subsequences between i and j is just:
+        say we have subarray 
+        [1,2,3,4,5] k = 6
+        bounds are at 1 and 5
+        which means all subsequences starting at 1 should work!
+        question now becomes, after finding a subarray that works, how many subsequence exist such that min(subarray) + max(subarray) <= target
+        say we have [1,2,3], k = 4
+        [1], [1,2], [1,2,3], [1,3]
+        [2]
+        we must include the left bound, but the array could be anysubset of left+1 right
+        number of subsets would be 2^^[right - left + 1] + 1
+        
+        '''
+        N = len(nums)
+        nums.sort()
+        ans = 0
+        mod = 10**9 + 7
+        
+        for i in range(N):
+            left = i
+            right = len(nums)
+            while left < right:
+                mid = left + (right - left) // 2
+                if nums[i] + nums[mid] > target:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            
+            ans += int(2**(left - i - 1))
+            ans %= mod
+        
+        return ans % mod
+    
+class Solution:
+    def numSubseq(self, nums: List[int], target: int) -> int:
+        '''
+        we need to find the insection for the largest right bound that we can find
+        '''
+        N = len(nums)
+        mod = 10**9 + 7
+        nums.sort()
+        
+        ans = 0
+        
+        for left in range(N):
+            #find inserction point for target - nums[left]
+            right = bisect.bisect_right(nums,target - nums[left])
+            right -= 1
+            
+            if right >= left:
+                ans += pow(2,right - left,mod)
+                
+        return ans % mod
+    
+#writing out binary search
+class Solution:
+    def numSubseq(self, nums: List[int], target: int) -> int:
+        '''
+        we need to find the insection for the largest right bound that we can find
+        '''
+        N = len(nums)
+        mod = 10**9 + 7
+        nums.sort()
+        
+        ans = 0
+        
+        def upper_bound(array,look_for):
+            left = 0
+            right = len(array)
+            
+            while left < right:
+                mid = left + (right - left) // 2
+                if nums[mid] <= target:
+                    left = mid + 1
+                else:
+                    right = mid - 1
+            
+            return left
+        
+        for left in range(N):
+            #find inserction point for target - nums[left]
+            right = upper_bound(nums,target - nums[left])
+            if nums[left] + nums[right-1] <= target:
+                if right - 1 >=left:
+                    ans += pow(2,(right-1) - (left),mod)
+        
+        return ans
+    
+class Solution:
+    def numSubseq(self, nums: List[int], target: int) -> int:
+        '''
+        we dont need to check every fixed left bound for a canddiate subarray
+        we can just use two pointers, and whenver we have a valid subarray, get the number of subsequences
+        then advance the left pointer
+        otherwise shift the right pointer
+        '''
+        n, mod = len(nums), 10 ** 9 + 7
+        nums.sort()
+        
+        answer = 0
+        left, right = 0, n - 1
+
+        while left <= right:
+            if nums[left] + nums[right] <= target:
+                answer = (answer + pow(2, right - left, mod)) % mod
+                left += 1
+            else:
+                right -= 1
+        return answer
