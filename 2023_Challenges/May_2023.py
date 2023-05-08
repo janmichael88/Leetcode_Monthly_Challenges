@@ -622,3 +622,188 @@ class Solution:
             else:
                 right -= 1
         return answer
+    
+##################################################################
+# 1964. Find the Longest Valid Obstacle Course at Each Position
+# 07MAY23
+#################################################################
+#cant greedily build the subseqyuence
+class Solution:
+    def longestObstacleCourseAtEachPosition(self, obstacles: List[int]) -> List[int]:
+        '''
+        we are given obstacles if length n, where obstacles[i] describes the height
+        for every index i in range(n) find longest obstalce in obstacles such that:
+            * choose any between (0,i)
+            * including i
+            * put chosen obstalces in same order (lexographic) as obstacles
+            * every obstalce (except first) is >= as the one before it
+            
+        return ans array where ans[i] is the height of the obstalce course for index i, as desriberd abover
+        
+        for each index i
+            ans[i] is just a montonic subsequence of obstalces (except the first)
+            
+        brute force is easy, just build the obstalce course and return its length, start with that
+        but i would need to build the course in a reverse, and make it motonic decreasing, except for the first
+        longest increasing subsequence, i can't greddily build it
+        
+        really this is just longest decreasing subsequence
+        ''' 
+        N = len(obstacles)
+        ans = [1]*N
+        
+        for i in range(N):
+            #build in reverse
+            curr_course = [obstacles[i]]
+            j = i - 1
+            while j >= 0:
+                if obstacles[j] <= curr_course[-1]:
+                    curr_course.append(obstacles[j])
+                j -= 1
+            #print(curr_course)
+            ans[i] = len(curr_course)
+        
+        return ans
+    
+#naive LIS (longest increasing subsequence), TLE
+class Solution:
+    def longestObstacleCourseAtEachPosition(self, obstacles: List[int]) -> List[int]:
+        '''
+        we are given obstacles if length n, where obstacles[i] describes the height
+        for every index i in range(n) find longest obstalce in obstacles such that:
+            * choose any between (0,i)
+            * including i
+            * put chosen obstalces in same order (lexographic) as obstacles
+            * every obstalce (except first) is >= as the one before it
+            
+        return ans array where ans[i] is the height of the obstalce course for index i, as desriberd abover
+        
+        for each index i
+            ans[i] is just a montonic subsequence of obstalces (except the first)
+            
+        brute force is easy, just build the obstalce course and return its length, start with that
+        but i would need to build the course in a reverse, and make it motonic decreasing, except for the first
+        longest increasing subsequence, i can't greddily build it
+        
+        really this is just longest decreasing subsequence, but if i apply LIS (reverse), that problem runs in O(N^2) times
+        just build along the way you idiot!
+        
+        reframe problem is longest decreasing subsequence using obstalces[i]
+        ''' 
+        N = len(obstacles)
+        ans = [1]*N
+        
+        memo = {}
+        
+        def dp(i):
+            if i < 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = 0
+            for j in range(i-1,-1,-1):
+                if obstacles[j] <= obstacles[i]:
+                    ans = max(ans,1+dp(j))
+            
+            memo[i] = ans
+            return ans
+        
+    
+        for i in range(N):
+            ans[i] = 1+dp(i)
+        
+        return ans
+    
+#we need to use the binary seach solution from LIS in order for this to pass
+class Solution:
+    def longestObstacleCourseAtEachPosition(self, obstacles: List[int]) -> List[int]:
+        '''
+        recall the solution from LIS where we intelligently build a subsequence, in the brute force solution
+        we keep greedidly adding to our current subsequence until we can't 
+        then we have to scan the array starting from the smallest element and replace the first element that is greater than or equal to num with hum
+        class Solution:
+            def lengthOfLIS(self, nums: List[int]) -> int:
+                sub = [nums[0]]
+
+                for num in nums[1:]:
+                    if num > sub[-1]:
+                        sub.append(num)
+                    else:
+                        # Find the first element in sub that is greater than or equal to num
+                        i = 0
+                        while num > sub[i]:
+                            i += 1
+                        sub[i] = num
+
+                return len(sub)
+                
+        then it was just binary search to find the upper bound
+        
+        class Solution:
+            def lengthOfLIS(self, nums: List[int]) -> int:
+                sub = []
+                for num in nums:
+                    i = bisect_left(sub, num)
+
+                    # If num is greater than any element in sub
+                    if i == len(sub):
+                        sub.append(num)
+
+                    # Otherwise, replace the first element in sub greater than or equal to num
+                    else:
+                        sub[i] = num
+
+                return len(sub)
+        in short, the longest course ending at index i depends on the ending before index i
+        we need to store all the previous obstalce courses we have met before index i
+        then for the obstalce at index i, we can choose any course that had a final obtacle <= obstacles[i] and add in obstacles[i]
+        we greedily choose the longest one out of them to make the longest course
+        
+        problem? there could be many sequences with the same length and its impracticel to store all of them
+        we keep the course with the obstacle that has the smaller ending height
+        we don't need to keep track of the the path, just the heights of the last obstacle being added in
+        keep an array to record the height of the shortest ending obstacle for course 
+        lis[i] is the heigh of the shortest ending obstalce of length i+1
+        lis[4] = 7 means the lowest end of a course with length 4 we have met so far is 7
+        
+        answer at i is the index at  position idx, the idx where we peformed binary search
+        we need to find the upper bound, the last possible solution we could put an obstacle in, and its insert position would be 1 less than that
+        
+        '''
+        N = len(obstacles)
+        ans = [1]*N
+        
+        lis = [] #store the smallest heights (list[i]) for longest increasing subsequences with length i+1
+        
+        for i, height in enumerate(obstacles):
+            #find right most position
+            idx = bisect.bisect_right(lis,height)
+            #if its larger than everything else
+            if idx == len(lis):
+                lis.append(height)
+            #otherwise, we can use a smaller heigh
+            else:
+                lis[idx] = height
+            #longest has to be using this height
+            ans[i] = idx + 1
+        
+        return ans
+    
+#brute force with linear scan
+class Solution:
+    def longestObstacleCourseAtEachPosition(self, obstacles: List[int]) -> List[int]:
+        piles = []
+        res = []
+        for n in obstacles:
+            found_pile = False
+            for i in range(len(piles)):
+                if piles[i][-1] > n:
+                    piles[i].append(n)
+                    res.append(i + 1)
+                    found_pile = True
+                    break
+            if not found_pile:
+                piles.append([n])
+                res.append(len(piles))
+        print(piles)
+        return res
