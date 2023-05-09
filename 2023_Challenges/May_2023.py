@@ -807,3 +807,90 @@ class Solution:
                 res.append(len(piles))
         print(piles)
         return res
+
+########################################
+# 1572. Matrix Diagonal Sum
+# 08MAY23
+########################################
+#welp it works, but i dont like it
+class Solution:
+    def diagonalSum(self, mat: List[List[int]]) -> int:
+        '''
+        walk the diagonals, the problem is that the intersect
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        seen = set()
+        ans = 0
+        #staring top left, and going down
+        i,j = 0,0
+        while i < rows and j < cols:
+            ans += mat[i][j]
+            print(mat[i][j])
+            seen.add((i,j))
+            i += 1
+            j += 1
+        
+        #starting bottom left
+        i = rows -1
+        j = 0
+        
+        while i >= 0 and j < cols:
+            if (i,j) not in seen:
+                ans += mat[i][j]
+                #print(mat[i][j])
+                seen.add((i,j))
+            i -= 1
+            j += 1
+        
+        return ans
+    
+class Solution:
+    def diagonalSum(self, mat: List[List[int]]) -> int:
+        '''
+        what if we want to save space
+        if there an even number rows/cols there is no double count
+        if there is an odd number we have a double count
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        ans = 0
+        #staring top left, and going down
+        i,j = 0,0
+        while i < rows and j < cols:
+            ans += mat[i][j]
+            i += 1
+            j += 1
+        
+        #starting bottom left
+        i = rows -1
+        j = 0
+        
+        while i >= 0 and j < cols:
+            ans += mat[i][j]
+            i -= 1
+            j += 1
+        
+        if rows % 2 == 1:
+            ans -= mat[rows//2][cols//2]
+        return ans
+        
+class Solution:
+    def diagonalSum(self, mat: List[List[int]]) -> int:
+        '''
+        primary diagnols lay in (i,i) for i in range(len(mat))
+        secondary diagonals lay in (n-i-1,i) for i in ranget(len(mat))
+        '''
+        n = len(mat)
+        ans = 0
+
+        for i in range(n):
+            # Add elements from primary diagonal.
+            ans += mat[i][i]
+            # Add elements from secondary diagonal.
+            ans += mat[n - i - 1][i]
+        # If n is odd, subtract the middle element as its added twice.
+        if n % 2 != 0:
+             ans -= mat[n // 2][n // 2]
+        
+        return ans
