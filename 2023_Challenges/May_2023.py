@@ -894,3 +894,303 @@ class Solution:
              ans -= mat[n // 2][n // 2]
         
         return ans
+
+###################################
+# 311. Sparse Matrix Multiplication
+# 08MAY23
+###################################
+class Solution:
+    def multiply(self, mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+        '''
+        inputs allow for naive implementation
+            dot product between row and column
+        '''
+        m = len(mat1)
+        n = len(mat1[0]) #which is also == len(mat2[0])
+        r = len(mat2[0])
+        
+        ans = [[0]*r for _ in range(m)]
+        
+        for i in range(m):
+            for j in range(r):
+                ij_entry = 0
+                for k in range(n):
+                    ij_entry += mat1[i][k]*mat2[k][j]
+                
+                ans[i][j] = ij_entry
+        
+        return ans
+    
+#skipping on zeros whil traversing and adding directly to output matrix
+class Solution:
+    def multiply(self, mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+        '''
+        inputs allow for naive implementation
+            dot product between row and column
+        '''
+        m = len(mat1)
+        n = len(mat1[0]) #which is also == len(mat2[0])
+        r = len(mat2[0])
+        
+        ans = [[0]*r for _ in range(m)]
+        
+        for i in range(m):
+            for j in range(n):
+                if mat1[i][j] != 0:
+                    for k in range(r):
+                        ans[i][k] += mat1[i][j]*mat2[j][k]
+
+        return ans
+    
+#list of lists
+class Solution:
+    def multiply(self, mat1: List[List[int]], mat2: List[List[int]]) -> List[List[int]]:
+        '''
+        for sparse matrix compress in format list of lists
+        lists[i] is at row i ands stores (value,column) of non zero elements
+        any element with index (row1,col1) in mat1 is multiplied with all elements of the col1'th row of mat2
+        '''
+        def compress_matrix(matrix):
+            rows = len(matrix)
+            cols = len(matrix[0])
+            comp_mat = [[] for _ in range(rows)]
+            for row in range(rows):
+                for col in range(cols):
+                    if matrix[row][col] != 0:
+                        comp_mat[row].append([matrix[row][col],col])
+            
+            return comp_mat
+        
+        M = len(mat1)
+        K = len(mat1[0])
+        N = len(mat2[0])
+        
+        ans = [[0]*N for _ in range(M)]
+        
+        #compress
+        A = compress_matrix(mat1)
+        B = compress_matrix(mat2)
+        
+        
+        for mat1_row in range(M):
+            for element_1,mat1_col in A[mat1_row]:
+                for element_2,mat2_col in B[mat1_col]:
+                    ans[mat1_row][mat2_col] += element_1*element_2
+        
+        return ans
+
+#############################################
+# 59. Spiral Matrix II
+# 10MAY23
+############################################
+class Solution:
+    def generateMatrix(self, n: int) -> List[List[int]]:
+        '''
+        we are given n and want to generate the matrix in spiral order
+        allocate an empty matrix for the answer then walk the spiral using code from spiral matrix1
+        '''
+        ans = [[0]*n for _ in range(n)]
+        numbers = [i for i in range(1,n*n + 1)]
+        ptr = 0
+        
+        rows, columns = len(ans), len(ans[0])
+        up = left = 0
+        right = columns - 1
+        down = rows - 1
+        
+        while ptr < len(numbers):
+            # Traverse from left to right.
+            for col in range(left, right + 1):
+                ans[up][col] = numbers[ptr]
+                ptr += 1
+                
+
+            # Traverse downwards.
+            for row in range(up + 1, down + 1):
+                ans[row][right] = numbers[ptr]
+                ptr += 1
+
+            # Make sure we are now on a different row.
+            if up != down:
+                # Traverse from right to left.
+                for col in range(right - 1, left - 1, -1):
+                    ans[down][col] = numbers[ptr]
+                    ptr += 1
+
+            # Make sure we are now on a different column.
+            if left != right:
+                # Traverse upwards.
+                for row in range(down - 1, up, -1):
+                    ans[row][left] = numbers[ptr]
+                    ptr += 1
+
+            left += 1
+            right -= 1
+            up += 1
+            down -= 1
+        
+        return ans
+    
+#no need to keep array of numbers, just increment
+class Solution:
+    def generateMatrix(self, n: int) -> List[List[int]]:
+        '''
+        we are given n and want to generate the matrix in spiral order
+        allocate an empty matrix for the answer then walk the spiral using code from spiral matrix1
+        '''
+        ans = [[0]*n for _ in range(n)]
+        ptr = 1
+        
+        rows, columns = len(ans), len(ans[0])
+        up = left = 0
+        right = columns - 1
+        down = rows - 1
+        
+        while ptr < n*n + 1:
+            # Traverse from left to right.
+            for col in range(left, right + 1):
+                ans[up][col] = ptr
+                ptr += 1
+                
+
+            # Traverse downwards.
+            for row in range(up + 1, down + 1):
+                ans[row][right] = ptr
+                ptr += 1
+
+            # Make sure we are now on a different row.
+            if up != down:
+                # Traverse from right to left.
+                for col in range(right - 1, left - 1, -1):
+                    ans[down][col] = ptr
+                    ptr += 1
+
+            # Make sure we are now on a different column.
+            if left != right:
+                # Traverse upwards.
+                for row in range(down - 1, up, -1):
+                    ans[row][left] = ptr
+                    ptr += 1
+
+            left += 1
+            right -= 1
+            up += 1
+            down -= 1
+        
+        return ans
+    
+#the boundary conditions freaking suck
+class Solution:
+    def generateMatrix(self, n: int) -> List[List[int]]:
+        '''
+        traverse in layers. how many layers are there for a given n?
+        n = 1, layer = 1
+        n = 2, layer = 1
+        n = 3, layer = 2
+        n = 4, layer = 2
+        n = 5, layer = 3
+        n = 6, layer = 3
+        
+        layers = (n + 1) // 2 
+        for n in range(1,7):
+            print(n,(n+1)//2)
+            
+        Direction 1: From top left corner to top right corner.
+            row remains constant as layer and column in [layer,n-layer-1]
+        
+        Direction 2: From top right corner to the bottom right corner.
+            col remains as n - layer - 1 and row moves [layer+1,n-layer]
+        
+        Direction 3: From bottom right corner to bottom left corner.
+            row remains as n-layer-1 and col moves [n-layer-2,layer]
+            
+        Direction 4: From bottom left corner to top left corner.
+            col remains as layer and column decrements [n-layer-2,layer+1]
+        '''
+        matrix = [[0]*n for _ in range(n)]
+        curr_num = 1
+        for layer in range(0,(n+1)//2,1):
+            #direction 1
+            for col in range(layer,n-layer):
+                matrix[layer][col] = curr_num
+                curr_num += 1
+            
+            #direction 2
+            for row in range(layer+1,n-layer):
+                matrix[row][n-layer-1] = curr_num
+                curr_num += 1
+                
+            #direction 3
+            for col in range(n-layer-2,layer-1,-1):
+                matrix[n-layer-1][col] = curr_num
+                curr_num += 1
+                
+            #direction 4
+            for row in range(n-layer-2,layer,-1):
+                matrix[row][layer] = curr_num
+                curr_num += 1
+        
+        for r in matrix:
+            print(r)
+        
+        return matrix
+
+###################################
+# 486. Predict the Winner
+# 09MAY23
+###################################
+#yessssss!! holy shit ballz! 
+#game theory is cool!
+#dont ever forget the negation of winning on the opposite turn in line 966
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        '''
+        similar to can i win, state space exploration using recursion
+        if player one can win this state
+        game ends when there are no more elements in the array
+        if there are no more elements in the array
+        player 1 wins if player1_score >= player2_score
+        
+        try brute force, keep two pointers at the ends left and right, then shrink them keeping track of scores
+        memo along the way
+        
+        '''
+        memo = {}
+        
+        def dp(left,right,curr_turn,p1_score,p2_score): #left and right will be 0 and len(nums) - 1
+            #pointer cross over
+            if left > right:
+                return p1_score >= p2_score
+            
+            if (left,right,curr_turn,p1_score,p2_score) in memo:
+                return memo[(left,right,curr_turn,p1_score,p2_score)]
+            
+            #p1 turn, can win from this state by either taking left or taking right
+            if curr_turn == 1:
+                #try both
+                take_left = dp(left+1,right,2,p1_score + nums[left],p2_score)
+                take_right = dp(left,right-1,2,p1_score + nums[right],p2_score)
+                #can win from here
+                if take_left or take_right:
+                    ans = True
+                else:
+                    ans = False
+                memo[(left,right,curr_turn,p1_score,p2_score) ] = ans
+                return ans
+            
+            #p2 turn else, if player 2 wins on this turn by taking left or right, player 1 will always win on the next turn
+            else:
+                take_left = dp(left+1,right,1,p1_score,p2_score + nums[left])
+                take_right = dp(left,right-1,1,p1_score,p2_score + nums[right])
+                if take_left and take_right:
+                    ans = True
+                else:
+                    ans = False
+                
+                memo[(left,right,curr_turn,p1_score,p2_score)] = ans
+                return ans
+            
+            
+        return dp(0,len(nums)-1,1,0,0)
+    
+#offical LC solution
