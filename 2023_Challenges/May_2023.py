@@ -937,6 +937,7 @@ class Solution:
         for i in range(m):
             for j in range(n):
                 if mat1[i][j] != 0:
+                    #distribute over rows in the output
                     for k in range(r):
                         ans[i][k] += mat1[i][j]*mat2[j][k]
 
@@ -978,6 +979,9 @@ class Solution:
                     ans[mat1_row][mat2_col] += element_1*element_2
         
         return ans
+    
+#sparse row and sparse col
+
 
 #############################################
 # 59. Spiral Matrix II
@@ -1194,3 +1198,85 @@ class Solution:
         return dp(0,len(nums)-1,1,0,0)
     
 #offical LC solution
+
+#############################################
+# 1035. Uncrossed Lines (REVISTED)
+# 11MAY23
+############################################
+class Solution:
+    def maxUncrossedLines(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we can draw lines from nums1[i] to nums2[j] only iff they are == and we are not intersecting another line
+        return max number of connecting lines this way
+        dp(i,j) gives the max number number of uncrosssed lines using nums1[i:] and nums2[j:]
+        
+        if i >= len(nums1) or j >= len(nums2):
+            return 0
+        
+        we want the answer to dp(0,0)
+        if nums1[i] == nums2[j]:
+            #we can add to the maximum
+            1 + dp(i+1,j+1)
+        else:
+            #we have to carry over the maximum
+            max(dp(i+1,j),dp(i,j+1))
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            if i >= len(nums1) or j >= len(nums2):
+                return 0
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if nums1[i] == nums2[j]:
+                ans = 1 + dp(i+1,j+1)
+                memo[(i,j)] = ans
+                return ans
+            else:
+                ans = max(dp(i+1,j),dp(i,j+1))
+                memo[(i,j)] = ans
+                return ans
+        
+        return dp(0,0)
+        
+#bottom up
+class Solution:
+    def maxUncrossedLines(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        bottom up
+        '''
+        dp = [[0]*(len(nums2)+1) for _ in range(len(nums1)+1)]
+        
+        for i in range(len(nums1)-1,-1,-1):
+            for j in range(len(nums2)-1,-1,-1):
+                if nums1[i] == nums2[j]:
+                    ans = 1 + dp[i+1][j+1]
+                    dp[i][j] = ans
+                else:
+                    ans = max(dp[i+1][j],dp[i][j+1])
+                    dp[i][j] = ans
+        
+        return dp[0][0]
+
+#bottom up space save
+class Solution:
+    def maxUncrossedLines(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        bottom up
+        we only need top and bottom rows at any one times
+        '''
+        dp = [[0]*(len(nums2)+1) for _ in range(2)]
+        
+        for i in range(len(nums1)-1,-1,-1):
+            for j in range(len(nums2)-1,-1,-1):
+                if nums1[i] == nums2[j]:
+                    ans = 1 + dp[1][j+1]
+                    dp[0][j] = ans
+                else:
+                    ans = max(dp[1][j],dp[0][j+1])
+                    dp[0][j] = ans
+            
+            #swap rows
+            dp[1] = dp[0][:]
+        return dp[0][0]
