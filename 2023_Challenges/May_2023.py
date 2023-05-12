@@ -1280,3 +1280,69 @@ class Solution:
             #swap rows
             dp[1] = dp[0][:]
         return dp[0][0]
+    
+####################################
+# 908. Smallest Range I
+# 11MAY23
+#####################################
+#fuck me
+class Solution:
+    def smallestRangeI(self, nums: List[int], k: int) -> int:
+        '''
+        lots of dislikes on this problem
+        i can change any number, nums[i] to num[i] + x
+        where x in in the range [-k,k]
+        i can do this operation at most once for each index i
+        
+        score is defined as the diff between max and min elements
+        
+        to minimze the score, we want to maximize the min and minimuze the max
+        [1,3,6] k = 3
+        [-2,4],[0,6],[3,9]
+        but i can only choose 1 in each of the ranges
+        
+        if i can send all the numbers to the same number, the answer if zero
+        what if added the numbers new array?
+        '''
+        #easy case, size 1, return 0
+        if len(nums) == 1:
+            return 0
+        
+        smallest = min(nums)
+        largest = max(nums)
+        
+        score = float('inf')
+        
+        for num in nums:
+            #shift as far as we can
+            upshift = num + k
+            downshift = num - k
+            
+            smallest = min(smallest,upshift,downshift)
+            largest = max(largest,upshift,downshift)
+            
+            score = min(score,largest-smallest)
+        
+        return score
+    
+class Solution:
+    def smallestRangeI(self, nums: List[int], k: int) -> int:
+        '''
+        If min(A) + K < max(A) - K, then return max(A) - min(A) - 2 * K
+        If min(A) + K >= max(A) - K, then return 0
+        
+        idea, if we raise the smallest number, in nums, i.e min(nums) + K and it can be greater than max(nums) - K
+        then any number larger than min nums can also be brought to any number in the range [max(nums)-k,max_nums]
+        so we strive to make all nums in this range
+        if we cant, then we need to try our best to minimze the score, the only way to do that would be to raise the min as far as we can
+        and bring down the max as far as we can
+        [ max(nums) - k ] - [ min(nums) + k ]
+        
+        max(nums) - min(nums) - k - k
+        '''
+        
+        if min(nums) + k >= max(nums) - k:
+            return 0
+        
+        else:
+            return max(nums) - min(nums) - k - k
