@@ -1281,6 +1281,8 @@ class Solution:
     
 #offical LC solution
 
+
+
 #############################################
 # 1035. Uncrossed Lines (REVISTED)
 # 11MAY23
@@ -1428,3 +1430,55 @@ class Solution:
         
         else:
             return max(nums) - min(nums) - k - k
+        
+#############################################
+# 2140. Solving Questions With Brainpower
+# 12MAY23
+############################################
+class Solution:
+    def mostPoints(self, questions: List[List[int]]) -> int:
+        '''
+        0-1 knapsack
+        must go in order of left to right for questions[i]
+        i can choose to solve question[i] and earn questions[i][0] points
+        but i have to skip questions[i+j] for j in range(i +questions[i][1])
+        
+        let dp(i) be the max points i can get starting from questions i
+        '''
+        
+        memo = {}
+        
+        def dp(i):
+            if i >= len(questions):
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            #answer question
+            answer = questions[i][0] + dp(i+questions[i][1]+1) #careful with the index bounds here!
+            dont_answer = dp(i+1)
+            ans = max(answer,dont_answer)
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+    
+#bottom up, boundary conditions suckkkk
+class Solution:
+    def mostPoints(self, questions: List[List[int]]) -> int:
+        '''
+        bottom up, the only part is trying to access the last spot
+        in cases where the skips can be very larger
+        precompute skipped
+        '''
+        N = len(questions)
+        dp = [0]*(N+1)
+        
+        for i in range(N-1,-1,-1):
+            skipped = 0 if (i + questions[i][1] + 1) >= N  else dp[i+questions[i][1] + 1]
+            answer = questions[i][0] + skipped
+            dont_answer = dp[i+1]
+            ans = max(answer,dont_answer)
+            dp[i] = ans
+        
+        return dp[0]
