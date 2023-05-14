@@ -1482,3 +1482,87 @@ class Solution:
             dp[i] = ans
         
         return dp[0]
+
+#########################################
+# 2466. Count Ways To Build Good Strings
+# 13MAY23
+#########################################
+#brute force, TLE
+class Solution:
+    def countGoodStrings(self, low: int, high: int, zero: int, one: int) -> int:
+        '''
+        zero is the number of times we can add a zero to the string
+        one is the number of times we can a one to the string
+        a good string s:
+            low <= len(s) <= high
+        
+        give number of different strings that an be constructed
+        brute force:
+            keep track of string length then apply the operations
+        '''
+        self.num_ways = 0
+        
+        def rec(curr_length):
+            if curr_length > high:
+                return
+            if low <= curr_length <= high:
+                self.num_ways += 1
+                self.num_ways %= 10**9 + 7
+            rec(curr_length+zero)
+            rec(curr_length+one)
+        
+        rec(0)
+        return self.num_ways
+
+#top down
+class Solution:
+    def countGoodStrings(self, low: int, high: int, zero: int, one: int) -> int:
+        '''
+        now try memozing states
+        
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        def rec(curr_length):
+            if curr_length > high:
+                return 0
+            if curr_length in memo:
+                return memo[(curr_length)]
+            ans = 0
+            if low <= curr_length <= high:
+                ans += 1
+
+            try_zero = rec(curr_length+zero)
+            try_one = rec(curr_length+one)
+            ans += try_zero + try_one
+            memo[(curr_length)] = ans % mod
+            return ans % mod
+        
+        return rec(0) % mod
+    
+#bottom up, again be careful with the boundary check
+class Solution:
+    def countGoodStrings(self, low: int, high: int, zero: int, one: int) -> int:
+        '''
+        bottom up
+        curr_length cannot be more than heigh, just watch the boundary conditions
+        '''
+        
+        mod = 10**9 + 7
+        dp =[0]*(high + max(one,zero)+1)
+        
+        #start from curr_length == high
+        for curr_length in range(high,-1,-1):
+            ans = 0
+            if low <= curr_length <= high:
+                ans += 1
+            
+            try_zero = dp[curr_length+zero]
+            try_one = dp[curr_length+one]
+            ans += try_zero + try_one
+            dp[curr_length] = ans % mod
+            
+        return dp[0] % mod
+
+    
