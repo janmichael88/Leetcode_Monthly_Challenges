@@ -1565,4 +1565,273 @@ class Solution:
             
         return dp[0] % mod
 
+#########################################
+# 1799. Maximize Score After N Operations
+# 14MAY23
+#########################################
+#brute force TLE
+class Solution:
+    def maxScore(self, nums: List[int]) -> int:
+        '''
+        given nums array of length 2*n:
+        len(nums) = n
+        on the ith operation, we can choose two eleemnts (x,y)
+        increment score by i*gcd(x,y)
+        remove x and y from nums
+        
+        n is small, 1 <= n <= 7
+        len(nums) is always even, so we can always do an operation
+        
+        hint 1, find every way split array until n groups of n, brute force recursion is acceptable
+        keep track of curr_score and mask
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            else:
+                return gcd(y,x % y)
+            
+        
+        self.ans = 0
+        n = len(nums)//2
+        
+        def rec(op_number,nums_taken,taken):
+            #all are taken
+            if op_number == n:
+                curr_score = 0
+                curr_step = 1
+                for i in range(0,len(nums),2):
+                    curr_score += curr_step*gcd(nums_taken[i],nums_taken[i+1])
+                    curr_step += 1
+                
+                self.ans = max(self.ans,curr_score)
+                return
+            
+            for i in range(len(nums)):
+                for j in range(i+1,len(nums)):
+                    if taken[i] or taken[j]:
+                        continue
+                    
+                    #otherwise take
+                    taken[i] = True
+                    taken[j] = True
+                    nums_taken.append(nums[i])
+                    nums_taken.append(nums[j])
+                    rec(op_number+1,nums_taken,taken)
+                    #backtrack?
+                    taken[i] = False
+                    taken[j] = False
+                    nums_taken.pop()
+                    nums_taken.pop()
+        
+        rec(0,[],[False]*len(nums))
+        return self.ans
     
+#caching states, using arrays
+class Solution:
+    def maxScore(self, nums: List[int]) -> int:
+        '''
+        we can pass a mask of indices taken
+        base case is that we return 0 when we have no numbers to pick
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            else:
+                return gcd(y,x % y)
+            
+        memo = {}
+        n = len(nums) // 2
+        def dp(operations,taken):
+            if operations == n:
+                return 0
+            
+            if (operations,tuple(taken)) in memo:
+                return memo[(operations,tuple(taken))]
+            
+            #maximize this current state
+            max_score = 0
+            for i in range(len(nums)):
+                for j in range(i+1,len(nums)):
+                    #if we cant take a pair
+                    if taken[i] or taken[j]:
+                        continue
+                        
+                    #take them
+                    taken[i] = True
+                    taken[j] = True
+                    
+                    #get score
+                    curr_score = (operations+1)*gcd(nums[i],nums[j])
+                    max_score = max(max_score,curr_score + dp(operations+1,taken))
+                    taken[i] = False
+                    taken[j] = False
+                
+            
+            memo[(operations,tuple(taken))] = max_score
+            return max_score
+        
+        
+        taken = [False]*len(nums)
+        return dp(0,taken)
+    
+#if we use a bit mask, we don't need to untake it
+class Solution:
+    def maxScore(self, nums: List[int]) -> int:
+        '''
+        we can pass a mask of indices taken
+        base case is that we return 0 when we have no numbers to pick
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            else:
+                return gcd(y,x % y)
+            
+        memo = {}
+        n = len(nums) // 2
+        def dp(operations,taken):
+            if operations == n:
+                return 0
+            
+            if (operations,taken) in memo:
+                return memo[operations,taken]
+            
+            #maximize this current state
+            max_score = 0
+            for i in range(len(nums)):
+                for j in range(i+1,len(nums)):
+                    #if we cant take a pair
+                    if (taken >> i) & 1 == 1 or (taken >> j) & 1 == 1:
+                        continue
+                        
+                    #take them
+                    taken = taken | (1 << i)
+                    taken = taken | (1 << j)
+                    
+                    #get score
+                    curr_score = (operations+1)*gcd(nums[i],nums[j])
+                    max_score = max(max_score,curr_score + dp(operations+1,taken))
+                    
+                    #un take them
+                    taken = taken ^ (1 << i)
+                    taken = taken ^ (1 << j)
+                
+            
+            memo[(operations,taken)] = max_score
+            return max_score
+        
+        
+        taken = 0
+        return dp(0,taken)
+    
+#instead of untaking them just make a new mask
+class Solution:
+    def maxScore(self, nums: List[int]) -> int:
+        '''
+        we can pass a mask of indices taken
+        base case is that we return 0 when we have no numbers to pick
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            else:
+                return gcd(y,x % y)
+            
+        memo = {}
+        n = len(nums) // 2
+        def dp(operations,taken):
+            if operations == n:
+                return 0
+            
+            if taken in memo:
+                return memo[taken]
+            
+            #maximize this current state
+            max_score = 0
+            for i in range(len(nums)):
+                for j in range(i+1,len(nums)):
+                    #if we cant take a pair
+                    if (taken >> i) & 1 == 1 or (taken >> j) & 1 == 1:
+                        continue
+                        
+                    #take them
+                    new_taken = taken | (1 << i)
+                    new_taken = new_taken | (1 << j)
+                    
+                    #get score
+                    curr_score = (operations+1)*gcd(nums[i],nums[j])
+                    max_score = max(max_score,curr_score + dp(operations+1,new_taken))
+
+            
+            memo[taken] = max_score
+            return max_score
+        
+        
+        taken = 0
+        return dp(0,taken)
+    
+'''
+time complexity
+let m be the number of elements in nums, len(nums) == m == 2*n
+let A be the largest elements in numbs
+O(2^(2n)*(2n)^2 * log A)
+logA comes from the gcd function
+2^m calls in total for each mask (using memo)
+inner call is m^2 times logA
+
+space complexity = O(n + 2^(2n)) = O(4^n)
+
+
+'''
+#bottom up
+#careful about accessing only valid states in bottom up\
+class Solution:
+    def maxScore(self, nums: List[int]) -> int:
+        '''
+        we can pass a mask of indices taken
+        base case is that we return 0 when we have no numbers to pick
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            else:
+                return gcd(y,x % y)
+            
+        #brian kernighan trick
+        def count_ones(n):
+            count = 0
+            while n:
+                count += 1
+                n = n & (n-1)
+            return count
+            
+        
+        states = 1 << len(nums) # 2^(nums array size)
+
+        # 'dp[i]' stores max score we can get after picking remaining numbers represented by 'i'.
+        dp = [0] * states
+
+        # Iterate on all possible states one-by-one.
+        for state in range(states-1, -1, -1):
+
+            numbersTaken = count_ones(state)
+            pairsFormed = numbersTaken // 2
+            # States representing even numbers are taken are only valid.
+            if numbersTaken % 2:
+                continue
+
+            # We have picked 'pairsFormed' pairs, we try all combinations of one more pair now.
+            # We iterate on two numbers using two nested for loops.
+            for firstIndex in range(len(nums)):
+                for secondIndex in range(firstIndex + 1, len(nums)):
+                    # We only choose those numbers which were not already picked.
+                    if (state >> firstIndex & 1) == 1 or (state >> secondIndex & 1) == 1:
+                        continue
+                    currentScore = (pairsFormed + 1) * gcd(nums[firstIndex], nums[secondIndex])
+                    stateAfterPickingCurrPair = state | (1 << firstIndex) | (1 << secondIndex)
+                    remainingScore = dp[stateAfterPickingCurrPair]
+                    dp[state] = max(dp[state], currentScore + remainingScore)
+
+        # Returning score we get from 'n' remaining numbers of array.
+        return dp[0]
