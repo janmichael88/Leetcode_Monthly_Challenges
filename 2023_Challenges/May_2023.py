@@ -1835,3 +1835,64 @@ class Solution:
 
         # Returning score we get from 'n' remaining numbers of array.
         return dp[0]
+
+####################################
+# 513. Find Bottom Left Tree Value
+# 15MAY23
+#####################################
+#bfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findBottomLeftValue(self, root: Optional[TreeNode]) -> int:
+        '''
+        bfs and if there is a row, replace the first element with with the current left
+        '''
+        curr_left = -1
+        q = deque([root])
+        
+        while q:
+            N = len(q)
+            for i in range(N):
+                curr = q.popleft()
+                if i == 0:
+                    curr_left = curr.val
+                if curr.left:
+                    q.append(curr.left)
+                if curr.right:
+                    q.append(curr.right)
+        
+        return curr_left
+
+#dfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findBottomLeftValue(self, root: Optional[TreeNode]) -> int:
+        '''
+        just use bfs keeping track of the depth, in dfs, when we go to a new depth, it must have been the left most
+        on this depth 
+        update answe as well as max depth
+        '''
+        self.ans = root.val
+        self.max_depth = 0
+        
+        def dfs(node,curr_depth):
+            if not node:
+                return
+            if curr_depth > self.max_depth:
+                self.ans = node.val
+                self.max_depth = curr_depth
+            
+            dfs(node.left,curr_depth+1)
+            dfs(node.right,curr_depth+1)
+        
+        dfs(root,0)
