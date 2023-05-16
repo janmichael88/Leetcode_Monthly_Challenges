@@ -1896,3 +1896,70 @@ class Solution:
             dfs(node.right,curr_depth+1)
         
         dfs(root,0)
+
+###########################################
+# 515. Find Largest Value in Each Tree Row
+# 15MAY23
+##########################################
+#bfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def largestValues(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        bfs and just take max on each row
+        '''
+        if not root:
+            return []
+        ans =  []
+        
+        q = deque([root])
+        
+        while q:
+            curr_max = float('-inf')
+            N = len(q)
+            for _ in range(N):
+                curr = q.popleft()
+                curr_max = max(curr_max,curr.val)
+                if curr.left:
+                    q.append(curr.left)
+                if curr.right:
+                    q.append(curr.right)
+            
+            
+            ans.append(curr_max)
+        
+        return ans
+            
+#dfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def largestValues(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        dfs, again when accessing a new depth, this msut have been the first time we were there, so make a new entry
+        add entry
+        '''
+        if not root:
+            return []
+        ans = [root.val]
+        
+        def dfs(node,curr_depth):
+            if not node:
+                return
+            if curr_depth == len(ans):
+                ans.append(node.val)
+            ans[curr_depth] = max(node.val,ans[curr_depth])
+            dfs(node.left,curr_depth + 1)
+            dfs(node.right,curr_depth + 1)
+        
+        dfs(root, 0)
+        return ans
