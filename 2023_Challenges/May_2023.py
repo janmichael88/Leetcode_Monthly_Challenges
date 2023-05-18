@@ -1345,7 +1345,63 @@ class Solution:
         
         return dp[0][n-1] >= 0
     
-#solving directly
+#solving directly top down
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        '''
+        for player 1, with choosbale (left,right)
+        1. if player picks nums[left],second player can pick from nums[left+1,right]
+            if second player picks nums[left+1], player 1 on the next turn can get nums[left+2,right]
+            if second picks nums[right], player1 on the enxt turn can choose from nums[left+1,right-1]
+            since second plays to maximize score, 1 is left to choose
+                nums[left] + min(dp(left+2,right), dp(left+1,right-1))
+            
+                
+        2. is just the reverse if player picks for the right
+        we only look ahead to the next move for plaeyaer 1
+        '''
+        memo = {}
+        
+        def dp(left,right):
+            if left > right:
+                return 0
+            
+            if (left,right) in memo:
+                return memo[(left,right)]
+            
+            choose_left = nums[left] + min(dp(left+2,right),dp(left+1,right-1))
+            choose_right = nums[right] + min(dp(left,right-2),dp(left+1,right-1))
+            
+            ans = max(choose_left,choose_right)
+            memo[(left,right)] = ans
+            return ans
+        
+        total_score = sum(nums)
+        player1_score = dp(0,len(nums)-1)
+        
+        return player1_score >= total_score - player1_score
+    
+#bottom up
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        '''
+        bottom up
+        '''
+        total_score = sum(nums)
+        n = len(nums)
+        
+        dp = [[0]*(n+2) for _ in range(n+2)]
+        for gap in range(n):
+            for left in range(n-gap):
+                right = left + gap
+                
+                choose_left = nums[left] + min(dp[left+2][right],dp[left+1][right-1])
+                choose_right = nums[right] + min(dp[left][right-2],dp[left+1][right-1])
+                ans = max(choose_left,choose_right)
+                dp[left][right] = ans
+        
+        p1_score = dp[0][len(nums)-1]
+        return p1_score >= total_score - p1_score
 
 
 #############################################
