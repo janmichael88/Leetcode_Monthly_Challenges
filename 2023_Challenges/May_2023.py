@@ -1280,7 +1280,72 @@ class Solution:
         return dp(0,len(nums)-1,1,0,0)
     
 #offical LC solution
+#top down
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        '''
+        solving indirectly
+        the problem isn't asking for what the final scores will be, but only if player 1 will have a score >= player 2
+        so we insteaf focus on the score difference and as along a player1 >= player2, player1 wins
+        
+        dp(left,right) returns the the maximum score difference usings nums[left;right] >= 0
+        if we want to find the differencce in scores by taking nums[left]
+        it would be nums[left] - dp(left+1,right)
+        similar for right it would be nums[right] - dp(left,right-1)
+        then we take the max of these two
+        
+        and we want to to ensure that dp(left,right) >= 0
+        
+        dp is the max score difference for the current player, is the firstt call dp(0,len(nums)-1) is from player1
+        but when we advance dp(left+1,right) or dp(left,righ-1) it will be from the persepctive of the opposite player
+        to get the difference for player 1, we take nums[left] or nums[right], then find the the differnce on the smaller subproblem
+        we then maximize the choices
+        '''
+        memo = {}
+        
+        def dp(left,right):
+            if left == right:
+                return nums[left]
+            if (left,right) in memo:
+                return memo[(left,right)]
+            take_left = nums[left] - dp(left+1,right)
+            take_right = nums[right] - dp(left,right-1)
+            ans = max(take_left,take_right)
+            memo[(left,right)] = ans
+            return ans
+        
+        return dp(0,len(nums)-1) >= 0
+    
 
+#bottom up
+class Solution:
+    def PredictTheWinner(self, nums: List[int]) -> bool:
+        '''
+        bottom up
+        '''
+        
+        n = len(nums)
+        dp = [[0]*(n+1) for _ in range(n+1)]
+        
+        #base cases
+        for left in range(n):
+            for right in range(n):
+                if left == right:
+                    dp[left][right] = nums[left]
+                    
+        #we need to start to try all allowable [left,right] boundaries
+        #gaps between left and right essentiall
+        for gap in range(1,n):
+            for left in range(n-gap):
+                right = left + gap
+                take_left = nums[left] - dp[left+1][right]
+                take_right = nums[right] - dp[left][right-1]
+                ans = max(take_left,take_right)
+                dp[left][right] = ans
+        
+        return dp[0][n-1] >= 0
+    
+#solving directly
 
 
 #############################################
@@ -1963,3 +2028,218 @@ class Solution:
         
         dfs(root, 0)
         return ans
+
+#######################################
+# 265. Paint House II (REVISTED)
+# 16MAY23
+#######################################
+#top down O(N*k*k)
+class Solution:
+    def minCostII(self, costs: List[List[int]]) -> int:
+        '''
+        let dp(i,color) be the answer to painting the all houses up to i, ending with color c
+        if i go to the next house i+ 1, i need to make sure its the opposite color and take the minimum
+        '''
+        n = len(costs)
+        k = len(costs[0])
+        
+        memo = {}
+        
+        def dp(i,c):
+            if i >= n:
+                return 0
+            if (i,c) in memo:
+                return memo[(i,c)]
+            
+            ans = float('inf')
+            for next_color in range(k):
+                if next_color == c:
+                    continue
+                ans = min(ans,dp(i+1,next_color))
+            
+            ans += costs[i][c]
+            memo[(i,c)] = ans
+            return ans
+        
+        ans = float('inf')
+        for c in range(k):
+            ans = min(ans,dp(0,c))
+        
+        return ans
+    
+#bottom up O(N*k*k)
+#using (N*k) space
+class Solution:
+    def minCostII(self, costs: List[List[int]]) -> int:
+        '''
+        bottom up, using n*k space
+        '''
+        n = len(costs)
+        k = len(costs[0])
+        
+        dp = [[0]*k for _ in range(n+1)]
+        
+        for i in range(n-1,-1,-1):
+            for color in range(k):
+                ans = float('inf')
+                for next_color in range(k):
+                    if next_color == color:
+                        continue
+                    ans = min(ans,dp[i+1][next_color])
+
+                ans += costs[i][color]
+                dp[i][color] = ans
+                
+                
+        ans = float('inf')
+        for c in range(k):
+            ans = min(ans,dp[0][c])
+        
+        return ans
+
+#bottom up using k space
+class Solution:
+    def minCostII(self, costs: List[List[int]]) -> int:
+        '''
+        bottom up, using k space
+        just allocate 2 rows and swap
+        '''
+        n = len(costs)
+        k = len(costs[0])
+        
+        dp = [[0]*k for _ in range(2)]
+        
+        for i in range(n-1,-1,-1):
+            for color in range(k):
+                ans = float('inf')
+                for next_color in range(k):
+                    if next_color == color:
+                        continue
+                    ans = min(ans,dp[1][next_color])
+
+                ans += costs[i][color]
+                dp[0][color] = ans
+            
+            #swap
+            dp[1] = dp[0][:]
+                
+                
+        ans = float('inf')
+        for c in range(k):
+            ans = min(ans,dp[0][c])
+        
+        return ans
+
+#constant space, we just overwrite the input space
+class Solution:
+    def minCostII(self, costs: List[List[int]]) -> int:
+        '''
+        bottom up, using k space
+        just allocate 2 rows and swap
+        '''
+        n = len(costs)
+        k = len(costs[0])
+        
+        for i in range(n-2,-1,-1):
+            for color in range(k):
+                ans = float('inf')
+                for next_color in range(k):
+                    if next_color == color:
+                        continue
+                    ans = min(ans,costs[i+1][next_color])
+
+                ans += costs[i][color]
+                costs[i][color] = ans
+
+        ans = float('inf')
+        for c in range(k):
+            ans = min(ans,costs[0][c])
+        
+        return ans
+    
+#the actual hard part of the problem is reducine it to O(Nk)
+
+#############################################
+# 2130. Maximum Twin Sum of a Linked List
+# 17MAY23
+############################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def pairSum(self, head: Optional[ListNode]) -> int:
+        '''
+        if i had the array, then just find the max twin sum for all (i,n-1-i) pairs
+        '''
+        nums = []
+        curr = head
+        
+        while curr:
+            nums.append(curr.val)
+            curr = curr.next
+        
+        ans = 0
+        n = len(nums)
+        for i in range(n//2):
+            ans = max(ans,nums[i]+nums[n-1-i])
+        
+        return ans
+    
+#without converting to array
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def pairSum(self, head: Optional[ListNode]) -> int:
+        '''
+        find middle,
+        reverse second half
+        two pointers starting head of first, and head of second
+        max out the pointer sums
+        '''
+        def reverse(node):
+            prev = None
+            curr = node
+            while curr:
+                next_node = curr.next
+                curr.next = prev
+                prev = curr
+                curr = next_node
+            
+            return prev
+        
+        def rec_reverse(node):
+            if not node or not node.next:
+                return node
+            #revsre the rest
+            temp = rec_reverse(node.next)
+            node.next.next = node
+            temp.next = None
+            return temp
+                
+        def get_middle(node):
+            slow = node
+            fast = node
+            while fast and fast.next:
+                slow = slow.next
+                fast = fast.next.next
+            
+            return slow
+        
+        front = head
+        middle = get_middle(head)
+        #revese middle
+        rev_middle = reverse(middle)
+        ans = 0
+        
+        while rev_middle:
+            ans = max(ans, rev_middle.val + front.val)
+            rev_middle = rev_middle.next
+            front = front.next
+        
+        return ans
+    
