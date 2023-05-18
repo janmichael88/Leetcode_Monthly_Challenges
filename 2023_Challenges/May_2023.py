@@ -2327,3 +2327,106 @@ class Solution:
         
         return ans
     
+#######################################################
+# 1557. Minimum Number of Vertices to Reach All Nodes
+# 18MAY23
+####################################################
+class Solution:
+    def findSmallestSetOfVertices(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        we have a directed graph, we want to include the minimum vertices needed to touch all nodes
+        say we have the graph
+        a node that does not have any incoming edges, can only be reached by itself
+        any other node with incoming edges can be reched from some other node
+        count nodes with 0 incoing edges
+
+        if a node has an inward going edge to it, we don't need to include this node, because we could have reached it from another noder
+        if a node doesn't have an inward edge going into it, it means we can't reach it from another node
+        so we must include it in the min set!
+        '''
+
+        indirection = [0]*(n)
+        for u,v in edges:
+            indirection[v] += 1
+        
+        ans = []
+        for i in range(n):
+            if indirection[i] == 0:
+                ans.append(i)
+        
+        return ans
+    
+#other ways
+class Solution:
+    def findSmallestSetOfVertices(self, n: int, edges: List[List[int]]) -> List[int]:
+        #return set(range(n)) - set(v for _,v in edges)
+        return {e[0] for e in edges} - {e[1] for e in edges}
+
+#######################################
+# 914. X of a Kind in a Deck of Cards
+# 18MAY23
+######################################
+class Solution:
+    def hasGroupsSizeX(self, deck: List[int]) -> bool:
+        '''
+        if we have k groups, each group should have the same count
+        we can try every possible X in the [2,N+1]
+        if X can divide N evenly, then check that all counts can be evdenly divided by X
+        '''
+        counts = Counter(deck)
+        N = len(deck)
+        for X in range(2,N+1):
+            #if this X can divide
+            if N % X == 0:
+                if all([v % X == 0 for k,v in counts.items()]):
+                    return True
+        
+        return False
+    
+class Solution:
+    def hasGroupsSizeX(self, deck: List[int]) -> bool:
+        '''
+        say there are count_i for car i
+        all of these count_i must be dviisble for some X to work
+        i.e all count_i % X == 0 for all i
+        
+        so X must divide all count_i, this mean X must be the GCD of count_i
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            return gcd(y, x % y)
+        
+        
+        counts = Counter(deck)
+        #get all counts
+        counts = list(counts.values())
+        if len(counts) == 1:
+            return counts[0] >= 2
+        
+        first_gcd = gcd(counts[0],counts[1])
+        for i in range(2,len(counts)):
+            first_gcd = gcd(first_gcd,counts[i])
+            
+        return first_gcd >= 2
+    
+#using reduce function
+class Solution:
+    def hasGroupsSizeX(self, deck: List[int]) -> bool:
+        '''
+        say there are count_i for car i
+        all of these count_i must be dviisble for some X to work
+        i.e all count_i % X == 0 for all i
+        
+        so X must divide all count_i, this mean X must be the GCD of count_i
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            return gcd(y, x % y)
+        
+        
+        counts = Counter(deck)
+        #get all counts
+        counts = list(counts.values())
+    
