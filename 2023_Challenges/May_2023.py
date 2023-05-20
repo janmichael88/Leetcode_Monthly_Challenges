@@ -2429,4 +2429,68 @@ class Solution:
         counts = Counter(deck)
         #get all counts
         counts = list(counts.values())
+        return reduce(gcd,counts) >= 2
     
+#######################################################
+# 785. Is Graph Bipartite?
+# 19MAY23
+####################################################
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        '''
+        dfs typical two color
+        color a node blue if it is part of the firt set, else red
+        we should be able to greedily color the graph iff it is bipartitie
+        
+        '''
+        colors = {}
+        n = len(graph)
+        
+        def dfs(node,curr_color):
+            if node in colors:
+                if colors[node] == curr_color:
+                    return False
+                return True
+            
+            colors[node] = curr_color
+            for neigh in graph[node]:
+                colors[node] = curr_color ^ 1
+                if dfs(neigh,curr_color ^ 1) == False:
+                    return False
+                
+            return True
+        
+        for i in range(n):
+            if i not in colors:
+                if dfs(i,0) == False:
+                    return False
+        
+        return True
+    
+#stack, dfs
+class Solution:
+    def isBipartite(self, graph: List[List[int]]) -> bool:
+        '''
+        iterative
+        '''
+        colors = {}
+        N = len(graph)
+        
+        for i in range(N):
+            if i not in colors:
+                stack = [i]
+                colors[i] = 0
+                
+                while stack:
+                    node = stack.pop()
+                    for neigh in graph[node]:
+                        if neigh not in colors:
+                            colors[neigh] = colors[node] ^ 1
+                            stack.append(neigh)
+                        elif colors[neigh] == colors[node]:
+                            return False
+                        
+        
+        return True
+    
+
