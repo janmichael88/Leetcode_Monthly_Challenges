@@ -2492,5 +2492,280 @@ class Solution:
                         
         
         return True
+
+#########################################
+# 399. Evaluate Division (REVISTED)
+# 20MAY23
+##########################################
+#bfs
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        '''
+        this is just a graph problem
+        so really we have
+            a->b = values[i]
+            b->a = 1 / values[i]
+        
+        values cannot be 0, so no division by zero error
+        '''
+        graph = defaultdict(list)
+        for eq,val in zip(equations,values):
+            u = eq[0]
+            v = eq[1]
+            forwards = val
+            backwards = 1/val
+            graph[u].append((v,forwards))
+            graph[v].append((u,backwards))
+        
+        
+        def bfs(start,end):
+            
+            q = deque([(start,1.0)])
+            visited = set()
+            
+            while q:
+                curr,path = q.popleft()
+                if curr not in graph:
+                    return -1.0
+                if curr == end:
+                    return path
+                #mark
+                visited.add(curr)
+                for neigh,weight in graph[curr]:
+                    if neigh not in visited:
+                        q.append((neigh,path*weight))
+            
+            return -1.0
+        
+        array = []
+        for start,end in queries:
+            ans = bfs(start,end)
+            array.append(ans)
+        
+        return array
+
+#dfs, no backtracking
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        '''
+        this is just a graph problem
+        so really we have
+            a->b = values[i]
+            b->a = 1 / values[i]
+        
+        values cannot be 0, so no division by zero error
+        '''
+        graph = defaultdict(list)
+        for eq,val in zip(equations,values):
+            u = eq[0]
+            v = eq[1]
+            forwards = val
+            backwards = 1/val
+            graph[u].append((v,forwards))
+            graph[v].append((u,backwards))
+        
+        
+        def rec(start,end,path,seen):
+            if start == end:
+                return path
+            seen.add(start)
+            for neigh,weight in graph[start]:
+                if neigh not in seen:
+                    #first got the child answer
+                    child = rec(neigh,end,path*weight,seen)
+                    if child != -1.0:
+                        return child
+            
+            return -1.0
+        
+        array = []
+        for start,end in queries:
+            if start not in graph or end not in graph:
+                array.append(-1.0)
+            else:
+                seen = set()
+                array.append(rec(start,end,1,seen))
+
+#dfs with backtracking
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        '''
+        this is just a graph problem
+        so really we have
+            a->b = values[i]
+            b->a = 1 / values[i]
+        
+        values cannot be 0, so no division by zero error
+        '''
+        graph = defaultdict(list)
+        for eq,val in zip(equations,values):
+            u = eq[0]
+            v = eq[1]
+            forwards = val
+            backwards = 1/val
+            graph[u].append((v,forwards))
+            graph[v].append((u,backwards))
+        
+        
+        def rec(start,end,path,seen):
+            seen.add(start)
+            ret = -1.0
+            if start == end:
+                ret = path
+            else:
+                for neigh,weight in graph[start]:
+                    if neigh in seen:
+                        continue
+                    ret = rec(neigh,end,path*weight,seen)
+                    if ret != -1.0:
+                        break
+            #backtrack
+            seen.remove(start)
+            return ret
+        
+        array = []
+        for start,end in queries:
+            if start not in graph or end not in graph:
+                array.append(-1.0)
+            else:
+                seen = set()
+                array.append(rec(start,end,1,seen))
+        
+        return array
     
+#union find
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        '''
+        we can use union find for this, but we need to edit the canonical union find methids
+        we define key as -> (group_id,weight)
+        given two nodes, a and b, with entries (a_group_id,a_weight) and (b_group_id,b_weight)
+        we can just perform a_weight/b_weight to get the answer to the query
+        
+        if a_group_id == b_group_id, there is a path between them 
+        a_weight / b_weight, this is the answer to the query
+        
+        intially each nodes point to itslef with weight of 1, DUH!
+        for each equation we can do union operation, but also update the weights
+        the find operations, will update the weight if there is a path between
+        
+        union attaches group of dividend to the divsor, if they are not in the same group   
+        also, it udpates the weight of the dividens variable accordinlgy, so that the ration and divisor isr espected
+        
+        time complexity if log*
+        O(M⋅log ∗N),
+        let N be the number of input equations
+        let M be the number of queries
+        First we iterate through each input equations and invoke unions O(N*log_start(N))
+        i.e nubmber of times we iterate log for it to be equal to one
+        
+        well both union and find update the wieghts
+        '''
+        gid_weight = {}
+
+        def find(node_id):
+            #recall we initailize these parents pointeres to itself and weights to 1 in the constructor
+            if node_id not in gid_weight:
+                gid_weight[node_id] = (node_id, 1)
+            #this would be the actual find call
+            group_id, node_weight = gid_weight[node_id]
+            if group_id != node_id:
+                # found inconsistency, trigger chain update
+                new_group_id, group_weight = find(group_id)
+                gid_weight[node_id] = (new_group_id, node_weight * group_weight)
+            return gid_weight[node_id]
+
+        def union(dividend, divisor, value):
+            dividend_gid, dividend_weight = find(dividend)
+            divisor_gid, divisor_weight = find(divisor)
+            if dividend_gid != divisor_gid:
+                # merge the two groups together,
+                # by attaching the dividend group to the one of divisor
+                gid_weight[dividend_gid] = (divisor_gid, divisor_weight * value / dividend_weight)
+
+        # Step 1). build the union groups
+        for (dividend, divisor), value in zip(equations, values):
+            union(dividend, divisor, value)
+
+        results = []
+        # Step 2). run the evaluation, with "lazy" updates in find() function
+        for (dividend, divisor) in queries:
+            if dividend not in gid_weight or divisor not in gid_weight:
+                # case 1). at least one variable did not appear before
+                results.append(-1.0)
+            else:
+                dividend_gid, dividend_weight = find(dividend)
+                divisor_gid, divisor_weight = find(divisor)
+                if dividend_gid != divisor_gid:
+                    # case 2). the variables do not belong to the same chain/group
+                    results.append(-1.0)
+                else:
+                    # case 3). there is a chain/path between the variables
+                    results.append(dividend_weight / divisor_weight)
+        return results
+    
+#check this out https://leetcode.com/problems/evaluate-division/discuss/270993/Python-BFS-and-UF(detailed-explanation)
+#OO implementation
+#intution: dividend points to parent divisor
+'''
+root[x] is of the form (root[x],ratio), and if x == root(x), then ratio is 1
+find(x):
+    we have root[x] = (p,x/p) #if x==p, x/p == 1
+    p is the parent node x, and not necessariy the root (i.e the id of the group in typical Union Find)
+    but with path compression we update
+    we want find(p) to return
+        root[p] = (root(p),p/root(p))
+        root[x] should be updated to (root(x), x/root(x)) = (root(p), x/p * p/root(p)) = (root[p][0], root[x][1] * root[p][1])
+
+union(x,y)L
+     in equations processing, we make root(root(x)) = root(y) as mentiond previously. 
+     And for root[root(x)]'s ratio, as root(y) is root(x)'s new root, 
+     we update it to root(x)/root(y) = (x/y) * (y/root(y)) / (x/root(x)) = x/y * root[y][1] / root[x][1]. 
+     x/y is the provided equation outcome value.
+
+For union(x, y) in queries, we can just simply return x/y = (x/root(x)) / (y/root(y)) = root[x][1]/root[y][1].
+'''
+class UnionFind:
+
+    def __init__(self, size):
+        self.root = [0]*size
+        for i in range(size):
+            self.root[i] = (i, 1.0)
+
+    def find(self, x):
+        p, xr = self.root[x]
+        if x!=p:
+            r, pr = self.find(p)
+            self.root[x] = (r, pr*xr)
+        return self.root[x]
+
+    def union(self, x, y, ratio):
+        px, xr= self.find(x)
+        py, yr = self.find(y)
+        if not ratio:
+            return xr / yr if px==py else -1.0
+        if px!=py:
+            self.root[px] = (py, yr/xr*ratio)
+
+
+class Solution:
+    def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        variables = {}
+        count = 0
+        for a, b in equations:
+            if a not in variables:
+                variables[a]=count
+                count+=1
+            if b not in variables:
+                variables[b]=count
+                count+=1
+        n = len(variables)
+        uf = UnionFind(n)
+
+        for (a, b), v in zip(equations, values):
+            uf.union(variables[a], variables[b], v)
+
+        return [uf.union(variables[a], variables[b], 0) \
+                if (a in variables) and (b in variables) else -1 \
+                for a, b in queries ]
 
