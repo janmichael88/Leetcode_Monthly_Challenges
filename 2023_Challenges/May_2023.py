@@ -2769,3 +2769,314 @@ class Solution:
                 if (a in variables) and (b in variables) else -1 \
                 for a, b in queries ]
 
+######################
+# 934. Shortest Bridge
+# 21MAY23
+######################
+#TLE???
+#O(N^4)
+class Solution:
+    def shortestBridge(self, grid: List[List[int]]) -> int:
+        '''
+        given binary matrix of 0s and 1s there are exactly two islands
+        0 is water, 1 is land, return the smllest number of 0's i can flip to 1's to connect the islands
+        i.e find the shortest bridge
+        
+        first find the islands using bfs
+        then for each cell in island 1, use bfs to find the a cell in island 2
+        the answer is the minimum
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        island_1 = set()
+        island_2 = set()
+        seen = set()
+        first_found = False
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def find_island(x,y,seen,curr_island):
+            q = deque([(x,y)])
+            
+            while q:
+                curr_x,curr_y = q.popleft()
+                seen.add((curr_x,curr_y))
+                curr_island.add((curr_x,curr_y))
+                for dx,dy in dirrs:
+                    neigh_x = curr_x + dx
+                    neigh_y = curr_y + dy
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        if (neigh_x,neigh_y) not in seen and grid[neigh_x][neigh_y] == 1:
+                            q.append((neigh_x,neigh_y))
+                            
+        first_i = None
+        first_j = None
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    first_i = i
+                    first_j = j
+                    break
+        #do first island
+        find_island(first_i,first_j,seen,island_1)
+        #any other 1 belongs to second island
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1 and (i,j) not in island_1:
+                    island_2.add((i,j))
+        
+        ans = float('inf')
+        for cell_1 in island_1:
+            for cell_2 in island_2:
+                x1,y1 = cell_1
+                x2,y2 = cell_2
+                dist = abs(x1 - x2) + abs(y1 -y2)
+                ans = min(ans,dist)
+        
+        return ans - 1
+    
+#comparing manaht is O(N^4), after getting islands do bfs one more time to find the smalelst distance
+#uhhhh??
+class Solution:
+    def shortestBridge(self, grid: List[List[int]]) -> int:
+        '''
+        given binary matrix of 0s and 1s there are exactly two islands
+        0 is water, 1 is land, return the smllest number of 0's i can flip to 1's to connect the islands
+        i.e find the shortest bridge
+        
+        first find the islands using bfs
+        then for each cell in island 1, use bfs to find the a cell in island 2
+        the answer is the minimum
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        island_1 = set()
+        island_2 = set()
+        seen = set()
+        first_found = False
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def find_island(x,y,seen,curr_island):
+            q = deque([(x,y)])
+            
+            while q:
+                curr_x,curr_y = q.popleft()
+                seen.add((curr_x,curr_y))
+                curr_island.add((curr_x,curr_y))
+                for dx,dy in dirrs:
+                    neigh_x = curr_x + dx
+                    neigh_y = curr_y + dy
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        if (neigh_x,neigh_y) not in seen and grid[neigh_x][neigh_y] == 1:
+                            q.append((neigh_x,neigh_y))
+                            
+        first_i = None
+        first_j = None
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    first_i = i
+                    first_j = j
+                    break
+        #do first island
+        find_island(first_i,first_j,seen,island_1)
+        #any other 1 belongs to second island
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1 and (i,j) not in island_1:
+                    island_2.add((i,j))
+        
+        #q up from island 1
+        q = deque([])
+        for i,j in island_1:
+            q.append((i,j,0))
+        
+        while q:
+            curr_x,curr_y,dist = q.popleft()
+            if (curr_x,curr_y) in island_2:
+                return dist - 1
+            for dx,dy in dirrs:
+                neigh_x = curr_x + dx
+                neigh_y = curr_y + dy
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    if (neigh_x,neigh_y) not in seen:
+                        seen.add((neigh_x,neigh_y))
+                        q.append((neigh_x,neigh_y,dist+1))
+
+    
+
+#######################################################
+# 2542. Maximum Subsequence Score
+# 24MAY23
+####################################################
+#bleaghhhh
+class Solution:
+    def maxScore(self, nums1: List[int], nums2: List[int], k: int) -> int:
+        '''
+        len(nums1) == len(nums2)
+        we want to choose a subsequence of k indicies from nums1
+        we need k indicies
+        we define score as:
+            let indices be an array of k indices
+            score = sum(nums1[i] for i in indices)*min(nums2[i] for i indinces)
+        
+        there are two ways to maximize score
+            1. maximize the sum
+            2. maximize the minimum
+            
+        all nums are positive, so it only makes sense to keep including numbers in the subsequcne of nums1 
+        we need to somehow sort
+        hint2, try sorting the two arrays based on the second array
+        hint3, loop through nums2 and compute the max product given the min is nums2[i]
+        '''
+        
+        #sort nums2
+        min_pairs = [(num,i) for i,num in enumerate(nums2)]
+        #sort increasinly
+        min_pairs.sort(key = lambda x: -x[0])
+        #sort nums1
+        nums1_sorted = []
+        for num,i in min_pairs:
+            nums1_sorted.append(nums1[i])
+        
+        ans = 0
+        curr_sum = 0
+        
+        for i,num in enumerate(nums1_sorted):
+            curr_sum += num
+            cand_ans = curr_sum*(min_pairs[i][0])
+            ans = max(ans,cand_ans)
+        
+        return ans
+    
+#heap
+class Solution:
+    def maxScore(self, nums1: List[int], nums2: List[int], k: int) -> int:
+        '''
+        note, that finding subsets of size k, is going to be in factorial time
+        if we pick nums2[i] as the the minimum, then it menas we are free to select the other k-1 elements froms nums1
+        in order to maximize the remaning score, we need to pick the next k-1 largest
+        we can change the relative ordering of nums1 wrt to nums2, but we are free to choose an subset of indice in nums1
+        it makes sense to store pairs as (nums1[i],nums2[i]) then sort decreasingly
+            we need to pair the numbers, why?
+            [1,2,3]
+            [7,8,9] sort decreasingly
+            
+            [9,8,7], but the top becomes
+            [3,2,1] (i.e we just want the indices to line up)
+        
+        if we fix the current minimum with nums2[i], after sorting
+        we can mizmie the total score by select the maximum k elements from nums1
+        this can be done by maintaing a min heap of size k that always contains the k largest
+        whenver we pick a new nums2[i] as the min we need to remove one element from theap
+            this represents removing a nums1 number and add nums[i] to it
+            no the heap contains the largest k element including nums1[i] again,
+            the current score == the sum of this heap times nums2[i]
+        
+        '''
+        #sort decreasingly on nums2 and pair with nums1
+        pairs = [(a,b) for a,b in zip(nums1,nums2)]
+        #sort decreasingly on nums2
+        pairs.sort(key = lambda x: -x[1])
+        
+        curr_top_k = [a for a,b in pairs[:k]]
+        heapq.heapify(curr_top_k)
+        curr_top_k_sum = sum(curr_top_k)
+        
+        #current ans
+        curr_min = pairs[k-1][1]
+        ans = curr_top_k_sum*curr_min
+        
+        for i in range(k,len(pairs)):
+            #updates
+            #remove smallest integer from previouis top k, and put it new one
+            curr_top_k_sum -= heapq.heappop(curr_top_k)
+            curr_top_k_sum += pairs[i][0]
+            #add back in
+            heapq.heappush(curr_top_k,pairs[i][0])
+            
+            #new potential answer
+            curr_min = pairs[i][1]
+            ans = max(ans,curr_top_k_sum*curr_min)
+        
+        return ans
+
+##################
+# 837. New 21 Game
+# 24MAY23
+##################
+#aye yai yai
+#nice try though
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        game:
+            alice starts with 0 points, and draws while she hass less than k points
+            during each draw, she gains an integer number of points randomly [1,maxPts] where maxPts is an integer
+            each draw is independent
+            alice stops drawing when she gets k or more points
+        
+        return probabilty that Alice has n or fewer points
+        for point in [1,maxPts]:
+            alice can get point with probability 1/(maxPts)
+        
+        we want probibilty that alice has <= n points
+        we want sum dp(i) to dp(n)
+        '''
+        memo = {}
+        
+        def dp(curr_points):
+            if curr_points == k:
+                return 1
+            if curr_points > k:
+                return 0
+            if curr_points in memo:
+                return memo[(curr_points)]
+            ans = 0
+            for next_point in range(1,maxPts+1):
+                curr_prob = (1/maxPts)*dp(curr_points+next_point)
+                ans += curr_prob
+            
+            memo[(curr_points)] = ans
+            return ans
+        
+    
+        
+        return 1 - dp(-1)
+
+#YESSS, but gets TLE
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        game:
+            alice starts with 0 points, and draws while she hass less than k points
+            during each draw, she gains an integer number of points randomly [1,maxPts] where maxPts is an integer
+            each draw is independent
+            alice stops drawing when she gets k or more points
+        
+        return probabilty that Alice has n or fewer points
+        for point in [1,maxPts]:
+            alice can get point with probability 1/(maxPts)
+        
+        we want probibilty that alice has <= n points
+        we want sum dp(i) to dp(n)
+        '''
+        memo = {}
+        
+        def dp(curr_points):
+            if curr_points > n:
+                return 0.0
+            if curr_points >= k:
+                return 1.0
+            if curr_points in memo:
+                return memo[(curr_points)]
+            ans = 0
+            for next_point in range(1,maxPts+1):
+                curr_prob = (1/maxPts)*dp(curr_points+next_point)
+                ans += curr_prob
+            
+            memo[(curr_points)] = ans
+            return ans
+        
+        return dp(0)
