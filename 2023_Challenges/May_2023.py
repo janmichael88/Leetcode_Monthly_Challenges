@@ -2905,6 +2905,56 @@ class Solution:
                         q.append((neigh_x,neigh_y,dist+1))
 
     
+#need to dfs/bfs for the first island
+#then try to reach the second island
+class Solution:
+    def shortestBridge(self, grid: List[List[int]]) -> int:
+        n = len(grid)
+        first_x, first_y = -1, -1
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        island_A = set()
+        # Find any land cell, and we treat it as a cell of island A.
+        for i in range(n):
+            for j in range(n):
+                if grid[i][j] == 1:
+                    first_x, first_y = i, j
+                    break
+        
+        # Recursively check the neighboring land cell of current cell grid[x][y] and add all
+        # land cells of island A to bfs_queue.
+        def dfs(x, y):
+            island_A.add((x,y))
+            bfs_queue.append((x, y))
+            for dx,dy in dirrs:
+                cur_x = x + dx
+                cur_y = y + dy
+                if 0 <= cur_x < n and 0 <= cur_y < n and grid[cur_x][cur_y] == 1 and (cur_x,cur_y) not in island_A:
+                    dfs(cur_x, cur_y)
+        
+        # Add all land cells of island A to bfs_queue.
+        bfs_queue = []
+        dfs(first_x, first_y)
+        
+        distance = 0
+        #try using the empty level curr level approach more often
+        while bfs_queue:
+            new_bfs = []
+            for x, y in bfs_queue:
+                for dx,dy in dirrs:
+                    cur_x = x + dx
+                    cur_y = y + dy
+                    if 0 <= cur_x < n and 0 <= cur_y < n and (cur_x,cur_y) not in island_A:
+                        if grid[cur_x][cur_y] == 1:
+                            return distance
+                        elif grid[cur_x][cur_y] == 0:
+                            new_bfs.append((cur_x, cur_y))
+                            island_A.add((cur_x,cur_y))
+
+            # Once we finish one round without finding land cells of island B, we will
+            # start the next round on all water cells that are 1 cell further away from
+            # island A and increment the distance by 1.
+            bfs_queue = new_bfs
+            distance += 1
 
 #######################################################
 # 2542. Maximum Subsequence Score
