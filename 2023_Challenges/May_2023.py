@@ -3130,3 +3130,96 @@ class Solution:
             return ans
         
         return dp(0)
+
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        instead of using the actual probabilties, just use sums and counts,
+        we can divide by maxPts laters
+        '''
+        memo = {}
+        
+        def dp(curr_points):
+            if curr_points > n:
+                return 0.0
+            if curr_points >= k:
+                return 1.0
+            if curr_points in memo:
+                return memo[(curr_points)]
+            ans = 0
+            for next_point in range(1,maxPts+1):
+                ans += dp(curr_points+next_point)
+            
+            ans /= maxPts
+            memo[(curr_points)] = ans
+            return ans
+        
+        return dp(0)
+    
+#now translate to bottom up, TLE
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        instead of using the actual probabilties, just use sums and counts,
+        we can divide by maxPts laters
+        '''
+        if k == 0 or n >= k-1+maxPts:
+            return 1.0
+        
+        dp = [0.0]*(n+maxPts+1)
+        
+        for curr_points in range(n,-1,-1):
+            #make sure to fill this part in
+            if curr_points >= k:
+                dp[curr_points] = 1.0
+            else:
+                ans = 0
+                for next_point in range(1,maxPts+1):
+                    ans += dp[curr_points + next_point]
+                
+                ans /= maxPts
+                dp[curr_points] = ans
+        
+        return dp[0]
+            
+#sliding window to get sums in the inner loop
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        instead of using the actual probabilties, just use sums and counts,
+        we can divide by maxPts laters
+        #check this out
+        https://leetcode.com/problems/new-21-game/discuss/3562375/Java-Solution-or-Memoization-greaterBottom-Up-greaterOptimization-or-3-step-optimization-for-acceptance-or-3-ms
+        #this too
+        https://leetcode.com/problems/new-21-game/discuss/3561172/C%2B%2B-oror-Bottom-Up-DP-oror-O(N)-oror-Beats-100
+        
+        
+        #keep track of curr_sum variable
+        and limits of summing window
+        
+        induction
+        dp(i) = (dp(i+1) + dp(i+2) + ... + dp(i+maxPts)) / maxPts
+        dp(i+1) = (dp(i+2) + dp(i+3) + ... + dp(i+maxPts+1)) / maxPts
+        
+        dp(i) - dp(i+1) = (dp(i+1) - dp(i+maxPts+1)) / maxPts
+        dp(i) = dp(i+1) + (dp(i+1) - dp(i+maxPts+1)) / maxPts
+        '''
+        if k == 0 or n >= k-1+maxPts:
+            return 1.0
+        
+        dp = [0.0]*(k+maxPts+1)
+        curr_sum = 0
+        
+        for curr_points in range(maxPts):
+            dp[k+curr_points] = (k + curr_points) <= n
+            curr_sum += dp[k+curr_points]
+        
+        #intial window at k
+        dp[k-1] = curr_sum/maxPts
+        #calculating other probabilites from k-2
+        for curr_points in range(k-2,-1,-1):
+            #using recurrence
+            ans = dp[curr_points + 1]  + (dp[curr_points + 1] - dp[curr_points + maxPts + 1]) / maxPts
+            dp[curr_points] = ans
+        
+        return dp[0]
