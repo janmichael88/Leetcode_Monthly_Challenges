@@ -3223,3 +3223,152 @@ class Solution:
             dp[curr_points] = ans
         
         return dp[0]
+    
+#####################################
+# 1140. Stone Game II
+# 26MAY23
+#####################################
+class Solution:
+    def stoneGameII(self, piles: List[int]) -> int:
+        '''
+        alice and bob switch turns with alice starting
+        M = 1, and an any move a player can take all thes stones in the frist X remaining piles
+        where 1 <= X <= 2M
+        then M becomes
+            M = max(M,X)
+        
+        dp(i,m) be the max stones alice can get for pciking from and we also need to keep track of current player
+        notes:
+            zero sum game, since all the number of stones in the piles is constant
+            alice must try to maxmize her score in the current state
+            and bob must try to minimize her score in the current state
+            
+        let  dp(p,i,m) be the number of stones that person p can get in the following state
+        this answer the question
+            max number of staones person p can get starting with stones[i:] and current m
+        assuming alice and bob play optimally
+        p = 0, when it is Alice's sturn
+        we want the answer to dp(0,0,1)
+        
+        base case, when i == len(piles), there are no stones to take,so return 0
+        when i < n, there is a tleast on pile in the game, the current player now choses a number x and takes all the stones from the x
+        (starting from the beginning) remaining piles
+        two inequalities must hold:
+            x <= 2m
+            x <= n - i (a aplyer cannot take more piles remaining the game)
+            x = min(2m,n-i)
+        when p = 0, it is Alice's move
+            she chooses a number x and takes piles[i] + pilts[i+1] + .... pils[i + x -1]
+            after that, the last n - (i+x) piles are remaining for bob to take
+            then it goes to p = 1 with m now being max(m,x)
+            so alice will gett dp(1,i+x,max(m,x)) after her move, plus the stones she got in her current move
+            she will take the max
+            
+        when p = 1, it is Bob's turn
+            bob can also take stones the same alice but we do not count them, because we defined the dp function as only for alice
+            so we just move the pointer i in stead
+            from bob's persepctive he minizmes the dp function
+            dp(0,i+x,max(m,x))
+        '''
+        n = len(piles)
+        memo = {}
+        
+        def dp(p,i,m):
+            if i == n:
+                return 0
+            if (p,i,m) in memo:
+                return memo[(p,i,m)]
+            res = float('-inf') if p == 0 else float('inf')
+            stone_sum = 0
+            for x in range(1,min(2*m,n-i)+1):
+                #take stones and try all
+                stone_sum += piles[i+x-1]
+                #recurse
+                if p == 0: #alice turn
+                    res = max(res, stone_sum + dp(1,i+x,max(x,m)))
+                else:
+                    res = min(res, dp(0,i+x, max(x,m)))
+        
+            memo[(p,i,m)] = res
+            return res
+        
+        
+        return dp(0,0,1)
+
+#keeping track of individual max scores
+class Solution:
+    def stoneGameII(self, piles: List[int]) -> int:
+        '''
+        instreaf of summing along the way, we can just use prefix sum array
+        and insteaf of trying to examine it from alice an bob's point of view, we just examine from alices
+        '''
+        if not piles:
+            return 0
+        #we want sums of form sum(piles[i:])
+        #so we need suffix sums
+        
+        suffixSum = [0] * len(piles)
+        suffixSum[-1] = piles[-1]
+        for i in range(len(piles) - 2, -1, -1):
+            suffixSum[i] = piles[i] + suffixSum[i + 1]
+            
+        
+        memo = {}
+        
+        def dp(i,m):
+            #no stones to take
+            if i == len(piles):
+                return 0
+            #from this i, we can go beyond the piles, just take all of them
+            if i + 2*m >= len(piles): 
+                return suffixSum[i]
+            
+            if (i,m) in memo:
+                return memo[(i,m)]
+            
+            ans = 0
+            for x in range(1,2*m + 1):
+                next_score = suffixSum[i] - dp(i+x,max(m,x))
+                ans = max(ans,next_score)
+            
+            memo[(i,m)] = ans
+            return ans
+        
+        return dp(0,1)
+    
+#bottom up
+class Solution:
+    def stoneGameII(self, piles: List[int]) -> int:
+        '''
+        bottom up
+        https://leetcode.com/problems/stone-game-ii/discuss/3563547/Image-Explanation-Recursion-Tree-Recursion-greaterMemo-greaterBottom-Up-%2B-Suffix-Sums-C%2B%2BJavaPython
+        '''
+        if not piles:
+            return 0
+        #we want sums of form sum(piles[i:])
+        #so we need suffix sums
+        
+        suffixSum = [0] * len(piles)
+        suffixSum[-1] = piles[-1]
+        for i in range(len(piles) - 2, -1, -1):
+            suffixSum[i] = piles[i] + suffixSum[i + 1]
+            
+        
+        n = len(piles)
+        dp = [[0]*(n+1) for _ in range(n+1)]
+        
+        
+        for i in range(n-1,-1,-1):
+            for m in range(1,n+1):
+                if (i+2*m >= n):
+                    dp[i][m] = suffixSum[i]
+                else:
+                    ans = 0
+                    for x in range(1,2*m + 1):
+                        next_score = suffixSum[i] - dp[i+x][max(m,x)]
+                        ans = max(ans,next_score)
+                    
+                    dp[i][m] = ans
+                    
+        
+        return dp[0][1]
