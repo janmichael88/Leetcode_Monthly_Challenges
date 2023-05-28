@@ -3372,3 +3372,158 @@ class Solution:
                     
         
         return dp[0][1]
+    
+################################
+# 1406. Stone Game III
+# 27MAY23
+################################
+class Solution:
+    def stoneGameIII(self, stoneValue: List[int]) -> str:
+        '''
+        hint 2 gives it away, just keep track of the score of the game,
+        Tie if 0, Alice if Poistive, Bob is negative
+        '''
+        memo = {}
+        n = len(stoneValue)
+        
+        def dp(p,i):
+            if i == n:
+                return 0
+            if (p,i) in memo:
+                return memo[(p,i)]
+            res = float('-inf') if p == 0 else float('inf')
+            stone_sum = 0
+            #we can onl take 1,2, or 3 from the beginning
+            for j in range(3):
+                if i + j < n:
+                    stone_sum += stoneValue[i+j]
+                    if p == 0:
+                        res = max(res,stone_sum + dp(1,i+j+1))
+                    else:
+                        res = min(res, dp(0,i+j+1))
+                        
+            memo[(p,i)] = res
+            return res
+        
+        
+        total_score = sum(stoneValue)
+        alice_max_score = dp(0,0)
+        bob_score = total_score - alice_max_score
+        
+        if alice_max_score == bob_score:
+            return "Tie"
+        elif alice_max_score > bob_score:
+            return "Alice"
+        else:
+            return "Bob"
+        
+class Solution:
+    def stoneGameIII(self, stoneValue: List[int]) -> str:
+        '''
+        we can use prefix sum to figure out the sum of piles
+        '''
+        memo = {}
+        n = len(stoneValue)
+        
+        pref_sum = [0]*(n+1)
+        for i in range(1,n+1):
+            pref_sum[i] = pref_sum[i-1] + stoneValue[i-1]
+        
+        
+        def dp(i,alice_turn):
+            if i >= n:
+                return 0
+            if (i,alice_turn) in memo:
+                return memo[(i,alice_turn)]
+            
+            if alice_turn:
+                ans = float('-inf')
+                for x in range(1,4):
+                    if i + x - 1 < n:
+                        #get sum using pref-sum
+                        stone_sum = pref_sum[i+x] - pref_sum[i]
+                        ans = max(ans, stone_sum + dp(i+x,False))
+                
+                memo[(i,alice_turn)] = ans
+                return ans
+            
+            else:
+                ans = float('inf')
+                for x in range(1,4):
+                    if i + x - 1 < n:
+                        ans  = min(ans,dp(i+x,True))
+                
+                memo[(i,alice_turn)] = ans
+                return ans
+            
+        
+        total_score = sum(stoneValue)
+        alice_max_score = dp(0,True)
+        bob_score = total_score - alice_max_score
+        
+        if alice_max_score == bob_score:
+            return "Tie"
+        elif alice_max_score > bob_score:
+            return "Alice"
+        else:
+            return "Bob"
+
+#solving directly
+#minimax with sign negation
+class Solution:
+    def stoneGameIII(self, stoneValue: List[int]) -> str:
+        '''
+        still zsero sum game, but we want to know the difference between the players scores
+        let dp(i) be the FIRST player's score minus the second player's score using stoneValues[i:]
+        we want to dp(0)
+        
+        the bast case, when i == n, there are no stones, so the difference us zero
+        
+        now when i < n, there is at least on stone in the game, call first player X and second player Y
+        dp(i) = score_x - score_y
+        if player X takes 1 stone, X's current score is stoneValue[i]
+        afer that the next state becomes dp(i+1), but their roles swap
+            X becomes Y and Y becomes X
+        why do we swap?
+            because we define dp(i) as the first player's move!
+            the first player now becomes the the player who's current move it is!
+        
+        originally dp(i) = score_x - score_y
+        dp(i+1) now becomes score_y - score_x
+         
+        so we are at i, and player X takes a stoneValue[i]
+        stoneValue[i] - dp(i+1), the minus flips the score
+        similariy if X takes two stones (with indices i and i + 1) the differnce (score_x - score_y) will be stoneValue[i] + stoneValue[i+1] - dp(i+2)
+        finallty the stones
+         stoneValue[i] + stoneValue[i+1] + stoneValie[i+2] - dp(i+3) 
+         
+        intution:
+            both players are trying to maximize their scores
+            because one player's gain is the other's loss, we need to subtract the next dp state
+            the next dp state represetns the other player's score and their gain is our loss
+        '''
+        n = len(stoneValue)
+        
+        memo = {}
+        
+        def dp(i):
+            if i == n:
+                return 0
+            if i in memo:
+                return memo[i]
+            #we can always take the stone we are at
+            ans = stoneValue[i] - dp(i+1)
+            if i + 2 <= n:
+                ans = max(ans,stoneValue[i] + stoneValue[i+1] - dp(i+2))
+            if i + 3 <= n:
+                ans = max(ans,stoneValue[i] + stoneValue[i+1] + stoneValue[i+2] - dp(i+3))
+
+            memo[i] = ans
+            return ans
+        
+        dif = dp(0)
+        if dif > 0:
+            return "Alice"
+        if dif < 0:
+            return "Bob"
+        return "Tie"
