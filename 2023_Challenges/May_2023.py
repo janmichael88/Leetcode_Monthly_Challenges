@@ -3527,3 +3527,291 @@ class Solution:
         if dif < 0:
             return "Bob"
         return "Tie"
+    
+###################################
+# 1547. Minimum Cost to Cut a Stick
+# 28MAY23
+###################################
+#nice try.....
+class Solution:
+    def minCost(self, n: int, cuts: List[int]) -> int:
+        '''
+        i am given a stick labeld 0 to n and a list of cuts
+        2 <= n <= 10^6
+        1 <= cuts.length <= min(n - 1, 100)
+        1 <= cuts[i] <= n - 1
+        
+        cuts length can only as large as 100
+        
+        example"
+        3 + 4 + 2 + 2 + 1 + 2 + 1 + 1
+        
+        with each cut, we split the stick, and the cost is the sum of the lenghts of the sticks in that cut
+        every cut, splits the stick into two sticks
+        
+        say we are examing a stick with endpoints i and j
+        and i make a cut k, somewhere between i and j
+        cost = (k-i) + (j-k) + some minimum of a previous state
+        
+        let dp(i,j) be the min cost to cut the stick using all cuts between i and j
+        so we want dp(0,n)
+        try all k cuts between an i and j
+        dp(i,j) = {
+        
+            for k in range(i,j):
+                dp(i,j) = min(dp(i,j), dp(i,k) + dp(k,j) + (j-i))
+        }
+        sort cuts increasingly
+        
+        
+        '''
+        cuts.sort()
+        memo = {}
+        taken = [False]*len(cuts)
+        def dp(i,j,taken):
+            if i >= j:
+                return 0
+            if (i,j,tuple(taken)) in memo:
+                return memo[(i,j,tuple(taken))]
+            
+            ans = float('inf')
+            #oh crap i can't do this becuase i'm reusing cuts....
+            for idx,k in enumerate(cuts):
+                if i < k < j and not taken[idx]:
+                    taken[idx] = True
+                    cost = (k-i) + (j-k)
+                    child_ans = cost + dp(i,k-1,taken) + dp(k+1,j,taken)
+                    ans = min(ans,child_ans)
+                    taken[idx] = False
+            print(ans)
+            memo[(i,j,tuple(taken))] = ans
+            return ans
+        
+        return dp(0,n,taken)
+    
+#dp
+class Solution:
+    def minCost(self, n: int, cuts: List[int]) -> int:
+        '''
+        https://leetcode.com/problems/minimum-cost-to-cut-a-stick/discuss/3573309/Python-(N2)-Solution-with-From-Recursive-to-Memoization
+        once a stick is cut we can eithr take cut values smaller or bigger, so sort the array
+        [1,3,4,5]
+        cut at 3
+        we are left with [1] [4,5]
+        we also want to keep track of the lower and upper bounds of the stick when we cut
+        '''
+        cuts.sort()
+        memo = {}
+        
+        def dp(lower,upper,cuts):
+            #no cuts, 
+            if len(cuts) == 0:
+                return 0
+            if (lower,upper) in memo:
+                return memo[(lower,upper)]
+            
+            ans = float('inf')
+            for k in range(len(cuts)):
+                left = dp(lower,cuts[k],cuts[:k])
+                right = dp(cuts[k],upper,cuts[k+1:])
+                ans = min(ans, left + right + (upper-lower))
+            
+            memo[(lower,upper)] = ans
+            return ans
+        
+        return dp(0,n,cuts)
+    
+
+class Solution:
+    def minCost(self, n: int, cuts: List[int]) -> int:
+        '''
+        instead of passing reference to cuts, just keep points into to cuts
+        '''
+        cuts.sort()
+        memo = {}
+        
+        def dp(lower,upper,i,j):
+            #no cuts, 
+            if i == j:
+                return 0
+            if (lower,upper) in memo:
+                return memo[(lower,upper)]
+            
+            ans = float('inf')
+            for k in range(i,j):
+                left = dp(lower,cuts[k],i,k)
+                right = dp(cuts[k],upper,k+1,j)
+                ans = min(ans, left + right + (upper-lower))
+            
+            memo[(lower,upper)] = ans
+            return ans
+        
+        return dp(0,n,0,len(cuts))
+    
+#official solutions
+class Solution:
+    def minCost(self, n: int, cuts: List[int]) -> int:
+        '''
+        if we select cuts[p1] we parition the initial stick into 2 peices with cost n
+        first piece is [0:p1] and [p1+1:n]
+        sizes are cuts[p1] for left piece and n-cuts[p1]
+        
+        define dp(left, right) as the minimum cost of cutting the stick with ends left and right
+        we add to cuts 0 and n and sort
+        the answer we want is dp(0,n)
+        where n is the length of the cuts array (after adding in 0 and n)
+        
+        base case
+            right - left = 1, return 0
+            we can't cut here so there is no cost to cutting
+            m will be the length of the new cuts array
+        
+        dp(0,m+1), no matter where we cut, will incuts cost equal to the length of the stick
+        which is new_cuts[m+1] - new_cuts[0]
+        
+        if we choose new_cuts[1] as the first cutting 
+            we have two fragments
+            [new_cuts[0]....new_cuts[1]] and [new_cuts[1]....new_cuts[m+1]]
+            so overall cost is dp(0,1) + dp(1,m+1) + new_cuts[m+1] - new_cuts[0] 
+                i.e the cost of cutting this peice
+        
+        if we choose new_cuts[2] we have
+            [new_cuts[0]....new_cuts[2]] and [new_cuts[2]....new_cuts[m+1]]
+            so overall cost is dp(0,2) + dp(2,m+1) + new_cuts[m+1] - new_cuts[0]
+            
+        so we need to try all cuts in the fragment of [new_cuts[1]...new_cuts[m+1]]
+        
+        if we choose new_cuts[2]
+            we end up with a cost of new_cuts[m + 1] - new_cuts[1] 
+            and two stick fragments [new_cuts[1], new_cuts[2]] and [new_cuts[2], new_cuts[m + 1]], 
+            thus the overall cost would be dp(1, 2) + dp(2, m + 1) + new_cuts[m + 1] - new_cuts[1]
+        
+        if we choose new_cuts[3]
+            we end up with a cost of new_cuts[m + 1] - new_cuts[1] 
+            and two stick fragments [new_cuts[1], new_cuts[3]] and [new_cuts[3], new_cuts[m + 1]], 
+            thus the overall cost would be cost(1, 3) + cost(3, m + 1) + new_cuts[m + 1] - new_cuts[1]
+        '''
+        memo = {}
+        cuts = [0] + sorted(cuts) + [n]
+        
+        def dp(left,right):
+            if right - left == 1:
+                return 0
+            if (left,right) in memo:
+                return memo[(left,right)]
+            
+            ans = float('inf')
+            for k in range(left+1,right):
+                left_cost = dp(left,k)
+                right_cost = dp(k,right)
+                curr_cost = cuts[right] - cuts[left]
+                ans = min(ans,curr_cost + left_cost + right_cost)
+            
+            memo[(left,right)] = ans
+            return ans
+        
+        return dp(0,len(cuts)-1)
+    
+#####################################
+# 348. Design Tic-Tac-Toe (REVISTED)
+# 30MAY23
+######################################
+class TicTacToe:
+
+    def __init__(self, n: int):
+        self.n = n
+        self.board = [[0]*n for _ in range(n)]
+        
+
+    def move(self, row: int, col: int, player: int) -> int:
+        #move is guarnteed to be valid, so make the move and check winners and rows, cols, or diags
+        self.board[row][col] = player
+        #check cols
+        in_cols = 0
+        for col in range(self.n):
+            all_same = 0
+            for row in range(self.n):
+                all_same += self.board[row][col] == player
+            
+            in_cols += all_same == self.n
+        
+        #check rows
+        in_rows = 0
+        for row in range(self.n):
+            all_same = 0
+            for col in range(self.n):
+                all_same += self.board[row][col] == player
+            in_rows += all_same == self.n
+        
+        #diags
+        in_diags = 0
+        for i in range(self.n):
+            for j in range(self.n):
+                if i == j:
+                    in_diags += self.board[i][j] == player
+        
+        #anti diags
+        in_anti_diags = 0
+        for i in range(self.n):
+            for j in range(self.n):
+                if i + j == self.n:
+                    in_anti_diags += self.board[i][j] == player
+        
+        if (in_cols > 0) or (in_rows > 0) or (in_diags == self.n) or (in_anti_diags == self.n):
+            return player
+        else:
+            return 0
+            
+############################################
+# 961. N-Repeated Element in Size 2N Array
+# 30MAY23
+#############################################
+class Solution:
+    def repeatedNTimes(self, nums: List[int]) -> int:
+        '''
+        let:
+            len(nums) == k
+            k = 2*n
+            
+            n is the number of unique elements
+            exactly one element of nums is repeated times
+        '''
+        counts = Counter(nums)
+        unique_elements = len(counts)
+        n = unique_elements - 1
+        #return element repeated n times
+        counts = Counter(nums)
+        for k,v in counts.items():
+            if v == n:
+                return k
+            
+class Solution:
+    def repeatedNTimes(self, nums: List[int]) -> int:
+        '''
+        nums contains n+1 unique elements
+        of these eleemnts, one is repeated n times
+        which means all the other elements must only be repeated one time!
+        return eleemnt who's count is > 1
+        
+        example
+            (n+1) unique elemenets, if i remove the element that is repeated n times, 
+            of these one element is repated n times
+            (n+1) - n = 1
+            but this one can be the count for the other n elements
+        '''
+        counts = Counter(nums)
+        for k,v in counts.items():
+            if v > 1:
+                return k
+
+class Solution:
+    def repeatedNTimes(self, nums: List[int]) -> int:
+        '''
+        intution, if there is a repeated element, it will happen at i and i+1 or i and i+2
+        '''
+        for i in range(len(nums)-2):
+            if nums[i] == nums[i+1] or nums[i] == nums[i+2]:
+                return nums[i]
+        
+        return nums[len(nums)-1]
+    
