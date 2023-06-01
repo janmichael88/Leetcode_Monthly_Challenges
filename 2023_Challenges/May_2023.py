@@ -3815,3 +3815,204 @@ class Solution:
         
         return nums[len(nums)-1]
     
+#################################
+# 965. Univalued Binary Tree
+# 30MAY23
+##################################
+#top down
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isUnivalTree(self, root: Optional[TreeNode]) -> bool:
+        
+        def dp(node):
+            if not node:
+                return True
+            left = dp(node.left)
+            right = dp(node.right)
+            if node.left:
+                left = left and (node.val == node.left.val)
+            if node.right:
+                right = right and (node.val == node.right.val)
+            
+            return left and right
+        
+        return dp(root)
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isUnivalTree(self, root: Optional[TreeNode]) -> bool:
+        #dfs, seen set of size 1
+        seen = set()
+        
+        def preorder(node):
+            if not node:
+                return
+            seen.add(node.val)
+            preorder(node.left)
+            preorder(node.right)
+        
+        preorder(root)
+        return len(seen) == 1
+    
+#passing in val argument along with node
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isUnivalTree(self, root: Optional[TreeNode]) -> bool:
+        
+        def dp(node,val):
+            if not node:
+                return True
+            if node.val != val:
+                return False
+            left = dp(node.left,val)
+            right = dp(node.right,val)
+            return left and right
+        
+        return dp(root,root.val)
+
+########################################
+# 519. Random Flip Matrix
+# 31MAY23
+########################################
+#close one
+class Solution:
+
+    def __init__(self, m: int, n: int):
+        '''
+        i can keep a set of all (i,j) indices that i can draw from
+        when i flip, i randomly draw from this set (since these are all zero still)
+        then remove from the set
+        
+        i actually don't need to mark any of the cells, we just need to keep track of the (i,j) cells used/not used
+        reset would just put all the indices back
+        
+        put into a list numbers [0,m*n -1]
+        shuffle them first 
+        do this in the constructor
+        when i flip, just pop from the end
+        '''
+        self.still_zero = []
+        self.now_one = []
+        
+        for i in range(m):
+            for j in range(n):
+                self.still_zero.append([i,j])
+        
+        #shuffle
+        random.shuffle(self.still_zero)
+
+    def flip(self) -> List[int]:
+        ans = self.still_zero.pop()
+        self.now_one.append(ans)
+        return ans
+
+    def reset(self) -> None:
+        self.still_zero.extend(self.now_one)
+        #shufflea gain
+        random.shuffle(self.still_zero)
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(m, n)
+# param_1 = obj.flip()
+# obj.reset()
+
+#simulate
+class Solution:
+    '''
+    maintain hashset of used indices, and keep trying until its not in there
+    '''
+    def __init__(self, m: int, n: int):
+        self.m = m
+        self.n = n
+        self.total = m*n
+        self.used = set()
+        self.r = random.Random() #generator
+        
+
+    def flip(self) -> List[int]:
+        r = self.r.randint(0,self.total-1)
+        while r in self.used:
+            r = self.r.randint(0,self.total-1)
+        
+        self.used.add(r)
+        return [r // self.n, r % self.n]
+        
+
+    def reset(self) -> None:
+        self.used = set()
+        
+
+
+# Your Solution object will be instantiated and called as such:
+# obj = Solution(m, n)
+# param_1 = obj.flip()
+# obj.reset()
+
+#main invaraint for hashmap
+class Solution:
+
+    def __init__(self, n_rows: int, n_cols: int):
+        '''
+        want to use less space than O(rows*cols)
+        allows us to generate a random 0 position effeciently, using signifincalt less than O(rows*cols) time
+        we can use a virtual array
+        
+        assume we are given an array like data structure V, of size (m*n) where all cells V[i] have been initialized to the ith entry in the matrix
+        and each assigment and acces takes O(1) times
+        
+        in the constructor, we cannot make V in less than O(m*n) time
+        
+        we modifify a hashmap slightly
+        where access to an unintialized key k will initalize V[k] to the kth entry in the matrix and return
+        rather than thrown an error, just V[k] to 1
+        
+        let the number of 0 entries remainin the matrix be rem = m*n
+        when we perform a flip and reset operations we update V to maintin the invariant that V[0]...V[rem-1] maps to all zreo etnries
+        and V[rem]....V[m*n-1] maps to all 1 entries
+        
+        flip wil chang he 0 entry stores at V[k] to 1
+        '''
+        self.V = {}
+        self.nr = n_rows
+        self.nc = n_cols
+        self.rem = self.nr*self.nc
+
+    def flip(self) -> List[int]:
+        #draw
+        r = random.randint(0,self.rem-1)
+        x = self.V.get(r,r)
+        #maintain invariant in V
+        #if entry is unintialized with a key k, we intilize it with key k
+        #k is going to be the number of remaining 0 spots in the matrix
+        self.V[r] = self.V.get(self.rem -1,self.rem-1)
+        # This ensures that the selected index r is swapped with the last remaining index.
+        #decrement
+        self.rem -= 1
+        #convert to (i,j) cell
+        #floor division by cols to get row, modulo to get column
+        return [x // self.nc, x % self.nc]
+        
+
+    def reset(self) -> None:
+        #this clears it
+        self.V = {}
+        self.rem = self.nr * self.nc
+
+        
+
