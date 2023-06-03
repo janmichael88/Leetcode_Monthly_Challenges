@@ -3987,6 +3987,12 @@ class Solution:
         and V[rem]....V[m*n-1] maps to all 1 entries
         
         flip wil chang he 0 entry stores at V[k] to 1
+
+        also known as the fisher yates shuffle
+        -- To shuffle an array a of n elements (indices 0..n-1):
+        for i from n−1 down to 1 do
+            j ← random integer such that 0 ≤ j ≤ i
+            exchange a[j] and a[i]
         '''
         self.V = {}
         self.nr = n_rows
@@ -4003,6 +4009,8 @@ class Solution:
         self.V[r] = self.V.get(self.rem -1,self.rem-1)
         # This ensures that the selected index r is swapped with the last remaining index.
         #decrement
+        #if this index has already been picked, it would have just picked the last remaining positions self.rem as x
+        #and this could not have bene picked because we drew exclusively
         self.rem -= 1
         #convert to (i,j) cell
         #floor division by cols to get row, modulo to get column
