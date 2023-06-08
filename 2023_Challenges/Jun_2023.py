@@ -198,3 +198,203 @@ class Solution:
                 arr[i],arr[j] = arr[j], arr[i]
         
         return True
+    
+##################################
+# 999. Available Captures for Rook
+# 06JUN23
+##################################
+#sheesh, works through
+class Solution:
+    def numRookCaptures(self, board: List[List[str]]) -> int:
+        '''
+        the highest attacking position for a rook is 4
+        a rook is considered attacking a pawn if th erook can capture on this turn
+        the number of available captures for the white rook is the number of pawns that the rook is attacking
+        
+        just check all the way up, all the way down, left and right
+        '''
+        n = 8
+        rook_i,rook_j = -1,-1
+        for i in range(n):
+            for j in range(n):
+                if board[i][j] == 'R':
+                    rook_i,rook_j = i,j
+                    break
+        
+        
+        pawns = 0
+        #check up
+        curr_i,curr_j = rook_i,rook_j
+        curr_i -= 1
+        while curr_i > 0 and board[curr_i][curr_j] == '.':
+            curr_i -= 1
+        pawns += board[curr_i][curr_j] == 'p'
+        
+        #check down
+        curr_i,curr_j = rook_i,rook_j
+        curr_i += 1
+        while curr_i < n-1 and board[curr_i][curr_j] == '.':
+            curr_i += 1
+        pawns += board[curr_i][curr_j] == 'p'
+        
+        #check left
+        curr_i,curr_j = rook_i,rook_j
+        curr_j -= 1
+        while curr_j > 0  and board[curr_i][curr_j] == '.':
+            curr_j -= 1
+        pawns += board[curr_i][curr_j] == 'p'
+        
+        curr_i,curr_j = rook_i,rook_j
+        curr_j += 1
+        while curr_j < n-1  and board[curr_i][curr_j] == '.':
+            curr_j += 1
+        pawns += board[curr_i][curr_j] == 'p'
+        
+
+#consolidate while loops
+class Solution:
+    def numRookCaptures(self, board):
+        for i in range(8):
+            for j in range(8):
+                if board[i][j] == 'R':
+                    x0, y0 = i, j
+                    break
+        res = 0
+        #store directions and paired steps
+        for i, j in [[1, 0], [0, 1], [-1, 0], [0, -1]]:
+            x, y = x0 + i, y0 + j
+            while 0 <= x < 8 and 0 <= y < 8:
+                if board[x][y] == 'p': 
+                    res += 1
+                if board[x][y] != '.': 
+                    break
+                x, y = x + i, y + j
+        return res
+
+################################################
+# 1318. Minimum Flips to Make a OR b Equal to c
+# 07JUN23
+################################################
+#ugly but it works
+class Solution:
+    def minFlips(self, a: int, b: int, c: int) -> int:
+        '''
+        find min bit flips in a and/or b such that a or b == c
+        hint says to check bits 1 by 1 and see if they need to be flipped
+        
+        '''
+        bits_a = bin(a)[2:]
+        bits_b = bin(b)[2:]
+        bits_c = bin(c)[2:]
+        
+        #need pad so that the bits are equallength
+        largest_size = max(len(bits_a),len(bits_b),len(bits_c))
+        bits_a = '0'*(largest_size - len(bits_a))+bits_a
+        bits_b = '0'*(largest_size - len(bits_b))+bits_b
+        bits_c = '0'*(largest_size - len(bits_c))+bits_c
+        
+        ans = 0
+        
+        print(bits_a,bits_b,bits_c)
+        for i in range(largest_size):
+            x = int(bits_a[i])
+            y = int(bits_b[i])
+            z = int(bits_c[i])
+            
+            if (x | y == z):
+                continue
+            else:
+                if (x == 1) and (y == 1) and (z == 0):
+                    ans += 2
+                else:
+                    ans += 1
+        
+        return ans
+    
+class Solution:
+    def minFlips(self, a: int, b: int, c: int) -> int:
+        '''
+        i don't need to convert string, just keep shifting and use the & operator to get the bit
+        
+        '''
+        
+        ans = 0
+        
+        while a or b or c:
+            #& operatore to get the bit value
+            x = a & 1
+            y = b & 1
+            z = c & 1
+            
+            if (x | y == z):
+                a = a >> 1
+                b = b >> 1
+                c = c >> 1
+            else:
+                if (x == 1) and (y == 1) and (z == 0):
+                    ans += 2
+                else:
+                    ans += 1
+            
+                #shift entirely
+                a = a >> 1
+                b = b >> 1
+                c = c >> 1
+        
+        return ans
+    
+class Solution:
+    def minFlips(self, a: int, b: int, c: int) -> int:
+        '''
+        we can get the least significant bit of any integer P using P & 1
+        case1:
+            c & 1 = 1
+            we need at least one bit in either a & 1 or b & 1, if either is, we can go on to the next bit, otherwise we need to flip
+            
+        case2:
+            c & 1 = 0:
+            both (a & 1) == 0 and (b & 1) == 0
+            if either (a & 1) or (b & 1) == q, we need on flip to make it zero
+            number of flips == (a & 1) + (b & 1)
+        '''
+        flips = 0
+        
+        while a or b or c:
+            #current c bit is 1 
+            if c & 1:
+                #need a 1 from either a or b
+                flips += 0 if ((a & 1) or (b & 1)) else 1
+            else:
+                #its a zero, only way it could be zero if they are bother zero
+                flips += (a & 1) + (b & 1)
+            
+            a >>= 1
+            b >>= 1
+            c >>= 1
+        
+        return flips
+    
+class Solution:
+    def minFlips(self, a: int, b: int, c: int) -> int:
+        '''
+        recall the XOR operation
+            returns 1 if the bits are different, else 0
+            if we do (a | b) ^ c, then every bit that is difference will have a value of 1
+        
+        we are trying to see if a | b == c
+        if we do (a | b) ^ c, and we know that XOR shows which bits are differenet, then we can just sum the set bits
+        
+        
+        however, there is one exception, when (c & 1) = 0 and both (a & 1) and (b & 1) are both 1
+        we need an extra flip here,
+        we can use the & operator to find the needed extra flips
+        (a & b) & ((a | b) ^ c)
+        
+        he final step is to count the number of digits 1 in the binary representation of the two numbers (a | b) ^ c and (a & b) & ((a | b) ^ c).
+
+
+            
+        '''
+        first = (a | b) ^ c
+        second = (a & b) & first
+        return bin(first).count("1") + bin(second).count("1")
