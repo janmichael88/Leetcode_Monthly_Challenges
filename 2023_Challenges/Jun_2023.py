@@ -398,3 +398,231 @@ class Solution:
         first = (a | b) ^ c
         second = (a & b) & first
         return bin(first).count("1") + bin(second).count("1")
+    
+#################################################
+# 1351. Count Negative Numbers in a Sorted Matrix
+# 08JUN23
+#################################################
+#binary search with error checking
+class Solution:
+    def countNegatives(self, grid: List[List[int]]) -> int:
+        '''
+        could also binary search to find negative numbers along rows or cols
+        find upper bound
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        count = 0
+        for row in grid:
+            left = 0
+            right = len(grid)
+            
+            while left < right:
+                mid = left + (right - left) // 2
+                if row[mid] < 0: #there are more negatives to the right
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            if left < cols and row[left] > 0:
+                left += 1
+            count += (cols - left)
+        
+        return count
+    
+
+class Solution:
+    def countNegatives(self, grid: List[List[int]]) -> int:
+        count = 0
+        n = len(grid[0])
+        # Iterate on all rows of the matrix one by one.
+        for row in grid:
+            # Using binary search find the index
+            # which has the first negative element.
+            left, right = 0, n - 1
+            while left <= right:
+                mid = (right + left) // 2
+                if row[mid] < 0:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            # 'left' points to the first negative element,
+            # which means 'n - left' is the number of all negative elements.
+            count += (n - left)
+        return count
+    
+class Solution:
+    def countNegatives(self, grid: List[List[int]]) -> int:
+        '''
+        both rows and cols are sorted in non-increasing order
+        if we are on row[i] with first negtaive index k, then we know that for any row [i+l]
+        the first index cannot be greater than k
+        
+        traverse right to left, and going down each row, find the first negative index
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        count = 0
+        
+        curr_negative_idx = cols - 1
+        #this will point to the last positive element
+        #so currnegtaive is going to be + 1
+        
+        for row in grid:
+            while curr_negative_idx >= 0 and row[curr_negative_idx] < 0:
+                curr_negative_idx -= 1
+            
+            #increase count
+            count += (cols - (curr_negative_idx + 1))
+        
+        return count
+
+#################################################################
+# 1150. Check If a Number Is Majority Element in a Sorted Array
+# 09JUN23
+#################################################################
+#fucking edge contitions
+class Solution:
+    def isMajorityElement(self, nums: List[int], target: int) -> bool:
+        '''
+        need to use binary search to find the frequencies since the array is sorted
+        binary search twice to find the first and last occurences of target
+        '''
+        N = len(nums)
+        #if there is a majority eleemnt, it should be found at the middle index
+        if nums[N // 2] != target:
+            return False
+        #find lower bound
+        left = 0
+        right = N
+        while left < right:
+            mid = left + (right - left) // 2
+            if nums[mid] < target:
+                left = mid + 1
+            else:
+                right = mid
+        
+        
+        lower_bound = left
+        #find upper bound
+        left = 0
+        right = N
+        while left < right:
+            mid = left + (right - left) // 2
+            if nums[mid] > target:
+                right = mid
+            else:
+                left = mid + 1
+        
+        upper_bound = left
+        if upper_bound == N:
+            upper_bound -= 1
+        #recall these are the insertion points
+        print(lower_bound,upper_bound)
+        if nums[lower_bound] == nums[upper_bound] == target:
+            return (upper_bound - lower_bound + 1) > N // 2
+        else:
+            return False
+        
+class Solution:
+    def isMajorityElement(self, nums: List[int], target: int) -> bool:
+        '''
+        recall lower bound returns the index of the first element >= to the target
+        if there is no instance, it retuns the length of the list
+        
+        more succintly, lower bound is the FIRST element >= than the target
+        upper bound is the first element that is greater than the given element
+        '''
+        N = len(nums)
+        #if there is a majority eleemnt, it should be found at the middle index
+        if nums[N // 2] != target:
+            return False
+        #find lower bound
+        left = 0
+        right = N-1
+        lower_bound = N
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] >= target:
+                right = mid - 1
+                lower_bound = mid
+            else:
+                left = mid + 1
+        
+        #find upper bound
+        upper_bound = N
+        left = 0
+        right = N - 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] > target:
+                right = mid - 1
+                upper_bound = mid
+            else:
+                left = mid + 1
+        
+        upper_bound = left
+        print(lower_bound,upper_bound)
+        return (upper_bound - lower_bound + 1) > N // 2
+
+#much easier to use builtins
+class Solution:
+    def isMajorityElement(self, nums: List[int], target: int) -> bool:
+        '''
+        uisng the builtins
+        '''
+        N = len(nums)
+        if nums[N//2] != target:
+            return False
+        
+        lo = bisect.bisect_left(nums,target)
+        hi = bisect.bisect_right(nums,target)
+        return hi - lo > N // 2
+
+class Solution:
+    def isMajorityElement(self, nums: List[int], target: int) -> bool:
+        '''
+        custome, lo == target
+        hi == target + 1
+        '''
+
+        def search(a, x):
+            lo, hi = 0, len(a)
+            while lo < hi:
+                mid = (lo + hi) // 2
+                if a[mid] < x:
+                    lo = mid + 1
+                else:
+                    hi = mid
+            return lo
+            
+        N = len(nums)
+        if nums[N // 2] != target:
+            return False
+        lo = search(nums, target)
+        hi = search(nums, target + 1)
+        return hi - lo > N // 2
+
+class Solution:
+    def isMajorityElement(self, nums: List[int], target: int) -> bool:
+        '''
+        we only need to search for the first index of target, or the first element that is <= target
+        then we just check if nums[this index + len(nums) /2] is also the target
+        this would mean we have a majority for this element
+        '''
+        N = len(nums)
+        left = 0
+        right = N - 1
+        lower_bound = N
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] >= target:
+                right = mid - 1
+                lower_bound = mid
+            else:
+                left = mid + 1
+        
+        if (lower_bound + N // 2) < N:
+            return nums[lower_bound + (N//2)] == target
