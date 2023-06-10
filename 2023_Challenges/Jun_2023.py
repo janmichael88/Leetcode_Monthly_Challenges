@@ -626,3 +626,33 @@ class Solution:
         
         if (lower_bound + N // 2) < N:
             return nums[lower_bound + (N//2)] == target
+        
+###############################################
+# 744. Find Smallest Letter Greater Than Target
+# 09JUN23
+###############################################
+class Solution:
+    def nextGreatestLetter(self, letters: List[str], target: str) -> str:
+        '''
+        binary search to find the upper bound
+        '''
+        left = 0
+        right = len(letters)
+        while left < right:
+            mid = left + (right - left) // 2
+            if letters[mid] > target:
+                right = mid
+            else:
+                left = mid + 1
+        
+        if left == len(letters):
+            return letters[0]
+        return letters[left]
+    
+class Solution:
+    def nextGreatestLetter(self, letters: List[str], target: str) -> str:
+        '''
+        upper bound with wrap around
+        '''
+        upper = bisect.bisect_right(letters,target)
+        return letters[upper % len(letters)]
