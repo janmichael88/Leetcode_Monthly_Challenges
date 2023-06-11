@@ -656,3 +656,141 @@ class Solution:
         '''
         upper = bisect.bisect_right(letters,target)
         return letters[upper % len(letters)]
+
+#########################################################
+# 1802. Maximum Value at a Given Index in a Bounded Array
+# 10JUN23
+##########################################################
+class Solution:
+    def maxValue(self, n: int, index: int, maxSum: int) -> int:
+        '''
+        if we were to constuct an array, it should have:
+            len(arry) == n
+            nums[i] > 0 for i in range(0,n+1), must be all positive, and cannot be zero
+            abs(arra[i]-array[i+1]) <= 1 for i in range(0,n), difference between consecutive elements cannot be more than 1
+            sum(array) does not exceed maxSum
+            array[index] is maximized
+            
+        return array[index]
+        
+        notes:
+            nums[index] cannot be maxSum
+            nums[index] must be the largest weight
+            lets all this largest_weight
+            if nums[index] == largest_weight
+            then sum of remaining == max_sum - largest_weight
+            rather:
+            left = sum(nums[:index -1])
+            right = sum(nums[index+1:])
+            and left + right == max_sum - largest_weight
+            we can always make a valid array equaling left and right
+
+        guranteed to be valid array becayse we have 1 <= n <= maxSum <= 10**9
+        if we wanted we could check for invalid array
+            if n > maxSum, canot do it
+        
+        and if index > n; cannot do it
+        
+        try all targets and see if we can make it?
+        objective is to maximize nums[index] while ensuring sum array does not exceed maxSum, but we cannot abritiatly make left and right sums 
+        anything we want
+        
+        easiet approach would be after setting nums[index] = target
+        let numbers to its left decrease by one until 1, and left numbers to the right decreased by 1 until 1
+        calculating sum of array parts?
+        take left for example, this would be an increasing arithmetic sequence with a sectino of consectuvie 1s if nums[index] < number of elements to the left
+        we need to determing the arithmetic sequence cased on the size of index and value
+        one we have determing the length of the seqeucne, we can sum the seuqnce using
+        (nums[start] + nums[end]) *n/2
+        1 + 2 + ... n = n*(n+1)/2
+        if start === 1 and ending is n
+        (1 + k) + (2 + k) + ... + (n+k) = (n+k)*(n+k+1)/2
+        
+        if value <= index, it means in addition to the arithmetic sequecne from value to 1, we have a region of consecutive 1's of lenfth index - value + 1
+            sum of arithmetic sequecne will be [1,2,3...value-1,value] == (value)*(value+1)/2
+            sume of consetive 1s sequence will be index - value + 1 
+        
+        if value > index, there are is consecutive 1s
+            The sum of arithmetic sequence [value - index, ..., value - 1, value], which is (value + value - index) * (index + 1) / 2.
+            really its just ((value-index) + (value)) *(index+1) / 2
+            
+        for the right:
+            we compare with n-index
+            if value <= n  index:
+                we have the arithemtic sequcne and string of consective 1s of length n-index - value in addition to the arithemtic sequence from value to 1
+                sum of arithemtic sequence if (1 + value)*value/2
+                sume of consectives 1s will be n-index - value
+                
+            if vvalue > n-index, we jsut have the sequence
+                [value, value - 1, ..., value - n + 1 + index], which is (value + value - n + 1 + index) * (n - index) / 2.
+                
+            ALSO! dont forget that we have added the actual value at index twice, so we need to subtract the final sum by value (the one that we try)
+            
+        
+        we can just use binary search to find the workable solution, and keep trying it
+        first we need to deinfe a function getSum(index,value) to calculate the minsum of the array, given that we fix nums[index] = value
+            have it return the sum of the array, 
+            and check if we <= maxSum or > maxSum
+        '''
+        left, right = 1, maxSum
+        while left < right:
+            mid = (left + right + 1) // 2
+            if self.getSum(index, mid, n) <= maxSum:
+                left = mid
+            else:
+                right = mid - 1
+        
+        return left
+    def getSum(self, index: int, value: int, n: int) -> int:
+        count = 0
+
+        # On index's left:
+        # If value > index, there are index + 1 numbers in the arithmetic sequence:
+        # [value - index, ..., value - 1, value].
+        # Otherwise, there are value numbers in the arithmetic sequence:
+        # [1, 2, ..., value - 1, value], plus a sequence of length (index - value + 1) of 1s. 
+        if value > index:
+            count += (value + value - index) * (index + 1) // 2
+        else:
+            count += (value + 1) * value // 2 + index - value + 1
+
+        # On index's right:
+        # If value >= n - index, there are n - index numbers in the arithmetic sequence:
+        # [value, value - 1, ..., value - n + 1 + index].
+        # Otherwise, there are value numbers in the arithmetic sequence:
+        # [value, value - 1, ..., 1], plus a sequence of length (n - index - value) of 1s. 
+        if value >= n - index:
+            count += (value + value - n + 1 + index) * (n - index) // 2
+        else:
+            count += (value + 1) * value // 2 + n - index - value
+
+        return count - value
+    
+class Solution:
+    def maxValue(self, n: int, index: int, maxSum: int) -> int:
+        '''
+        another eay
+        '''
+        #lambda function get get arithmetics sequence sum
+        calc_sum = lambda x,y: (x-y)*y//2
+        left = 1
+        right = maxSum + 1
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            #get sizes of subarray
+            left_size = index
+            right_size = n - index - 1
+            #get counsective ones on each side
+            #don't forget this max trick
+            ones_left = max(left_size - mid + 1,0)
+            ones_right = max(right_size - mid +1,0)
+            #get sums
+            left_sum = calc_sum(2*mid-1, left_size - ones_left)
+            right_sum = calc_sum(2*mid -1, right_size - ones_right)
+            if ones_left + left_sum + mid + right_sum + ones_right > maxSum:
+                right = mid
+            else:
+                left = mid + 1
+        
+        return left - 1
