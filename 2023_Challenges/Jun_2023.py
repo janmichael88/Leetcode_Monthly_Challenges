@@ -794,3 +794,331 @@ class Solution:
                 left = mid + 1
         
         return left - 1
+    
+######################################
+# 1146. Snapshot Array
+# 11JUN23
+######################################
+class SnapshotArray:
+    def __init__(self, length: int):
+        '''
+        hint1: use list of lists adding both element and snap id to each index
+        '''
+        self.container = [[[0,0]] for _ in range(length)] #at the index we have (snap_id,val)
+        self.curr_snap = 0
+        
+
+    def set(self, index: int, val: int) -> None:
+        #check most recent for updating
+        if self.container[index][-1][0] == self.curr_snap:
+            self.container[index][-1][1] = val
+            return
+        #otherise append
+        self.container[index].append([self.curr_snap,val])
+
+    def snap(self) -> int:
+        self.curr_snap += 1
+        return self.curr_snap - 1
+
+        
+    def get(self, index: int, snap_id: int) -> int:
+        #binary search to find the snap id
+        curr_list = self.container[index]
+        left = 0
+        right = len(curr_list)
+        #we are searching for the upper bound, so return the one snap shot just before it
+        while left < right:
+            mid = left + (right - left) // 2
+            if curr_list[mid][0] > snap_id:
+                right = mid
+            else:
+                left = mid+1
+        return curr_list[left-1][1]
+
+
+# Your SnapshotArray object will be instantiated and called as such:
+# obj = SnapshotArray(length)
+# obj.set(index,val)
+# param_2 = obj.snap()
+# param_3 = obj.get(index,snap_id)
+
+class SnapshotArray:
+    def __init__(self, length: int):
+        '''
+        hint1: use list of lists adding both element and snap id to each index
+        '''
+        self.container = [[[0,0]] for _ in range(length)] #at the index we have (snap_id,val)
+        self.curr_snap = 0
+        
+
+    def set(self, index: int, val: int) -> None:
+        #check most recent for updating
+        if self.container[index][-1][0] == self.curr_snap:
+            self.container[index][-1][1] = val
+            return
+        #otherise append
+        self.container[index].append([self.curr_snap,val])
+
+    def snap(self) -> int:
+        self.curr_snap += 1
+        return self.curr_snap - 1
+
+        
+    def get(self, index: int, snap_id: int) -> int:
+        #binary search to find the snap id
+        curr_list = self.container[index]
+        #can also use biect right
+        snap_index = bisect.bisect_right(curr_list,[snap_id, float('inf')]) #need to specify list of lists
+        return curr_list[snap_index-1][1]
+
+
+# Your SnapshotArray object will be instantiated and called as such:
+# obj = SnapshotArray(length)
+# obj.set(index,val)
+# param_2 = obj.snap()
+# param_3 = obj.get(index,snap_id)
+
+#########################################
+# 1002. Find Common Characters
+# 12JUN23
+#########################################
+#close
+class Solution:
+    def commonChars(self, words: List[str]) -> List[str]:
+        '''
+        make hashset of letters for words[0]
+        for then for words[1:], use &
+        including duplicates huh
+        need to cu
+        
+        count map, and store as tuple (char,count)
+        '''
+        common = Counter(words[0])
+        common = set([(k,v) for k,v in common.items()])
+        
+        for word in words[1:]:
+            word_count = Counter(word)
+            temp = set([(k,v) for k,v in word_count.items()])
+            common = common & temp
+        
+        ans = []
+        while common:
+            char,count = common.pop()
+            for _ in range(count):
+                ans.append(char)
+        
+        return ans
+    
+#oh god, should be medium
+class Solution:
+    def commonChars(self, words: List[str]) -> List[str]:
+        '''
+        keep count and check
+        '''
+        common = Counter(words[0])
+        
+        for word in words[1:]:
+            word_count = Counter(word)
+            #need to generate new common
+            new_common = Counter()
+            first = set(common.keys())
+            second = set(word_count.keys())
+            #get current intersection
+            curr_intersection = list(first & second)
+            for ch in curr_intersection:
+                new_common[ch] = min(common[ch],word_count[ch])
+            #reassign
+            common = new_common
+        
+        ans = []
+        
+        for ch,count in common.items():
+            for _ in range(count):
+                ans.append(ch)
+        
+        return ans
+    
+class Solution:
+    def commonChars(self, A: List[str]) -> List[str]):
+        """
+        :type A: List[str]
+        :rtype: List[str]
+        """
+        # counter generator:
+        def CreateCounter(string):
+            counter = {}
+            for c in string:
+                if c not in counter:
+                    counter[c] = 0
+                counter[c] += 1
+            return counter
+        
+        if A is None or len(A) == 0: return A
+        counter = CreateCounter(A[0])
+     
+        for word in A[1:]:
+            currCounter = CreateCounter(word)
+            copy = list(counter.items())
+            for key, value in copy:
+                if key in currCounter:
+                    counter[key] = min(value, currCounter[key])
+                else:
+                    del counter[key]
+        ans = []
+        for c, count in counter.items():            
+            for _ in range(count):
+                ans.append(c)
+        return ans
+            
+class Solution:
+    def commonChars(self, words: List[str]) -> List[str]:
+        common = Counter(words[0])
+        
+        for word in words[1:]:
+            new_common = Counter()
+            for ch in word:
+                if common[ch] > 0:
+                    new_common[ch] += 1
+                    common[ch] -= 1
+            
+            common = new_common
+        
+        ans = []
+        for c, count in common.items():            
+            for _ in range(count):
+                ans.append(c)
+        return ans
+                
+######################################
+# 2352. Equal Row and Column Pairs
+# 13JUN23
+######################################
+#brute force passes??
+class Solution:
+    def equalPairs(self, grid: List[List[int]]) -> int:
+        '''
+        i can un pack all the rows as rows and cols as rows
+        then we need to check that all (i row) and (j pairs)
+        would be O(N*N + N*N)
+        carch
+        '''
+        N = len(grid)
+        rows = defaultdict(list)
+        cols = defaultdict(list)
+        
+        for i in range(N):
+            for j in range(N):
+                val = grid[i][j]
+                rows[i].append(val)
+                cols[j].append(val)
+        
+        
+        ans = 0
+        for i in range(N):
+            for j in range(N):
+                curr_row = rows[i]
+                curr_col = cols[j]
+                if curr_row == curr_col:
+                    ans += 1
+        
+        return ans
+    
+#lock at row r and col c, then move and check
+class Solution:
+    def equalPairs(self, grid: List[List[int]]) -> int:
+        N = len(grid)
+        ans = 0
+        
+        for i in range(N):
+            for j in range(N):
+                same = True
+                
+                for k in range(N):
+                    if grid[i][k] != grid[k][j]:
+                        same = False
+                        break
+                
+                ans += int(same)
+        
+        return ans
+    
+#row and col signatures
+class Solution:
+    def equalPairs(self, grid: List[List[int]]) -> int:
+        '''
+        store rows as keys in count maps
+        then just get cols, and check if this col signature is in the hahsmap
+        '''
+        ans = 0
+        row_counts = Counter()
+        N = len(grid)
+        
+        for row in grid:
+            row_counts[tuple(row)] += 1
+            
+        for c in range(N):
+            curr_col = []
+            for r in range(N):
+                curr_col.append(grid[r][c])
+            
+            #col can be repeated as many times tuple(col) in row_counts
+            curr_col = tuple(curr_col)
+            ans += row_counts[curr_col]
+        
+        return ans
+
+#Trie
+class Node:
+    def __init__(self,):
+        self.count = 0
+        self.children = {}
+        
+
+class Trie:
+    def __init__(self,):
+        self.root = Node()
+    
+    def insert(self,array):
+        curr = self.root
+        for num in array:
+            if num not in curr.children:
+                curr.children[num] = Node()
+            curr = curr.children[num]
+        
+        curr.count += 1
+        
+    def search(self,array):
+        curr = self.root
+        for num in array:
+            if num not in curr.children:
+                return 0
+            else:
+                curr = curr.children[num]
+        
+        return curr.count
+        
+        
+
+class Solution:
+    def equalPairs(self, grid: List[List[int]]) -> int:
+        '''
+        we can use a Trie, where each node represents an eleemnts in a row /col
+        the leaves of the nodes
+            or when we get to the end, store counts
+        '''
+        N = len(grid)
+        t = Trie()
+        ans = 0
+        
+        for row in grid:
+            t.insert(row)
+        
+        for c in range(N):
+            curr_col = []
+            for r in range(N):
+                curr_col.append(grid[r][c])
+            
+            ans += t.search(curr_col)
+        
+        return ans
+        
