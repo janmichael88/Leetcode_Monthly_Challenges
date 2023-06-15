@@ -1122,3 +1122,81 @@ class Solution:
         
         return ans
         
+##########################################
+# 1161. Maximum Level Sum of a Binary Tree
+# 15JUN23
+###########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxLevelSum(self, root: Optional[TreeNode]) -> int:
+        '''
+        dfs and store levels
+        '''
+        level_sums = []
+        def dfs(node,curr_level):
+            if not node:
+                return
+            if curr_level >= len(level_sums):
+                level_sums.append([])
+            #do sum on the fly
+            if len(level_sums[curr_level]) == 1:
+                level_sums[curr_level][0] += node.val
+            else:
+                level_sums[curr_level].append(node.val)
+            dfs(node.left,curr_level+1)
+            dfs(node.right,curr_level+1)
+        
+        dfs(root,0)
+        print(level_sums)
+        max_sum = float('-inf')
+        ans = 1
+        for i in range(len(level_sums)):
+            curr_sum = level_sums[i]
+            if curr_sum[0] > max_sum:
+                ans = i+1
+                max_sum = curr_sum[0]
+        
+        return ans
+    
+#can we reduce second part on the fly?
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxLevelSum(self, root: Optional[TreeNode]) -> int:
+        '''
+        bfs and keep level sums along with a max sum
+        '''
+        max_sum = float('-inf')
+        min_level = 1
+        curr_level = 1
+        
+        q = deque([root])
+        
+        while q:
+            curr_sum = 0
+            N = len(q)
+            for _ in range(N):
+                curr_node = q.popleft()
+                curr_sum += curr_node.val
+                if curr_node.left:
+                    q.append(curr_node.left)
+                if curr_node.right:
+                    q.append(curr_node.right)
+            
+            if curr_sum > max_sum:
+                max_sum = curr_sum
+                min_level = curr_level
+            
+            
+            curr_level += 1
+        
+        return min_level
