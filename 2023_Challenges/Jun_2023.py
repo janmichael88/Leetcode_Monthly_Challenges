@@ -1200,3 +1200,343 @@ class Solution:
             curr_level += 1
         
         return min_level
+
+########################################
+# 163. Missing Ranges (REVISTED)
+# 15JUN23
+#######################################
+class Solution:
+    def findMissingRanges(self, nums: List[int], lower: int, upper: int) -> List[List[int]]:
+        '''
+        number is considered missing if in the inclusive range [lower,uppper]
+        and not in nums
+        return shortest shorted list of ranges that covers all missing numbers
+        [0,1,3,50,75], lower = 0, upper = 99
+        append bounds
+        [0,1,3,50,75,99]
+        [
+        [2,2],
+        [4,49],
+        [51,75],
+        [76,99]
+        ]
+        '''
+        if lower < nums[0]:
+            nums = [lower] + nums
+        
+        if upper > nums[-1]:
+            nums = nums + [upper]
+        
+        intervals = []
+        #now just find the missing gapes
+        curr_interval = []
+        for i in range(1,len(nums)):
+            if nums[i] - nums[i-1] != 1:
+                lower_bound = nums[i-1] + 1
+                upper_bound = nums[i] - 1
+                curr_interval = [lower_bound,upper_bound]
+                intervals.append(curr_interval)
+            
+            curr_interval = []
+        
+        #adjust beginning and ends
+        intervals[0][0] = min(lower,nums[0])
+        intervals[-1][1] = max(upper,nums[-1])
+        return intervals
+    
+class Solution:
+    def findMissingRanges(self, nums: List[int], lower: int, upper: int) -> List[List[int]]:
+        '''
+        number is considered missing if in the inclusive range [lower,uppper]
+        and not in nums
+        return shortest shorted list of ranges that covers all missing numbers
+        [0,1,3,50,75], lower = 0, upper = 99
+        append bounds
+        [0,1,3,50,75,99]
+        [
+        [2,2],
+        [4,49],
+        [51,75],
+        [76,99]
+        ]
+        
+        #edge cases
+            if we dont start with lower as the first element in the array, we need to include [lower,nums[0]-1]
+            if we don't end with upper as the last element of the array, we need to cinlude it at the end [nums[-1]+1,upper]
+        '''
+        n = len(nums)
+        
+        if n == 0:
+            return [[lower,upper]]
+        intervals = []
+        
+        if lower < nums[0]:
+            intervals.append([lower,nums[0]-1])
+
+        #now just find the missing gapes
+        curr_interval = []
+        for i in range(1,len(nums)):
+            if nums[i] - nums[i-1] != 1:
+                lower_bound = nums[i-1] + 1
+                upper_bound = nums[i] - 1
+                curr_interval = [lower_bound,upper_bound]
+                intervals.append(curr_interval)
+            
+            curr_interval = []
+        
+        if upper > nums[-1]:
+            intervals.append([nums[-1]+1,upper])
+        return intervals
+    
+class Solution:
+    def findMissingRanges(self, nums: List[int], lower: int, upper: int) -> List[List[int]]:
+        '''
+        cool use of pairwise
+        if i do [lower-1] + nums + [upper+1], just one before lower and one greater than upper
+        [1,2,3,4,5,6], [1,6]
+        [0,1,2,3,4,5,6,7]
+        [1,2]
+        a = 1
+        b = 2
+        [2,2]
+        '''
+        nums = [lower-1] + nums + [upper+1]
+        intervals = []
+        for a,b in pairwise(nums):
+            if a + 1 <= b - 1:
+                intervals.append([a+1,b-1])
+        
+        return intervals
+    
+#one line
+class Solution:
+    def findMissingRanges(self, nums, lower, upper) -> List[List[int]]:
+        return ([a+1,b-1] for a,b in pairwise([lower-1]+nums+[upper+1]) if a+1 <= b-1)
+    
+########################################################
+# 1569. Number of Ways to Reorder Array to Get Same BST
+# 16JUN23
+#########################################################
+#close one
+class Solution:
+    def numOfWays(self, nums: List[int]) -> int:
+        '''
+        divide and conquer
+        first number will be the root, consdier the numbers smaller and larger than the root seperately
+        when merging the results together, how many ways can you order x elements in x + y spots
+        counting problem
+        
+        inserting into a BST, find point then rebalance, we just want perms of nums such that when we insert in order of the perm
+        we get the same BST tree
+        starting with [2,1,3]
+        2 will always be the root, so i can't start with anything larger then 2
+        so fix [2], then we have the remaining part of the array [1,3]
+        in this pushing 1 before 3 or 3 before 1 makes the same BST, so we wan do [2,1,3], [2,3,1]
+        
+        '''
+        mod = 10**9+7
+        def rec(arr):
+            if len(arr) == 0:
+                return 0
+            if len(arr) == 1:
+                return 1
+            root = arr[0]
+            smaller = []
+            larger = []
+            for i in range(1,len(arr)):
+                if nums[i] < root:
+                    smaller.append(arr[i])
+                else:
+                    larger.append(arr[i])
+            left = rec(smaller)
+            right = rec(larger)
+            return (left*right + 1) % mod
+        
+        return rec(nums) % mod
+    
+class Solution:
+    def numOfWays(self, nums: List[int]) -> int:
+        '''
+        fist eleemtn in nums will alwasy be the root of the bst tree
+        let dfs(nums) be the number of perms of nums that result in the same BST
+        we just keep calling nums[1:] recursively
+        example
+        [3,4,5,1,2]
+            [3]
+        [1,2] [4,5]
+        
+        we are free to swap to [2,1] and to [5,4]
+        the realtive positions to nums[0] could be anything
+        so really we can rearrange [1,2] and [4,5] any number of ways
+        so we need to call dfs([1,2]) and dfs([4,5]) and do something to them to count the number of ways with
+        nums[0] as the root
+        
+        dfs(nums)=dfs(left_nodes)⋅dfs(right_nodes) so far we have
+        however, it is important to note that the actual numbers of valid pemrs may exceed the calculate number from above
+        this is because there are some perms that do not alter the relative order in left and in right
+        this given the same BST
+        
+        example
+        [3,4,5,1,2]
+            [3]
+        [1,2] [4,5] for these two we can permute them 2 ways
+        2*2 = 4, but we are missing 1, so we don't get all the ways here
+        this implies that we need to adjust the formulate by multiplying it with a coeffient (P) that represents the number
+        of permuttaions that preserve the relative order of nodes in left and right
+        
+        dfs(nums)=P⋅dfs(left_nodes)⋅dfs(right_nodes)
+        
+        it is possible to abritraily select two cells to hold the nodes in left and there are 6 permutions that generat the same
+        left and right
+        exmplae [3,_,_,_,_] where we want to place [4,5] in any two spots but we want to preserve the ordering of [4,5]
+        can we [3,4,5,_,_], [3,4,_,5,_], [3,4,_,_,5], [3,_,4,5,_], [3,_,4,_,5], [3,_,_,4,5]
+        so really its num_ways(left)*num_ways(right)*(something includes preserving the ordering)
+        
+        in generatl, for an array len(left) == m nodes in the left subtree
+        the number of valid permutatinos == the numger of ways of selecting k cells from m-1 cells (first cell includes the root)
+        (m-1) C left = (m-1,left) = (m-1)! / (left!(m-1-left))
+        we can use python's builtin or use pascals triangle to find the binom coefficents
+        generte a lenght m by m table
+        then index into table[n][k] = n choose k 
+        
+        so we now have the transition equations
+        dfs(nums)=P⋅dfs(left_nodes)⋅dfs(right_nodes) = (n C k)*dfs(left_nodes)*dfs(right_nodes)
+        base case
+            if the array is not more than 3 elements long, it only has one permutation to contruct the same BST (for that root)
+          
+         exmaple
+         [5, 1, 8, 3, 7, 9, 4, 2, 6], we need to keep the relative order in [1, 3, 4, 2] and [8, 7, 9, 6] unchanged
+         first coeffcient is (4 choose 8)
+         on left [1,3,4,2]
+         nothing can be on th left side, so return 1
+         presrver order on right [3,4,2], coefficent now is 0 choose 3
+         
+         for the return, dont include the starting array itself
+        '''
+        mod = 10**9 + 7
+        def dfs(nums):
+            m = len(nums)
+            if m < 3:
+                return 1
+            left_nodes = []
+            right_nodes = []
+            for num in nums:
+                if num < nums[0]:
+                    left_nodes.append(num)
+                elif num > nums[0]:
+                    right_nodes.append(num)
+            
+            left_count = dfs(left_nodes)
+            right_count = dfs(right_nodes)
+            binom_nCk = comb(m-1,len(left_nodes))
+            ans = left_count*right_count*binom_nCk
+            return ans % mod
+            
+#using pacals to find the binomial coefs
+class Solution:
+    def numOfWays(self, nums: List[int]) -> int:
+        '''
+        try building out pascals trianlge to compute the binomCoefficient
+        
+        '''
+        #generate pascal's triangle
+        m = len(nums)
+        mod = 10**9 + 7
+        pascals = [[0]*m for _ in range(m)]
+        
+        for i in range(m):
+            pascals[i][0] = 1
+            pascals[i][i] = 1
+            
+        for i in range(2,m):
+            for j in range(1,i):
+                pascals[i][j] = (pascals[i-1][j-1] + pascals[i-1][j]) % mod
+
+        
+        def dfs(nums):
+            m = len(nums)
+            if m < 3:
+                return 1
+            left_nodes = []
+            right_nodes = []
+            for num in nums:
+                if num < nums[0]:
+                    left_nodes.append(num)
+                elif num > nums[0]:
+                    right_nodes.append(num)
+            
+            left_count = dfs(left_nodes)
+            right_count = dfs(right_nodes)
+            binom_nCk = pascals[m-1][len(left_nodes)]
+            ans = left_count*right_count*binom_nCk
+            return ans % mod
+        
+        return (dfs(nums) - 1) % mod
+    
+class TreeNode:
+    def __init__(self,val):
+        self.val = val
+        self.right = None
+        self.left = None
+        self.size = 1
+        
+    
+    def insert(self,node,val):
+        if not node:
+            self.root = TreeNode(val)
+            return self.root
+        else:
+            node.size += 1
+            if val < node.val:
+                node.left = self.insert(node.left,val)
+            else:
+                node.right = self.insert(node.right,val)
+            
+            return self.root
+        
+class Solution:
+    def numOfWays(self, nums: List[int]) -> int:
+        '''
+        we can actually try building the tree first starting with nums
+        in the BST tree api, include the number of nodes in each each subtree
+        if we are at a node (call it curr_node)
+        and we have orderings on left and orderings on right
+        we can do left*right orderings butt also to,es C, where C is the number of ways in which left and right can be interleaved
+        
+        
+        Example 2 is good for thinking through this. At the root, both the left and right trees have one possible ordering. 
+        For the whole tree, we just need to figure out the number of ways in which both arrays, of size 2, .can be interleaved, which is comb(4, 2) = 6. 
+        The final solution is 1*1*6 - 1 = 5 (subtracting 1 since the problem asks for reorderings).
+
+why we use comb(ls + rs, ls) and not comb(ls + rs, rs): The binomial coefficient (n k) is the same as (n n-k).
+Which means comb(ls + rs, ls) == comb(ls + rs, rs).
+        '''
+        def insert(node,val):
+            if not node:
+                return TreeNode(val)
+            else:
+                node.size += 1
+                if val < node.val:
+                    node.left = insert(node.left,val)
+                else:
+                    node.right = insert(node.right,val)
+
+                return node
+
+        bst = None
+        mod = 10**9 + 7
+        for num in nums:
+            bst = insert(bst,num)
+        
+        
+        def dfs(node):
+            if not node:
+                return 1
+            left_ways = dfs(node.left)
+            right_ways = dfs(node.right)
+            left_nodes = node.left.size if node.left else 0
+            right_nodes = node.right.size if node.right else 0
+            binom_coef = comb(left_nodes + right_nodes, left_nodes) #could else use right_nodes as (k)
+            return left_ways*right_ways*binom_coef % mod
+        
+        return dfs(bst) - 1
