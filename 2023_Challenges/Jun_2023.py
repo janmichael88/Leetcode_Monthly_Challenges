@@ -1540,3 +1540,194 @@ Which means comb(ls + rs, ls) == comb(ls + rs, rs).
             return left_ways*right_ways*binom_coef % mod
         
         return dfs(bst) - 1
+
+##########################################
+# 1187. Make Array Strictly Increasing
+# 17JUN23
+##########################################
+#bleacghhh
+class Solution:
+    def makeArrayIncreasing(self, arr1: List[int], arr2: List[int]) -> int:
+        '''
+        in on move i can pick two indices (i,j)
+        and do the assigment arr1[i] = arr2[j], if course i and j must be in bounds
+        greddily going left to right and searching for an element in arr2 where the is a violation in arr1 does not always work
+        [1,5,3,6,7] and [4,3,1]
+        going left to right we hit violation at 5, but looking for number between 1 and 3 in arr2, we don't
+        but we could have swapped 5 with 3 if we had swapped the 3 with 4
+        
+        hint says state is
+            index in arr1 and the index of the previous element in arr2 after sotring it and removing duplicate
+        the arrays must be strictly increasing, so we can't reuse elements anyway
+        it makes sense to sort arr2 and remove duplicates
+        [1,5,3,6,7]
+        [1,2,3,4]
+        
+        let dp(i,prev) be the min operations to make arr1[i:] increasing when arr1[i-1] > prev
+        if arr[i] > prev, we can just go on to the next tep
+            dp(i+1,arr[i]) #set prev to a new arr[i]
+        
+        if its not we need to find a replacement in arr2
+            the replacement in nums 2 needs be just greater then prev
+            so we can find the upper bound arr2 (i.e) the smallest element in arr2 just greater than prev
+            if such an element is in arr2 we have a replacement event
+            1 + dp(i+1,arr2[idex of element to be found])
+            but here we just take the minimum of out two options
+            
+        cases1:
+            if arr[i] < arr[i-1], we must replace with the smallest number in arr2 just greater than arr[i-1]
+            binar seach
+        
+        case2.a,.2b
+            if arr[i] > arr[i-1]
+                leave it and advance
+            try replacing it with an even emsaller value. why?
+            by doing so itt may make it easier to ensure that subsequent numbers are greater than arr1[i]
+        
+        in both cases we also look for the upper bound from arr[i-1]
+        
+        importantn step
+            if we canont replace arr[i] with a value from arr2, need to return a larger number float('inf')
+            to indicate that it cannot be replace
+        '''
+        arr2 = sorted(list(set(arr2)))
+        memo = {}
+        
+        def dp(i,prev):
+            if i == len(arr1):
+                return 0
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            
+            curr_min_cost = float('inf')
+            #if the array is sorted at this arr[i] and prev
+            if arr1[i] > prev:
+                curr_min_cost = dp(i+1,arr1[i])
+            
+            #try finding largest
+            upper_bound = bisect.bisect_right(arr2,prev)
+            #if we can replace it
+            if upper_bound < len(arr2):
+                curr_min_cost = min(curr_min_cost, 1 + dp(i+1,arr2[upper_bound]))
+                
+            memo[(i,prev)] = curr_min_cost
+            return curr_min_cost
+        ans = dp(0,float('-inf'))
+        
+        if ans != float('inf'):
+            return ans
+        return -1
+    
+#starting to get the hang of upper bound
+class Solution:
+    def makeArrayIncreasing(self, arr1: List[int], arr2: List[int]) -> int:
+        '''
+        coding out binary search 
+        '''
+        arr2 = sorted(list(set(arr2)))
+        memo = {}
+        
+        def bin_search(arr,search):
+            left = 0
+            right = len(arr)
+            while left < right:
+                mid = left + (right - left) // 2
+                if arr[mid] <= search:
+                    left = mid + 1
+                else:
+                    right = mid
+            
+            return left
+        
+        def dp(i,prev):
+            if i == len(arr1):
+                return 0
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            
+            curr_min_cost = float('inf')
+            #if the array is sorted at this arr[i] and prev
+            if arr1[i] > prev:
+                curr_min_cost = dp(i+1,arr1[i])
+            
+            #try finding largest
+            upper_bound = bin_search(arr2,prev)
+            #if we can replace it
+            if upper_bound < len(arr2):
+                curr_min_cost = min(curr_min_cost, 1 + dp(i+1,arr2[upper_bound]))
+                
+            memo[(i,prev)] = curr_min_cost
+            return curr_min_cost
+        ans = dp(0,float('-inf'))
+        
+        if ans != float('inf'):
+            return ans
+        return -1
+    
+#another cool way with boundar conditins
+#https://leetcode.com/problems/make-array-strictly-increasing/discuss/3648097/Python-Elegant-and-Short-or-Top-Down-DP-or-Binary-Search
+class Solution:
+    def makeArrayIncreasing(self, arr1: List[int], arr2: List[int]) -> int:
+        arr2.sort()
+        memo = {}
+        
+        def dp(i,prev_max):
+            if i == len(arr1):
+                return 0
+            if (i,prev_max) in memo:
+                return memo[(i,prev_max)]
+            
+            j = bisect.bisect_right(arr2,prev_max)
+            take = dp(i+1,arr2[j])  + 1 if j < len(arr2) else float('inf')
+            no_take = dp(i+1,arr1[i]) if arr1[i] > prev_max else float('inf')
+            ans = min(take,no_take)
+            memo[(i,prev_max)] = ans
+            return ans
+        
+        return dp(0,float('-inf'))
+    
+#bottom up is trickier, and needs slight modification
+class Solution:
+    def makeArrayIncreasing(self, arr1: List[int], arr2: List[int]) -> int:
+        '''
+        for bottom up we need to use a mapp of the form
+            (i:{prev:count}) where prev i the prev value and cound is th minimum operations to reach this state
+            we can't do the thing where we loop through all i and through all prev from prev to max_prev
+            why? we don't know how many prevs can exists, other than the fact the we need to seach for prev in arr2
+        
+        loop through all indices i, and for all states in dp
+            each state in dp is {prev:count}
+            
+        again:
+            if arr1[i] <= prev, wemust replace arr1[i] with the smallest value in arr2 just greart than prev
+            this new state becomes {arr2[index for bin seach] : count + 1}
+            otherwise we can't update, so we just return float('inf')
+        
+        if arr[i] > prev:
+            leave it unchanged {arr[i]:count} -> new_dp
+            try replacing it with a smaller value, i.e the smallest value > prev: {arr2[index for bin search]: count + 1}
+            then we take the ,minimum
+        
+        then we just reassign dp's
+        
+        
+            
+        '''
+        #boundary conditions, we have min count 0 for the start of the array
+        dp = {-1:0}
+        arr2.sort()
+        N = len(arr2)
+        
+        for i in range(len(arr1)):
+            next_dp = collections.defaultdict(lambda: float('inf')) #set default value to float('inf') it not in hahsmap
+            for prev in dp:
+                if arr1[i] > prev:
+                    next_dp[arr1[i]] = min(dp[prev],next_dp[arr1[i]])
+                #try binary search
+                idx = bisect.bisect_right(arr2,prev)
+                if idx < len(arr2):
+                    next_dp[arr2[idx]] = min(dp[prev] + 1, next_dp[arr2[idx]])
+            
+            dp = next_dp
+            
+        return min(dp.values()) if dp else -1
