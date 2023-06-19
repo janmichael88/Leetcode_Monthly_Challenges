@@ -1731,3 +1731,141 @@ class Solution:
             dp = next_dp
             
         return min(dp.values()) if dp else -1
+    
+###################################################
+# 2328. Number of Increasing Paths in a Grid
+# 18JUN23
+###################################################
+#YESSSS
+class Solution:
+    def countPaths(self, grid: List[List[int]]) -> int:
+        '''
+        if i let dp(i,j) be the number of increasing paths starting from cell (i,j)
+        dp(i,j) = {
+                for (neigh_i,neigh_j) in neighbors of (i,j):
+                    if grid[i][j] < grid[neigh_i][neigh_j]:
+                        dp(i,j) += dp(neigh_i,neigh_j)
+        }
+        
+        do dp(i,j) for all (i,j) in rows, then sum for each
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        mod = 10**9 + 7
+        
+        memo = {}
+        
+        def dp(i,j):
+            #we don't need a termination case go out of bounds, because we will check before recursing below
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = 1
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #increasing
+                    if grid[neigh_x][neigh_y] > grid[i][j]:
+                        ans += dp(neigh_x,neigh_y)
+                        ans %= mod
+            
+            #one more time
+            ans %= mod
+            memo[(i,j)] = ans
+            return ans
+        
+        
+        paths = 0
+        for i in range(rows):
+            for j in range(cols):
+                paths += dp(i,j)
+                paths %= mod
+        
+        return paths % mod
+            
+class Solution:
+    def countPaths(self, grid: List[List[int]]) -> int:
+        '''
+        to do bottom up, we need to sort the cells by their value
+        and we cna keep a temp dp arry
+        where dp[i][j] represents the number of paths ending at dp[i][j]
+        then we check all in bound neighs (neigh_i,neigh_j)
+        and if grid[neigh_i][neigh_j] > grid[i][j]
+            we cane exxtend all paths to neigh_i,neigh_j, so we weincremant by dp[i][j]
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        mod = 10**9 + 7
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        
+        #counts
+        dp = [[1]*cols for _ in range(rows)]
+        cells = []
+        for i in range(rows):
+            for j in range(cols):
+                cells.append([grid[i][j],i,j])
+        
+        #sort increasingly by value
+        cells.sort(key = lambda x: x[0])
+        for val,i,j, in cells:
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #increasing
+                    if grid[neigh_x][neigh_y] > grid[i][j]:
+                        dp[neigh_x][neigh_y] += dp[i][j]
+                        dp[neigh_x][neigh_y] %= mod
+                        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans += dp[i][j]
+                ans %= mod
+        
+        return ans % mod
+    
+#more pythonic
+class Solution:
+    def countPaths(self, grid: List[List[int]]) -> int:
+        '''
+        to do bottom up, we need to sort the cells by their value
+        and we cna keep a temp dp arry
+        where dp[i][j] represents the number of paths ending at dp[i][j]
+        then we check all in bound neighs (neigh_i,neigh_j)
+        and if grid[neigh_i][neigh_j] > grid[i][j]
+            we cane exxtend all paths to neigh_i,neigh_j, so we weincremant by dp[i][j]
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        mod = 10**9 + 7
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        
+        #counts
+        dp = [[1]*cols for _ in range(rows)]
+        cells = [[i,j] for i in range(rows) for j in range(cols)]
+        cells.sort(key = lambda x: grid[x[0]][x[1]])
+
+        for i,j in cells:
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #increasing
+                    if grid[neigh_x][neigh_y] > grid[i][j]:
+                        dp[neigh_x][neigh_y] += dp[i][j]
+                        dp[neigh_x][neigh_y] %= mod
+                        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans += dp[i][j]
+                ans %= mod
+        
+        return ans % mod
