@@ -1869,3 +1869,123 @@ class Solution:
                 ans %= mod
         
         return ans % mod
+    
+class Solution:
+    def countPaths(self, grid: List[List[int]]) -> int:
+        MOD = 10 ** 9 + 7
+        R,C = len(grid), len(grid[0])
+        dp = defaultdict(int)
+        for val,r,c in sorted(((grid[r][c],r,c) for r,c in product(range(R), range(C))), reverse=True):
+            for dr, dc in (0,1),(1,0),(0,-1),(-1,0):
+                nr,nc = r+dr,c+dc
+                if R > nr >= 0 <= nc < C and grid[r][c] < grid[nr][nc]:
+                    dp[r,c] += 1 + dp[nr,nc]
+                    dp[r,c] %= MOD
+        return (R * C + sum(dp.values())) % MOD
+    
+###############################################################
+# 158. Read N Characters Given read4 II - Call Multiple Times
+# 19JUN23
+#################################################################
+# The read4 API is already defined for you.
+# def read4(buf4: List[str]) -> int:
+
+class Solution:
+    def __init__(self,):
+        self.internal_buffer = ['']*4
+        self.buffer_ptr = 0
+        self.characters_in_buffer = 0
+    '''
+    https://leetcode.com/problems/read-n-characters-given-read4-ii-call-multiple-times/discuss/989807/Clean-Python-solution
+    * the idea is to read from the file into an internal buffer,
+    * store number of characters in the internal buffer
+    * keep track of the current interal buffer position
+    
+    for each
+        use local varibale to keep track of the number of copied charcters (from file into internal buffer)
+        whiel its lees than n, copy characters from interal buffer into the our buffer
+        move both pointers
+    
+    if the current buffer pointer to char == the size of the buffer
+        we need to read another chunk from the file using read4
+        ipdate and reset the poitners
+    '''
+    def read(self, buf: List[str], n: int) -> int:
+        #recall we arte trying to read in n characters
+        i = 0
+        while i < n:
+            #if we need to read in a new set of 4
+            if self.buffer_ptr == self.characters_in_buffer:
+                self.buffer_ptr = 0
+                self.characters_in_buffer = read4(self.internal_buffer)
+                if self.characters_in_buffer == 0:
+                    #nothing else to read
+                    break
+            #write into file buffer
+            buf[i] = self.internal_buffer[self.buffer_ptr]
+            self.buffer_ptr += 1
+            i += 1
+        
+        return i
+    
+#an additional way
+# The read4 API is already defined for you.
+# def read4(buf4: List[str]) -> int:
+
+class Solution:
+    
+    def __init__(self,):
+        self.buf4 = ["" for _ in range(4)]
+        #pointer in buffer
+        self.ptr = 0
+        self.n = 0 #spaces used in buffer
+        
+    def read(self, buf: List[str], n: int) -> int:
+        ans = 0
+        
+        for i in range(n):
+            if self.ptr >= self.n:
+                #read next check
+                r = read4(self.buf4)
+                #reset
+                self.ptr = 0
+                self.n = r
+            
+            if self.ptr < self.n:
+                buf[i] = self.buf4[self.ptr]
+                self.ptr += 1
+                ans += 1
+            else:
+                break
+        
+        return ans
+    
+#Google follow up, speed up read
+#essentially the same as the first one
+#maybe brute force would have been to call read4, create temp, and copy over
+#here we copy on the fly
+
+#https://leetcode.com/problems/read-n-characters-given-read4-ii-call-multiple-times/discuss/188293/Google-follow-up-question.-Speed-up-the-copy.
+class Solution:
+    def __init__(self):
+        self.buf4 = [''] * 4
+        self.i4 = 0
+        self.n4 = 0
+        
+    def read(self, buf: List[str], n: int) -> int:
+        idx = 0
+        
+        while idx < n:
+            if self.i4 < self.n4:
+                buf[idx] = self.buf4[self.i4]
+                idx += 1
+                self.i4 += 1
+            else:
+                self.n4 = read4(self.buf4)
+                self.i4 = 0
+
+                if not self.n4:
+                    return idx
+
+        return idx
+    
