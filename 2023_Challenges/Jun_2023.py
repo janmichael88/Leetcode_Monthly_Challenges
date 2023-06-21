@@ -1989,3 +1989,128 @@ class Solution:
 
         return idx
     
+##################################
+# 2090. K Radius Subarray Averages
+# 20JUN23
+##################################
+#jesus
+class Solution:
+    def getAverages(self, nums: List[int], k: int) -> List[int]:
+        '''
+        i can build prefix sum, then i should be able to find the subarray sums in constant time
+        then divide by k for each i
+        just remmber for prefix sum array with [0] at the beginning
+        given points (i,j)
+        sum us pref_sum[j+1] - pref_sum[i]
+        '''
+        N = len(nums)
+        pref_sum = [0]
+        for num in nums:
+            pref_sum.append(num + pref_sum[-1])
+        
+        
+        ans = [-1]*N
+        
+        for i in range(N):
+            #get the bounds
+            left_bounds = i - k
+            right_bounds = i + k
+            if left_bounds >= 0 and right_bounds < N:
+                #print(temp)
+                #print(nums[left_bounds],nums[right_bounds])
+                #find sum
+                curr_sum = pref_sum[right_bounds+1] - pref_sum[left_bounds]
+                num_elements = right_bounds - left_bounds + 1
+                #print(temp)
+                #print(curr_sum,sum(temp),num_elements)
+                ans[i] = curr_sum // num_elements
+
+        
+        return ans
+
+class Solution:
+    def getAverages(self, nums: List[int], k: int) -> List[int]:
+        '''
+        for any K radius subarray in nums, there is going to be 2*k + 1 eleemnts in that array
+        if there are not, this avearge will be - 1
+        
+        notes on pref_sum array
+            given n elements, we get pref_sum array of size n + 1
+            given (left,right), we can find sum as : pref_sum[right+1] - pref_sum[left]
+        
+        special cases to spee up
+        if k == 0, we only consinder average of subarrays of size 1, the average of a sigle eleemnt is just the elemnet itself
+            return nums
+        
+        if 2*k + 1 > n, which means we have to find more than n numbers of the left and right for in i in range [0,n-1]
+        just return [-1]*n
+        otherwise we can check all i for i in range [k to n-k]
+        
+        '''
+        N = len(nums)
+        if k == 0:
+            return nums
+        
+        ans = [-1]*N
+        if 2*k + 1 > N:
+            return ans
+        
+        pref_sum = [0]*(N+1)
+        for i in range(N):
+            pref_sum[i+1] = pref_sum[i] + nums[i]
+            
+        #centers from k to n - k
+        for i in range(k,N-k):
+            left = i - k
+            right = i + k
+            entry = (pref_sum[right+1] - pref_sum[left]) // (2*k + 1)
+            ans[i] = entry
+        
+        return ans
+            
+#sliding window for O(1) space
+class Solution:
+    def getAverages(self, nums: List[int], k: int) -> List[int]:
+        '''
+        we can using a sliding window
+        we know there must be 2*k + 1 elements in a subarray
+        say we are at some index x and we knows is K radius subarray, call it S_x
+        when we go to the next x+1, we just add the next element in right and remove left most window
+        S_{x+1} = S_{x} + nums[k+x+1] - nums[k-x+1]
+        '''
+        N = len(nums)
+        if k == 0:
+            return nums
+        
+        ans = [-1]*N
+        if 2*k + 1 > N:
+            return ans
+        
+        #get the first window sum
+        window_sum = sum(nums[:2*k+1])
+        ans[k] = window_sum // (2*k+1)
+        
+        #iterate on the next ending indicies, i.e right
+        #from a right bounds, we can find its left start
+        for right in range(2*k+1,N):
+            window_sum += nums[right] - nums[right - (2*k+1)]
+            ans[right-k] = window_sum//(2*k+1)
+        
+        return ans
+
+#another way
+class Solution:
+    def getAverages(self, nums: List[int], k: int) -> List[int]:
+        N = len(nums)
+        ans = [-1]*N
+        
+        running_sum = 0
+        left = 0
+        for right,num in enumerate(nums):
+            running_sum += num
+            if right >= 2*k:
+                ans[left+k] = running_sum // (2*k+1)
+                running_sum -= nums[left]
+                left += 1
+        
+        return ans
