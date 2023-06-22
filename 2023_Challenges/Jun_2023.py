@@ -2114,3 +2114,181 @@ class Solution:
                 left += 1
         
         return ans
+
+############################################
+# 2448. Minimum Cost to Make Array Equal
+# 21JUN23
+#############################################
+class Solution:
+    def minCost(self, nums: List[int], cost: List[int]) -> int:
+        '''
+        in one operation we can increase or decrease any element in nums by 1
+        the cost of doing this at nums[i] is costs[i]
+        return min cost such that all array nums become equal
+        
+        its optimal to try changing all the elements to an element existing in nums already
+        
+        tryingg all posbile nums to raise to would be
+            O(N^2)
+        say we have elements: [a,b,c,d,e]
+        we know we need to raise each element to any one of them,
+        if we try a, then the number of steps for the remaining would be abs(b-a), abs(c-a)....abs(e-a)
+        and cost would be abs(b-a)*cost[1] + abs(c-a)*cost[2] + ... _ abs(e-a)*cost[-1]
+        
+        what if we were to sort (nums[i],cost[i]) for i in range(n), on increasing cost
+        if we know the current cost to changing nums[i] to x, lets call it total cost
+        if we were to chagne x to dx, then the cost would increas by dx*(total_cost)
+        
+        intutions
+            nums = [1,3,5,2]
+            cost = [2,3,1,14]
+            cost to change to 3 would be
+            abs(3-2)*2 + abs(3-3)*3 + abs(5-3)*2 + abs(3-1)*14 = 20
+            no try raising to 5
+            abs(5-1)*2 + abs(5-3)*3 + abs(5-5)*0 + abs(5-2)*14 = 56
+            F(x) = \sum_{i=0}^{N} abs(nums[i]-x)*cost[i]
+            now try increasin x by something x' = x + dx
+           F(x+dx) = \sum_{i=0}^{N} abs(nums[i]-(x+dx))*cost[i] 
+           F(x+dx) = F(x) + \sum_{i=0}^{n} (dx*cost[i])
+           depending on the direction of dx, could be positive or could be negative
+           if we had sorted the array, and we know the current cost for changing to nums[i], then we can get the change from nums[i-1]        
+        two different costs
+            1. the cost of increasing numbers smaller than nums[i] is pref_sum up to i
+            2. the cost of decreasing largers numbers than nums[i] would be suffix_sum at i to the end of the array
+        def compute_cost(nums,cost,x):
+            N = len(nums)
+            total_cost = 0
+            for i in range(N):
+                total_cost += abs(nums[i] - x)*cost[i]
+            
+            return total_cost
+        
+        print(compute_cost(nums,cost,5))
+        print(compute_cost(nums,cost,6))
+        print(sum(cost))
+        
+        intution:
+            the increament of the cost is proporital to the pref_sum (or suff_sum) of cost at i
+         
+        why do we only need to pick from an existing element in nums?
+            F(x) is montonic when x is in the range nums[i] and nums[i+1]
+            F(x) is motnoic when the array is sorted
+        why does F(x) being montonic imply that the base must be an element in nums?
+        
+        algo:
+            1. pair num with cost and sort increaisnly on cost
+            2. build pref_sum array for the sorted costs
+            3. start with nums[0], as the bast, and calculate the cost of makgin evey element euqal to nums[0]
+            4. then iteratinf from nums[1] to nums[len(nums)-1]
+                to get the delta x change in costs
+                minimize each delta x
+                there will be a delta x for (0,1), (1,2),(2,3)....all the way to (N-2,N-1)
+        
+        intution 2:
+            for the function F(x), start with the smallast x in nums
+            to raise x to x', which would be the next largest element in nums
+            find delta x = x' - x
+            The current totalCost made by nums[i], compared with the previous cost made by nums[i - 1], 
+            is increased by gap times the prefix sum of costs prefixCost[i - 1] and decreased by gap 
+            times the suffix sum of costs prefixCost[n - 1] - prefixCost[i - 1].
+
+        Since F(x) is monotonic for a range nums[i] <= x <= nums[j], where i, j are just random indices, it must mean that F(x) is a minimum at either nums[i] or nums[j]. 
+        Think about it, if a function monotonic increasing, you start at the top and end at the bottom. 
+        If a function is monotonic decreasing, you start at the bottom and end at the top. In both scenarios, 
+        the bottom is at one of the endpoints.
+
+        So we are trying to find the x that makes F(x) at minimum, and since the function is monotonic on the range [i,j] where nums[i] <= x <= nums[j], 
+        the minimum must be at one of the endpoints i or j. Anything in between would not make F(x) the minimum.
+            
+        '''
+        def compute_cost(nums,cost,x):
+            N = len(nums)
+            total_cost = 0
+            for i in range(N):
+                total_cost += abs(nums[i] - x)*cost[i]
+            
+            return total_cost
+        
+        #print(compute_cost(nums,cost,5))
+        #print(compute_cost(nums,cost,6))
+        #print(sum(cost))
+        
+        N = len(nums)
+        pairs = [(num,c) for num,c in zip(nums,cost)] #(num[i],cost[i])
+        #sort increasinly on nums
+        pairs.sort(key = lambda x: x[0])
+        
+        pref_sum_cost = [0]*(N+1)
+        for i in range(N):
+            pref_sum_cost[i+1] = pref_sum_cost[i] + pairs[i][1]
+        
+        #then we try every interger and change ot ti nums[0]
+        starting_cost = 0 
+        for i in range(1,N):
+            cost_at_i = pairs[i][1]
+            diff = pairs[i][0] - pairs[0][0]
+            starting_cost += cost_at_i*diff
+        
+        ans = starting_cost
+        
+        #thenw e try nums[1] and nums[2] and so on
+        #the cost difference is made by the cnage of two parts 1. pref_sum of costs 2. suff_sum of costs
+        #print(pref_sum_cost)
+        for i in range(1,N):
+            delta_x = pairs[i][0] - pairs[i-1][0]
+            pref_sum = pref_sum_cost[i]
+            suff_sum = pref_sum_cost[-1] - pref_sum_cost[i]
+            starting_cost += pref_sum*delta_x
+            starting_cost  -= suff_sum*delta_x
+            ans = min(ans,starting_cost)
+        
+        return ans
+    
+#binary search
+class Solution:
+    def minCost(self, nums: List[int], cost: List[int]) -> int:
+        '''
+        binary search approach
+        intution:
+            a linear combination (with) non negative coeffients of convex functinos is convex
+            a function is convex if a line segment between any two points lies above the graph
+            rather, the second derivative must be non negative in its entire domain
+            i.e must be positive semi definite
+            
+        if we define f_i{x} as the cost function for one elements nums[i]
+        then f_i(x) is convex
+        
+        if nums consists of multiple elements, F(X) = f1(x) + f2(x) + fx(x) + ... + fn(x)
+        which means F(x) is also convent, and the minmum must be in range [min(nums),max(nums)]
+        we can use binary search to find the min by comparing F(x) and F(x+1)
+        
+        case1:
+            if F(x) < F(x+1), we can i.e its increasing, we discard the right half
+            if F(x) > F(x+1), its decreasing, and we discard the left half
+        '''
+        # Get the cost of making every element equals base.
+        def get_cost(base):
+            return sum(abs(base - num) * c for num, c in zip(nums, cost))
+        
+        # Initialize the left and the right boundary of the binary search.
+        left, right = min(nums), max(nums)
+        answer = get_cost(nums[0])
+        
+        # As shown in the previous picture, if F(mid) > F(mid + 1), then the minimum
+        # is to the right of mid, otherwise, the minimum is to the left of mid.
+        while left < right:
+            mid = (left + right) // 2
+            cost_1 = get_cost(mid)
+            cost_2 = get_cost(mid + 1)
+            answer = min(cost_1, cost_2)
+            
+            if cost_1 > cost_2:
+                left = mid + 1
+            else:
+                right = mid
+        
+        return answer
+            
+            
+        
+        
