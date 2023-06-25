@@ -2289,6 +2289,283 @@ class Solution:
         
         return answer
             
+############################################################
+# 714. Best Time to Buy and Sell Stock with Transaction Fee
+# 22JUN23
+############################################################
+#YAYYYYYYY
+class Solution:
+    def maxProfit(self, prices: List[int], fee: int) -> int:
+        '''
+        can only hold 1 stock at a time
+        states:
+            position
+            holding and not holding stock
+        
+        transition
+            if im holding stock at i, i can sell on this day which means i go up in price, but i lose profit due to fee
+            if im holding stock at i, i can just do nothing and move on
             
+            if im not holding stock at i, i can continue not holding
+            if im not holding stock at i, buy stock at i and go down in price
+        '''
+        memo = {}
+        N = len(prices)
+        
+        def dp(i,holding):
+            if i == N:
+                return 0
+            if (i,holding) in memo:
+                return memo[(i,holding)]
+            
+            ans = float('-inf')
+            #holding stock then buy
+            if holding:
+                option1 = prices[i] - fee + dp(i+1,False) #no longer holding
+                option2 = dp(i+1,True) #do nothing and still else
+                ans = max(ans,option1,option2)
+            
+            else:
+                #not holding 
+                option3 = dp(i+1,False)
+                option4 = -prices[i] + dp(i+1,True)
+                ans = max(ans,option3,option4)
+            
+            memo[(i,holding)] = ans
+            return ans
         
         
+        return dp(0,False)
+    
+#bottom up
+class Solution:
+    def maxProfit(self, prices: List[int], fee: int) -> int:
+        '''
+        bottom up,
+        dp arrays of size N+1, two of them
+        '''
+        N = len(prices)
+        dp = [[0]*(2) for _ in range(N+1)]
+        
+        for i in range(N-1,-1,-1):
+            ans = float('-inf')
+            for holding in [0,1]:
+                if holding:
+                    option1 = prices[i] - fee + dp[i+1][0]
+                    option2 = dp[i+1][1]
+                    ans = max(ans,option1,option2)
+                else:
+                    option3 = dp[i+1][0]
+                    option4 = -prices[i] + dp[i+1][1]
+                    ans = max(option3,option4)
+                
+                dp[i][holding] = ans
+        
+        return dp[0][0]
+
+#########################
+# 1214. Two Sum BSTs
+# 22JUN23
+########################
+#meh it works
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def twoSumBSTs(self, root1: Optional[TreeNode], root2: Optional[TreeNode], target: int) -> bool:
+        '''
+        dump one tree into a hashset than traverse the other tree and check for its complement
+        '''
+        hash_set1 = set()
+        self.ans = False
+        def dfs(node,curr_hash_set):
+            if not node:
+                return
+            curr_hash_set.add(node.val)
+            dfs(node.left,curr_hash_set)
+            dfs(node.right,curr_hash_set)
+        
+        
+        def dfs_2(node,curr_hash_set):
+            if not node:
+                return
+            #find complement
+            comp = target - node.val
+            if comp in curr_hash_set:
+                self.ans = True
+            dfs_2(node.left,curr_hash_set)
+            dfs_2(node.right,curr_hash_set)
+            
+        dfs(root1,hash_set1)
+        dfs_2(root2,hash_set1)
+        return self.ans
+
+##############################################
+# 1027. Longest Arithmetic Subsequence
+# 23JUN23
+#############################################
+#dammit this sucks
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        '''
+        states:
+            need position in array, call it i
+            at that position keep track of the arithmetic difference, call it prev_diff
+            need a way to check prev_diff
+        
+        transition:
+            we either take at this i to extend if there is a common differnce
+            or we don't take and reset to 1
+        
+        if im at i, i need to check for the existence of nums[i] - nums[i-1] for a start index j
+        beteween (0 and i-1)
+        
+        start off at index 1
+        
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i,prev):
+            if i == N:
+                return 0
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            #if we can extend
+            extend = 1 + dp(i+1,nums[i]-nums[i-1])
+            skip = dp(i+1,prev)
+            ans = 0
+            #check the other ones
+            for j in range(i):
+                child = 1 + dp(j,nums[i]-nums[j])
+                ans = max(ans,child,extend,skip)
+            
+            memo[(i,prev)] = ans
+            return ans
+        
+        
+        return dp(1,nums[1]-nums[0])
+        
+#python TLE's but hava does not
+#O(N^3)
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        '''
+        states:
+            need position in array, call it i
+            at that position keep track of the arithmetic difference, call it prev_diff
+            need a way to check prev_diff
+        
+        transition:
+            we either take at this i to extend if there is a common differnce
+            or we don't take and reset to 1
+        
+        if im at i, i need to check for the existence of nums[i] - nums[i-1] for a start index j
+        beteween (0 and i-1)
+        
+        this would be longest starting i
+        
+        start off at index 1
+        
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i,prev):
+            if i == N:
+                return 0
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            ans = 0
+            #check the other ones
+            for j in range(i+1,N):
+                #find the next idff
+                next_diff = nums[j] - nums[i]
+                if next_diff == prev:
+                    ans = max(ans,1+dp(j,prev))
+            
+            memo[(i,prev)] = ans
+            return ans
+        
+        ans = 0
+        #smallest can be length 2
+        for i in range(N):
+            for j in range(i+1,N):
+                start_diff = nums[j] - nums[i]
+                temp = 1 + dp(i,start_diff)
+                ans = max(ans,temp)
+        
+        return ans
+
+#top down O(N^2), it only gets AC with java though
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        '''
+        states:
+            need position in array, call it i
+            at that position keep track of the arithmetic difference, call it prev_diff
+            need a way to check prev_diff
+        
+        transition:
+            we either take at this i to extend if there is a common differnce
+            or we don't take and reset to 1
+        
+        if im at i, i need to check for the existence of nums[i] - nums[i-1] for a start index j
+        beteween (0 and i-1)
+        
+        this would be longest starting i
+        
+        start off at index 1
+        
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i,prev):
+            if i == N:
+                return 0
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            ans = 1
+            
+            if prev == float('-inf'):
+                for j in range(i+1,N):
+                    extend = 1 + dp(j,nums[j]-nums[i])
+                    no_extend = dp(j,prev)
+                    ans = max(ans,max(extend,no_extend))
+            else:
+                for j in range(i+1,N):
+                    if nums[j] - nums[i] == prev:
+                        extend = 1 + dp(j,prev)
+                        ans = max(ans,extend)
+            
+            memo[(i,prev)] = ans
+            return ans
+        
+        
+        return dp(0,float('-inf'))
+
+#need to do bottom up with dp as hash table
+class Solution:
+    def longestArithSeqLength(self, nums: List[int]) -> int:
+        '''
+        bottom up, dp(i,prev)
+            represents the longest arightmetic subsequence ending at i, with common difference prev
+        '''
+        dp = {}
+        N = len(nums)
+        
+        for right in range(N):
+            for left in range(0,right):
+                diff = nums[right] - nums[left]
+                if (left,diff) in dp:
+                    dp[(right,diff)] = dp[(left,diff)] + 1
+                else:
+                    dp[(right,diff)] = 2
+
+                    
+        
+        return max(dp.values())
