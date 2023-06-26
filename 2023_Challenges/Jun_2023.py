@@ -2721,4 +2721,45 @@ class Solution:
                 answer = max(answer, first_half[diff] + second_half[-diff])
         return answer
 
-
+########################################
+# 1575. Count All Possible Routes
+# 25JUN23
+########################################
+class Solution:
+    def countRoutes(self, locations: List[int], start: int, finish: int, fuel: int) -> int:
+        '''
+        we are given locations of cities where locations[i] is hte positions
+        we are given start city and finish city
+        count all paths from start to finisght
+        i can visit any city more than once
+        
+        define dp(i,fuel) as:
+            the number count of all possilble paths
+            if i is the finish city, there is a path, so return 1
+            then we just need to add all the paths from there
+            if fuel < 0:
+                return 0
+        '''
+        memo = {}
+        N = len(locations)
+        mod = 10**9 + 7
+        
+        def dp(i,fuel):
+            if fuel < 0:
+                return 0
+            if (i,fuel) in memo:
+                return memo[(i,fuel)]
+            
+            #dont just return 1 on any leaf node, theres at least 1 if we hit it
+            ways = 1 if i == finish else 0
+            for j in range(N):
+                if j != i:
+                    used_fuel = abs(locations[i] - locations[j])
+                    ways += dp(j, fuel - used_fuel)
+                    ways %= mod
+            ways %= mod
+            memo[(i,fuel)] = ways
+            return ways
+        
+        
+        return dp(start,fuel)
