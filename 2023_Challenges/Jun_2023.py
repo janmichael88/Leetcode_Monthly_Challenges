@@ -2569,3 +2569,156 @@ class Solution:
                     
         
         return max(dp.values())
+    
+##########################################
+# 956. Tallest Billboard
+# 25JUN23
+##########################################
+#yasss
+class Solution:
+    def tallestBillboard(self, rods: List[int]) -> int:
+        '''
+        keep track to two different sums
+        for each each we can either add to sum1 or sum2 or skip
+        if we got to the end, check the sums
+        '''
+        memo = {}
+        N = len(rods)
+        
+        def dp(i,sum1,sum2):
+            if i == N:
+                if sum1 == sum2:
+                    return 0
+                else:
+                    return float('-inf')
+            
+            if (i,sum1,sum2) in memo:
+                return memo[(i,sum1,sum2)]
+            
+            op1 = rods[i] + dp(i+1,sum1+rods[i],sum2)
+            op2 = rods[i] + dp(i+1,sum1,sum2+rods[i])
+            op3 = dp(i+1,sum1,sum2)
+            ans = max(op1,op2,op3)
+            memo[(i,sum1,sum2)] = ans
+            return ans
+        
+        
+        return dp(0,0,0) // 2
+
+#state reudction to 2
+#if we know one sum, we inriscally know the other
+#the sum actually represents the sum of both stacks, do we need to divide by two
+class Solution:
+    def tallestBillboard(self, rods: List[int]) -> int:
+        '''
+        i want to make the tallest billboard, i need at least two rods to make a biull board
+        all rods have positive length
+        brute force:
+            ans = 0
+            for subset_sum in all subset_sums:
+                if subset_sum === sum(rodes) - subset_sum:
+                    ans = max(ans,subset_sum)
+            you don't need to use all the rods
+            
+        maintain states 
+            i, positoin, and difference between two susbet sums
+            if difference is zero, we have an an answer
+
+        state reduction is tricky, FYI
+            
+        '''
+        memo = {}
+        N = len(rods)
+        
+        def dp(i,diff):
+            if i == N:
+                if diff == 0:
+                    return 0
+                else:
+                    return float('-inf')
+            
+            if (i,diff) in memo:
+                return memo[(i,diff)]
+            
+            op1 = rods[i] + dp(i+1,diff + rods[i])
+            op2 = rods[i] + dp(i+1, diff - rods[i])
+            skip = dp(i+1,diff)
+            ans = max(op1,op2,skip)
+            memo[(i,diff)] = ans
+            return ans
+        
+        return dp(0,0) // 2
+    
+#brute force, but with reduction in input by constant
+class Solution:
+    def tallestBillboard(self, rods: List[int]) -> int:
+        '''
+        brute force involves finding subets for
+            using a subset on the left stand
+            using a subset on the right stand
+            or not using a stand at all
+            
+            which would be O(3^n)
+            given the inputs 3^20 is too much, but if we would get down to
+            3^10, it would be work, for stuff with exponential time, try to find a way to reduce by a constant at least; constant in the input
+            we need to divide rods into halves
+        
+        intuition is to split the rods in two halves
+        then we start from states (0,0) and we essentially BFS from them
+            for r1 we can
+                use in left (r1,0)
+                use in right (0,r1)
+                not use at all (0,0)
+            
+            for r2, we need to add to the exisiting stgates, brancing factor of three
+                states:
+                    {(0, 0), (r1, 0), (0, r1), (r2, 0), (0, r2), (r2 + r1, 0), (r1, r2), (r2, r1), (0, r2 + r1)}
+                this will grow, but the point was the we limited the exponent to 10, which is acceptable
+        
+        given the states, how can we find the anser
+            say we have some left combinations with height 5, and some right combinations with height 2
+            left is higher by 3, so we need to find a combidnation giving 3 extra
+        
+        so lets store combindations in the first half, where the keys are:
+            diff = left - right
+        the value should be either the left or right rode height
+            an answer for a combindation between two halvews owuld be either the left or the right
+           
+         we stotre first_half[left-right] = left
+         second_half must be the same: second_half[left-right] = left
+         
+         after builing the hashmapes for the left and right halves we traverse over the first half
+         and for each combindation represetned as first_half[diff] = left
+         we check whether the second half contains the combiantion with diff to componestate
+         if it does we take irst_half[diff] + second_half[-diff] as a valid billboard height
+
+         if we know the height difference between the left and right
+         and the -heigh difference exsists in the other side, combining thme both wild give the same heights for both left and right
+        '''
+        # Helper function to collect every combination `(left, right)`
+        def helper(half_rods):
+            states = set()
+            states.add((0, 0))
+            for r in half_rods:
+                new_states = set()
+                for left, right in states:
+                    new_states.add((left + r, right))
+                    new_states.add((left, right + r))
+                states |= new_states
+                
+            dp = {}
+            for left, right in states:
+                dp[left - right] = max(dp.get(left - right, 0), left)
+            return dp
+
+        n = len(rods)
+        first_half = helper(rods[:n // 2])
+        second_half = helper(rods[n // 2:])
+
+        answer = 0
+        for diff in first_half:
+            if -diff in second_half:
+                answer = max(answer, first_half[diff] + second_half[-diff])
+        return answer
+
+
