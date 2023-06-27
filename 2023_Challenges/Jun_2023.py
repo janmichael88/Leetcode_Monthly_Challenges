@@ -2763,3 +2763,180 @@ class Solution:
         
         
         return dp(start,fuel)
+    
+#############################################
+# 2462. Total Cost to Hire K Workers
+# 26JUN23
+#############################################
+#fuck....
+class Solution:
+    def totalCost(self, costs: List[int], k: int, candidates: int) -> int:
+        '''
+        we are given array costs, where costs[i] is cost of hiring the ith work
+        conditions:
+            run k session and hire exactly one worker from each sessions
+            in each session:
+                choose the worker with the lowest cost from either the first canddiate workes ro the last canddiat workers
+                break the two by the smallest indext
+                
+        maintain two heaps one for the left and right parts
+        '''
+        left_half = []
+        right_half = []
+        remaining = []
+        ptr_rem = 0
+        N = len(costs)
+        
+        for i in range(candidates):
+            #combine entries into string????
+            heapq.heappush(left_half, str(costs[i])+"_"+str(i))
+            heapq.heappush(right_half, str(costs[N-i-1])+"_"+str(N-i-1))
+            
+        #anything remaining
+        for i in range(candidates,N-candidates):
+            remaining.append(str(costs[i])+"_"+str(i))
+        
+        
+        ans = 0
+        while k < 0:
+            #three cases
+            #no left
+            if len(left_half) == 0:
+                entry = heapq.heappop(right_half)
+                cost,index = entry.split("_")
+                ans += int(cost)
+                if ptr_rem < len(remaining):
+                    heapq.heappush(right_half,remaining[ptr_rem])
+                    ptr_rem += 1
+            #no right 
+            elif len(right_half) == 0:
+                entry = heapq.heappop(left_half)
+                cost,index = entry.split("_")
+                ans += int(cost)
+                if ptr_rem < len(remaining):
+                    heapq.heappush(left_half,remaining[ptr_rem])
+                    ptr_rem += 1
+            #find min from havles
+            else:
+                cost_left,index_left = left_half[0]
+                cost_right,index_right = right_half[0]
+                if cost_
+                
+#two heaps with deque of remaining
+class Solution:
+    def totalCost(self, costs: List[int], k: int, candidates: int) -> int:
+        '''
+        be careful for not taking into the right side, what we have already taken into the left side
+        we don't need to keep track of the indinces if we split between left and right parts
+        if there is a tie, we know we have to pick from the left side because the indices on left are before right
+        so we just check the tops of the two heaps <=
+        '''
+        left_half = []
+        right_half = []
+        remaining = deque([])
+        ptr_rem = 0
+        N = len(costs)
+        
+        for i in range(candidates):
+            #combine entries into string????
+            left_half.append(costs[i])
+        for i in range(max(candidates, len(costs) - candidates),N):
+            right_half.append(costs[N-i-1])
+            
+        heapq.heapify(left_half)
+        heapq.heapify(right_half)
+        
+        #anything remaining
+        for i in range(candidates,N-candidates):
+            remaining.append(costs[i])
+        
+        ans = 0
+        while k > 0:
+            #epty right half, take from left, or left_half[0] <= right_half
+            if len(right_half) == 0 or len(left_half) > 0 and left_half[0] <= right_half[0]:
+                ans += heapq.heappop(left_half)
+                #rebalane the heaps
+                if len(remaining) > 0:
+                    heapq.heappush(left_half, remaining.popleft())
+                    
+            else:
+                #right side
+                ans += heapq.heappop(right_half)
+                if len(remaining) > 0:
+                    heapq.heappush(right_half,remaining.pop())
+            
+            k -= 1
+        
+        return ans
+
+#two pointers in remaning
+class Solution:
+    def totalCost(self, costs: List[int], k: int, candidates: int) -> int:
+        # head_workers stores the first k workers.
+        # tail_workers stores at most last k workers without any workers from the first k workers. 
+        head_workers = costs[:candidates]
+        tail_workers = costs[max(candidates, len(costs) - candidates):]
+        heapify(head_workers)
+        heapify(tail_workers)
+        
+        answer = 0
+        next_head, next_tail = candidates, len(costs) - 1 - candidates 
+
+        for _ in range(k): 
+            if not tail_workers or head_workers and head_workers[0] <= tail_workers[0]: 
+                answer += heappop(head_workers)
+
+                # Only refill the queue if there are workers outside the two queues.
+                if next_head <= next_tail: 
+                    heappush(head_workers, costs[next_head])
+                    next_head += 1
+            else: 
+                answer += heappop(tail_workers)
+
+                # Only refill the queue if there are workers outside the two queues.
+                if next_head <= next_tail:  
+                    heappush(tail_workers, costs[next_tail])
+                    next_tail -= 1
+                    
+        return answer
+
+#one heap
+class Solution:
+    def totalCost(self, costs: List[int], k: int, candidates: int) -> int:
+        '''
+        the issue with putting all the costs into one queue paired with their indices is that we can only examine candidates at a time
+        we can push on to a min heap (costs,0 if first m candidates or 1 if last m candidates)
+        
+        when we rebalance the min heap again, we need to check we take from the remaining at the left side or right side by checking the indices
+        '''
+        min_heap = []
+        N = len(costs)
+        for i in range(candidates):
+            min_heap.append((costs[i],0))
+        
+        for i in range(max(candidates, len(costs) - candidates),N):
+            min_heap.append((costs[i],1))
+        
+        heapq.heapify(min_heap)
+        
+        ans = 0
+        #get points top next left or next right
+        next_left = candidates
+        next_right = N - candidates - 1
+        
+        while k > 0:
+            curr_cost, curr_side = heapq.heappop(min_heap)
+            ans += curr_cost
+            #rebalance
+            if next_left <= next_right:
+                if curr_side == 0:
+                    heapq.heappush(min_heap, (costs[next_left],0))
+                    next_left += 1
+                
+                else:
+                    heapq.heappush(min_heap, (costs[next_right],1))
+                    next_right -= 1
+            
+            k -= 1
+        
+        return ans
