@@ -2940,3 +2940,52 @@ class Solution:
             k -= 1
         
         return ans
+
+#############################################
+# 373. Find K Pairs with Smallest Sums
+# 28JUN23
+##############################################
+class Solution:
+    def kSmallestPairs(self, nums1: List[int], nums2: List[int], k: int) -> List[List[int]]:
+        '''
+        bfs with min heap, only add to the heap if we hav
+        there is no easy way to pick up the smallest sums
+        so we keep track of states (index in nums1, index in nums2)
+        we either pick at this state and move on to the next one
+        
+        intution:
+            the arrays are sorted increasingly, so the smallest sum would be (0,0)
+                from here the next smallest sum would could, we only need to look at these two pairs, because any other would be greater
+                    (0,1), (1,0)
+                if we move to (1,0), the next smallest pair would be (0,1) still
+                    that state is still in contetion, or (1,1), (0,2)
+                but we would want the smaller sum of these two pairs, BFS!
+            at each step we chose the minimum sum pair from the remaining leftover combinations of pairs
+        
+        we can use heap to keep track of the smallest sum
+        '''
+        ans = []
+        seen = set()
+        
+        min_heap = [(nums1[0]+nums2[0],0,0)]
+        seen.add((0,0))
+        
+        while k > 0 and min_heap:
+            sum_,i,j = heapq.heappop(min_heap)
+            entry = [nums1[i],nums2[j]]
+            ans.append(entry)
+            
+            #check neighbors
+            if i+1 < len(nums1) and (i+1,j) not in seen:
+                heapq.heappush(min_heap,(nums1[i+1] + nums2[j], i+1,j))
+                seen.add((i+1,j))
+            
+            if j+1 < len(nums2) and (i,j+1) not in seen:
+                heapq.heappush(min_heap,(nums1[i] + nums2[j+1], i,j+1))
+                seen.add((i,j+1))
+            
+            k -= 1
+        
+        return ans
+    
+    
