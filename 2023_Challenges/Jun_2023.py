@@ -2988,4 +2988,187 @@ class Solution:
         
         return ans
     
+#########################################
+# 1514. Path with Maximum Probability
+# 28JUN23
+#########################################
+#using acutal probs
+class Solution:
+    def maxProbability(self, n: int, edges: List[List[int]], succProb: List[float], start: int, end: int) -> float:
+        '''
+        this is just djikstras shortest path, but using max prob as the weight, insteaf of the sum
+        multiplying probabilites will take precision errors
+        take logs and sum them up
+        '''
+        graph = defaultdict(list)
+        for i in range(len(edges)):
+            u = edges[i][0]
+            v = edges[i][1]
+            #weight = math.log(succProb[i],2)
+            weight = succProb[i]
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        
+        visited = set()
+        dist = [0.0]*n
+        dist[start] = 1.0
+        
+        max_heap = [(-1.0,start)]
+        
+        while max_heap:
+            curr_prob,node = heapq.heappop(max_heap)
+            curr_prob *= -1
+            
+            #only need to maximuize,already maximum
+            if dist[node] > curr_prob:
+                continue
+            visited.add(node)
+            for neigh,prob_to in graph[node]:
+                if neigh in visited:
+                    continue
+                
+                new_prob = curr_prob*prob_to
+                if new_prob > dist[neigh]:
+                    dist[neigh] = new_prob
+                    heapq.heappush(max_heap, (-new_prob,neigh))
+        
+        
+        return dist[end]
     
+#using log probs
+class Solution:
+    def maxProbability(self, n: int, edges: List[List[int]], succProb: List[float], start: int, end: int) -> float:
+        '''
+        this is just djikstras shortest path, but using max prob as the weight, insteaf of the sum
+        multiplying probabilites will take precision errors
+        take logs and sum them up
+        '''
+        graph = defaultdict(list)
+        for i in range(len(edges)):
+            u = edges[i][0]
+            v = edges[i][1]
+            weight = math.log(succProb[i],2)
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        
+        visited = set()
+        dist = [float('-inf')]*n
+        dist[start] = 0.0
+        
+        max_heap = [(0.0,start)]
+        
+        while max_heap:
+            curr_prob,node = heapq.heappop(max_heap)
+            curr_prob *= -1
+            
+            #only need to maximuize,already maximum
+            if dist[node] > curr_prob:
+                continue
+            visited.add(node)
+            for neigh,prob_to in graph[node]:
+                if neigh in visited:
+                    continue
+                
+                new_prob = dist[node] + prob_to
+                if new_prob > dist[neigh]:
+                    dist[neigh] = new_prob
+                    heapq.heappush(max_heap, (-new_prob,neigh))
+        
+        
+        if dist[end] != 0.0:
+            return 2**(dist[end])
+        else:
+            return 0.0
+        
+#bellman ford
+class Solution:
+    def maxProbability(self, n: int, edges: List[List[int]], succProb: List[float], start: int, end: int) -> float:
+        '''
+        we can also use bellman ford
+        intution
+            a path in a graph without any cycles has at most n - 1 edges (if there are n nodes)
+            so we relax the edges n-1 times for all edge in edges
+            for each node in the graph, it tries to improve the shortest path from some source
+        
+        in the first round, we update the maximum probabily of reachining some nod u if we are allowed only 1 edge
+        second round, we are allowed two edges...third round we are allowed three....and so on
+        
+        algo:
+            init max probabilty array, to 0's and init the start to 1
+            relax all edges
+                for each edge (u,v) if we find a high probability of reaching u through this edge we update
+            if we are unable to update break
+        '''
+        max_probs = [float('-inf')]*n
+        max_probs[start] = 0
+        
+        for _ in range(n-1):
+            can_update = False
+            for i in range(len(edges)):
+                u,v = edges[i]
+                log_prob = math.log(succProb[i],2)
+                #if we can reach u with a heigh prob
+                prob_v_through_u = max_probs[u] + log_prob
+                if prob_v_through_u > max_probs[v]:
+                    max_probs[v] = prob_v_through_u
+                    can_update = True
+                prob_u_through_v = max_probs[v] + log_prob
+                if prob_u_through_v > max_probs[u]:
+                    max_probs[u] = prob_u_through_v
+                    can_update = True
+            
+            if not can_update:
+                break
+        
+        if max_probs[end] != float('-inf'):
+            return 2**max_probs[end]
+        return 0.0
+    
+#shortest path faster 
+class Solution:
+    def maxProbability(self, n: int, edges: List[List[int]], succProb: List[float], start: int, end: int) -> float:
+        '''
+        shortest path faster algo, similar to dijkstra's but we use q for node to edge weights
+        we also only add back to the queue when we can relax an edge
+            if the probability of traveling from the stating node to a neighbor node through a specific edge is greater than the current maximum
+            probability for that neighbor, we update the maximum prob of this neighbor and add its neighbor
+        '''
+        graph = defaultdict(list)
+        for i in range(len(edges)):
+            u = edges[i][0]
+            v = edges[i][1]
+            weight = math.log(succProb[i],2)
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        
+        visited = set()
+        dist = [float('-inf')]*n
+        dist[start] = 0.0
+        
+        q = deque([(0.0,start)])
+        
+        while q:
+            curr_prob,node = q.popleft()
+            curr_prob *= -1
+            
+            #only need to maximuize,already maximum
+            if dist[node] > curr_prob:
+                continue
+            visited.add(node)
+            for neigh,prob_to in graph[node]:
+                if neigh in visited:
+                    continue
+                
+                new_prob = dist[node] + prob_to
+                if new_prob > dist[neigh]:
+                    dist[neigh] = new_prob
+                    q.append((-new_prob,neigh))
+        
+        
+        if dist[end] != 0.0:
+            return 2**(dist[end])
+        else:
+            return 0.0
