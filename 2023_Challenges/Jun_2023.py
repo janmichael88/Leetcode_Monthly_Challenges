@@ -3172,3 +3172,380 @@ class Solution:
             return 2**(dist[end])
         else:
             return 0.0
+
+###########################################
+# 864. Shortest Path to Get All Keys
+# 29JUN23
+###########################################
+#fml
+class Solution:
+    def shortestPathAllKeys(self, grid: List[str]) -> int:
+        '''
+        we have empty cells, walls, keys and locks
+        we have a starting point
+        if we walk over a key, we can choose to pick it up or not pick it up
+            however, we can only walk over a lock if we have the key
+        
+        there is always a bijection to the (key,lock) pair
+        return lowest number of moves to get all the keys, not to obtain all the locks
+        bfs, but push step count and states 
+        states:
+            need to keep track of (key,lock) pairs as well as count
+            if we have picked up all the keys, we are good
+            if we go over a lock without having the key, we are in an invalid state, so skip it and don't add its neihbords
+            but we'll need a way to keep track of already visited states
+            store states as strings "key_count_lock_count" as well as if the lock has been opend up
+            push the whole grid?, then check the state of this grid on this path
+            there is only going to be 6 key,lock pairs
+            state would be:
+                (i,j,keys_count_locks_count)
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        start_row,start_col = -1,-1
+        key_lock_state = {}
+        keys = 0
+        visited = set()
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == '@':
+                    start_row,start_col = i,j
+                elif grid[i][j].islower():
+                    key_lock_state[grid[i][j]] = 0
+                    keys += 1
+                elif grid[i][j].isupper():
+                    key_lock_state[grid[i][j]] = 0
+                    
+        def get_state(mapp):
+            string_state = [k+"_"+str(v) for k,v in mapp.items()]
+            string_state = "_".join(string_state)
+            return string_state
+        
+        def get_state_reverse(string):
+            temp = string.split("_")
+            mapp = {}
+            for i in range(0,len(temp),2):
+                key = temp[i]
+                lock = temp[i+1]
+                mapp[key] = int(lock)
+            
+            return mapp
+        
+        q = deque([(0,start_row,start_col,get_state(key_lock_state))])
+        while q:
+            #unpack states
+            curr_moves,curr_row,curr_col,curr_state = q.popleft()
+            #check if we have all keys
+            print(curr_state)
+            curr_state = get_state_reverse(curr_state)
+            if sum(curr_state.values()) == keys:
+                return curr_moves
+            visited.add((curr_row,curr_col, get_state(curr_state)))
+            for dx,dy in dirrs:
+                neigh_x = dx + curr_row
+                neigh_y = dy + curr_col
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #empty cell
+                    if grid[neigh_x][neigh_y] == '.' and (neigh_x,neigh_y,get_state(curr_state)) not in visited:
+                        q.append((curr_moves+1,neigh_x,neigh_y,get_state(curr_state)))
+                    
+                    #is a key
+                    elif grid[neigh_x][neigh_y].islower() and (neigh_x,neigh_y,get_state(curr_state)) not in visited:
+                        next_state = curr_state
+                        next_state[grid[neigh_x][neigh_y]] += 1
+                        q.append((curr_moves+1,neigh_x,neigh_y,get_state(next_state)))
+                    #if its lock that we can open
+                    elif grid[neigh_x][neigh_y].isupper():
+                        #check if we have that key
+                        if curr_state[grid[neigh_x][neigh_y].lower()] == 1:
+                            next_state = curr_state
+                            next_state[grid[neigh_x][neigh_y].lower()] = 0
+                            q.append((curr_moves+1,neigh_x,neigh_y,get_state(next_state)))
+                            
+                        
+        return -1
+    
+
+#close oneeee!
+class Solution:
+    def shortestPathAllKeys(self, grid: List[str]) -> int:
+        '''
+        we have empty cells, walls, keys and locks
+        we have a starting point
+        if we walk over a key, we can choose to pick it up or not pick it up
+            however, we can only walk over a lock if we have the key
+        
+        there is always a bijection to the (key,lock) pair
+        return lowest number of moves to get all the keys, not to obtain all the locks
+        bfs, but push step count and states 
+        states:
+            need to keep track of (key,lock) pairs as well as count
+            if we have picked up all the keys, we are good
+            if we go over a lock without having the key, we are in an invalid state, so skip it and don't add its neihbords
+            but we'll need a way to keep track of already visited states
+            store states as strings "key_count_lock_count" as well as if the lock has been opend up
+            push the whole grid?, then check the state of this grid on this path
+            there is only going to be 6 key,lock pairs
+            state would be:
+                (i,j,keys_count_locks_count)
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        start_row,start_col = -1,-1
+        key_lock_state = {}
+        keys = 0
+        visited = set()
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == '@':
+                    start_row,start_col = i,j
+                elif grid[i][j].islower():
+                    key_lock_state[grid[i][j]] = 0
+                    keys += 1
+                elif grid[i][j].isupper():
+                    key_lock_state[grid[i][j]] = 0
+                    
+        def get_state(mapp):
+            string_state = [k+"_"+str(v) for k,v in mapp.items()]
+            string_state = "_".join(string_state)
+            return string_state
+        
+        def get_state_reverse(string):
+            temp = string.split("_")
+            mapp = {}
+            for i in range(0,len(temp),2):
+                key = temp[i]
+                lock = temp[i+1]
+                mapp[key] = int(lock)
+            
+            return mapp
+        
+        q = deque([(0,0,start_row,start_col,get_state(key_lock_state))])
+        while q:
+            #unpack states
+            curr_moves,curr_keys,curr_row,curr_col,curr_state = q.popleft()
+            #check if we have all keys
+            curr_state = get_state_reverse(curr_state)
+            if curr_keys == keys:
+                return curr_moves
+            visited.add((curr_row,curr_col, get_state(curr_state)))
+            for dx,dy in dirrs:
+                neigh_x = dx + curr_row
+                neigh_y = dy + curr_col
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #empty cell
+                    if grid[neigh_x][neigh_y] == '.' and (neigh_x,neigh_y,get_state(curr_state)) not in visited:
+                        q.append((curr_moves+1,curr_keys,neigh_x,neigh_y,get_state(curr_state)))
+                    
+                    #is a key
+                    elif grid[neigh_x][neigh_y].islower() and (neigh_x,neigh_y,get_state(curr_state)) not in visited:
+                        next_state = curr_state
+                        next_state[grid[neigh_x][neigh_y]] += 1
+                        q.append((curr_moves+1,curr_keys+1,neigh_x,neigh_y,get_state(next_state)))
+                    #if its lock that we can open
+                    elif grid[neigh_x][neigh_y].isupper():
+                        #check if we have that key
+                        if curr_state[grid[neigh_x][neigh_y].lower()] == 1:
+                            next_state = curr_state
+                            next_state[grid[neigh_x][neigh_y].lower()] = 0
+                            q.append((curr_moves+1,curr_keys,neigh_x,neigh_y,get_state(next_state)))
+        
+        return -1
+    
+class Solution:
+    def shortestPathAllKeys(self, grid: List[str]) -> int:
+        '''
+        almost had it! need to use bit masks to represent key holding states to allow is to visit previosuly visited cells
+        states:
+            (row,col,dist,key-holding state)
+        
+        need to use bit mask to represent state of collecterd keys
+        we only have 6 keys, we need 12 spots in total (for key lock pairs)
+        when entering a cell we just check if we have that key and also check if we have seen this state
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        #if we have all the keys
+        end_key_mask = 0
+        visited = set()
+        q = deque([])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        for i in range(rows):
+            for j in range(cols):
+                #start cell add to q and seen
+                if grid[i][j] == '@':
+                    q.append((i,j,0,0)) #entry is (row,col,steps and state)
+                    visited.add((i,j,0))
+                elif grid[i][j]  in 'abcdef':
+                    end_key_mask = end_key_mask | 1 << (ord(grid[i][j]) - ord('a'))
+        
+        while q:
+            curr_row,curr_col,curr_state,curr_steps = q.popleft()
+            if curr_state == end_key_mask:
+                return curr_steps
+            #make sure we can move from here
+            if grid[curr_row][curr_row] != '#':
+                for dx,dy in dirrs:
+                    neigh_x = dx + curr_row
+                    neigh_y = dy + curr_col
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        if (curr_row,curr_col,curr_state) not in visited:
+                            if grid[neigh_x][neigh_y] in 'abcdef':
+                                new_state = curr_state | (ord(grid[neigh_x][neigh_y]) - ord('a'))
+                                q.append((neigh_x,neigh_y,new_state,curr_steps+1))
+                            #is a lock, make sure we have it 
+                            elif grid[neigh_x][neigh_col] in '@.' or (grid[neigh_x][neigh_col] in 'ABCDEF' and k & (1 << ord(grid[neigh_x][neigh_col]) - ord('A'))):
+                                q.append((neigh_x,neigh_y,new_state,curr_steps+1))
+                                
+                            visited.add((neigh_row,neigh_col,curr_state))
+            
+        return -1
+    
+
+########################################
+# 250. Count Univalue Subtrees
+# 29JUN23
+########################################
+#close one, can top down, but need two return arguments
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countUnivalSubtrees(self, root: Optional[TreeNode]) -> int:
+        '''
+        let dp(node) be the number of univalue subtrees for this node
+            if i know the number of univalue subtress on left and right
+            i can add them together, only if node.val == node.left.val and node.right.val
+
+        the algorithm doesn't hold for cases like
+        [1,1,1,5,5,null,5], where we need to break the count at the 
+         1
+         /\
+         1 1 position, this algo is carrying it up
+        '''
+        def dp(node):
+            if not node:
+                return 0
+            left = dp(node.left)
+            right = dp(node.right)
+            #no subtrees
+            if not node.left and not node.right:
+                return 1 + left + right
+            #two subtress
+            elif node.left and node.right:
+                if node.val == node.left.val == node.right.val:
+                    return 1 + left + right
+                else:
+                    return left + right
+            #only left side
+            elif node.left and not node.right:
+                if node.val == node.left.val:
+                    return 1 + left
+                else:
+                    return left + right
+            elif not node.left and node.right:
+                if node.val == node.right.val:
+                    return 1 + right
+                else:
+                    return left + right
+        
+        return dp(root)
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countUnivalSubtrees(self, root: Optional[TreeNode]) -> int:
+        '''
+        intution, given a node in our tree, a node is uni-value if:
+            the children of this node are also uni-value
+            the children have the same value as node
+            leaf nodes are trivially uni-value
+        
+        dfs(node) returns whether or not a node in univalue
+        then we need to check univalue for left and univalue for right
+        return false is it is not
+        for dfs function
+            if node is null, we can return true
+            
+        keep global count variable
+        '''
+        self.count = 0
+        
+        def dfs(node):
+            if not node:
+                return True
+            left = dfs(node.left)
+            right = dfs(node.right)
+            
+            if left and right:
+                if node.left and node.left.val != node.val:
+                    return False
+                if node.right and node.right.val != node.val:
+                    return False
+                
+                self.count += 1
+                return True
+            
+            return False
+
+        dfs(root)
+        return self.count
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countUnivalSubtrees(self, root: Optional[TreeNode]) -> int:
+        '''
+        to avoid the use of a global variable, we can modify the function
+        dp(node) returns two values:
+            whether this node is univalue
+            and the number of univalue subtrees in this node
+            
+            then we can just unpack
+            base case:
+                return True,0
+            
+            is_left_uni,count_left = dp(node.left)
+            is_right_unit,count_right = dp(node.right)
+            
+            
+        '''
+        def dp(node):
+            if not node:
+                return [True,0]
+            
+            left_uni, left_count = dp(node.left)
+            right_uni,right_count = dp(node.right)
+            #maintain uni invaraint
+            if left_uni and right_uni:
+                if node.left and node.left.val != node.val:
+                    return [False, left_count + right_count]
+                if node.right and node.right.val != node.val:
+                    return [False, left_count + right_count]
+                
+                return [True, left_count + right_count + 1]
+            
+            return [False, left_count + right_count]
+        
+        return dp(root)[1]
