@@ -3549,3 +3549,125 @@ class Solution:
             return [False, left_count + right_count]
         
         return dp(root)[1]
+    
+#################################################
+# 1970. Last Day Where You Can Still Cross
+# 30JUN23
+#################################################
+class Solution:
+    def latestDayToCross(self, row: int, col: int, cells: List[List[int]]) -> int:
+        '''
+        we are given binary matrix, 0 = land, 1 = water
+        we are given a list of cells list<list> 1 indexed, where cells[i] changed to water
+        find the last day where we can walk to the bottom from the top
+            can start anywhere on top, and end anywhere on bottom
+        
+        brute force woul be to bfs for each grid where we modify the grid on that day
+        if we cant reach the bottom, we are done
+        bfs with binary search!
+            issue is getting the grid at the right time
+        
+        i can create the grid in row,col time and in each cell, indicate the time when it turns to water
+        then when doing bfs, check if we can reach this cell by using the time
+        '''
+        grid = [[0]*col for _ in range(row)]
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        for i,cell in enumerate(cells):
+            x,y = cell
+            grid[x-1][y-1] = i+1
+        
+        #make the trip at time t
+        def can_make(grid,time):
+            seen = set()
+            q = deque([])
+            for c in range(col):
+                if grid[0][c] > time:
+                    q.append((0,c))
+                    seen.add((0,c))
+            #early checks
+            if len(q) == 0:
+                return False
+            
+            while q:
+                curr_row,curr_col = q.popleft()
+                #made it to the bottom
+                if curr_row == row - 1:
+                    return True
+                for dx,dy in dirrs:
+                    neigh_x = curr_row + dx
+                    neigh_y = curr_col + dy
+                    #bounds
+                    if 0 <= neigh_x < row and 0 <= neigh_y < col:
+                        #has not changed yet at this time
+                        if grid[neigh_x][neigh_y] > time and (neigh_x,neigh_y) not in seen:
+                            q.append((neigh_x,neigh_y))
+                            seen.add((neigh_x,neigh_y))
+            return False
+        
+        #binary search now
+        left = 1
+        right = len(cells)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            if can_make(grid,mid):
+                left = mid + 1
+            else:
+                right = mid
+        
+        return left - 1
+        
+#dfs
+class Solution:
+    def latestDayToCross(self, row: int, col: int, cells: List[List[int]]) -> int:
+        '''
+        we can also use dfs insteaf of bfs
+        note, another way would have been to build the 1's grid up the the ith day then do dfs/bfs
+        
+        '''
+        grid = [[0]*col for _ in range(row)]
+        for i,cell in enumerate(cells):
+            x,y = cell
+            grid[x-1][y-1] = i+1
+            
+        #binary search now
+        left = 1
+        right = len(cells)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            if self.can_make(row,col,cells,grid,mid):
+                left = mid + 1
+            else:
+                right = mid
+        
+        return left - 1
+        
+    
+    def can_make(self, row:int, col:int, cells: List[List[int]], grid: List[List[int]], time:int) -> bool:
+        visited = set()
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        
+        #make the trip at time t
+        def dfs(i,j):
+            if i == row - 1:
+                return True
+            visited.add((i,j))
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < row and 0 <= neigh_y < col:
+                    #has not changed yet at this time
+                    if grid[neigh_x][neigh_y] > time and (neigh_x,neigh_y) not in visited and dfs(neigh_x,neigh_y):
+                        return True
+            return False
+        
+        for i in range(col):
+            if grid[0][i] > time and dfs(0,i):
+                return True
+        return False
+    
+
+#union find using dfs
+dfsdfsdf
