@@ -3670,4 +3670,76 @@ class Solution:
     
 
 #union find using dfs
-dfsdfsdf
+class DSU:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.size = [1]*n
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if x_par == y_par:
+            return
+        
+        #other wise not same
+        if self.size[x_par] >= self.size[y_par]:
+            self.parent[y_par] = x_par
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+
+class Solution:
+    def latestDayToCross(self, row: int, col: int, cells: List[List[int]]) -> int:
+        '''
+        union find solution is a little trickier
+        we need to reverse the days in cells, which is the same as replacing water celss with land cels
+        if we go in reverse and we have a path, this is the first day a path becomes available
+        we replaces cells[at this date] with a land cell and for each land cell we uniond the edges
+        
+        top row my have many disconnected components. do we need to check them one by one?
+        no, we just need another group for both top row and bottom row to represent a connection
+        '''
+        
+        dsu = DSU(row*col + 2)
+        #initally all are land
+        grid = [[1]*col for _ in range(row)]
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        
+        #go in reverse days
+        for i in range(len(cells)-1,-1,-1):
+            curr_row,curr_col = cells[i][0] - 1, cells[i][1] - 1
+            #turn to lans
+            grid[curr_row][curr_col] = 0
+            #find number in UF
+            idx1 = curr_row*col + curr_col + 1
+            for dx,dy in dirrs:
+                neigh_x = curr_row + dx
+                neigh_y = curr_col + dy
+                idx2 = neigh_x*col + neigh_y + 1
+                #bounds
+                if 0 <= neigh_x < row and 0 <= neigh_y < col:
+                    #is also land
+                    if grid[neigh_x][neigh_y] == 0:
+                        #union them
+                        dsu.union(idx1,idx2)
+            
+            #check if we havepaths
+            #if twop row, add the to top row parent in UF
+            if curr_row == 0:
+                dsu.union(0,idx1)
+            #add to bottom row parent in UF
+            if curr_row == row - 1:
+                dsu.union(row*col + 1, idx1)
+            #if connection
+            if dsu.find(0) == dsu.find(row*col + 1):
+                return i
