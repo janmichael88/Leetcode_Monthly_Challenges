@@ -117,7 +117,7 @@ class Solution:
 # 1601. Maximum Number of Achievable Transfer Requests
 # 02JUN23
 ####################################################
-#TLE
+#no it actually works!
 class Solution:
     def maximumRequests(self, n: int, requests: List[List[int]]) -> int:
         '''
@@ -225,3 +225,376 @@ class Solution:
                 ans = bitCount
         
         return ans
+################################################
+# 1005. Maximize Sum Of Array After K Negations
+# 03JUL23
+################################################
+#O(k*logN)
+class Solution:
+    def largestSumAfterKNegations(self, nums: List[int], k: int) -> int:
+        '''
+        we can only negate, it makes sense to first negate the negative signs to make them positive
+        we want to negate the most negative numbers
+        min heap and negate the top k times, then sum the heap
+        '''
+        heapq.heapify(nums)
+        
+        while k:
+            top = heapq.heappop(nums)
+            heapq.heappush(nums,-top)
+            k -= 1
+        
+        return sum(nums)
+
+#O(NlgN)
+class Solution:
+    def largestSumAfterKNegations(self, nums: List[int], k: int) -> int:
+        '''
+        using sorting
+        1. sort the numbers in ascending order
+        2. flip all the negativ numbers as long as k > 0
+        3. find sum of new array and keep track of the minimum number
+        4. for the return statement
+            res is sum of new array
+            check for parity of remainig k, if even, it does nothing
+            if odd we flip the minimum number on more time and subtract twice its value
+            becase we added it twice
+        '''
+        nums.sort()
+        i = 0
+        while i < len(nums) and i < k and nums[i] < 0:
+            nums[i] = -nums[i]
+            i += 1
+        
+        res = sum(nums)
+        smallest = min(nums)
+        remaining_k = k - i
+        return res - (remaining_k % 2)*smallest*2
+    
+class Solution:
+    def largestSumAfterKNegations(self, nums: List[int], k: int) -> int:
+        '''
+        notice that negating a negative number add twice its value to the sum
+        we can fist negate all the negative numbers and modify the sum by incremanting by twice its absolute value
+        then only push back if its bigger so we maintain all postive
+        then check for the remainder of k operations
+        '''
+        res = sum(nums)
+        heapq.heapify(nums)
+        while k > 0 and nums[0] < 0:
+            smallest = heapq.heappop(nums)
+            res -= 2*smallest
+            
+            if -smallest > nums[0]:
+                heapq.heappush(nums,-smallest)
+            k -= 1
+        
+        #left over opeations if odd, even sum won't change
+        if k % 2 == 1:
+            smallest = heapq.heappop(nums)
+            res -= 2*smallest
+        
+        return res
+    
+############################################
+# 137. Single Number II (REVISTED)
+# 05JUL23
+#############################################
+#bit shift hacks, insteaf mod2 use mod3, 
+#mod2 from single number is essentially XOR
+class Solution:
+    def singleNumber(self, nums: List[int]) -> int:
+        '''
+        every element can appear three times except for 1, there could k elements that appear three times, 0 times if that makes sense LMAOOO
+        if sorted it would be [a,a,a,b,b,b,c,d,d,d,e,e,e] for nums [a,b,d,e] repeated three times
+        
+        properties for bit manipulation
+        A XOR B = (A+B) mod 2, rather modulo 2 addtion, here we are interested in modulo three additions
+        if there is a count of three for a number count % 3 = 0, and the other number will not
+        
+        we need to do modulo three addition bit by bit
+        get last bit by &1
+        if we want ith bit >> i times and do num &1
+        
+        we need to compute the loner bit by bit using mod 3
+        
+        because the numbers can only appear three times (bit_sum % 3_ will either be 0 or 1, which means the loner number would be 1
+        notice the constraints are 2*31 and not 2**32
+        
+        note on two's comleement, subatract 2**32 to get it, if the sign bit is set
+        '''
+        
+        loner = 0
+        for shift in range(32):
+            bit_sum = 0 #count up bits at this positiosn
+            for num in nums:
+                bit_sum += (num >> shift) & 1
+            
+            #put back and compute longer
+            loner_bit = bit_sum % 3
+            loner = loner | (loner_bit << shift)
+        
+        #don't forget about twos compleemnt
+        #do not mistake sign bit for the most siginificant bit
+        if loner >= (1 << 31):
+            loner = loner - (1 << 32)
+        
+        return loner
+    
+#equation for bit mask
+
+
+###########################################################
+# 1493. Longest Subarray of 1's After Deleting One Element
+# 05JUL23
+###########################################################
+#dp??
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        i can use dp, need to keep track of number of zeros ive delete
+        dp(i,deletions_left) be the longest subarray using nums[:i]
+        then take the max
+        three cases
+        1. is a 1, so extend
+        2. is a 0, and we have deletion, extend
+        3. is a 0 and no deletion, carry over, i.e push up
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i,deletions):
+            if i == N:
+                return 0
+            if (i,deletions) in memo:
+                return memo[(i,deletions)]
+            
+            case1 = case2 = case3 = 0
+            if nums[i] == 1:
+                case = 1 + dp(i+1,deletions)
+            if nums[i] == 0 and deletions == 1:
+                case2 = 1 + dp(i+1,0)
+            if nums[i] == 0 and deletions == 0:
+                case3 = max(case1,case2)
+            
+            ans = max(case1,case2,case3)
+            memo[(i,deletions)] = ans
+            return ans
+        
+        
+        dp(0,1)
+        print(memo)
+
+#need global dp
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        i can use dp, need to keep track of number of zeros ive delete
+        dp(i,deletions_left) be the longest subarray using nums[:i]
+        then take the max
+        three cases
+        1. is a 1, so extend
+        2. is a 0, and we have deletion, extend
+        3. is a 0 and no deletion, carry over, i.e push up
+
+        Since 
+Only in the case where all elements are one we will have to delete one (result will be totalSum - 1)
+Otherwise we can always delete zero and in case of deletion we can have two possibilites
+1) Affect our result that is might increase the length of 1 (for ex del 0 in 11011)
+2) Does not affect our result (for ex 1111000) 
+So whenever we encounter zero 
+  .) if it is the first zero encountered from right then try deleting which might give increase the length of 1s (for example zero b/w 1's in 0011011)
+     or skip it (for example first zero on rightmost side is a better option 1111111000000101) So try both possibility and take the max.
+  .) if it is the second zero encountered then return 0 we are not allowed deleting this.
+        '''
+        memo = {}
+        N = len(nums)
+        #we need to update for ueach subarray on the fly, insteaf of optimize for all the whole problem we want the max
+        self.ans = 0
+        
+        def dp(i,deletions):
+            if i == N:
+                return 0
+            if (i,deletions) in memo:
+                return memo[(i,deletions)]
+            
+            #we had already deleted
+            if deletions == 0:
+                curr = 0
+                if nums[i] == 1:
+                    curr = 1 + dp(i+1,deletions)
+                    self.ans = max(self.ans,curr)
+                    memo[(i,deletions)] = curr
+                    return curr
+                memo[(i,deletions)] = 0
+                return 0
+            else: #we have a deletion
+                curr = 0
+                if nums[i] == 1:
+                    curr = 1 + dp(i+1,deletions)
+                    self.ans = max(curr,self.ans)
+                    memo[(i,deletions)] = curr
+                    return curr
+                
+                #otherwise its the frist zero encounter
+                nodelete = dp(i+1,deletions)
+                delete = dp(i+1,0)
+                self.ans = max(self.ans, nodelete,delete)
+                memo[(i,deletions)] = delete #return result of deleting becasue in previous states, we did not have a delete zero, so we need this for expansion
+                return delete
+            return 0
+        
+        #coner case, all ones delete at least 1
+        if sum(nums) == len(nums):
+            return len(nums) - 1
+        dp(0,1)
+        return self.ans
+
+#sliding window, bleagh it works
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        maitain sliding window where there is at most one zero in it
+        hard part is that we need to delete at least 1
+        '''
+        zeros = 0
+        ans = 0
+        left,right = 0,0
+        N = len(nums)
+        
+        if sum(nums) == N:
+            return N - 1
+        
+        while right < N:
+            #expand
+            while right < N and zeros <= 1:
+                zeros += (nums[right] == 0)
+                right += 1
+            
+            #ans = max(ans,(right - left - 1))
+            cand = nums[left:right]
+            ans = max(ans,cand.count(1))
+            
+            #shrink
+            while left < N and zeros > 1:
+                zeros -= (nums[left] == 0)
+                left += 1
+            
+        
+        return ans
+    
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        deleting a zero in the sequence really just means we can only have a subarray with only one zero in it
+        if there are two zeros in it, we need to shrink
+        '''
+        zeros = 0
+        left = 0
+        ans = 0
+        N = len(nums)
+        
+        for right in range(N):
+            zeros += (nums[right] == 0)
+            
+            #too many zeros we shrink
+            while zeros > 1:
+                zeros -= (nums[left] == 0)
+                left += 1
+        
+            
+            ans = max(ans, right - left)
+    
+        return ans
+    
+from contextlib import suppress
+
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        can length of consecutive ones, supress value erros when going out of bounds
+        '''
+        def lengths_of_one_intervals():
+            i = 0
+            with suppress(ValueError):
+                while True:
+                    #look for next occruence of zero in nums[i:]
+                    j, i = i, nums.index(0, i) + 1
+                    yield i - j - 1
+            yield len(nums) - i
+            
+        #default of the empty iterable
+        return max((a + b for a, b in pairwise(lengths_of_one_intervals())), default=len(nums) - 1)
+
+############################################
+# 209. Minimum Size Subarray Sum
+# 06JUL23
+############################################
+#sliding window is trivial
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        '''
+        once we have found a subarray sum >= target, it doesn't make sense to expand it anymore
+        so we just shrink it
+        '''
+        if sum(nums) < target:
+            return 0
+        
+        N = len(nums)
+        ans = N
+        
+        curr_sum = 0
+        left = 0
+        
+        for right in range(N):
+            curr_sum += nums[right]
+            
+            while left < N and curr_sum >= target:
+                ans = min(ans, right - left + 1)
+                curr_sum -= nums[left]
+                left += 1
+        
+        return ans
+    
+#binary seach for the valid sum
+class Solution:
+    def minSubArrayLen(self, target: int, nums: List[int]) -> int:
+        '''
+        binary search on prefix sum
+        for each index i, find the subarray who's sum is just greater than target
+        dont forget bound conditions
+        '''
+        if sum(nums) < target:
+            return 0
+        N = len(nums)
+        pref_sum = [0]*(N+1)
+        for i in range(N):
+            pref_sum[i+1] = pref_sum[i] + nums[i]
+        
+        ans = N
+        
+        #binary search for all is
+        for i in range(N):
+            #get the sum for this nums[i:]
+            #curr_sum = pref_sum[-1] - pref_sum[i]
+            left = i
+            right = N
+            while left < right:
+                mid = left + (right - left) // 2
+                curr_sum = pref_sum[mid] - pref_sum[left+1]
+                #too big
+                if curr_sum < target:
+                    left = mid + 1
+                else:
+                    right = mid
+            
+            if i < N:
+                ans = min(ans, left-i + 1)
+        
+        return ans
+    
+
+####################################
+# 465. Optimal Account Balancing
+# 02JUL23
+###################################
