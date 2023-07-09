@@ -330,18 +330,70 @@ class Solution:
             for num in nums:
                 bit_sum += (num >> shift) & 1
             
-            #put back and compute longer
+            #put back and compute loner
             loner_bit = bit_sum % 3
             loner = loner | (loner_bit << shift)
         
         #don't forget about twos compleemnt
         #do not mistake sign bit for the most siginificant bit
         if loner >= (1 << 31):
-            loner = loner - (1 << 32)
+            loner = loner - (1 << 32) #twos complement, exponent is one more than the places used for bits
         
         return loner
     
 #equation for bit mask
+class Solution:
+    def singleNumber(self, nums: List[int]) -> int:
+        '''
+        from single number II:
+        A XOR B = A(~B) + (~A)B
+        from the bit by bit approach, we only want to if 1 appears (i.e count % 3 = 1, for any of the bits)
+        a number can only appear in the array 0 or 3 times
+            i.e if an integer appears three times, it should not be in the bitmask, and if it appears 1 time, it should 
+        
+        XOR does modulo 2, so we need seenZero, seenOnce, seenTwice
+            if any bit in seenzero is set, it means that bit has appeared 0 times in all integers so far, since we are doing module 3, it is seen thrice
+            if any bit in seenOnce is set it menas that bit has appeared 1 mod 3 times, same thing with seenTwice
+        
+        seenZero initally set to all 1's since we haven't seen anything yet
+        we don't really need seenZero, if a bit is  not set in seenOnce and not set in seenTwice, it must be set in seenZero, pigeonhole
+        
+        now for each num in nums:
+        for seenOnce:
+            should not have been set in seenTwice, if it was previously seen once, it should be removed from seenONce and set to seenTwice
+            if not it should be added to seenOnce, we can XOR with num
+            i.e seenOnce = (seenOnce XOR num) AND (NOT seenTwice)
+            
+        for seenTwice:
+            it should be previsouly seenOnce, so this put should be set, but if we have already ipdate seenOnce fo this num, then it should not been in seenOnce. it the bit was set in seenOnce, then for this num it is the first occrucne it sohuld not be mistaken for a second
+            in other words, for the second ocurrence, it must be removed from seenOnce while updateing it using the seenOnce equaiotns
+            thus it should not be in seenOnce while updating seenTwice
+            
+            if it was previously seen twice, it should be removed from seenTwice
+            if not ti should be added to seenTwice, which can be done by XORING seenTwice with num
+            either of them shoould be set, but not both
+            seenTwice = (seenTwice XOR num) AND (NOT seenOnce)
+        
+       crux of the problem
+        if a bit appears for the first time, add it to seenOnce, it will not be added to seenTwice because of its precense in seenonce
+        if a bit appears a second time, remove itfrom seenOnce and set in seenTwice
+        if a bit appears a third time, it wont be added to seenOnce because its alreayd present in seenTwice. after it will be removed from seenTwice
+        
+        one we are done, we will have seenOnce set at all the bits where the nums appeared only once return seenOnce
+        '''
+                # Initialize seen_once and seen_twice to 0
+        seen_once = seen_twice = 0
+
+        # Iterate through nums
+        for num in nums:
+            # Update using derived equations
+            seen_once = (seen_once ^ num) & (~seen_twice)
+            seen_twice = (seen_twice ^ num) & (~seen_once)
+
+        # Return integer which appears exactly once
+        return seen_once
+    
+#Boolean Algebra and Karnaugh Map
 
 
 ###########################################################
@@ -593,8 +645,205 @@ class Solution:
         
         return ans
     
-
 ####################################
 # 465. Optimal Account Balancing
 # 02JUL23
 ###################################
+#fuck this shit...., nice try though
+class Solution:
+    def minTransfers(self, transactions: List[List[int]]) -> int:
+        '''
+        brute force seems doable given the input conditions
+        given transactinos
+        [[0,1,10],[2,0,5]]
+        
+        after first transaction
+        0: -10
+        1: 10
+        2: 0
+        after second transctions
+        
+        0:-5
+        1:10
+        2:-5
+        
+        if i get the final state after completing all transactions
+        then i can just find the optimal way of setting verything to zero
+        now the question becomes, given the final state, find the minimum number of transactions so that no value is negative
+        if i'm at person i, and starting_debt[i] >= abs(sum(all other debts that are negative)) then we can settle the debt
+        i dont want to touch people with zero debt because they have nothing to contribute
+        debts can also be settled no matter what
+        
+        notes:
+            we would never need to check if all were == 0 at the starting condition, this could never be the case
+            we can settle all debts in n transactions, in the case where we have an addtional entity serving as the institution
+            we can settle all debts in n-1 transactions if one of the people acts as the institution
+        
+        find all debts that are non zero, than backtrack to euqlize
+        
+        
+        '''
+        starting_debts = [0]*12
+        for first, second, amount in transactions:
+            starting_debts[first] -= amount
+            starting_debts[second] += amount
+            
+        #only grab non zero entries
+        starting_debts = [debt for debt in starting_debts if debt != 0]
+
+        def rec(i,starting_debts):
+            if i == len(starting_debts):
+                return 0
+            if starting_debts[i] < 0 or starting_debts[i] == 0:
+                return rec(i+1,starting_debts)
+            
+            curr_debt = starting_debts[i]
+            ans = float('inf')
+            for j in range(len(starting_debts)):
+                #make sure its not the same person
+                if j != i and starting_debts[j] < 0:
+                    #transfer
+                    old_debt = starting_debts[j]
+                    curr_debt -= old_debt
+                    starting_debts[j] = 0
+                    ans = min(ans,1 + rec(i+1,starting_debts))
+                    starting_debts[j] = -old_debt
+                    curr_debt += old_debt
+            
+            return ans
+        
+        return rec(0,starting_debts)
+                    
+
+##########################################
+# 2024. Maximize the Confusion of an Exam
+# 07JUL23
+#########################################
+#fuckkk
+class Solution:
+    def maxConsecutiveAnswers(self, answerKey: str, k: int) -> int:
+        '''
+        given string of T's and F's, and using at most k operations where i can flip a T to F or F to T
+        return the maximum consecutive Ts or Fs in the array
+        
+        TTFF
+        
+        kep track of maxi length at each position
+        1200
+        then use sliding window on the consec arrays making sure the we can only use k 0's in the window
+        use consective arrays to figure out size
+        
+        '''
+        N = len(answerKey)
+        Ts = [0]*N
+        Ts[0] = 1 if answerKey[0] == 'T' else 0
+        for i in range(1,N):
+            if answerKey[i] == 'T':
+                Ts[i] = Ts[i-1] + 1
+            else:
+                Ts[i] = 0
+        
+        Fs = [0]*N
+        Fs[0] = 1 if answerKey[0] == 'F' else 0
+        for i in range(1,N):
+            if answerKey[i] == 'F':
+                Fs[i] = Fs[i-1] + 1
+            else:
+                Fs[i] = 0
+        
+        #sliding window on T's array
+        ans = 0
+        left = right = 0
+        allowed_k = k
+        #print(Ts)
+        while right < N:
+            while right < N and allowed_k >= 0:
+                allowed_k -= Ts[right] == 0
+                right += 1
+            #print(Ts[left:right-1])
+            ans = max(ans, len(Ts[left:right-1]))
+            while left < N and allowed_k < k:
+                allowed_k += Ts[left] == 0
+                left += 1
+        
+        #do Fs
+        left = right = 0
+        allowed_k = k
+        #print(Ts)
+        while right < N:
+            while right < N and allowed_k >= 0:
+                allowed_k -= Fs[right] == 0
+                right += 1
+            #print(Ts[left:right-1])
+            ans = max(ans, len(Fs[left:right-1]))
+            while left < N and allowed_k < k:
+                allowed_k += Fs[left] == 0
+                left += 1
+        
+        return ans
+    
+#what the invariant for the sliding window, it could be anything really
+class Solution:
+    def maxConsecutiveAnswers(self, answerKey: str, k: int) -> int:
+        '''
+        sliding window, check on both Fs and Ts
+        we need to keep a count of both F and Ts and if the min count of F or T is bigger than K, its not valid
+        '''
+        N = len(answerKey)
+        #check Ts
+        ans = 0
+        counts = Counter()
+        left = 0
+        for right in range(N):
+            counts[answerKey[right]] += 1
+            
+            while min(counts['T'],counts['F']) > k:
+                counts[answerKey[left]] -= 1
+                left += 1
+            
+            ans = max(ans,right - left + 1)
+        
+        return ans
+    
+class Solution:
+    def maxConsecutiveAnswers(self, answerKey: str, k: int) -> int:
+        '''
+        we don't need to keep shrinking the window for every invalid subarray 
+        if we have already found a valid window of length maxlength and we next find an invalid one, we dont need to keep shrking it one by one
+        i.e we just need to find a window os max_size + 1
+        just remove the left most answer in the window to keep the window at max_size
+        '''
+        max_size = 0
+        counts = Counter()
+        N = len(answerKey)
+        max_size = 0
+        
+        for right in range(N):
+            counts[answerKey[right]] += 1
+            
+            if min(counts['F'],counts['T']) <= k:
+                max_size += 1
+            
+            #remove leftmost
+            else:
+                counts[answerKey[right - max_size]] -= 1
+        
+        return max_size
+    
+class Solution:
+    def maxConsecutiveAnswers(self, A: str, k: int) -> int:
+        max_len = left = 0
+        k = {'T': k, 'F': k}
+        for right in range(len(A)):
+            k[A[right]] -= 1
+            # while k['T'] < 0 and k['F'] < 0:
+            #     k[A[left]] += 1
+            #     left += 1
+            # max_len = max(max_len, right - left + 1)
+            if k['T'] < 0 and k['F'] < 0:
+                k[A[left]] += 1
+                left += 1
+            else:
+                max_len = max(max_len, right - left + 1)
+        return max_len
+    
