@@ -847,3 +847,194 @@ class Solution:
                 max_len = max(max_len, right - left + 1)
         return max_len
     
+########################################
+# 2551. Put Marbles in Bags
+# 09JUL23
+#########################################
+#dp gets TLE
+class Solution:
+    def putMarbles(self, weights: List[int], k: int) -> int:
+        '''
+        we need to put marbles into k bags such that
+        1. no bag is empty
+        2. if marble[i] and marble[j] are in a bag, then all marbles between i and j should also be in that same bag
+        3. if a bag consists of all the marbles with an index from i to j inclusive, then cost is
+            wieghts[i] + weights[j]
+            
+        score is the sum of all the costs of k bags
+    
+        
+        return diff between maxi and min score bag distributions
+
+        i can also say, split weights into k parititions
+        for each partition scheme, find the differeence between the max and minimum scores on each paritition scheme
+        
+        
+        '''
+        #dp gets TLE, we try all possible splits and find the min and max
+        memo_min = {}
+        memo_max = {}
+        N = len(weights)
+        
+        def dp_min(i,k):
+            if i == N and k == 0:
+                return 0
+            if k < 0:
+                return float('inf')
+            
+            if (i,k) in memo_min:
+                return memo_min[(i,k)]
+            
+            cost = 0
+            ans = float('inf')
+            #try all splits
+            for left in range(i+1,N):
+                for right in range(left):
+                    cost = weights[left] + weights[right] + dp_min(left+1,k-1)
+                    ans = min(ans,cost)
+            
+            memo_min[(i,k)] = ans
+            return ans
+        
+        
+        def dp_max(i,k):
+            if i == N and k == 0:
+                return 0
+            if k < 0:
+                return float('-inf')
+            
+            if (i,k) in memo_min:
+                return memo_max[(i,k)]
+            
+            cost = 0
+            ans = float('-inf')
+            #try all splits
+            for left in range(i+1,N):
+                for right in range(left):
+                    cost = weights[left] + weights[right] + dp_max(left+1,k-1)
+                    ans = max(ans,cost)
+            
+            memo_max[(i,k)] = ans
+            return ans
+        
+        return dp_max(0,k) - dp_min(0,k)
+        
+#this is a variant of parition in to k subarrays
+class Solution:
+    def putMarbles(self, weights: List[int], k: int) -> int:
+        '''
+        check this out
+        https://leetcode.com/problems/put-marbles-in-bags/discuss/3136136/Intuitive-approach-and-then-optimization-Greedy
+        u have two option at any index
+
+either cut at that index and add a[i]+a[i+1] to the answer ->solve(i+1,k-1) +a[i]+a[i+1]
+skip that index -> solve(i+1,k)
+but the catch is at 0th and n-1th index will ba added anyways irrespective or the manner how u r dividing / cutting the array so at 0th index
+a[i] is added
+and if u decide to keep only single element in bag then that element will be added twice so the same with the 0th element as well.
+
+ if(i==0)
+    {
+       
+        return dp1[i][k]= a[i]+min(solve1(a,i+1,k-1)+a[i]+a[i+1],solve1(a,i+1,k));
+       
+    }
+    
+    and when i=n-1 and k==1 then a[n-1] is returned
+
+
+        '''
+        N = len(weights)
+        memo_min = {}
+        memo_max = {}
+        
+        def dp_min(i,k):
+            if k == 0:
+                return float('inf')
+            if i == N-1 and k == 1:
+                return weights[i]
+            if i == N-1 and k > 0:
+                return float('inf')
+            if (i,k) in memo_min:
+                return memo_min[(i,k)]
+            
+            if i == 0:
+                ans = weights[i] + min(dp_min(i+1,k-1) + weights[i] + weights[i+1], dp_min(i+1,k))
+                memo_min[(i,k)] = ans
+                return ans
+            else:
+                ans = min(dp_min(i+1,k-1) + weights[i] + weights[i+1], dp_min(i+1,k))
+                memo_min[(i,k)] = ans
+                return ans
+            
+            
+        def dp_max(i,k):
+            if k == 0:
+                return float('-inf')
+            if i == N-1 and k == 1:
+                return weights[i]
+            if i == N-1 and k > 0:
+                return float('-inf')
+            if (i,k) in memo_max:
+                return memo_max[(i,k)]
+            
+            if i == 0:
+                ans = weights[i] + max(dp_max(i+1,k-1) + weights[i] + weights[i+1], dp_max(i+1,k))
+                memo_max[(i,k)] = ans
+                return ans
+            else:
+                ans = max(dp_max(i+1,k-1) + weights[i] + weights[i+1], dp_max(i+1,k))
+                memo_max[(i,k)] = ans
+                return ans
+            
+            
+        return dp_max(0,k) - dp_min(0,k)
+    
+#true solution is actually greedy
+class Solution:
+    def putMarbles(self, weights: List[int], k: int) -> int:
+        '''
+        we need to put marbles into k bags such that
+        1. no bag is empty
+        2. if marble[i] and marble[j] are in a bag, then all marbles between i and j should also be in that same bag
+        3. if a bag consists of all the marbles with an index from i to j inclusive, then cost is
+            wieghts[i] + weights[j]
+            
+        score is the sum of all the costs of k bags
+    
+        
+        return diff between maxi and min score bag distributions
+
+        i can also say, split weights into k parititions
+        for each partition scheme, find the differeence between the max and minimum scores on each paritition scheme
+        if we parition the array into k groups, we always make k-1 splitting points, and we only neeed to examine the boundary points
+        
+        we need to fin the sum of the largest k-1 paris and the sum of the smallest k-1 pairs
+        '''
+        pairs = sorted([weights[i - 1] + weights[i] for i in range(1, len(weights))])
+        return sum(pairs[len(pairs) - k + 1:]) - sum(pairs[:(k - 1)])
+    
+class Solution:
+    def putMarbles(self, weights: List[int], k: int) -> int:   
+        # We collect and sort the value of all n - 1 pairs.
+        n = len(weights)
+        pair_weights = [0] * (n - 1)
+        for i in range(n - 1):
+            pair_weights[i] = weights[i] + weights[i + 1]
+        pair_weights.sort()
+        
+        # Get the difference between the largest k - 1 values and the 
+        # smallest k - 1 values.
+        answer = 0
+        for i in range(k - 1):
+            answer += pair_weights[n - 2 - i] - pair_weights[i]
+            
+        return answer
+    
+'''
+formal derivations
+max_score = weights[0] + weights[n-1] + \sum_{i = n-k}^{n-1}
+min_score = weights[o] + weights[n-1] + \sum_{i=0}^{k-2}
+ans = max_score = min_score
+ans = \sum_{i= n-k}^{n-1} - \sum_{i=0}^{k-2}
+'''
