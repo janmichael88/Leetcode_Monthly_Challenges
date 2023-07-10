@@ -1034,7 +1034,171 @@ class Solution:
 '''
 formal derivations
 max_score = weights[0] + weights[n-1] + \sum_{i = n-k}^{n-1}
-min_score = weights[o] + weights[n-1] + \sum_{i=0}^{k-2}
+min_score = weights[0] + weights[n-1] + \sum_{i=0}^{k-2}
 ans = max_score = min_score
 ans = \sum_{i= n-k}^{n-1} - \sum_{i=0}^{k-2}
 '''
+
+########################################
+# 2272. Substring With Largest Variance
+# 09JUL23
+########################################
+#almonst, just kadanes repreated 
+# general kadane's does not work because we have negative values
+class Solution:
+    def largestVariance(self, s: str) -> int:
+        '''
+        we define variance of a string as
+            largest difference between the number of occruences of any 2 characters in a string
+        
+        return the largesrt variance of all possible substrings s
+        well we know its dp
+        hint1, solve if the string only had 2 distinct characters
+        hint2, replace all occruence of the first char by +1 and second char by-1
+        hint3, try all combindatinos
+        aababbb
+    
+        [1,1,-1,1,-1,-1,-1]
+        max sum subarray or min sub subarray
+        decode the string into to chars (u,v) then find maximim sum
+        '''
+        if len(s) == len(set(s)):
+            return 0
+        
+        counts = Counter(s)
+        ans = 0
+        N = len(s)
+        for i in range(26):
+            for j in range(26):
+                first = chr(ord('a') + i)
+                second = chr(ord('a') + j)
+                #must both appar and cannot by the same
+                if i != j and counts[first] > 0 and counts[second] > 0:
+                    #create aux array
+                    temp = [0]*N
+                    for i in range(N):
+                        if s[i] == first:
+                            temp[i] = 1
+                        elif s[i] == second:
+                            temp[i] = -1
+                        else:
+                            temp[i] = 0
+                    #find maximum, two cases
+                    dp_max = [0]*N
+                    dp_max[0] = temp[0]
+
+
+                    for i in range(1,N):
+                        dp_max[i] = max(dp_max[i-1] + temp[i],temp[i])
+
+                    #find max on both
+                    ans = max(ans,max(dp_max))
+        return ans
+                
+#need modified version of Kadanes
+class Solution:
+    def largestVariance(self, s: str) -> int:
+        '''
+        we define variance of a string as
+            largest difference between the number of occruences of any 2 characters in a string
+        
+        return the largesrt variance of all possible substrings s
+        well we know its dp
+        hint1, solve if the string only had 2 distinct characters
+        hint2, replace all occruence of the first char by +1 and second char by-1
+        hint3, try all combindatinos
+        aababbb
+    
+        [1,1,-1,1,-1,-1,-1]
+        max sum subarray or min sub subarray
+        decode the string into to chars (u,v) then find maximim sum
+        
+        the issue with kadanes is that it allows so a subarray to have 0 occruence of a major or minor elements
+        however, a valid substring MUST contain one major and one minor
+        so we only update global max when minor_count > 0
+        i.e no element with negative value would be allowed with kadane's algo
+        
+        and reset local max to - when there is at least one minor in the remainin substring
+        
+        recall that we need a step local_max = max(local_max,0) in regular Kadane's
+        but we cannot simply reset the sum to 0 here in this problem
+            doing so would reset boht major count and minor count to 0
+            if there are no more minors in the remaning traversal, the minor count will remain - and we would never update global
+            to avoid this we reset local_max to 0 only when there is at least one minor in the remaning s
+            to do this we can use an additional variable rest_minor to keep track of the minors in the remaining string
+        '''
+        counts = Counter(s)
+        ans = 0
+        N = len(s)
+        for i in range(26):
+            for j in range(26):
+                first = chr(ord('a') + i)
+                second = chr(ord('a') + j)
+                #major and minor cannot be the same and must appear in s
+                if first == second or counts[first] == 0 or counts[second] == 0:
+                    continue
+                
+                major_count = 0
+                minor_count = 0
+                
+                #get remaning of s
+                rest_minor = counts[second]
+                for ch in s:
+                    if ch == first:
+                        major_count += 1
+                    if ch == second:
+                        minor_count += 1
+                        rest_minor -= 1
+                    
+                    #only update the variance (local max) if we have at least aminor
+                    if minor_count > 0:
+                        ans = max(ans, major_count - minor_count)
+                    
+                    #dist care the previous string if there is at leat one remaining minor
+                    if major_count < minor_count and rest_minor > 0:
+                        major_count = 0
+                        minor_count = 0
+        
+        return ans
+    
+class Solution:
+    def largestVariance(self, s: str) -> int:
+        '''
+        same thing as Kadanes' the only problem is that we have to maintain a substring with an a and a b
+        the presence of another char other than a or b would break the subarray sum
+        so we have to watch for that
+        '''
+        counts = Counter(s)
+        ans = 0
+        for a in counts.keys():
+            for b in counts.keys():
+                if a == b:
+                    continue
+                #keep tracking of remaining
+                remaining_a = counts[a]
+                remaining_b = counts[b]
+                variance = 0
+                has_a = has_b = False
+                for ch in s:
+                    if ch != a and ch != b:
+                        continue
+                    if ch == a:
+                        variance += 1
+                        remaining_a -= 1
+                        has_a = True
+                    else:
+                        variance -= 1
+                        remaining_b -= 1
+                        has_b = True
+                    
+                    #special cases, 
+                    ## abbb case: cannot reset after abb as we can build longer substring abbb, this is the locl max rest part
+                    if variance < 0 and remaining_a > 0 and remaining_b > 0:
+                        variance = 0
+                        has_a = has_b = False
+                        
+                    if has_a and has_b:
+                        ans = max(ans,variance)
+            
+        
+        return ans
