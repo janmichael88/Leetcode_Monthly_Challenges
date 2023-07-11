@@ -713,6 +713,105 @@ class Solution:
             return ans
         
         return rec(0,starting_debts)
+    
+#TLE
+class Solution:
+    def minTransfers(self, transactions: List[List[int]]) -> int:
+        '''
+        brute force seems doable given the input conditions
+        given transactinos
+        [[0,1,10],[2,0,5]]
+        
+        after first transaction
+        0: -10
+        1: 10
+        2: 0
+        after second transctions
+        
+        0:-5
+        1:10
+        2:-5
+        
+        if i get the final state after completing all transactions
+        then i can just find the optimal way of setting verything to zero
+        now the question becomes, given the final state, find the minimum number of transactions so that no value is negative
+        if i'm at person i, and starting_debt[i] >= abs(sum(all other debts that are negative)) then we can settle the debt
+        i dont want to touch people with zero debt because they have nothing to contribute
+        debts can also be settled no matter what
+        
+        notes:
+            we would never need to check if all were == 0 at the starting condition, this could never be the case
+            we can settle all debts in n transactions, in the case where we have an addtional entity serving as the institution
+            we can settle all debts in n-1 transactions if one of the people acts as the institution
+        
+        find all debts that are non zero, than backtrack to euqlize
+        
+        
+        '''
+        starting_debts = [0]*12
+        for first, second, amount in transactions:
+            starting_debts[first] -= amount
+            starting_debts[second] += amount
+            
+        #only grab non zero entries
+        starting_debts = [debt for debt in starting_debts if debt != 0]
+        
+        def rec(i):
+            if i == len(starting_debts):
+                return 0
+            if starting_debts[i] == 0:
+                return rec(i+1)
+            cost = float('inf')
+            for j in range(i+1,len(starting_debts)):
+                starting_debts[j] += starting_debts[i]
+                cost = min(cost,1 + rec(i+1))
+                starting_debts[j] -= starting_debts[i]
+            
+            return cost
+        
+        return rec(0)
+    
+#need to optimize, and only carry debts over on allowed states
+class Solution:
+    def minTransfers(self, transactions: List[List[int]]) -> int:
+        '''
+        we need to slightly optimize
+        if the current balance and the balance we wish to move are oppozite, we can clear one of the debts
+        
+        '''
+        starting_debts = [0]*12
+        for first, second, amount in transactions:
+            starting_debts[first] -= amount
+            starting_debts[second] += amount
+            
+        #only grab non zero entries
+        starting_debts = [debt for debt in starting_debts if debt != 0]
+        
+        def rec(i):
+            if i == len(starting_debts):
+                return 0
+            if starting_debts[i] == 0:
+                return rec(i+1)
+            curr_balance = starting_debts[i]
+            cost = float('inf')
+            for j in range(i+1,len(starting_debts)):
+                next_balance = starting_debts[j]
+                if curr_balance*next_balance > 0:
+                    continue
+                starting_debts[j] += curr_balance
+                cost = min(cost,1 + rec(i+1))
+                starting_debts[j] -= curr_balance
+                
+                #can slighlight prune
+                #when curr_balance == next_balance, thsi is the best case, because onfe of the debts has been cleared
+                if next_balance == curr_balance:
+                    break
+            
+            return cost
+        
+        return rec(0)
+                    
+
                     
 
 ##########################################
@@ -1202,3 +1301,38 @@ class Solution:
             
         
         return ans
+    
+########################################################
+# 1481. Least Number of Unique Integers after K Removals
+# 10JUL23
+#########################################################
+#jesus fuck
+class Solution:
+    def findLeastNumOfUniqueInts(self, arr: List[int], k: int) -> int:
+        '''
+        remove the least frequent ones first
+        '''
+        counts = Counter(arr)
+        min_counts = [(v,k) for k,v in counts.items()]
+        heapq.heapify(min_counts)
+        
+        while len(min_counts) > 0 and k > 0:
+            curr_count, curr_num = heapq.heappop(min_counts)
+            curr_count -= 1
+            k -= 1
+            if curr_count > 0:
+                heapq.heappush(min_counts, (curr_count,curr_num))
+            
+        
+        return len(min_counts)
+    
+class Solution:
+    def findLeastNumOfUniqueInts(self, arr: List[int], k: int) -> int:
+        '''
+        exclude k smallest
+        '''
+        counts = Counter(arr)
+        #sort base on counts
+        s = sorted(arr,key = lambda x: (counts[x],x)) #important to break ties
+        #remove k smallest
+        return len(set(s[k:]))
