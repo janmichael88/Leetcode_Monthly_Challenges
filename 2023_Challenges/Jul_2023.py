@@ -1336,3 +1336,243 @@ class Solution:
         s = sorted(arr,key = lambda x: (counts[x],x)) #important to break ties
         #remove k smallest
         return len(set(s[k:]))
+    
+
+#######################################
+# 529. Minesweeper
+# 11JUL23
+######################################
+#im thkning too hard just do on the board and follow the rules
+class Solution:
+    def updateBoard(self, board: List[List[str]], click: List[int]) -> List[List[str]]:
+        '''
+        first find the mines and for neighboring cells of that mine, 
+            if they are 'E', change them to a '1'
+            then bfs, adding more mines until we are out of mines
+            pre-allocate grid where we are storing numbers
+        
+        then bfs again from click
+        '''
+        #if we hit a mine, change it and return board
+        if board[click[0]][click[1]] == 'M':
+            board[click[0]][click[1]] = 'X'
+            return board
+        rows = len(board)
+        cols = len(board[0])
+        dirrs = []
+        for dx in [1,0,-1]:
+            for dy in [1,0,-1]:
+                if (dx,dy) != (0,0):
+                    dirrs.append((dx,dy))
+        
+        mines = []
+        for i in range(rows):
+            for j in range(cols):
+                if board[i][j] == 'M':
+                    mines.append((i,j))
+        
+        bomb_counts = board[:][:]
+        #modify this with the bomb scores
+        for x,y in mines:
+            for dx,dy in dirrs:
+                neigh_x = x + dx
+                neigh_y = y + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #if already has number
+                    if '1' <= bomb_counts[neigh_x][neigh_y] <= '8':
+                        bomb_counts[neigh_x][neigh_y] = str(int(bomb_counts[neigh_x][neigh_y]) + 1)
+                    #first bomb
+                    else:
+                        bomb_counts[neigh_x][neigh_y] = '1'
+        
+        #put mines back
+        for x,y in mines:
+            bomb_counts[x][y] = 'M'
+        
+        #bfs from this first clock
+        seen = set()
+        q = deque([(click[0],click[1])])
+        
+        while q:
+            x,y = q.popleft()
+            seen.add((x,y))
+            #if its a number on bomb_counts, reveal that number in the board and continue
+            if '1' <= bomb_counts[x][y] <= '8':
+                board[x][y] = bomb_counts[x][y]
+                print(x,y)
+                continue
+            #unrevealed empty
+            if board[x][y] == 'E':
+                board[x][y] = 'B'
+                #dont continue, search from here
+            #only look 4 directions here
+            for dx,dy in [(1,0),(-1,0),(0,-1),(0,1)]:
+                neigh_x = x + dx
+                neigh_y = y + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    if (neigh_x,neigh_y) not in seen:
+                        q.append((neigh_x,neigh_y))
+        
+        return board
+    
+#bfs
+class Solution:
+    def updateBoard(self, board: List[List[str]], click: List[int]) -> List[List[str]]:
+        '''
+        im  a dumb dumb, just count mines surrounding at the current cell, and update or don't update accorindling
+        gahhhhhhh
+        '''
+        #get starts as i,j
+        i,j = click
+        #if we hit a mine, change it and return board
+        if board[i][j] == 'M':
+            board[i][j] = 'X'
+            return board
+        
+        rows = len(board)
+        cols = len(board[0])
+        dirrs = []
+        for dx in [1,0,-1]:
+            for dy in [1,0,-1]:
+                if (dx,dy) != (0,0):
+                    dirrs.append((dx,dy))
+                    
+        q = deque([(i,j)])
+        
+        while q:
+            x,y = q.popleft()
+            #if we are unrevealed
+            if board[x][y] == 'E':
+                #get mine count
+                mine_count = 0
+                for dx,dy in dirrs:
+                    neigh_x = x + dx
+                    neigh_y = y + dy
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols and board[neigh_x][neigh_y] == 'M':
+                        mine_count += 1
+                
+                #if we have a mine count
+                if mine_count > 0:
+                    board[x][y] = str(mine_count)
+                #othereise reveal and add neights
+                else:
+                    board[x][y] = 'B'
+                    for dx,dy in dirrs:
+                        neigh_x = x + dx
+                        neigh_y = y + dy
+                        #bounds
+                        if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                            q.append((neigh_x,neigh_y))
+        
+        return board
+    
+#dfs
+class Solution:
+    def updateBoard(self, board: List[List[str]], click: List[int]) -> List[List[str]]:
+        '''
+        im  a dumb dumb, just count mines surrounding at the current cell, and update or don't update accorindling
+        gahhhhhhh
+        '''
+        #get starts as i,j
+        i,j = click
+        #if we hit a mine, change it and return board
+        if board[i][j] == 'M':
+            board[i][j] = 'X'
+            return board
+        
+        rows = len(board)
+        cols = len(board[0])
+        dirrs = []
+        for dx in [1,0,-1]:
+            for dy in [1,0,-1]:
+                if (dx,dy) != (0,0):
+                    dirrs.append((dx,dy))
+                    
+        q = deque([(i,j)])
+        
+        def dfs(x,y):
+            if board[x][y] == 'E':
+                #get mine count
+                mine_count = 0
+                for dx,dy in dirrs:
+                    neigh_x = x + dx
+                    neigh_y = y + dy
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols and board[neigh_x][neigh_y] == 'M':
+                        mine_count += 1
+                
+                #if we have a mine count
+                if mine_count > 0:
+                    board[x][y] = str(mine_count)
+                #othereise reveal and add neights
+                else:
+                    board[x][y] = 'B'
+                    for dx,dy in dirrs:
+                        neigh_x = x + dx
+                        neigh_y = y + dy
+                        #bounds
+                        if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                            dfs(neigh_x,neigh_y)
+        
+        dfs(i,j)
+        return board
+
+
+#####################################
+# 802. Find Eventual Safe States
+# 12JUL23
+#####################################
+class Solution:
+    def eventualSafeNodes(self, graph: List[List[int]]) -> List[int]:
+        '''
+        terminal node is anode that has no out going edges
+        a node is afe if every possible path starting from that nodes leads to a terminal node
+        return all safe nodes in ascending order
+        
+        brute force would be to dfs from each node and check that we always lade on a safe node ON EVERY PATH PATH
+        any node that leads to a cycle cannot be a safe node
+        better brute force would be to dfs on each node and check for cycle, which is still long
+        
+        we can use dfs to add the nodes in a the cyle while doing dfs on each node
+        then retravese the nodes and see if that node was part of a cycle, which means it is not a safe node
+        '''
+        visited = set()
+        in_cycle = set()
+        
+        #make adjaceny list
+        adj_list = defaultdict(list)
+        N = len(graph)
+        for i in range(N):
+            #recal its a DAG
+            for neigh in graph[i]:
+                adj_list[i].append(neigh)
+        
+        #detect cycles
+        def has_cycle(node,visited,in_cycle):
+            if node in in_cycle:
+                return True
+            if node in visited:
+                return False
+            #make viste and in current cycle
+            visited.add(node)
+            in_cycle.add(node)
+            for neigh in adj_list[node]:
+                if has_cycle(neigh,visited,in_cycle):
+                    return True
+            
+            #remove from in cycle to allow
+            in_cycle.remove(node)
+            return False
+        
+        for i in range(N):
+            has_cycle(i,visited,in_cycle)
+        
+        safe = []
+        for i in range(N):
+            if i not in in_cycle:
+                safe.append(i)
+        
+        return safe
