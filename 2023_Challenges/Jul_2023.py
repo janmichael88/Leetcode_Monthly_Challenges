@@ -1641,3 +1641,138 @@ class Solution:
                     q.append(neigh)
         
         return [i for i in range(N) if safe_nodes[i]]
+    
+#########################################
+# 863. All Nodes Distance K in Binary Tree
+# 11JUL23
+##########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        '''
+        remake the tree into a graph, then dfs from target getting paths lenghts up to size k
+        '''
+        graph = defaultdict(list)
+        
+        def dfs(node):
+            if not node:
+                return
+            if node.left:
+                graph[node.val].append(node.left.val)
+                graph[node.left.val].append(node.val)
+            if node.right:
+                graph[node.val].append(node.right.val)
+                graph[node.right.val].append(node.val)
+            
+            dfs(node.left)
+            dfs(node.right)
+            
+        dfs(root)
+        #dfs from target
+        ans = []
+        seen = set()
+        
+        def dfs2(node,k,seen):
+            seen.add(node)
+            if k == 0:
+                ans.append(node)
+                return
+            for neigh in graph[node]:
+                if neigh not in seen:
+                    dfs2(neigh,k-1,seen)
+        
+        dfs2(target.val,k,seen)
+        return ans
+    
+#BFS
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        '''
+        we can also do bfs from the target node
+        '''
+        graph = defaultdict(list)
+        
+        def dfs(node):
+            if not node:
+                return
+            if node.left:
+                graph[node.val].append(node.left.val)
+                graph[node.left.val].append(node.val)
+            if node.right:
+                graph[node.val].append(node.right.val)
+                graph[node.right.val].append(node.val)
+            
+            dfs(node.left)
+            dfs(node.right)
+            
+        dfs(root)
+        #dfs from target
+        ans = []
+        seen = set()
+        
+
+        q = deque([(target.val,k)])
+        
+        while q:
+            node, curr_k = q.popleft()
+            seen.add(node)
+            if curr_k == 0:
+                ans.append(node)
+                continue #no no eed to go down anymore
+            
+            for neigh in graph[node]:
+                if neigh not in seen:
+                    q.append((neigh,curr_k - 1))
+        
+        return ans
+    
+#we can also modify parent pointers
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def distanceK(self, root: TreeNode, target: TreeNode, k: int) -> List[int]:
+        '''
+        we can also do bfs from the target node
+        '''
+        graph = defaultdict(list)
+        
+        def add_parent(node,parent):
+            if node:
+                node.parent = parent
+                add_parent(node.left,node)
+                add_parent(node.right,node)
+        
+        add_parent(root,None)
+        ans = []
+        seen = set()
+        def dfs(node,k,seen):
+            if not node or node.val in seen:
+                return
+            seen.add(node.val)
+            if k == 0:
+                ans.append(node.val)
+                return
+            dfs(node.parent,k-1,seen)
+            dfs(node.left,k-1,seen)
+            dfs(node.right,k-1,seen)
+        
+        dfs(target,k,seen)
+        return ans
