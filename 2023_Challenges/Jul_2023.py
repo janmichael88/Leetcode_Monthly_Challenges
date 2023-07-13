@@ -1576,3 +1576,68 @@ class Solution:
                 safe.append(i)
         
         return safe
+    
+class Solution:
+    def eventualSafeNodes(self, graph: List[List[int]]) -> List[int]:
+        '''
+        we need to use kahns algorithm and start with the nodes that have no out going edges
+        recall terminal node = nodes with no outgoing edges
+        safe node = for every possible path starting from this node, leads to a terminal node
+        terminal nodes are naively safe
+        any node part of cycle cannot be safe, why?
+            would back to itself at the end of a path
+        
+        intuition:
+            a node is safe if all outgoing edges are to nodes that are safe
+            and since the all the neighbors are safe, no neighbor should lead to a cycle
+        
+        we know that terminal nodes are safe, and so nodes that have ONLY outgoing edges to terminal nodes are also safe
+        so we start from terminal nodes
+            reverse edges and create new graph, visit terminal nodes, remove edges, then go to the next ones
+        
+        a node is safe if all its incoming edges come from previously safe nodes
+            if we erase the outging edges from the safe node and discover a node with no incoming edges, it is a new safe node
+            KAHNS! topological sort
+            repeatedly visting nodes with indegress 0 and deleting all the edges associted with it, leading to a decreement of indegree to neighboring nodes
+            continue process until no eleement with zero indegree can be found
+        
+        the nodes in the reverse graph would never be visited again
+            since the nodes have no out going edges
+            bascially every node in the original network that has a path to the cycle will never be visited by Kahns
+        
+        takeaway, if we start from terminal nodes, we visit the next of neighbors for each terminal nodes but remove an edge
+        since we only add back into the q if indegree is zero, nodes in the cycle would never be visited because the would have indegree of 1
+        
+        '''
+        N = len(graph)
+        in_degree = [0]*N
+        adj_list = defaultdict(list)
+        
+        #reverse edges, we need to start from terminal nodes, remove edges, and find new safe nodes
+        #only nodes in the cyle would remain unvisted in the traversal
+        for i in range(N):
+            for neigh in graph[i]:
+                adj_list[neigh].append(i)
+                in_degree[i] += 1
+        
+        safe_nodes = [False]*N
+        
+        q = deque([])
+        
+        #add in terminal nodes
+        for i in range(N):
+            if in_degree[i] == 0:
+                q.append(i)
+                
+        while q:
+            curr = q.popleft()
+            safe_nodes[curr] = True
+            
+            for neigh in adj_list[curr]:
+                #remove edge
+                in_degree[neigh] -= 1
+                #new safe node
+                if in_degree[neigh] == 0:
+                    q.append(neigh)
+        
+        return [i for i in range(N) if safe_nodes[i]]
