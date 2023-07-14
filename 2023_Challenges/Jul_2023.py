@@ -1776,3 +1776,338 @@ class Solution:
         
         dfs(target,k,seen)
         return ans
+    
+########################################
+# 545. Boundary of Binary Tree
+# 12JUL23
+########################################
+#fuck, this problem, almost had it....
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def boundaryOfBinaryTree(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        dfs, flags for root and in left boundary
+        lists for left, right and leaves
+        '''
+        root_boundary = []
+        left_boundary = []
+        leaves = []
+        right_boundary = []
+        
+        def dfs(node,is_root,is_left_boundary,is_right_boundary):
+            if not node:
+                return
+            
+            if is_left_boundary:
+                left_boundary.append(node.val)
+            
+            if is_right_boundary:
+                right_boundary.append(node.val)
+            
+            elif not node.left and not node.right:
+                leaves.append(node.val)
+            
+            if is_root:
+                root_boundary.append(root.val)
+                if node.left:
+                    dfs(node.left,False,True,False)
+                if node.right:
+                    dfs(node.right,False,False,True)
+            
+            else:
+                dfs(node.left,is_root,is_left_boundary,is_right_boundary)
+                dfs(node.right,is_root,is_left_boundary,is_right_boundary)
+        
+        dfs(root,True,False,False)
+        print(root_boundary,left_boundary,leaves,right_boundary)
+
+#function helper mania
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def boundaryOfBinaryTree(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        the [root] + [left_boundary] + [leaves] + [right_boundary] is simlilar to the pre-order traversal, just minus the middle nodes
+        and the right boundary is also reversed, 
+        we can use flag variables to mark whether they belong a certain part of the boundary
+        flag 0 = root, flag 1 = left, flag 2 = right, flag 3 = others
+        then when going left and right define left_child_flag and right_child flag
+        for left_child_flag:
+            if curr is a left boundary node, let will alwasy be in the left boundary
+            if curr node is roote node, left child will alwasy be left boundary
+            if curr node is right boundary node
+                if there is no right child, the left always acts as the right boundar
+                if there is a right child, left child acts as middle
+        
+        for right_child_flag:   
+            if curr node is right boundary, right child will alwasy be right boundary
+            if curr node is root, right child will always be right boundary
+            if curr node ie left boundary:
+                if there is no left child, right child is still left boundary
+                if there is a left child, child acts as middle node
+        '''
+        left_boundary = []
+        right_boundary = []
+        leaves = []
+        
+        def is_leaf(node):
+            return not node.left and not node.right
+        def is_right_boundary(flag):
+            return flag == 2
+        def is_left_boundary(flag):
+            return flag == 1
+        def is_root(flag):
+            return flag == 0
+        def left_child_flag(curr,flag):
+            if is_left_boundary(flag) or is_root(flag):
+                return 1
+            elif is_right_boundary(flag) and not curr.right:
+                return 2
+            else:
+                return 3
+        def right_child_flag(curr,flag):
+            if is_right_boundary(flag) or is_root(flag):
+                return 2
+            elif is_left_boundary(flag) and not curr.left:
+                return 1
+            else:
+                return 3
+            
+        def preorder(node,left_boundary,right_boundary,leaves,flag):
+            if not node:
+                return
+            if is_right_boundary(flag):
+                right_boundary.append(node.val)
+            elif is_left_boundary(flag) or is_root(flag):
+                left_boundary.append(node.val)
+            elif is_leaf(node):
+                leaves.append(node.val)
+            preorder(node.left,left_boundary,right_boundary,leaves,left_child_flag(node,flag))
+            preorder(node.right,left_boundary,right_boundary,leaves,right_child_flag(node,flag))
+            
+        preorder(root,left_boundary,right_boundary,leaves,0)
+        #print(left_boundary,right_boundary,leaves)
+        return left_boundary + leaves + right_boundary[::-1]
+
+#bfs wont work
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def boundaryOfBinaryTree(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        easier to divide into three parts, 
+        findinv leaves is easy,
+        we just need to find the left boundary and right boundary
+        use bfs to find the left and right bounds, then dfs to find the leaves
+        '''
+        root_vals = []
+        left_boundary = []
+        right_boundary = []
+        leaves = []
+        
+        q = deque([(root,True)])
+        
+        while q:
+            N = len(q)
+            for i in range(N):
+                curr,is_root = q.popleft()
+                if is_root:
+                    root_vals.append(curr.val)
+                elif i == 0:
+                    left_boundary.append(curr.val)
+                elif i == N-1:
+                    right_boundary.append(curr.val)
+                
+                if curr.left:
+                    q.append((curr.left,False))
+                if curr.right:
+                    q.append((curr.right,False))
+        #pop the last items from left if right
+        if left_boundary:
+            left_boundary.pop()
+        if right_boundary:
+            right_boundary.pop()
+            
+        #find leaves
+        def find_leaf(node,leaves):
+            if not node:
+                return
+            if not node.left and not node.right:
+                leaves.append(node.val)
+                return
+            find_leaf(node.left,leaves)
+            find_leaf(node.right,leaves)
+            
+        find_leaf(root,leaves)
+        print(root_vals,left_boundary,leaves, right_boundary[::-1])
+
+#traverse left, leaves, then right
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def boundaryOfBinaryTree(self, root: Optional[TreeNode]) -> List[int]:
+        '''
+        easier to divide into three parts, 
+        findinv leaves is easy,
+        we just need to find the left boundary and right boundary
+        use bfs to find the left and right bounds, then dfs to find the leaves
+        '''
+        ans = []
+        if not root:
+            return [] 
+        leaves = []
+        #find leaves
+        def find_leaf(node,leaves):
+            if not node:
+                return
+            if not node.left and not node.right:
+                leaves.append(node.val)
+                return
+            find_leaf(node.left,leaves)
+            find_leaf(node.right,leaves)
+            
+        def is_leaf(node):
+            return not node.left and not node.right
+        
+        if not is_leaf(root):
+            ans.append(root.val)
+        
+        #left boundary first
+        curr = root.left
+        while curr:
+            if not is_leaf(curr):
+                ans.append(curr.val)
+            if curr.left:
+                curr = curr.left
+            else:
+                curr = curr.right
+        
+        #leaves
+        find_leaf(root,ans)
+        right_boundary = [] #add its reverse after
+        curr = root.right
+        while curr:
+            if not is_leaf(curr):
+                right_boundary.append(curr.val)
+            if curr.right:
+                curr = curr.right
+            else:
+                curr = curr.left
+        
+        ans += right_boundary[::-1]
+        return ans
+
+
+#######################
+# 207. Course Schedule
+# 13JUL23
+#######################
+#cycle detection
+class Solution:
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        '''
+        cycle detection algorithm, if there is a cycle anywhere we can't do it
+        '''
+        adj_list = defaultdict(list)
+        for a,b in prerequisites:
+            adj_list[a].append(b)
+        
+        #two sets for cycles, visited and on traversal
+        visited = set()
+        in_cycle = set()
+        def has_cycle(node,visited,in_cycle):
+            if node in in_cycle:
+                return True
+            if node in visited:
+                return False
+            visited.add(node)
+            in_cycle.add(node)
+            for neigh in adj_list[node]:
+                if has_cycle(neigh,visited,in_cycle):
+                    return True
+            
+            in_cycle.remove(node)
+            return False
+        
+        
+        for i in range(numCourses):
+            has_cycle(i,visited,in_cycle)
+
+        
+        return len(in_cycle) == 0
+    
+#top sort
+class Solution:
+    def canFinish(self, numCourses: int, prerequisites: List[List[int]]) -> bool:
+        '''
+        we can use top sort
+        start with classes that have 0 indegree, meaning that we can take them first
+        then take neighbors, remove edge, and add back into q is in degree is now zero
+        '''
+        N = numCourses
+        taken = [False]*N
+        adj_list = defaultdict(list)
+        in_degree = [0]*N
+        
+        for a,b in prerequisites:
+            adj_list[a].append(b)
+            in_degree[b] += 1
+        
+        q = deque([])
+        for i in range(N):
+            if in_degree[i] == 0:
+                q.append(i)
+        
+        while q:
+            node = q.popleft()
+            taken[node] = True
+            for neigh in adj_list[node]:
+                in_degree[neigh] -= 1
+                if in_degree[neigh] == 0:
+                    q.append(neigh)
+        
+        return sum(taken) == N
+
+###########################################
+# 1018. Binary Prefix Divisible By 5
+# 13JUL23
+###########################################
+#bit shift and set
+class Solution:
+    def prefixesDivBy5(self, nums: List[int]) -> List[bool]:
+        '''
+        i number is divisible by 5 of it ends in 0 or 5
+        i could generate the integer in O(1) time from the previous and check if mod 5 == 0
+        i.e dp(i) = 
+        '''
+        N = len(nums)
+        ans = [False]*N
+        #check first
+        ans[0] = nums[0] % 5 == 0
+        prev = nums[0]
+        for i in range(1,N):
+            #get new digits
+            prev = prev << 1
+            #set bit
+            prev = prev | nums[i]
+            ans[i] = prev % 5 == 0
+        
+        return ans
