@@ -811,7 +811,63 @@ class Solution:
         
         return rec(0)
 
+class Solution:
+    def minTransfers(self, transactions: List[List[int]]) -> int:
+        '''
+        intuition:
+            for a group of n person with a total balance of 0, only n-1 transfers are needed
+        we can degenerate the problem to:
+            how many subgroupes the balance list can be divided into such that the sum of balances in each group is zero
+            the number of subgroups would give the min transsactions
+            so we have turned a minmization problem into a counting problem
+        
+        we can use bit masks to represent the states of the subgroups
+        balance array [3,-3,1,-1], represetned by the bit mask(1111) menaing all are in this group
+        then we recurse and try removing a person recursively
+                (1111)
+        (0111), (1011), (1101), (1110)
+        
+        we need to solve the problem for each of these subgroups
+        but what we solving? we want the sums to in these subgroups to be 0
+        then it would be max(rec(subgroup) for all subgroups) + (1111) sum is 0
+        
+        important:
+        Once we obtain the optimal solution to the subproblems, an important step is still missing: 
+        if the total balance of the current group is zero, it means that the sum of each subproblem is not zero
+        
+        Therefore, the non-zero part of the subproblem, plus the balance of the additional person in the current problem, make up an additional group whose sum is zero
+        
+        Thus, the optimal solution to the current problem is the maximum optional solution to its subproblems plus 1. However, if the total balance of the current group is not zero, this property does not hold.
+        '''
+        balance_map = collections.defaultdict(int)
+        for a, b, amount in transactions:
+            balance_map[a] += amount
+            balance_map[b] -= amount
+        
+        balance_list = [amount for amount in balance_map.values() if amount]
+        n = len(balance_list)
+        print(balance_list)
+        
+        memo = [-1] * (1 << n)
+        memo[0] = 0
+        
+        def dfs(total_mask):
+            if memo[total_mask] != -1:
+                return memo[total_mask]
+            balance_sum, answer = 0, 0
 
+            # Remove one person at a time in total_mask
+            for i in range(n):
+                cur_bit = 1 << i
+                if total_mask & cur_bit:
+                    balance_sum += balance_list[i]
+                    answer = max(answer, dfs(total_mask ^ cur_bit))
+
+            # If the total balance of total_mask is 0, increment answer by 1.
+            memo[total_mask] = answer + (balance_sum == 0)
+            return memo[total_mask]
+        
+        return n - dfs((1 << n) - 1)
 
                     
 
