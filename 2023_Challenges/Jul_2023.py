@@ -810,7 +810,8 @@ class Solution:
             return cost
         
         return rec(0)
-                    
+
+
 
                     
 
@@ -2111,3 +2112,197 @@ class Solution:
             ans[i] = prev % 5 == 0
         
         return ans
+    
+############################################################
+# 1218. Longest Arithmetic Subsequence of Given Difference
+# 14JUL23
+###########################################################
+#brute force
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        '''
+        pure brute force wouild be to try each arr[i], then look at all j in range(i+1,N)
+        and if arr[j] - arr[i] = difference*(num elemetns in subsequence)
+        '''
+        #brute force
+        N = len(arr)
+        ans = 1
+        for i in range(N):
+            curr_size = 1
+            for j in range(i+1,N):
+                if arr[j] - arr[i] == curr_size*difference:
+                    curr_size += 1
+            
+            ans = max(ans,curr_size)
+    
+        return ans
+#gahh
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        '''
+        need to keep track of the position im in as well as the difference
+        dp(i,diff) = longest subsequence ending at i with difference diff
+            if [i+1] - i == diff, we can extend:
+                dp(i+1,diff) + 1
+            otherwise we have to break the sequence here and move up
+            the answer at this position is the max
+        '''
+        
+        memo = {}
+        N = len(arr)
+        
+        def dp(i,diff):
+            #dont go out of bounrs
+            if i == N-1:
+                return 1
+            if (i,diff) in memo:
+                return memo[(i,diff)]
+            next_diff = arr[i+1] - arr[i]
+            extend = 0
+            if next_diff == diff:
+                extend = 1 + dp(i+1,next_diff)
+            dont_take = dp(i+1,diff)
+            take_but_no_extend = dp(i+1,next_diff)
+            ans = max(extend,dont_take,take_but_no_extend)
+            memo[(i,diff)] = ans
+            return ans
+        
+        return dp(0,difference)
+    
+#we need the position where it last ended with diff, TLE/MLE, too many states
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        '''
+        need to keep track of the position im in as well as the difference
+        dp(i,diff) = longest subsequence ending at i with difference diff
+            if [i+1] - i == diff, we can extend:
+                dp(i+1,diff) + 1
+            otherwise we have to break the sequence here and move up
+            the answer at this position is the max
+            and we also need the last index where it ended with diff!
+        '''
+        
+        memo = {}
+        N = len(arr)
+        
+        def dp(i,last_index,diff):
+            if i == N:
+                return 0
+            if (i,last_index,diff) in memo:
+                return memo[(i,last_index,diff)]
+            
+            no_take = dp(i+1,last_index,diff)
+            take = 0
+            if last_index == -1 or arr[i] - arr[last_index] == diff:
+                take = 1 + dp(i+1,i,diff)
+            
+            ans = max(take,no_take)
+            memo[(i,last_index,diff)] = ans
+            return ans
+        
+        return dp(0,-1,difference)
+    
+
+#another way would be to pass in the last index position, as well as the last element added to that subsequence
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        '''
+        need to keep track of the position im in as well as the difference
+        dp(i,diff) = longest subsequence ending at i with difference diff
+            if [i+1] - i == diff, we can extend:
+                dp(i+1,diff) + 1
+            otherwise we have to break the sequence here and move up
+            the answer at this position is the max
+            and we also need the last index where it ended with diff!
+        '''
+        
+        memo = {}
+        N = len(arr)
+        
+        def dp(i,last_element,diff):
+            if i == N:
+                return 0
+            if (i,last_element,diff) in memo:
+                return memo[(i,last_element,diff)]
+            
+            no_take = dp(i+1,last_element,diff)
+            take = 0
+            if last_element == float('-inf') or arr[i] - last_element == diff:
+                take = 1 + dp(i+1,arr[i],diff)
+            
+            ans = max(take,no_take)
+            memo[(i,last_element,diff)] = ans
+            return ans
+        
+        return dp(0,float('-inf'),difference)
+
+#binary search with dp
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        '''
+        we can use binary search to quickly find the next occurence of the element + difference that should be included in the subsequence
+        say we are at index i
+            we need to find all indicies j, where j > i and arr[j] - arr[i] == difference
+            we can use binary search to speed up 
+            then recurse on index j by adding 1 to it
+        i.e dp(i) = longest_subseuqnece with difference i starting i
+        dp(i) = {
+            for all j, where j > i:
+                if arr[j] - arr[i] = difference:
+                    1 + rec(j)
+        }
+        
+        
+        '''
+        #mapp elements to ther index
+        elements_to_idx = defaultdict(list)
+        for i,num in enumerate(arr):
+            elements_to_idx[num].append(i)
+        
+        N = len(arr)
+        memo = {}
+        
+        def dp(i):
+            #find next element in subsequence
+            next_num = arr[i] + difference
+            if next_num not in elements_to_idx:
+                return 1
+            if i in memo:
+                return memo[i]
+            #find next index
+            j = bisect.bisect_left(elements_to_idx[next_num],i)
+            #edge case, when differnece is zero
+            if difference == 0:
+                j += 1
+            #no such index
+            if j == len(elements_to_idx[next_num]):
+                return 1
+            ans = 1 + dp(elements_to_idx[next_num][j])
+            memo[i] = ans
+            return ans
+        
+        longest = 1
+        for i in range(N):
+            longest = max(longest,dp(i))
+        
+        return longest
+            
+class Solution:
+    def longestSubsequence(self, arr: List[int], difference: int) -> int:
+        '''
+        pure brute force wouild be to try each arr[i], then look at all j in range(i+1,N)
+        and if arr[j] - arr[i] = difference*(num elemetns in subsequence)
+        
+        instead of doing brute force, recorde the count of the longest subsequence ending with this curren difference
+        we just need to check if arr[i] - difference is already in the array
+        since arr[i] - difference would have been the last element added in the subsequence
+        '''
+        last_seen_element = {}
+        
+        for num in arr:
+            prev = num - difference
+            curr_length = last_seen_element.get(prev,0)
+            last_seen_element[num] = curr_length + 1
+        
+        return max(last_seen_element.values())
+
