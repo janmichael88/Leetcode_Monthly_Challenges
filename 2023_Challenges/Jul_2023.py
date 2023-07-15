@@ -2362,3 +2362,179 @@ class Solution:
         
         return max(last_seen_element.values())
 
+##########################################################
+# 1751. Maximum Number of Events That Can Be Attended II
+# 15JUL23
+#########################################################
+#yes!
+class Solution:
+    def maxValue(self, events: List[List[int]], k: int) -> int:
+        '''
+        notes:
+            end dates are inclusive, can only attend on event at a time, if we choose this event we must stay for the entire event
+            you cannot attend two events where one starts and the other ends
+        sort on start, 0/1 knapsack take the event or don't take
+        need to keep track of the ith event that we are on
+        use binary search to find the next event that i can take
+        keep track of the time and the current and events k
+        
+        '''
+        N = len(events)
+        events.sort(key = lambda x : x[0])
+        start_times = [x[0] for x in events]
+        
+        print(start_times)
+        
+        memo = {}
+        
+        def dp(time,i,k):
+            if i == N:
+                return 0
+            if k == 0:
+                return 0
+            if (time,i,k) in memo:
+                return memo[(time,i,k)]
+            #if we can take
+            take = 0
+            if events[i][0] >= time:
+                next_time = events[i][1]
+                #look for the smallest index j that is just greater than next time to take it
+                next_index = bisect.bisect_right(start_times,next_time)
+                if next_index <= N:
+                    take = events[i][2] + dp(next_time,next_index,k-1)
+                    
+            dont_take = dp(time,i+1,k)
+            ans = max(take,dont_take)
+            memo[(time,i,k)] = ans
+            return ans
+        
+        return dp(0,0,k)
+    
+#we don't need to keep track of the times just the index
+class Solution:
+    def maxValue(self, events: List[List[int]], k: int) -> int:
+        '''
+        notes:
+            end dates are inclusive, can only attend on event at a time, if we choose this event we must stay for the entire event
+            you cannot attend two events where one starts and the other ends
+        sort on start, 0/1 knapsack take the event or don't take
+        need to keep track of the ith event that we are on
+        use binary search to find the next event that i can take
+        keep track of the time and the current and events k
+        
+        '''
+        N = len(events)
+        events.sort(key = lambda x : x[0])
+        start_times = [x[0] for x in events]
+        
+        memo = {}
+        
+        def dp(i,k):
+            if i == N:
+                return 0
+            if k == 0:
+                return 0
+            if (i,k) in memo:
+                return memo[(i,k)]
+            #if we can take
+            take = 0
+            next_time = events[i][1]
+            #look for the smallest index j that is just greater than next time to take it
+            next_index = bisect.bisect_right(start_times,next_time)
+            if next_index <= N:
+                take = events[i][2] + dp(next_index,k-1)
+                    
+            dont_take = dp(i+1,k)
+            ans = max(take,dont_take)
+            memo[(i,k)] = ans
+            return ans
+        
+        return dp(0,k)
+    
+#bottom up
+class Solution:
+    def maxValue(self, events: List[List[int]], k: int) -> int:
+        '''
+        notes:
+            end dates are inclusive, can only attend on event at a time, if we choose this event we must stay for the entire event
+            you cannot attend two events where one starts and the other ends
+        sort on start, 0/1 knapsack take the event or don't take
+        need to keep track of the ith event that we are on
+        use binary search to find the next event that i can take
+        keep track of the time and the current and events k
+        
+        '''
+        N = len(events)
+        events.sort(key = lambda x : x[0])
+        start_times = [x[0] for x in events]
+        
+        dp = [[0]*(k+1) for _ in range(N+1)]
+        
+        
+        for i in range(N-1,-1,-1):#start from last n
+            #start from fist k
+            for count in range(1,k+1):
+                take = 0
+                next_time = events[i][1]
+                #look for the smallest index j that is just greater than next time to take it
+                next_index = bisect.bisect_right(start_times,next_time)
+                if next_index <= N:
+                    take = events[i][2] + dp[next_index][count-1]
+
+                dont_take = dp[i+1][count]
+                ans = max(take,dont_take)
+                dp[i][count] = ans
+        
+        return dp[0][k]
+    
+#precomputet binary searches before hand
+class Solution:
+    def maxValue(self, events: List[List[int]], k: int) -> int:
+        '''
+        if wanted to, we could precompute the next indices for each event
+        
+        '''
+        N = len(events)
+        events.sort(key = lambda x : x[0])
+        start_times = [x[0] for x in events]
+        next_index_map = []
+        for start in start_times:
+            next_index_map.append(bisect.bisect_right(start_times,start))
+        
+        dp = [[0]*(k+1) for _ in range(N+1)]
+        
+        
+        for i in range(N-1,-1,-1):#start from last n
+            #start from fist k
+            for count in range(1,k+1):
+                take = 0
+                #look for the smallest index j that is just greater than next time to take it
+                next_index = next_index_map[i]
+                if next_index <= N:
+                    take = events[i][2] + dp[next_index][count-1]
+
+                dont_take = dp[i+1][count]
+                ans = max(take,dont_take)
+                dp[i][count] = ans
+        
+        return dp[0][k]
+
+#recursive precompute
+class Solution:
+    def maxValue(self, events: List[List[int]], k: int) -> int:        
+        events.sort()
+        n = len(events)
+        starts = [start for start, end, value in events]
+        next_indices = [bisect_right(starts, events[cur_index][1]) for cur_index in range(n)]
+        dp = [[-1] * n for _ in range(k)]
+        
+        def dfs(cur_index, count):
+            if count == k or cur_index == n:
+                return 0
+            if dp[count][cur_index] != -1:
+                return dp[count][cur_index]
+            next_index = next_indices[cur_index]
+            dp[count][cur_index] = max(dfs(cur_index + 1, count), events[cur_index][2] + dfs(next_index, count + 1))
+            return dp[count][cur_index]
+        
+        return dfs(0, 0)
