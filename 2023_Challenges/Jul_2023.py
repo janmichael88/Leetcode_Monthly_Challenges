@@ -2819,6 +2819,198 @@ class Solution:
         return dp(0,(1 << M) - 1)
 
 #BFS state exploration and stop at minimum
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        '''
+        for each skill, add the people that know this skill by index
+        intution:
+            the idea is to select the rarest skill in terms of people (skills that only few know)
+            nodes will be map of people belong to a pariticular skill
+            starting node is the empty team and the table what maps all skills to certian people
+            then select the skill that few people know
+            create the next state of skills map:
+                go through each person (from the rare_skill_set) and select the skills they dont have
+                the next state are the skills we dont have yet
+            
+            once we have covered the skills (COVERING) return the team
+        '''
+        #for each skills, find the peoplle that can do that skill
+        skills_people_table = [set() for i in range(len(req_skills))]
+        #fast lookup
+        skills_map = {skill : i for i, skill in enumerate(req_skills)}
+        for i in range(len(people)):
+            for skill in people[i]: 
+                skills_people_table[skills_map[skill]].add(i)
+        
+        #print(skills_people_table)
+        #add to queue, the current skills to people mapping and empty team
+        #we need to contsruct this
+        q = deque()
+        q.append((skills_people_table, []))
+        while q:
+            curr_table, curr_team = q.popleft()
+            #add one at a time
+            rare_skill_people_set = min(curr_table, key=len)
+            #print(curr_table,rare_skill_people_set)
+            #for person in range(len(people)): #if we just checked for every person in the list
+            for person in rare_skill_people_set: 
+                next_table = []
+                for skill_people_set in curr_table:
+                    #if this person wasn't part of the current skills to person mapping, then it means we need to include this person
+                    #to cover the skills
+                    if person not in skill_people_set:
+                        next_table.append(skill_people_set)
+                #empty table means we have covered all the skills
+                #we only had a next table if we were missing some kills, if we arent missing any skills then this is our team
+                if not next_table: 
+                    return curr_team + [person]
+                #print(next_table)
+                q.append((next_table, curr_team + [person]))
+
+#another dp way
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        memo = {}
+        M = len(req_skills)
+        N = len(people)
+        #mapp skills to id, which is the position
+        skills_to_id = {}
+        for i in range(M):
+            skills_to_id[req_skills[i]] = i
+            
+        #get masks of each people[i] holding skills
+        skillsMaskPerson = [0]*N
+        for i in range(N):
+            mask = 0
+            for skill in people[i]:
+                mask = mask | (1 << skills_to_id[skill])
+            skillsMaskPerson[i] = mask
+        need_skills = (1 << M) - 1
+        
+        def solve(i, team_skills):
+            if team_skills == need_skills: 
+                return 0
+            if i == len(people): 
+                return (1 << 61) - 1
+            if (i,team_skills) in memo:
+                return memo[(i,team_skills)]
+            
+            pick = (1 << i) | solve(i + 1, team_skills | skillsMaskPerson[i])
+            skip = solve(i + 1, team_skills)
+            ans = pick if pick.bit_count() < skip.bit_count() else skip
+            memo[(i,team_skills)] = ans
+            return ans
+        
+        final_mask = solve(0,0)
+        ans = [i for i in range(N) if final_mask & 1 << i]
+        return ans
+    
+#bottom up
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        memo = {}
+        M = len(req_skills)
+        N = len(people)
+        #mapp skills to id, which is the position
+        skills_to_id = {}
+        for i in range(M):
+            skills_to_id[req_skills[i]] = i
+            
+        #get masks of each people[i] holding skills
+        skillsMaskPerson = [0]*N
+        for i in range(N):
+            mask = 0
+            for skill in people[i]:
+                mask = mask | (1 << skills_to_id[skill])
+            skillsMaskPerson[i] = mask
+        need_skills = (1 << M) - 1
+        
+        dp = [[0]*(need_skills+1) for i in range(N+1)]
+        #base cases
+        for i in range(N+1):
+            for team_skills in range(need_skills+1):
+                if team_skills == need_skills:
+                    dp[i][team_skills] = 0
+                elif i == N:
+                    dp[i][team_skills] = (1 << 61) - 1
+        
+        for i in range(N-1,-1,-1):
+            for team_skills in range(need_skills):
+                pick = (1 << i) | dp[i + 1][team_skills | skillsMaskPerson[i]]
+                skip = dp[i + 1][team_skills]
+                ans = pick if pick.bit_count() < skip.bit_count() else skip
+                dp[i][team_skills] = ans
+        
+        final_mask = dp[0][0]
+        ans = [i for i in range(N) if final_mask & 1 << i]
+        return ans
+    
+#additional backtracking
+#https://leetcode.com/problems/smallest-sufficient-team/discuss/334630/Python-Optimized-backtracking-with-explanation-and-code-comments-88-ms
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        
+        # Firstly, convert all the sublists in people into sets for easier processing.
+        for i, skills in enumerate(people):
+            people[i] = set(skills)
+        
+        # Remove all skill sets that are subset of another skillset, by replacing the subset with an
+        # empty set. We do this rather than completely removing, so that indexes aren't 
+        # disrupted (which is a pain to have to sort out later).
+        for i, i_skills in enumerate(people):
+            for j, j_skills in enumerate(people):
+                if i != j and i_skills.issubset(j_skills):
+                    people[i] = set()
+        
+        # Now build up a dictionary of skills to the people who can perform them. The backtracking algorithm
+        # will use this.
+        skills_to_people = collections.defaultdict(set)
+        for i, skills in enumerate(people):
+            for skill in skills:
+                skills_to_people[skill].add(i)
+            people[i] = set(skills)
+        
+        # Keep track of some data used by the backtracking algorithm.
+        self.unmet_skills = set(req_skills) # Backtracking will remove and readd skills here as needed.
+        self.smallest_length = math.inf # Smallest team length so far.
+        self.current_team = [] # Current team members.
+        self.best_team = [] # Best team we've found, i,e, shortest team that covers skills/
+        
+		# Here is the backtracking algorithm.
+        def meet_skill(skill=0):
+			# Base case: All skills are met.
+            if not self.unmet_skills:
+				# If the current team is smaller than the previous we found, update it.
+                if self.smallest_length > len(self.current_team):
+                    self.smallest_length = len(self.current_team)
+                    self.best_team = self.current_team[::] # In Python, this makes a copy of a list.
+                return # So that we don't carry out the rest of the algorithm.
+                        
+            # If this skill is already met, move onto the next one.
+            if req_skills[skill] not in self.unmet_skills:
+                return meet_skill(skill + 1)
+				# Note return is just to stop rest of code here running. Return values
+				# are not caught and used.
+            
+            # Otherwise, consider all who could meet the current skill.
+            for i in skills_to_people[req_skills[skill]]:
+                
+				# Add this person onto the team by updating the backtrading data.
+                skills_added_by_person = people[i].intersection(self.unmet_skills)
+                self.unmet_skills = self.unmet_skills - skills_added_by_person
+                self.current_team.append(i)
+                
+				# Do the recursive call to further build the team.
+                meet_skill(skill + 1)
+                
+                # Backtrack by removing the person from the team again.
+                self.current_team.pop()
+                self.unmet_skills = self.unmet_skills.union(skills_added_by_person)
+        
+		# Kick off the algorithm.
+        meet_skill()        
+        return self.best_team 
+
 
 
 ###########################################
