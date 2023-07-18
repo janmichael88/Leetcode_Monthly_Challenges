@@ -2538,3 +2538,377 @@ class Solution:
             return dp[count][cur_index]
         
         return dfs(0, 0)
+
+###############################################
+# 1644. Lowest Common Ancestor of a Binary Tree II
+# 15JUL23
+###############################################
+#two pass works
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        '''
+        traverse tree checking for p and q, return null if not in true
+        otherwise adopt the same algorithm from LCA I
+        '''
+        self.found_p = False
+        self.found_q = False
+        
+        def dfs(node):
+            if not node:
+                return
+            if node == p:
+                self.found_p = True
+            if node == q:
+                self.found_q = True
+            
+            dfs(node.left)
+            dfs(node.right)
+            
+        dfs(root)
+        
+        if not self.found_p or not self.found_q:
+            return None
+        
+        def lca(node,p,q):
+            if node == None:
+                return None
+            if node == p or node == q:
+                return node
+            left = lca(node.left,p,q)
+            right = lca(node.right,p,q)
+            #if there something to return on left or right, this must be the LCA
+            if left != None and right != None:
+                return node
+            #if we returned nothing, retuing nothing
+            if left == None and right == None:
+                return None
+            return left if left else right
+        
+        return lca(root,p,q)
+    
+####################################
+# 1125. Smallest Sufficient Team
+# 16JUL23
+####################################
+#wtf.....???
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        '''
+        we have List<string> required skills and List<List<string>> people where people[i] has those skills
+        sufficent team is a team that contains all required skills
+        return any suffcient team that is as small as possible
+        
+        this is bitmask dp
+        say we have bit maske (0000), which means no one is on this time
+        we can add the ith person to this team, but for this team pair, we need to know if we have the required skills
+        pair it with a required skills mask
+        (0000) and (000), when the required skills mask is all ones, we have valid team
+        then we only add this person the team is they can contribute a skill that is not the current part of the team
+        '''
+        M = len(req_skills)
+        N = len(people)
+        
+        #mapp skills to id, which is the position
+        skills_to_id = {}
+        
+        for i in range(M):
+            skills_to_id[req_skills[i]] = i
+        memo = {}
+        
+        
+        def count_set_bits(mask):
+            count = 0
+            while mask:
+                mask = mask & (mask-1)
+                count += 1
+            
+            return count
+        
+        def dp(skills_mask,team_mask):
+            #base case we have all skills present, return team mask and number of set ones
+            if skills_mask == (1 << M) - 1:
+                return [team_mask,team_mask]
+            #retrieve
+            if (skills_mask,team_mask) in memo:
+                return memo[(skills_mask,team_mask)]
+            #get curr count
+            curr_set_bits = count_set_bits(team_mask)
+            ans = [skills_mask,team_mask]
+            for i in range(N):
+                for skill in people[i]:
+                    j = skills_to_id[skill]
+                    #if this ith person has this skill needed in the mask, add it
+                    if skills_mask & (1 << j) == 0:
+                        next_skills_mask = skills_mask | (1 << j)
+                        next_team_mask = team_mask | (1 << i)
+                        child_ans = dp(next_skills_mask,next_team_mask)
+                        if count_set_bits(child_ans[1]) < curr_set_bits:
+                            curr_set_bits = child_ans[1]
+                            ans = [next_skills_mask,next_team_mask]
+            memo[(skills_mask,team_mask)] = ans
+            return ans
+        
+        dp(0,0)
+        for k,v in memo.items():
+            print(k,v)
+                
+
+#this is a covering set problem
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        '''
+        we need to use a mask of skills from the req_skills for each people[i]
+        we can also reformulate the questions: find the smallest team such that the bitwise OR fo the bitmasks representing the skills of
+        the current members on the team is 2**(len(req_skills)) - 1
+        
+        we let dp(skillsMask) be the bitmask represetning the team that poasses all the skills from this skillsmask
+        the value of dp(skillsMask) is the mask the represents the indices of the people on this team such that the size is minimum
+        dp(0) = 0, base case
+        
+        for a given skillsMaks != 0, there must bet at least on person in a team, since we dont know, we just set it to a large value
+        essential, all skills maksk will be as larges as possible giiving us the chance to minimize
+        to make it easier we use skills mask for each person
+        skillsMaskPerson[i] denot the bitmask respreetning the skill set of the ith person
+            precompute before hand
+            
+            In [42]: skills = '111111'
+
+        In [43]: has =    '100101'
+
+        In [44]: int(skills,2) & ~int(has,2)
+        Out[44]: 26
+
+        In [45]: bin(26)
+        Out[45]: '0b11010'
+
+        In [46]: '011010'
+            
+        notes, althrough the other team members may possess sills from skillMaskPerson[i] it is not nesscary to examine all pairings
+        however, THEY MUST have the skills from skillSmaks not presnt in skillsMaskPerson[i]
+        
+        the set smallerSkillsMask = skillsMask \ skillsMaskPerson[i], where i denotes the difference in skills
+            this contains the required skills that the ith person does not possess
+        
+        i,e set(skills_person[i]) differecen set(skills person[j]) = skills_mask & -skillsMaskPerson[i]
+        but we can also do it manually, where we check bit by bit
+        
+        we update dp(skillsMask) with dp(smallerSkills_mask) OR 2**i 
+            this add the ith perosn to the team with the skills not covered by smallerSillsMask
+            only update when smaller_skills_maks != skillsMask
+            
+        one more question:
+            how to know where we actually call dp(skillsMask) of if we need to update for a previous computed asnwer
+            we store -1, indicatting we don't have an answer, which we comptue
+            otherwirse we write into dp[skillsMask] != -1 the new mask
+        
+        '''
+        M = len(req_skills)
+        N = len(people)
+        
+        #mapp skills to id, which is the position
+        skills_to_id = {}
+        for i in range(M):
+            skills_to_id[req_skills[i]] = i
+            
+        #get masks of each people[i] holding skills
+        skillsMaskPerson = [0]*N
+        for i in range(N):
+            mask = 0
+            for skill in people[i]:
+                mask = mask | (1 << skills_to_id[skill])
+            skillsMaskPerson[i] = mask
+            
+        memo = [-1]*(1 << M)
+        memo[0] = 0
+        
+        #B. kernighan
+        def count_set_bits(mask):
+            count = 0
+            while mask:
+                mask = mask & (mask-1)
+                count += 1
+            
+            return count
+        
+        def dp(skills_mask):
+            if memo[skills_mask] != -1:
+                return memo[skills_mask]
+            for i in range(N):
+                #find skills not covered by person i
+                needed_skills = skills_mask & ~skillsMaskPerson[i]
+                #make sure they are not the same
+                if skills_mask != needed_skills:
+                    team_mask = dp(needed_skills) | (1 << i) #includign person i
+                    if memo[skills_mask] or count_set_bits(team_mask) < count_set_bits(memo[skills_mask]):
+                        memo[skills_mask] = team_mask
+
+            return memo[skills_mask]
+        
+        ans_mask = dp((1 << M)-1)
+        
+        ans = []
+        for i in range(N):
+            if (ans_mask >> i) & 1 == 1:
+                ans.append(i)
+        
+        return ans
+    
+class Solution:
+    def smallestSufficientTeam(self, req_skills: List[str], people: List[List[str]]) -> List[int]:
+        '''
+        we can also treat this is 0/1 knapack with states (i,skills_mask)
+        we either choose to take this person and update the skills_mask
+        of we don't take this person
+        
+        '''
+        M = len(req_skills)
+        N = len(people)
+        
+        #mapp skills to id, which is the position
+        skills_to_id = {}
+        for i in range(M):
+            skills_to_id[req_skills[i]] = i
+            
+        #get masks of each people[i] holding skills
+        skillsMaskPerson = [0]*N
+        for i in range(N):
+            mask = 0
+            for skill in people[i]:
+                mask = mask | (1 << skills_to_id[skill])
+            skillsMaskPerson[i] = mask
+            
+        memo = {}
+        
+        def dp(i,needed_skills):
+            if i >= N:
+                if not needed_skills:
+                    #if we dont need skills we dont need a team
+                    return [] 
+                return None
+            
+            if (i,needed_skills) in memo:
+                return memo[(i,needed_skills)]
+            
+            take = dp(i+1, needed_skills & ~skillsMaskPerson[i])
+            no_take = dp(i+1,needed_skills)
+            
+            #if bother are none no anser
+            if take is None and no_take is None:
+                memo[(i,needed_skills)] = None
+            elif no_take is None:
+                #add this person when taking
+                memo[(i,needed_skills)] = [i] + take
+            elif take is None:
+                memo[(i,needed_skills)] = no_take #must be the other answer
+            else:
+                if len(no_take) < 1 + len(take):
+                    ans = no_take
+                else:
+                    ans = [i] + take
+                memo[(i,needed_skills)] = ans
+            
+            return memo[(i,needed_skills)]
+        
+        return dp(0,(1 << M) - 1)
+
+#BFS state exploration and stop at minimum
+
+
+###########################################
+# 445. Add Two Numbers II (REVISTED)
+# 17JUL23
+############################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        i can reverse the lists, then created the new ll and reverse again
+        '''
+        def reverse(node):
+            if not node or not node.next:
+                return node
+            #reverse rest of list
+            reversed_rest = reverse(node.next)
+            node.next.next = node
+            node.next = None
+            return reversed_rest
+        
+        def reverse2(node):
+            prev = None
+            curr = node
+            while curr:
+                next_node = curr.next
+                curr.next = prev
+                prev = curr
+                curr = next_node
+            
+            return prev
+        
+        
+        ll1 = reverse(l1)
+        ll2 = reverse(l2)
+        
+        dummy = ListNode(-1)
+        curr = dummy
+        carry = 0
+        
+        curr1 = ll1
+        curr2 = ll2
+        
+        while curr1 or curr2:
+            v1 = curr1.val if curr1 else 0
+            v2 = curr2.val if curr2 else 0
+            entry = v1 + v2 + carry
+            carry,val = divmod(entry,10)
+            new_node = ListNode(val = val)
+            curr.next = new_node
+            curr = curr.next
+            curr1 = curr1.next if curr1 else curr1
+            curr2 = curr2.next if curr2 else curr2
+        
+        if carry == 1:
+            curr.next = ListNode(val=1)
+        print(dummy.next,carry)
+        return reverse(dummy.next)
+            
+#instead of reversing lists
+class Solution:
+    def addTwoNumbers(self, l1: Optional[ListNode], l2: Optional[ListNode]) -> Optional[ListNode]:
+        s1 = []
+        s2 = []
+
+        while l1:
+            s1.append(l1.val)
+            l1 = l1.next
+        while l2:
+            s2.append(l2.val)
+            l2 = l2.next
+
+        total_sum = 0
+        carry = 0
+        ans = ListNode()
+        while s1 or s2:
+            if s1:
+                total_sum += s1.pop()
+            if s2:
+                total_sum += s2.pop()
+
+            ans.val = total_sum % 10
+            carry = total_sum // 10
+            head = ListNode(carry)
+            head.next = ans
+            ans = head
+            total_sum = carry
+
+        return ans.next if carry == 0 else ans
