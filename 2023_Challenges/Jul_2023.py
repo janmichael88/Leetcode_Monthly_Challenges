@@ -2593,6 +2593,111 @@ class Solution:
         
         return lca(root,p,q)
     
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        '''
+        traverse tree checking for p and q, return null if not in true
+        otherwise adopt the same algorithm from LCA I
+        '''
+        self.found_p = False
+        self.found_q = False
+        
+        def dfs(node):
+            if not node:
+                return
+            if node == p:
+                self.found_p = True
+            if node == q:
+                self.found_q = True
+            
+            dfs(node.left)
+            dfs(node.right)
+            
+        dfs(root)
+        
+        if not self.found_p or not self.found_q:
+            return None
+        
+        def lca(node,p,q):
+            if node is None or node == p or node == q:
+                return node
+            left = lca(node.left,p,q)
+            right = lca(node.right,p,q)
+            
+            if left and right:
+                return node
+            elif left:
+                return left
+            else:
+                return right
+        return lca(root,p,q)
+    
+#actual solution, call lca, than check for the exitence of the other node in the the subtree that we returned
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        def dfs(node, target):
+            if node == target:
+                return True
+            if node is None:
+                return False
+            return dfs(node.left, target) or dfs(node.right, target)
+
+        def LCA(node, p, q):
+            if node is None or node == p or node == q:
+                return node
+            left = LCA(node.left, p, q)
+            right = LCA(node.right, p, q)
+            if left and right:
+              return node
+            elif left:
+              return left
+            else:
+              return right
+
+        ans = LCA(root, p, q)
+        if ans == p:  # check if q is in the subtree of p
+            return p if dfs(p, q) else None
+        elif ans == q:  # check if p is in the subtree of q
+            return q if dfs(q, p) else None
+        return ans
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, x):
+#         self.val = x
+#         self.left = None
+#         self.right = None
+
+class Solution:
+    def lowestCommonAncestor(self, root: 'TreeNode', p: 'TreeNode', q: 'TreeNode') -> 'TreeNode':
+        '''
+        global dfs answer and counting conditions
+        '''
+        self.ans = None
+        
+        def dfs(node,p,q):
+            if not node:
+                return False
+            left = dfs(node.left,p,q)
+            right = dfs(node.right,p,q)
+            
+            mid = node == p or node == q
+            if left + right + mid >= 2:
+                self.ans = node
+                
+            return left or mid or right
+        
+        dfs(root,p,q)
+        return self.ans
+
+    
 ####################################
 # 1125. Smallest Sufficient Team
 # 16JUL23
@@ -2621,7 +2726,6 @@ class Solution:
         for i in range(M):
             skills_to_id[req_skills[i]] = i
         memo = {}
-        
         
         def count_set_bits(mask):
             count = 0
@@ -3104,3 +3208,245 @@ class Solution:
             total_sum = carry
 
         return ans.next if carry == 0 else ans
+    
+##################
+# 146. LRU Cache
+# 18JUL23
+##################
+#queue solution
+class LRUCache:
+    '''
+    we can also use a queue, where the key at the front is the least recently used and the key at the back is most recently used
+    '''
+
+    def __init__(self, capacity: int):
+        self.cache = {}
+        self.q = deque([])
+        self.size = capacity
+
+    def get(self, key: int) -> int:
+        if key in self.cache:
+            #remove from q and put back
+            self.q.remove(key)
+            self.q.append(key)
+            return self.cache[key]
+        return -1
+
+
+    def put(self, key: int, value: int) -> None:
+        if key in self.cache:
+            #remove from q and put back
+            self.q.remove(key)
+            self.q.append(key)
+        
+        else:
+            self.cache[key] = value
+            self.q.append(key)
+        
+        #if too big
+        if len(self.cache) > self.size:
+            least_recent_key = self.q.popleft()
+            del self.cache[least_recent_key]
+            
+            
+
+import collections
+class LRUCache:
+    '''
+    put evicts the least recently used key and puts in the new (key,value) if the capacity is too high
+        if they have the same min count, we need to evict the older one
+    the crux of the problem is keeping track of the least recently used keys
+    count map! this might TLE though
+    '''
+
+    def __init__(self, capacity: int):
+        self.size = capacity
+        self.cache = collections.OrderedDict()
+
+    def get(self, key: int) -> int:
+        if key not in self.cache:
+            return -1
+        #move this key to the end because we used this key
+        self.cache.move_to_end(key)
+        return self.cache[key]
+
+    def put(self, key: int, value: int) -> None:
+        #move key to end
+        if key in self.cache:
+            self.cache.move_to_end(key)
+        
+        self.cache[key] = value
+        if len(self.cache) > self.size:
+            self.cache.popitem(False)
+            
+
+
+# Your LRUCache object will be instantiated and called as such:
+# obj = LRUCache(capacity)
+# param_1 = obj.get(key)
+# obj.put(key,value)
+
+################################################
+# 435. Non-overlapping Intervals (REVISTED)
+# 19JUL23
+###################################################
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        '''
+        ---
+        ----
+        -----
+        we have one interval that contains the other intervals
+        so really want to find the the maximum number of overlapping intervals
+        to make them non overlapping i need to remove 2
+        if i have n overlapping intervals where they are essentially nested, i need to remove n-1 intervals
+        
+        sort array on start and set the last interval's ending point as end
+        1. if end > the start of the next interval, there is an overlap here, but we dont increment the count
+            we need to keep track of the smaller ends to include in out window, by including the smaller ends we increase the number of intervals we can fit
+        2. end <= the start of the next interval, we cant possibly have an overlap here
+            so increment count, and set end to the end of the next interval
+        '''
+        if not intervals:
+            return 0
+        intervals.sort()
+        curr_end = intervals[0][1] 
+        unpcaptured_intervals = 1 #maximize this, we will alwasy have one uncapture intervals, i.e a single interval is still uncaptured
+        for start,end in intervals[1:]:
+            #if we want to include this interval to be captured, adjust the end to be the smaller
+            if curr_end > start:
+                curr_end = min(curr_end, end)
+            elif start >= curr_end:
+                #we cant possible capture this interval
+                unpcaptured_intervals += 1
+                curr_end = end        
+        return len(intervals) - unpcaptured_intervals
+    
+#top down dp
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        '''
+        we can also use dp to solve this problem
+        let dp(i) be the maximum number of tasks we can take using intervals[i:]
+        dp(i) = {
+            then find the next interval we can take at index j
+            take = 1 + dp(j)
+            no_take = dp(i+1)
+            max(take,no_take)
+            
+            we can just binary search to find the starttime just greater than the current end time for this task
+        }
+        '''
+        N = len(intervals)
+        intervals.sort()
+        starts = []
+        ends = []
+        for start,end in intervals:
+            starts.append(start)
+            ends.append(end)
+        
+        end_mapp = {}
+        for end in ends:
+            end_mapp[end] = bisect.bisect_left(starts,end)
+            
+        memo = {}
+        
+        def dp(i):
+            if i == N:
+                return 0
+            if i in memo:
+                return memo[i]
+            curr_start = starts[i]
+            curr_end = ends[i]
+            #find the next task we can take, i.e the jth task is just before the end
+            #bisect left, not we also could have precompute the array for each start
+            no_take = dp(i+1)
+            #we also could have precomputed this for all ends
+            j = end_mapp[curr_end]
+            #j = bisect.bisect_left(starts,curr_end)
+            take = dp(j) + 1
+            ans = max(take,no_take)
+            memo[i] = ans
+            return ans
+        
+        #dp(0) returens the maximum number of tasks i can do, which means i need to get rid of the rest 
+        #to find the minimum number of intervals to remove
+        return N - dp(0)
+
+#another greedy
+class Solution:
+    def eraseOverlapIntervals(self, intervals: List[List[int]]) -> int:
+        '''
+        if we sort on end times, then to avoid overlap we greedily take the one with the earlier end time
+        want to find the maximum number of overlapping intervals
+        if we choose the intervals with the earlier end times we can maximize the number of overlapping intervals
+        
+        because we sorted on the end times, ends > curr _end
+        if start >= end, we can certinal take this interval, because it doesnt cause an overlap, update curr_end end
+        if end < k, there is an overlap so inncrement the count
+        '''
+        ans = 0 #count of overlaps
+        curr_end = float('-inf')
+        intervals.sort(key = lambda x: x[1])
+        for start,end in intervals:
+            if start >= curr_end:
+                curr_end = end
+            else:
+                ans += 1
+        
+        return ans
+
+##########################################
+# 553. Optimal Division
+# 18JUL23
+##########################################
+#WOOOHOOO
+class Solution:
+    def optimalDivision(self, nums: List[int]) -> str:
+        '''
+        inputs are small enough to allow brute force
+        i can generate the string and use pythons eval literal function
+        
+        kinda a stupid problem because it really should be an valid literal epression
+        
+        the answer is just:
+            nums[0] / "/".join(nums[1:])
+            
+        but just be careful of special cases
+        
+        not sure why this works, but looking at the examples i just guessed
+        proof, sorta of
+        say we have [a,b,c,d] and we want to maximize
+        we can write the answer as p/q and in order to maximize p/q we minimize q
+        repeated division in successsion will always give smaller numbers ( as long as the numbers are > 1)
+        we could do b/c/d or (b/c)/d or b/(c/d)
+        
+        and we must have a number in the top
+
+        X1/X2/X3/../Xn will always be equal to (X1/X2) * Y, no matter how you place parentheses. 
+        i.e no matter how you place parentheses, X1 always goes to the numerator and X2 always goes to the denominator. 
+        Hence you just need to maximize Y. And Y is 
+        maximized when it is equal to X3 *..*Xn. So the answer is always X1/(X2/X3/../Xn) = (X1 *X3 *..*Xn)/X2
+        '''
+        first = nums[0]
+        second = nums[1:]
+        #reformat
+        if len(second) > 1:
+            return str(first)+"/"+"("+"/".join([str(num) for num in second])+")"
+        elif len(second) == 1:
+            return str(first)+"/"+"/".join([str(num) for num in second])
+        return str(first)
+    
+#in one line
+class Solution:
+    def optimalDivision(self, nums: List[int]) -> str:
+        return "/".join(map(str, nums)) if len(nums) <= 2 else f'{nums[0]}/({"/".join(map(str, nums[1:]))})'
+    
+'''
+better proof
+[a/b/c/d/e] = a*(1/b)*(1/c)*(1/d)*(1/e) = k
+no matter how we split up using parentheses, product will always be k
+in which case, hold a consant then use the rest, so we just get a / (1(b*c*d*e)) = a / (b/c/d/e)
+'''
+    
+#now do the actual dp, start with brute force recursion
