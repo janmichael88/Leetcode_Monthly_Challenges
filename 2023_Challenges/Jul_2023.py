@@ -3395,6 +3395,83 @@ class Solution:
                 ans += 1
         
         return ans
+    
+##########################################
+# 735. Asteroid Collision (REVISTED)
+# 20JUL23
+##########################################
+#dang it
+class Solution:
+    def asteroidCollision(self, asteroids: List[int]) -> List[int]:
+        '''
+        just simulate, add asteroids to the stack until
+        if they are in opposite side, simulate collections
+        '''
+        stack = []
+        for ast in asteroids:
+            while stack and stack[-1]*ast < 0 and abs(ast) > stack[-1]:
+                stack.pop()
+            
+            if not stack:
+                stack.append(ast)
+            
+            elif stack and abs(stack[-1]) == abs(ast):
+                stack.pop()
+            elif stack and abs(stack[-1]) > abs(ast):
+                continue
+            else:
+                stack.append(ast)
+        return stack
+
+
+#case work?
+class Solution:
+    def asteroidCollision(self, asteroids: List[int]) -> List[int]:
+        '''
+        just simulate, add asteroids to the stack until
+        if they are in opposite side, simulate collections
+        '''
+        if not asteroids:
+            return []
+        
+        results =  []
+        
+        #starting with the second one
+        for ast in asteroids:
+            #check if we need pop off, or explistion
+            while results and results[-1] > 0 and ast < 0 and abs(ast) > results[-1]:
+                results.pop()
+                
+            #check if we need to append, exploed,or both
+            #if empty add it
+            if not results:
+                results.append(ast)
+            #iff the last asteroid in our stack is positive but same size they both go away
+            elif results[-1] > 0 and ast < 0 and abs(ast) == results[-1]:
+                results.pop()
+            #iff last asteroid is negative, and the asteroid is going the other way
+            elif results[-1] < 0 or ast > 0:
+                results.append(ast)
+        return results
+
+class Solution:
+    def asteroidCollision(self, asteroids: List[int]) -> List[int]:
+        '''
+        just add asteroids to the right and clean up the last two
+        '''
+        ans = []
+        for ast in asteroids:
+            ans.append(ast)
+            while len(ans) > 1 and ans[-2] > 0 and ans[-1] < 0:
+                right = ans.pop()
+                left = ans.pop()
+                if abs(left) != abs(right):
+                    if abs(left) > abs(right):
+                        ans.append(left)
+                    else:
+                        ans.append(right)
+        
+        return ans
 
 ##########################################
 # 553. Optimal Division
