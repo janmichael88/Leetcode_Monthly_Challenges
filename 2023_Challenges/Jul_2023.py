@@ -3472,6 +3472,69 @@ class Solution:
                         ans.append(right)
         
         return ans
+    
+#########################################
+# 592. Fraction Addition and Subtraction
+# 20JUL23
+#########################################
+#stupid problem
+class Solution:
+    def fractionAddition(self, expression: str) -> str:
+        '''
+        get the sign of the first expression, then split
+        then find the gcd of the denomators and update the numerators
+        find lcd of fractions
+        '''
+        first_sign = expression[0] if expression[0] in '+-' else None
+        #split on second 
+        if first_sign:
+            expression = expression[1:]
+        
+        fracs = expression.split("+")
+        all_fracs = []
+        for f in fracs:
+            for temp in f.split("-"):
+                all_fracs.append(temp)
+        
+        #find posittions of signs
+        signs = []
+        if first_sign:
+            signs.append(first_sign)
+        else:
+            signs.append('+')
+        
+        for ch in expression:
+            if ch in '+-':
+                signs.append(ch)
+        
+        nums = []
+        denoms = []
+        for sign,f in zip(signs,all_fracs):
+            num,denom = f.split("/")
+            nums.append(int(sign+num))
+            denoms.append(int(denom))
+        
+        #find lcm of denoms
+        lcm = 1
+        for i in denoms:
+            lcm = lcm*i//math.gcd(lcm, i)
+        #convert nums
+        for i in range(len(nums)):
+            nums[i] *= (lcm//denoms[i])
+        
+        #get actual parts of fraction
+        num_ans = sum(nums)
+        denom_ans = sum(denoms)
+        
+
+        print(num_ans,lcm)
+        gcd = math.gcd(num_ans,lcm)
+        print(gcd)
+        
+        num_ans //= gcd
+        denom_ans //= gcd
+        
+        return str(num_ans)+"/"+str(denom_ans)
 
 ##########################################
 # 553. Optimal Division
@@ -3527,3 +3590,378 @@ in which case, hold a consant then use the rest, so we just get a / (1(b*c*d*e))
 '''
     
 #now do the actual dp, start with brute force recursion
+#check out this solution 
+#https://leetcode.com/problems/optimal-division/discuss/392316/Python-not-easy-using-DFS%2Bmemo-(DP)-explained
+'''
+There are already a lot of posts talking about the mathmatic way. But you might not be able to give such answer in an interview. The standard DFS+Memo way is not easy because other than finding the max result, you also need to construct it's string expression.
+In DFS, you remember both the max and min result for range [i,j]. [0,n-1] will be the final answer. You need to remember both max and min result because min result can be used as denominator.
+It can also be explained in dp way:
+dp(i,j) means the max and min result you can get for range [i,j], "k" represent any index between i~j.
+max dp(i,j) = max dp(i,k) / min dp(k+1,j)
+min dp(i,j) = min dp(i,k) / max dp(k+1,j)
+
+Time: O(n^3) time, space: O(n^2)
+'''
+import functools
+class Solution:
+    def optimalDivision(self, nums: List[int]) -> str:
+        @functools.lru_cache(None)
+        def dfs(start,end):
+            if start==end:
+                return nums[start],str(nums[start]),nums[end],str(nums[end])
+            resmax,resmaxstr,resmin,resminstr=-1,'',math.inf,''
+            for i in range(start,end):
+                lmax,lmaxstr,lmin,lminstr=dfs(start,i)
+                rmax,rmaxstr,rmin,rminstr=dfs(i+1,end)
+                tmpmax=lmax/rmin
+                if tmpmax>resmax:
+                    resmax=tmpmax
+                    if '/' in rminstr:
+                        resmaxstr=lmaxstr+'/('+rminstr+')'
+                    else:
+                        resmaxstr=lmaxstr+'/'+rminstr
+                tmpmin=lmin/rmax
+                if tmpmin<resmin:
+                    resmin=tmpmin
+                    if '/' in rmaxstr:
+                        resminstr=lminstr+'/('+rmaxstr+')'
+                    else:
+                        resminstr=lminstr+'/'+rmaxstr
+                tmpmin=lmin/rmax
+            return resmax,resmaxstr,resmin,resminstr
+        return dfs(0,len(nums)-1)[1]
+
+#################################################
+# 673. Number of Longest Increasing Subsequence
+# 21JUL23
+#################################################
+#close one, dang it
+class Solution:
+    def findNumberOfLIS(self, nums: List[int]) -> int:
+        '''
+        i can use dp to find the length of the longest increasing subsequence
+        for each length, put into another hashmap of counts
+        then get the asnwer from that
+        
+        find longest increasing subsequence
+        let dp(i) be the length of LIS using nums[i:]
+        '''
+        memo = {}
+        counts = Counter()
+        N = len(nums)
+        
+        def dp(i):
+            if i == N:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = 1
+            counts[i] = 1 
+            for j in range(i+1,N):
+                if nums[j] > nums[i]:
+                    child_ans = 1 + dp(j)
+                    #counts[child_ans] += 1
+                    ans = max(ans,child_ans)
+            
+            counts[ans] += 1
+            memo[i] = ans
+            return ans
+        
+        
+        longest = 1
+        for i in range(N):
+            longest = max(longest,dp(i))
+        
+        print(counts)
+        return counts[longest]
+
+#dp, two sepearte count arrays
+class Solution:
+    def findNumberOfLIS(self, nums: List[int]) -> int:
+        '''
+        we need to store two arrays, legnths and counts both of size len(nums)
+        where: lenghts[i] == the lenght of the LIS endind at nums[i]
+                counts[i] == count if LIS with LIS == lenghts[i] AND ending at i
+        
+        initially every lengths[i] == 1 and counts[i] because we have at least length 1 LIS and a count of 1
+        then we need to update
+        
+        for each index j, where j < i and nums[j] < nums[i] we can extend the LIS ending at nums[j] and make it end at nums[i]
+        by extending it by 1, we get a new subsequengt of lenght[j] + 1 at lengths[i]
+        
+        1. if length[j] + 1 > length[i], when nums[j] < nums[i]
+            length[i] = length[j] + 1
+            countt[i] = 0
+            
+        2. if length[j] + 1 == length[i], then it implies that we can extenf every LIS ending at idnex j to nums[i]
+            count[i] += count[j]
+            
+        then we just find the max(lengths[i] for all possible i)
+        then acccumalte the counts
+        '''
+        N = len(nums)
+        lengths = [0]*N
+        counts = [0]*N
+        
+        #need to invoke dp on the first i
+        def dp(i):
+            if lengths[i] != 0: #meaning we have computed already
+                return
+            
+            lengths[i] = 1
+            counts[i] = 1
+            
+            for j in range(i):
+                if nums[j] < nums[i]:
+                    dp(j)
+                    if lengths[j] + 1 > lengths[i]:
+                        lengths[i] = lengths[j] + 1
+                        counts[i] = 0
+                    
+                    if lengths[j] + 1 == lengths[i]:
+                        counts[i] += counts[j]
+        
+        max_length = 1
+        ans = 0
+        for i in range(N):
+            dp(i)
+            max_length = max(max_length,lengths[i])
+        
+        for i in range(N):
+            if lengths[i] == max_length:
+                ans += counts[i]
+        
+        return ans
+##########################################
+# 688. Knight Probability in Chessboard
+# 22JUL23
+##########################################
+#YESSSS
+class Solution:
+    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:
+        '''
+        dfs,
+        if i'm off the board, return zero
+        otherwise find possible moves keeping me on the board (1/num possible)
+        answer is product of all moves
+        for each move add its neighbording moves to a cell
+        count possible moves then return its reciporcal?
+        '''
+        dirrs = [(-2,1),(-1,2),(1,2),(2,1),(2,-1),(1,-2),(-1,-2),(-2,-1)]
+        memo = {}
+        def dfs(i,j,k):
+            if k == 0:
+                return 1
+            if (i,j,k) in memo:
+                return memo[(i,j,k)]
+            neigh_moves = []
+            for dx,dy, in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < n and 0 <= neigh_y < n:
+                    neigh_moves.append((neigh_x,neigh_y))
+            num_moves = 8
+            ans = 0
+            for neigh_x,neigh_y in neigh_moves:
+                ans += (1/num_moves)*dfs(neigh_x,neigh_y,k-1)
+            
+            memo[(i,j,k)] = ans
+            return ans
+        
+        return dfs(row,column,k)
+    
+#removing prune earlier
+class Solution:
+    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:
+        '''
+        dfs,
+        if i'm off the board, return zero
+        otherwise find possible moves keeping me on the board (1/num possible)
+        answer is product of all moves
+        for each move add its neighbording moves to a cell
+        count possible moves then return its reciporcal?
+        '''
+        dirrs = [(-2,1),(-1,2),(1,2),(2,1),(2,-1),(1,-2),(-1,-2),(-2,-1)]
+        memo = {}
+        def dfs(i,j,k):
+            if k == 0:
+                return 1
+            if (i,j,k) in memo:
+                return memo[(i,j,k)]
+            num_moves = 8
+            ans = 0
+            for dx,dy, in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < n and 0 <= neigh_y < n:
+                    ans += (1/num_moves)*dfs(neigh_x,neigh_y,k-1)
+            
+            memo[(i,j,k)] = ans
+            return ans
+        
+        return dfs(row,column,k)
+
+#bottom up
+class Solution:
+    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:
+        '''
+        dfs,
+        if i'm off the board, return zero
+        otherwise find possible moves keeping me on the board (1/num possible)
+        answer is product of all moves
+        for each move add its neighbording moves to a cell
+        count possible moves then return its reciporcal?
+        '''
+        dirrs = [(-2,1),(-1,2),(1,2),(2,1),(2,-1),(1,-2),(-1,-2),(-2,-1)]
+        dp = [[[0]*(k+1) for _ in range(n+1)] for _ in range(n+1)]
+        #base case fill at k == 0
+        for i in range(n):
+            for j in range(n):
+                dp[i][j][0] = 1
+                
+        for curr_k in range(1,k+1):
+            for i in range(n):
+                for j in range(n):
+                    num_moves = 8
+                    ans = 0
+                    for dx,dy, in dirrs:
+                        neigh_x = i + dx
+                        neigh_y = j + dy
+                        #bounds
+                        if 0 <= neigh_x < n and 0 <= neigh_y < n:
+                            ans += (1/num_moves)*dp[neigh_x][neigh_y][curr_k-1]
+            
+                    dp[i][j][curr_k] = ans
+        
+        return dp[row][column][k]
+        
+#bfs, more like bottom up dp with space optimzation
+class Solution:
+    def knightProbability(self, n: int, k: int, row: int, column: int) -> float:
+        '''
+        bfs, starting form curr row and column, then accumlate probabilites in global answer
+        trick, and set curr q to next q
+        '''
+        dirrs = [(-2,1),(-1,2),(1,2),(2,1),(2,-1),(1,-2),(-1,-2),(-2,-1)]
+        prev = defaultdict(int)
+        prev[(row,column)] = 1.0
+        overall_prob = 1 #in the case where we dont have k or k == 0
+        
+        for curr_k in range(k):
+            overall_prob = 0
+            next_q = defaultdict(int)
+            for (x,y),curr_prob in prev.items():
+                for dx,dy in dirrs:
+                    neigh_x = x + dx
+                    neigh_y = y + dy
+                    #bounds
+                    if 0 <= neigh_x < n and 0 <= neigh_y < n:
+                        next_q[(neigh_x,neigh_y)] = curr_prob / 8
+                        #accumulate
+                        overall_prob += curr_prob / 8
+            
+            prev = next_q
+        
+        return overall_prob
+    
+########################################
+# 894. All Possible Full Binary Trees
+# 23JUL23
+########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def allPossibleFBT(self, n: int) -> List[Optional[TreeNode]]:
+        '''
+        intution:
+            node has either 0 or 2 children, and since there is a root node, a full binary tree will alwas have an odd number of nodes
+            i.e if ne is even, there was only be a single root node
+            we can use on node at the root, then split the remaning n-1 nodes
+                i.e place i nodes on the left and (n-i-1) on the right
+        
+        since we know the tree must have an odd number of nodes, i and n-i-1 must also be odd
+        we could start a i = 1, then go for only odd numbers, which means we go in steps of 2, but we don't need too
+        
+        let dp(i) return a list of full binary trees use i nodes
+        then dp(i) = {
+            get full binary trees on left = dp(left)
+            get full binary trees on right = dp(right)
+            
+            list of nodes
+            for each tree in left:
+                for each tree in right
+                    add to list of nodes a new node where node.left = left and node.right = right
+        }
+        '''
+        def dp(i):
+            if i % 2 == 0:
+                return []
+            if i == 1:
+                return [TreeNode()]
+            trees = []
+            for j in range(1,i):
+                left = dp(j)
+                right = dp(i-j-1)
+                for left_tree in left:
+                    for right_tree in right:
+                        #need to make a neww tree node here, not before
+                        currTree = TreeNode()
+                        currTree.left = left_tree
+                        currTree.right = right_tree
+                        trees.append(currTree)
+            
+            return trees
+        
+        return dp(n)
+
+#making clones
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def allPossibleFBT(self, n: int) -> List[Optional[TreeNode]]:
+        '''
+        using a function to clone a node
+        check that [1] is only root
+        check that [3] is [1]+root+[1]
+        check that [5] is [1]+root+[3] and [3]+root+[1] (mirror)
+        check that [7] is formed from all combinations of root + [1],[3],[5] on left and right sides
+        '''
+        def clone(node):
+            if not node:
+                return None
+            copy = TreeNode()
+            copy.left = clone(node.left)
+            copy.right = clone(node.right)
+            return copy
+        
+        def dp(i):
+            if i % 2 == 0:
+                return []
+            if i == 1:
+                return [TreeNode()]
+            trees = []
+            for j in range(1,i):
+                left = dp(j)
+                right = dp(i-j-1)
+                for left_tree in left:
+                    for right_tree in right:
+                        #need to make a neww tree node here, not before
+                        currTree = TreeNode()
+                        currTree.left = left_tree
+                        currTree.right = right_tree
+                        cloneTree = clone(currTree)
+                        trees.append(cloneTree)
+            
+            return trees
+        
+        return dp(n)
