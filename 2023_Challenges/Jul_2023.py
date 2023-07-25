@@ -3536,6 +3536,38 @@ class Solution:
         
         return str(num_ans)+"/"+str(denom_ans)
 
+#neat trick
+class Solution:
+    def fractionAddition(self, expression: str) -> str:
+        '''
+        keep the overall result in some form A/B
+        then when adding the next a/b, the answer should be (A*b + B*a) / B*b
+        but reduce by their gcd
+        '''
+        def gcd(x,y):
+            if y == 0:
+                return x
+            return gcd(y, x % y)
+        
+        #find numbers
+        numbers = re.findall('[+-]?\d+',expression)
+        numbers = map(int,numbers)
+        
+        #A/B, is essentially zero so A = 0, B = 1
+        A = 0
+        B = 1
+        
+        #loop through map object
+        for a in numbers:
+            b = next(numbers)
+            A = A*b + B*a
+            B = B*b
+            GCD = gcd(A,B)
+            A //= GCD
+            B //= GCD
+            
+        return '%d/%d'%(A, B)
+
 ##########################################
 # 553. Optimal Division
 # 18JUL23
@@ -3871,11 +3903,11 @@ class Solution:
 # 23JUL23
 ########################################
 # Definition for a binary tree node.
-# class TreeNode:
-#     def __init__(self, val=0, left=None, right=None):
-#         self.val = val
-#         self.left = left
-#         self.right = right
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
 class Solution:
     def allPossibleFBT(self, n: int) -> List[Optional[TreeNode]]:
         '''
@@ -3965,3 +3997,270 @@ class Solution:
             return trees
         
         return dp(n)
+    
+class Solution:
+    def allPossibleFBT(self, n: int) -> List[Optional[TreeNode]]:
+        def clone(root):
+            return TreeNode(0, clone(root.left), clone(root.right)) if root else None
+
+        def dfs(n):
+            if n not in parts:
+                for i in range(1, n, 2):
+                    dfs(i)
+                    for left_branch in parts[i]:
+                        dfs(n - 1 - i)
+                        for right_branch in parts[n - 1 - i]:
+                            parts[n].append(TreeNode(0, clone(left_branch), clone(right_branch)))
+        
+        if n % 2 == 0:
+            return []
+        parts = defaultdict(list)
+        parts[1] = [TreeNode(0)]
+        dfs(n)
+        return parts[n]
+
+####################################
+# 742. Closest Leaf in a Binary Tree
+# 23JUL23
+#####################################
+#bleagh, the problem is the k could be a leaf, easier to just pass node objects
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findClosestLeaf(self, root: Optional[TreeNode], k: int) -> int:
+        '''
+        return the value of nearest leaf to some value k
+        each value is unique, so I can make a directed graph, but also add in a field that markes this node a leaf
+        then just BFS from target k
+        '''
+        
+        def isleaf(node):
+            return not node.left and not node.right
+        
+        graph = defaultdict(list)
+        def dfs(node,parent):
+            if not node:
+                return
+            if parent:
+                graph[parent.val].append((node.val, isleaf(node)))
+                graph[node.val].append((parent.val,isleaf(parent)))
+            
+            dfs(node.left,node)
+            dfs(node.right,node)
+            
+        
+        dfs(root,None)
+        seen = set()
+        #assume k is not a leaf
+        q = deque([(k,False)])
+        while q:
+            curr, leaf = q.popleft()
+            seen.add(curr)
+            if leaf:
+                return curr
+            for neigh, is_a_leaf in graph[curr]:
+                if neigh not in seen:
+                    q.append((neigh,is_a_leaf))
+        
+        return k
+    
+#sheeesh
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findClosestLeaf(self, root: Optional[TreeNode], k: int) -> int:
+        def isleaf(node):
+            return not node.left and not node.right
+        
+        graph = defaultdict(list)
+        def dfs(node,parent):
+            if not node:
+                return
+            if parent:
+                graph[parent].append(node)
+                graph[node].append(parent)
+            
+            dfs(node.left,node)
+            dfs(node.right,node)
+        
+        dfs(root,None)
+        
+        seen = set()
+        q = deque([])
+        for node in graph:
+            if node.val == k:
+                seen.add(node)
+                q.append(node)
+        
+        
+        while q:
+            curr = q.popleft()
+            if isleaf(curr):
+                return curr.val
+            
+            for neigh in graph[curr]:
+                if neigh not in seen:
+                    seen.add(neigh)
+                    q.append(neigh)
+        
+        return k
+
+################################
+# 50. Pow(x, n)
+# 24JUL23
+################################
+#yasssss
+class Solution:
+    def myPow(self, x: float, n: int) -> float:
+        '''
+        can i just use recurison in python
+        
+        '''
+        def rec(x,n):
+            if n == 0:
+                return 1
+            #when n is negative
+            if n < 0:
+                return 1.0 / rec(x,-1*n)
+            
+            #odd case
+            #need to call the result for the subproblem first
+            temp = rec(x,n//2)
+            if n % 2 == 1:
+                return x*temp*temp
+            else:
+                return temp*temp
+            
+        
+        return rec(x,n)
+            
+#naively
+class Solution:
+    def myPow(self, x: float, n: int) -> float:
+        #naive reucrsion is just n-1
+        def naivePow(x,n):
+            if n == 0:
+                return 1
+            if n < 0:
+                return 1.0 / naivePow(x,-1*n)
+            
+            return x*naivePow(x,n-1)
+        
+        return naivePow(x,n)
+    
+#another variannt, accumlate x*x in function, and if odd do (n-1) // 2 and multply by x
+class Solution:
+    def myPow(self, x: float, n: int) -> float:
+        if n == 0:
+            return 1
+        if n < 0:
+            return 1.0 / self.myPow(x,-1*n)
+        if n % 2 == 1:
+            return x*self.myPow(x*x, (n-1)//2)
+        else:
+            return self.myPow(x*x,n//2)
+
+#iterative
+class Solution:
+    def binaryExp(self, x: float, n: int) -> float:
+        if n == 0:
+            return 1
+
+        # Handle case where, n < 0.
+        if n < 0:
+            n = -1 * n
+            x = 1.0 / x
+
+        # Perform Binary Exponentiation.
+        result = 1
+        while n != 0:
+            # If 'n' is odd we multiply result with 'x' and reduce 'n' by '1'.
+            if n % 2 == 1:
+                result *= x
+                n -= 1
+            # We square 'x' and reduce 'n' by half, x^n => (x^2)^(n/2).
+            x *= x
+            n //= 2
+        return result
+
+    def myPow(self, x: float, n: int) -> float:
+        return self.binaryExp(x, n)
+    
+#########################################
+# 852. Peak Index in a Mountain Array
+# 25JUL23
+##########################################
+class Solution:
+    def peakIndexInMountainArray(self, arr: List[int]) -> int:
+        '''
+        we dont need to check the conditinos len(arr) >= 3, since the input is lower bounded by at least 3
+        linear time would be to just find the index i where:
+            arr[i-1] - arr[i] is opposite in sign to arr[i] - arr[i+1]
+        '''
+        N = len(arr)
+        for i in range(1,N-1):
+            if (arr[i-1] - arr[i])*(arr[i] - arr[i+1]) < 0:
+                return i
+
+class Solution:
+    def peakIndexInMountainArray(self, arr: List[int]) -> int:
+        '''
+        we dont need to check the conditinos len(arr) >= 3, since the input is lower bounded by at least 3
+        linear time would be to just find the index i where:
+            arr[i-1] - arr[i] is opposite in sign to arr[i] - arr[i+1]
+            
+        binary search, duhh
+        the array is guaranteed to have a peak somewhere
+        
+        if i'm on the ascending side of the peak, it means that the middle i pick is greater then the left bound
+        so the peack cannot be on the left side
+        
+        if im on the descendng side of the peak, it means the leaf bound is greater than the middle, so it cannot be on the right
+        need to check element next to it
+        
+        make sure to check the input conditions to actually be worried about overflow
+        '''
+        left = 0
+        right = len(arr)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            #ascending side, discart the left
+            if arr[mid] < arr[mid+1]:
+                left = mid + 1
+            else:
+                right = mid
+                
+        
+        return left
+                 
+class Solution:
+    def peakIndexInMountainArray(self, arr: List[int]) -> int:
+        '''
+        we could also adopt the linear scan approach to binary search directly
+        just check if we are on ascending or descending sides
+        need to choose second and second to last elements are boundary bounds
+        '''
+        left = 1
+        right = len(arr) - 2
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            #if we guessed right
+            if arr[mid-1] < arr[mid] > arr[mid+1]:
+                return mid
+            elif arr[mid-1] < arr[mid]:
+                #disard left
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return -1
