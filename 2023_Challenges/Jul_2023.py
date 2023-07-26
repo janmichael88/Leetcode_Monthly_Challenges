@@ -4264,3 +4264,126 @@ class Solution:
                 right = mid - 1
         
         return -1
+
+######################################
+# 439. Ternary Expression Parser
+# 25JUL23
+######################################
+#yayy
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        '''
+        for a ternary expression we can define an atomic expression as
+        B?E1?E2
+        where E1 and E2 would be expressions, T,F, or digits between ['1' and '9']
+        also atomic expressions are right to left associative
+        this means T?F:T?4:5
+        
+        should be evalutated as 
+        T?F:(T?4:5)
+        
+        so we can find the right most atomic expression, evaluare, and replace its value, then we repeat
+        start with sliding window of length 5 from the right
+        find right most atmic expression
+            evaluate, then rebuild the exrepssion with the right most atomic expression subssittue for the answer
+        '''
+        
+        def isAtomic(exp):
+            if exp[0] in 'TF' and exp[1] == '?'\
+                and exp[2] in 'TF0123456789' and exp[3] == ':' and exp[4] in 'TF0123456789':
+                return True
+            return False
+            
+        def solveAtomic(exp):
+            return exp[2] if exp[0] == 'T' else exp[4]
+        
+        #reduce expression with sliding window of five
+        while len(expression) > 1:
+            right = len(expression)
+            while not isAtomic(expression[right-5:right]):
+                right -= 1
+            expression = expression[:right-5] + solveAtomic(expression[right-5:right]) + expression[right:]
+        
+        return expression
+        
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        '''
+        this is just reverse polish notation, rather post fix,
+        find the right most '?', then evaluate, then go back to the right
+        we can simiply using string concatenations
+        '''
+        
+        while len(expression) != 1:
+            right = len(expression) - 1
+            while expression[right] != '?':
+                right -= 1
+            
+            #find operants
+            if expression[right-1] == 'T':
+                val = expression[right+1]
+            else:
+                val = expression[right+3]
+            
+            
+            #rebuild expression
+            expression = expression[:right-1] + val + expression[right+4:]
+        
+        return expression
+
+###########################################
+# 1870. Minimum Speed to Arrive on Time
+# 26JUL23
+###########################################
+import math
+class Solution:
+    def minSpeedOnTime(self, dist: List[int], hour: float) -> int:
+        '''
+        binary search for a workable speed for each train, i.e the minimum postive integer speed 
+        that all tranins mus travel in order fo me to reach at th office in time
+        we only have hour to use
+        
+        if i choose sum speed x, then the amount of time taken would be:
+        time = 0
+        for d in dist:
+            time += (1/x)*d + fractional part used for waiting for the next train
+        
+        if time is at least hour, we know this speed works, and any other speed greater works, 
+        so discard right half
+        otherwise discard the left half
+        
+        description says an will not exceed 10**7, so use that as the upper bound
+        '''
+        
+        def calcTime(x,dist):
+            time = 0.0
+            N = len(dist)
+            for i,d in enumerate(dist):
+                time_on_train = (1/x)*d
+                #careful with the last ride, we don't need to wait
+                if i == N - 1:
+                    time += time_on_train
+                else:
+                    #round up to the next integer
+                    time += math.ceil(time_on_train)
+            
+            return time
+        
+        #binary serch for a workable solution
+        left = 1
+        right = 10**7
+        ans = -1
+        while left <= right:
+            mid = left + (right - left)//2
+            curr_time = calcTime(mid,dist)
+            #if this time works, it  could be an answer, remmebr we want to find the minimum time
+            #so dicard anything greater
+            if curr_time <= hour:
+                ans = mid
+                right = mid -1
+            #if times is greater, then anything smaller than mid would give an even bigger time, so we dont go left
+            else:
+                left = mid + 1
+    
+        return ans
+                
