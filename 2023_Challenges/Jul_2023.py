@@ -4331,6 +4331,66 @@ class Solution:
         
         return expression
 
+#using stack
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        '''
+        recall this is jsut reverse polish notation, or post fix,
+        we can use a stack and evaluate from right to left
+        we push values onto the stack, and when we hit a '?'
+        we need to evluate, the remaning items on the stock by popping the fisrt or second
+        we can exclude ":" since we know have to evaluate when we hit a '?'
+        '''
+        stack = []
+        i = len(expression) - 1
+        while i >= 0:
+            char = expression[i]
+            #add to stack if TFor[\d]
+            if char in 'TF0123456789':
+                stack.append(char)
+            
+            elif char == '?':
+                #remember are reversed here when we add to stack
+                #example T?2:3, we pushed 3,2, 2 if the True evluations and 3 is the False
+                onTrue = stack.pop()
+                onFalse = stack.pop()
+                if expression[i-1] == 'T':
+                    stack.append(onTrue)
+                else:
+                    stack.append(onFalse)
+                #we evaluated this "?" so move the pointer too
+                i -= 1
+            #always move here
+            i -= 1
+    
+            
+        return stack[0]
+    
+class Solution:
+    def parseTernary(self, expression: str) -> str:
+        
+        # Initialize a stack
+        stack = []
+        
+        # Traverse the expression from right to left
+        for char in expression[::-1]:
+            
+            # If stack top is ?, then replace next four characters
+            # with E1 or E2 depending on the value of B
+            if stack and stack[-1] == '?':
+                stack.pop()
+                onTrue = stack.pop()
+                stack.pop()
+                onFalse = stack.pop()
+                stack.append(onTrue if char == 'T' else onFalse)
+            
+            # Otherwise, push this character
+            else:
+                stack.append(char)
+        
+        # Return the final character
+        return stack[0]
+
 ###########################################
 # 1870. Minimum Speed to Arrive on Time
 # 26JUL23
@@ -4387,3 +4447,186 @@ class Solution:
     
         return ans
                 
+##################################
+# 616. Add Bold Tag in String
+# 27JUL23
+##################################
+class Solution:
+    def addBoldTag(self, s: str, words: List[str]) -> str:
+        '''
+        if two strings overlap, you should wrap them togther with only one capture
+        if two substrinsg wrapped by bolds are conec, you should combine them
+        
+        generate all pairs of substrings, both single and double
+        s = "abcxyz123", words = ["abc","123"]
+        what if i did single tags first
+        (abc)xyz(123)
+        
+        s = "aaabbb", words = ["aa","b"]
+        (aa)(b)(b)(b)
+        then merge as one
+        (aabbb)
+        
+        but wht about for the first rule, where there are two oeverlapping substrings
+        then i need to clean up words, make trie on words
+        all words are unique
+        
+        brute force would be to create a boolean array marking true that needs to bold tagged
+        then for each word, checkif this substring of this word in in s
+        if it is, mark all posisitions in that array where there is a subtring
+        '''
+        N = len(s)
+        bold = [False]*N
+        
+        for word in words:
+            for i in range(len(s)-len(word)+1):
+                if s[i:i+len(word)] == word:
+                    #mark all positions to be bold face
+                    for j in range(i,i+len(word)):
+                        bold[j] = True
+        
+        open_tag = '<b>'
+        close_tag = '</b>'
+        ans = ""
+        
+        #initially i thought about parsing the boolean arrays to find the intervals, but we can do it one pass
+        for i in range(N):
+            if bold[i] and (i == 0 or not bold[i-1]):
+                ans += open_tag
+            
+            ans += s[i]
+            
+            if bold[i] and (i == N-1 or not bold[i+1]):
+                ans += close_tag
+        
+        return ans
+
+############################################
+# 2141. Maximum Running Time of N Computers
+# 27JUL23
+############################################
+#brute force TLE
+class Solution:
+    def maxRunTime(self, n: int, batteries: List[int]) -> int:
+        '''
+        i have n computers and batteries where batteries[i] can run a computer for batteries[i] minutes
+        we want to run all n computers simultaenously
+            edge case 1:  if we have less batteries than computers we can't do it
+            this isn't the case given the batteries length
+        
+        initally you can insert at most one battery on each computer, after some amout of time 
+        return maximum number of minutes you can run all n computers simultanuesly
+        
+        for a given run time, determine if it is possible to run all n computers
+        if we can run all n coputers with x run time, then we can certainly finish with any value less than x
+        now how can we determine if a given running time can power all n computers
+        
+        if we had access to all batteries as one pack, we could power n computers with
+        sum(batteries) // n
+        example, n = 2, batteries = [3,3,3]
+        9//2 = 4
+        
+        reframe the problem, whats the largest minutes that we can use to evenly distribute charge to n computers
+        we could sort the batteries in increasing order and try to add charge such that the levels are even 
+        we keep doing this until we cant
+        
+        '''
+        levels = [0]*n
+        power = sum(batteries)
+        
+        def check(levels):
+            return len(set(levels)) == 1
+        
+
+        minutes = 0
+        while check(levels) == True and power > 0:
+            for i in range(n):
+                if power > 0:
+                    levels[i] += 1
+                    power -= 1
+                else:
+                    break
+            minutes += 1
+        print(levels,minutes)
+        return min(levels)
+
+class Solution:
+    def maxRunTime(self, n: int, batteries: List[int]) -> int:
+        '''
+        go through this one step at a time,
+        what if we are given 4 computers and 4 batteries, the bottle neck for the longest running time will be min(4 batteries)
+        what if we are given 5 batteries, the smallest 4 are already in use, so we take from the next largest battery and raise is to the next largest, i.e use it to raise the power in the smallest battery time
+        let extra by the sum of all the extra power
+        we start off by power the n computers with the n largest batteries, and the remaining smaller will be the extra power
+        we need to charg the smallest battery at live[0] so
+        extra -= live[1] - live[0], assuming live is already sorted from the beginning
+        now live[0] == live[1], now we try increasing live[2] using some extra power? but to increase live[2] we need to increase live[0] and live[1]
+        so we need to expend 2*(live[2] - live[1])
+        now they are all equal, i.e live[0] == live[1] == live[2]
+        then we need spedn 3*(live[3] - live[2]), if we have enough power that is
+        if we dont, than live 2 is the max we can power it to
+        (extra/3)
+        if we have enough extra to support all batteries in live becoming == live[n-1], any remaining power should be evenly split 
+        across all the computer to get final running time, which would be live[n-1] + extra /n
+        
+        generalize:
+            for each battery live[i] if we want to increase the running time to live[i+1], we need to spend (i+1)*(live[i+1] - live[i])
+            we dont need to update each live[i] since we already know live[0] = live[1] = ...= live[i]
+            we iterate through live until we cannot afford to icnrease to live[i+1], or we manage to get through the whole array
+        
+        edge case:
+            if we don't have enough extra power, what about the largest battery being used?
+            NOT AN EDGE CASE! because we cannot use a battery that is already being used to charger another, also we cannot charge more than one computer at a time
+        
+        rule:
+            if batteries[i] has more power than the total running time, there is no way we can use its excess power to further increase the running time, therefore if we picked the n largest batteries and assign them to n coputer, swapping them does not bring a longer running time
+        '''
+        #sort 
+        batteries.sort()
+        #find extra power of the unused batteries
+        extra = sum(batteries[:-n])
+        #array to store batteries for current used batteries
+        live = batteries[-n:]
+        
+        #try to increas running time of live batteries using extra
+        for i in range(n-1):
+            #if we dont have enough extra power
+            if extra // (i+1) < live[i+1] - live[i]:
+                return live[i] + extra // (i+1)
+            
+            #otherwuse use extra power to power the batteries to live[i+1]
+            extra -= (i+1)*(live[i+1] - live[i])
+        
+        #we got through the whole array, add in exta power to n computers
+        return live[-1] + extra // n
+    
+#binary search
+class Solution:
+    def maxRunTime(self, n: int, batteries: List[int]) -> int:
+        '''
+        binary search solution
+        assign the n larget batteries, then assign target time, and see if we can reach this target time using the extra batteries
+        if power of batteries if < target
+            use it all up
+        if power > target:
+            use up only the target time from it
+        we can traverse through the batteries  and collect all the power that can be use
+        if sum of collected power is >= target*n, then we can know for sure this target time is reachable
+        '''
+        def can_power_with_x(x,batteries):
+            power = 0
+            for b in batteries:
+                power += min(b,x)
+            return power  >= x*n
+        
+        left = 1
+        right = sum(batteries) // n + 1 #ans is upper middle now, so decrement left by 1
+        
+        while left < right:
+            target = left + (right - left) // 2
+            if can_power_with_x(target,batteries):
+                left = target + 1
+            else:
+                right = target
+        
+        return left - 1
