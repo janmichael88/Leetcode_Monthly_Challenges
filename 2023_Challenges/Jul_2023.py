@@ -4630,3 +4630,154 @@ class Solution:
                 right = target
         
         return left - 1
+
+########################################
+# 808. Soup Servings
+# 29JUL23
+########################################
+#YESSSS
+class Solution:
+    def soupServings(self, n: int) -> float:
+        '''
+        start with (A,B)
+        operations
+            A-100 and B
+            A-75 and B-25
+            A-50 and B-50
+            A-25 and B-75
+            
+        we stop once we no longer have some quantity of both type of soups
+        return prob A will be empty first + half prob that A and B become empty at the same time
+        
+        two dp functions
+        1. for prob A will be empty first
+        2. prob that A and B become empty at the same time
+        '''
+        if n > 4800:
+            return 1.0
+        memo1 = {}
+        memo2 = {}
+        
+        def dp1(A,B):
+            if (A == 0 and B > 0):
+                return 1
+            if (A > 0 and B == 0):
+                return 0
+            if (A,B) in memo1:
+                return memo1[(A,B)]
+            curr_ans = 0
+            #option 1
+            if A > 0:
+                curr_ans += 0.25*dp1(A - min(A,100),B)
+            #opdtion 2
+            if A > 0 and B > 0:
+                curr_ans += 0.25*dp1(A - min(75,A), B - min(25,B))
+            #opdtion 3
+            if A > 0 and B > 0:
+                curr_ans += 0.25*dp1(A - min(50,A), B - min(50,B))
+            #option 4
+            if A > 0 and B > 0:
+                curr_ans += 0.25*dp1(A - min(25,A), B - min(75,B))
+            
+            memo1[(A,B)] = curr_ans
+            return curr_ans
+        
+        #empty at same time
+        def dp2(A,B):
+            if (A == 0 and B == 0):
+                return 1
+            if (A > 0 and B == 0):
+                return 0
+            if (A == 0 and B > 0):
+                return 0
+            if (A,B) in memo2:
+                return memo2[(A,B)]
+            
+            curr_ans = 0
+            #option 1
+            if A > 0:
+                curr_ans += 0.25*dp2(A - min(A,100),B)
+            #opdtion 2
+            if A > 0 and B > 0:
+                curr_ans += 0.25*dp2(A - min(75,A), B - min(25,B))
+            #opdtion 3
+            if A > 0 and B > 0:
+                curr_ans += 0.25*dp2(A - min(50,A), B - min(50,B))
+            #option 4
+            if A > 0 and B > 0:
+                curr_ans += 0.25*dp2(A - min(25,A), B - min(75,B))
+            
+            memo2[(A,B)] = curr_ans
+            return curr_ans
+        
+        return dp1(n,n) + 0.5*dp2(n,n)
+    
+class Solution:
+    def soupServings(self, n: int) -> float:
+        '''
+        intution:
+            recognize that it will always be some multiple of n//25 serverings
+            so there are really four different options
+            1. 4 of A and 0 of B
+            2. 3 of A and 1 of B
+            3. 2 of A and 2 of B
+            4. 1 of A and 3 of B
+            #nothere there is no fifth condidition
+        
+        let dp(i,j) be the answerse when we start with i servings of A and j servings of B
+        base caes:
+            when i <= 0 and j <= 0:
+                return 0.5 because we want half of this probibilit
+            when i <= 0 and j > 0, only soup A ran out
+                return 0.0
+            when i > 0 and j <= 0: only soup B ran out
+                return 0.0
+        
+        each option is prob 1/4
+            for each options we take servings away and multiply by 1/4
+            op1 = 0.25*dp(max(0,i-4),j)
+            op2 = 0.25*dp(max(0,i-3),max(0,j-1))
+            op3 = 0.25*dp(max(0,i-2),max(0,j-2))
+            op4 = 0.25*dp(max(0,i-1),max(0,j-3))
+            then we sum them up
+        
+        notes on when N is large:
+            when N >= 200 we are already getting close to 1
+            law of large numbers
+            https://leetcode.com/problems/soup-servings/discuss/195582/A-Mathematical-Analysis-of-the-Soup-Servings-Problem
+            since we can decrease the amount by any serving size in (4,3,2,1)
+            the average amaount decreased by 0.25*(4+3+2+1) for A, this is just the average, notice how soup B cannot be reduced by 4
+            and for B, 0.25*(0+1+2+3)
+        
+        the only way really is to simulate the dp function with large n
+        find the m_0 value when the answer starts to be greater than 1 - 10**-5
+        if m < m_0, run dp, otherwise return 1, turns out this number is 200
+
+        to actually do the simulatino on leetcode, need to do ceil(n//25) 
+        '''
+        memo = {}
+        
+        def dp(A,B):
+            if A <= 0 and B <= 0:
+                return 0.5
+            if A <= 0:
+                return 1.0
+            if B <= 0:
+                return 0.0
+            if (A,B) in memo:
+                return memo[(A,B)]
+            
+            ans = 0.0
+            ans += 0.25*dp(max(0,A-100),B)
+            ans += 0.25*dp(max(0,A-75),max(0,B-25))
+            ans += 0.25*dp(max(0,A-50),max(0,B-50))
+            ans += 0.25*dp(max(0,A-25),max(0,B-75))
+            
+            memo[(A,B)] = ans
+            return ans
+        
+        for k in range(1,n+1):
+            if dp(k,k) > 1 - 1e-5:
+                return 1.0
+        
+        return dp(n,n)
