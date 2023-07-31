@@ -4781,3 +4781,71 @@ class Solution:
                 return 1.0
         
         return dp(n,n)
+
+###########################
+# 664. Strange Printer
+# 31JUL23
+###########################
+class Solution:
+    def strangePrinter(self, s: str) -> int:
+        '''
+        printer can only do 1 of two options:
+            print the sequence of the same character
+            print new characters starting from and ending at any place and cover the original
+        
+        
+        intution:
+            we define (c,l,r) as an operation where the character c is printed in in the inclusive range [l,r]
+            when l == r, we print the character c at s[l]
+        
+        lemma:
+            there exists and optimal sequence for each operation (c,l,r) = s_r, 
+            we can replace an operation (c,l,r) with (c,l,r-1), but (c,l,r-1) might still be bad
+            we replace iteratively until there are no more bad opertaions and each triplet (c,l,r) will statisfy c = s_r
+        
+        approach, consider all possibile substrings of the input string and find the min number of operations required to print each substring using
+        the strange printer
+        
+        given pair of indices (l,r) with substring of lenth r - l + 1, that only was one character s
+        let dp(l,r) be the minimum number of operations need to transofmr t into the subtrin s_{l..r}, where t == s_r, i.e the character at s[r]
+        
+        base cases are when the substrings are enitrely consisiting of the same character,
+        i.e dp(l,r) = 0, when s[l:r+1] are all the same
+        
+        transitions for dp:
+            consider a substring s_{l..r} with at least two distinct chars, and the left most index j, where j >= l and s_j != s_r
+            i.e the fist character in the range the does not equal the last charcter in the substring
+            we want to transofrm the string of r-l+1 occurense of s_r into s_{l..r} 
+            since s_j != s_r we will eventually have to change the character at the jth position by print another character over it
+            the characters in the substring s_{l..j-1} are all equal to s_r
+            consider the first operation that prints at the position j, we know that we start printing at position j, but we do not know where we end
+            so lets call it (s_i,j,i)
+        
+        let say we fix i
+            with the operation (s_i,j,i) we print teh character s_i over the subtring s_{j..i}
+            reduyce to two smaller subproblems
+                the segment s_{j..i} contains j-i+1 occurences of s_i and dp(j,i) gives min number of operations to fix this segment
+                so we split into the sub problems dp(l,j-1) and dp(j+1,r)
+                for a fix i the answer is 1 + dp(j,i) + dp(i+1,r)
+                
+        so dp(l,r) = 1 + dp(j,i) + dp(i+1,r) for i in range(j,r-1)
+        '''
+        memo = {}
+        n = len(s)
+        
+        def dp(left,right):
+            if left > right:
+                return 0
+            if (left,right) in memo:
+                return memo[(left,right)]
+            
+            min_cost = dp(left,right-1) + 1 #the inital previous answer
+            for k in range(left,right):
+                if s[k] == s[right]:
+                    min_cost = min(min_cost, dp(left,k-1) + dp(k,right-1))
+            
+            memo[(left,right)] = min_cost
+            return min_cost
+        
+        
+        return dp(0,n-1)
