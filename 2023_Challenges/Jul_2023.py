@@ -4849,3 +4849,152 @@ class Solution:
         
         
         return dp(0,n-1)
+    
+###########################################################
+# 712. Minimum ASCII Delete Sum for Two Strings (REVISITED)
+# 31JUL23
+###########################################################
+class Solution:
+    def minimumDeleteSum(self, s1: str, s2: str) -> int:
+        '''
+        prefix dp
+        i and j into strings s1 and s2
+        say we already knew the minimum ascii delete sum for two strings up to s1[:i] and s2[:j]
+        and we are at i+1 and j+1
+        if the chars are equal we just advance both
+        otherwise delete s1[i+1] and find ascii
+            or delete s2[j+1]
+            then we just take the minimum
+        '''
+        M = len(s1)
+        N = len(s2)
+        #store answer to subproblems
+        memo = {}
+        #fast loop for base cases
+        
+        dp = [[0]*(N+1) for _ in range(M+1)]
+        
+        for i in range(M+1):
+            for j in range(N+1):
+                if i == M or j == N:
+                    dp[i][j] =  sum(ord(ch) for ch in s1[i:]) or sum(ord(ch) for ch in s2[j:])
+        
+        for i in range(M-1,-1,-1):
+            for j in range(N-1,-1,-1):
+                if s1[i] == s2[j]:
+                    dp[i][j] = dp[i+1][j+1]
+                else:
+                    first = dp[i+1][j] + ord(s1[i])
+                    second = dp[i][j+1] + ord(s2[j])
+                    ans = min(first,second)
+                    dp[i][j] = ans
+        
+        return dp[0][0]
+    
+################################################
+# 1060. Missing Element in Sorted Array
+# 31JUL23
+################################################
+#TLE
+class Solution:
+    def missingElement(self, nums: List[int], k: int) -> int:
+        '''
+        return the kth mmissing element starting from the left most number in the array
+        check the gaps between each nums[i] and nums[i-1] and see if k falls in between
+        i k falls in between the gap return nums[i] + k
+        mutate array by appending 10**7 to the array
+        if there is a gap:
+            then it means for i in range(gap):
+                nums[i] + i is missingf
+        count used up k
+        '''
+        nums.append(10**7)
+        missing = []
+        N = len(nums)
+        for i in range(1,N):
+            gap = nums[i] - nums[i-1]
+            if gap > 0:
+                for j in range(1,gap):
+                    missing.append(nums[i-1] + j)
+        
+        return missing[k-1]
+    
+#jesus off by 1 from hell
+class Solution:
+    def missingElement(self, nums: List[int], k: int) -> int:
+        '''
+        return the kth mmissing element starting from the left most number in the array
+        check the gaps between each nums[i] and nums[i-1] and see if k falls in between
+        i k falls in between the gap return nums[i] + k
+        mutate array by appending 10**7 to the array
+        if there is a gap:
+            then it means for i in range(gap):
+                nums[i] + i is missingf
+        count used up k
+        '''
+        nums.append(10**7)
+        missing = []
+        N = len(nums)
+        for i in range(1,N):
+            gap = nums[i] - nums[i-1]
+            if gap > 0:
+                if k < gap:
+                    return nums[i-1] + k
+                else:
+                    k -= gap - 1
+                    
+        
+        return nums[-1] + k - 1
+    
+#no need to add in 10**7
+class Solution:
+    def missingElement(self, nums: List[int], k: int) -> int:
+        '''
+        return the kth mmissing element starting from the left most number in the array
+        check the gaps between each nums[i] and nums[i-1] and see if k falls in between
+        i k falls in between the gap return nums[i] + k
+        mutate array by appending 10**7 to the array
+        if there is a gap:
+            then it means for i in range(gap):
+                nums[i] + i is missingf
+        count used up k
+
+        '''
+        N = len(nums)
+        for i in range(1,N):
+            gap = nums[i] - nums[i-1] - 1
+            if k <= gap:
+                return nums[i-1] + k
+            else:
+                k -= gap
+                    
+        
+        return nums[-1] + k
+    
+#binary search solution
+class Solution:
+    def missingElement(self, nums: List[int], k: int) -> int:
+        '''
+        intution:
+            for an index i, we can get the number of missing elements on its left using:
+            say we have [nums[0], nums[i]]
+            total number of  elements would be (nums[i] - nums[0] + 1) 
+            and up to, there are (i+1) elements
+            so the missing would be (nums[i] - nums[0] + 1) - (i+1) = nums[i] - nums[0] - k
+            then we just compare the mid points
+            if we have more elements, missing is on the right
+            else its on the left
+            
+        input is small enough overflow woulnd't occur anyway
+        '''
+        left, right = 0, len(nums)
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            count_missing = nums[mid] - nums[0] - mid
+            if count_missing < k:
+                left = mid + 1
+            else:
+                right = mid
+                
+        return nums[0] + left + k - 1
