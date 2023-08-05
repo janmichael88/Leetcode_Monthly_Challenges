@@ -199,6 +199,168 @@ class Solution:
         
         return ans
 
+#################################
+# 139. Word Break (REVISITED)
+# 04AUG23
+################################
+#TLE
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        '''
+        just dfs for all possible paritions of s and return true if they are in wordsDict
+        i need to break the word, that's that kicker
+        i can discard each word in word dict recursively and return is its empty
+        '''
+        word_set = set(wordDict)
+        self.got_to_end = False
+        used = set()
+        N = len(s)
+        
+        def dfs(i):
+            if i == N:
+                self.got_to_end = True
+                return
+            for j in range(i+1,N+1):
+                word = s[i:j]
+                if word in word_set:
+                    used.add(word)
+                    dfs(j)
+        
+        dfs(0)
+        return self.got_to_end and len(used) >= 1
+        
+#make it dp
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        '''
+        just dfs for all possible paritions of s and return true if they are in wordsDict
+        i need to break the word, that's that kicker
+        i can discard each word in word dict recursively and return is its empty
+        
+        need to check all and only advance when we can make a word
+        '''
+        word_set = set(wordDict)
+        N = len(s)
+        memo = {}
+        
+        def dp(i):
+            if i == N:
+                return True
+            
+            if i in memo:
+                return memo[i]
+            for j in range(i+1,N+1):
+                word = s[i:j]
+                if word in word_set and dp(j):
+                    memo[i] = True
+                    return True
+            
+            memo[i] = False
+            return False
+        
+        return dp(0)
+        
+#bottom up
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        '''
+        bottom up
+        
+        '''        
+        word_set = set(wordDict)
+        N = len(s)
+        dp = [False]*(N+1)
+        dp[N] = True
+        
+        for i in range(N-1,-1,-1):
+            for j in range(i+1,N+1):
+                word = s[i:j]
+                if word in word_set and dp[j]:
+                    dp[i] = True
+                    break #early optimization
+                    
+        return dp[0]
+
+#we can optimize the search for a word usint a Trie insteaf of checking all prefixes,
+#we just check if it exits in the tree and that it is a word
+class Node:
+    def __init__(self,):
+        self.isWord = False
+        self.children = defaultdict()
+        
+class Trie:
+    def __init__(self,):
+        self.root = Node()
+        self.children = self.root.children
+        
+    def addWord(self,word):
+        curr = self.root
+        for ch in word:
+            if ch not in curr.children:
+                curr.children[ch] = Node()
+            curr = curr.children[ch]
+        
+        curr.isWord = True
+
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        '''
+        bottom up
+        
+        '''
+        word_Trie = Trie()
+        for word in wordDict:
+            word_Trie.addWord(word)
+            
+        N = len(s)
+        dp = [False]*(N+1)
+        dp[N] = True
+        
+        for i in range(N-1,-1,-1):
+            curr = word_Trie
+            for j in range(i+1,N+1):
+                ch = s[j-1]
+                if ch not in curr.children:
+                    break
+                curr = curr.children[ch]
+                if curr.isWord and dp[j]:
+                    dp[i] = True
+                    break #stop search
+
+                    
+        return dp[0]
+    
+#there is also a BFS approach
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> bool:
+        '''
+        we can also use BFS, if we imagine the indices of the words as states
+        if we are at index i, it implies we have already found s[:i+1] up this point
+        we just need to connect i+1 to an end, for all possible ends
+        all possible ends would be [i+1,N+1]
+        
+        if we have gotten to the end of the word, return True
+        otherwise, there isn't a path, return False
+        '''
+        wordDict = set(wordDict)
+        seen = set()
+        q = deque([0])
+        N = len(s)
+        
+        while q:
+            start = q.popleft()
+            if start == N:
+                return True
+            
+                
+            for end in range(start+1,N+1):
+                if s[start:end] in wordDict and end not in seen:
+                    seen.add(end)
+                    q.append(end)
+        
+        return False
+
+
 
 ##############################
 # 2266. Count Number of Texts
