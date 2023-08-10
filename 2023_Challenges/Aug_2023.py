@@ -360,8 +360,268 @@ class Solution:
         
         return False
 
+####################################
+# 95. Unique Binary Search Trees II
+# 05AUG23
+###################################
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+class Solution:
+    def generateTrees(self, n: int) -> List[Optional[TreeNode]]:
+        '''
+        if we pick an i, all [1 to i-1] are on the left and all[i+1,n+1] are on the right
+        need to keep pointers to start and end
+        let dp(left,right) return a list of all unique BST
+        then we split for all possible left and right
+        '''
+        memo = {}
+        
+        def dp(left,right):
+            if left > right:
+                return [None]
+            if (left,right) in memo:
+                return memo[(left,right)]
+            
+            res = []
+            for i in range(left,right+1):
+                left_trees = dp(left,i-1)
+                right_trees = dp(i+1,right)
+                
+                for l_tree in left_trees:
+                    for r_tree in right_trees:
+                        curr_tree = TreeNode(i,l_tree,r_tree)
+                        res.append(curr_tree)
+            
+            memo[(left,right)] = res
+            return res
+        
+        
+        return dp(1,n)
 
+###################################
+# 920. Number of Music Playlists
+# 06AUG23
+###################################
+#fmlllll
+class Solution:
+    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
+        '''
+        we have n songs, we want to listen to goal songs
+        constraints:
+            every song is played at least once
+            a song can only be played again if k other songs have been played, what do they mean k other songs?
+            
+        if goal == n, then no matter k is, the answer is just
+            goalChooseN i.e the binomial coefficient
+        
+        norie how k < n <= goal
+        menaing k never be n or goal
+        
+        keep track of number of songs played and also the current count of sounds played
+        use set to keep track of player songs count
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        curr_played = [False]*n
+        
+        def convert(arr):
+            ans = ""
+            for b in arr:
+                if b == True:
+                    ans += '1'
+                else:
+                    ans += '0'
+            
+            return ans
+        
+        def dp(count,curr_played,k):
+            if count == goal:
+                return 1
+            
+            if (count,convert(curr_played)) in memo:
+                return memo[(count,convert(curr_played))]
+            
+            ans = 0
+            for i in range(n):
+                if curr_played[i] == False:
+                    curr_played[i] = True
+                    ans += dp(count+1,curr_played,k)
+                    ans %= mod
+                    
+                if sum(curr_played) > k:
+                    ans += dp(count+1,curr_played,k)
+                    ans %= mod
+                    
 
+            
+            ans %= mod
+            memo[(count,convert(curr_played))] = ans
+            return ans
+        
+        return dp(0,curr_played,k)
+                    
+#push dp, but multiply to get the count
+class Solution:
+    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
+        '''
+        welp, i didn't get this sone
+        if we define dp(i,j) as the number of possible playlists of length i contains exactly j unique songs
+        then we can solve dp(goal,n)
+        if (i,j) == (0,0)
+            this represents exactly 1 valid way
+        
+        for all i < j:
+            dp(i,j) = 0, because we can make a playlist with length i, if i < j, we simply don't have enough songs
+            
+        
+        transition rules:
+            if we add a song we haven't added to the playlist, the length increases by 1
+            and the number of unique songs to chose from decreses
+            therefore a playlist of length  i with j unique songs can be formed by adding to each preivous state (i-1,j-1)
+            but for here, how many songs can we choose from?
+            at this point there are j-1 unique songs in the playlistn and there are n songs in total 
+            which means we can chose from n - (j-1) = n -j + 1 songs to choose from
+            but we can do this for each playlist, or rather we do this for the number of playlists given in state9 (i-1,j-1)
+        
+        first transition
+            dp(i,j) = dp(i-1,j-1)*(n-j+1)
+            
+        now how about old songs?
+            if we replay an old song, the list increases by 1 (from i-1 to i), but the number of unique songs remains the same, still k
+            therfore the number of playlists if length i with j unique songs can be icnrease by replaying an old song in every playlist 
+            from dp(i-1)
+        
+        if we have more j unique songs than k, we can play and extra song, but will having j unique songs
+        then we can increment by dp(i-1,j)*(j-k) songs
+        i.e for each of the playlists in dp(i-1,j), we can add any (j-k) songs
+        '''
+        mod = 10**9 + 7
+        memo = {}
+        
+        def dp(i,j):
+            if i == 0 and j == 0:
+                return 1
+            if i == 0 or j == 0:
+                return 0
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = 0
+            ans += dp(i-1,j-1)*(n-j+1)
+            ans %= mod
+            
+            #if we have extra
+            if j > k:
+                ans += dp(i-1,j)*(j-k)
+                ans %= mod
+            
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(goal,n) % mod
+    
+#bottom up
+class Solution:
+    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
+        '''
+        bottom up
+        '''
+        mod = 1_000_000_007
+        dp = [[0]*(n+1) for _ in range(goal+1)]
+        
+        #base case fill
+        dp[0][0] = 1
+        
+        #start 1 away from bounary
+        for i in range(1,n+1):
+            for j in range(1,n+1):
+
+                ans = 0
+                ans += dp[i-1][j-1]*(n-j+1)
+                ans %= mod
+            
+                #if we have extra
+                if j > k:
+                    ans += dp[i-1][j]*(j-k)
+                    ans %= mod
+                    
+                dp[i][j] = ans
+
+        
+        return dp[goal][n] % mod
+    
+#just another way
+#https://leetcode.com/problems/number-of-music-playlists/discuss/1879256/PYTHON-SOLUTION-oror-RECURSION-%2B-MEMO-oror-WELL-EXPLAINED-oror-HOW-TO-REACH-EXPLAINED-oror
+'''
+Understand some basics of the question
+    1. We have to use all of the n songs in our playlist
+    2. We can repeat a song only after k other songs
+    
+	Now for first point : We have to make sure that we will use all the n  songs
+	To make this happend I have made a check whenever we are going to repeat a song
+	
+	reapeat only if the no. of songs left to complete playlist > no. unique of songs left to add to playlist
+	
+	For the seecond point : We have this above condition + we can only repeat if our  current size of playlist is greater than or equals to k + 1
+	
+	You can use recursion and keep tracking of actual playlist bit it will give TLE
+	
+	To remove this TLE we need to understand combinations
+	
+	For adding a new element: 
+	        lets n = 5 goal  = 7 k = 2
+			our playlist = [ 1 , 2 ]
+			In how many ways can we add new item ?? ans is the no. of unique item left
+			Exactly !! So we do not need to check for all of them one by one but we do check for one and multilply by the no. of unique items left
+			
+			
+	For repeating a element
+	    lets  n = 5 goal = 7 k = 2
+		our playlist = [1 , 2 ,  3  , 4 , __ ]
+		now we can repeat 1 or 2 at the blank position 
+		So is there any mathematical way to find the no. of ways of repeatition too ??
+		Yes , there is (I got this from my observation )
+		
+		See there are exactly 4 unique items in our playlist
+		We know that k = 2 means we need atleast a gap of 2
+		So we leave 2 unique items from the k=last( they can never be same and will always be unique as we have a gap of k for repeating )
+		So yes we can repeat 2 items i.e. unique - k precisely
+		
+		if you say for n = 5 goal = 10 k  = 4
+		our playlist = [ 1 , 2 ,3 , 4 , 5 , 1 , 2 , 3 , __ ]
+		See the last 4 (k) items are unique and if we remove 4 from no. of unique (5)
+		i.e 5-4 = 1 we know that we can repeat exactly 1 item i,.e 4
+		
+		So for any point find no. of ways we insert by repeating and by non repeating
+		Find ans for both of them and boom question solved !!!!!
+		
+		In dp we store our key as ( unique , size ) and value as ans for the key
+		
+
+'''
+class Solution:
+    def numMusicPlaylists(self, n: int, goal: int, k: int) -> int:
+        # size means current size without item we are going to add
+        # unique is the count of unique items
+        def solve(size , unique):
+            if size == goal : return 1
+            if (size,unique) in dp:return dp[(size,unique)]
+            ans = 0
+            repeat = 0
+            # check if we can repeat
+            if goal - size > n - unique and size >= k+1:repeat = unique - k
+            non_repeat = n - unique
+            if repeat > 0 :ans += solve(size+1,unique) * repeat
+            ans += solve(size+1,unique+1) * non_repeat
+            dp[(size,unique)] = ans
+            return ans
+        dp = {}
+        return solve(0,0)%1000000007
+    
 ##############################
 # 2266. Count Number of Texts
 # 03AUG23
@@ -443,3 +703,365 @@ class Solution:
             return ans % mod
             
         return dp(0) % mod
+    
+#bottom up
+class Solution:
+    def countTexts(self, pressedKeys: str) -> int:
+        '''
+        bottom up
+        '''
+        
+        mod = 1_000_000_007
+        threes = '234568'
+        fours = '79'
+        
+        N = len(pressedKeys)
+        
+        dp = [0]*(N+1)
+        dp[N] = 1
+        
+        for i in range(N-1,-1,-1):
+            ans = 0
+            if pressedKeys[i] in threes:
+                j = i
+                while j < N and pressedKeys[j] == pressedKeys[i] and j - i < 3:
+                    #i need to accumlate the answers, its the sum of all j in the current substring that im on
+                    j += 1
+                    ans += dp[j] % mod
+            
+            else:
+                j = i
+                while j < N and pressedKeys[j] == pressedKeys[i] and j - i < 4:
+                    j += 1
+                
+                    ans += dp[j] % mod
+            
+            dp[i] = ans % mod
+
+            
+        return dp[0] % mod
+
+#####################################
+# 74. Search a 2D Matrix (REVISTED)
+# 07AUG23
+#####################################
+#binary search by row is easy
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        '''
+        brute force is just to search
+        next best is binary search each row
+        '''
+        
+        def bin_search(row,target):
+            left = 0
+            right = len(row)
+            while left < right:
+                mid = left + (right - left) // 2
+                if row[mid] > target:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            return left
+        
+        
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        for row in matrix:
+            idx = bin_search(row,target)
+            print(idx)
+            if idx <= cols - 1:
+                if row[idx] == target:
+                    return True
+                if row[idx-1] == target:
+                    return True
+            if idx == cols and row[idx-1] == target:
+                return True
+        
+        return False
+                    
+#convert m*n indices to cells => (i,j)
+class Solution:
+    def searchMatrix(self, matrix: List[List[int]], target: int) -> bool:
+        '''
+        notice that if we concated the elements into a long array, we could jsut do binary search
+        we just need to convert an index to an (i,j) point
+        given an index idx
+        row = idx // cols
+        col = idx % cols
+        '''
+        
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        if rows == 0:
+            return False
+        left = 0
+        right = rows*cols - 1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            i = mid // cols
+            j = mid % cols
+            
+            if matrix[i][j] == target:
+                return True
+            elif matrix[i][j] > target:
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return False
+    
+
+####################################
+# 625. Minimum Factorization
+# 07AUG23
+####################################
+class Solution:
+    def smallestFactorization(self, num: int) -> int:
+        '''
+        find smallest positive integer x whose multilcation of each digit == num
+        if i first find the factorization of num, 
+        then just find the smallest number i can create using the prime factors
+        48
+        6*8  = 68
+        2*3*4*2  = 2342
+        2*3*2*2*2 = 23222
+        of thes 48 is the smallest
+        
+        then it makes sens to use the largest numbers first
+        
+        just greedily divide by numbers 9 to 1
+        '''
+        if num < 2:
+            return num
+        
+        res = 0
+        mult = 1
+        for i in range(9,1,-1):
+            while (num % i == 0):
+                num //= i
+                res = mult*i + res
+                mult  *= 10
+        
+        return res if num == 1 and res <= 2**31 - 1 else 0
+    
+################################################
+# 2616. Minimize the Maximum Difference of Pairs
+# 09AUG23
+################################################
+#FML
+class Solution:
+    def minimizeMax(self, nums: List[int], p: int) -> int:
+        '''
+        find p pairs of indices such that tht maximum difference among all pairs is minimzed
+        is the absolute difference
+        return minimum maximum difference among all pairs
+        
+        brute force would be to examine all (i,j) pairings, sort the pairings increasinly by their abs(nums[i] - nums[j]), grab the p smallest,
+        making sure that the group i grab doesnt have intersecting indices
+        
+        hint says dp
+        sort increasinly
+        
+        if i let dp(i,count_pair) be the answer to he min maximum difference
+            then i can either not make a pair here in which case i move i+1
+            or i make a pair, and since i sorted the next smallest min would just be nums[i+1] - nums[i]
+            
+        '''
+        nums.sort()
+        memo = {}
+        N = len(nums)
+        
+        def dp(i,p):
+            #since p if smaller than len(nums), we always hit the base case first
+            #no pairs left, return a small number to max
+            if p == 0:
+                return 0
+            #return a larg number in order to minimize
+            if i >= N - 1:
+                return float('inf')
+            if (i,p) in memo:
+                return memo[(i,p)]
+            
+            #dont make a pair
+            no_pair = dp(i+1,p)
+            #try making pair with next greater minimum and find the max for the p-1 pairs
+            max_pair = max(nums[i+1] - nums[i],dp(i+2,p-1))
+            #minimuze
+            ans = min(no_pair,max_pair)
+            memo[(i,p)] = ans
+            return ans
+        
+        return dp(0,p)
+    
+class Solution:
+    def minimizeMax(self, nums: List[int], p: int) -> int:
+        '''
+        this is binary search on workable solution paradigm, the crux of the problem is trying to figure what a workable solution is
+        if i have n nums, how many pairs can i possibly make?
+        i can make at most n//2 pairs
+        
+        when we select p pairs, the we want to minmize the maximum different among all the pairs
+        say we pick a candidate maximum, call it curr_max
+        we can sort the array and greedily try to build up pairs such that each pair isnt more than the curr_max
+        now say we have k pairs with this curr_max as the upper bound
+        if k >= p, then it means we can use this as the upper bound, so find a smaller one
+        else curr_max += 1
+        
+        
+        we can us dp to find such a workable solution given a treshhold
+        what are the bounds
+        well the highest could be max(nums) - min(nums)
+        lowest could be 0
+        '''
+        
+        nums.sort()
+        N = len(nums)
+        memo = {}
+        
+        #function to count pairs that are less than curr_max
+        def dp(i,curr_max,memo):
+            if i >= N-1:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = 0
+            if nums[i+1] - nums[i] <= curr_max:
+                ans = 1 + dp(i+2,curr_max,memo)
+            else:
+                ans = dp(i+1,curr_max,memo)
+            
+            memo[i] = ans
+            return ans
+        
+        lo = 0
+        hi = nums[-1] - nums[0]
+        
+        while lo < hi:
+            curr_max = lo + (hi - lo) // 2
+            #get candidate count
+            memo = {}
+            curr_count = dp(0,curr_max,memo)
+            if curr_count >= p:
+                hi = curr_max
+            else:
+                lo = curr_max + 1
+        
+        return lo
+    
+###################################
+# 271. Encode and Decode Strings
+# 09AUG23
+####################################
+#escaping
+class Codec:
+    def encode(self, strs: List[str]) -> str:
+        """Encodes a list of strings to a single string.
+        """
+        '''
+        we use /: as our delimiter and / as our escapre character
+        iterate over each string in the list and for each string is a character is a /, we another / to escape it
+        if the character is not a slash we do nothing
+        escaping means to escape the delimiter!
+        exmple
+        Wor/:ld, uses a delimter we can escape it if we we
+        Wor//:ld, in which cas the second the /: is part of the string
+        decode:
+            is the current character is the escape character, we check the one next to it, and if its our delimeter we know we need to split
+            otherwise its part of the actual string
+        '''
+        enc_str = ""
+        for s in strs:
+            #replace slash with // followed by delimter
+            temp = s.replace('/','//') + '/:'
+            enc_str += temp
+        
+        return enc_str
+            
+
+    def decode(self, s: str) -> List[str]:
+        """Decodes a single string to a list of strings.
+        """
+        res = []
+        curr_string = ""
+        i = 0
+        while i < len(s):
+            if s[i:i+2] == '/:':
+                res.append(curr_string)
+                curr_string = ""
+                i += 2
+            elif s[i:i+2] == '//':
+                #first / is part
+                curr_string += '/'
+                i += 2
+            else:
+                curr_string += s[i]
+                i += 1
+        
+        return res
+        
+
+
+# Your Codec object will be instantiated and called as such:
+# codec = Codec()
+# codec.decode(codec.encode(strs))
+
+#Chunked Transfer Encoding
+class Codec:
+    def encode(self, strs: List[str]) -> str:
+        """Encodes a list of strings to a single string.
+        """
+        '''
+        we can use chunked trasfer encoding
+        for each string in strs, we store len(str) + '/:' + str
+        then we keep reading until we hit '/:'
+        the number before '/:' is the amount we need to read
+        '''
+        enc_str = ""
+        for s in strs:
+            temp = str(len(s))+'/:'+s
+            enc_str += temp
+        
+        return enc_str
+        
+
+    def decode(self, s: str) -> List[str]:
+        """Decodes a single string to a list of strings.
+        """
+        res = []
+        i = 0
+        while i < len(s):
+            #find first deleimier after current index i
+            delim_idx = s.find('/:',i)
+            #get length to read
+            size = int(s[i:delim_idx])
+            #get the actual string 
+            curr_string = s[delim_idx+2:delim_idx + 2 + size]
+            res.append(curr_string)
+            i = delim_idx + 2 + size
+        
+        return res
+        
+
+
+# Your Codec object will be instantiated and called as such:
+# codec = Codec()
+# codec.decode(codec.encode(strs))
+
+#another way
+class Codec:
+    def encode(self, strs: List[str]) -> str:
+        # encode as: string length+string body. if you need more, use 4 bytes
+        return ''.join(chr(len(s)) + s for s in strs)
+    def decode(self, s: str) -> List[str]:
+        i = 0
+        res = []
+        while i < len(s):
+            res.append(s[i + 1:i + ord(s[i]) + 1])
+            i += 1 + ord(s[i])
+        return res
+
