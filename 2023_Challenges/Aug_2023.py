@@ -1065,3 +1065,334 @@ class Codec:
             i += 1 + ord(s[i])
         return res
 
+###################################################
+# 81. Search in Rotated Sorted Array II (REVISTED)
+# 10AUG23
+###################################################
+class Solution:
+    def search(self, nums: List[int], target: int) -> bool:
+        '''
+        the other way is to linearly scan to find the pivot, we cannot simply use binary search to exclude side
+        then binary search on the correct side
+        '''
+        N = len(nums)
+        #look for pivot
+        pivot = -1
+        for i in range(N-1):
+            if nums[i] > nums[i+1]:
+                pivot = i
+                break
+            if nums[i] == target:
+                return True
+        
+        
+        #now apply binary search on the correct side
+        def binarySearch(left_bound,right_bound,target):
+            found = False
+            
+            while left_bound <= right_bound:
+                mid = left_bound + (right_bound - left_bound) // 2
+                if nums[mid] == target:
+                    found = True
+                if nums[mid] >= target:
+                    right_bound = mid - 1
+                else:
+                    left_bound = mid + 1
+                
+            
+            return found
+        
+        
+        left_side = binarySearch(0,pivot,target)
+        right_side = binarySearch(pivot+1, N-1,target)
+        
+        if left_side or right_side:
+            return True
+        return False
+    
+#####################################
+# 638. Shopping Offers
+# 10AUG23
+#####################################
+#TLE!
+class Solution:
+    def shoppingOffers(self, price: List[int], special: List[List[int]], needs: List[int]) -> int:
+        '''
+        price[i] gives price for the ith item
+        needs[i] gives units neede for ith item
+        special[i][j] = number of pieces of the jth item in the ith offer 
+        
+        given an offer i special[i] is of length n + 1
+        where i can pay special[i][-1] for special[i][j] units of the jth item, read the explanation for more on this
+        
+        return lowest price i have to pay to get exactly needs unies of each item
+        we are not allowed to buy more items than we want, even if that would lower the overall price
+        
+        we can define a state, call it X, an array is size n, n == len(price)
+        in X we have some counts of n items (a,b,c,d)
+        
+        call this state X optimal, meaning it contains the lowest prices with item counts (a,b,c,d) and with indicies (i,j,k,l)
+        now we can move from this state for any number
+        say for a, we can go to a+1 going up in prices[i]
+        
+        first 
+            we can try ill going up by count 1 with indices (i,j,k,l)
+                min(choices using prices up by 1), and go up in prices[(for all indicies in (i,j,k,l))]
+            or we can try all speical offers
+                min(prices and we ge up) by the last number of the offeres array
+                then we just take the min
+            
+            base case,
+                if any of the counts goes over the needs, return float('inf'), because we need to maximuze
+            
+            if the current state X == needs,
+                return 0
+
+        '''
+        
+        memo = {}
+        n = len(price)
+        starting = [0]*(n)
+        
+        def dp(state):
+            if state == needs:
+                return 0
+            if any([a > b for a,b in zip(state,needs)]):
+                return float('inf')
+            
+            if tuple(state) in memo:
+                return memo[tuple(state)]
+            
+            #minimize by taking only a single item at a time
+            ans = float('inf')
+            for i in range(n):
+                next_state = state[:]
+                next_state[i] += 1
+                ans = min(ans, price[i] + dp(next_state))
+            
+            #or we try using the offers array[][]
+            for off in special:
+                next_state = state[:]
+                for i in range(n):
+                    next_state[i] += off[i] #add counts
+                
+                ans = min(ans, off[-1] + dp(next_state))
+            
+            memo[tuple(state)] = ans
+            return ans
+        
+        
+        return dp(starting)
+            
+#imporvemnts, start from needs then check if we go to zeros
+#also add pruning, but still TLE
+class Solution:
+    def shoppingOffers(self, price: List[int], special: List[List[int]], needs: List[int]) -> int:
+        '''
+        but still TLE, getting there
+        '''
+        
+        memo = {}
+        n = len(price)
+        ending = [0]*(n)
+        
+        def dp(state):
+            if state == ending:
+                return 0
+            if tuple(state) in memo:
+                return memo[tuple(state)]
+            
+            #minimize by taking only a single item at a time
+            ans = float('inf')
+            for i in range(n):
+                next_state = state[:]
+                if next_state[i] > 0:
+                    next_state[i] -= 1
+                    ans = min(ans, price[i] + dp(next_state))
+            
+            #or we try using the offers array[][]
+            for off in special:
+                next_state = state[:]
+                broken = False
+                for i in range(n):
+                    if next_state[i] >= off[i]:
+                        next_state[i] -= off[i] #add counts
+                    else:
+                        broken = True
+                        break
+                if not broken:
+                    ans = min(ans, off[-1] + dp(next_state))
+            
+            memo[tuple(state)] = ans
+            return ans
+        
+        
+        return dp(needs)
+
+#instead of increamting by 1 and price[i] each time, just buy them all for the given state!
+class Solution:
+    def shoppingOffers(self, price: List[int], special: List[List[int]], needs: List[int]) -> int:
+        '''
+        but still TLE, getting there
+        '''
+        
+        memo = {}
+        n = len(price)
+        ending = [0]*(n)
+        
+        def dp(state):
+            if state == ending:
+                return 0
+            if tuple(state) in memo:
+                return memo[tuple(state)]
+            
+            ans = sum([p*c for p,c in zip(price,state)])
+            '''
+            for i in range(n):
+                next_state = state[:]
+                if next_state[i] > 0:
+                    next_state[i] -= 1
+                    ans = min(ans, price[i] + dp(next_state))
+            '''
+            #or we try using the offers array[][]
+            for off in special:
+                next_state = state[:]
+                broken = False
+                for i in range(n):
+                    if next_state[i] >= off[i]:
+                        next_state[i] -= off[i] #add counts
+                    else:
+                        broken = True
+                        break
+                if not broken:
+                    ans = min(ans, off[-1] + dp(next_state))
+            
+            memo[tuple(state)] = ans
+            return ans
+        
+        
+        return dp(needs)
+    
+######################################
+# 518. Coin Change II (REVISTED)
+# 11AUG23
+######################################
+#one state with curr sum is no good
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        '''
+        dp with in state, just the sum, why doesn't it work thoguh
+        need to keep trak if the ith coun that im on as well as the curr sum
+        '''
+        memo = {}
+        def dp(curr_sum):
+            if curr_sum < 0:
+                return 0
+            if curr_sum == 0:
+                return 1
+            if (curr_sum) in memo:
+                return memo[curr_sum]
+            
+            ans = 0
+            for c in coins:
+                ans += dp(curr_sum - c)
+            
+            memo[curr_sum] = ans
+            return ans
+        
+        dp(amount)
+        print(memo)
+        return 0
+    
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        '''
+        dp with in state, just the sum, why doesn't it work thoguh
+        need to keep trak if the ith coun that im on as well as the curr sum
+        
+        keep track if the ith coun and the curramount
+        then we take or dont take and add them both
+        '''
+        memo = {}
+        N = len(coins)
+        
+        def dp(i,curr_sum):
+            if i == N:
+                return 0
+            if curr_sum == 0:
+                return 1
+            if (i,curr_sum) in memo:
+                return memo[(i,curr_sum)]
+            
+            if coins[i] > curr_sum:
+                no_take = dp(i+1,curr_sum)
+                memo[(i,curr_sum)] = no_take
+                return no_take
+            else:
+            
+                take = dp(i,curr_sum - coins[i]) + dp(i+1,curr_sum)
+                memo[(i,curr_sum)] = take
+                return take
+        
+        
+        return dp(0,amount)
+    
+#bottom up
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        '''
+        dp with in state, just the sum, why doesn't it work thoguh
+        need to keep trak if the ith coun that im on as well as the curr sum
+        
+        keep track if the ith coun and the curramount
+        then we take or dont take and add them both
+        '''
+        
+        N = len(coins)
+        dp = [[0]*(amount+1) for _ in range(N+1)]
+        #base case fill
+        for i in range(N+1):
+            for curr_sum in range(amount+1):
+                if curr_sum == 0:
+                    dp[i][curr_sum] = 1
+        
+        
+        #start one away from base case
+        for i in range(N-1,-1,-1):
+            for curr_sum in range(1,amount+1):
+                if coins[i] > curr_sum:
+                    no_take = dp[i+1][curr_sum]
+                    dp[i][curr_sum] = no_take
+                else:
+                    take = dp[i][curr_sum - coins[i]] + dp[i+1][curr_sum]
+                    dp[i][curr_sum] = take
+        
+        
+        
+        return dp[0][amount]
+    
+#space save, we only look back at the previous i
+#and we only need to check for the next valid coins, this is just a tiny prune i feel
+class Solution:
+    def change(self, amount: int, coins: List[int]) -> int:
+        '''
+        reduce to 1 dp
+        '''
+        
+        N = len(coins)
+        dp = [0]*(amount+1)
+        #base case fill
+        dp[0] = 1
+        
+        
+        #start one away from base case
+        for i in range(N-1,-1,-1):
+            for curr_sum in range(coins[i],amount+1):
+                    take = dp[curr_sum - coins[i]]
+                    dp[curr_sum] += take
+        
+        
+        
+        return dp[amount]
+
+
