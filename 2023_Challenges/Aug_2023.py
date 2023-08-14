@@ -1396,3 +1396,274 @@ class Solution:
         return dp[amount]
 
 
+#########################################
+# 63. Unique Paths II (REVISTED)
+# 12AUG23
+##########################################
+#top down
+class Solution:
+    def uniquePathsWithObstacles(self, obstacleGrid: List[List[int]]) -> int:
+        '''
+        this is just dp
+        let dp(i,j) be the number of unique paths starting at (i,j) and getting to to (final_row,fina_col)
+        base is case is when:
+            (i,j) == (final_row,final_col)
+            return 1
+        
+        out of bounds
+            return 0
+        
+        then for neigh_x,neigh_y in neighbors of (i,j)
+            if we can advcane to that neigh and its not an obstacle
+            dp(i,j) += dp(neigh_x,neigh_y) for all nieghborng pairs
+            and it can only go down and to the right
+        '''
+        
+        rows = len(obstacleGrid)
+        cols = len(obstacleGrid[0])
+        
+        
+        #fucking corner case
+        if obstacleGrid[rows-1][cols-1] == 1:
+            return 0
+        memo = {}
+        
+        
+        def dp(i,j):
+            if (i,j) == (rows-1,cols-1):
+                return 1
+            if (i < 0) or (i >= rows) or (j < 0) or (j >= cols):
+                return 0
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            if obstacleGrid[i][j] == 1:
+                return 0
+            
+            ans = dp(i+1,j) + dp(i,j+1)
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,0)
+    
+#bottom up
+#need to be carefule when adding into cells and for boundary conditions, otherwise we overwrite
+class Solution:
+    def uniquePathsWithObstacles(self, obstacleGrid: List[List[int]]) -> int:
+        '''
+        this is just dp
+        let dp(i,j) be the number of unique paths starting at (i,j) and getting to to (final_row,fina_col)
+        base is case is when:
+            (i,j) == (final_row,final_col)
+            return 1
+        
+        out of bounds
+            return 0
+        
+        then for neigh_x,neigh_y in neighbors of (i,j)
+            if we can advcane to that neigh and its not an obstacle
+            dp(i,j) += dp(neigh_x,neigh_y) for all nieghborng pairs
+            and it can only go down and to the right
+        '''
+        
+        rows = len(obstacleGrid)
+        cols = len(obstacleGrid[0])
+        
+        
+        #fucking corner case
+        if obstacleGrid[rows-1][cols-1] == 1:
+            return 0
+        
+        dp = [[0]*(cols+1) for _ in range(rows+1)]
+        
+        #base case fill
+        dp[rows-1][cols-1] = 1
+        #then fill for the first row and first col
+        
+        
+        for i in range(rows-1,-1,-1):
+            for j in range(cols-1,-1,-1):
+                if obstacleGrid[i][j] == 1:
+                    continue
+                
+                if i + 1 >= 0:
+                    dp[i][j] += dp[i+1][j]
+                
+                if j + 1 >= 0:
+                    dp[i][j] += dp[i][j+1]
+        
+        return dp[0][0]
+
+#########################################################
+# 2369. Check if There is a Valid Partition For The Array
+# 13AUG23
+#########################################################
+class Solution:
+    def validPartition(self, nums: List[int]) -> bool:
+        '''
+        need to parition the array into one or more contiguous subarrays
+        a valid array is, on that meets the requirments
+            1. exactly two elemetns
+            2. exactly 3 elements
+            3. consecutive increasing by diff 1
+        
+        cant just linearly scan the array and greedily paritions when we find valid subarray
+        the contig arrays can only be of length 2 or length 3
+        so we can check from an index i for the conditions
+        if any of these are true, we can make a valid partition
+        
+        i just don't know what to get when i get to the end of the array?
+        return true
+        '''
+        N = len(nums)
+        memo = {}
+        
+        def dp(i):
+            if i == N:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            #two equal elements
+            if i + 1 < N and nums[i] == nums[i+1]:
+                #must be true here and for the other part
+                ans = True or dp(i+2)
+                memo[i] = ans
+                return ans
+            #three of a kind
+            if i + 2 < N and nums[i] == nums[i+1] == nums[i+2]:
+                ans = True or dp(i+3)
+                memo[i] = ans
+                return ans
+            
+            #diff 1
+            if (i + 2 < N) and (nums[i+2] - nums[i+1] == 1) and (nums[i+1] - nums[i] == 1):
+                ans = True or dp(i+3)
+                memo[i] = ans
+                return ans
+            
+            else:
+                memo[i] = False
+                return False
+            
+        
+        return dp(0)
+
+
+class Solution:
+    def validPartition(self, nums: List[int]) -> bool:
+        '''
+        need to parition the array into one or more contiguous subarrays
+        a valid array is, on that meets the requirments
+            1. exactly two elemetns
+            2. exactly 3 elements
+            3. consecutive increasing by diff 1
+        
+        cant just linearly scan the array and greedily paritions when we find valid subarray
+        the contig arrays can only be of length 2 or length 3
+        so we can check from an index i for the conditions
+        if any of these are true, we can make a valid partition
+        
+        i just don't know what to get when i get to the end of the array?
+        return true
+        '''
+        N = len(nums)
+        memo = {}
+        
+        def dp(i):
+            if i == N:
+                return True
+            if i in memo:
+                return memo[i]
+            
+            ans = False
+            #dont immediaatley return from these staments, but add to its possibiltiy
+            #two equal elements
+            if i + 1 < N and nums[i] == nums[i+1]:
+                #must be true here and for the other part
+                ans = ans or dp(i+2)
+            #three of a kind
+            if i + 2 < N and nums[i] == nums[i+1] == nums[i+2]:
+                ans = ans or dp(i+3)
+            
+            #diff 1
+            if (i + 2 < N) and (nums[i+2] - nums[i+1] == 1) and (nums[i+1] - nums[i] == 1):
+                ans = ans or dp(i+3)
+            
+            memo[i] = ans
+            return ans
+            
+        
+        return dp(0)
+
+#bottom up, fuck yeahhh!
+class Solution:
+    def validPartition(self, nums: List[int]) -> bool:
+        '''
+        need to parition the array into one or more contiguous subarrays
+        a valid array is, on that meets the requirments
+            1. exactly two elemetns
+            2. exactly 3 elements
+            3. consecutive increasing by diff 1
+        
+        cant just linearly scan the array and greedily paritions when we find valid subarray
+        the contig arrays can only be of length 2 or length 3
+        so we can check from an index i for the conditions
+        if any of these are true, we can make a valid partition
+        
+        i just don't know what to get when i get to the end of the array?
+        return true
+        '''
+        N = len(nums)
+        dp = [False]*(N+1)
+        
+        dp[N] = True
+        
+        for i in range(N-1,-1,-1):
+            ans = False
+            #two equal elements
+            if i + 1 < N and nums[i] == nums[i+1]:
+                #must be true here and for the other part
+                ans = ans or dp[i+2]
+            #three of a kind
+            if i + 2 < N and nums[i] == nums[i+1] == nums[i+2]:
+                ans = ans or dp[i+3]
+            
+            #diff 1
+            if (i + 2 < N) and (nums[i+2] - nums[i+1] == 1) and (nums[i+1] - nums[i] == 1):
+                ans = ans or dp[i+3]
+            
+            dp[i] = ans
+        
+        return dp[0]
+    
+#optimzed, only need to keep three entries in the array
+class Solution:
+    def validPartition(self, nums: List[int]) -> bool:
+        '''
+        we can optimzied space
+        its called rolling index, use modular 3
+        '''
+        N = len(nums)
+        dp = [False]*(3)
+        
+        dp[-1] = True
+        
+        for i in range(N-1,-1,-1):
+            ans = False
+            #two equal elements
+            if i + 1 < N and nums[i] == nums[i+1]:
+                #must be true here and for the other part
+                ans = ans or dp[(i+2) % 3]
+            #three of a kind
+            if i + 2 < N and nums[i] == nums[i+1] == nums[i+2]:
+                ans = ans or dp[(i+3) % 3]
+            
+            #diff 1
+            if (i + 2 < N) and (nums[i+2] - nums[i+1] == 1) and (nums[i+1] - nums[i] == 1):
+                ans = ans or dp[(i+3) % 3]
+            
+            dp[i % 3] = ans
+        
+        return dp[0]
