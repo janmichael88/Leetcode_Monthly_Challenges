@@ -1667,3 +1667,118 @@ class Solution:
             dp[i % 3] = ans
         
         return dp[0]
+
+#######################################
+# 646. Maximum Length of Pair Chain
+# 13AUG23
+#######################################
+#eeeh at least at works
+class Solution:
+    def findLongestChain(self, pairs: List[List[int]]) -> int:
+        '''
+        for p in pairs, it will always be the case taht p[0] < p[1]
+        this is similart to LIS
+        i could sort on start, then just keep track of i and the current end of the chain
+        
+        '''
+        N = len(pairs)
+        pairs.sort()
+        memo = {}
+        
+        def dp(i,curr_end):
+            if i == N:
+                return 0
+            if (i,curr_end) in memo:
+                return memo[(i,curr_end)]
+            
+            #we can extend from this i
+            extend = 0
+            if pairs[i][0] > curr_end:
+                extend = 1 + dp(i+1,pairs[i][1])
+            
+            no_extend = dp(i+1,curr_end)
+            ans = max(extend,no_extend)
+            memo[(i,curr_end)] = ans
+            return ans
+        
+        return dp(0,float('-inf'))
+    
+#we can speed up using binary search for the next greater start from i
+#then we move up by that distance?
+class Solution:
+    def findLongestChain(self, pairs: List[List[int]]) -> int:
+        '''
+        for p in pairs, it will always be the case taht p[0] < p[1]
+        this is similart to LIS
+        i could sort on start, then just keep track of i and the current end of the chain
+        
+        '''
+        N = len(pairs)
+        pairs.sort()
+        memo = {}
+        
+        def binary_search(start,pairs,target):
+            left = start + 1
+            right = len(pairs) - 1
+            
+            while left <= right:
+                mid = left + (right - left) // 2
+                if pairs[mid][0] > target:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            return left
+        
+        def dp(i):
+            if i == N:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            #we can extend from this i
+            next_index = binary_search(i,pairs,pairs[i][1])
+            extend = 1 + dp(next_index)
+            no_extend = dp(i+1)
+            ans = max(extend,no_extend)
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+    
+#using for loop inside to find the next greater end
+#need to do dp for all i
+class Solution:
+    def findLongestChain(self, pairs: List[List[int]]) -> int:
+        '''
+        for p in pairs, it will always be the case taht p[0] < p[1]
+        this is similart to LIS
+        i could sort on start, then just keep track of i and the current end of the chain
+        
+        '''
+        N = len(pairs)
+        pairs.sort()
+        memo = {}
+        
+        def dp(i):
+            if i == N:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            #we can extend from this i
+            ans = 1
+            for j in range(i+1,N):
+                if pairs[j][0] > pairs[i][1]:
+                    ans = max(ans, 1 + dp(j))
+            memo[i] = max(ans,dp(i+1))
+            return ans
+        
+        
+        ans = 0
+        for i in range(N):
+            ans = max(ans,dp(i))
+        
+        return ans
+    
+
