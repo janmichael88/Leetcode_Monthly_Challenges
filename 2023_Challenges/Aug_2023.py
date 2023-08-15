@@ -1781,4 +1781,130 @@ class Solution:
         
         return ans
     
-
+#################################################
+# 215. Kth Largest Element in an Array (REVISTED)
+# 14AUG23
+#################################################
+#quick select, make sure to remember this implementation, 
+#its with lists insteaf of playing around with indices
+#careful when framing the questn kth smalest or kth largest
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        '''
+        quick select
+        partition into three arrays, then compre with left and right
+        start by picking ranom index
+        '''
+        def quick_select(nums,k):
+            pivot = random.choice(nums)
+            left, right,mid = [],[],[]
+            
+            for num in nums:
+                if num > pivot:
+                    right.append(num)
+                elif num < pivot:
+                    left.append(num)
+                else:
+                    mid.append(num)
+                    
+            if k <= len(left):
+                return quick_select(left,k)
+            
+            if len(left) + len(mid) < k:
+                return quick_select(right,k-len(left) - len(mid))
+            
+            return pivot
+        
+        
+        return quick_select(nums,len(nums) - k + 1)
+    
+#inplace
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        '''
+        do quick select in place
+        kth largest means its position in sorted array would be 
+        nums[len(nums) - k + 1]
+        for problems like these, ask what would k be in an ascending array
+        '''
+        N = len(nums)
+        
+        def quick_select(left,right,k,nums):
+            pivot = left + (right - left) // 2 #could also do random
+            #move pivot to the end
+            nums[pivot],nums[right] = nums[right],nums[pivot]
+            store_idx = left
+            for i in range(left,right):
+                #verything greater than the pivot is to the left
+                if nums[i] > nums[right]:
+                    continue
+                #swap
+                nums[store_idx],nums[i] = nums[i], nums[store_idx]
+                store_idx += 1
+            
+            #put pivot back at its place
+            nums[store_idx],nums[right] = nums[right],nums[store_idx]
+            
+            if store_idx == k:
+                return nums[store_idx]
+            elif store_idx > k:
+                return quick_select(left,store_idx-1,k,nums)
+            else:
+                return quick_select(store_idx+1,right,k,nums)
+    
+        
+        return quick_select(0,N-1,N-k,nums)
+    
+#counting sort
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        '''
+        we can use counting sort, with offsets
+        need to offset by min value in order to allow for negative numbres mapping to arrays which are indexed by positive real numbers
+        then rebuild the array
+        '''
+        N = len(nums)
+        min_val = min(nums)
+        max_val = max(nums)
+        counts = [0]*(max_val - min_val + 1)
+        
+        for num in nums:
+            counts[num - min_val] += 1
+        
+        #created sorted array
+        start = 0
+        for i,count in enumerate(counts):
+            counts[i] = start
+            start += count
+        
+        sorted_list = [0]*N
+        for num in nums:
+            sorted_list[counts[num - min_val]] = num
+            counts[num - min_val] += 1
+            
+        
+        return sorted_list[-k]
+    
+#counting sort without building the array
+class Solution:
+    def findKthLargest(self, nums: List[int], k: int) -> int:
+        '''
+        we can use counting sort, with offsets
+        need to offset by min value in order to allow for negative numbres mapping to arrays which are indexed by positive real numbers
+        then rebuild the array
+        '''
+        N = len(nums)
+        min_val = min(nums)
+        max_val = max(nums)
+        counts = [0]*(max_val - min_val + 1)
+        
+        for num in nums:
+            counts[num - min_val] += 1
+        
+        #using no sorted array, start from then end 
+        for num in range(len(counts)-1,-1,-1):
+            k -= counts[num]
+            if k <= 0:
+                return num + min_val
+        
+        return -1
