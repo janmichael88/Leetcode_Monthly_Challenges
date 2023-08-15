@@ -1908,3 +1908,139 @@ class Solution:
                 return num + min_val
         
         return -1
+    
+##########################################
+# 767. Reorganize String 
+# 14AUG23
+##########################################
+#the corner cases absolutlte suck
+class Solution:
+    def reorganizeString(self, s: str) -> str:
+        '''
+        build a string so that any two adjacent characters are not the same
+        use heap and alternate placing most common chars
+        
+        '''
+        counts = Counter(s)
+        max_heap = [(-count,char) for char,count in counts.items()]
+        heapq.heapify(max_heap)
+        ans = ""
+        
+        if len(counts) == 1:
+            return ans
+        
+        while len(max_heap) > 1:
+            first_count,first_char = heapq.heappop(max_heap)
+            second_count,second_char = heapq.heappop(max_heap)
+            ans += first_char
+            ans += second_char
+            first_count += 1
+            second_count += 1
+            
+            if first_count < 0:
+                heapq.heappush(max_heap, (first_count,first_char))
+            if second_count < 0:
+                heapq.heappush(max_heap, (second_count,second_char))
+    
+        
+        
+        
+        if len(max_heap) == 1 and abs(max_heap[0][0]) == 1:
+            ans += max_heap[0][1]
+        else:
+            return ""
+            
+        #check
+        for i in range(len(ans) - 1):
+            if ans[i] == ans[i+1]:
+                return ""
+        
+        return ans
+    
+#aye yai yai
+class Solution:
+    def reorganizeString(self, s: str) -> str:
+        '''
+        build a string so that any two adjacent characters are not the same
+        use heap and alternate placing most common chars
+        
+        '''
+        counts = Counter(s)
+        max_heap = [(-count,char) for char,count in counts.items()]
+        heapq.heapify(max_heap)
+        ans = []
+        
+        while max_heap:
+            #check first
+            first_count,first_char = heapq.heappop(max_heap)
+            #alloed char
+            if not ans or first_char != ans[-1]:
+                ans.append(first_char)
+                #make sure we have available
+                if first_count + 1 < 0:
+                    heapq.heappush(max_heap, (first_count + 1, first_char))
+            
+            #if we cant use the first char, then try the second char
+            else:
+                #if we cant use the first char, and there are nothing left, it canot be done
+                if not max_heap:
+                    return ""
+                
+                second_count,second_char = heapq.heappop(max_heap)
+                ans.append(second_char)
+                if second_count + 1 < 0:
+                    heapq.heappush(max_heap, (second_count + 1, second_char))
+                
+                #push the first char back
+                heapq.heappush(max_heap, (first_count,first_char))
+                
+        
+        return "".join(ans)
+                
+class Solution:
+    def reorganizeString(self, s: str) -> str:
+        '''
+        we can intelligently place chars at odd/even indices
+        we put the largest chars at even indices first until we exhaut the largest
+        then place the remaning at odd inices
+        
+        note:
+            to guarantee an arrangement, we need to ensure that the most frequent letter doest not exceed len(s) // 2 + 1
+            otherwise its impossible. why? becasue we need a gap of 1 between same chars, so if a char occupies more than half, its going to be place next to itself somewhere
+            
+        
+        '''
+        counts = Counter(s)
+        N = len(s)
+        max_count = 0
+        max_count_char = ""
+        for char,count in counts.items():
+            if count > max_count:
+                max_count = count
+                max_count_char = char
+                
+        #check
+        if max_count > (len(s) + 1) // 2:
+            return ""
+        
+        ans = [""]*N
+        i = 0
+        
+        #place most frequesnt letter
+        while counts[max_count_char] > 0:
+            ans[i] = max_count_char
+            counts[max_count_char] -= 1
+            i += 2
+            
+        #recall we may not hav gotten to the end and there may still be spots to place
+        #place the rest
+        for char,count in counts.items():
+            while count > 0:
+                if i >= N:
+                    i = 1
+                ans[i] = char
+                count -= 1
+                i += 2
+        
+        return "".join(ans)
+            
