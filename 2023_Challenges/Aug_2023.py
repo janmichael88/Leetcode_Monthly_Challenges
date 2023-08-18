@@ -2430,3 +2430,44 @@ class Solution:
                     stack[-1][1] += time
         
         return ans
+
+#############################
+# 1615. Maximal Network Rank
+# 18JUL23
+#############################
+class Solution:
+    def maximalNetworkRank(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        we are given n cities and roads connecting them
+        network rank between two cities
+            the total number of directly connected roads to either city
+            if road is direclt connected to both cities, its counted once
+        
+        max network rank is max of all pairs
+        make adjcent list, then coount the number of connecting rouds between an i and j
+        (0,1) same
+        (0,3)
+        (1,0) same
+        (0,2)
+        (0,3)
+        
+        network rank is almost the sum of their degrees
+        then we just check of the are connected using the adj list
+        '''
+        adj_list = defaultdict(set)
+        for u,v in roads:
+            adj_list[u].add(v)
+            adj_list[v].add(u)
+        
+        ans = 0
+        for i in range(n):
+            for j in range(i+1,n):
+                i_deg = len(adj_list[i])
+                j_deg = len(adj_list[j])
+                rank = i_deg + j_deg
+                if j in adj_list[i] or i in adj_list[j]:
+                    rank -= 1
+                
+                ans = max(ans,rank)
+        
+        return ans
