@@ -2044,3 +2044,389 @@ class Solution:
         
         return "".join(ans)
             
+#########################################
+# 239. Sliding Window Maximum (REVISTED)
+# 16AGU23
+#########################################
+#good idea but doesnt work
+class Solution:
+    def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
+        '''
+        need to find max for each sliding window of size k
+        initally store max in the first window,
+        then during the update step update the max by doing max(nums[left+1],nums[right+1],min(kthprevious_window))
+        there can only be N-k+1 windows givne some nums of length N
+        '''
+        N = len(nums)
+       
+        if k == 1:
+            return nums
+       
+        ans = []
+        #find first max
+        curr_max = max(nums[:k+1])
+        for left in range(N-k+1):
+            #sub = nums[left:left+k]
+            #print(nums[left],nums[left+k-1])
+            #update
+            curr_max = max(curr_max,nums[left],nums[left+k-1])
+            print(nums[left],nums[left+k-1],curr_max)
+            ans.append(curr_max)
+            #need to find new max
+            curr_max = max(float('-inf'),nums[left],nums[left+k-1])
+       
+        return ans
+
+#using pq
+class Solution:
+    def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
+        '''
+        i can try using a max heap
+        initalliy i keep the first k largest elements in the window
+        then when i go in and add the next element, i need to remove one of the elements
+        i can also keep track of the indices for each num
+        
+        [1,3,-1,-3,5,3,6,7]
+        3
+        
+        inital max_heap:
+            [[3,1],[1,0],[-3,2]]
+        
+        largest so far is 3
+        
+        intution, the elemetns that come before the largest will never be selected as the largest of any future windows
+        example
+        [1,2,3,4,1]
+        any window with the elements [1,2,3] would also include 4, but they are not the max anway! so we can disacrd them
+        
+        make a pq of nums[:k] and for each entry pair it with its index
+        get the first max as the answer
+        then we need to examine the next k to n elements
+        also keep track of the number of elements after k we have examined
+        '''
+        #print(nums[:k],nums[k])
+        N = len(nums)
+        if N <= k:
+            return max(nums)
+        
+        ans = []
+        max_heap = [(-num,i) for i,num in enumerate(nums[:k])]
+        heapq.heapify(max_heap)
+        
+        ans.append(-max_heap[0][0]) #first larget
+        j = 0
+        for i in range(k,N):
+            j += 1
+            #if the nums's index currently at the top is smaller than j, then this can't possibly be a max for the the current window
+            #so we just clear it
+            while max_heap and max_heap[0][1] < j:
+                heapq.heappop(max_heap)
+            
+            #add new one to the window
+            heapq.heappush(max_heap, (-nums[i],i))
+            ans.append(-max_heap[0][0])
+        
+        return ans
+    
+#another way
+class Solution:
+    def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
+        #additional way
+        N = len(nums)
+        res = [0]*(N-k+1)
+        #pushsh the first k-1 elements
+        pq = []
+        for i in range(k-1):
+            heapq.heappush(pq, (-nums[i],i))
+        
+        for window_end in range(k-1,N):
+            #add the new element to be considers
+            heapq.heappush(pq, (-nums[window_end],window_end))
+            while pq and window_end - k + 1 > pq[0][1]:
+                heapq.heappop(pq)
+            
+            res[window_end - k + 1] = -pq[0][0]
+        
+        return res
+    
+#montonic queue
+class Solution:
+    def maxSlidingWindow(self, nums: List[int], k: int) -> List[int]:
+        '''
+        true solution is something called montinic deque
+        take the array [1,2,3,4,1]
+        any window including the the first three elements would always have a max of 4, if 4 were included in the array
+        idea is that elements that come before the largest element will never be select as the largest or any future windows
+        but we cannot ignore the items that follow the largest
+        in the example, we cannot ignore the last 1, since there mayb be a winow from the fourhth inde to the tieth index where there is a larger eleemnt
+        
+        say for exmaple we are considereing some number x, and x > 1, we can discard 1 because will be the new max
+        in general, when we encounter a new element x, we can discard any elment less than x
+        
+        Let's say we currently have [63, 15, 8, 3] and we encounter 12. 
+        Any future window with 8 or 3 will also contain 12, so we can discard them. After discarding them and adding 12, we have [63, 15, 12]. 
+        As you can see, we keep elements in descending order.
+        
+        when we add a new element x to the deque, we maintain the rep invariant be keeping it descending
+        keep dq is useful indces in the current window
+        we need the indices in order to detect when elements leave the window 
+        
+        largest elmeent must always be in the first elment in the deque
+        i.e nums[dq[0]] is the max
+        
+        
+        We initialize the first window with the first k elements. 
+        Then we iterate over the indices i in the range [k, n - 1], and for each element, we add its index to dq while maintaining the monotonic property. 
+        We also remove the first element in dq if it is too far to the left (dq[0] = i - k). After these operations, 
+        dq will correctly hold the indices of all useful elements in the current window in decreasing order. Thus, we can push nums[dq[0]] to the answer.
+
+
+        '''
+        n = len(nums)
+        q = deque([])
+        ans = []
+        for i in range(k):
+            #we are storing indices
+            while q and nums[i] >= nums[q[-1]]:
+                q.pop()
+            q.append(i)
+        
+        #first answer
+        ans.append(nums[q[0]])
+        
+        for i in range(k,n):
+            #if the current eleement at the front is outside the window, remove it
+            if q and i - k == q[0]:
+                q.popleft()
+            #maintin invaraiant
+            while q and nums[i] >= nums[q[-1]]:
+                q.pop()
+            
+            q.append(i)
+            ans.append(nums[q[0]])
+        
+        return ans
+    
+############################
+# 542. 01 Matrix (REVISITED)
+# 24MAY23
+#############################
+class Solution:
+    def updateMatrix(self, mat: List[List[int]]) -> List[List[int]]:
+        '''
+        brute force is to look up down left right for each (i,j) the the position of the zero
+        if dp(i,j) represents the nearest distance of zero cell (i,j)
+        
+        and we cant to consider a new i,j
+            it would be 1 + min(of all neighbors for i,j)
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        memo1 = {}
+        memo2 = {}
+        
+        dirrs = [(-1,0),(1,0),(0,-1),(0,1)]
+        #need two dps, one getting min from going down and to the right
+        #the other going up and the the left
+        #then dp on both and take min
+        
+        def dp1(i,j,memo):
+            #out of bounds
+            if i < 0 or i >= rows or j < 0 or j >= cols:
+                return rows + cols
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if mat[i][j] == 0:
+                return 0
+            
+            ans = 1 + min(dp1(i+1,j,memo),dp1(i,j+1,memo))
+            memo[(i,j)] = ans
+            return ans
+        
+        def dp2(i,j,memo,memo2):
+            #out of bounds
+            if i < 0 or i >= rows or j < 0 or j >= cols:
+                return rows + cols
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if mat[i][j] == 0:
+                return 0
+            
+            #if there is a shorter min dsitnace from cming down and to the right, leave that answer at a minimum
+            ans = min(memo2[(i,j)], 1 + min(dp2(i-1,j,memo,memo2),dp2(i,j-1,memo,memo2)))
+            memo[(i,j)] = ans
+            return ans
+        
+        
+        
+        ans = [[0]*cols for _ in range(rows)]
+        
+        for i in range(rows):
+            for j in range(cols):
+                ans[i][j] = dp1(i,j,memo1)
+        
+
+        for i in range(rows-1,-1,-1):
+            for j in range(cols-1,-1,-1):
+                ans[i][j] = min(ans[i][j], dp2(i,j,memo2,memo1))
+        
+        return ans
+    
+#bottom up
+class Solution:
+    def updateMatrix(self, mat: List[List[int]]) -> List[List[int]]:
+        '''
+        we can also do bottom up,
+        note, we just cant take the minimum from any of the 4 neighbors and add 1, becausee it depends on how we got to a previous neighbor
+        so we start bottom going left, then up going right
+        i.e we don't have a strict ordering on how we got to the current minimum and we don't know what way to sovle the subprblems
+        '''
+        
+        rows = len(mat)
+        cols = len(mat[0])
+        
+        dp = [row[:] for row in mat]
+        
+        #going down and right
+        for row in range(rows):
+            for col in range(cols):
+                ans = float('inf')
+                if mat[row][col] != 0:
+                    #can go back
+                    if row > 0:
+                        ans = min(ans, dp[row-1][col] )
+                    
+                    if col > 0:
+                        ans = min(ans, dp[row][col-1])
+                        
+                    dp[row][col] = ans + 1
+                    
+        #going up and left
+        for row in range(rows-1,-1,-1):
+            for col in range(cols-1,-1,-1):
+                ans = float('inf')
+                if mat[row][col] != 0:
+                    if row < rows - 1:
+                        ans = min(ans,dp[row+1][col])
+                    if col < cols - 1:
+                        ans = min(ans,dp[row][col+1])
+                
+                dp[row][col] = min(dp[row][col],ans+1)
+    
+        return dp
+
+#bfs
+class Solution:
+    def updateMatrix(self, mat: List[List[int]]) -> List[List[int]]:
+        '''
+        this is multipoint bfs
+        i can first load up into a queue, all the (i,j);s that correspong to a 0 
+        also, pair with it its distance from 0, in this case its zero
+        then bfs to its unseen neighbors and if this neighor is a 1, this distacnce must be the min to it
+        '''
+        seen = set()
+        rows = len(mat)
+        cols = len(mat[0])
+        q = deque([])
+        
+        ans = [[0]*cols for _ in range(rows)]
+        
+        for i in range(rows):
+            for j in range(cols):
+                if mat[i][j] == 0:
+                    q.append((i,j,0))
+                    #need toa dd them before starting
+                    seen.add((i,j))
+                    #becase we look in directions, the could be added again
+        
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        
+        while q:
+            x,y,dist = q.popleft()
+            for dx,dy in dirrs:
+                neigh_x = dx + x
+                neigh_y = dy + y
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and (neigh_x,neigh_y) not in seen:
+                    q.append((neigh_x,neigh_y,dist+1))
+                    #we need to mark them zene here because fomr another neighbore, we might be able to reach it
+                    #add the "going" to be seen neighbors
+                    seen.add((neigh_x,neigh_y))
+                    ans[neigh_x][neigh_y] = dist + 1
+        
+        return ans
+
+class Solution:
+    def updateMatrix(self, mat: List[List[int]]) -> List[List[int]]:
+        '''
+        we can just use -1 as the results matrix (i,j) entry marking as unvitised
+        then just bfs from all zeros
+        then retraverse and only take values where mat[i][j] == 1
+        '''
+        rows = len(mat)
+        cols = len(mat[0])
+        zeros_dist = [[0]*cols for _ in range(rows)]
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        
+        q = deque([])
+        seen = set([])
+        for i in range(rows):
+            for j in range(cols):
+                if mat[i][j] == 0:
+                    q.append((i,j,0))
+                    seen.add((i,j))
+                    
+        
+        while q:
+            x,y,dist = q.popleft()
+            zeros_dist[x][y] = dist
+            for dx,dy in dirrs:
+                neigh_x = x + dx
+                neigh_y = y + dy
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and (neigh_x,neigh_y) not in seen:
+                    seen.add((neigh_x,neigh_y))
+                    q.append((neigh_x,neigh_y,dist+1))
+        
+        
+        return zeros_dist
+    
+
+
+#######################################
+# 636. Exclusive Time of Functions
+# 15AUG23
+#######################################
+class Solution:
+    def exclusiveTime(self, n: int, logs: List[str]) -> List[int]:
+        '''
+        we are given n jobs with logs
+        logs[i] is read as 'id':'started/ended at':'time'
+        
+        functions exlcusive time is the sum of executing times for all functions in the program
+        what if i keep a hashamp with entries
+        stack of times for each function
+        it a singel threaded CPU, so we can only be running the function that most receently start
+        we keep an array and stack
+        on the stack we keep track of the current running functinons start/end event time
+        
+        '''
+        ans = [0]*n
+        stack = []
+        
+        for log in logs:
+            log = log.split(":")
+            #new start time, addd to stack
+            if log[1] == 'start':
+                stack.append([int(log[2]),0]) #zero to keep track of the amouynt of time since this function start
+                #entires are for started processed only (time when it start,curr_running_time)
+            #otherwise we end
+            else:
+                #get the previous process and how long its been running
+                start = stack.pop()
+                #evalute time since it ran
+                time = int(log[2]) - start[0] + 1
+                ans[int(log[0])] += time - start[1] #add this running time to the function
+                if stack:
+                    #add the rest of the running time to the previous funcino that ran
+                    stack[-1][1] += time
+        
+        return ans
