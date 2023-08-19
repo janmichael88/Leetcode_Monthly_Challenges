@@ -2672,3 +2672,130 @@ class Solution:
         
         return dfs(start[0],start[1],seen)
     
+#########################################################################
+# 1489. Find Critical and Pseudo-Critical Edges in Minimum Spanning Tree
+# 19AUG23
+##########################################################################
+#jesus fuck
+class UnionFind:
+    def __init__(self,n):
+        self.rank = [1]*n
+        self.parent = [i for i in range(n)]
+        #need to make sure we have n nodes
+        self.nodes = 0
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+            
+        return self.parent[x]
+    
+    def join(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        #same group
+        if x_par == y_par:
+            return False
+        if self.rank[x_par] >= self.rank[y_par]:
+            self.parent[y_par] = x_par
+            self.rank[x_par] += self.rank[y_par]
+            self.nodes = max(self.nodes,self.rank[x_par])
+            self.rank[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.rank[y_par] += self.rank[x_par]
+            self.nodes = max(self.nodes,self.rank[y_par])
+            self.rank[x_par] = 0       
+            
+        return True
+class Solution:
+    def findCriticalAndPseudoCriticalEdges(self, n: int, edges: List[List[int]]) -> List[List[int]]:
+        '''
+        a critical edge is an edge whose deletion from the graph would cause the MST weight to increase
+            note, this is from the perspective of the GRAPH and not an MST from the graph
+            if we were to remove a critical edge from a graph, and the MST weight goes up, we know that this edge must be critical (i.e we need it to keep the MST at a minmum)
+        a psuedo-critical edge is one that can appear in some MST's but not all
+            i.e, this edge isn't really necessary to keep the MST weight at the minimum
+        
+        the algorithm is straight forward, i jutt dont know how to implement it
+        notes on difference between kruskal and primm
+        krukal and find an MST in a disconnected graph
+            i.e for each disconnected componenet, find an MST
+        primms only works on connected graph
+        
+        kruskals uses DSU to find MSt
+        hints
+            1. use kurskal algo to find the MST by sorting edges and picking esges from smaller weights
+            2. use dsu to to avoid adding reducnt edges that result in cycle
+            3. to find if edge is critical, delete that edge and re-run MST and see if weight incresed
+            4. to find pseudo-critical (in any MST), include that edge to the accepted edge list and continue MST,
+                then see if the resulting MST has the same wieght of the inital MST
+        
+        first step is to run kruskal to find the MST and the MST weight
+        next is to identify the critical and non critical edges
+        
+        for critical
+            rebuild the MST while dropping the edge, if this new MST's weight increases or an MST cannot be made, this edge must be critical
+            given the inputs peforming kruskal should be fine
+        
+        for non critical
+            first check that adge is not critical, which mean it is a candidate for being non critical
+            then run kruskal again while forcing the edge to be part of three
+            if the new MST weight remains the same, this edges is part of at least one MST ans is non critical (i.e psuedo critical)
+        '''
+        #make new edges paired with indices
+        new_edges = []
+        for i,edge in enumerate(edges):
+            entry = (i,edge)
+            new_edges.append(entry)
+            
+        #sort increasinly by weight
+        new_edges.sort(key = lambda x: x[-1][-1])
+        
+        #find mst first
+        mst = UnionFind(n)
+        mst_weight = 0
+        for i,entry in new_edges:
+            u,v,w = entry
+            #we if we can union them add to mst weight
+            if mst.join(u,v):
+                mst_weight += w
+        
+        #print(mst_weight,mst.nodes)
+        #now check for critical and pseudo_critical
+        critical = set()
+        pseudo_critical = set()
+        
+        #first check critical
+        for i,entry1 in new_edges:
+            #igonre this ith edge and rebuild mst with the rest
+            mst_critical = UnionFind(n)
+            critical_edge_mstweight = 0
+            for j,entry2 in new_edges:
+                u,v,w = entry2
+                if i != j and mst_critical.join(u,v):
+                    critical_edge_mstweight += w
+            
+            if mst_critical.nodes < n or critical_edge_mstweight > mst_weight:
+                critical.add(i)
+
+        #now check pseudo critical
+        for i,entry1 in new_edges:
+            #any edege not in critical could be psuedo critical
+            if i not in critical:
+                #include this edge
+                uf_pseudo = UnionFind(n)
+                uf_pseudo.join(entry1[0],entry1[1])
+                pseudo_edge_weight = entry1[-1]
+                for j,entry2 in new_edges:
+                    u,v,w = entry2
+                    if i != j and uf_pseudo.join(u,v):
+                        pseudo_edge_weight += w
+                
+                #print(i,pseudo_edge_weight,mst_weight)
+                if pseudo_edge_weight == mst_weight and uf_pseudo.nodes == n:
+                    pseudo_critical.add(i)
+        
+        return [critical,pseudo_critical]
+    
