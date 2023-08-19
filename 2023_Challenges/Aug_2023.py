@@ -2551,3 +2551,124 @@ class Solution:
                 ans = max(ans,rank)
         
         return ans
+    
+#############################
+# 490. The Maze (REVISTED)
+# 18AUG23
+#############################
+#BFS
+class Solution:
+    def hasPath(self, maze: List[List[int]], start: List[int], destination: List[int]) -> bool:
+        '''
+        0s are spaces and 1s are walls, the ball can only go through spaces and must stop at a wall
+        if i end up going back to the same spot, ive seen, return false
+        bfs, but instead of step, go all the way in for directions
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        seen = set()
+        
+        q = deque([start])
+        while q:
+            x,y = q.popleft()
+            if [x,y] == destination:
+                return True
+            seen.add((x,y))
+            #go down
+            neigh_x,neigh_y = x,y
+            while neigh_x - 1 >= 0 and maze[neigh_x-1][neigh_y] == 0:
+                neigh_x -= 1
+            #chceck that its not the same and not in vsitied
+            if (neigh_x,neigh_y) != (x,y) and (neigh_x,neigh_y) not in seen:
+                q.append((neigh_x, neigh_y))
+            
+            #go up
+            neigh_x,neigh_y = x,y
+            while neigh_x + 1 < rows and maze[neigh_x+1][neigh_y] == 0:
+                neigh_x += 1
+            #chceck that its not the same and not in vsitied
+            if (neigh_x,neigh_y) != (x,y) and (neigh_x,neigh_y) not in seen:
+                q.append((neigh_x, neigh_y))
+                
+            #go left
+            neigh_x,neigh_y = x,y
+            while neigh_y - 1 >= 0 and maze[neigh_x][neigh_y-1] == 0:
+                neigh_y -= 1
+            #chceck that its not the same and not in vsitied
+            if (neigh_x,neigh_y) != (x,y) and (neigh_x,neigh_y) not in seen:
+                q.append((neigh_x,  neigh_y))
+                
+            #go right
+            neigh_x,neigh_y = x,y
+            while neigh_y + 1 < cols and maze[neigh_x][neigh_y+1] == 0:
+                neigh_y += 1
+            #chceck that its not the same and not in vsitied
+            if (neigh_x,neigh_y) != (x,y) and (neigh_x,neigh_y) not in seen:
+                q.append((neigh_x, neigh_y))
+        
+#optimized using for loop
+class Solution:
+    def hasPath(self, maze: List[List[int]], start: List[int], destination: List[int]) -> bool:
+        '''
+        0s are spaces and 1s are walls, the ball can only go through spaces and must stop at a wall
+        if i end up going back to the same spot, ive seen, return false
+        bfs, but instead of step, go all the way in for directions
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        seen = set()
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        q = deque([start])
+        while q:
+            x,y = q.popleft()
+            if [x,y] == destination:
+                return True
+            seen.add((x,y))
+            for dx,dy in dirrs:
+                neigh_x,neigh_y = x,y
+                while 0 <= neigh_x + dx < rows and 0 <= neigh_y + dy < cols and maze[neigh_x+dx][neigh_y+dy] == 0:
+                    neigh_x += dx
+                    neigh_y += dy
+                #chceck that its not the same and not in vsitied
+                if (neigh_x,neigh_y) != (x,y) and (neigh_x,neigh_y) not in seen:
+                    q.append((neigh_x, neigh_y))
+            
+
+        
+        return False
+    
+#dfs
+class Solution:
+    def hasPath(self, maze: List[List[int]], start: List[int], destination: List[int]) -> bool:
+        '''
+        0s are spaces and 1s are walls, the ball can only go through spaces and must stop at a wall
+        if i end up going back to the same spot, ive seen, return false
+        bfs, but instead of step, go all the way in for directions
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        seen = set()
+        
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        
+        def dfs(x,y,seen):
+            if [x,y] == destination:
+                return True
+            if (x,y) in seen:
+                return False
+            seen.add((x,y))
+            for dx,dy in dirrs:
+                neigh_x,neigh_y = x,y
+                while 0 <= neigh_x + dx < rows and 0 <= neigh_y + dy < cols and maze[neigh_x+dx][neigh_y+dy] == 0:
+                    neigh_x += dx
+                    neigh_y += dy
+                #chceck that its not the same and not in vsitied
+                if dfs(neigh_x,neigh_y,seen):
+                    return True
+            
+            return False
+        
+        return dfs(start[0],start[1],seen)
+    
