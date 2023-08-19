@@ -2395,6 +2395,52 @@ class Solution:
 # 636. Exclusive Time of Functions
 # 15AUG23
 #######################################
+#TLE
+class Solution:
+    def exclusiveTime(self, n: int, logs: List[str]) -> List[int]:
+        '''
+        intuitino
+            func1 calls func2, func2 calls func3
+            func3 last, but ends first, and func1 starts first, but ends last (if there were a dependency chain)
+        
+        we can use stack, and just keep icnrementing a time count, until we get to the enxt time
+        intiaiyll we push the first functino on top of thes stack, then we keep increment both timer and exclusing time for functino on stack
+        untilwe get to the next time
+            if its a start, add to stack and keep icnrmeing timers and exlcusivv time
+            if its end, we need to increment the timer and exlusive time of the last function for this end time, thne pop
+            
+        #TLE
+        '''
+        stack = []
+        ans = [0]*n
+        
+        #first function
+        first = logs[0].split(":")
+        #push indicies
+        stack.append(int(first[0]))
+        curr_time = int(first[2])
+        
+        for i in range(1,len(logs)):
+            next_func = logs[i].split(':')
+            #cinrement time intil we get to the the next time marker
+            while curr_time < int(next_func[2]):
+                curr_time += 1
+                ans[stack[-1]] += 1
+            
+            #now we have moved up to this time
+            #check start of new function
+            if next_func[1] == 'start':
+                stack.append(int(next_func[0]))
+            #we are done
+            else:
+                ans[stack[-1]] += 1
+                curr_time += 1
+                stack.pop()
+                
+        
+        return ans
+    
+#moving one at time
 class Solution:
     def exclusiveTime(self, n: int, logs: List[str]) -> List[int]:
         '''
@@ -2430,6 +2476,40 @@ class Solution:
                     stack[-1][1] += time
         
         return ans
+    
+#jump to the end for the ith job
+class Solution:
+    def exclusiveTime(self, n: int, logs: List[str]) -> List[int]:
+        '''
+        instead of going 1 step at a time for curr time, just move to it
+        '''
+        stack = []
+        ans = [0]*n
+        
+        #first function
+        first = logs[0].split(":")
+        #push indicies
+        stack.append(int(first[0]))
+        prev = int(first[2])
+        
+        for i in range(1,len(logs)):
+            next_func = logs[i].split(':')
+            #now we have moved up to this time
+            #check start of new function
+            if next_func[1] == 'start':
+                if stack:
+                    ans[stack[-1]] += int(next_func[2]) - prev
+                stack.append(int(next_func[0]))
+                prev = int(next_func[2])
+            #we are done
+            else:
+                ans[stack[-1]] += int(next_func[2]) - prev + 1
+                prev = int(next_func[2]) + 1
+                stack.pop()
+                
+        
+        return ans
+        
 
 #############################
 # 1615. Maximal Network Rank
