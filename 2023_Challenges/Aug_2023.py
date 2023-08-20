@@ -2798,4 +2798,59 @@ class Solution:
                     pseudo_critical.add(i)
         
         return [critical,pseudo_critical]
+
+############################################
+# 1135. Connecting Cities With Minimum Cost
+# 19AUG23
+###########################################
+class UnionFind:
+    def __init__(self,n):
+        self.rank = [1]*n
+        self.parent = [i for i in range(n)]
+        #need to make sure we have n nodes
+        self.nodes = 0
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+            
+        return self.parent[x]
     
+    def join(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        #same group
+        if x_par == y_par:
+            return False
+        if self.rank[x_par] >= self.rank[y_par]:
+            self.parent[y_par] = x_par
+            self.rank[x_par] += self.rank[y_par]
+            self.nodes = max(self.nodes,self.rank[x_par])
+            self.rank[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.rank[y_par] += self.rank[x_par]
+            self.nodes = max(self.nodes,self.rank[y_par])
+            self.rank[x_par] = 0
+            
+            
+        return True
+    
+class Solution:
+    def minimumCost(self, n: int, connections: List[List[int]]) -> int:
+        '''
+        kruskal, sort in min weights then use union find
+        '''
+        mst = UnionFind(n+1)
+        #sort edges by weight
+        connections.sort(key = lambda x: x[-1])
+        mst_weight = 0
+        for u,v,w in connections:
+            if mst.join(u,v):
+                mst_weight += w
+        
+        
+        if mst.nodes == n:
+            return mst_weight
+        return -1
