@@ -2854,3 +2854,272 @@ class Solution:
         if mst.nodes == n:
             return mst_weight
         return -1
+    
+####################################################
+# 1203. Sort Items by Groups Respecting Dependencies
+# 19AUG23
+#####################################################
+class Solution:
+    def sortItems(self, n: int, m: int, group: List[int], beforeItems: List[List[int]]) -> List[int]:
+        '''
+        we have n items, that belong to zero or one of m groups, i.e one to many from n to m
+        a group can have no item belonging to it
+        return sorted list such that
+            * items belong to the same group are next to each other
+            * itemss follow beforeItems, beforeItems[i] is a list contains all the items that should come before the ith item in the sorted array
+            * essentially this gives a relative ordering
+        
+        hints
+            top sort on the depency graph
+            build two graphs, one for the grous and another for the items
+            
+        careful with shared indices between n items and m groups
+        intuition
+            do top sort using the item dependencies
+            then do top sort in each group using item depenedncies in the group
+            colect the items into each group
+        
+        the beforItems top sort is trivial
+        when doing the groups, we check that the previtem is coming fron a different group
+        
+        so we need to assign a uniqe id for each of the groups
+            groups can only be up to m, and if they are already in a group, we can skip them
+        '''
+        #trasform the group array to encode each item as a unique group
+        uniq_group = m
+        for i in range(n):
+            if group[i] == -1:
+                group[i] = uniq_group
+                uniq_group += 1
+                
+        group_graph = defaultdict(list)
+        group_indegree = [0]*uniq_group
+        
+        item_graph = defaultdict(list)
+        item_indegree = [0]*n
+
+        for i,come_before in enumerate(beforeItems):
+            for item_before in come_before:
+                item_graph[item_before].append(i)
+                item_indegree[i] += 1
+                
+                #group depenedncy 
+                if group[item_before] != group[i]:
+                    group_graph[group[item_before]].append(group[i])
+                    group_indegree[group[i]] += 1
+                    
+        #top dort
+        def topSort(graph,indegree):
+            ordering  = []
+            q = deque([])
+            #add in 0 inderrees
+            for i in range(len(indegree)):
+                if indegree[i] == 0:
+                    q.append(i)
+            
+            while q:
+                curr = q.popleft()
+                ordering.append(curr)
+                for neigh in graph[curr]:
+                    indegree[neigh] -= 1
+                    if indegree[neigh] == 0:
+                        q.append(neigh)
+            
+            return ordering if len(ordering) == len(indegree) else []
+        
+        #top sort on both graphs
+        item_ordering = topSort(item_graph,item_indegree)
+        group_ordering = topSort(group_graph, group_indegree)
+        
+        if not item_ordering or not group_ordering:
+            return []
+        
+        #items are sorts already, we just need to order within in groups
+        ordered_groups = collections.defaultdict(list)
+        for item in item_ordering:
+            #find the group they belong too
+            group_key = group[item]
+            ordered_groups[group_key].append(item)
+        
+        #now use the group ordering, we already know the ordering of items in the group
+        #no we just need to use the ordering of the groups
+        ans = []
+        for group_index in ordered_groups:
+            ans += ordered_groups[group_index]
+            
+        return ans
+    
+#the actual solution
+class Solution:
+    def sortItems(self, n, m, group, beforeItems):
+        # If an item belongs to zero group, assign it a unique group id.
+        group_id = m
+        for i in range(n):
+            if group[i] == -1:
+                group[i] = group_id
+                group_id += 1
+        
+        # Sort all item regardless of group dependencies.
+        item_graph = [[] for _ in range(n)]
+        item_indegree = [0] * n
+        
+        # Sort all groups regardless of item dependencies.
+        group_graph = [[] for _ in range(group_id)]
+        group_indegree = [0] * group_id      
+        
+        for curr in range(n):
+            for prev in beforeItems[curr]:
+                # Each (prev -> curr) represents an edge in the item graph.
+                item_graph[prev].append(curr)
+                item_indegree[curr] += 1
+                
+                # If they belong to different groups, add an edge in the group graph.
+                if group[curr] != group[prev]:
+                    group_graph[group[prev]].append(group[curr])
+                    group_indegree[group[curr]] += 1      
+        
+        # Tologlogical sort nodes in graph, return [] if a cycle exists.
+        def topologicalSort(graph, indegree):
+            visited = []
+            stack = [node for node in range(len(graph)) if indegree[node] == 0]
+            while stack:
+                cur = stack.pop()
+                visited.append(cur)
+                for neib in graph[cur]:
+                    indegree[neib] -= 1
+                    if indegree[neib] == 0:
+                        stack.append(neib)
+            return visited if len(visited) == len(graph) else []
+
+        item_order = topologicalSort(item_graph, item_indegree)
+        group_order = topologicalSort(group_graph, group_indegree)
+        
+        if not item_order or not group_order: 
+            return []
+        
+        # Items are sorted regardless of groups, we need to 
+        # differentiate them by the groups they belong to.
+        ordered_groups = collections.defaultdict(list)
+        for item in item_order:
+            ordered_groups[group[item]].append(item)
+        
+        # Concatenate sorted items in all sorted groups.
+        # [group 1, group 2, ... ] -> [(item 1, item 2, ...), (item 1, item 2, ...), ...]
+        answer = []
+        for group_index in group_order:
+            answer += ordered_groups[group_index]
+        return answer
+    
+#######################################################
+# 1180. Count Substrings with Only One Distinct Letter
+# 21AUG23
+#######################################################
+class Solution:
+    def countLetters(self, s: str) -> int:
+        '''
+        partition s into substrings that contain only one distinct character
+        then cound number of substring we can get for that subtrain
+        exmple, so we have
+        'abc'
+        a,ab,abc
+        b,bc,
+        c
+        
+        which is just sum of arithmetic sequences
+        use sliding windwo to partition
+        '''
+        left = 0
+        N = len(s)
+        ans = 0
+        for right in range(N+1):
+            if s[min(right,N-1)] != s[left]:
+                temp = s[left:right]
+                #print(temp,right - left)
+                substring_size = right - left
+                num_substrings = (substring_size + 1)*(substring_size) // 2
+                ans += num_substrings
+                left = right
+        
+        #last one
+        substring_size = right - left + 1
+        num_substrings = (substring_size + 1)*(substring_size) // 2
+        ans += num_substrings
+        return ans
+        
+#extend to boundary condition when right get to the end
+class Solution:
+    def countLetters(self, s: str) -> int:
+        '''
+        partition s into substrings that contain only one distinct character
+        then cound number of substring we can get for that subtrain
+        exmple, so we have
+        'abc'
+        a,ab,abc
+        b,bc,
+        c
+        
+        which is just sum of arithmetic sequences
+        use sliding windwo to partition
+        '''
+        left = 0
+        N = len(s)
+        ans = 0
+        for right in range(N+1):
+            if right == N or s[min(right,N-1)] != s[left]:
+                temp = s[left:right]
+                #print(temp,right - left)
+                substring_size = right - left
+                num_substrings = (substring_size + 1)*(substring_size) // 2
+                ans += num_substrings
+                left = right
+        
+
+        return ans
+        
+#dp, top down
+class Solution:
+    def countLetters(self, s: str) -> int:
+        '''
+        can use dp
+        let dp(i) be the number of substrings with one unique letter ending at i
+        if s[i] == s[i+1], then extend
+        then do this for all i
+        '''
+        N = len(s)
+        memo = {}
+        
+        def dp(i):
+            if i == N-1:
+                return 1
+            if i in memo:
+                return memo[i]
+            if s[i] == s[i+1]:
+                ans = 1 + dp(i+1)
+                memo[i] = ans
+                return ans
+            memo[i] = 1
+            return 1
+        
+        ans = 0
+        for i in range(N):
+            ans += dp(i)
+        
+        return ans
+        
+#bottom up, the answer is just the sum of the dp array
+class Solution:
+    def countLetters(self, s: str) -> int:
+        '''
+        bottom up
+        '''
+        N = len(s)
+        dp = [0]*(N)
+        dp[-1] = 1
+        
+        for i in range(N-2,-1,-1):
+            if s[i] == s[i+1]:
+                dp[i] = dp[i+1] + 1
+            else:
+                dp[i] = 1
+        
+        return sum(dp)
