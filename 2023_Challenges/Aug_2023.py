@@ -3123,3 +3123,130 @@ class Solution:
                 dp[i] = 1
         
         return sum(dp)
+    
+#####################################
+# 533. Lonely Pixel II
+# 21AUG23
+#####################################
+#bleagh, close one
+class Solution:
+    def findBlackPixel(self, picture: List[List[str]], N: int) -> int:
+        '''
+        return the number of black lonely pixels
+        a black lonely pizel is a char 'B' at s specific (i,j) where
+            i and j both contain exactly target black pixels
+            for all rows that have a black pixel at column c, the hould be exactly the same row as r
+            
+        find all rows and cols that contain target black pixels
+        then check
+            for all rows that have a black pixel at column c, the should be exactly same as row r
+            basically for all rows r (in candidate rows)
+                all the c's in this row are black
+            i.e for each candidate_row, there can only be black pixels at columns c
+            
+        the row should match,i.e their string singatures shuld match
+        '''
+        rows = len(picture)
+        cols = len(picture[0])
+        def countBsAtRow(row):
+            count = 0
+            for col in range(cols):
+                count += picture[row][col] == "B"
+            
+            return count
+        
+        def countBsAtCol(col):
+            count = 0
+            for row in range(rows):
+                count += picture[row][col] == "B"
+            
+            return count
+        
+        candidate_rows = []
+        candidate_cols = []
+        for i in range(rows):
+            if countBsAtRow(i) == N:
+                candidate_rows.append(i)
+        
+        for j in range(cols):
+            if countBsAtCol(j) == N:
+                candidate_cols.append(j)
+        
+        
+        #get singatures of each rows and put into a count map
+        counts = Counter()
+        for row in picture:
+            row = "".join(row)
+            counts[row] += 1
+        
+        #for each signature, check that there are only B's at the candidate columns, 
+        #and for each of these increment
+        for row,c in counts.items():
+
+class Solution:
+    def findBlackPixel(self, picture: List[List[str]], target: int) -> int:
+        '''
+        for each row, check if row and N black pixels. if it does, store 2 things
+            its row signauture in a count map
+            and keep track of the of the number of pixels in each column
+            
+        then, for through the hashamp, and find singautres where we have N black pixels,
+        then validate the cols for that row
+        ans is count of that row signature times the number of B's in that column
+        '''
+        rows = len(picture)
+        cols = len(picture[0])
+        if rows == 0 or cols == 0:
+            return 0
+        
+        counts = Counter()
+        col_counts = [0]*cols #store count Bs in this column
+        for i,row in enumerate(picture):
+            if row.count('B') == target:
+                counts["".join(row)] += 1
+            for j in range(cols):
+                if picture[i][j] == "B":
+                    col_counts[j] += 1
+        
+        
+        lonely_pixels = 0
+        #goo through hashmap row signatures, and validate the rows
+        for row,count in counts.items():
+            #if the count of rows with target B == target, this might be a valid row
+            if count == target:
+                for j in range(cols):
+                    if (row[j] == 'B' and col_counts[j] == target):
+                        #there are target occurrences of lonely pixels
+                        lonely_pixels += target
+        
+        return lonely_pixels
+    
+class Solution:
+    def findBlackPixel(self, picture: List[List[str]], target: int) -> int:
+        '''
+        just another way,
+        intuition, if a column is a valid, than it contributes N lonely pizels
+        reduction: find number of valid columns
+        
+        valid columns are:
+            1. it has target Bs
+            2. first row with B insertsection col count == n
+            3. 
+        '''
+        count_valid_cols = 0
+        for col in zip(*picture):
+            if col.count('B') != target:
+                continue
+            #find first index in row where there is a B
+            first_row = picture[col.index('B')] #first row with B at this col
+            #must have target B's
+            if first_row.count('B') != target:
+                continue
+            
+            #there must be N of these
+            if picture.count(first_row) != target:
+                continue
+            
+            count_valid_cols += 1
+        
+        return target*count_valid_cols
