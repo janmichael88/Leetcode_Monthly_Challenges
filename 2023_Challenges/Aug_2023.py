@@ -3250,3 +3250,192 @@ class Solution:
             count_valid_cols += 1
         
         return target*count_valid_cols
+
+#############################################
+# 2343. Query Kth Smallest Trimmed Number
+# 22AUG23
+#############################################
+class Solution:
+    def smallestTrimmedNumbers(self, nums: List[str], queries: List[List[int]]) -> List[int]:
+        '''
+        try brute force
+        '''
+        def trim_digit(dig,trim):
+            return dig[-trim:]
+        
+        ans = []
+        
+        for k,trim in queries:
+            temp = []
+            for i,num in enumerate(nums):
+                entry = (int(trim_digit(num,trim)),i)
+                temp.append(entry)
+            
+            #sort
+            temp.sort()
+            ans.append(temp[k-1][1])
+        
+        return ans
+    
+####################
+# 723. Candy Crush
+# 23AUG23
+#####################
+class Solution:
+    def candyCrush(self, board: List[List[int]]) -> List[List[int]]:
+        '''
+        this is similar to Advent of Code 2022 with the stone and chambers problem
+        first loook through board for 3 in a row, horiz, and vert, then clear these with X
+        then replace the zeros with numbers above them
+        it shouldn't matter if i move down a cell at (i,j) where this cell (i,j) is abover another X cell (i',j') where (i',j') is below i,j
+        
+        
+        '''
+        rows = len(board)
+        cols = len(board[0])
+        #need extra board to store crush cells
+        crush_cells = [[False]*cols for _ in range(rows)]
+        
+        def clear_crush_board(board):
+            for i in range(rows):
+                board[i] = [False]*cols
+        
+        def placeZeros(crushed_board,board):
+            for i in range(rows):
+                for j in range(cols):
+                    if crushed_board[i][j] == True:
+                        board[i][j] = 0
+        
+        def imputeCrushes(crushed_board,board):
+            #locate crushes, and put as some char 'X'
+            crush_found = False
+            for i in range(rows):
+                for j in range(cols):
+                    #check cols at this row
+                    if board[i][j] == 0:
+                        continue
+                    curr_col = j
+                    next_col = j + 1
+                    while (next_col < cols) and board[i][next_col] == board[i][j]:
+                        next_col += 1
+                    
+                    #check we have at least three
+                    if next_col - curr_col >= 3:
+                        #impute
+                        crush_found = True 
+                        for k in range(curr_col,next_col):
+                            crushed_board[i][k] = True
+                        
+                    #check rows doing down at this col
+                    curr_row = i
+                    next_row = i + 1
+                    while (next_row < rows) and board[next_row][j] == board[i][j]:
+                        next_row += 1
+                    
+                    #check
+                    if next_row - curr_row >= 3:
+                        crush_found = True
+                        for k in range(curr_row,next_row):
+                            crushed_board[k][j] = True
+            
+            return crush_found
+        
+        #implement drop col, pass in board values along col, and crush locations, then recreate a new array
+        def crush_col(col,board):
+            #imlement as swapping
+            values = []
+            for i in range(rows):
+                values.append(board[i][col])
+            lowest_zero = rows-1
+            for i in range(rows-1,-1,-1):
+                if values[i] == 0:
+                    lowest_zero = max(lowest_zero,i)
+                elif values[i] > 0:
+                    values[i],values[lowest_zero] = values[lowest_zero],values[i]
+                    lowest_zero -= 1
+            
+            #put back into board
+            for i in range(rows):
+                board[i][col] = values[i]
+        
+        
+        while imputeCrushes(crush_cells,board):
+            placeZeros(crush_cells,board)
+            for col in range(cols):
+                crush_col(col,board)
+            clear_crush_board(crush_cells)
+            
+        return board
+
+######################################
+# 68. Text Justification
+# 25AUG23
+######################################
+class Solution:
+    def fullJustify(self, words: List[str], maxWidth: int) -> List[str]:
+        '''
+        read each word line by line and try to fit
+        so we are on some line, and we added words a,b,c but adding d exceeds the maxwidth, it means we can't add d on this line
+        so we start a new line
+        we then need to appropriately add spaces between the words so that they fit
+        if the number of spaces does not evenly divide the words, the empty spots in the left will be assigned more spaces on the right
+        last line should be left justified
+        '''
+        ans = []
+        i = 0
+        N = len(words)
+        
+        #first just try getting words that fit on line
+        def getWords(i,words,maxWidth):
+            curr_line = []
+            curr_size = 0
+            #ith word could be the last word, which doesn't require space, so we don't reflect adding a space here while we checl
+            #we add space when adding its length to curr_size
+            while i < len(words) and curr_size + len(words[i]) <= maxWidth:
+                curr_line.append(words[i])
+                curr_size += len(words[i]) + 1 #include spacce
+                i += 1
+            
+            return curr_line,i
+        
+        
+        def justifyLine(i,line,words,maxWidth):
+            start_length = 0 #we are gonna add the each word's length + 1, 
+            for word in line:
+                start_length += len(word) + 1
+            
+            #remvove space from last word
+            start_length -= 1
+            extra_spaces = maxWidth - start_length
+            
+            #check if final line wor single word
+            if len(line) == 1 or i == len(words):
+                return " ".join(line) + " "*extra_spaces
+            
+            #otherwise distribute spaces in between, excep the last word
+            space_words = len(line) - 1
+            space_per_word = extra_spaces // space_words
+            needs_extra_space = extra_spaces % space_words
+            
+            #add extra spaces
+            for j in range(needs_extra_space):
+                line[j] += " "
+            
+            #add the regular space
+            for j in range(space_words):
+                line[j] += " "*space_per_word
+            
+            return " ".join(line)
+            
+        i = 0
+        ans = []
+        while i < len(words):
+            curr_line,next_i = getWords(i,words,maxWidth)
+            #transform line
+            transformed_line = justifyLine(next_i,curr_line,words,maxWidth)
+            #print(transformed_line)
+            ans.append(transformed_line)
+            i = next_i
+        
+        return ans
+                
