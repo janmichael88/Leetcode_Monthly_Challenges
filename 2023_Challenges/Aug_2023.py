@@ -3439,3 +3439,175 @@ class Solution:
         
         return ans
                 
+#######################################
+# 97. Interleaving String (REVISTED) 
+# 25AUG23
+#######################################
+#nice try again
+class Solution:
+    def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
+        '''
+        if len(s3) > len(s1) + len(s2)
+        
+        say we have indices (i,j,k) going into s1,s2, and s3
+        and we know s3[:k] i.e up to this k is interleaving
+        no we want to examin k+1
+            we can only move to k+1 if s1[i] or s2[j] == s3[k]
+            if there isn't a match we can't make it interleaving
+            otherwise if there is a match, try both
+        '''
+        
+        if len(s3) > len(s1) + len(s2):
+            return False
+        memo = {}
+        
+        def dp(i,j,k):
+            if i >= len(s1):
+                return k == len(s3) and j == len(s2)
+            if j >= len(s2):
+                return k == len(s3) and i == len(s1)
+            if k >= len(s3):
+                #gone all the way
+                return i == len(s1) and j == len(s2)
+            
+            if (i,j,k) in memo:
+                return memo[(i,j,k)]
+            
+
+            if s3[k] == s1[i] or s3[k] == s2[j]:
+                ans = dp(i+1,j,k+1) or dp(i,j+1,k+1)
+                memo[(i,j,k)] = ans
+                return ans
+            else:
+                ans = dp(i,j,k+1)
+                memo[(i,j,k)] = ans
+                return ans
+             
+        return dp(0,0,0)
+    
+class Solution:
+    def isInterleave(self, s1: str, s2: str, s3: str) -> bool:
+        '''
+        if len(s3) > len(s1) + len(s2)
+        
+        say we have indices (i,j,k) going into s1,s2, and s3
+        and we know s3[:k] i.e up to this k is interleaving
+        no we want to examin k+1
+            we can only move to k+1 if s1[i] or s2[j] == s3[k]
+            if there isn't a match we can't make it interleaving
+            otherwise if there is a match, try both
+            
+        k is just the sum of i + j
+        '''
+        
+        if len(s3) != len(s1) + len(s2):
+            return False
+        
+        
+        dp = [[0]*(len(s2) + 1) for _ in range(len(s1) + 1)]
+        
+        #base case fill
+        for i in range(len(s1) + 1):
+            for j in range(len(s2) +1):
+                if i == len(s1):
+                    dp[i][j] = s2[j:] == s3[i+j:]
+                if j == len(s2):
+                    dp[i][j] = s1[i:] == s3[i+j:]
+    
+    
+        #start from base case but 1 away
+        for i in range(len(s1)-1,-1,-1):
+            for j in range(len(s2)-1,-1,-1):
+                a = s1[i] == s3[i+j] and dp[i+1][j]
+                b = s2[j] == s3[i+j] and dp[i][j+1]
+                ans = a or b
+                dp[i][j] = ans
+        
+        return dp[0][0]
+
+##########################################
+# 1128. Number of Equivalent Domino Pairs
+# 26AUG23
+##########################################
+#two pass
+class Solution:
+    def numEquivDominoPairs(self, dominoes: List[List[int]]) -> int:
+        '''
+        this is just a hashmap problem, store domino and its index and count totla number of pairs
+        divid the pairs by two
+        key, (a,b) and (b,a) are the some dominoe
+        '''
+        counts = Counter()
+        
+        for a,b in dominoes:
+            entry = tuple(sorted([a,b]))
+            counts[entry] += 1
+        
+        ans = 0
+        for k,v in counts.items():
+            uniq_pairs = v*(v-1) // 2
+            ans += uniq_pairs
+        
+        return ans
+    
+#count on the fly
+class Solution:
+    def numEquivDominoPairs(self, dominoes: List[List[int]]) -> int:
+        '''
+        this is just a hashmap problem, store domino and its index and count totla number of pairs
+        divid the pairs by two
+        key, (a,b) and (b,a) are the some dominoe
+        '''
+        counts = Counter()
+        ans = 0
+        
+        for a,b in dominoes:
+            entry = tuple(sorted([a,b]))
+            if entry in counts:
+                ans += counts[entry]
+            counts[entry] += 1
+        
+        return ans
+
+
+
+
+#####################################
+# 979. Distribute Coins in Binary Tree
+# 25AUG23
+######################################
+#wasn't a graph problem
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def distributeCoins(self, root: Optional[TreeNode]) -> int:
+        '''
+        its given that we have n coins and n nodes
+        we can only move one coin at a time and we can move from parent to child or from child to parent
+        turn tree into graph
+        if a node a has k coins, and a node b is two steps away, it will alwasy take 2 moves
+        
+        multipoint BFS
+        queue up those with non zero coins
+        '''
+        graph = defaultdict(list)
+        
+        def dfs(parent,child):
+            if not child:
+                return
+            if parent:
+                graph[parent].append(child)
+                graph[child].append(parent)
+            
+            if child.left:
+                dfs(child,child.left)
+            if child.right:
+                dfs(child,child.right)
+        
+        dfs(None,root)
+        
+    
