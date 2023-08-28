@@ -3569,7 +3569,195 @@ class Solution:
         
         return ans
 
+##################
+# 403. Frog Jump
+# 27AUG23
+###################
+#need to cache seen states
+class Solution:
+    def canCross(self, stones: List[int]) -> bool:
+        '''
+        check for zero index
+        '''
+        N = len(stones)
+        
+        seen = set()
+        #temp = bisect.bisect_right(stones,4)
+        #print(stones[temp-1])
+        q = deque([(0,0)]) #state is curr_stone,and prev_jump size
+        while q:
+            curr_stone, prev_jump = q.popleft()
+            if curr_stone == N-1:
+                return True
+            
+            
+            neigh1 = stones[curr_stone] + (prev_jump - 1)
+            neigh2 = stones[curr_stone] + (prev_jump)
+            neigh3 = stones[curr_stone] + (prev_jump + 1)
+            
+            #try finding each of the stones in the array
+            idx1 = bisect.bisect_right(stones,neigh1)
+            #make sure we dont hit the samse stone
+            if idx1 - 1 != curr_stone and stones[idx1-1] == neigh1 and (idx1-1,prev_jump - 1) not in seen:
+                seen.add((idx1-1,prev_jump - 1))
+                q.append([idx1-1,prev_jump - 1])
+                
+            idx2 = bisect.bisect_right(stones,neigh2)
+            #make sure we dont hit the samse stone
+            if idx2 - 1 != curr_stone and stones[idx2-1] == neigh2 and (idx2-1,prev_jump) not in seen:
+                seen.add((idx2-1,prev_jump))
+                q.append([idx2-1,prev_jump])  
+            
+            idx3 = bisect.bisect_right(stones,neigh3)
+            #make sure we dont hit the samse stone
+            if idx3 - 1 != curr_stone and stones[idx3-1] == neigh3 and (idx3-1,prev_jump+1) not in seen:
+                seen.add((idx3-1,prev_jump+1))
+                q.append([idx3-1,prev_jump+1])
+            
+        return False
+    
+#consolidate
+class Solution:
+    def canCross(self, stones: List[int]) -> bool:
+        '''
+        check for zero index
+        '''
+        N = len(stones)
+        
+        seen = set()
+        #temp = bisect.bisect_right(stones,4)
+        #print(stones[temp-1])
+        q = deque([(0,0)]) #state is curr_stone,and prev_jump size
+        while q:
+            curr_stone, prev_jump = q.popleft()
+            if curr_stone == N-1:
+                return True
+            
+            
+            for k in [-1,0,1]:
+                neigh = stones[curr_stone] + (prev_jump + k)
+                #try finding each of the stones in the array
+                idx = bisect.bisect_right(stones,neigh)
+                #make sure we dont hit the samse stone
+                if idx - 1 != curr_stone and stones[idx-1] == neigh and (idx-1,prev_jump + k) not in seen:
+                    seen.add((idx-1,prev_jump + k))
+                    q.append([idx-1,prev_jump + k])
+            
+        return False 
+            
+#top down
+class Solution:
+    def canCross(self, stones: List[int]) -> bool:
+        '''
+        let dp(i) be the answer if we can reach the end
+        then we just check of we can hit try for any neighbors or i
+        pre process stones 
+            mapp its location to its index
+        '''
+        mapp = {dist:i for (i,dist) in enumerate(stones)}
+        memo = {}
+        
+        N = len(stones)
+        #keep track of index and prev_jump
+        def dp(i,prev_jump):
+            if i == N-1:
+                return True
+            if (i,prev_jump) in memo:
+                return memo[(i,prev_jump)]
+            for k in [prev_jump-1,prev_jump,prev_jump+1]:
+                next_stone = stones[i] + k
+                if next_stone in mapp and mapp[next_stone] != i and dp(mapp[next_stone],k):
+                    memo[(i,prev_jump)] = True
+                    return True
+            
+            memo[(i,prev_jump)] = False
+            return False
+        
+        
+        
+        return dp(0,0)
+    
+#one ans for child answers
+class Solution:
+    def canCross(self, stones: List[int]) -> bool:
 
+        mapp = {dist:i for (i,dist) in enumerate(stones)}
+        memo = {}
+        
+        N = len(stones)
+        #keep track of index and prev_jump
+        def dp(i,prev_jump):
+            if i == N-1:
+                return True
+            if (i,prev_jump) in memo:
+                return memo[(i,prev_jump)]
+            ans = False
+            for k in [prev_jump-1,prev_jump,prev_jump+1]:
+                next_stone = stones[i] + k
+                if next_stone in mapp and mapp[next_stone] != i and dp(mapp[next_stone],k):
+                    ans = ans or True
+            
+            memo[(i,prev_jump)] = ans
+            return ans
+        
+        return dp(0,0)
+        
+#bottom up, TLE though, need to do it differently
+class Solution:
+    def canCross(self, stones: List[int]) -> bool:
+        '''
+        for bottom up we notice that the length of stones can only be no greater than 2000
+        so we make dp array 2001 by 2001, the rest should be just the reverse of top down
+        '''
+        mapp = {dist:i for (i,dist) in enumerate(stones)}
+        dp = [[False]*(2001) for _ in range(2001)]
+        N = len(stones)
+        
+        #base case fill
+        for i in range(N):
+            for prev_jump in range(2001):
+                if i == N-1:
+                    dp[i][prev_jump] = True
+                    
+                    
+        for i in range(N-2,-1,-1):
+            for prev_jump in range(min(N,2000)):
+                ans = False
+                for k in [prev_jump-1,prev_jump,prev_jump+1]:
+                    next_stone = stones[i] + k
+                    if next_stone in mapp and mapp[next_stone] != i and dp[mapp[next_stone]][k] == True:
+                        ans = ans or True
+
+                dp[i][prev_jump] = ans
+
+        
+        
+        return dp[0][0]
+    
+#bottom up AC
+class Solution:
+    def canCross(self, stones: List[int]) -> bool:
+        '''
+        just check if we can reach the jth stone from any previous stone i
+        return the last dp entry
+        '''
+        #easy cases, pruning
+        if len(stones) == 1:
+            return True
+        if stones[1] - stones[0] != 1:
+            return False
+        
+        dp = [set() for _ in range(len(stones))]
+        dp[1].add(1)
+        for i in range(2, len(stones)):
+            for j in range(i):
+                if (
+                    stones[i] - stones[j] + 1 in dp[j] or
+                    stones[i] - stones[j] in dp[j] or
+                    stones[i] - stones[j] - 1 in dp[j]
+                ):
+                    dp[i].add(stones[i] - stones[j])
+        return dp[-1]
 
 
 #####################################
@@ -3610,4 +3798,60 @@ class Solution:
         
         dfs(None,root)
         
+    # Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def distributeCoins(self, root: Optional[TreeNode]) -> int:
+        '''
+        if the leaf of a tree has 0 coins (which has an ecess of -1, for example if a left has 1 coin, there is no escess)
+        then we should push a coin from its parent on to the left
+        if a leaf has 4 coins (excess of +3) then we need to move 3 coins from the leaf to its parent
+        so in total, the number of moves from tha leave to or from its parent is
+            excess = abs(num_coins-1)
+            
+            afterwards we never have to consider this leaf again
+            
+        we define dp(node) as the number of coinds in the subbtree at or below this node
+            i.e the number of coins in this subtree - number of nodes
+        
+        then the number of moves we make from this node to and from its children is
+            abs(dp(node.left)) + abs(dp(node.right))
+        
+        after we have an excess of node.val + dp(node.left) + dp(node.right) - 1
+        '''
+        ans = [0]
+        
+        def dp(node):
+            if not node:
+                return 0
+            left = dp(node.left)
+            right = dp(node.right)
+            ans[0] += abs(left) + abs(right) #add up moves fro each node
+            return node.val + left + right - 1 #keep one coin for the root
     
+    
+        dp(root)
+        return ans[0]
+    
+#detailed explanation
+#https://leetcode.com/problems/distribute-coins-in-binary-tree/discuss/432210/Detail-Explanation-Plus-solution
+class Solution:
+  def distributeCoins(self, root):
+
+    self.moves = 0
+    def move(root):
+      if root == None:
+        return 0
+      left = move(root.left)
+      right = move(root.righot)
+      total_coins = left + right + root.val
+      self.moves += abs(total_coins - 1)
+      return total_coins - 1
+    move(root)
+    return self.moves
+
+
