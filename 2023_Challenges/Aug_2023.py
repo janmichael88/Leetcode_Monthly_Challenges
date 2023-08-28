@@ -3840,18 +3840,51 @@ class Solution:
 #detailed explanation
 #https://leetcode.com/problems/distribute-coins-in-binary-tree/discuss/432210/Detail-Explanation-Plus-solution
 class Solution:
-  def distributeCoins(self, root):
+    def distributeCoins(self, root):
 
-    self.moves = 0
-    def move(root):
-      if root == None:
-        return 0
-      left = move(root.left)
-      right = move(root.righot)
-      total_coins = left + right + root.val
-      self.moves += abs(total_coins - 1)
-      return total_coins - 1
-    move(root)
-    return self.moves
+        self.moves = 0
+        def move(root):
+            if root == None:
+                return 0
+            left = move(root.left)
+            right = move(root.righot)
+            total_coins = left + right + root.val
+            self.moves += abs(total_coins - 1)
+            return total_coins - 1
+        move(root)
+        return self.moves
 
 
+##################################
+# 1175. Prime Arrangements
+# 28AUG23
+##################################
+import math
+class Solution:
+    def numPrimeArrangements(self, n: int) -> int:
+        '''
+        fix the prime numbers at their prime indices, 
+        say for an array of size k, there are p primes
+        that mean there are (k-p) non primes
+        we are free to move these (k-p) non primes anywhere
+        so its just p!*(k-p)!
+        
+        in order to this, we need to count the number of primes up to n,
+        we can use seive
+        '''
+        primes = [True]*(n+1)
+        
+        i = 2
+        while i*i <= n:
+            if primes[i] == True:
+                multiples_i = i*i
+                while multiples_i <= n:
+                    primes[multiples_i] = False
+                    multiples_i += i
+            
+            i += 1
+        
+        
+        count_primes = sum(primes[2:])
+        return math.factorial(count_primes)*math.factorial(n - count_primes) % (10**9 + 7)
+        
