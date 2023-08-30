@@ -4130,3 +4130,77 @@ class Solution:
         self.ans = [[""]*cols for _ in range(height)]
         dfs(root,0,0,cols-1)
         return self.ans
+
+############################################
+# 1183. Maximum Number of Ones
+# 29AGU23
+############################################
+#yayyy!
+class Solution:
+    def maximumNumberOfOnes(self, width: int, height: int, sideLength: int, maxOnes: int) -> int:
+        '''
+        define a matrix , M of width by height
+        and submatrix of dimensions sideLength*sideLength, and any submatrix in M, can have at most maxOnes
+        return the number of ones M could have
+        
+        hints. 1. say you choose some cell (i,j) and set to i, then for all cells (x,y) such that i % sideLength == x % sideLength and
+        j % sideLength == y % sideLength
+        chose the cells with the max frequency
+        '''
+        counts = [[0]*width for _ in range(height)]
+        counts_first_square_matrix = []
+        
+        
+        for i in range(sideLength):
+            for j in range(sideLength):
+                count_replicated_Is = 0
+                copy_i = i
+                while copy_i < height:
+                    count_replicated_Is += 1
+                    copy_i += sideLength
+                
+                count_replicated_Js = 0
+                copy_j = j
+                while copy_j < width:
+                    count_replicated_Js += 1
+                    copy_j += sideLength
+                
+                total_replicated_cells = count_replicated_Is*count_replicated_Js
+                counts_first_square_matrix.append(total_replicated_cells)
+                #print(total_replicated_cells)
+                
+        counts_first_square_matrix.sort(reverse = True)
+        #print(counts_first_square_matrix)
+        return sum(counts_first_square_matrix[:maxOnes])
+    
+
+class Solution:
+    def maximumNumberOfOnes(self, width: int, height: int, sideLength: int, maxOnes: int) -> int:
+        '''
+        define a matrix , M of width by height
+        and submatrix of dimensions sideLength*sideLength, and any submatrix in M, can have at most maxOnes
+        return the number of ones M could have
+        
+        hints. 1. say you choose some cell (i,j) and set to i, then for all cells (x,y) such that i % sideLength == x % sideLength and
+        j % sideLength == y % sideLength
+        chose the cells with the max frequency
+        '''
+        counts = [[0]*width for _ in range(height)]
+        counts_first_square_matrix = []
+        
+        
+        for i in range(sideLength):
+            for j in range(sideLength):
+                #for each (i,j) in the first square matrix, count the number of times this cell would be replicated in the other square matrix
+                #the crux of the problem is counting the number of times (i,j) is tiled along Matix M
+                count_Is_along_rows = 1 + (height - i - 1) // sideLength
+                count_Js_along_cols = 1 + (width - j - 1) // sideLength 
+                counts_first_square_matrix.append(count_Is_along_rows*count_Js_along_cols)
+        
+        #get the maxOnes largest
+        #to maximimze the ones, just place them in the the ones have that have the largest
+        #rather if maxOnes == k, get the k largest
+        counts_first_square_matrix.sort(reverse = True)
+        print(counts_first_square_matrix)
+        return sum(counts_first_square_matrix[:maxOnes])
+    
