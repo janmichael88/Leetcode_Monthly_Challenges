@@ -3887,4 +3887,246 @@ class Solution:
         
         count_primes = sum(primes[2:])
         return math.factorial(count_primes)*math.factorial(n - count_primes) % (10**9 + 7)
+
+#######################################################
+# 2483. Minimum Penalty for a Shop
+# 29AUG23
+#######################################################
+class Solution:
+    def bestClosingTime(self, customers: str) -> int:
+        '''
+        customers is log, string of N and Y, where N means no customers come at ith hour, and Y means they cam
+        len(customers) is total hours, could be in range 0 to len(customers)
         
+        if shop closes at the jth hour, define pentalty as
+            for every hour when shop is open and no customers came, penalty goes up by 1
+            for every hour when shop is closed and  customers came, penalty goes up by 1
+        
+        return earliest hour at which shop mus be close to incur the smallest penalty
+        this is just prefix sum and suffix sum
+        for penalty, we need pref count of N and suff count of Y
+        precompute and evalutae
+        '''
+        pref_count_Ns = [0]
+        suff_count_Ys = [0]
+        N = len(customers)
+        
+        for i in range(N):
+            pref_count_Ns.append(pref_count_Ns[-1] + (customers[i] == 'N'))
+            suff_count_Ys.append(suff_count_Ys[-1] + (customers[N-i-1] == 'Y'))
+        
+        #reverse Ys to get suffix
+        suff_count_Ys = suff_count_Ys[::-1]
+        #print(pref_count_Ns)
+        #print(suff_count_Ys)
+        
+        min_penalty = float('inf')
+        earliest_hour = -1
+        for i in range(N+1):
+            curr_penalty = pref_count_Ns[i] + suff_count_Ys[i]
+            if curr_penalty < min_penalty:
+                min_penalty = curr_penalty
+                earliest_hour = i
+        
+        return earliest_hour
+    
+#two pass
+class Solution:
+    def bestClosingTime(self, customers: str) -> int:
+        '''
+        try optimizing by not reversing the suff_count_Ys, 
+        which means we need N+1 elements
+        '''
+        N = len(customers)
+        pref_count_Ns = [0]*(N+1)
+        suff_count_Ys = [0]*(N+1)
+        
+        for i in range(N):
+            pref_count_Ns[i+1] = pref_count_Ns[i] +  (customers[i] == 'N')
+            suff_count_Ys[(N+1 -i) - 2] = suff_count_Ys[(N+1 - i) - 1] + (customers[N-i-1] == 'Y')
+        
+        min_penalty = float('inf')
+        earliest_hour = -1
+        for i in range(N+1):
+            curr_penalty = pref_count_Ns[i] + suff_count_Ys[i]
+            if curr_penalty < min_penalty:
+                min_penalty = curr_penalty
+                earliest_hour = i
+        
+        return earliest_hour
+    
+#two pass constant space
+class Solution:
+    def bestClosingTime(self, customers: str) -> int:
+        '''
+        if we pick an ith hour to close, then the penalty becomes 
+            the number of Ns to the left (prefix Ns)
+            the number of Ys to the right (suffix Ys)
+            
+        
+        intution, this one is very substle
+            notince that in two adjacent cases (if we wish to close at i, then look at i -1)
+            the status of one hour has changed, where the status has been changed from closing hour to open hour
+            this implies that we can record the overall penalty change by calculating the difference betweeen two adjacent cases
+        
+        explanation
+            say we calculate the penalty for some time i, and we need to calculate the next penalty for i + 1
+            we just need to record the differences in penalties to get the penality for i + 1
+        
+        idea: close at hour 0 and calculate initial penalty
+        '''
+        N = len(customers)
+        curr_penalty = 0
+        earliest_hour = 0
+        
+        #calculate penalty by closing at hour zero first
+        for ch in customers:
+            curr_penalty += ch == 'Y'
+            
+        min_penalty = curr_penalty
+            
+        #to find penalty at i, we update by decreasing if Y or increasing if zero
+        #we check by closing at i + 1
+        for i,ch in enumerate(customers):
+            if ch == 'Y':
+                curr_penalty -= 1
+            else:
+                curr_penalty += 1
+                
+            #updates
+            if curr_penalty < min_penalty:
+                min_penalty = curr_penalty
+                earliest_hour = i + 1
+                
+        
+        return earliest_hour
+    
+#one pass
+#turns out we dont need to precompute penalty for closing at the 0th hour
+class Solution:
+    def bestClosingTime(self, customers: str) -> int:
+        '''
+        we dont need to precompute
+        '''
+        N = len(customers)
+        curr_penalty = 0
+        earliest_hour = 0
+            
+        min_penalty = curr_penalty
+            
+        #to find penalty at i, we update by decreasing if Y or increasing if zero
+        #we check by closing at i + 1
+        for i,ch in enumerate(customers):
+            if ch == 'Y':
+                curr_penalty -= 1
+            else:
+                curr_penalty += 1
+                
+            #updates
+            if curr_penalty < min_penalty:
+                min_penalty = curr_penalty
+                earliest_hour = i + 1
+                
+        
+        return earliest_hour
+
+
+        
+#########################################
+# 655. Print Binary Tree
+# 28AUG23
+#########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def printTree(self, root: Optional[TreeNode]) -> List[List[str]]:
+        '''
+        the rules are not quite correct
+        rows should be equal to the height of tree
+        cols should be 2^(neight + 1) - 1
+        root node should be in the top row 
+            grid[0][(cols-2)//2] i.e the middle of the first row
+            so any node below the root is offset (+ or - from the center)
+        
+        if we place a node at grid[r][c]
+            left should be grid[r+1][c-2^(height - r - 1)]
+            right should be grid[r+1][c+2^(height - r - 1)]
+            
+        review notes on binary tree
+        max total numbers of nodes is 2**height - 1
+        max number of nodes at each level (0 indexed) = 2**L
+        
+        if we places a node at (level,c), and if depth = height
+        then we define offset as depth - level - 2
+        then left is placed at (level + 1, c - 2**offet)
+        then right is placed at (level + 1, c + 2**offet )
+        its given in the instructions that this shoudl be the calse, but its off by one
+        '''
+        #find height
+        def getHeight(node):
+            if not node:
+                return 0
+            left = getHeight(node.left)
+            right = getHeight(node.right)
+            return max(left,right) + 1
+        
+        def dfs(node,depth,level,pos):
+            if not node:
+                return
+            #place
+            self.grid[level][pos] = str(node.val)
+            #we need to offset only in column placement
+            #follow the formula, instead of height - r - 1, do height - level - 2
+            offset = depth - level - 2
+            dfs(node.left,depth,level+1,pos - 2**(offset))
+            dfs(node.right,depth,level+1,pos + 2**(offset))
+        
+        #get height
+        height = getHeight(root)
+        
+        #grid, note how cols are 2**(height - 1) insteaf of whats in the problemd escription
+        self.grid = [[""]*(2**height - 1) for _ in range(height)]
+        
+        #start at first row and middle column
+        dfs(root,height,0,(2**height - 1) // 2)
+
+        return self.grid
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def printTree(self, root: Optional[TreeNode]) -> List[List[str]]:
+        '''
+        we just always place the node at middle
+        left = 0, right = (number of nodes at the deepest levelt) - 1
+        then we place at (left + right) // 2
+        '''
+        #find height
+        def getHeight(node):
+            if not node:
+                return 0
+            left = getHeight(node.left)
+            right = getHeight(node.right)
+            return max(left,right) + 1
+        
+        def dfs(node,level,left,right):
+            if not node:
+                return
+            mid = (left + right) // 2
+            self.ans[level][mid] = str(node.val)
+            dfs(node.left,level+1,left,mid-1)
+            dfs(node.right,level+1,mid+1,right)
+            
+        height = getHeight(root)
+        cols = 2**height - 1 #basically the number of nodes at the last level
+        self.ans = [[""]*cols for _ in range(height)]
+        dfs(root,0,0,cols-1)
+        return self.ans
