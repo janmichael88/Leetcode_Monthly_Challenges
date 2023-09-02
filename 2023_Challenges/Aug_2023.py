@@ -4193,6 +4193,16 @@ class Solution:
             for j in range(sideLength):
                 #for each (i,j) in the first square matrix, count the number of times this cell would be replicated in the other square matrix
                 #the crux of the problem is counting the number of times (i,j) is tiled along Matix M
+                '''
+                notes on formula derivation
+                say we are at i, and we know we can tile i by doing i + k*sideLength, where k is an interger
+                but we are bounded by height, so i + k*sideLength < height - 1
+                how many times can we tile is just solving for k
+                k < (height - 1 - i) / sideLength 
+                k += 1 for boundary value case
+                ceiling
+                in fact k must be equal to this
+                '''
                 count_Is_along_rows = 1 + (height - i - 1) // sideLength
                 count_Js_along_cols = 1 + (width - j - 1) // sideLength 
                 counts_first_square_matrix.append(count_Is_along_rows*count_Js_along_cols)
@@ -4204,3 +4214,223 @@ class Solution:
         print(counts_first_square_matrix)
         return sum(counts_first_square_matrix[:maxOnes])
     
+##############################################
+# 2366. Minimum Replacements to Sort the Array
+# 30AUG23
+###############################################
+#bleagh close one....
+class Solution:
+    def minimumReplacement(self, nums: List[int]) -> int:
+        '''
+        we can replace any element in the array with any two elements that sum up to it in one operation
+        return min moves to make array that is sorted in non-decreasing order
+        hints:
+            1. it is opmtial to never make an operatino to the left eleemnt on the array
+            2. start from second to last element, if the current value is bigger than the previous bound, we need to break into smaller pieces
+            so that the smaller one is as larger as posible byt not larger than the previous one
+            
+        so we need to greedibly break up the number and update the previous bounds
+        [3,9,3]
+        we need to breack 9
+        it cannot be more than 3
+        so try [3,6], we still need to break
+        [3,3,3]
+        
+        
+        '''
+        N = len(nums)
+        if N == 1:
+            return 0
+            
+        def breakNumber(num,prev):
+            reduce_to = prev if num % prev == 0 else num % prev
+            steps = num // prev
+            steps -= 1
+            return steps,reduce_to
+            
+        ans = 0
+        prev_bound = nums[-1]
+        
+        for i in range(N-2,-1,-1):
+            if nums[i] > prev_bound:
+                steps,new_prev = breakNumber(nums[i],prev_bound)
+                ans += steps
+                prev_bound = new_prev
+        
+        return ans
+                
+class Solution:
+    def minimumReplacement(self, nums: List[int]) -> int:
+        ''' 
+        Remember: ceil(a/b) = (a+b-1)/b
+        turns out this is just celing division
+        
+        We can only make numbers smaller, not larger. So we should iterate from right to left; this way, we know exactly how small we have to make the current number, because we already know what the number to the right is, and we know the current number has to be smaller than that.
+Suppose we're iterating from right to left. The current number is n, and the right number is prev. We have to consider how to split n into some m numbers (m can be 1), such that...
+a. The largest (and rightmost) of those m numbers must be less than or equal to prev.
+b. The smallest (and leftmost) of these m numbers should probably be as large as possible. Why? Because this will become our next prev, so if it's higher, it will probably be easier to split numbers to the left.
+c. We should probably split as little as we possibly can, since this is an optimization problem on the number of splits.
+This fact is important to us when splitting: for any positive integer n and all 1 <= k <= n, it's possible to represent n as the sum of k numbers, such that all numbers differ by no more than 1.
+
+Why is this relevant? Because as we iterate from right to left, we're going to try to split n into k integers such that the largest is less than or equal to prev, the difference between all numbers is no more than 1, the numbers are as large as possible, and there are as few numbers as possible. Note that the last three conditions go hand-in-hand! If the numbers are as large as they possibly can be such that they're all less than or equal to prev, then there will definitely be as few as possible. The largest k that we can split into will be ceil(n / prev); to understand why, let's break it into two cases:
+
+n % prev == 0 - in other words, prev divides n. In this case, we should break n into as many copies of prev as we can. This will prevent us from lowering prev in our next iteration, and since prev is the highest we can make our new elements without breaking the sorted condition, it also means we're splitting into as few elements as possible.
+n % prev > 0 - in other words, prev does not divide n. In this case, we can't have all elements equal to prev, but we can do the next best thing. We can use one extra element ((n // prev) + 1) than we would in the first case to make the lowest element (n // prev) instead. Because of the property about k that I stated above, this is always doable.
+
+
+https://leetcode.com/problems/minimum-replacements-to-sort-the-array/discuss/2388143/Python-Google-interview-problem-why-strategy-beats-implementation
+
+
+        '''
+        N = len(nums)
+        if N == 1:
+            return 0
+
+        def breakNumber(num,prev):
+            #even break, just make them prev
+            num_elements = ceil(num / prev)
+            steps = num_elements - 1
+            return steps, num // num_elements
+        
+        ans = 0
+        prev_bound = nums[-1]
+        
+        for i in range(N-2,-1,-1):
+            steps,new_prev = breakNumber(nums[i],prev_bound)
+            ans += steps
+            prev_bound = new_prev
+        
+        return ans
+                
+class Solution:
+    def minimumReplacement(self, nums: List[int]) -> int:
+        n = len(nums)
+        ret = 0
+        prev = nums[n - 1]
+        for ind in range(n - 2, -1, -1):
+            num = nums[ind]
+            k = ceil(num / prev)
+
+            # (k - 1) is the minimum number of times you'll have to split
+            ret += k - 1
+            # (num // k) is the maximal number you can create from splitting (k - 1) times
+            prev = num // k
+
+        return ret
+
+#########################################################
+# 1326. Minimum Number of Taps to Open to Water a Garden
+# 31AUG23
+#########################################################
+class Solution:
+    def minTaps(self, n: int, ranges: List[int]) -> int:
+        '''
+        we have points in a garden in range [0,n] inclusive, length of garden is n
+        we have ranges array of size n+1, indicating location of taps
+        we read ranges[i] meaning the ith trap can water the inclusive area [i - ranges[i], i + ranges[i]]
+        
+        return min number of tap that should be open to span n
+        
+        try dp first
+        keep track of position i and ranges covered
+        say i'm at i = 0, i can cover all taps betwen [-ranges[i] and ranges[i]] using 1 tap
+        if i move to i = 1, could i have covered this if i started from any j less than i?
+        find minimum from here if we can't reach it increase
+        
+        '''
+        memo = {}
+        def dp(i):
+            if i <= 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = float('inf')
+            for j in range(i,-1,-1):
+                #check if we can reach from any previous j
+                if ranges[j] > 0 and ranges[j] + j >= i:
+                    #solve for the problem j - ranges[j] + 1 more interval
+                    ans = min(ans, 1 + dp(j - ranges[j]))
+            
+            memo[i] = ans
+            return ans
+        
+        temp = dp(n)
+        return temp if temp != float('inf') else -1
+
+class Solution:
+    def minTaps(self, n: int, ranges: List[int]) -> int:
+        '''
+        bottom up, keep track of the coverage of each tap and try to extend if we can reach it,
+        take smallest answer at each extension
+        
+        dp(i) represents the minimum number of tpas needed to water garden from 0 to i
+        if we are i, we can have range [i - ranges[i] to i + ranges[j]]
+        now imagine a j in this range, if we open this jth tap, we extend by dp(j) + 1 and we can cover up to i + ranges[j] if we include this i and j
+        or the other way 1 + tap start, it doesn't really matter
+
+        be sure to check out video stitching LC 1024
+
+        hard part because if we land on an i where ranges[i] == 0, we can't water antyhing
+        different from jump game where we are good if we land on an i
+        '''
+        dp = [float('inf')] * (n + 1)
+        dp[0]  = 0
+
+        for i in range(n+1):
+            tap_start = max(0, i - ranges[i])
+            tap_end = min(n, i + ranges[i])
+            for j in range(tap_start,tap_end + 1):
+                dp[j] = min(dp[j], 1+dp[tap_start])
+        
+        if dp[n] == float('inf'):
+            return -1
+        
+        return dp[n]
+    
+class Solution:
+    def minTaps(self, n: int, ranges: List[int]) -> int:
+        '''
+        sorting and dp
+        start from all taps that at least cover 0,
+        then for each of these, open up taps until we get to n, minimizing along the way
+        '''
+        #get intervals and sort
+        intervals = []
+        N = len(ranges)
+        for i in range(N):
+            left = max(0, i - ranges[i])
+            right = min(n, i + ranges[i])
+            intervals.append([left,right])
+        
+        intervals.sort(key = lambda x: x[0])
+        
+        memo = {}
+        
+        def dp(i,memo,intervals):
+            #if we have reached an interval where the end is n, we know at least need to use this ith tap
+            if intervals[i][1] == n:
+                return 1
+            #gone too far
+            if i == len(intervals):
+                return float('inf')
+            if i in memo:
+                return memo[i]
+            ans = float('inf')
+            for j in range(i+1,len(intervals)):
+                if intervals[j][0] > intervals[i][1]: #meaning we can't reach j from i
+                    break
+                ans = min(ans, 1 + dp(j,memo,intervals))
+            
+            memo[i] = ans
+            return ans
+        
+        
+        ans = float('inf')
+        for i in range(n):
+            if intervals[i][0] == 0:
+                ans = min(ans, dp(i,memo,intervals))
+        
+        
+        if ans == float('inf'):
+            return -1
+        return ans
