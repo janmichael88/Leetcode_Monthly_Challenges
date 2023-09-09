@@ -273,7 +273,6 @@ class Solution:
         c.next = b
         return head
 
-#recursively is tricky
 # Definition for singly-linked list.
 # class ListNode:
 #     def __init__(self, val=0, next=None):
@@ -298,7 +297,7 @@ class Solution:
         node.next = None
         return last
 
-    #dervere first N elements revursively
+    #reverse first N elements revursively
     def reverseN(self, node,n):
         #one left
         if n == 1:
@@ -309,6 +308,113 @@ class Solution:
         node.next = self.succ
         return last
         
+#without keeping succ
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def reverseBetween(self, head: Optional[ListNode], left: int, right: int) -> Optional[ListNode]:
+        '''
+        we dont need to store successort because head.next.next will always point ot is
+        '''
+        if head == None or head.next == None:
+            return head
+        if left == right:
+            return head
+        
+        if left > 1:
+            head.next = self.reverseBetween(head.next,left -1, right - 1)
+            return head
+        
+        newHead = self.reverseBetween(head.next,1,right -1)
+        tail = head.next.next
+        head.next.next = head
+        head.next = tail
+        return newHead
+
+############################################
+# 1019. Next Greater Node In Linked List
+# 07SEP23
+#############################################
+#almost!
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def nextLargerNodes(self, head: Optional[ListNode]) -> List[int]:
+        '''
+        if we had the array we could just work backwards and update the max
+        its next greater, not greater to the right!
+        need to use motonic stack in decreasing order
+        '''
+        curr = head
+        ans = []
+        stack = []
+        
+        while curr:
+            #empty stack we append
+            if not stack:
+                stack.append(curr.val)
+            #maintain decreassing
+            elif stack and stack[-1] > curr.val:
+                stack.append(curr.val)
+            else:
+                temp = []
+                while stack and stack[-1] < curr.val:
+                    num = stack.pop()
+                    if num < curr.val:
+                        temp.append(curr.val)
+                temp.append(0)
+                ans.extend(temp[::-1])
+                stack.append(curr.val)
+            
+            curr = curr.next
+        
+        return ans[::-1]
+            
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def nextLargerNodes(self, head: Optional[ListNode]) -> List[int]:
+        '''
+        push values into an array 
+        then keep montonic decreaing stack of indices
+        when the value we are trying to push is bigger than the top of the stack,
+        then every index in the stack has next greater value == to the one we are trying to push
+        dont forget this paradigm!
+        motonic stack at least
+        '''
+        nums = []
+        curr = head
+        while curr:
+            nums.append(curr.val)
+            curr = curr.next
+            
+        N = len(nums)
+        ans = [0]*N
+        
+        stack = []
+        
+        #push indicies
+        for i,num in enumerate(nums):
+            while stack and nums[stack[-1]] < num:
+                #get the index
+                index = stack.pop()
+                #this values next greater is num
+                ans[index] = num
+            
+            stack.append(i)
+        
+        return ans
+
 
 ############################################
 # 1199. Minimum Time to Build Blocks
@@ -411,4 +517,62 @@ class Solution:
         
         return dp(0,1)
         
+######################################
+# 118. Pascal's Triangle (REVISTED)
+# 08SEP23
+######################################
+#top down
+class Solution:
+    def generate(self, numRows: int) -> List[List[int]]:
+        '''
+        dp(i,j) = dp(i-1,j) + dp(i-1,j+1)
+        '''
+        memo = {}
         
+        def dp(i,j):
+            if i < 0:
+                return 0
+            if (i,j) == (0,0):
+                return 1
+            if i == j:
+                return 1
+            if j == 0:
+                return 1
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = dp(i-1,j-1) + dp(i-1,j)
+            memo[(i,j)] = ans
+            return ans
+        
+        
+        ans = []
+        for i in range(numRows):
+            level = []
+            for j in range(i+1):
+                level.append(dp(i,j))
+            
+            ans.append(level)
+        
+        return ans
+    
+#bottom up
+class Solution:
+    def generate(self, numRows: int) -> List[List[int]]:
+        '''
+        bottom up
+        '''
+        
+        ans = [[1]]
+        
+        for i in range(numRows-1):
+            prev_row = ans[-1]
+            next_row = [1]
+            for j in range(len(prev_row) - 1):
+                next_row.append(prev_row[j] + prev_row[j+1])
+            next_row.append(1)
+            ans.append(next_row)
+        
+        return ans
+    
+#every time i solve this i alwasy solve it a different way!
+
