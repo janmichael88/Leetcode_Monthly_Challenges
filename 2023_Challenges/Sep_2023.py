@@ -415,6 +415,36 @@ class Solution:
         
         return ans
 
+#one pass
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def nextLargerNodes(self, head: Optional[ListNode]) -> List[int]:
+        '''
+        no need to push answers to an integer array, we can just update the stack and answer on the flow
+        we need to keep track the index and number when using stack, 
+        we do this by keeping track of the count
+        '''
+        ans = []
+        stack = []
+        count = 0
+        
+        curr = head
+        while curr:
+            ans.append(0) #same as init'ing the 0s array
+            while stack and curr.val > stack[-1][1]:
+                curr_idx, curr_val = stack.pop()
+                ans[curr_idx] = curr.val
+            
+            stack.append([count,curr.val])
+            count += 1
+            curr = curr.next
+        
+        return ans 
+
 
 ############################################
 # 1199. Minimum Time to Build Blocks
@@ -576,3 +606,57 @@ class Solution:
     
 #every time i solve this i alwasy solve it a different way!
 
+########################################
+# 1252. Cells with Odd Values in a Matrix
+# 09SEP23
+########################################
+class Solution:
+    def oddCells(self, m: int, n: int, indices: List[List[int]]) -> int:
+        '''
+        can i just simulate each indicies operation?
+        optimize?
+        if i have row r that im adding 1 to, then all columns go up by 1
+        '''
+        mat = [[0]*n for _ in range(m)]
+        for r,c in indices:
+            #do the rth row
+            for col in range(n):
+                mat[r][col] += 1
+            
+            for row in range(m):
+                mat[row][c] += 1
+        
+        ans = 0
+        for i in range(m):
+            for j in range(n):
+                ans += (mat[i][j] % 2) != 0
+        
+        return ans
+    
+#speed up (O(M*N + l))
+class Solution:
+    def oddCells(self, m: int, n: int, indices: List[List[int]]) -> int:
+        '''
+        only count row index and col index that appear odd tims
+        then onle cells (i,j) that are odd will appear odd number of times
+        use XOR to flipp, basically just getting parity from this
+        imagine slapping 1s along some row i, these have parity odd
+        if we do that same i, the are no longer 1
+        now what about some column j, well it depends on if the parity of i was odd or evven!
+        if some j intersected with an i, where i was aready odd, then it switches back to even!
+        
+        so we only want (i,j) that are odd
+        '''
+        rows,cols = [0]*m,[0]*n
+        
+        for r,c in indices:
+            rows[r] ^= True
+            cols[c] ^= True
+        
+        ans = 0
+        for i in range(m):
+            for j in range(n):
+                ans += rows[i] ^ cols[j]
+        
+        return ans
+    
