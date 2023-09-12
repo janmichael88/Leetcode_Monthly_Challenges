@@ -546,6 +546,177 @@ class Solution:
         
         
         return dp(0,1)
+    
+
+#top down
+class Solution:
+    def minBuildTime(self, blocks: List[int], split: int) -> int:
+        '''
+        we need at least n workers to build all blocks, and we initially have on worker
+        we can imagine the splitting as a tree, and we can split in any number of ways to produce an assortment of trees
+        the depth would be the number of splits taken to get that worker
+        so for any leaf node, the splitting time would be depth*split, and only leaf nodes can actually build a block
+        so for any leaf node, the total time taken by the worker (designated as that leaf node) would be blocks[i] + depth[i]*split
+        so the total time would be max(blocks[i] + depth[i]*split) for all in in [0,N-1], FOR a given tree
+        which means we have to enumrate all trees, find the max(blocks[i] + depth[i]*split) for that tree and take the minimum
+        i.e split until we get N leaf nodes
+        intuition:
+            the block which takes the max time ot build should be assigned to the leaf node with the smllest depth
+            the leaf with the highed depth should be assigend to the block with min time
+            this leads to idea of sorting
+        
+        the best tree structure for the input depends on three and the hints suggest we have to look for all possbile optiosns
+        each worker can either work -> continue as leaf node
+                            split -> become an itnernal node
+                            
+        assume we had dp(b,w) which give the minimum for building the first b blocks with w workers
+        first sort decending
+        after buildingn block b, we try b+1
+        so we need to solve dp(0,1)
+        base cases
+            b == N, build all blocks, so no time
+            w = 0, no workers, return larget value
+            w >= N - b, we have enough workers, just reutrn blocks[b]
+        number blocks remaing would be len(blocks) - b
+        if we have N workers, meaning we can build them all, the answer is just the max of blocks, but since we sorted, its just blocks[b]
+        
+        transsition part:
+            if use this bth work to build blocks b, we need to go on to dp(b+1,w-1)
+            since we can do both we take the maximum time
+            option1 = max(blocks[b], dp(b+1,w-1))
+            
+            we can split here
+            option2 = split + dp(b, min(2*w, N-b)), 
+            
+            then we just take min of option2 or option1
+        '''
+        n = len(blocks)
+
+        # Sort the blocks in descending order
+        blocks.sort(reverse=True)   
+
+        # dp[i][j] represents the minimum time taken to 
+        # build blocks[i~n-1] block using j workers
+        dp = [[-1] * (n + 1) for _ in range(n)]
+
+        def solve(b, w):
+            # Base cases
+            if b == n:
+                return 0
+            if w == 0:
+                return float('inf')
+            if w >= n - b:
+                return blocks[b]
+
+            # If the sub-problem is already solved, return the result
+            if dp[b][w] != -1:
+                return dp[b][w]
+
+            # Two Choices
+            work_here = max(blocks[b], solve(b + 1, w - 1))
+            split_here = split + solve(b, min(2 * w, n - b))
+
+            # Store the result in the dp array
+            dp[b][w] = min(work_here, split_here)
+            return dp[b][w]
+
+        # For block from index 0, with 1 worker
+        return solve(0, 1)
+    
+#note using dictionary ges MLE
+class Solution:
+    def minBuildTime(self, blocks: List[int], split: int) -> int:
+        n = len(blocks)
+
+        # Sort the blocks in descending order
+        blocks.sort(reverse=True)   
+        
+        memo = {}
+        def dp(b, w):
+            # Base cases
+            if b == n:
+                return 0
+            if w == 0:
+                return float('inf')
+            if w >= n - b:
+                return blocks[b]
+
+            # If the sub-problem is already solved, return the result
+            if (b,w) in memo:
+                return memo[(b,w)]
+
+            # Two Choices
+            work_here = max(blocks[b], dp(b + 1, w - 1))
+            split_here = split + dp(b, min(2 * w, n - b))
+
+            # Store the result in the dp array
+            ans = min(work_here, split_here)
+            memo[(b,w)] = ans
+            return ans
+
+        # For block from index 0, with 1 worker
+        return dp(0, 1)
+    
+#bottom up
+class Solution:
+    def minBuildTime(self, blocks: List[int], split: int) -> int:
+        '''
+        bottom up
+        '''
+        n = len(blocks)
+        blocks.sort(reverse = True)
+        
+        dp = [[0]*(n+1) for _ in range(n+1)]
+        
+        for b in range(n+1):
+            for w in range(n+1):
+                if b == n:
+                    dp[b][w] = 0
+                if w == 0:
+                    dp[b][w] = float('inf')
+                    
+        #starting from n - 1, one away from base case
+        #for w start at n
+        for b in range(n - 1, -1, -1):
+            #we stop just before 1, if we wante dp(0,0) go one more step
+            for w in range(n, 0, -1):
+                if w >= n - b:
+                    #need to handle this boundary condition while traversing
+                    dp[b][w] = blocks[b]
+                    continue
+                workHere = max(blocks[b], dp[b + 1][w - 1])
+                split_here = split + dp[b][min(2 * w, n - b)]
+                
+                # Store the result in the dp array
+                dp[b][w] = min(workHere, split_here)
+        
+
+        return dp[0][1]
+    
+#optimal merge pattern
+class Solution:
+    def minBuildTime(self, blocks: List[int], split: int) -> int:
+        '''
+        concept is known as the optimal merge patern
+        we aleady know that leaf nodes at the deppest depth should be assigned blocks with mnimal time
+        and leaf nodes nearest the root should be assigned blocks that take maximum time
+        say we have blocks [10,50,25] with split 7
+        we need to split
+        we find the the next greatest two blocks [10,25], then its just 7 + max(10,25)
+        imagine accimpulate the time in the each root node, split left and right
+        the we just take the next two minimums
+             note we cant just sort, keep taking two at time and incrementing
+        need to use heap to keep track of the minimums and take the next max
+        '''
+        heapq.heapify(blocks)
+        
+        while len(blocks) > 1:
+            first_min = heapq.heappop(blocks)
+            second_min = heapq.heappop(blocks)
+            new_node = split + max(first_min,second_min)
+            heapq.heappush(blocks,new_node)
+        
+        return blocks[0]
         
 ######################################
 # 118. Pascal's Triangle (REVISTED)
@@ -660,3 +831,109 @@ class Solution:
         
         return ans
     
+#############################################################
+# 1359. Count All Valid Pickup and Delivery Options (REVISITED)
+# 10SEP23
+#############################################################
+#other way around
+class Solution:
+    def countOrders(self, n: int) -> int:
+        '''
+        keep track of picked and delieveted
+        '''
+        mod = 10**9 + 7
+        memo = {}
+        def dp(picked, delivered):
+            if picked == n and delivered == n:
+                return 1
+            if picked > n or delivered > n or picked > delivered:
+                return 0
+            if (picked,delivered) in memo:
+                return memo[(picked,delivered)]
+            
+            ans = 0
+            #get num ways for picking
+            picking = (n-picked)*dp(picked+1,delivered)
+            ans += picking
+            ans %= mod
+            
+            #beause when picking i use up a spot
+            delivering = (delivered - picked + 1)*dp(picked,delivered+1)
+            ans += delivering
+            ans %= mod
+            memo[(picked,delivered)] = ans
+            return ans
+        
+        
+        a = (dp(0,0))
+        return a
+    
+class Solution:
+    def countOrders(self, n: int) -> int:
+        '''
+        there are going to be 2n spots
+        things to note, a pickup cannot happen at the end and a dropoff cannot happend at the beginning
+        try n = 2, so there are 4 spots
+        [_,_,_,_]
+        i can place P1, anywhere except the end
+        so for the first pickup, i can place it at 3 positions
+        if i cant to drop it off, i need to place it any of the available positions that come after where i had place P1
+        so i place P1 at some index i, then i can place D1 at (4-i - 1) positions
+        which means there are in 3*(4 - i + 1) for a a pair
+        need to keep track of the number of picked
+        
+        for picks ups, we can place N picks in any 2*N - 1 spots (everythign except the last)
+        for delivers we can only place them after we have picked up the ith 1
+        '''
+        memo = {}
+        
+        def dp(i):
+            if i > n:
+                return 1
+            if i in memo:
+                return memo[i]
+            #number of wasy to place the ith pick is i*dp(i+1) to get the total number of ways
+            # to place a deliver, we have 2*i - 1 spots
+            # so its just i*(2*i - 1)
+            ans = i*(2*i - 1)*dp(i+1)
+            ans %= 10**9 + 7
+            memo[i] = ans
+            return ans
+        
+        return dp(1)
+    
+#############################################################
+# 1282. Group the People Given the Group Size They Belong To
+# 11SEP23
+#############################################################
+class Solution:
+    def groupThePeople(self, groupSizes: List[int]) -> List[List[int]]:
+        '''
+        there can be multiple answers and we can return any of them
+        map group size to ids, the greedinly make a grop
+        '''
+        group_size_to_id = defaultdict(list)
+        for i,size in enumerate(groupSizes):
+            group_size_to_id[size].append(i)
+        
+        
+        ans = []
+        #split each entry
+        for size,ids in group_size_to_id.items():
+            curr_size = len(ids)
+            #split ids into the correct size
+            for i in range(0,curr_size,size):
+                ans.append(ids[i:i+size])
+        
+        return ans
+    
+#can also do one pass!
+class Solution:
+    def groupThePeople(self, groupSizes: List[int]) -> List[List[int]]:
+        groups = defaultdict(list)
+        res = []
+        for pid, group_size in enumerate(groupSizes):
+            groups[group_size].append(pid)
+            if len(groups[group_size]) == group_size:
+                res.append(groups.pop(group_size))
+        return res
