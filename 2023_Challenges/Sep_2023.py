@@ -937,3 +937,142 @@ class Solution:
             if len(groups[group_size]) == group_size:
                 res.append(groups.pop(group_size))
         return res
+    
+###########################################
+# 358. Rearrange String k Distance Apart
+# 12SEP23
+###########################################
+#close one! 56/64
+class Solution:
+    def rearrangeString(self, s: str, k: int) -> str:
+        '''
+        note there can multiple answers
+        must be a greedy solution
+        say i have count k for a letter
+        each has to be at least k away from each other
+        get counts of chars, and greddily try to place them
+        so we have: aabbcc
+        a : 2
+        b : 2
+        c : 2
+        
+        does it make sense to greedily put them k distance apart?
+        a b c a b c
+        '''
+        if k == 0:
+            return s
+        counts = Counter(s)
+        #sort them decreasinly
+        sorted_counts = sorted([(v,k) for k,v in counts.items()],reverse = True)
+        N = len(s)
+        ans = [""]*N
+        
+        start = 0
+        for count,ch in sorted_counts:
+            while start < N and count > 0:
+                ans[start] = ch
+                count -= 1
+                start += k
+            #impossible
+            if count > 0:
+                return ""
+
+            #find next empty spot
+            for i in range(N):
+                if ans[i] == "":
+                    start = i
+                    break
+        
+        return "".join(ans)
+            
+class Solution:
+    def rearrangeString(self, s: str, k: int) -> str:
+        '''
+        idea is to use priority queue to retreive the most frequent elements
+        and to also is a deque to control when we push back into the queue
+        
+        intuition:
+            if we place a character at index x, then then next time we can place that character must be at x + K
+            which means that all characters in between x and x + k are unique
+            so we need to start with characters that have the highest frequency
+            use max heap and decrement char counts, push into heap to alwasy find the max
+            
+        we place at the current index, but we can't simply put the the char we just pushed back into the heap, because we might violate the K rule
+        for this when we add to our answer, we also push into a deque
+        when deque becomes size k, we know the char at the front of the q can be put back in
+            not it cannot simply the the size of deque, it must be the case that the index from where the char at the front is more than k away
+        '''
+        freq = [0] * 26
+
+        # Store the frequency for each character.
+        for char in s:
+            freq[ord(char) - ord('a')] += 1
+
+        free = []
+
+        # Insert the characters with their frequencies in the max heap.
+        for i in range(26):
+            if freq[i]:
+                heapq.heappush(free, (-freq[i], i))
+
+        ans = ""
+
+        # This queue stores the characters that cannot be used now.
+        busy = []
+
+        while len(ans) != len(s):
+            index = len(ans)
+
+            # Insert the character that could be used now into the free heap.
+            if busy and (index - busy[0][0]) >= k:
+                _, char = busy.pop(0)
+                heapq.heappush(free, (-freq[char], char))
+
+            # If the free heap is empty, it implies no character can be used at this index.
+            if not free:
+                return ""
+
+            _, currChar = heapq.heappop(free)
+            ans += chr(currChar + ord('a'))
+
+            # Insert the used character into busy queue with the current index.
+            freq[currChar] -= 1
+            if freq[currChar] > 0:
+                busy.append((index, currChar))
+
+        return ''.join(ans)
+    
+#we can also do the variant where we check the size of the deque
+class Solution:
+    def rearrangeString(self, s: str, k: int) -> str:
+        #another way, using len(q) variant to checck whether we can add back
+        if k == 0:
+            return ""
+        
+        max_heap = [(-freq,key) for key,freq in Counter(s).items()]
+        heapq.heapify(max_heap)
+        waiting = deque([])
+        
+        ans = ""
+        
+        while max_heap:
+            curr_freq, curr_char = heapq.heappop(max_heap)
+            ans += curr_char
+            waiting.append((curr_freq+1,curr_char))
+            
+            if len(waiting) < k:
+                continue
+            
+            #add back into heap from q
+            curr_freq, curr_char = waiting.popleft()
+            if curr_freq < 0:
+                heapq.heappush(max_heap, (curr_freq,curr_char))
+        
+        #before returning check if we have anything in the waitilist
+        #i.e any unused characters
+        while waiting:
+            curr_freq,curr_char = waiting.popleft()
+            if curr_freq < 0:
+                return ""
+        
+        return ans
