@@ -1076,3 +1076,111 @@ class Solution:
                 return ""
         
         return ans
+    
+##############################################
+# 135. Candy (REVISTED)
+# 13SEP23
+##############################################
+#nice try
+#but we need to keep checking if distribution is valid
+class Solution:
+    def candy(self, ratings: List[int]) -> int:
+        '''
+        initally all children can have one candy
+        [1,1,1]
+        ratigins
+        [1,0,2]
+        
+        start with first child
+        1 < 0 for raitings, up 1 by 1
+        [2,1,1]
+        [2,1,2]
+        
+        '''
+        N = len(ratings)
+        candies = [1]*N
+        
+        for i in range(N):
+            #first one
+            if i == 0 and (i+1) < N:
+                #bigger raiting and not enouhg candies
+                if ratings[i] > ratings[i+1] and candies[i] <= candies[i+1]:
+                    candies[i] = candies[i+1] + 1
+            #ending 
+            elif i == N-1 and (i-1) >= 0:
+                if ratings[i] > ratings[i-1] and candies[i] <= candies[i-1]:
+                    candies[i] = candies[i-1] + 1
+            else:
+                if ratings[i] > ratings[i-1] and ratings[i] > ratings[i+1] and candies[i-1] >= candies[i] and candies[i+1] >= candies[i]:
+                    candies[i] = max(candies[i-1],candies[i+1]) + 1
+    
+        return sum(candies)
+                
+#top down
+class Solution:
+    def candy(self, ratings: List[int]) -> int:
+        '''
+        dp
+        if ratings[i] > ratings[i+1]
+        then candies[i] should be > candies[i+1]
+        which meand candies[i] is also going to greater than any other candies to the right
+        same could be said checking to the left
+        so for each 
+        '''
+        memoleft = {}
+        memoright = {}
+        N = len(ratings)
+        
+        def dpLeft(i):
+            if i == 0:
+                return 1
+            if i in memoleft:
+                return memoleft[i]
+            ans = 1
+            if ratings[i] > ratings[i-1]:
+                ans = dpLeft(i-1) + 1
+            memoleft[i] = ans
+            return ans
+        
+        
+        def dpRight(i):
+            if i == N-1:
+                return 1
+            if i in memoright:
+                return memoright[i]
+            ans = 1
+            if ratings[i] > ratings[i+1]:
+                ans = dpRight(i+1) + 1
+            memoright[i] = ans
+            return ans
+        
+        
+        ans = 0
+        for i in range(N):
+            ans += max(dpLeft(i),dpRight(i))
+        
+        return ans
+    
+#bottom up
+class Solution:
+    def candy(self, ratings: List[int]) -> int:
+
+        N = len(ratings)
+        rightwards = [1]*N
+        leftwards = [1]*N
+        
+        #left to right
+        for i in range(1,N):
+            if ratings[i] > ratings[i-1]:
+                rightwards[i] = rightwards[i-1] + 1
+        
+        #right to left
+        for i in range(N-2,-1,-1):
+            if ratings[i] > ratings[i+1]:
+                leftwards[i] = leftwards[i+1] + 1
+                
+        res = 0
+        for i in range(N):
+            res += max(leftwards[i],rightwards[i])
+        
+        return res
