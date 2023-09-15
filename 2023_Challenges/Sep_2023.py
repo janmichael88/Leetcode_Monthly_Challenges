@@ -1184,3 +1184,198 @@ class Solution:
             res += max(leftwards[i],rightwards[i])
         
         return res
+    
+###########################################
+# 2182. Construct String With Repeat Limit
+# 14SEP23
+###########################################
+class Solution:
+    def repeatLimitedString(self, s: str, repeatLimit: int) -> str:
+        '''
+        given string s and repeatLimit, 
+        use chars of s such that no letter appears more than repeatLimit times in a row
+        we do not need to use all chars from s, we cannot use more than the counts in s
+        need to keep track of the largest lexographical character
+        but you can't simply discard a char if we hit the repeat limits
+        so if we hit the repeatlimit while in pq, we need to cache tht char somehwere, then put it back in the heap
+        we dont need to wait, we can just alternate between the two largest chars
+        '''
+        counts = [0]*26
+        for ch in s:
+            counts[ord(ch) - ord('a')] += 1
+        
+        largest_chars = [-(i+1) for i in range(26) if counts[i] != 0] #one based indexing to allow for ordering
+        heapq.heapify(largest_chars)
+        
+        ans = ""
+        waiting = -1
+        
+        while largest_chars:
+            first_largest = -heapq.heappop(largest_chars) - 1
+            
+            #use up first largest as much as we can
+            repeat = 0
+            while repeat < repeatLimit and counts[first_largest] > 0:
+                ans += chr(ord('a') + first_largest)
+                repeat += 1
+                counts[first_largest] -= 1
+            
+            #no more of firt largest
+            if counts[first_largest] == 0:
+                continue
+            #otherwise we can break this wit the second largest
+            else:
+                if not largest_chars:
+                    return ans
+                second_largest = -heapq.heappop(largest_chars) - 1
+                ans += chr(ord('a') + second_largest)
+                counts[second_largest] -= 1
+                
+                #add back in
+                if counts[second_largest] > 0:
+                    heapq.heappush(largest_chars, -(second_largest + 1))
+                    
+                #dont forget first largest
+                heapq.heappush(largest_chars, -(first_largest +1))
+        
+        
+        return ans
+            
+#########################################
+# 332. Reconstruct Itinerary
+# 14SEP23
+#########################################
+#we can't just greedily take the smallest lexographical neighbor
+#nice try though!
+class Solution:
+    def findItinerary(self, tickets: List[List[str]]) -> List[str]:
+        '''
+        this is not just top sort
+        note, we also want the itinerary that has smallest lexographicla order
+        tickets are directed
+        if the there were no cycles, we just return the traversal, the issue is that there could be cycles 
+        we need to visit every EDGE, exactly once
+        concept is called Eulerian Path
+        
+        remove edges while we traverse
+        when making the adjlist sort them, and when taking that edge just pop from the front
+        cant just greedily take the next lexographical on
+        '''
+        graph = defaultdict(list)
+        for u,v in tickets:
+            graph[u].append(v)
+        for node,neighs in graph.items():
+            graph[node] = sorted(neighs)
+        
+        ans = []
+        
+        def dfs(node):
+            ans.append(node)
+            
+            #has edges
+            if graph[node]:
+                dfs(graph[node].pop(0))
+        
+        dfs('JFK')
+        return ans
+        
+#need to use backtracking after sorting
+class Solution:
+    def findItinerary(self, tickets: List[List[str]]) -> List[str]:
+        '''
+        remove edges while we traverse
+        when making the adjlist sort them, and when taking that edge just pop from the front
+        cant just greedily take the next lexographical on
+        we need to backtrack, 
+        the ending conditions is when we have we touched all the edges
+        
+        for each node, we keep track of a visited set if we can touch all edges from this node
+        if there are N edges, we need to take them all, which means there will be N+1 nodes in the path
+        start by adding JFK to the curr path, then recursively try all neighbors until we get N+1 nodes in the path
+        we return True once we get N+1 nodes, and for each call, check if we can get a valid path
+        otherwise return False
+        '''
+        graph = defaultdict(list)
+        for u,v in tickets:
+            graph[u].append(v)
+        
+        visited_edges = {}
+        for node,neighs in graph.items():
+            graph[node] = sorted(neighs)
+            visited_edges[node] = [False]*len(neighs)
+        
+        self.ans = []
+        N = len(tickets)
+        
+        def dfs(node,path):
+            if len(path) == N+1:
+                self.ans = path[:]
+                return True
+            
+            for i,neigh in enumerate(graph[node]):
+                if not visited_edges[node][i]:
+                    #mark as this being visited fomr this node to its neigh, we mark neigh as visit
+                    visited_edges[node][i] = True
+                    if dfs(neigh, path + [neigh]):
+                        return True
+                    visited_edges[node][i] = False
+                
+            
+            
+            return False
+        
+        dfs('JFK',['JFK'])
+        return self.ans
+                
+#Hierholzer algo
+class Solution:
+    def findItinerary(self, tickets: List[List[str]]) -> List[str]:
+        '''
+        i almost had it with the first attempt,
+        concept is something called Eulerian Cycle, or Eulerian path
+        in Eulerian path, we touch all edges only once and in Eulerian Cycel touch all edges but also come back to the vertext we started at
+        Hierholzer algorithm
+            idea is stepwise constructions of the Eulerian cycle by connecting disjunctive circles
+            start with a random node and then follows an abritary unvisited edge to a neighbor, and repeat until one return to the starting node
+            this gives the first cyle
+            if the first cycle covers all the nodes, it must Eulerian
+            othwise choose another node among the cycle's nodes with unvisited edges and construct another circle
+            this is called a subtour
+            
+        
+        for eulerian path, rather than stopping at the starting point we stop at the vertext where we do not have any unvisited edges
+        algo:
+        1. start from any vertex, we keep following the unused edges until we get stuck at certain vertex where there are no more unvisite edges
+        2. backtrack to the nearest neighbord vertex in the current path that has unused edges and repeat
+        
+        the first vertex we got stuck at would be the endpoint
+        if we follow stuck points backwards we get the Eulerian path
+        
+        since we know an Eulerian path exsits, we dont need to backtrack
+        i.e we keep dfsing until we get stuck, when we get stuck we just add the node started the first traversal from
+        notes
+            there is an eulerian path so we change the question as given a list of flights, find an order to use each flight once and only once
+            before visiting the last airport (call it V) we can say that we have already used all the rest of the flights
+            rather, before adding the last airport in the path, we make sure visit all the other in that path
+        '''
+        graph = defaultdict(list)
+        for u,v in tickets:
+            graph[u].append(v)
+        
+        for node,neighs in graph.items():
+            graph[node] = sorted(neighs,reverse = True) #do this decreasinly
+        
+        self.ans = []
+        
+        def dfs(node):
+            neighs = graph[node]
+            while neighs:
+                dfs(neighs.pop())
+            
+            self.ans.append(node)
+            
+        dfs('JFK')
+        return self.ans[::-1]
+    
+
+
