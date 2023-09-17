@@ -1711,7 +1711,154 @@ class Solution:
         
         return -1
     
+####################################################
+# 847. Shortest Path Visiting All Nodes (REVSITED)
+# 17SEP23
+####################################################
+#TLE
+#could also have used frozen states here too
+class Solution:
+    def shortestPathLength(self, graph: List[List[int]]) -> int:
+        '''
+        this is variant traveling salesman problem
+        find shortest path touching all nodes
+            may reuse nodes and edges
+        BFS, and push states to next levels
+            each state needs to track current cells visited and path length
+            when all cells have been visited return the path length
+        '''
+        q = deque([])
+        N = len(graph)
+        for i in range(N):
+            entry = (0,i,set([i]))
+            q.append(entry)
+        
+        while q:
+            dist,node,seen = q.popleft()
+            if len(seen) == N:
+                return dist
+            
+            for neigh in graph[node]:
+                copy_seen = copy.deepcopy(seen)
+                copy_seen.add(neigh)
+                #print(node,copy_seen)
+                q.append((dist+1,neigh,copy_seen))
+                
+        return -1
+    
+#use bit mask instead of seen set
+class Solution:
+    def shortestPathLength(self, graph: List[List[int]]) -> int:
+        '''
+        this is variant traveling salesman problem
+        find shortest path touching all nodes
+            may reuse nodes and edges
+        BFS, and push states to next levels
+            each state needs to track current cells visited and path length
+            when all cells have been visited return the path length
+        '''
+        q = deque([])
+        N = len(graph)
+        for i in range(N):
+            mask = 0
+            #set this bit
+            mask |= (1 << i)
+            entry = (0,i,mask)
+            q.append(entry)
+            
+        
+        
+        while q:
+            dist,node,seen = q.popleft()
+            if seen == 2**N - 1:
+                return dist
+            
+            for neigh in graph[node]:
+                next_mask = seen | (1 << neigh)
+                #print(node,copy_seen)
+                q.append((dist+1,neigh,next_mask))
+                
+        return -1
+    
+#careful not to revisit mask states
+#for some reason deque gets TLE on this problems, even with caching,you need to use array lists insteaf
+class Solution:
+    def shortestPathLength(self, graph: List[List[int]]) -> int:
+        '''
+        this is variant traveling salesman problem
+        find shortest path touching all nodes
+            may reuse nodes and edges
+        BFS, and push states to next levels
+            each state needs to track current cells visited and path length
+            when all cells have been visited return the path length
+        '''
+        q = deque([])
+        N = len(graph)
+        for i in range(N):
+            mask = 0
+            #set this bit
+            mask |= (1 << i)
+            entry = (0,i,mask)
+            q.append(entry)
+        
+        #state are combindaito of node and mask
+        seen_states = set()
+        while q:
+            dist,node,seen = q.popleft()
+            seen_states.add((node,seen))
+            if seen == 2**N - 1:
+                return dist
+            
+            for neigh in graph[node]:
+                next_mask = seen | (1 << neigh)
+                if next_mask == 2**N - 1:
+                    return dist + 1
+                if (neigh,next_mask) not in seen_states:
+                    #print(node,copy_seen)
+                    q.append((dist+1,neigh,next_mask))
+                
+        return -1
+    
+#top down dp review
+class Solution:
+    def shortestPathLength(self, graph: List[List[int]]) -> int:
+        '''
+        so we have some group of k nodes, call it state, and we know this for state we are at a minimum path length
+        we then want to add some node i
+        there are two options:
+            1. we have already visted node
+            2. we have not visited this node
+            so then are awnser would be Min((1 + option1), (1 + option2))
+            
+            if we have already visited, we dont need to update state, but simply add1
+            if we haven't, identfy new mask and recurse
+        '''
+        memo = {}
+        N = len(graph)
+        
+        def dp(node,mask):
+            if mask == 2**N - 1:
+                return 0
+            if (node,mask) in memo:
+                return memo[(node,mask)]
+            
+            ans = float('inf')
+            memo[(node,mask)] = ans
+            for neigh in graph[node]:
+                #not seen
+                if mask & (1 << neigh) == 0:
+                    visited = 1 + dp(neigh,mask)
+                    not_visited = 1 + dp(neigh, mask | (1 << neigh))
+                    ans = min(ans,visited,not_visited)
+            
+            memo[(node,mask)] = ans
+            return ans
+        
+        ans = float('inf')
+        for i in range(N):
+            ans = min(ans, dp(i, 1 << i))
 
+        return ans
 
 ################################################
 # 2152. Minimum Number of Lines to Cover Points
