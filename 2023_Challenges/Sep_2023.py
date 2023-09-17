@@ -1377,5 +1377,343 @@ class Solution:
         dfs('JFK')
         return self.ans[::-1]
     
+##############################################
+# 2097. Valid Arrangement of Pairs
+# 14SEP23
+###############################################
+class Solution:
+    def validArrangement(self, pairs: List[List[int]]) -> List[List[int]]:
+        '''
+        turn into graph problem and return eulerian path
+        a pair i can be connected another pair j if the end  for this i == start for this j
+        consider pairs as edges, and each number as a node
+        then run HeirHolzer
+        start on any node with outdegree - indegree = 1, if all zero, start anywhere in cycle
+        '''
+        graph = defaultdict(list)
+        degree = Counter()
+        for u,v in pairs:
+            graph[u].append(v)
+            degree[u] += 1
+            degree[v] -= 1
+            
+        for start in graph:
+            if degree[start] == 1:
+                break
+        
+        self.ans = []
+        
+        def dfs(node):
+            neighs = graph[node]
+            while neighs:
+                neigh = neighs.pop()
+                dfs(neigh)
+                self.ans.append([node,neigh])
+            
+        dfs(start)
+        return self.ans[::-1]
+
+#not adding pairs on the fly, but adding desitination
+#then recreate the answer
+class Solution:
+    def validArrangement(self, pairs: List[List[int]]) -> List[List[int]]:
+        '''
+        turn into graph problem and return eulerian path
+        a pair i can be connected another pair j if the end  for this i == start for this j
+        consider pairs as edges, and each number as a node
+        then run HeirHolzer
+        start on any node with outdegree - indegree = 1, if all zero, start anywhere in cycle
+        '''
+        graph = defaultdict(list)
+        degree = Counter()
+        for u,v in pairs:
+            graph[u].append(v)
+            degree[u] += 1
+            degree[v] -= 1
+            
+        for start in graph:
+            if degree[start] == 1:
+                break
+
+        self.ans = []
+        
+        def dfs(node):
+            neighs = graph[node]
+            while neighs:
+                neigh = neighs.pop()
+                dfs(neigh)
+            self.ans.append(node)
+            
+        
+        dfs(start)
+        self.ans = self.ans[::-1]
+        return [[self.ans[i], self.ans[i+1]] for i in range(len(self.ans)-1)]
+    
+##################################################
+# 1584. Min Cost to Connect All Points (REVISTED)
+# 15SEP23
+#################################################
+#kruskal
+class DSU:
+    def __init__(self,n):
+        self.size = [1]*n
+        self.parent = [i for i in range(n)]
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if self.size[x_par] >= self.size[y_par]:
+            self.parent[y_par] = x_par
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+        
+
+class Solution:
+    def minCostConnectPoints(self, points: List[List[int]]) -> int:
+        '''
+        minimum spanning tree problem, kruskal or primms
+        make directed edge_list with weights, sort on weights
+        '''
+        edge_weights = []
+        N = len(points)
+        for i in range(N):
+            for j in range(i+1,N):
+                x1,y1 = points[i]
+                x2,y2 = points[j]
+                weight = abs(x1-x2) + abs(y1 - y2)
+                entry = (weight, i,j)
+                edge_weights.append(entry)
+        
+        edge_weights.sort(key = lambda x: x[0])
+        
+        dsu = DSU(N)
+        min_cost = 0
+        for weight,u,v in edge_weights:
+            #check if we can join
+            if dsu.find(u) != dsu.find(v):
+                min_cost += weight
+                dsu.union(u,v)
+        
+        return min_cost
+    
+#primms
+class Solution:
+    def minCostConnectPoints(self, points: List[List[int]]) -> int:
+        '''
+        we can also use primmms 
+        start with any abritray node and find all its neighbors, find its weight and push into a heap
+        we greediblly add edges to mst by taking the smaller ones first
+        keep track of nodes in mst and edges used
+        invariant is until we use up the edges
+        if there are n nodes in an mst, then ther will be n-1 edges
+        '''
+        N = len(points)
+        min_heap = [(0,0)] #(weight,node)
+        in_mst = [False]*N
+        
+        edges_used = 0
+        min_cost = 0
+        
+        while edges_used < N:
+            curr_weight,curr_node = heapq.heappop(min_heap)
+            
+            if in_mst[curr_node]:
+                continue
+            
+            #mark
+            in_mst[curr_node] = True
+            min_cost += curr_weight
+            edges_used += 1
+            
+            #check neighs
+            for neigh in range(N):
+                if in_mst[neigh] == False:
+                    x1,y1 = points[curr_node]
+                    x2,y2 = points[neigh]
+                    weight = abs(x1-x2) + abs(y1 - y2)
+                    heapq.heappush(min_heap,(weight,neigh))
+        
+        return min_cost
+
+#################################################
+# 1631. Path With Minimum Effort (REVISITED)
+# 16SEP23
+#################################################
+#binary search dfs
+class Solution:
+    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+        '''
+        binary search to find the right k value
+        to see if we can reach the end, use dfs
+        smallest value can be 0 and largest value will be the the maximum
+        if i can get to the path using this k, it means i can use any k greater than it
+        '''
+        rows = len(heights)
+        cols = len(heights[0])
+        dirrs = [(0,1),(0,-1),(1,0),(-1,0)]
+        
+        
+        def canReach(i,j,seen,k):
+            if (i,j) == (rows-1,cols-1):
+                return True
+            seen.add((i,j))
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #un seen and within k
+                    if (neigh_x,neigh_y) not in seen and abs(heights[i][j] - heights[neigh_x][neigh_y]) <= k:
+                        if canReach(neigh_x,neigh_y,seen,k) == True:
+                            return True
+            
+            return False
+        
+        
+        left = 0
+        right = max([max(row) for row in heights])
+        #seen = set()
+        #temp = canReach(0,0,seen, 2)
+        #print(temp)
+        ans = -1
+        while left < right:
+            mid = left + (right - left) // 2
+            seen = set()
+            #which means we can use this k
+            if canReach(0,0,seen,mid):
+                ans = mid
+                right = mid
+            #we need to try a bigger k
+            else:
+                left = mid + 1
+        
+        return ans
+            
+#djikstras
+class Solution:
+    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+        '''
+        we can turn this into a single source shortest path problem (SSP) with djikstras
+        we can take the abs difference between two cells as the edge wiehgt
+        recall with djikastras they are all float('inf') or float('-inf') away
+        
+        intsteaf or looking for the shortest path, we define the cells as the minimum effor required to reach that cell from ALL possible paths
+        update all from the current cell
+        use min heap to store edges weights that are closest
+        
+        i.e we are looking for the path from the current cell to the adjcent cell that takes less efforst than other paths that have reached the adjacent cell
+        i.e going from (i,j) to (neigh_i, neigh_j) requires less effort (on a different path)
+        we dont care about the path, we only care about the min effor
+        
+        the whole point is that we ARRVIVED at some cell from another cell with a smaller effort
+        '''
+        rows = len(heights)
+        cols = len(heights[0])
+        dirrs = [(0,1),(0,-1),(1,0),(-1,0)]
+        
+        distances = [[float('inf')]*cols for _ in range(rows)]
+        #starting dista
+        distances[0][0] = 0
+        seen = set()
+        
+        min_heap = [(0,0,0)] #(weight, i,j)
+        
+        while min_heap:
+            diff, i,j = heapq.heappop(min_heap)
+            seen.add((i,j))
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    #un seen and within k
+                    if (neigh_x,neigh_y) not in seen:
+                        curr_diff = abs(heights[i][j] - heights[neigh_x][neigh_y])
+                        max_diff = max(curr_diff, distances[i][j])
+                        #arrive at a smaller effort
+                        if distances[neigh_x][neigh_y] > max_diff:
+                            distances[neigh_x][neigh_y] = max_diff
+                            #can do so, so push to heap
+                            heapq.heappush(min_heap, (max_diff, neigh_x,neigh_y))
+
+        return distances[rows-1][cols-1]
+    
+#union find
+class DSU:
+    def __init__(self,size):
+        self.parent = [i for i in range(size)]
+        self.rank = [1]*(size)
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if self.rank[x_par] >= self.rank[y_par]:
+            self.parent[y_par] = x_par
+            self.rank[x_par] += self.rank[y_par]
+            self.rank[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.rank[y_par] += self.rank[x_par]
+            self.rank[x_par] = 0
+class Solution:
+    def minimumEffortPath(self, heights: List[List[int]]) -> int:
+        '''
+        we can also do union find, recall each cell (i,j) is connected to any one of is neighbords (neigh_i,neigh_j) throough an edge
+        abs(cell(i,j) - cell(neigh_i,neigh_j))
+        so we just need to check if (0,0) and (rows-1,cols-1) are connected
+        we join components greedily start with the smallest edges first
+        need to flatten 2d matrixn to 1d matrix: (currentRow * col + currentCol)
+        
+        '''
+        rows = len(heights)
+        cols = len(heights[0])
+        dirrs = [(0,1),(0,-1),(1,0),(-1,0)]
+        
+        if rows == 1 and cols == 1:
+            return 0
+        
+        edge_list = []
+        for i in range(rows):
+            for j in range(cols):
+                for dx,dy in dirrs:
+                    neigh_x = i + dx
+                    neigh_y = j + dy
+                    #bounds
+                    if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                        curr_diff = abs(heights[i][j] - heights[neigh_x][neigh_y])
+                        #push as (diff, to, from)
+                        entry = (curr_diff, i*cols + j, neigh_x*cols + neigh_y) #will have repeated edges, but its ok becase we sort anyway
+                        edge_list.append(entry)
+        edge_list.sort(key = lambda x: x[0])
+        dsu = DSU(rows*cols)
+        for diff,u,v in edge_list:
+            dsu.union(u,v)
+            if dsu.find(0) == dsu.find(rows*cols-1):
+                return diff
+        
+        return -1
+    
 
 
+################################################
+# 2152. Minimum Number of Lines to Cover Points
+# 15SEP23
+#################################################
