@@ -1859,6 +1859,212 @@ class Solution:
             ans = min(ans, dp(i, 1 << i))
 
         return ans
+    
+###############################################
+# 2812. Find the Safest Path in a Grid
+# 17SEP23
+###############################################
+#jesus too many fucking edge cases
+class Solution:
+    def maximumSafenessFactor(self, grid: List[List[int]]) -> int:
+        '''
+        cells at (i,j) contain 1 if theif
+        0 if empty
+        safeness factor of a paht is defined as the min minhat distance from any cell in the path to any theif in the grid
+        return maximum safeness factor for all paths
+        define path as (0,0) to (N-1,N-1)
+        
+        its manhattan distance! not step distance
+        
+        i can do the binary search workable solution thingy again
+        for each (i,j) cell find the minimum safeness factor
+        then try reaching start to end with some safeness factor k, if k works, then anything less than equal to k should work
+        
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0), (-1,0), (0,1), (0,-1)]
+        
+        if (grid[0][0],grid[rows-1][cols-1]) == (1,1):
+            return 0
+        
+        safeness = [[-1]*cols for _ in range(rows)]
+        #find min dist for each (i,j) using bfs
+        #multipoint BFS
+        seen = set()
+        q = deque([])
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    safeness[i][j] = 0
+                    q.append((0,i,j))
+                    
+        while q:
+            dist,i,j = q.popleft()
+            for dx,dy in dirrs:
+                neigh_x = dx + i
+                neigh_y = dy + j
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and safeness[neigh_x][neigh_y] == -1:
+                    safeness[neigh_x][neigh_y] = dist + 1
+                    q.append((dist+1,neigh_x,neigh_y))
+        
+        #dfs function to see if we can reach (rows-1,cols-1) from (0,0) using this k safeness factor
+        def dfs(i,j,k,seen):
+            if (i,j) == (rows-1,cols-1):
+                return True
+            seen.add((i,j))
+            for dx,dy in dirrs:
+                neigh_x = dx + i
+                neigh_y = dy + j
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and (neigh_x,neigh_y) not in seen:
+                    if safeness[neigh_x][neigh_y] >= k:
+                        if dfs(neigh_x,neigh_y,k,seen) == True:
+                            return True
+            
+            return False
+    
+
+        left = 0
+        right = max([max(row) for row in safeness])
+        ans = -1
+        while left < right:
+            seen = set()
+            mid = left + (right - left) // 2
+            if dfs(0,0,mid,seen) and safeness[0][0] >= mid:
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+                
+        return ans if ans != -1 else 0
+
+class Solution:
+    
+    DIRS = ((-1, 0), (1, 0), (0, -1), (0, 1))
+
+    def manhattanDist(self, grid: List[List[int]], n: int) -> List[List[int]]:
+        queue = collections.deque()
+        visited = [[False for _ in range(n)] for _ in range(n)]
+
+        distances = [[0 for _ in range(n)] for _ in range(n)]
+
+        for r in range(n):
+            for c in range(n):
+                if grid[r][c]:
+                    queue.append((r, c))
+                    visited[r][c] = True
+        
+        dist = 0
+        while queue:
+            for _ in range(len(queue)):
+                r, c = queue.popleft()
+                distances[r][c] = dist
+
+                for dr, dc in self.DIRS:
+                    nr, nc = r + dr, c + dc
+
+                    if 0 <= nr < n and 0 <= nc < n and not visited[nr][nc]:
+                        queue.append((nr, nc))
+                        visited[nr][nc] = True
+
+            dist += 1
+        
+        return distances
+
+    def reachable(self, dist_grid: List[List[int]], min_dist: int, n: int) -> bool:
+        visited = [[False for _ in range(n)] for _ in range(n)]
+
+        def dfs(r: int, c: int) -> bool:
+            if r == n - 1 and c == n - 1:
+                return True
+            
+            visited[r][c] = True
+            for dr, dc in self.DIRS:
+                nr, nc = r + dr, c + dc
+
+                if 0 <= nr < n and 0 <= nc < n and not visited[nr][nc]:
+                    if dist_grid[nr][nc] >= min_dist:
+                        if dfs(nr, nc):
+                            return True
+            
+            return False
+        
+        return dfs(0, 0) if dist_grid[0][0] >= min_dist else False
+    
+
+    def maximumSafenessFactor(self, grid: List[List[int]]) -> int:
+        
+        n = len(grid)
+
+        l, r = 0, 400
+        l -= 1
+
+        dist_grid = self.manhattanDist(grid, n)
+        while l < r:
+            mid = (l + r + 1) >> 1
+
+            if self.reachable(dist_grid, mid, n):
+                l = mid
+            else:
+                r = mid - 1
+        
+        return l if l != -1 else 0
+    
+class Solution:
+    def maximumSafenessFactor(self, grid: List[List[int]]) -> int:
+        '''
+        we can also use djikstras to find the path with maximum safeness factor
+        dist[i][j] is stores max safness factor getting to (i,j) on any path
+        
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0), (-1,0), (0,1), (0,-1)]
+        
+        if (grid[0][0],grid[rows-1][cols-1]) == (1,1):
+            return 0
+        
+        safeness = [[-1]*cols for _ in range(rows)]
+        #find min dist for each (i,j) using bfs
+        #multipoint BFS
+        seen = set()
+        q = deque([])
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    safeness[i][j] = 0
+                    q.append((0,i,j))
+                    
+        while q:
+            dist,i,j = q.popleft()
+            for dx,dy in dirrs:
+                neigh_x = dx + i
+                neigh_y = dy + j
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and safeness[neigh_x][neigh_y] == -1:
+                    safeness[neigh_x][neigh_y] = dist + 1
+                    q.append((dist+1,neigh_x,neigh_y))
+        
+        
+        distances = [[0]*cols for _ in range(rows)]
+        distances[0][0] = safeness[0][0]
+        max_heap = [(-distances[0][0],0,0)]
+        
+        while max_heap:
+            dist,i,j = heapq.heappop(max_heap)
+            dist *= -1
+            if (i,j) == (rows-1,cols-1):
+                return dist
+            for dx,dy in dirrs:
+                neigh_x = dx + i
+                neigh_y = dy + j
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    max_safeness = max(dist, distances[neigh_x][neigh_y])
+                    if max_safeness > distances[neigh_x][neigh_y]:
+                        distances[neigh_x][neigh_y] = max_safeness
+                        heapq.heappush(max_heap,(-max_safeness,neigh_x,neigh_y))
+        
+        return distances[rows-1][cols-1]
+    
 
 ################################################
 # 2152. Minimum Number of Lines to Cover Points
