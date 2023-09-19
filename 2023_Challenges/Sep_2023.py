@@ -2070,3 +2070,153 @@ class Solution:
 # 2152. Minimum Number of Lines to Cover Points
 # 15SEP23
 #################################################
+class Solution:
+    def minimumLines(self, points: List[List[int]]) -> int:
+        '''
+        need to touch all points using the minimum number of lines
+        inputs are small, we will only have 10 points
+        if there are n points, than at most we can n lines, one line for each point 
+        but even better if a line connects at leat two points, we only need n/2 lines + 1 is odd
+        
+        so i had a group of points call it S with indeix (i,j,k,l)
+        and for this group we know the min lines to be a minimum
+        then we want to introduct another point m
+        if m is is on any intsersecting in this group, we do not need to add a new line
+        otherwise, we do need to add a new line
+        bass case is when we get all 1s in the mask
+        
+        need to preomcpute pairwise slopes for all (i,j)
+        then i can say for this ith point at this slope it connects j
+        '''
+        memo = {}
+        N = len(points)
+        target = (1 << N) - 1
+        
+        if N == 1:
+            return 1
+        
+        #precompute pairwise point slope
+        graph = defaultdict(lambda: defaultdict(list))
+        for i in range(N):
+            for j in range(i+1,N):
+                p1 = points[i]
+                p2 = points[j]
+                slope = self.getSlope(p1,p2)
+                #note python dictionary can handle floating points
+                graph[i][slope].append(j)
+                graph[j][slope].append(i)
+        
+        
+        return self.dp(0,memo,target,graph,N,points)
+                
+        
+    def getSlope(self,p1,p2):
+        x1,y1 = p1
+        x2,y2 = p2
+
+        if x1 == x2:
+            return float('inf')
+        return (y1 - y2) / (x1 - x2)
+
+    def dp(self,mask,memo,target,graph,N,points):
+        #we have taken all points
+        if mask == target:
+            return 0
+        if mask in memo:
+            return memo[mask]
+
+        ans = float('inf')
+        for i in range(N):
+            #not taken
+            if (mask & (1 << i)) == 0:
+                p1 = points[i]
+                #find another point
+                for j in range(N):
+                    p2 = points[j]
+                    if j == i:
+                        continue
+                    #include both in new mask
+                    next_mask = mask | (1 << i)
+                    next_mask = next_mask | (1 << j)
+                    next_slope = self.getSlope(p1,p2)
+                    #check points from i that match this slope
+                    for k in graph[i][next_slope]:
+                        #these points don't add 1 to the count since they are on the same line
+                        next_mask = next_mask | (1 << k)
+                        ans = min(ans, 1 + self.dp(next_mask,memo,target,graph,N,points))
+                        #note, can also minimize here on the fly, or at the end of looking through neighbors
+        
+        memo[mask] = ans
+        return ans
+
+import math
+class Solution:
+    def minimumLines(self, points: List[List[int]]) -> int:
+        '''
+        if we didn't want to store floats in the hash map, we need to normalaize by the GCD
+        '''
+        memo = {}
+        N = len(points)
+        target = (1 << N) - 1
+        
+        if N == 1:
+            return 1
+        
+        #precompute pairwise point slope
+        graph = defaultdict(lambda: defaultdict(list))
+        for i in range(N):
+            for j in range(i+1,N):
+                p1 = points[i]
+                p2 = points[j]
+                slope = self.getSlope(p1,p2)
+                #note python dictionary can handle floating points
+                graph[i][slope].append(j)
+                graph[j][slope].append(i)
+        
+        
+        return self.dp(0,memo,target,graph,N,points)
+                
+        
+    def getSlope(self,p1,p2):
+        x1,y1 = p1
+        x2,y2 = p2
+
+        if x1 == x2:
+            return float('inf')
+        num = (y1 - y2) 
+        denom = (x1 - x2)
+        GCD = math.gcd(num,denom)
+        entry = (num // GCD, denom // GCD)
+        return entry
+
+    def dp(self,mask,memo,target,graph,N,points):
+        #we have taken all points
+        if mask == target:
+            return 0
+        if mask in memo:
+            return memo[mask]
+
+        ans = float('inf')
+        for i in range(N):
+            #not taken
+            if (mask & (1 << i)) == 0:
+                p1 = points[i]
+                #find another point
+                for j in range(N):
+                    p2 = points[j]
+                    if j == i:
+                        continue
+                    #include both in new mask
+                    next_mask = mask | (1 << i)
+                    next_mask = next_mask | (1 << j)
+                    next_slope = self.getSlope(p1,p2)
+                    #check points from i that match this slope
+                    for k in graph[i][next_slope]:
+                        #these points don't add 1 to the count since they are on the same line
+                        next_mask = next_mask | (1 << k)
+                        ans = min(ans, 1 + self.dp(next_mask,memo,target,graph,N,points))
+                        #note, can also minimize here on the fly, or at the end of looking through neighbors
+        
+        memo[mask] = ans
+        return ans
+                    
