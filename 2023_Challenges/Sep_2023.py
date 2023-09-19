@@ -2220,3 +2220,111 @@ class Solution:
         memo[mask] = ans
         return ans
                     
+############################################
+# 1136. Parallel Courses (REVISTED)
+# 19SEP23
+############################################
+class Solution:
+    def minimumSemesters(self, n: int, relations: List[List[int]]) -> int:
+        '''
+        this is just longest path given a dag, or number of edges in longest path + 1
+        if there is a cycle we can't do it
+        another issue is there the components could be disconnected
+        
+        for cycle detection remember three states: visited, visiting, unvisited
+        '''
+        graph = defaultdict(list)
+        for u,v in relations:
+            graph[u].append(v)
+        
+        seen = {}
+        for i in range(1,n+1):
+            if self.hasCycle(i,seen,graph):
+                return -1
+        
+        #no cycle, use dp to find longest path
+        memo = {}
+        ans = 0
+        for i in range(1,n+1):
+            if i not in memo:
+                ans = max(ans, self.dp(i,memo,graph))
+
+        return ans
+
+        
+
+    def hasCycle(self,node,seen,graph):
+        if node in seen:
+            return seen[node]
+        else:
+            seen[node] = -1
+        for neigh in graph[node]:
+            if self.hasCycle(neigh,seen,graph):
+                return True
+        
+        
+        seen[node] = False
+        return False
+        
+        '''
+        for i in range(1,n+1):
+            seen = set()
+            if hasCycle(i,seen):
+                return -1
+        '''
+        #no cycle, use dp to find longest path
+        memo = {}
+        
+    def dp(self,node,memo,graph):
+        if len(graph[node]) == 0:
+            return 1
+        if node in memo:
+            return memo[node]
+        ans = 0
+        for neigh in graph[node]:
+            ans = max(ans,1 + self.dp(neigh,memo,graph))
+        memo[node] = ans
+        return ans
+
+#kahns
+class Solution:
+    def minimumSemesters(self, n: int, relations: List[List[int]]) -> int:
+        '''
+        topsort using kahns
+        clases with zero in degree can be taken first 
+        visit neighbors, but only add back into queue when when indegree is zero
+        instead of passing step count into queue, layer out and increment
+        
+        '''
+        graph = defaultdict(list)
+        indegree = Counter()
+        for u,v in relations:
+            graph[u].append(v)
+            indegree[v] += 1
+        
+        #quee up zero indedree
+        q = []
+        for i in range(1,n+1):
+            if indegree[i] == 0:
+                q.append(i)
+        
+        q = deque(q)
+        
+        classes = 0
+        semesters = 0
+        while q:
+            N = len(q)
+            for _ in range(N):
+                curr_class = q.popleft()
+                classes += 1
+                for neigh in graph[curr_class]:
+                    indegree[neigh] -= 1
+                    if indegree[neigh] == 0:
+                        q.append(neigh)
+            
+            semesters += 1
+        
+        if classes != n:
+            return -1
+        return semesters
+    
