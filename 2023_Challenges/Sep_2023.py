@@ -2328,3 +2328,115 @@ class Solution:
             return -1
         return semesters
     
+################################################
+# 1494. Parallel Courses II
+# 19SEP23
+################################################
+class Solution:
+    def minNumberOfSemesters(self, n: int, relations: List[List[int]], k: int) -> int:
+        '''
+        from parallel coures the min number of semesters is just the longest path, given the constraints
+        we can use dp with bitmasks, bitmask will store classes taken
+        backtrack using indegree
+        offset classes by 1
+        need to try all possible ways to take k classes at each step, not  just any k
+        then just take or dont take up to k times
+        hard search problem
+        '''
+        graph = defaultdict(list)
+        indegree = [0]*n
+        
+        for u,v in relations:
+            graph[u-1].append(v-1)
+            indegree[v-1] += 1
+        
+        final_mask = (1 << n) - 1
+        start_mask = 0
+        
+        memo = {}
+        
+        def dp(mask,memo,indegree):
+            if mask == final_mask:
+                return 0
+            if (mask,tuple(indegree)) in memo:
+                return memo[(mask,tuple(indegree))]
+            
+            #get classes we can possible take
+            possible_classes = []
+            for i in range(n):
+                if (mask & (1 << i)) == 0 and indegree[i] == 0:
+                    possible_classes.append(i)
+                    
+            ans = float('inf')
+            #generate k combinatinos of classes we can take
+            for next_classes in combinations(possible_classes, min(k,len(possible_classes))):
+                next_mask = mask
+                next_indegree = indegree[:] #copy it
+                #minimize againat all possible classes
+                #need to minimze for all possible ways!
+                for next_class in next_classes:
+                    next_mask |= (1 << next_class)
+                    for neigh in graph[next_class]:
+                        next_indegree[neigh] -= 1
+                    
+                ans = min(ans, 1 + dp(next_mask,memo,next_indegree))
+                #note i could indent here but that would TLE, because i call it that many more times
+                #why does the answer have to here
+            
+            memo[(mask,tuple(indegree))] = ans
+            return ans
+        
+        return dp(0,memo,indegree)
+    
+#we can also do bfs
+class Solution:
+    def minNumberOfSemesters(self, n: int, relations: List[List[int]], k: int) -> int:
+        '''
+        from parallel coures the min number of semesters is just the longest path, given the constraints
+        we can use dp with bitmasks, bitmask will store classes taken
+        backtrack using indegree
+        offset classes by 1
+        need to try all possible ways to take k classes at each step, not  just any k
+        then just take or dont take up to k times
+        hard search problem
+        '''
+        graph = defaultdict(list)
+        indegree = [0]*n
+        
+        for u,v in relations:
+            graph[u-1].append(v-1)
+            indegree[v-1] += 1
+        
+        final_mask = (1 << n) - 1
+        start_mask = 0
+        
+        q = deque([(0,start_mask,indegree)])
+        seen = set()
+        seen.add((start_mask,tuple(indegree)))
+        
+        while q:            
+            curr_semesters, mask, indegree = q.popleft()
+            
+            if mask == final_mask:
+                return curr_semesters
+            
+            #get classes we can possible take
+            possible_classes = []
+            for i in range(n):
+                if (mask & (1 << i)) == 0 and indegree[i] == 0:
+                    possible_classes.append(i)
+
+            #generate k combinatinos of classes we can take
+            for next_classes in combinations(possible_classes, min(k,len(possible_classes))):
+                next_mask = mask
+                next_indegree = indegree[:] #copy it
+                #minimize againat all possible classes
+                #need to minimze for all possible ways!
+                for next_class in next_classes:
+                    next_mask |= (1 << next_class)
+                    for neigh in graph[next_class]:
+                        next_indegree[neigh] -= 1
+                if (curr_semesters + 1, next_mask, tuple(next_indegree)) not in seen:
+                    entry = (curr_semesters + 1, next_mask, next_indegree)
+                    seen.add((curr_semesters + 1, next_mask, tuple(next_indegree)))
+                    q.append(entry)
