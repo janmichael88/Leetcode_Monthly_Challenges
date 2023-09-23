@@ -2440,3 +2440,285 @@ class Solution:
                     entry = (curr_semesters + 1, next_mask, next_indegree)
                     seen.add((curr_semesters + 1, next_mask, tuple(next_indegree)))
                     q.append(entry)
+
+######################################
+# 640. Solve the Equation
+# 20SEP23
+######################################
+#its a regex problem
+import re
+class Solution:
+    def solveEquation(self, equation: str) -> str:
+        '''
+        this is a regex problem
+        for coefficients:
+            '-?\d*x'
+
+            -? - An optional negative sign
+            \d* - 0 or more digits, we can also use this for a single number
+            x - literal x
+        
+        split into left and right, the compute coeffs and numbers
+
+        '''
+        #get regex patterns
+        coef_pat = re.compile('-?\d*x')
+        num_pat = re.compile('-?\d*')
+        
+        left, right = equation.split("=")
+        
+        #get coefs
+        left_coefs = coef_pat.findall(left)
+        right_coefs = coef_pat.findall(right)
+        
+        #get nums, but make sure nums don't belong to a coef
+        #hack is to replace coef numbers with *
+        left_nums = num_pat.findall(re.sub('-?\d*x','*',left))
+        right_nums = num_pat.findall(re.sub('-?\d*x','*',right))
+        #print(left_nums, num_pat.findall(left))
+        
+        left_sum, right_sum = 0,0
+        for num in left_nums:
+            if num:
+                left_sum += int(num)
+        
+        for num in right_nums:
+            if num:
+                right_sum += int(num)
+        #print(left_coefs,right_coefs)
+         # While adding coefficients, 'x' and '-x' wil be replaced by 1 and -1 respectively.
+        
+        left_coef_sum, right_coef_sum = 0,0
+        for i in left_coefs:
+            i = i.replace('x','')
+            if not i:
+                i = 1
+            elif i == '-':
+                i = -1
+            left_coef_sum += int(i)
+            
+        for i in right_coefs:
+            i = i.replace('x','')
+            if not i:
+                i = 1
+            elif i == '-':
+                i = -1
+            right_coef_sum += int(i)
+            
+        #same line, inift
+        if left_sum == right_sum and left_coef_sum == right_coef_sum:
+            return "Infinite solutions"
+        #parallel, same slope, no solutiosn
+        if left_coef_sum == right_coef_sum:
+            return "No solution"
+        
+        res = (right_sum - left_sum) / (left_coef_sum - right_coef_sum)
+        return "x="+str(int(res))
+
+####################################################
+# 2749. Minimum Operations to Make the Integer Zero 
+# 21SEP23
+###################################################
+#dont think we can use dp here, because we get stuck in a loop?
+class Solution:
+    def makeTheIntegerZero(self, num1: int, num2: int) -> int:
+        '''
+        try dp and just reduce?
+        we need to bring num1 to zero, and we can only add at least num2
+        '''
+        memo = {}
+        seen = set()
+        def dp(curr):
+            print(curr)
+            if curr == 0:
+                return 0
+            if curr in memo:
+                return memo[curr]
+            ans = float('inf')
+            for i in range(2):
+                next_step = curr - (2**i + num2)
+                #dont go down if we go past num1
+                if next_step >= num1 or next_step in seen:
+                    continue
+                seen.add(next_step)
+                ans = min(ans, 1 + dp(curr - (2**i + num2)))
+            
+            memo[i] = ans
+            return ans
+        
+        return dp(num1)
+    
+
+class Solution:
+    def makeTheIntegerZero(self, num1: int, num2: int) -> int:
+        '''
+        hints
+        1. if we want to make n == 0 by using only pwoers of 2 from n, we need at least the number of bits in binary rep of 2 and at most -n
+        2. if its possible to make num1 == 0, then we need at most 60 opeations
+        
+        i.e if i can only subtract powers of 2, the mininum number of operations is just the number of set bit in num1
+        the issue is that we are subtracting a power of 2 + num2
+        say we have 3 and -2
+        smallest value we can subtract depends on the sign
+        if i == 0, we just subtract num2, but if we subtract a negative we move away
+        
+        if num2 is positive then we are always subtracting a postivie number
+        if num2 is negative, then it depends when 2**i > abs(num2), for use to subtract
+        
+        get diff between steps
+        (num1 - (2**(i+1) + num2)) - (num1 - (2**i + num2)) = diff
+        
+        '''
+        #can't do it
+        if num1 < num2:
+            return -1
+        def countBits(num):
+            count = 0
+            while num > 0:
+                count += num & 1
+                num >>= 1
+            return count
+        
+        for steps in range(101):
+            #see if we can make diff
+            diff = num1 - 1 * num2 * steps
+            bits = countBits(diff)
+            if bits <= steps and steps <= diff:
+                return steps
+
+        return -1
+
+
+class Solution:
+    def makeTheIntegerZero(self, num1: int, num2: int) -> int:
+        '''
+        https://leetcode.com/problems/minimum-operations-to-make-the-integer-zero/discuss/3679108/JavaPython-3-Bit-Count-and-greedy-algorithm-w-explanation-and-analysis.
+        
+        it must be the case that num1 > num2
+        if num1 > 0, then we need at leat one operation to make it 0, 
+        first assume we need at least k opertionas
+        from zero, and using k operations, we can rewrite num1 = k*num2 + (\sum_{i=0}^{k} 2**i)
+        so we can greedly check k steps from 1 until num1 - k*nums2 can be exrpessed as (\sum_{i=0}^{k} 2**i), or when there are all ones bits in num1
+        or when num1 - k*num2 <= 0, in which case there is no solution (we can't get to a zero)
+        
+        another way:
+        Instead of iteratively applying operations, we check if we can achieve the result with cnt operations.
+
+        With cnt operations, num1 should equal cnt * num2 + diff.
+
+        diff is the sum of cnt single-bit numbers; a single-bit number is 2 power something.
+
+        So, we check if we can make diff:
+
+        Number of bits in diff should not exceed cnt.
+        The minimum possible sum is cnt * (2 ^ 0), so cnt should not be larger than diff.
+        
+        why can we guarantee that num1 can be exprssed as (\sum_{i=0}^{k} 2**i)
+        '''
+        if num1 < num2:
+            return -1
+        
+        def countBits(num):
+            count = 0
+            while num > 0:
+                count += num & 1
+                num >>= 1
+            return count
+        
+        steps = 0
+        while num1 > 0:
+            #reduce by num2
+            num1 -= num2
+            steps += 1
+            #at this point we have reduce num1 by num2 on the first step, but  know we also need to reduce by a power of 2
+            #if we have steps set bits in the num1, it means we could have reduced num1 to zero at this step
+            #also check that
+            if countBits(num1) <= steps <= num1:
+                return steps
+        
+        return -1
+    
+########################
+# 1185. Day of the Week
+# 22SEP23
+#########################
+class Solution:
+    def dayOfTheWeek(self, day: int, month: int, year: int) -> str:
+        '''
+        we can calulcate the offset
+        ideally we could use zellers know and know what the first day is in 1971
+        
+        list out days starting from today going around
+        then caculate the number of days from today and days from the input
+        then use this to cycle across the days array to get the day
+        '''
+        def hasLeapYear(year):
+            return 1 if year % 4 == 0 and year % 100 != 0 or year % 400 == 0 else 0
+        
+        
+        days = ['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday']
+        daysInMonth =  [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        
+        def daysSinceStart(day,month,year):
+            #assuming 1/1/1971 is the first day
+            numDays = 0
+            #year 1 before 1970, i.e not including
+            for y in range(year-1,1970,-1):
+                numDays += 365 + hasLeapYear(y)
+            
+            #months 1 before month
+            numDays += sum(daysInMonth[:month-1])
+            numDays += day
+            if month > 2:
+                numDays += hasLeapYear(year)
+            
+            return numDays
+        
+        knownStart = daysSinceStart(22,9,2023)
+        d = daysSinceStart(day,month,year)
+        diff = d - knownStart
+        return days[diff % 7]
+    
+#zeller formula
+days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", ]
+def dayOfTheWeek(self, d, m, y):
+    if m < 3:
+        m += 12
+        y -= 1
+    c, y = y / 100, y % 100
+    w = (c / 4 - 2 * c + y + y / 4 + 13 * (m + 1) / 5 + d - 1) % 7
+    return self.days[w]
+
+def dayOfTheWeek(self, d, m, y):
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    from datetime import datetime
+    return days[datetime(y, m, d).weekday()]
+
+#another way is to just count the days at Jan 1, 1971, knowing that that day was a Friday
+class Solution:
+    def dayOfTheWeek(self, day: int, month: int, year: int) -> str:
+        '''
+        on Jan 1, 1971 it was a friday
+        just count the number of days from there
+        '''
+        def hasLeapYear(year):
+            return 1 if year % 4 == 0 and year % 100 != 0 or year % 400 == 0 else 0
+        
+        
+        days = ['Friday','Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday']
+        daysInMonth =  [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        
+        numDays = 0
+        #year 1 before 1970, i.e not including
+        for y in range(1970,year):
+            numDays += 365 + hasLeapYear(y)
+
+        #months 1 before month
+        numDays += sum(daysInMonth[:month-1])
+        numDays += day
+        if month > 2:
+            numDays += hasLeapYear(year)
+
+        return days[(numDays % 7) -2]
+        
+
