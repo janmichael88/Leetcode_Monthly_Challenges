@@ -2721,4 +2721,209 @@ class Solution:
 
         return days[(numDays % 7) -2]
         
+####################################################
+# 1048. Longest String Chain (REVISITED)
+# 23SEP23
+####################################################
+#MLE, but good idea though!
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        '''
+        word_a is a pred of word_b if len(word_a) < len(word_b) and word_a is a subsequence of word_b
+        sort increasingly based on length
+        then use knapsack dp to extend
+            either include to extend chain (if we can)
+            or dont include
+            
+        similar to LIS
+        store index and last word in chain
+        '''
+        def isPred(s,t): #check that s is subseq of t
+            if len(s) + 1 != len(t):
+                return False
+            i, j = 0,0
+            while i < len(s) and j < len(t):
+                if s[i] == t[j]:
+                    i += 1
+                    j += 1
+                else:
+                    j += 1
+            return i == len(s)
+        
+        
+        #sort on lengths
+        words.sort(key = lambda x: len(x))
+        memo = {}
+        N = len(words)
+        
+        def dp(i,prev_word):
+            if i >= N:
+                return 1
+            if (i,prev_word) in memo:
+                return memo[(i,prev_word)]
+              
+            op1 = 1
+            if isPred(prev_word,words[i]):
+                op1 = 1 + dp(i+1,words[i])
+            op2 = dp(i+1,prev_word)
+            ans = max(op1,op2)
+            memo[(i,prev_word)] = ans
+            return ans
+        
+        
+        ans = 1
+        for i in range(N):
+            ans = max(ans,dp(i+1,words[i]))
+        return ans
+    
+#need to trade time for space in order to pass
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        '''
+        cant store index and word, too much space, trade time for space to pass
+        '''
+        def isPred(s,t): #check that s is subseq of t
+            if len(s) + 1 != len(t):
+                return False
+            i, j = 0,0
+            while i < len(s) and j < len(t):
+                if s[i] == t[j]:
+                    i += 1
+                    j += 1
+                else:
+                    j += 1
+            return i == len(s)
+        
+        
+        #sort on lengths
+        words.sort(key = lambda x: len(x))
+        memo = {}
+        N = len(words)
+        
+        def dp(i):
+            if i >= N:
+                return 1
+            if i in memo:
+                return memo[i]
+              
+            ans = 1
+            for j in range(i+1,N):
+                if isPred(words[i],words[j]):
+                    ans = max(ans, 1 + dp(j))
+            memo[i] = ans
+            return ans
+        
+        ans = 1
+        for i in range(N):
+            ans = max(ans,dp(i))
+        
+        return ans
+    
+#true dp
+class Solution:
+    def longestStrChain(self, words: List[str]) -> int:
+        '''
+        actual way use to use dp on word, dp(word) is longest chain for word, then we check all preds of this word and maximize
+        '''
+        words = set(words)
+        memo = {}
+        
+        def dp(word):
+            if word in memo:
+                return memo[word]
+            #try all preds
+            ans = 1
+            for i in range(len(word)):
+                pred = word[:i] + word[i+1:]
+                if pred in words:
+                    ans = max(ans,1 + dp(pred))
+            
+            memo[word] = ans
+            return ans
+        
+        ans = 1
+        for word in words:
+            ans = max(ans,dp(word))
+        
+        return ans
 
+##########################################
+# 799. Champagne Tower (REVISTED)
+# 24SEP23
+##########################################
+class Solution:
+    def champagneTower(self, poured: int, query_row: int, query_glass: int) -> float:
+        '''
+        i can simulate the poured of 1 with flowt through for all the glasses
+        it essentially half a square matrix 100 by 100
+        for a glass (i,j) we pour as much as we can, and overflow goes into two glasses
+        (i-1,j+1,) and (i+1,j+1)
+        rahter if we are at (i,j), it goes into (i,j+1,) and (i+1,j+1)
+        the last row just gets overflow
+        
+        try top down first
+        let dp(i,j) be amount in glass(i,j)
+        dp(i,j) = {
+            if glass can get from upper left and upper right
+            ans = 0.5*dp(i-1,j-1) + 0.5*dp(i,j-1)
+        }
+        
+        base case is when top glass: (0,0) just return poured, need to store 
+        '''
+        k = 101
+        glasses = [[0]*k for _ in range(k)]
+        glasses[0][0] = poured
+        for prev_row in range(100):
+            for prev_col in range(prev_row+1):
+                curr_glass = glasses[prev_row][prev_col]
+                #set current volume for glass and flow through
+                if curr_glass > 1.0:
+                    excess = (curr_glass - 1) / 2.0
+                    #update old
+                    glasses[prev_row][prev_col] = 1.0
+                    #push excess
+                    glasses[prev_row+1][prev_col] += excess
+                    glasses[prev_row+1][prev_col+1] += excess
+        
+        
+        return glasses[query_row][query_glass]
+    
+##############################################
+# 1063. Number of Valid Subarrays
+# 24SEP23
+##############################################
+class Solution:
+    def validSubarrays(self, nums: List[int]) -> int:
+        '''
+        im thinking monotonic stack for this problem
+        if we are some some index i from i to some point j, it was increasing
+        and we find that nums[j] < nums[i], which means from i to j -1, i being the start of the subarray and j-1 being the end
+        the number of valid subarryas would be j-1 - i
+        
+        we maintain a montonic stack storing the indices, when we get to a point that the current subarray is not increasing
+        i.e where i is no longer the minmum, we count all subarrays from i to j - 1
+        
+        if we have array
+        [1,2,3], we can do [1], [1,2], [1,2,3] 
+        i.e number of subarrays with valid subarray being N, is just N
+        '''
+        ans = 0
+        N = len(nums)
+        stack = []
+        
+        for i in range(N):
+            #nums[i] is the next smaller element after the current element at the top of the stack
+            #i.e everythin ing this stack is a valid subarray
+            while stack and nums[i] < nums[stack[-1]]:
+                ans += (i - stack[-1])
+                stack.pop()
+            
+            stack.append(i)
+        
+        #everything in the stack is valid subarray with endpoint as N, and left as the top of stack
+        while stack:
+            ans += (N - stack[-1])
+            stack.pop()
+            
+        
+        return ans
