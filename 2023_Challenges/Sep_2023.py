@@ -2927,3 +2927,342 @@ class Solution:
             
         
         return ans
+    
+###############################################
+# 2189. Number of Ways to Build House of Cards
+# 25SEP23
+###############################################
+class Solution:
+    def houseOfCards(self, n: int) -> int:
+        '''
+        rules:
+            row for a house must have one or more trianlges with horizontal cards
+            trianlges are created by leaning two cards against each other
+            one card must be plce horitontally between all adjacent triangles in a row
+            any triangle on a row higher than the first must be place on a horizontal card from the preivous row
+            each trianlge is placed on the left most available sport
+        if i have 2 cards, there's only 1 way
+        hints:
+            if a row has k triangles, we need 3*k-1 cards
+            if we have i cards left and on the previous row there were k triangles
+                then you can start at 1 triangle and continue adding more until run out of cards or reach k-1 triangles
+        
+        i can either use a triangle to extend the current row that i'm on
+        or start a new row
+        at each step, extend the current row, or make a new row
+        
+        3*k - 1 = cards
+        k = (cards + 1) /3
+        what if i keep track of the number of cards, and the number of triangles on the previous row
+        
+        idea is that we have a valid row if cards is 2, or is multiple of 3, starting from 5
+        then we try decrementing the current count of cards for all valid options [5,8,11...]
+        and then we try adding this to the last row
+        '''
+        memo = {}
+        
+        def dp(cards_left,last_row):
+            if cards_left == 0 or cards_left == 2:
+                return 1
+            if (cards_left,last_row) in memo:
+                return memo[(cards_left,last_row)]
+            ways = 0
+            i = 5
+            #we cannot use more cards then we currently have
+            #and we cannot have more cards on the previous row, but we try adding a triangle
+            while i <= cards_left and i < last_row:
+                ways += dp(cards_left - i,i)
+                i += 3
+            
+            memo[(cards_left,last_row)] = ways
+            return ways
+        
+        
+        return dp(n,n+1) #second n could be any larger number as long as it is bigger than the first n
+    
+class Solution:
+    def houseOfCards(self, n: int) -> int:
+        '''
+        another way to think about it
+        each row uses 3*n-1 cards , where n is the number of triangles
+        cards = 3*triangles - 1
+        (cards + 1) // 3 = triangles
+        '''
+        memo = {}
+        
+        def dp(curr_cards, prev_row):
+            if curr_cards == 0 or curr_cards == 2:
+                return 1
+            if curr_cards < 0:
+                return 0
+            if (curr_cards,prev_row) in memo:
+                return memo[(curr_cards,prev_row)]
+            ways = 0
+            for i in range(2,min(prev_row, (curr_cards + 1) // 3 + 1)):
+                #i is number of trianlges and to get cards we do 3*i - 1
+                #this says use up this number of curr_cards to generate a triangle
+                ways += dp(curr_cards -3*i + 1,i)
+            
+            memo[(curr_cards,prev_row)] = ways
+            return ways
+        
+        
+        return dp(n,501)
+    
+###################################################
+# 316. Remove Duplicate Letters (REVISTED)
+# 26SEP23
+###################################################
+#nice try..
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        '''
+        need smallest lexogrphical order possible such that initall order is maintain
+        its really ust smallest subsequence of distinct characters
+        
+        the final answer will only contain len(set(s)) chars, so lets try intelligently placing chars at the indices
+        it wont be more than 26
+        if i place some character at index i, then i need at least an occurence of all remaning characters who's indices come after i 
+        so before placing this character see if i can at least do it
+        use binary search to see if i can place it
+        and start greedily
+        '''
+        unique = set(s)
+        ans_size = len(unique)
+        
+        chars_to_idx = defaultdict(list)
+        for i,ch in enumerate(s):
+            chars_to_idx[ch].append(i)
+        
+        ans = [""]*ans_size
+        
+        for i in range(ans_size):
+            for j in range(26):
+                curr_char = chr(ord('a') + i)
+                #dont use thie character
+                if curr_char not in unique: #meaning we've successfully placed this  char
+                    continue
+                #check that if we place curr_char at index i, we can find the remaning characters at indices after i
+                #smallest index after i
+                can_use = True
+                for other in unique:
+                    if other != curr_char:
+                        next_indices = chars_to_idx[other]
+                        next_index = bisect.bisect_right(next_indices,i)
+                        if next_index >= len(next_indices):
+                            can_use = False
+                            break
+                
+                #place it
+                if can_use:
+                    ans[i] = curr_char
+                    unique.remove(curr_char)
+        
+        return "".join(ans)
+    
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        '''
+        greedily make the leftmost character as small as possible
+        also, it will be the smallest character such that  the suffix contains every other not used yet in the prefix of the answer string
+        if there are multiple characters, we use the left most, simply to keep options
+        
+        as we move across s, if we find the i is bigger than i+1 and another char of i exists later, deleting i will alwasy lead to the optimal solution
+        character tha come later in the string i dont matter becasue i is ther ealir spot
+        
+        remove characters as early as possible and pick the beste letter at each step
+        '''
+        def rec(s):
+            counts = Counter(s)
+            leftmost = 0
+            for i in range(len(s)):
+                if s[i] < s[leftmost]:
+                    leftmost = i
+                #use up, we cant use these past i
+                counts[s[i]] -= 1
+                #no more letters, stop as we have found the last and left most char available
+                if counts[s[i]] == 0:
+                    break
+            
+            #ans is the left most char, plus the string after leftmost
+            next_part = s[leftmost:].replace(s[leftmost], "") if s else "" #use up the leftmost chars as we dont need them anymore
+            if s:
+                return s[leftmost] + rec(next_part)
+            return ""
+        
+        
+        return rec(s)
+    
+#montonic stack
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        '''
+        keep stack to store subsequence so far, delete characters when possible
+        at each iteration add the current character to the stack if we haven't use already
+        try to remove as many chars by popping off stack
+        
+        for popping:
+            1. the current char is greater than the current characters
+            2. the character can e removed if it occurs later on
+        '''
+        stack = []
+        rightmost_index = {ch:i for i,ch in enumerate(s)}
+        
+        used_chars = set()
+        
+        for i,ch in enumerate(s):
+            #check if we haven't use this char yet
+            if ch not in used_chars:
+                #conditions for removing current char
+                #its greater then the current one, meaning we can make the string smaller
+                #and it occurs later
+                while stack and stack[-1] > ch and rightmost_index[stack[-1]] > i:
+                    used_chars.remove(stack.pop())
+                
+                stack.append(ch)
+                used_chars.add(ch)
+        
+        return "".join(stack)
+    
+#keep tracking of counts
+class Solution:
+    def removeDuplicateLetters(self, s: str) -> str:
+        count = Counter(s)
+        vis = set()
+        stack = []
+        
+        for c in s:
+            if c not in vis:
+                while stack and stack[-1] > c and count[stack[-1]] > 0:
+                    vis.remove(stack.pop())
+                stack.append(c)
+                vis.add(c)
+            count[c] -= 1
+        return "".join(stack)
+
+#########################################
+# 880. Decoded String at Index (REVSITED)
+# 27SEP23
+#########################################
+#nice try again
+class Solution:
+    def decodeAtIndex(self, s: str, k: int) -> str:
+        '''
+        we dont need to store the whole string in memory, only just the first repeat
+        keep track of length and if k is >= at the current length, find the string
+        
+        leet, the next is 2
+        its essesentially going to to be leet but twice
+        '''
+        curr_string = ""
+        curr_length = 0
+        i = 0
+        N = len(s)
+        
+        while i < N:
+            #if its a char
+            if s[i].isalpha():
+                curr_string += s[i]
+                i += 1
+                curr_length += 1
+            
+            #it must be a number
+            else:
+                curr_mult = 0
+                while i < N and '2' <= s[i] <= '9':
+                    curr_mult *= 10
+                    curr_mult += int(s[i])
+                    i += 1
+                
+                #its only d - 1 times
+                print(curr_mult)
+                #here we are just repeating the current string? so we really need to repeat the string?
+                #the issuse with going from left to right, i need to keep the prefix in order to repeat
+                curr_string = curr_string*curr_mult
+                
+        
+        return curr_string[k-1]
+            
+
+class Solution:
+    def decodeAtIndex(self, s: str, k: int) -> str:
+        '''
+        write letter lengths to an array
+        for the given string leet2code3
+        l = 1
+        le = 2
+        lee = 3
+        leet = 4
+        leet2 = 8
+        leet2c = 9
+        leet2co = 10
+        leet2cod = 11
+        leet2code = 12
+        leetcode3 = 36
+        
+        we just need to find where K lies starting backwards from the lengths
+
+        1. 18 < 21, so on this step we do nothing.
+        2. 18 % 7 = 4, it means, that string hihibob repeated 3 times and we need to choose element number 4 from this string.
+        3 4 < 6, 4 < 5, so we skip these two steps
+        4. Now we have K = 4 and lens[i] = 4, and we make K = 0. We are good, we can stop? Not exactly, the problem, that now we on the place hi2 and we are on digit symbol, so we need to continue.
+        5. Now, K = 0 and lens[i] = 2, and also we have string hi so far, so we can stop and answer will be i.
+
+        
+        another way to think:
+        say we have some string so far 'abcd' and the last digit is 7, and k is less than 4*7  or less than 28
+        we dont need to repread abcd 7 times, insteaf just do find (k - 1) % 4, and return the char from 'abcd'
+        but what if more than 1 didgit, or 1 didt in between like 'ab2cd', k = 7?
+        '''
+        sizes = [0]
+        N = len(s)
+        
+        for ch in s:
+            if ch.isdigit():
+                sizes.append(sizes[-1]*int(ch))
+            else:
+                sizes.append(sizes[-1] + 1)
+                
+        #keeep doing K % size backwards and see if we land on ahcaracter
+        for i in range(N,0,-1):
+            k %= sizes[i]
+            if k == 0: #in that block
+                if s[i-1].isalpha():
+                    return s[i-1]
+                
+class Solution:
+    def decodeAtIndex(self, s: str, k: int) -> str:
+        '''
+        recursion
+        rec(s,k) returns the the char that we want at s[k]
+        we then break down the problem into subproblems
+        keep track of current lenght of string
+        if its char, increment size, and when we hit size, we are done
+        if its a digits, generate the next new new size and see if k is reachable
+        '''
+        
+        def rec(s,k):
+            size = 0
+            ans = ""
+            for i in range(len(s)):
+                if s[i].isdigit():
+                    next_size = size*int(s[i])
+                    #if k comes after the new size, meaning the previous string has been extended
+                    if next_size >= k:
+                        #if it goes evenly, pass in size not k, i.e recurse into size not k
+                        if (k % size) == 0:
+                            return rec(s,size)
+                        #reduce k by size and recurse since we are repepeating the string anyway up to index i
+                        return rec(s, k % size)
+                        
+                    size = next_size
+                #if its a char, just add to size and see if we are at k
+                else:
+                    size += 1
+                    if k == size:
+                        return s[i]
+            
+            return ans
+        
+        
+        return rec(s,k)
