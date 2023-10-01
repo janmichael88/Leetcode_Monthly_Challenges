@@ -3009,6 +3009,70 @@ class Solution:
         
         return dp(n,501)
     
+class Solution:
+    def houseOfCards(self, n: int) -> int:
+        '''
+        https://leetcode.com/problems/number-of-ways-to-build-house-of-cards/discuss/1816490/Solution-with-Explanation-and-images
+        imagine we have a row, with some number of triangles, say its k triangle
+        if we have k triangles, we have b bases
+        if we have b bases on this current row, then the next row can have b-1 triangles
+        if we dont have enough to make b-1 triangles, then we try to make b-2 triangles, and b-3....and so on
+        the the number of trianlge we can make is
+            (n-2) / 3
+        '''
+        memo = {}
+        
+        def dp(n,b):
+            if n == 0 or n == 2:
+                return 1
+            if (n,b) in memo:
+                return memo[(n,b)]
+            
+            ways = 0
+            triangles = int(min(n-2/3, b-1))
+            
+            for i in range(1, triangles+1):
+                ways += dp(n - (i*3) - 2, i)
+            
+            memo[(n,b)] = ways
+            return ways
+        
+        return dp(n,501)
+    
+class Solution:
+    def houseOfCards(self, n: int) -> int:
+        '''
+        https://leetcode.ca/2022-03-22-2189-Number-of-Ways-to-Build-House-of-Cards/
+        we try using triangles 1,2,3 in the first row and count how man houses we can build
+        
+        if we use j trianlges in the first row, then we can build at most j-1 triangles in the row aover
+        define dp(i,j) as the number of different houses we can build given i cards and j houses in the current row
+        dp[i][j] = SUM( dp[i - usedCards][housesInCurrentRow - 1] )
+                where usedCards = 3 * housesInCurrentRow - 1
+                
+        recursive counting problem with special boundary conditions amd tricky recurrence relation
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            if i == 0:
+                return 1
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ways = 0
+            cards_used = 2
+            triangles = 1
+            while triangles <= j and cards_used <= i:
+                ways += dp(i - cards_used, triangles-1)
+                cards_used += 3
+                triangles += 1
+            
+            memo[(i,j)] = ways
+            return ways
+        
+        
+        return dp(n,n+1)
+    
 ###################################################
 # 316. Remove Duplicate Letters (REVISTED)
 # 26SEP23
@@ -3266,3 +3330,298 @@ class Solution:
         
         
         return rec(s,k)
+    
+
+#############################################
+# 650. 2 Keys Keyboard
+# 27SEP23
+#############################################
+#bleagh
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        initally there is one character on the screen
+        two moves:
+            1. copy all chars present on the screen
+            2. past the chars there were copied last
+            
+        keep track of current chars, and chars that were copied last
+        keep track of current chars on screen, and number of chars last copied 
+        need to get to n
+        '''
+        memo = {}
+        
+        def dp(curr_chars,last_chars):
+            print(curr_chars,last_chars)
+            if last_chars == n:
+                return 1
+            if curr_chars == n:
+                return 0
+            if curr_chars > n:
+                return float('inf')
+            if (curr_chars,last_chars) in memo:
+                return memo[(curr_chars,last_chars)]
+            copy_all = dp(curr_chars,last_chars + curr_chars)
+            paste = dp(curr_chars + last_chars, last_chars)
+            ans = 1 + min(copy_all,paste)
+            memo[(curr_chars,last_chars)] = ans
+            return ans
+        
+        return dp(1,0)
+
+#jesus, finally
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        initally there is one character on the screen
+        two moves:
+            1. copy all chars present on the screen
+            2. past the chars there were copied last
+            
+        keep track of current chars, and chars that were copied last
+        keep track of current chars on screen, and number of chars last copied 
+        need to get to n
+        paste is 1 step, if we can
+        copy_paste is 2, which we can alwasy do
+        
+        and its not last copied, its whats on the screen
+        '''
+        memo = {}
+        
+        def dp(curr_chars,last_chars):
+
+            if curr_chars == n:
+                return 0
+            if curr_chars > n:
+                return float('inf')
+            if (curr_chars,last_chars) in memo:
+                return memo[(curr_chars,last_chars)]
+            
+            copy_paste = 2 + dp(curr_chars*2,curr_chars)
+            paste = None
+            if last_chars > 0:
+                paste = 1 + dp(curr_chars + last_chars, last_chars)
+            
+            if paste:
+                ans = min(copy_paste,paste)
+            else:
+                ans = copy_paste
+            memo[(curr_chars,last_chars)] = ans
+            return ans
+        
+        return dp(1,0)
+    
+#bottom up
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        bottom up
+        '''
+        dp = [[0]*(n+1) for _ in range(n+1)]
+
+        for curr_chars in range(n-1,-1,-1):
+            for last_chars in range(curr_chars):
+                #boundary checks
+                if curr_chars*2 > n:
+                    copy_paste = float('inf')
+                else:
+                    copy_paste = 2 + dp[curr_chars*2][curr_chars]
+                
+                paste = None
+                if last_chars > 0:
+                    if curr_chars + last_chars > n:
+                        paste = float('inf')
+                    else:
+                        paste = 1 + dp[curr_chars + last_chars][last_chars]
+                
+                if paste:
+                    ans = min(copy_paste,paste)
+                else:
+                    ans = copy_paste
+                
+                dp[curr_chars][last_chars] = ans
+        
+        return dp[1][0]
+
+#prime factorization
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        if we cna break the total sequence of operations into groups of tha form "[copy][some number of postses]" where the size of this group is K
+        then the length of the final string is going to be some multile of K
+        now suppose N can be written as N = d_1*d_2* ... * d_k
+        but we can get N's by summing them d_1 + d_2 + ... + d_k
+        if any of the d_i's are compositie, d_i = p*q, then we can get p + q operations intead of p*q operations
+        For example, if we make 15 with 15 operations, we could instead make it with 3 operations to get AAA then another 5 operations. 
+        Also, we should justify that p+q <= p*q (because (p-1)(q-1) is positive), so we indeed do get savings by breaking up this product.
+
+        its just the prime factorization of n
+        
+        '''
+        ans = 0
+        d = 2
+        while n > 1:
+            while (n % d == 0):
+                ans += d
+                n //= d
+            d += 1
+        
+        return ans
+    
+#recursive
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        https://leetcode.com/problems/2-keys-keyboard/discuss/105966/C%2B%2B-3-ms-5-lines-(prime-numbers)
+        we want to find the GCD so we can minimze the number of steps 
+        if we have some larger number in the clipboard, we just paste it multiple times
+        the quickest way to find the GCD is to start with the smallest prime and work out way u[]
+        '''
+        def rec(n):
+            if n == 1:
+                return 0
+            start = 2
+            while start*start <= n:
+                if n % start == 0:
+                    return start + rec(n // start) #found a single past operation where n//start gives n, we can get this length in one step
+                start += 1
+            return n
+        
+        return rec(n)
+
+
+###########################################
+# 456. 132 Pattern (REVISTED)
+# 30SEP23
+###########################################
+#better brute force
+class Solution:
+    def find132pattern(self, nums: List[int]) -> bool:
+        '''
+        better brute force, 
+        if we fix some j, given that we already know i < j, we just need to find some k after j such that nums[i] < nums[k] < nums[j]
+        fix i to be a small as possible
+        '''
+        first_i = float('inf')
+        N = len(nums)
+        for j in range(N):
+            first_i = min(first_i, nums[j]) #note this effectiyl doen'st work because there are times when nums[j] == first_i
+            #it would fail anyway on the next search for k
+            #look for k
+            for k in range(j+1,N):
+                if first_i < nums[k] < nums[j]:
+                    return True
+        
+        return False
+    
+class Solution:
+    def find132pattern(self, nums: List[int]) -> bool:
+        '''
+        we can search for intervals, in the last approach we looked for a k after some j
+        but if we knew the intervals before hand, we can just look for a k that first in those intervals
+        while traversing the array, we look for all local rising slopes and add those to an intervals array
+        then we cna just look for k among the intervals found so far
+
+        
+        '''
+        intervals = []
+        N = len(nums)
+        min_point_after_last_peak_index = 0
+        for i in range(1,N):
+            # if we encounter a falling edge, then element i - 1 is a peak
+            if nums[i] < nums[i - 1]:
+                # make sure the peak occurs after the rising edge's minimum
+                if min_point_after_last_peak_index < i - 1:
+                    # nums[min_point_after_last_peak_index...(i-1)] is a valid rising peak
+                    intervals.append(
+                        (nums[min_point_after_last_peak_index], nums[i - 1])
+                    )
+                # the current element is the minimum for the next rising peak
+                min_point_after_last_peak_index = i
+            for interval in intervals:
+                if interval[0] < nums[i] < interval[1]:
+                    return True
+        return False
+        
+class Solution:
+    def find132pattern(self, nums: List[int]) -> bool:
+        '''
+        declare min_so_far array,
+        where min_so_far[i] = min(nums[i]) for every i in len(nums)
+        then we montonic stack, and work backwards from the array
+        we just need to find min_so_far[i] < stack[-1] < nums[i]
+        kee popping until we find it
+        
+        going backward starting from j
+        1. if nums[i] <= min_so_far[j], this possible can't be a 132 pattern, because it must be greater than the min so far
+        2. if nums[j] > min_so_far[j], we need to find the correct k, which would be at the top of the stack
+            if we have numbers whiich are less than or equal to min_list[j], we keep popping them (we are making the middle number large as possible)
+        3. if we have stack[-1] < min_so_far[j] , we are good
+        
+        stack[-1] is 2 in out pattern, nums[j] is 3 in our pattern and min_so_far[i] is the 1 in our pattern, which is just the smallest to the left of i
+        '''
+        if len(nums) < 3:
+            return False
+        N = len(nums)
+        min_so_far = [-1]*N
+        min_so_far[0] = nums[0]
+        
+        stack = []
+        for i in range(1,N):
+            min_so_far[i] = min(nums[i], min_so_far[i-1])
+        
+        for j in range(N-1,-1,-1):
+            if nums[j] <= min_so_far[j]:
+                continue
+            while stack and stack[-1] <= min_so_far[j]:
+                stack.pop()
+            if stack and stack[-1] < nums[j]:
+                return True
+            stack.append(nums[j])
+        
+        return False
+
+###########################################
+# 2393. Count Strictly Increasing Subarrays
+# 30SEP23
+###########################################
+class Solution:
+    def countSubarrays(self, nums: List[int]) -> int:
+        '''
+        if we have a striclty increasing sub array of size k, the number of subrrays for this is just k*(k+1) / 2
+        keep track of strictly increasing sub arrays and when we dont, increment count and reset to 0
+        '''
+        ans = 0
+        curr_size = 1
+        N = len(nums)
+        for i in range(1,N):
+            if nums[i] > nums[i-1]:
+                curr_size += 1
+            else:
+                ans += (curr_size)*(curr_size + 1) // 2
+                curr_size = 1
+        ans += (curr_size)*(curr_size + 1) // 2
+        return ans
+        
+#just count them all, 
+#i we have legnth 3. then its ust 1 + (1 + 1) + (1 + 1 + 1)
+class Solution:
+    def countSubarrays(self, nums: List[int]) -> int:
+        '''
+        we have length 3, then is just 1 + 2 + 3
+        which is just
+        1 +....
+        1 + 1 + ..
+        1 + 1 + 1 + ..
+        '''
+        ans = 1
+        curr_size = 1
+        N = len(nums)
+        for i in range(1,N):
+            if nums[i] > nums[i-1]:
+                curr_size += 1
+            else:
+                curr_size = 1
+            
+            ans += curr_size
+        return ans
