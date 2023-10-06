@@ -212,4 +212,261 @@ class Solution:
             ans += count*(count+1) // 2
         
         return ans
+
+#######################################
+# 229. Majority Element II
+# 05OCT23
+#######################################
+class Solution:
+    def majorityElement(self, nums: List[int]) -> List[int]:
+        '''
+        take the idea from Majority Element I,where we keep track of the current candiate
+        essentially we are finding majority nums[:i] for all i
+        for the case when n//2:
+            keep count of occurrences of current candidate and current candidate variables
+            when count if zero, we assign new candidate as the current element
+            otherwise +=1 if num is the cnadiate, else -1
+        heres the snippet
+        class Solution:
+            def majorityElement(self, nums):
+                count = 0
+                candidate = None
+
+                for num in nums:
+                    if count == 0:
+                        candidate = num
+                    count += (1 if num == candidate else -1)
+
+                return candidate
+        
+        now for the case n//3
+        intuition
+            there can be at most one majority element with count more than n//2
+            there can be as most two elements with count more than n//3
+            three for count more than n//4
+        
+        for some count n // k, there can be at most k-1, with k being >= 1
+        we adopt the same intution for the n//2 case to the n // 3 case, but keep track of two candidates instead of 1 
+        '''
+        if not nums:
+            return []
+        
+        cand1,cand2 = None,None
+        count1,count2 = 0,0
+        
+        for num in nums:
+            #matching candidates
+            if num == cand1:
+                count1 += 1
+            elif num == cand2:
+                count2 += 1
+            #check counts
+            elif count1 == 0:
+                cand1 = num
+                count1 += 1
+            elif count2 == 0:
+                cand2 = num
+                count2 += 1
+            else:
+                count1 -= 1
+                count2 -= 1
+        
+        #check
+        ans = []
+        count1 = 0
+        count2 = 0
+        for num in nums:
+            if num == cand1:
+                count1 += 1
+            if num == cand2:
+                count2 += 1
+        N = len(nums)
+        if count1 > N//3:
+            ans.append(cand1)
+        if count2 > N//3:
+            ans.append(cand2)
+        
+        return ans
+        
+#################################################
+# 1206. Design Skiplist
+# 05OCT23
+#################################################
+'''
+reading on skiplists
+https://brilliant.org/wiki/skip-lists/#height-of-the-skip-list
+https://ocw.mit.edu/courses/6-046j-design-and-analysis-of-algorithms-spring-2015/resources/mit6_046js15_lec07/
+be sure to check out implementaion frmo video
+actual implementation
+https://leetcode.com/problems/design-skiplist/discuss/1573487/Clean-Python
+'''
+import random
+
+class Node:
+    def __init__(self, val = -1, right = None, bottom = None):
+        #nodes for only going right and bottom
+        self.val = val
+        self.right = right
+        self.bottom = bottom
+
+class Skiplist:
+    def __init__(self):
+        self.head = Node()
+
+    def flip_coin(self): #coin flip for promoting when element is added
+        return random.randrange(0, 2)
+
+    def search(self, target: int) -> bool:
+        node = self.head
+
+        #go right and down
+        while node:
+            while node.right and target > node.right.val:
+                node = node.right
+            if node.right and target == node.right.val:
+                return True
+            node = node.bottom
+
+        return False
+
+    def add(self, num: int) -> None:
+        node = self.head
+        #store all the nodes we went down on while search
+        record_levels = []
+
+        while node:
+            while node.right and num > node.right.val:
+                node = node.right
+
+            record_levels.append(node) #all the nodes we went down on are in the array, with the most recent ones (i.e the bottom) are at the end of the array
+            node = node.bottom
+        #insertion prep
+        new_node = None
+        
+        #while we don't have a new node or while we can promote (get a heads)
+        while not new_node or self.flip_coin():
+            #if we are at the top level
+            if len(record_levels) == 0:
+                #just jeep adding to head and point to isetself,
+                #in the case where we keep getting heads and we have to promote
+                self.head = Node(-1, None, self.head)
+                prev_level = self.head
+            #we need to promote and we have levles
+            else:
+                prev_level = record_levels.pop()
+            #make new node
+            new_node = Node(num, prev_level.right, new_node)
+            #connect
+            prev_level.right = new_node
+
+    def erase(self, num: int) -> bool:
+        #easy peeze insert
+        node = self.head
+        boolean = False
+
+        while node:
+            while node.right and num > node.right.val:
+                node = node.right
+            #erase all nodes with that num value doing down levels
+            if node.right and num == node.right.val:
+                node.right = node.right.right
+                boolean = True
+            node = node.bottom
+
+        return boolean
     
+#another way
+'''
+https://cw.fel.cvut.cz/old/_media/courses/a4b36acm/maraton2015skiplist.pdf
+https://ocw.mit.edu/courses/6-046j-design-and-analysis-of-algorithms-spring-2015/resources/mit6_046js15_lec07/
+https://leetcode.com/problems/design-skiplist/discuss/1082053/simple-solution-with-dynamic-levels-%2B-references
+'''
+import random
+
+
+class ListNode:
+    def __init__(self, val):
+        self.val = val
+        self.next = None
+        self.down = None
+
+class Skiplist:
+    def __init__(self):
+        # sentinel nodes to keep code simple
+        node = ListNode(float('-inf'))
+        node.next = ListNode(float('inf'))
+        self.levels = [node]
+
+    def search(self, target: int) -> bool:
+        level = self.levels[-1]
+        while level:
+            node = level
+            while node.next.val < target:
+                node = node.next
+            if node.next.val == target:
+                return True
+            level = node.down
+        return False
+
+    def add(self, num: int) -> None:
+        stack = []
+        level = self.levels[-1]
+        while level:
+            node = level
+            while node.next.val < num:
+                node = node.next
+            stack.append(node)
+            level = node.down
+
+        heads = True
+        down = None
+        while stack and heads:
+            prev = stack.pop()
+            node = ListNode(num)
+            node.next = prev.next
+            node.down = down
+            prev.next = node
+            down = node
+            # flip a coin to stop or continue with the next level
+            heads = random.randint(0, 1)
+
+        # add a new level if we got to the top with heads
+        if not stack and heads:
+            node = ListNode(float('-inf'))
+            node.next = ListNode(num)
+            node.down = self.levels[-1]
+            node.next.next = ListNode(float('inf'))
+            node.next.down = down
+            #this is in reverse, 
+            #top left node is actually at the bottom of the list
+            self.levels.append(node)
+
+    def erase(self, num: int) -> bool:
+        stack = []
+        level = self.levels[-1]
+        while level:
+            node = level
+            while node.next.val < num:
+                node = node.next
+            if node.next.val == num:
+                stack.append(node)
+            level = node.down
+
+        if not stack:
+            return False
+
+        for node in stack:
+            node.next = node.next.next
+
+        # remove the top level if it's empty
+        while len(self.levels) > 1 and self.levels[-1].next.next is None:
+            self.levels.pop()
+
+        return True
+
+# Your Skiplist object will be instantiated and called as such:
+# obj = Skiplist()
+# param_1 = obj.search(target)
+# obj.add(num)
+# param_3 = obj.erase(num)
+
