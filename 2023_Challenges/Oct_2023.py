@@ -470,3 +470,343 @@ class Skiplist:
 # obj.add(num)
 # param_3 = obj.erase(num)
 
+#########################################
+# 343. Integer Break (REVISTED)
+# 06OCT23
+#########################################
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        dp
+        '''
+        if n == 3:
+            return 2
+        memo = {}
+        def dp(n):
+            if n <= 2:
+                return 1
+            if n in memo:
+                return memo[n]
+            ans = 1
+            for i in range(2,n+1):
+                ans = max(ans, i*dp(n-i))
+            
+            memo[n] = ans
+            return ans
+        
+        
+        return dp(n)
+    
+#bottom up, be careful with boundar conditions
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        dp
+        '''
+        if n == 3:
+            return 2
+        
+        dp = [0]*(n+1)
+        #base case fill
+        for i in range(2+1):
+            dp[i] = 1
+            
+        for i in range(3,n+1):
+            ans = 1
+            for j in range(2,n+1):
+                ans = max(ans, j*dp[i-j])
+            
+            dp[i] = ans
+        
+        return dp[-1]
+    
+#math
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        AM-GM inequality says that to maximize the product of a set of numbers with a fixed sum, all numbers should be equal
+            a + b + c + d = SUM
+            a*b*c*d
+            using AM_GM
+            (a + b + c + d)*4 >= (a*b*c*d)^(1/2)
+            ((SUM)*4))^2 >= abcd , this is maximum when a = b = c = d and a+b+c+d = SUM
+        
+        so we have n = a*x, this is just x some number of times
+        a = n/x
+        product will be x**a = x**(n/x)
+        f(x) = x**(1/x)*n, we want to know where this max product us
+        derivative is actually hard to do
+        find where this is max by taking derivative
+        f'(x) = -n*x^(n/x - 2) *(log(x) - 1)
+        first product converges to zero, so we are interest in (log(x) - 1) = 0, which happens at e
+        we can use e since we need an interger, so we try using as many 3s
+        only apply to n > 4, for n == 4, we do 2*2, insteaf of 3*1
+        '''
+        if n <= 3:
+            return n - 1
+        ans = 1
+        while n > 4:
+            ans *= 3
+            n -= 3
+        
+        return ans*n
+    
+#logn
+class Solution:
+    def integerBreak(self, n: int) -> int:
+        '''
+        we know that we need to use 3, so just count hay many times we can use
+        adjusting for edge cases ofr course
+        
+        cases:
+        1. if n % 3 == 0, just break it into n//3 threes
+        2. if n % 3 == 1, we will have a remainder of 1, buts its better to combine this one with one of the 3s to form sum4, which is 2*2
+        3. if n % 3 == 2, this is optimale just break into n/3 threes and use a two
+        '''
+        if n <= 3:
+            return n - 1
+        
+        if n % 3 == 0:
+            return 3 ** (n // 3)
+        
+        if n % 3 == 1:
+            return 3 ** (n // 3 - 1) * 4
+        
+        return 3 ** (n // 3) * 2
+    
+############################################################################
+# 1420. Build Array Where You Can Find The Maximum Exactly K Comparisons
+# 07OCT23
+############################################################################
+#nice try!
+class Solution:
+    def numOfArrays(self, n: int, m: int, k: int) -> int:
+        '''
+        we are given searh cost algorithm, it calculates the number of times we update max, and returns index
+        create array that satisfies:
+            n integers,
+            each elements is in the range [1,m] 
+            after applhying the algorithm, we get search cost equal to k
+        
+        if search cost is k, it means that while traversing the array we updated the maximum k times,
+        dp(i,j,k) gives number of ways to build an array starting from index a, search cost k, and max integer used was b
+        
+        if i == N, we have found a way, return 1
+        we can loop through from [1 to m], so we start at 1
+        if k greater then search cost, return 0
+        if j greater than m, return 0
+        
+        if i'm at some state (i,j,k) and i know the number of ways to to make a valid array
+        i need to move i to i+1, but for moving i i can mainting the current max j or i an increment j by 1 and increase cost k by 1
+        '''
+        memo = {}
+        
+        def dp(a,b,c):
+            if a == n:
+                if c == k and b <= m:
+                    return 1
+                else:
+                    return 0
+            #prune
+            if c > k:
+                return 0
+            if b > m:
+                return 0
+            
+            if (a,b,c) in memo:
+                return memo[(a,b,c)]
+            
+            ways = 1
+            ways += max(b*dp(a+1,b,c)
+            ways += (b+1)*dp(a+1,b+1,c+1)
+            ways %= 10**9 + 7
+            memo[(a,b,c)] = ways
+            return ways
+        
+        return dp(0,1,0)
+
+#not too bad
+class Solution(object):
+    def numOfArrays(self, n: int, m: int, k: int) -> int:
+        '''
+        we are given searh cost algorithm, it calculates the number of times we update max, and returns index
+        create array that satisfies:
+            n integers,
+            each elements is in the range [1,m] 
+            after applhying the algorithm, we get search cost equal to k
+        
+        if search cost is k, it means that while traversing the array we updated the maximum k times,
+        dp(i,j,k) gives number of ways to build an array starting from index a, search cost k, and max integer used was b
+        
+        if i == N, we have found a way, return 1
+        we can loop through from [1 to m], so we start at 1
+        if k greater then search cost, return 0
+        if j greater than m, return 0
+        
+        if i'm at some state (i,j,k) and i know the number of ways to to make a valid array
+        i need to move i to i+1, but for moving i i can mainting the current max j or i an increment j by 1 and increase cost k by 1
+        before adding a number that is not a new maximum, we need to get the number of ways of doing this
+        if we are at state (i,j,k) and adding the same j
+            we can pick any number in the range [1,j] so we multiply:
+            j*dp(i+1,j,k)
+        otherwise we introduct a new number, which cause the search cost the go up
+        '''
+        memo = {}
+        
+        def dp(a,b,c):
+            if a == n:
+                if c == k and b <= m:
+                    return 1
+                else:
+                    return 0
+            #prune
+            if c > k:
+                return 0
+            if b > m:
+                return 0
+            
+            if (a,b,c) in memo:
+                return memo[(a,b,c)]
+            
+            ways = b*dp(a+1,b,c) #get current ways for this state
+            #we are free to add another number from b to m+1
+            for next_max in range(b+1,m+1):
+                #add to it
+                ways += dp(a+1,next_max,c+1)
+                ways %= 10**9 +7
+                
+            ways %= 10**9 + 7
+            memo[(a,b,c)] = ways
+            return ways
+        
+        return dp(0,0,0)
+
+#we dont need to wait to base case
+#if we are equal to search cost, then we can place the max at on the remaining spots
+class Solution:
+    def numOfArrays(self, n: int, m: int, k: int) -> int:
+        mod = int(10**9 + 7)
+        @cache
+        def dp(i, max_so_far, remain):
+           # Original code: check at the last index
+           # if i == n:
+           #     if remain == 0:
+           #         return 1
+           #    
+           #     return 0
+           # proposed improvement: check when no more items remain
+            if remain == 0:
+                return max_so_far ** (n - i)
+            if i == n: return 0
+            ans = (max_so_far * dp(i + 1, max_so_far, remain)) % MOD
+            for num in range(max_so_far + 1, m + 1):
+                ans = (ans + dp(i + 1, num, remain - 1)) % MOD
+                
+            return ans
+        
+        MOD = 10 ** 9 + 7
+        return dp(0, 0, k)
+
+
+#bottom up
+class Solution:
+    def numOfArrays(self, n: int, m: int, k: int) -> int:
+        '''
+        '''
+        dp = [[[0]*(k+1) for _ in range(m+1)] for _ in range(n+1)]
+        mod = 10**9 + 7
+        
+        #base case fill
+        for a in range(n+1):
+            for b in range(m+1):
+                for c in range(k+1):
+                    if c == k and b <= m:
+                        dp[a][b][c] = 1
+        
+        
+        for a in range(n-1,-1,-1):
+            for b in range(m-1,-1,-1):
+                for c in range(k,-1,-1):
+                    
+                    ways = b*dp[a+1][b][c] % mod
+                    if c < k:
+                        for next_max in range(b+1,m+1):
+                            ways += dp[a+1][next_max][c+1] % mod
+                            ways %= mod
+                    
+                    ways %= mod
+                    dp[a][b][c] = ways
+        
+        return dp[0][0][0]
+
+#use different dp state
+class Solution:
+    def numOfArrays(self, n: int, m: int, k: int) -> int:
+        '''
+        if we notince there is a loop inside the recursive function.
+        can we avoid this to improve the time complexity?
+        first lets try coming up with a new dp state (i,maxNum,cost)
+        so given a length i, with maxNum and current cost , how many ways can we build this array?
+        the previous do answered the question: given this state, how many was can we finish
+        
+        answer if just dp(n,maxNum,k) for all values in range [1,m]
+        base case is just i = 1, and is cost == 1, return 1 else 0
+        
+        transitions:
+            if we dont add a new maximum, then we could have placed any of the nums, [1,max_num], to the array of sizes n-1 with max_num nad value cost - 1
+                maxNum*dp(i-1,maxNum,cost)
+            update cost cost+1
+        
+        '''
+        mod = 10**9 + 7
+        memo = {}
+        def dp(i,max_num,cost):
+            #single array, make sure we have cost
+            if i == 1:
+                return cost == 1
+            
+            if (i,max_num,cost) in memo:
+                return memo[(i,max_num,cost)]
+            
+            #count so far
+            ways_so_far = max_num*dp(i-1,max_num,cost) % mod
+            #find new number of ways
+            #arrived from here
+            for num in range(1,max_num):
+                ways_so_far += dp(i-1,num,cost-1) % mod
+            
+            ways_so_far %= mod
+            memo[(i,max_num,cost)] = ways_so_far
+            return ways_so_far
+        
+        #sum all dp states with 1 to m+1
+        ways = 0
+        for num in range(1,m+1):
+            ways += dp(n,num,k) % mod
+            ways %= mod
+        
+        return ways % mod
+
+#improve time complextiy using prefix sums
+class Solution:
+    def numOfArrays(self, n: int, m: int, k: int) -> int:
+        dp = [[[0] * (k + 1) for _ in range(m + 1)] for __ in range(n + 1)]
+        prefix = [[[0] * (k + 1) for _ in range(m + 1)] for __ in range(n + 1)]
+        MOD = 10 ** 9 + 7
+        
+        for num in range(1, m + 1):
+            dp[1][num][1] = 1
+            prefix[1][num][1] = prefix[1][num - 1][1] + 1
+
+        for i in range(1, n + 1):
+            for max_num in range(1, m + 1):
+                for cost in range(1, k + 1):                    
+                    ans = (max_num * dp[i - 1][max_num][cost]) % MOD
+                    ans = (ans + prefix[i - 1][max_num - 1][cost - 1]) % MOD
+
+                    dp[i][max_num][cost] += ans
+                    dp[i][max_num][cost] %= MOD
+                    
+                    prefix[i][max_num][cost] = (prefix[i][max_num - 1][cost] + dp[i][max_num][cost]) % MOD
+
+        return prefix[n][m][k]
