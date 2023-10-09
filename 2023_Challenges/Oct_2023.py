@@ -622,7 +622,7 @@ class Solution:
             ways %= 10**9 + 7
             memo[(a,b,c)] = ways
             return ways
-        
+
         return dp(0,1,0)
 
 #not too bad
@@ -810,3 +810,75 @@ class Solution:
                     prefix[i][max_num][cost] = (prefix[i][max_num - 1][cost] + dp[i][max_num][cost]) % MOD
 
         return prefix[n][m][k]
+
+##########################################
+# 1458. Max Dot Product of Two Subsequences
+# 08OCT23
+##########################################
+class Solution:
+    def maxDotProduct(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        brute force would be to examine all subsequences of all lengths
+        let dp(i,j) be the max dot prodcut using nums1[:i] and nums2[:j]
+        say we are in state (i,j) i can include i+1 and j+1 and increase 
+            nums1[i]*nums2[j] + dp(i-1,j-1)
+        
+        skip both, we just go to dp(i-1,j-1)
+        now take 1 or the other
+        if take take i and skip this j
+        
+        this is just LCS, the tricky bit is finding the rule for the special cases
+        imagine inputs like:
+                [-1, -4, -7]
+                [6, 2, 52]
+        if we just did knapsack then we would end up retruning 0 as the max product (because we wend up not taking any elements from nums1 or nums2)
+        but in this case we cannot have non-empty subsequencces, i.e there must be elements in the array
+        when all elements in nums1 are negative and all element in nums2 are positive (or vice versa)
+        the answer will be negative, so we must return the high negative possible!
+            choose the largest negative and smalelst positive
+        '''
+        
+        #special cases
+        if max(nums1) < 0 and min(nums2) > 0:
+            return max(nums1)*min(nums2)
+        
+        if max(nums2) < 0 and min(nums1) > 0:
+            return max(nums2)*min(nums1)
+        memo = {}
+        
+        def dp(i,j):
+            if i < 0 or j < 0:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #use i and j
+            take = nums1[i]*nums2[j] + dp(i-1,j-1)
+            ans = max(take,dp(i-1,j),dp(i,j-1))
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(len(nums1) - 1, len(nums2) - 1)
+
+#bottom up
+class Solution:
+    def maxDotProduct(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        bottom up
+        '''
+        
+        #special cases
+        if max(nums1) < 0 and min(nums2) > 0:
+            return max(nums1)*min(nums2)
+        
+        if max(nums2) < 0 and min(nums1) > 0:
+            return max(nums2)*min(nums1)
+        
+        dp = [[0]*(len(nums2) + 1) for _ in range(len(nums1) + 1)]
+        
+        for i in range(1,len(nums1)+1):
+            for j in range(1,len(nums2)+1):
+                take = nums1[i-1]*nums2[j-1] + dp[i-1][j-1]
+                ans = max(take,dp[i-1][j],dp[i][j-1])
+                dp[i][j] = ans
+                
+        return dp[len(nums1)][len(nums2)]
