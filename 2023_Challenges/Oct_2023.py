@@ -882,3 +882,572 @@ class Solution:
                 dp[i][j] = ans
                 
         return dp[len(nums1)][len(nums2)]
+
+##############################
+# 505. The Maze II (REVISTED)
+# 08OCT23
+##############################
+#ez SSP
+class Solution:
+    def shortestDistance(self, maze: List[List[int]], start: List[int], destination: List[int]) -> int:
+        '''
+        this is djikstras 
+            an (i,j) cell is conneceted to all is neighbors by an edge
+            edge is just the distance the ball rolls until it hits a wall
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        
+        #function to generate next neighbors
+        def getNeighs(x,y):
+            dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+            for dx,dy in dirrs:
+                neigh_x = x
+                neigh_y = y
+                dist = 0
+                while 0 <= neigh_x + dx < rows and 0 <= neigh_y + dy < cols and maze[neigh_x+dx][neigh_y+dy] == 0:
+                    neigh_x += dx
+                    neigh_y += dy
+                    dist += 1
+                yield dist,neigh_x,neigh_y
+                
+        visited = [[False]*cols for _ in range(rows)]
+        dist = [[float('inf')]*cols for _ in range(rows)]
+        
+        dist[start[0]][start[1]] = 0
+        #makr visited while in loop
+        pq = [(0,start[0],start[1])]
+        
+        while pq:
+            edge_weight,x,y = heapq.heappop(pq)
+            #not smaller
+            if dist[x][y] < edge_weight:
+                continue
+            #mark
+            visited[x][y] = True
+            for neigh_edge,neigh_x,neigh_y in getNeighs(x,y):
+                #skip visited edges
+                if visited[neigh_x][neigh_y]:
+                    continue
+                    
+                new_dist = dist[x][y] + neigh_edge
+                if new_dist < dist[neigh_x][neigh_y]:
+                    dist[neigh_x][neigh_y] = new_dist
+                    heapq.heappush(pq, (new_dist, neigh_x,neigh_y))
+        
+        if dist[destination[0]][destination[1]] != float('inf'):
+            return dist[destination[0]][destination[1]] 
+        return -1
+
+#can also use dfs, but TLES
+class Solution:
+    def shortestDistance(self, maze: List[List[int]], start: List[int], destination: List[int]) -> int:
+        '''
+        this is djikstras 
+            an (i,j) cell is conneceted to all is neighbors by an edge
+            edge is just the distance the ball rolls until it hits a wall
+            
+        we can also use dfs, just make sure to miniize all outgoing i to j nodes when there is a smaller distance
+        '''
+        rows = len(maze)
+        cols = len(maze[0])
+        
+        #function to generate next neighbors
+        def getNeighs(x,y):
+            dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+            for dx,dy in dirrs:
+                neigh_x = x
+                neigh_y = y
+                dist = 0
+                while 0 <= neigh_x + dx < rows and 0 <= neigh_y + dy < cols and maze[neigh_x+dx][neigh_y+dy] == 0:
+                    neigh_x += dx
+                    neigh_y += dy
+                    dist += 1
+                yield dist,neigh_x,neigh_y
+                
+        visited = [[False]*cols for _ in range(rows)]
+        dist = [[float('inf')]*cols for _ in range(rows)]
+        
+        dist[start[0]][start[1]] = 0
+        #makr visited while in loop
+        
+        def dfs(x,y,maze,dist):
+            for neigh_edge,neigh_x,neigh_y in getNeighs(x,y):
+                new_dist = dist[x][y] + neigh_edge
+                if new_dist < dist[neigh_x][neigh_y]:
+                    dist[neigh_x][neigh_y] = new_dist
+                    dfs(neigh_x,neigh_y,maze,dist)
+                    
+        dfs(start[0],start[1],maze,dist)
+        
+        if dist[destination[0]][destination[1]] != float('inf'):
+            return dist[destination[0]][destination[1]] 
+        return -1
+
+#########################################################################
+# 34. Find First and Last Position of Element in Sorted Array (REVISTED)
+# 09OCT23
+#########################################################################
+class Solution:
+    def searchRange(self, nums: List[int], target: int) -> List[int]:
+        '''
+        this is just left bound and right bound
+        '''
+        if len(nums) == 0: 
+            return [-1, -1]
+        left = 0
+        right = len(nums) - 1
+        leftbound = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] < target:
+                leftbound = mid + 1
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        
+        left = 0
+        right = len(nums) - 1
+        rightbound = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] <= target:
+                left = mid + 1
+            
+            else:
+                rightbound = mid - 1
+                right = mid  - 1
+        
+        if 0 <= leftbound < len(nums) and leftbound <= rightbound and nums[leftbound] == target:
+            return [leftbound, rightbound]
+        else:
+            return [-1, -1]
+    
+#fucking binary search
+class Solution:
+    def searchRange(self, nums: List[int], target: int) -> List[int]:
+        if len(nums) == 0: return [-1, -1]
+        
+        def searchLow(nums, target):
+            head, tail = 0, len(nums) - 1
+            while head <= tail:
+                mid = (head + tail)//2
+                if nums[mid] >= target:
+                    tail = mid - 1
+                else:
+                    head = mid + 1
+            return head
+                
+        def searchHigh(nums, target):
+            head, tail = 0, len(nums) - 1
+            while head <= tail:
+                mid = (head + tail)//2
+                if nums[mid] > target:
+                    tail = mid - 1
+                else:
+                    head = mid + 1
+            return tail
+        
+        start = searchLow(nums, target)
+        end = searchHigh(nums, target)
+        if 0 <= start < len(nums) and start <= end and nums[start] == target:
+            return [start, end]
+        else:
+            return [-1, -1]
+
+#########################################################
+# 1287. Element Appearing More Than 25% In Sorted Array
+# 09OCT23
+#########################################################
+class Solution:
+    def findSpecialInteger(self, arr: List[int]) -> int:
+        '''
+        we can just do sliding window
+        we need to find the elements where arr[i] to arr[i + nunmber of .25 of time] is the same
+        '''
+        N = len(arr)
+        count = N // 4
+        for i in range(N-count):
+            if arr[i] == arr[i+count]:
+                return arr[i]
+        
+        return -1
+
+class Solution:
+    def findSpecialInteger(self, arr: List[int]) -> int:
+        '''
+        another way, keep track of curr, prev and count
+        '''
+        N = len(arr)
+        prev = -1
+        needed = N / 4
+        curr_count = 0
+        for num in arr:
+            if num == prev:
+                curr_count += 1
+            else:
+                prev = num
+                count = 1
+            
+            if curr_count > needed:
+                return num
+        
+        return -1
+
+#binary search
+class Solution:
+    def findSpecialInteger(self, arr: List[int]) -> int:
+        '''
+        if a value occurs more than 25% of the time, then it must be one one of three positions
+        (n/4, n/2 (3/4)*2)
+        i.e the numbers cover more than a quarter of the array!, we we need to find the one tht spans more than 1/4
+        '''
+        size = len(arr)
+        #must be on of the numbers at these sports
+        #and must span size//4
+        candidates = [arr[size // 4], arr[size // 2], arr[-size // 4]]
+        for target in candidates:
+            i = self.firstElementIndex(arr, target)
+            if arr[i + size // 4] == target:
+                return target
+        return None
+        
+    def firstElementIndex(self, arr, target):
+        l, r = 0, len(arr)
+        first = -1
+        while l < r:
+            m = (l + r) // 2
+            if arr[m] >= target:
+                r = m
+            else:
+                first = m + 1
+                l = m + 1
+            
+        return first
+
+####################################################
+# 1196. How Many Apples Can You Put into the Basket
+# 10OCT23
+####################################################
+class Solution:
+    def maxNumberOfApples(self, weight: List[int]) -> int:
+        '''
+        sort and keep taking apples
+        
+        '''
+        bag = 5000
+        weight.sort()
+        N = len(weight)
+        i = 0
+        while i < N:
+            if bag - weight[i] >= 0:
+                bag -= weight[i]
+                i += 1
+            else:
+                return i
+        
+        return i
+
+class Solution:
+    def maxNumberOfApples(self, weight: List[int]) -> int:
+        '''
+        we can use min heap and keep taking the lowest
+        '''
+        heapq.heapify(weight)
+        bag_weight = 0
+        apples = 0
+        
+        while weight and weight[0] + bag_weight <= 5000:
+            apples += 1
+            bag_weight += heapq.heappop(weight)
+        
+        return apples
+
+##############################################################
+# 2009. Minimum Number of Operations to Make Array Continuous
+# 10OCT23
+##############################################################
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        define continuous has having two properties
+            all elements are unique
+            max(nums) - min(nums) == len(nums) - 1
+        
+        in one operation, i can replace any element in nums with any integer
+        return minimum number of moves to make nums continuous
+        sort the array, smallest is at beginning, largest is at the end
+        given [1,2,3,5,6] sort
+        [1,2,3,5,6]
+        N = 5
+        6 - 1 != 5 - 1
+        
+        say we are at some index i, compare that to the largest, which is at some index k
+        if nums[k] - nums[i] != len(nums) - 1
+        then make we need to fix nums[k] to make it so
+        but we need to make sure that number isn't used in the array
+        
+        [1,2,3,5,6]
+        we are at 1, we need to find some number cand_max, such that cand_max - 1 == N - 1
+        cand_max = N
+        more so, given some curr_num after sorting
+        cand_max - curr_num == N - 1
+        cand_max = N - 1 + curr_num
+        i probably need to duplicate the numbers first
+        
+        if when looking for the max im not at the end of the array, it means there is a number larger than the cand_max,
+        i need to change this eleement to cand_max
+        
+        turns out we are trying to find a continuous array, where each elements goes up by 1, if sorted
+        if we are given array of size n, and some start left, then the numbers in the array should be [left, left + n]
+        idea is to treat each number as a left bound, and finds its right bound, [left, left + n - 1]
+        
+        to find how many operations we need to ot this, we need to find the number of elements already in the range [left, left + n - 1]
+        we can leave these elements unchange, we also need to remove duplicates
+        which mean we need to change the n - (right - left) elements
+        the answer is just the minimum for each left
+        need to use right bound
+            the smallest number that is just greater when looking for the right
+            right bound is the insertion point
+        '''
+        N = len(nums)
+        ans = N #notice how N is still the original nums
+        #in the case where we need to replace all
+        deduped_nums = sorted(set(nums))
+        
+        for i in range(len(deduped_nums)):
+            left = deduped_nums[i]
+            right = left + N - 1
+            right_idx = bisect.bisect_right(deduped_nums,right)
+            count_no_change = right_idx - i
+            ans = min(ans, N - count_no_change)
+        
+        return ans
+            
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        writing out upper bound
+        '''
+        
+        def upper_bound(arr,target):
+            left = 0
+            right = len(arr)
+            right_bound = 0
+            while left < right:
+                mid = left + (right - left) // 2
+                if arr[mid] > target:
+                    right = mid
+                else:
+                    right_bound = mid + 1
+                    left = mid + 1
+            
+            return right_bound
+            
+        N = len(nums)
+        ans = N #notice how N is still the original nums
+        #in the case where we need to replace all
+        deduped_nums = sorted(set(nums))
+        
+        for i in range(len(deduped_nums)):
+            left = deduped_nums[i]
+            right = left + N - 1
+            right_idx = upper_bound(deduped_nums,right)
+            count_no_change = right_idx - i
+            ans = min(ans, N - count_no_change)
+        
+        return ans
+            
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        we can use sliding window to find the the count of unchanged numbers in the range [left, left+n-1]
+        notince that as i inreases so does left = nums[i]
+        and since left increase, right increases
+        so we can use two pointers and expand the window until we go just past the needed right bound
+        '''
+        N = len(nums)
+        ans = N #notice how N is still the original nums
+        #in the case where we need to replace all
+        deduped_nums = sorted(set(nums))
+        
+        right_idx = 0
+        
+        for i in range(len(deduped_nums)):
+            left = deduped_nums[i]
+            while right_idx < len(deduped_nums) and deduped_nums[right_idx] < left + N:
+                right_idx += 1
+            
+            count_no_change = right_idx - i
+            ans = min(ans, N - count_no_change)
+        
+        return ans
+            
+#################################################
+# 2251. Number of Flowers in Full Bloom
+# 11OCT23
+#################################################
+#brute force
+class Solution:
+    def fullBloomFlowers(self, flowers: List[List[int]], people: List[int]) -> List[int]:
+        '''
+        return array ans of size len(people) where ans[i] is the number of flowers in full bloom
+        flowers[i] gives [start bloom, end bloom] for the ith flower
+        sweep line?
+        hints1
+        1. count(t) = number flowers in bloom at time t = number of flowers that have started blooming - number of of flowers that have already stopped blooming
+        
+        '''
+        N = len(people)
+        ans = [0]*N
+        
+        for i,time in enumerate(people):
+            #count
+            in_bloom = 0
+            for start,end in flowers:
+                if start <= time <= end:
+                    in_bloom += 1
+            
+            ans[i] = in_bloom
+        
+        return ans
+            
+class Solution:
+    def fullBloomFlowers(self, flowers: List[List[int]], people: List[int]) -> List[int]:
+        '''
+        return array ans of size len(people) where ans[i] is the number of flowers in full bloom
+        flowers[i] gives [start bloom, end bloom] for the ith flower
+        sweep line?
+        hints1
+        1. count(t) = number flowers in bloom at time t = number of flowers that have started blooming - number of of flowers that have already stopped blooming
+        2. speed up the search binary search to find the counts
+        sort start and ends seperately
+        then binary search to find the number starting bllom flowers and ending bloom flowers
+        '''
+        N = len(people)
+        ans = [0]*N
+        starts = []
+        ends = []
+        for start,end in flowers:
+            starts.append(start)
+            ends.append(end)
+        
+        starts.sort()
+        ends.sort()
+        
+        for i,time in enumerate(people):
+            #count
+            start_bloom = bisect.bisect_right(starts,time)
+            end_bloom = bisect.bisect_left(ends,time)
+            count = start_bloom - end_bloom
+            ans[i] = count
+        
+        return ans
+
+#using heap/pq
+class Solution:
+    def fullBloomFlowers(self, flowers: List[List[int]], people: List[int]) -> List[int]:
+        '''
+        we first sort on flowers based on start time, sort based on people increasinly, and min heap for end times
+        the idea is that for a person with time t, and flower that bloomed with less than time t, is a possibility for that person to see it bloom
+        but if the flower finished blooming with time < t, then this peron cannot possbily see it
+        
+        intution:
+            for person i with time t, find all flowers <= time t, then of those flowers remove the ones who's bloom ended before time t
+            for finding the ending time we can use a min heap
+        
+        intution:
+            after sorting, move pointer i to iterate along flowers where we find flowers that started bloooming <= time t
+            as we advance, we add the end times to the min heap
+            from this heap, we remove will end times that are <= the current time
+            the answer is the size of the heap
+        
+        use dictionary to mapp times to people
+        '''
+        flowers.sort(key = lambda x: x[0])
+        sorted_people = sorted(people) #keep separetely
+        end_times = []
+        mapp = {} #person time to num flowers
+        start = 0
+        
+        for person in sorted_people:
+            #get possible flowers
+            while start < len(flowers) and flowers[start][0] <= person:
+                heapq.heappush(end_times, flowers[start][1])
+                start += 1
+                
+            #remover flowers that possibly couldn't be seen
+            while end_times and end_times[0] < person:
+                heapq.heappop(end_times)
+            
+            mapp[person] = len(end_times)
+        
+        #remapp
+        return [mapp[p] for p in people ]
+
+#sorting and two pointers
+class Solution:
+    def fullBloomFlowers(self, flowers: List[List[int]], people: List[int]) -> List[int]:
+        arr1 = sorted([x[0] for x in flowers])
+        arr2 = sorted([x[1] for x in flowers])
+        people = sorted(enumerate(people), key = lambda x: x[1])
+
+        p1, p2, p3 = 0, 0, 0
+        n = len(arr1)
+        m = len(people)
+        cur_flower = 0
+        # cur_time = 0
+        res = {}
+        
+        for org_idx, t in people:
+            while p1 < n and arr1[p1] <= t:
+                cur_flower += 1
+                p1 += 1
+            while p2 < n and arr2[p2] < t:
+                cur_flower -= 1
+                p2 += 1
+            res[org_idx] = cur_flower
+
+        return [res[i] for i in range(m)]
+
+#line sweep
+#differene arrays
+class Solution:
+    def fullBloomFlowers(self, flowers: List[List[int]], people: List[int]) -> List[int]:
+        '''
+        line sweep or difference array, typically used in range base problems
+        for some range [start,end] we do diff[start] += 1 and diff[end] -= 1
+        the idea is that each index repersents a change in count, in this case a change in the number of flowers
+        then for a certain range we can do a prefix sum to find the total flowers in bloom, more so, we do pref_sum at time t on the differences array
+        
+        algo:
+            1. make the differences array (line sweep)
+            2. create pref sum of the values in the difference array and mapp them to the positions, these are the keys
+            3. binary search over people and find the person in the positions array, answer is in the pref_sum array
+        '''
+        difference = {} #could also use SortedDict
+        for start,end in flowers:
+            difference[start] = difference.get(start,0) + 1
+            difference[end+1] = difference.get(end+1,0) - 1
+        
+        #makre prefix sum
+        prefix_sums = []
+        positions = []
+        curr_flowers = 0
+        
+        for key in sorted(difference.keys()):
+            val = difference[key]
+            positions.append(key)
+            curr_flowers += val
+            prefix_sums.append(curr_flowers)
+        
+        ans = []
+        
+        #binary search for the index (right bound) of perosn in the positions array
+        for p in people:
+            right_idx = bisect.bisect_right(positions,p) - 1
+            ans.append(prefix_sums[right_idx])
+        
+        return ans
