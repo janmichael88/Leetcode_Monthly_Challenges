@@ -1451,3 +1451,328 @@ class Solution:
             ans.append(prefix_sums[right_idx])
         
         return ans
+
+###############################################
+# 1095. Find in Mountain Array
+# 12OCT23
+###############################################
+#ughh too many calls to the API
+# """
+# This is MountainArray's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class MountainArray:
+#    def get(self, index: int) -> int:
+#    def length(self) -> int:
+
+class Solution:
+    def findInMountainArray(self, target: int, mountain_arr: 'MountainArray') -> int:
+        '''
+        we need to binary seach in a mountain array
+        we actually dont have access to the mountain array, can only interact withit through the API
+        return min indiex such that it == target
+        similar to search in rotated array
+        i can binary search for the peack index, then search both left and right parts and check for target and validate the minimum
+        '''
+        #find peack index
+        left = 1
+        right = mountain_arr.length()-2
+        peak_idx = 0
+        while left <= right:
+            mid = left + (right - left) // 2
+            #on the peak
+            if mountain_arr.get(mid -1) < mountain_arr.get(mid) > mountain_arr.get(mid+1):
+                peak_idx = mid
+                break
+            #if we are on the ascending side
+            elif mountain_arr.get(mid -1) < mountain_arr.get(mid) < mountain_arr.get(mid+1):
+                peak_idx = mid + 1
+                left = mid + 1
+            #descending side
+            else:
+                right = mid - 1
+            
+        #print(peak_idx)
+        #now binary search for target from [0 to peak_idx] and [peak_idx to right]
+        left = 0
+        right = peak_idx
+        cand1 = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            #is answer
+            if mountain_arr.get(mid) == target:
+                cand1 = mid
+                break
+            elif mountain_arr.get(mid) < target:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        #right side, but remember this is decreasing
+        left = peak_idx
+        right = mountain_arr.length()-1
+        cand2 = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            #is answer
+            if mountain_arr.get(mid) == target:
+                cand2 = mid
+                break
+            elif mountain_arr.get(mid) < target:
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        print(peak_idx, cand1,cand2)
+        #validate
+        if cand1 == -1 and cand2 == -1:
+            return -1
+        elif cand1 == -1:
+            return cand2
+        elif cand2 == -1:
+            return cand1
+        else:
+            return min(cand1,cand2)
+
+#yes!!!
+# """
+# This is MountainArray's API interface.
+# You should not implement it, or speculate about its implementation
+# """
+#class MountainArray:
+#    def get(self, index: int) -> int:
+#    def length(self) -> int:
+
+class Solution:
+    def findInMountainArray(self, target: int, mountain_arr: 'MountainArray') -> int:
+                #find peack index
+        left = 1
+        right = mountain_arr.length()-2
+        peak_idx = 1 #set this to 1 not 0, peak cannot be at beignning or end anway
+        while left <= right:
+            mid = left + (right - left) // 2
+            #we actually dont need to check all thre conidtions, just if we are on the ascending side
+            if mountain_arr.get(mid) < mountain_arr.get(mid+1):
+                peak_idx = mid + 1
+                left = mid + 1
+            #descending side
+            else:
+                right = mid - 1
+            
+        #print(peak_idx)
+        #now binary search for target from [0 to peak_idx] and [peak_idx to right]
+        left = 0
+        right = peak_idx
+        cand1 = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            #is answer
+            if mountain_arr.get(mid) == target:
+                cand1 = mid
+                break
+            elif mountain_arr.get(mid) < target:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        #right side, but remember this is decreasing
+        left = peak_idx
+        right = mountain_arr.length()-1
+        cand2 = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            #is answer
+            if mountain_arr.get(mid) == target:
+                cand2 = mid
+                break
+            elif mountain_arr.get(mid) < target:
+                right = mid - 1
+            else:
+                left = mid + 1
+
+        #validate
+        if cand1 == -1 and cand2 == -1:
+            return -1
+        elif cand1 == -1:
+            return cand2
+        elif cand2 == -1:
+            return cand1
+        else:
+            return min(cand1,cand2)
+
+############################################
+# 1213. Intersection of Three Sorted Arrays
+# 13OCT23
+############################################
+class Solution:
+    def arraysIntersection(self, arr1: List[int], arr2: List[int], arr3: List[int]) -> List[int]:
+        '''
+        the arrays are already sorted, just keep three pointers and move the smallest
+        '''
+        i,j,k = 0,0,0
+        ans = []
+        
+        #if we get to the end of one array first, we can stop, since it wont have whats in the other two
+        while i < len(arr1) and j < len(arr2) and k < len(arr3):
+            #all the same
+            if arr1[i] == arr2[j] == arr3[k]:
+                ans.append(arr1[i])
+                i += 1
+                j += 1
+                k += 1
+            
+            elif arr1[i] < arr2[j]:
+                i += 1
+            elif arr2[j] < arr3[k]:
+                j += 1
+            else:
+                k += 1
+        
+        return ans
+
+class Solution:
+    def arraysIntersection(self, arr1: List[int], arr2: List[int], arr3: List[int]) -> List[int]:
+        ans = []
+        j,k = 0,0
+        for i in range(len(arr1)):
+            while j < len(arr2) - 2 and arr2[j+1] <= arr1[i]:
+                j += 1
+            while k < len(arr3) - 2 and arr3[k+1] <= arr1[i]:
+                k += 1
+            
+            if arr1[i] == arr2[j] == arr3[k]:
+                ans.append(arr1[i])
+        
+        return ans
+
+###########################################
+# 746. Min Cost Climbing Stairs (REVISTED)
+# 13OCT23
+##########################################
+class Solution:
+    def minCostClimbingStairs(self, cost: List[int]) -> int:
+        '''
+        let dp(i) be min cost of climbing stairs starting at i
+        then dp(i) = {
+            cost[i] + min(dp(i+1), dp(i+2))
+        }
+        
+        min dp(0,1)
+        '''
+        
+        N = len(cost)
+        memo = {}
+        
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = cost[i] + min(dp(i+1),dp(i+2))
+            memo[i] = ans
+            return ans
+        
+        
+        return min(dp(0),dp(1))
+
+#bottom up
+class Solution:
+    def minCostClimbingStairs(self, cost: List[int]) -> int:
+        '''
+        let dp(i) be min cost of climbing stairs starting at i
+        then dp(i) = {
+            cost[i] + min(dp(i+1), dp(i+2))
+        }
+        
+        min dp(0,1)
+        '''
+        
+        N = len(cost)
+        dp = [0]*(N+2)
+        
+        for i in range(N-1,-1,-1):
+            ans = cost[i] + min(dp[i+1],dp[i+2])
+            dp[i] = ans
+        
+        
+        return min(dp[0],dp[1])
+
+########################################
+# 544. Output Contest Matches
+# 13OCT23
+#########################################
+class Solution:
+    def findContestMatch(self, n: int) -> str:
+        '''
+        generate all pairs, then cut in half and nest the left and right parts
+        i can use recursion,
+        left and right to numbers
+        '''
+        def rec(left,right):
+            if left >= right:
+                return ""
+            
+            larger_rank = "({},{})".format(left,right)
+            smaller_rank = rec(left+1,right - 1)
+            #play them
+            play = "{},{}".format(larger_rank,smaller_rank)
+            return play
+        
+        
+        print(rec(1,n))
+
+class Solution:
+    def findContestMatch(self, n: int) -> str:
+        '''
+        generate all pairs, then cut in half and nest the left and right parts
+        i can use recursion,
+        left and right to numbers
+        i need to recurse on the array
+        '''
+        def rec(left,right):
+            if right - left == 1:
+                return [(left,right)]
+            
+            res = [(left,right)]
+            return res + rec(left+1,right-1)
+        
+        def rec2(arr,left,right):
+            if left >= right:
+                return ""
+            
+            play = "{},{}".format(arr[left],arr[right])
+            return "("+play+","+rec2(arr,left+1,right-1)+")"
+        
+        teams = rec(1,n)
+        print(teams)
+        print(rec2(teams,0,len(teams)-1))
+
+class Solution:
+    def findContestMatch(self, n: int) -> str:
+        def helper(array):
+            if len(array) == 1:
+                return array[0]
+            res = []
+            for i in range(len(array)//2):
+                res.append('('+array[i]+','+array[len(array)-1-i]+')')
+            return helper(res)
+        a = [str(num) for num in range(1,n+1)]
+        return helper(a)
+
+class Solution:
+    def findContestMatch(self, n: int) -> str:
+        '''
+        iteratvively
+        '''
+        #seeds = map(str, range(1,n+1))
+        seeds = [str(num) for num in range(1,n+1)]
+        while n > 1:
+            seeds = ["("+ seeds[i] + "," + seeds[n-1-i] + ")" for i in range(n//2)]
+            n //= 2
+        
+        return seeds[0]
+
