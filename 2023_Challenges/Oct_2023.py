@@ -1776,3 +1776,105 @@ class Solution:
         
         return seeds[0]
 
+###########################################
+# 2742. Painting the Walls
+# 14OCT23
+############################################
+#nice try
+class Solution:
+    def paintWalls(self, cost: List[int], time: List[int]) -> int:
+        '''
+        we are given costs and times and cost[i] and time[i] represents that cost and time to paint the ith wall
+        
+        we have two paitners
+        paid:
+            cost = cost[i]
+        free painter:
+            paint any wall in 1 unit time at cost of zero
+            free painter can only be used if paid painters is already occupied? WTF??
+            we can only use a free painter while we are using a paid painter
+            rather, if free painter takes time t to paint a wall, i can use free painter to paint t walls
+            
+        if im at wall i using a paid patiner, cost must be cost[i] and time[i]
+        so he paints and we move up i
+        but given time[i], we can also use free painters to advance by time[i] with cost of 1
+            or we can pick time[i] walls to paint
+        
+        so we paint this will cost[i] and use time[i] free painters
+        sort cost increasinly
+        and keep track of i
+        '''
+        paired = [(c,t) for c,t in zip(cost,time)]
+        paired.sort()
+        cost = [c for c,t in paired]
+        time = [t for c,t in paired]
+        N = len(cost)
+        
+        memo = {}
+        
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            #use only paid, 
+            #use only paid and free
+            only_paid = cost[i] + dp(i+1)
+            paid_free = cost[i] + dp(i+time[i]+2)
+            ans = min(only_paid,paid_free)
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+
+class Solution:
+    def paintWalls(self, cost: List[int], time: List[int]) -> int:
+        '''
+        need to keep track of the index 
+        and number of walls painted so far
+        when we paint wall i, we can also elimnate time[i] walls
+        or we dont paint
+        doesnt matter what walls we paint, as long as we paint them
+        '''
+        memo = {}
+        N = len(cost)
+        def dp(i,left):
+            if left <= 0:
+                return 0
+            if i >= N:
+                return float('inf')
+            if (i,left) in memo:
+                return memo[(i,left)]
+            
+            paint = cost[i] + dp(i+1,left - 1 - time[i])
+            dont_paint = dp(i+1,left)
+            ans = min(paint,dont_paint)
+            memo[(i,left)] = ans
+            return ans
+        
+        return dp(0,N)
+            
+#bottom up
+class Solution:
+    def paintWalls(self, cost: List[int], time: List[int]) -> int:
+        '''
+        bottom up
+        '''
+        N = len(cost)
+        dp = [[0]*(N+1) for _ in range(N+1)]
+        #prepopulate base cases
+        for i in range(1,N+1):
+            for left in range(1,N+1):
+                if i >= N:
+                    dp[i][left] = float('inf')
+                    
+                    
+        for i in range(N-1,-1,-1):
+            for left in range(1,N+1):
+                paint = cost[i] + dp[i+1][max(0,left - 1 - time[i])]
+                dont_paint = dp[i+1][left]
+                ans = min(paint,dont_paint)
+                dp[i][left] = ans
+        
+        return dp[0][N]
+        
