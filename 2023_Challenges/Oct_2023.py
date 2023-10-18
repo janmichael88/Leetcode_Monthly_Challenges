@@ -1878,3 +1878,311 @@ class Solution:
         
         return dp[0][N]
         
+#################################################################
+# 1269. Number of Ways to Stay in the Same Place After Some Steps
+# 15OCT23
+#################################################################
+class Solution:
+    def numWays(self, steps: int, arrLen: int) -> int:
+        '''
+        lets call (i,j) state as i being the position in the array and the number of steps j
+        let dp(i,j) be the number of ways of getting to (i,j)
+        so we need to stolve dp(0,steps)
+        if im at (i,j), i either come from (i-1,j-1), (i+1,j-1), or (i,j-1)
+        
+        dp(i,j) = dp(i-1,j-1) + dp(i+1,j-1)  +dp(i,j-1)
+        if (steps == 0) and (i == 0) its a valid way
+        
+        '''
+        mod = 10**9 + 7
+        memo = {}
+        def dp(i,j):
+            if j == 0:
+                if i == 0:
+                    return 1
+                return 0
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #staying theree and reduce step count
+            ans = dp(i,j-1)
+            #if we can move left
+            if i - 1 >= 0:
+                ans += (dp(i-1,j-1) % mod)
+            #if we can mvoe right
+            if i + 1 <= arrLen - 1:
+                ans += (dp(i+1,j-1) % mod)
+            ans %= mod
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,steps) % mod
+
+#bottom up
+class Solution:
+    def numWays(self, steps: int, arrLen: int) -> int:
+        '''
+        bottom up
+        
+        '''
+        mod = 10**9 + 7
+        dp = [[0]*(steps+1) for _ in range(arrLen+1)]
+        
+        #prepopulate base casses
+        for i in range(arrLen+1):
+            for j in range(steps+1):
+                if j == 0:
+                    if i == 0:
+                        dp[i][j] = 1
+                        
+        dp[0][0] = 1
+        
+        #for steps start 1 away from 0
+        for j in range(1,steps+1):
+            #for position, we need to start from the end
+            for i in range(arrLen):
+                ans = dp[i][j-1]
+                #if we can move left
+                if i - 1 >= 0:
+                    ans += (dp[i-1][j-1] % mod)
+                #if we can mvoe right
+                if i + 1 <= arrLen - 1:
+                    ans += (dp[i+1][j-1] % mod)
+                ans %= mod
+                dp[i][j] = ans
+        
+        return dp[0][steps]
+
+########################################
+# 1243. Array Transformation
+# 17OCT23
+########################################
+class Solution:
+    def transformArray(self, arr: List[int]) -> List[int]:
+        '''
+        simulate
+        
+        '''
+        N = len(arr)
+        while True:
+            isThereChange = False
+            next_array = arr[:]
+            for i in range(1,N-1):
+                if arr[i-1] > arr[i] < arr[i+1]:
+                    next_array[i] = arr[i] + 1
+                    isThereChange = True
+                if arr[i-1] < arr[i] > arr[i+1]:
+                    next_array[i] = arr[i] - 1
+                    isThereChange = True
+            
+            arr = next_array
+            if isThereChange == False:
+                return arr
+                
+#########################################
+# 1361. Validate Binary Tree Nodes
+# 17OCT23
+#########################################
+#gahh, it not just a simple hashmap problem
+class Solution:
+    def validateBinaryTreeNodes(self, n: int, leftChild: List[int], rightChild: List[int]) -> bool:
+        '''
+        we just need to make a tree,
+        the graph can have no connected components and must not have no back edge
+        rather if we find the parent of each node,
+            a valid tree must have nodes with only parent and exactly one node with no parent
+        '''
+        parents = [-1]*n
+        parent_mapp = defaultdict(list)
+        for i in range(n):
+            #i -> left and i -> right
+            left = leftChild[i]
+            right = rightChild[i]
+            if left != -1:
+                if parents[left] == -1:
+                    parents[left] = i
+                if left != i:
+                    parent_mapp[left].append(i)
+            if right != -1: 
+                if parents[right] == -1:
+                    parents[right] = i
+                if right != i:
+                    parent_mapp[right].append(i)
+                
+        #validate
+        #there should only be one -1 and each must have only one parent
+        def onlyOneRoot(arr):
+            return arr.count(-1) == 1
+        
+        def onlyOneParent(mapp):
+            for k,v in mapp.items():
+                if len(v) > 1:
+                    return False
+            return True
+        
+        print(parents)
+        print(parent_mapp)
+        return onlyOneRoot(parents) and onlyOneParent(parent_mapp)
+        
+#this is just DFS,BFS problem
+class Solution:
+    def validateBinaryTreeNodes(self, n: int, leftChild: List[int], rightChild: List[int]) -> bool:
+        '''
+        find root, 
+        dfs for cycle, and make sure we touch all nodes
+        '''
+        children = set(leftChild) | set(rightChild)
+        root = -1
+        for i in range(n):
+            if i not in children:
+                root = i
+        
+        if root == -1:
+            return False
+        
+    
+        seen = set()
+        def cycleDetect(node):
+            if node in seen:
+                return True
+            seen.add(node)
+            left = leftChild[node]
+            right = rightChild[node]
+            for child in [left,right]:
+                if child != -1:
+                    if cycleDetect(child):
+                        return True
+            
+            return False
+        
+        hasCycle = cycleDetect(root)
+        return hasCycle == False and len(seen) == n
+
+#bfs
+class Solution:
+    def validateBinaryTreeNodes(self, n: int, leftChild: List[int], rightChild: List[int]) -> bool:
+        '''
+        bfs variant
+        '''
+        children = set(leftChild) | set(rightChild)
+        root = -1
+        for i in range(n):
+            if i not in children:
+                root = i
+        
+        if root == -1:
+            return False
+        
+    
+        def cycleDetect(node):
+            seen = set()
+            q = deque([])
+            q.append(node)
+            while q:
+                node = q.popleft()
+                if node in seen:
+                    return [True,seen]
+                seen.add(node)
+                left = leftChild[node]
+                right = rightChild[node]
+                for child in [left,right]:
+                    if child != -1:
+                        q.append(child)
+
+            return [False,seen]
+        
+        hasCycle,seen = cycleDetect(root)
+        return hasCycle == False and len(seen) == n
+
+#can also do top sort
+class Solution:
+    def validateBinaryTreeNodes(self, n: int, leftChild: List[int], rightChild: List[int]) -> bool:
+        '''
+        for top sort, start with node that has zero indegree, this is the root
+        then we just check if we can touch all nodes
+        children cannot have more the 1 indegree
+        '''
+        indegree = [0]*n
+        for i in range(n):
+            if leftChild[i] != -1:
+                indegree[leftChild[i]] += 1
+            if rightChild[i] != -1:
+                indegree[rightChild[i]] += 1
+            
+        #check no more than 1 indegree for each node
+        for i in range(n):
+            if indegree[i] > 1:
+                return False
+        
+        q = deque([]) #only root has 0 indegree
+        for i in range(n):
+            if indegree[i] == 0:
+                q.append(i)
+            
+        if len(q) > 1:
+            return False
+        
+        seen = set()
+        while q: 
+            curr = q.popleft()
+            seen.add(curr)
+            for child in [leftChild[curr], rightChild[curr]]:
+                if child != -1:
+                    indegree[child] -= 1
+                    if indegree[child] == 0:
+                        q.append(child)
+        
+        return len(seen) == n
+
+#union find???
+class DSU:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.comps = n
+        
+    def find(self,node):
+        if self.parent[node] != node:
+            self.parent[node] = self.find(self.parent[node])
+        
+        return self.parent[node]
+    
+    def union(self,child,parent):
+        child_par = self.find(child)
+        parent_par = self.find(parent)
+        
+        #if childs parent doesn't point to itself, it means it was assigned
+        #first assigned of a parent to child would be allowed
+        if child != child_par:
+            return False
+        
+        #can't have this in a tree
+        if parent_par == child_par:
+            return False
+        
+        self.comps -= 1
+        self.parent[child_par] = parent_par
+        return True
+        
+    
+class Solution:
+    def validateBinaryTreeNodes(self, n: int, leftChild: List[int], rightChild: List[int]) -> bool:
+        '''
+        key insights for union find solution
+        while exmaining (parent,left) and (parent,right)
+            1. if find(child) != child, it must mean that the child got assigned a parent earlier, and thus must have one parent
+                otherwise we make the relationship
+                reduce group size
+            2. if parent and child alreayd belong to the same group, and we see them again, it must mean they are in a cycle
+        
+        all the while keep track of the component size
+        initally there are N groups, 
+        checkk if there is one 1 at the end
+        '''
+        dsu = DSU(n)
+        for node in range(n):
+            for child in [leftChild[node], rightChild[node]]:
+                if child != -1:
+                    if not dsu.union(child,node):
+                        return False
+                    
+        return dsu.comps == 1
