@@ -2186,3 +2186,99 @@ class Solution:
                         return False
                     
         return dsu.comps == 1
+
+#############################################
+# 2050. Parallel Courses III
+# 18OCT23
+#############################################
+class Solution:
+    def minimumTime(self, n: int, relations: List[List[int]], time: List[int]) -> int:
+        '''
+        find min number of months needed to complete all courses
+        relations[i] is edge list (u to v)
+        time gives amount of time needed to complete course
+        rules
+            1. can start taking a course at anyh time if prereqs are met
+            2. any number of course can be taken at the same time
+        
+        need to start with courses that have no prereqs
+        if courses all took the same time, then we would just take thme one by one
+        use kahns to determine if i can take all the courses, then if i can take all the courses
+        as we do kahns keep track of the total time taken by taking the max
+        min months is really just defined as the longest bottlneck (by a class)
+        min number of semesters is just the longest path
+        
+        intution:
+            the minimum time to finish a course is defined as the maximum time to finish any one of its preruesists
+            if we want to take course v, we have prev a list of [prev_courses] going into v
+            then the min time needeed to complete course v woudl be time[v] + max(u[time] for u in prev_courses)
+            then we just takte the max time for all course
+        
+        intution
+            needed latest prerequsite time needed for a class, which is bottlenecked by the lognest pre-requisite
+            define value of a path as the sum of values for eahc node,
+                consider all paths going into this node, the answer for this node is just the max
+            
+            top sort from 0 indegree and keep track pf max
+        '''
+        #just use zero indexing
+        graph = defaultdict(list)
+        indegree = [0]*n
+        for u,v in relations:
+            graph[u-1].append(v-1)
+            indegree[v-1] += 1
+        
+        #print(indegree)
+        #print(graph)
+        max_times = [0]*n
+        q = deque([])
+        for i in range(n):
+            if indegree[i] == 0:
+                q.append(i)
+                max_times[i] = time[i]
+        while q:
+            curr_class = q.popleft()
+            for neigh in graph[curr_class]:
+                indegree[neigh] -= 1
+                max_times[neigh] = max(max_times[neigh],max_times[curr_class] + time[neigh])
+                if indegree[neigh] == 0:
+                    q.append((neigh))
+        
+        return max(max_times)
+            
+#dp
+class Solution:
+    def minimumTime(self, n: int, relations: List[List[int]], time: List[int]) -> int:
+        '''
+        we can treat this as dp 
+        let dp(node) be the minimum time needed to complete all courses start from node
+        base case is when we hit a node with 0 indegree, we can just return the time from time
+        '''
+        #just use zero indexing
+        graph = defaultdict(list)
+        indegree = [0]*n
+        for u,v in relations:
+            graph[u-1].append(v-1)
+            indegree[v-1] += 1
+        
+        memo = {}
+        def dp(curr_class):
+            if curr_class not in graph:
+                return time[curr_class]
+            if curr_class in memo:
+                return memo[curr_class]
+            ans = 0
+            for neigh in graph[curr_class]:
+                ans = max(ans, dp(neigh) + time[curr_class])
+            
+            memo[curr_class] = ans
+            return ans
+        
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans, dp(i))
+        
+        return ans
+            
+        
