@@ -2257,13 +2257,16 @@ class Solution:
         #just use zero indexing
         graph = defaultdict(list)
         indegree = [0]*n
+        outdegree = [0]*n
         for u,v in relations:
             graph[u-1].append(v-1)
             indegree[v-1] += 1
+            outdegree[u-1] += 1
         
         memo = {}
         def dp(curr_class):
-            if curr_class not in graph:
+            if outdegree[curr_class] == 0: #class with no out degree means we just use its full time
+            #if curr_class not in graph:
                 return time[curr_class]
             if curr_class in memo:
                 return memo[curr_class]
@@ -2281,4 +2284,194 @@ class Solution:
         
         return ans
             
+            
+############################################
+# 2355. Maximum Number of Books You Can Take
+# 18OCT23
+############################################
+#nice try though
+class Solution:
+    def maximumBooks(self, books: List[int]) -> int:
+        '''
+        given books array of length n, books[i] is number of books on ith shelf
+        want to take a contig secttion [l,r], and for i in range(l,r+1)
+            if we take k books from shelf i, we must take > k + 1 books in shelf i+1
+        
+        i can use (l,r) as states, too big
+        then use prefix array
+        dp(i) gives the maximum books i can take using books[:i] inclusive
+        if we are at i, we can only take up to books[i+1] - 1
+        if we can take this many do so, otherwise skip
+        '''
+        memo = {}
+        n = len(books)
+        
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            ans = 0
+            if i + 1 < n:
+                for j in range(books[i+1]):
+                    ans = max(ans,j + dp(i+1))
+            memo[i] = ans
+            return ans
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans,dp(i))
+        
+        return ans
+                
+#O(n^3)
+class Solution:
+    def maximumBooks(self, books: List[int]) -> int:
+        '''
+        for dp, we need two states (posotion i, and prev books taken)
+        then we keep trying to take a book and minimize
+        '''
+        memo = {}
+        n = len(books)
+        
+        def dp(i,prev_taken):
+            if i >= n:
+                return 0
+            if (i,prev_taken) in memo:
+                return memo[(i,prev_taken)]
+            
+            ans = 0
+            #try taking books from books[i] to 0, only its greater then previous taken
+            for books_taken in range(books[i], 0, -1):
+                if books_taken > prev_taken:
+                    ans = max(ans, books_taken + dp(i+1,books_taken))
+            
+            memo[(i,prev_taken)] = ans
+            return ans
+        
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans, dp(i,0))
+        
+        return ans
+
+class Solution:
+    def maximumBooks(self, books: List[int]) -> int:
+        '''
+        if we define a_i as the number of books we take from the ith shelf, there are two constrains
+            1. a_i <= books[i]
+            2. a_i <= a_{i+1} - 1, meaing we the books we take from the current shelf must be strictly greater than i + 1
+        
+        say we are it index i, and we take books[i], we then look to i - 1, and if books[i-1] >= books[i] - 1, we take books[i]-1 from books[i-1]
+        try i-2, and take if books[i-1] >= books[i] - 2
+        at some point we will find some index j, such that:
+            * j < i and books[j] < books[i] - (i - j)
+            * books[j] - j < books[i] - i
+            this is the index that we cannot take as part of the arithmetic progreassion
+            i.e the right most j, that satifies that the above two equations
+        
+        really we want a contiguous sequences that is strictly increasing and consective diff (from left to right) == 1
+        need to be ablse to get sum for arithmetic sequence, ez peasy
+        sequence of numbers of books should be in the range[j+1,i], and in this range it should be an arithmetic progression
+        
+        the number of books taken from shelves in range [l,r] is books[r] + (books[r] - 1) + (books[r] - 2) + ...+ (books[r] - (cnt - 1)]
+        where cnt is th enumber of shelves or summnags, of which there shold only be [r - l + 1]
+        and cnt must be positive, so cnt = min(books[r], r - l + 1), in cases where r-l + 1 is negative
+        so the sum for a block of an arithemtic progression in the range [l,r] is defined as 
+            1/2*(first element at l + second element at right)*cnt
+            = (1/2)*(books[r] - (cnt - 1))*cnt
+            
+        sum of arithmetic sequence: general form
+        S_{n} = n/2(2*a + (n-1)*2)
+        n = number of terms to be added
+        a = first term
+        d = comon diffeertent
+        
+        we define calcSum(l,r) to find sum of arithmetic progression
+        now on to dp
+        let dp(i) be the max number of books we can take from all the shelves in range[0,i] taking exactly books[i]
+        how can we find dp(i)?
+            we already know that the number of books in the range [j+1,i] = calcSum(j+1,i)
+            to find dp(i) we need to find j and add calcSum(j+1,i)
+            dp(i) = dp(j) + calcSum(j+1,i)
+            if such a j doest not exists, then dp(i) = calcSum(0,i), i.e its just the range from 0 to i
+        now we need to find j for each i, how?
+        define rightmost i as i_i and the next best j, as i_2
+            it must be the case that i_2 < i_1 and books[i_2] - i_2 < books[i_1] - i_1
+            and it must be the case that in the range [i_2 + 1, i_1] is arith progression
+        then we just do the same for i_2
+        
+        motonic stack:
+            stack will keep indices in order of books[i] - i with the index with the largest value being at the top of the stack
+            when a new index comes we pop some elemnts from the stack, to keep it montonic, and push new index,
+            need to maintain books[i] - i values of elements in ascending order
+        
+        '''
+        N = len(books)
+        
+        #get arith preogression
+        def calcSum(l,r):
+            cnt = min(books[r], r - l + 1)
+            ap = (2*books[r] - (cnt - 1))*cnt // 2
+            return ap
+        
+        stack = []
+        dp = [0]*N
+        
+        for i in range(N):
+            #finding the best j for the current i, keeep track of indices
+            while stack and books[stack[-1]] - stack[-1] >= books[i] - i:
+                stack.pop()
+            
+            #if we cant find a j, uisg calcSum(0,i)
+            if not stack:
+                dp[i] = calcSum(0,i)
+            #transition to find the best i
+            else:
+                j = stack[-1]
+                dp[i] = dp[j] + calcSum(j+1,i)
+            
+            stack.append(i)
+        
+        return max(dp)
+        
+class Solution:
+    def maximumBooks(self, books: List[int]) -> int:
+        '''
+        just solving it another way
+        sum arithmetic progression in range [l,r]
+        is books[r] + (books[r] - 1) + (books[r] -2) + ... + books[r] - (cnt - 1)
+            last sum, books[r] - (cnt - 1) >= 0
+            books[r] >= (cnt - 1), so cnt = min(books[r], r - l + 1)
+        problem really is just finding all the strictly increasing arithmetic progressions
+        if i is the right of the end of the arithmetic progression, we need to find the smallest j, where books[j] - j < books[i] - i does not hold
+        let dp(i) be max sum of books we can take using books[:i] and taking books[i]
+        we know the sum for some j is just the arithsum from (j+1,i)
+            so we want max beteen (j+1,i), which is just dp(j)
+        '''
+        arith_sum = lambda x : (1 + x)*x // 2 if x >= 0 else 0
+        N = len(books)
+        dp = [0]*N
+        stack = []
+        for i in range(N):
+            #use first shelf
+            if i == 0:
+                dp[i] = books[i]
+            else:
+                while stack and books[stack[-1]] > books[i] - (i - stack[-1]):
+                    #find the next j, everything on the stack was good, need to make increasing
+                    stack.pop()
+                
+                if stack:
+                    dp[i] = dp[stack[-1]] + arith_sum(books[i]) - arith_sum(books[i] - (i - stack[-1])) #same as + calcSum(j+1,i), whole sum minus the parts up to j-1
+                else:
+                    #just caclSum(j+1,i)
+                    dp[i] = arith_sum(books[i]) - arith_sum(books[i] - (i+1))
+            
+            stack.append(i)
+        
+        return max(dp)
+                              
         
