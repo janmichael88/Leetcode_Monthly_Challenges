@@ -2474,4 +2474,40 @@ class Solution:
         
         return max(dp)
                               
+######################################
+# 555. Split Concatenated Strings
+# 21OCT23
+######################################
+#inteligent brute force
+class Solution:
+    def splitLoopedString(self, strs: List[str]) -> str:
+        '''
+        brute force would be to try all possible concatneations, and for each concatenation, check each split
+        find the largest lexographical one
+        needs to be greedy, if i want the largest lexograhpical one first, need to priortize them so taht larger chars are in the beginning
         
+        for every starting direction and leter, lets determing the best string we can make
+        this is essentially brute force
+        basically try all splits in all s in strs
+        then try all concatenations
+        '''
+        #first fine the largest lexogrpahical strings in strs
+        max_starts = []
+        for s in strs:
+            max_start = max(s,s[::-1])
+            max_starts.append(max_start)
+        
+        ans = ""
+        for i,s in enumerate(max_starts):
+            #try both 
+            for start in (s,s[::-1]):
+                for j in range(len(start)+ 1):
+                    split_start = start[j:]
+                    #get remaning
+                    #simular splitting on this one
+                    remaining = "".join(max_starts[i+1:] + max_starts[:i]) + start[:j]
+                    candidate = split_start + remaining
+                    if candidate > ans:
+                        ans = candidate
+        
+        return ans
