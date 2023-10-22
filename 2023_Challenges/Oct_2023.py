@@ -2511,3 +2511,227 @@ class Solution:
                         ans = candidate
         
         return ans
+
+##################################################
+# 1425. Constrained Subsequence Sum
+# 21OCT23
+##################################################
+#nice try
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        first start with dp without any optimizing
+        need to keep track of position i, and last number added in the subequence
+        then its just knapsack
+        subsequnce must be non empty
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i,prev):
+            if i >= N:
+                return 0
+            if (i,prev) in memo:
+                return memo[(i,prev)]
+            take = float('-inf')
+            no_take = float('-inf')
+            if i - prev <= k:
+                take = nums[i] + dp(i+1,i)
+            no_take = dp(i+1,prev)
+            ans = max(take,no_take)
+            memo[(i,prev)] = ans
+            return ans
+        
+        
+        return dp(0,0)
+        
+#one index
+#hard part is the non-empty sequence part
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        first start with dp without any optimizing
+        need to keep track of position i, and last number added in the subequence
+        then its just knapsack
+        subsequnce must be non empty
+        need states where j-i <= k and i < j
+        if i am at i i can only include the i + k indices, inclusive, i cant skip, i have to include
+        '''
+        memo = {}
+        N = len(nums)
+        
+        if sum(nums) < min(nums):
+            return max(nums)
+        
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = float('-inf')
+            for j in range(i+1,i+k+1):
+                ans = max(ans, nums[i] + dp(j))
+            #ans = max(ans, dp(i+1)) #this part here, i dont know when to toggle off or on
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+
+#tehre we go,
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        first start with dp without any optimizing
+        need to keep track of position i, and last number added in the subequence
+        then its just knapsack
+        subsequnce must be non empty
+        need states where j-i <= k and i < j
+        if i am at i i can only include the i + k indices, inclusive, i cant skip, i have to include
+        '''
+        memo = {}
+        N = len(nums)
+        
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = 0
+            for j in range(i+1,i+k+1):
+                ans = max(ans, dp(j))
+            #ans = max(ans, dp(i+1)) #this part here, i dont know when to toggle off or on
+            ans += nums[i]
+            memo[i] = ans
+            return ans
+        
+        ans = float('-inf')
+        for i in range(N):
+            ans = max(ans,dp(i))
+        #dp(0)
+        #return max(memo.values())
+        return ans
+
+#bottom up before optimizing
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        bottom up before optimizing with monostack/deque
+        '''
+        N = len(nums)
+        dp = [0]*(N+1)
+        
+        for i in range(N-1,-1,-1):
+            ans = 0
+            for j in range(i+1,min((i+k+1),N)):
+                ans = max(ans, dp[j])
+            
+            ans += nums[i]
+            dp[i] = ans
+
+        ans = float('-inf')
+        for i in range(N):
+            ans = max(ans,dp[i])
+        return ans
+
+#keeping dp arrary
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        bottom up before optimizing with monostack/deque or heap
+        
+        '''
+        N = len(nums)
+        max_heap = [(-nums[-1], N-1)]
+        dp = [0]*N
+        dp[-1] = nums[-1]
+        
+        for i in range(N-2,-1,-1):
+            #garbage heap, keep largest nums[i] that is k away from i
+            #we dont care about antyhing else
+            while max_heap[0][1] - i > k:
+                heapq.heappop(max_heap)
+            curr = max(0, -max_heap[0][0]) + nums[i]
+            dp[i] = curr
+            heapq.heappush(max_heap, (-curr,i))
+
+        ans = float('-inf')
+        for i in range(N):
+            ans = max(ans,dp[i])
+        return ans
+
+
+#optimize using heap
+#no dp array
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        bottom up before optimizing with monostack/deque or heap
+        '''
+        N = len(nums)
+        max_heap = [(-nums[-1], N-1)]
+        ans = nums[-1]
+        
+        for i in range(N-2,-1,-1):
+            #garbage heap, keep largest nums[i] that is k away from i
+            #we dont care about antyhing else
+            while max_heap[0][1] - i > k:
+                heapq.heappop(max_heap)
+            curr = max(0, -max_heap[0][0]) + nums[i]
+            ans = max(ans,curr)
+            heapq.heappush(max_heap, (-curr,i))
+
+        return ans
+
+#keeping deque of size k only
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        '''
+        using deque, but rember we are going from right to left in this implmentation
+        need to keept some kind of monotnic structure, keep values of dp in in order
+        queue most hold the largest dp[j] at the last element
+        '''
+        N = len(nums)
+        max_heap = [(-nums[-1], N-1)]
+        dp = [0]*N
+        dp[-1] = nums[-1]
+        q = deque([N-1])
+        
+        for i in range(N-2,-1,-1):
+            #find curent max from q
+            curr = max(0, dp[q[0]]) + nums[i]
+            dp[i] = curr
+            while q and dp[q[-1]] < dp[i]:
+                q.pop()
+            
+            q.append(i)
+            if q[-1] - i > k:
+                q.popleft()
+
+        '''
+        print(dp)
+        ans = float('-inf')
+        for i in range(N):
+            ans = max(ans,dp[i])
+        '''
+        print(dp)
+        return max(dp)
+
+
+#going left to right
+class Solution:
+    def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
+        # replaced max_heap with max_deque
+        N = len(nums)
+        max_queue = deque([(nums[0], 0)])
+        max_sum_ending_at_i = 0
+        res = nums[0]
+        for i in range(1, N):
+            while max_queue and max_queue[0][1] < i - k:
+                max_queue.popleft()
+            max_sum_ending_at_i = max(0, max_queue[0][0]) + nums[i]
+            res = max(res, max_sum_ending_at_i)
+            while max_queue and max_sum_ending_at_i > max_queue[-1][0]:
+                max_queue.pop()
+            max_queue.append((max_sum_ending_at_i, i))
+        return res
+
