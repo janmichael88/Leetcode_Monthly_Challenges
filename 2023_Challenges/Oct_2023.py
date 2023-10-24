@@ -626,7 +626,7 @@ class Solution:
         return dp(0,1,0)
 
 #not too bad
-class Solution(object):
+class Solution:
     def numOfArrays(self, n: int, m: int, k: int) -> int:
         '''
         we are given searh cost algorithm, it calculates the number of times we update max, and returns index
@@ -2720,18 +2720,182 @@ class Solution:
 #going left to right
 class Solution:
     def constrainedSubsetSum(self, nums: List[int], k: int) -> int:
-        # replaced max_heap with max_deque
+        '''
+        using deque, but rember we are going from right to left in this implmentation
+        need to keept some kind of monotnic structure, keep values of dp in in order
+        queue most hold the largest dp[j] at the last element 
+        storing states on queue as (dp(j), and j)
+        '''
         N = len(nums)
         max_queue = deque([(nums[0], 0)])
-        max_sum_ending_at_i = 0
-        res = nums[0]
+        dp = [0]*N
+        dp[0] = nums[0]
         for i in range(1, N):
+            #if the index is not within k distace from i
             while max_queue and max_queue[0][1] < i - k:
                 max_queue.popleft()
             max_sum_ending_at_i = max(0, max_queue[0][0]) + nums[i]
-            res = max(res, max_sum_ending_at_i)
+            dp[i] = max_sum_ending_at_i
+            #these sums dont matter because we only want the highest
+            #i.e we dont want the previous dp sums
             while max_queue and max_sum_ending_at_i > max_queue[-1][0]:
                 max_queue.pop()
             max_queue.append((max_sum_ending_at_i, i))
-        return res
+        return max(dp)
 
+###########################################
+# 1793. Maximum Score of a Good Subarray
+# 22OCT23
+###########################################
+class Solution:
+    def maximumScore(self, nums: List[int], k: int) -> int:
+        '''
+        score of subarry between [i,j] inclusive is min(nums[i:j])*(j-1+1)
+        god subarray is where i <= k <= j
+        we are given k, find max possible score of good subarray
+        find mins to the left and mins to the right
+        look for mins left up to k, and mins right from k+1, N
+        
+        if k == 3, i cannot pick a k, that is < 3
+        try all k' for k' in [k to N]
+        
+        the further away i and j are, the larger the score, but we can increase the score of we find a larger minimum
+        say we are at some (i,j) and min(nums[i:j]) = curr_min
+        the curr_min could go up or down if i do (i+1,j) and (i,j-1)
+        two pointers, k is fixed, so the only thing we can do is move the left or right bounds
+        neet to split array in two parts 0 to k-1 and k to n
+        left is one before k, and right is including k
+        
+        call them left and right, and they represent the miniums of the array if we had started at k
+        so for the left, we go from k-1 to 0, and for right we go from k to n
+        
+        k is in the righ section, so we tierate over the entire right section and try to take each element
+        lets so we pick a subarray from the right, INCLUDING k,  with current minimum x
+        if we we want to extend the range, then we need to pick an element from left where the minimum is >= x
+        intuition; binarys search the left side for the minimum left pointer
+            idea is that the left array is sorted, so we binarys earch for the index
+            iterate j over each index of right, and assing curMin = right[j]
+            peform binary search to find i, the insertion index of currMin in left
+            once we have i, we get teh size of the minimmum and maximize score
+        how do we find the size?
+            right is offset by k, i.e it starts at k, array should be [i,k+j] and so size is (k+j) - i + 1
+            multiply this by right[j] to get score
+        
+        assumption is thatt minimum is in the right? but what if its on th left?
+        revere the array and apply the same algorithm
+            and also change k to N -k - 1
+
+        '''
+        def findMin(arr,k):
+            N = len(arr)
+            #build left min going from k-1 to 0
+            left = [0]*k
+            curr_min = float('inf')
+            for i in range(k-1,-1,-1):
+                curr_min = min(curr_min,arr[i])
+                left[i] = curr_min
+            #build right starting from k+1 to N
+            right = [0]*(N-k)
+            curr_min = float('inf')
+            for i in range(k,N):
+                curr_min = min(curr_min,arr[i])
+                right[i-k] = curr_min
+            
+            ans = 0
+            #pick any j from right, and fbind the the insertion point in left, where the minimum is just greater
+            for j in range(len(right)):
+                curr_min = right[j]
+                #find next greatest minimum, i.e everything to the left of is <= curr_min
+                i = bisect.bisect_left(left,curr_min)
+                size = (k+j) - i + 1
+                ans = max(ans, curr_min*size)
+            
+            return ans
+                
+        
+        return max(findMin(nums,k), findMin(nums[::-1], len(nums) - k - 1))
+
+#monostack
+class Solution:
+    def maximumScore(self, nums: List[int], k: int) -> int:
+        '''
+        similar to next greater element, but here we are looking for the smaller element instead
+        we need to treat nums[i] as the current minimum element
+            then looking left we need to find the the position of the next smaller element
+            same thing with looking right, we find the position of the next smaller element
+        make left array, where left i the index of the FIRST element to the left i that has a lower value than nums in nums[i]
+        we need to know how far the next lesser eleement is away from i on both sides
+        monotnic stack with indices
+        allocate lefts with -1 and rights with n, in cases where there are no smaller elements to the left and to the right
+        once we have left and right
+            we need to check if we can use k, and then find the size by looking into left[i] and right[i]
+            the positions must contain k, i.e left[i] < k < right[i]
+            k is inbetween the bounds left and right
+        how we do find the size?
+            index starts at left[i] + 1, we dont want to include left[t]
+            index ends at right[i] - 1, we dont want to incdlue right[i]
+            right[i] - left[i] - 1
+        '''
+        N = len(nums)
+        left = [-1]*N #rerpesents the index of the next smallet element to the right of i uisng nums[i] 
+        #its the next smaller, not the SMALLEST
+        stack = []
+        for i in range(N-1,-1,-1):
+            while stack and nums[stack[-1]] > nums[i]:
+                idx = stack.pop()
+                left[idx] = i
+            
+            stack.append(i)
+        
+        right = [N]*N
+        stack = []
+        for i in range(N):
+            while stack and nums[stack[-1]] > nums[i]:
+                idx = stack.pop()
+                right[idx] = i
+            stack.append(i)
+        
+        
+        ans = 0
+        #trying each i has k, if we can use it
+        for i in range(N):
+            if left[i] < k and right[i] > k:
+                ans = max(ans, nums[i]*(right[i] - left[i] - 1))
+        
+        return ans
+
+#two pointers, greedy
+class Solution:
+    def maximumScore(self, nums: List[int], k: int) -> int:
+        '''
+        exparng from nums[k]
+            set points left == right == k
+            then comapre nums[left-1] and nums[right+1], and go in the direction of the larger element
+        similar to quesiton, Container with Most Water
+        why? proof by contradiction:
+            we argue that not going in the direction of the greater element doesn't give a bigger value
+            for some state [left,right] we can go to [left-1,right] or [left,right+1]
+            assume nums[left-1] > nums[right+1] and we have yet to find the optimal subarray
+            the optimal subarray must include nums[left-1], it we didn't we could have tkaen nums[right+1]
+            now at this point, if the subarray was optimal, it shoudl include nums[left-1] without affeecting the minimum
+        '''
+        N = len(nums)
+        ans = nums[k]
+        left = right = k
+        curr_min = nums[k]
+        
+        while left > 0 or right < N - 1:
+            #care ful when checking left -1 and right + 1, when one of the pointers if out of index
+            left_neigh = 0 if left == 0 else nums[left-1]
+            right_neigh = 0 if right == N-1 else nums[right+1]
+            if left_neigh < right_neigh:
+                right += 1
+                curr_min = min(curr_min, nums[right])
+            else:
+                left -= 1
+                curr_min = min(curr_min,nums[left])
+            
+            ans = max(ans, curr_min*(right - left + 1))
+        
+        return ans
+            
