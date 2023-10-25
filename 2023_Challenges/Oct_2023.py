@@ -2899,3 +2899,112 @@ class Solution:
         
         return ans
             
+######################################
+# 1660. Correct a Binary Tree
+# 24OCT23
+#######################################
+#DFS
+#check for right and its right val
+class Solution:
+    def correctBinaryTree(self, root: TreeNode) -> TreeNode:
+        '''
+        after finding the defect, from the nodes parent, sent parent to defect node to None
+        hint 1:
+            traversing from right to levet, the defected node will point to a previosuly seen node
+        its connect right, so checek if node.right.val is already seen
+        
+        '''
+        seen = set()
+        
+        def delete(node):
+            if not node:
+                return None
+            if node.right and node.right.val in seen:
+                return None
+            node.right = delete(node.right)
+            seen.add(node.val)
+            node.left = delete(node.left)
+            return node
+        
+        return delete(root)
+#         traversals = []
+        
+#         traversals = []
+        
+#         def trav(node):
+#             if not node:
+#                 return
+#             trav(node.right)
+#             traversals.append(node.val)
+#             trav(node.left)
+        
+#         trav(root)
+#         print(traversals)
+
+#bfs solution
+#left to right variant
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def correctBinaryTree(self, root: TreeNode) -> TreeNode:
+        '''
+        we can also do BFS, just make sure to traverse the right side first
+        and also keep track of parent and node parents
+        at each level of the queue keep track of the nodes we have seen by using hassh set
+        '''
+        parent = None
+        q = deque([(root,parent)])
+        
+        while q:
+            N = len(q)
+            seen = set()
+            #prepopulate seen at this current level
+            for n,p in q:
+                seen.add(n)
+            for _ in range(N):
+                curr_node, curr_parent = q.popleft()
+                #check right 
+                if curr_node.right in seen:
+                    if curr_parent.left == curr_node:
+                        curr_parent.left = None
+                    else:
+                        curr_parent.right = None
+                    
+                    return root
+                
+                if curr_node.left:
+                    q.append((curr_node.left,curr_node))
+                if curr_node.right:
+                    q.append((curr_node.right,curr_node))
+            
+#right left, check and add on the fly
+class Solution:
+    def correctBinaryTree(self, root: TreeNode) -> TreeNode:
+        # Queue for BFS. Every element stores [node, parent]
+        queue = deque([[root, None]])
+
+        # Traverse Level by Level
+        while queue:
+            # Nodes in the current level
+            n = len(queue)
+
+            # Hash Set to store nodes of the current level
+            visited = set()
+
+            # Traverse all nodes in the current level
+            for _ in range(n):
+                # Pop the node from the queue
+                node, parent = queue.popleft()
+
+                # If node.right is already visited, then the node is defective
+                if node.right in visited:
+                    # Replace the child of the node's parent with null and return the root
+                    if parent.left == node:
+                        parent.left = None
+                    else:
+                        parent.right = None
+                    return root
