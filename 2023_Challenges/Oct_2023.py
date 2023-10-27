@@ -3008,3 +3008,330 @@ class Solution:
                     else:
                         parent.right = None
                     return root
+
+#########################################
+# 779. K-th Symbol in Grammar (REVISTED)
+# 25OCT23
+########################################
+#TLE
+class Solution:
+    def kthGrammar(self, n: int, k: int) -> int:
+        '''
+        simulating woud talke to long
+        thats 2**n operations 2**30
+        why does the iterative TLE
+        TC is n*(len(2**n))
+        1 1
+        2 2
+        3 8
+        4 16
+        ....
+        if it were just 2**n this would be fine
+        '''
+        start_row = "0"
+        for _ in range(n):
+            next_row = ""
+            for ch in start_row:
+                if ch == '0':
+                    next_row += '01'
+                else:
+                    next_row += '10'
+            
+            start_row = next_row
+            
+    
+        return int(start_row[k-1])
+
+class Solution:
+    def kthGrammar(self, n: int, k: int) -> int:
+        '''
+        simulating woud talke to long
+        thats 2**n operations 2**30
+        why does the iterative TLE
+        TC is n*(len(2**n))
+        1 1
+        2 2
+        3 8
+        4 16
+        ....
+        if it were just 2**n this would be fine
+        use state (n,k)
+        if we are at some row n and we want to know k, we know its going to be zero or a 1
+        from this position k, it changed to something from the previous row (n-1, ans a position prev_k) in row (n-1)
+        first 5
+        0
+        01
+        0110
+        01101001
+        0110100110010110
+        
+        position k at row n, comes from (n-1,k//2 + 1) , 1 indexed
+        base case (n,k) == (1,1) return 0
+        find parity of (k//2 + 1)? in n-1
+        need positions of k//2 and k//2 + 1 in prev_row, n-1
+        every even position is flipped from the previous k//2
+        for odd positions
+        #no need for memo, divide and conqure, but no repeated states
+        '''
+        #memo = {}
+        
+        def dp(n,k):
+            #first k is always zero
+            if k == 1:
+                return 0
+            #if (n,k) in memo:
+            #    return memo[(n,k)]
+            #if k even, it, flip it from the previous rows k//2 spot
+            if (k % 2) == 0:
+                ans = dp(n-1,k//2) ^ 1
+                memo[(n,k)] = ans
+                return ans
+            else:
+                #odd, look in prev row, its just the odd position from the previous row k//2, but +1 because its one based
+                ans = dp(n-1,k//2 + 1)
+                memo[(n,k)] = ans
+                return ans
+            
+        return dp(n,k)
+
+#treating it like binary tree
+class Solution:
+    def kthGrammar(self, n: int, k: int) -> int:
+        '''
+        we can treat this like a binary tree too
+        node starts with 0, for every node, if ita zero (left,right) -> (0,1)
+        if its a 1 -> (1,0)
+        for this problem nodes at some level i, where i = [1,2,3...] is just 2**(i-1)
+        its going to be a complete binary tree, so we can use counting to effeciently traverse
+        it then becomes a search problem, i.e seach for the kth node in the nth row
+        intution:
+            count number of nodes at the kth row
+            then check left or right for the number of nodes
+            then seach for num_nodes - num_nodes//2
+        
+        no need to actually cache because there are no repeated states
+        '''
+        def dfs(level,position,val):
+            if level == 1:
+                return val
+            #get nodes for the current number of levels
+            nodes = 2**(level-1)
+            #go right?
+            if position > nodes // 2:
+                #flip if we have to
+                next_val = 0
+                if val == 1:
+                    next_val = 0
+                else:
+                    next_val = 1
+                return dfs(level-1, position - (nodes // 2), next_val)
+            else:
+                #go left
+                next_val = 0
+                if val == 1:
+                    next_val = 1
+                else:
+                    next_val = 0
+                    
+                return dfs(level-1,position,next_val)
+        
+        return dfs(n,k,0)
+
+class Solution:
+    def kthGrammar(self, n: int, k: int) -> int:
+        '''
+        for some row_i at the ith row
+        row_i[:len(row_i)//2] == row_{i-1}[:]
+        ans also:
+        row_i[len(row_i)//2:] == flipped_bits(row_{i-1}[:])
+        
+        formally define dp(i) as the state of a row
+        dp(i) = dp(i-1) + flipped_bits(dp(i-1))
+        making the whole row required n*2**n time, its infeasible, go back to the counting and bianry seach part 
+        
+        given state (n,k)
+        find number of nodes at this level
+        total_nodes = 2**(n-1)
+        if k > total_nodes // 2, 
+            we flip the position from the first half of row n
+            1 - dp(n, k - total_nodes//2)
+            othrewise
+            dp(n-1,k)
+        we can either go left along a row or go up in a row
+        '''
+        def rec(n,k):
+            if k == 1:
+                return 0
+            
+            total_nodes = 2**(n-1)
+            if k > total_nodes // 2:
+                return 1 - rec(n,k - total_nodes//2)
+            else:
+                return rec(n-1,k)
+        
+        return rec(n,k)
+
+class Solution:
+    def kthGrammar(self, n: int, k: int) -> int:
+        '''
+        for the iterative  solution, we should start at (n,k), then go down to (1,1)
+        then we just follow the paths going left and going up
+        then we just flip if the current position is more than half the row size
+        we assume (n,k) to be X, then carry the assmption all the way to (1,1), then we just validate the assumption with the known truth that (1,1) is zero
+        start with assumption of 1
+        '''
+        if n == 1:
+            return 0
+        
+        start = 1
+        for curr_row in range(n,1,-1): #go to row just above the first row
+            total_elements = 2**(curr_row - 1)
+            if k > total_elements // 2:
+                start ^= 1
+                #now look for the other half
+                k -= total_elements // 2
+        
+        #validate
+        if start != 0:
+            return 0
+        return start
+
+#flipping O(N)
+class Solution:
+    def kthGrammar(self, n: int, k: int) -> int:
+        '''
+        we can that the bit was flipped some number of times
+        and a flip happened when the current k was bigger than half the elemenets
+        '''
+        if n == 1:
+            return 0
+        
+        start = 0
+        flips = 0
+        for curr_row in range(n,1,-1): #go to row just above the first row
+            total_elements = 2**(curr_row - 1)
+            if k > total_elements // 2:
+                start ^= 1
+                #now look for the other half
+                k -= total_elements // 2
+                flips += 1
+        
+        #validate
+        if flips % 2 == 0:
+            return 0
+        return 1
+
+###############################################################
+# 558. Logical OR of Two Binary Grids Represented as Quad-Trees
+# 25OCT23
+###############################################################
+#sheeeh, 31/60
+#nice try thoughm good review on quad tree
+"""
+# Definition for a QuadTree node.
+class Node:
+    def __init__(self, val, isLeaf, topLeft, topRight, bottomLeft, bottomRight):
+        self.val = val
+        self.isLeaf = isLeaf
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+"""
+
+class Solution:
+    def intersect(self, quadTree1: 'Node', quadTree2: 'Node') -> 'Node':
+        '''
+        if had the values as a 2d array, then the question is trivial, 
+        convert the trees each to an n by n array, apply logical or and rebuild the quad tree
+        when we cut in half we just do lower middle and upper middle
+        
+        when placing in 2d array, keep track of upper left and bottom right, then we can divide into four here
+        '''
+        #find dimensinos first
+        def findSize(tree):
+            if not tree:
+                return 1
+            TL = findSize(tree.topLeft)
+            TR = findSize(tree.topRight)
+            BR = findSize(tree.bottomRight)
+            BL = findSize(tree.bottomLeft)
+            return TL + TR + BR + BL
+        
+        
+        def createGrid(tree,array,x1,y1,N): #keep four points for the four corners of the box
+            if tree.isLeaf:
+                for i in range(x1,x1+N):
+                    for j in range(y1,y1+N):
+                        array[i][j] = 1 if tree.val else 0
+                return
+            createGrid(tree.topLeft,array, x1, y1, N // 2)
+            createGrid(tree.topRight,array, x1, y1 + N // 2, N // 2 )
+            createGrid(tree.bottomLeft,array, x1 + N // 2, y1, N // 2)
+            createGrid(tree.bottomRight,array,x1 + N // 2, y1 + N // 2, N // 2)
+        
+        def build(i,j,size,grid):
+            #check current square
+            status = True
+            for new_i in range(i,i+size):
+                for new_j in range(j, j + size):
+                    if grid[new_i][new_j] != grid[i][j]:
+                        status = False       
+                        break
+            if status == True:
+                return Node(val=grid[i][j],isLeaf = True, topLeft = None, topRight = None, bottomLeft = None, bottomRight = None)
+            
+            else:
+                node = Node(val = -1, isLeaf = False,topLeft = None, topRight = None, bottomLeft = None, bottomRight = None)
+                #recurse
+                node.topLeft = build(i,j,size//2,grid)
+                node.topRight = build(i,j + size //2,size//2,grid)
+                node.bottomLeft = build(i + size // 2,j,size//2,grid)
+                node.bottomRight = build(i + size //2, j + size//2,size//2,grid)
+                
+                return node
+
+        
+        N = int(findSize(quadTree1)**.5)
+        tree1 = [[0]*(N) for _ in range(N)]
+        tree2 = [[0]*(N) for _ in range(N)]
+
+        createGrid(quadTree1,tree1,0,0,N)
+        createGrid(quadTree2,tree2,0,0,N)
+        
+        #OR the two trees
+        new_tree = [[0]*(N) for _ in range(N)]
+        for i in range(N):
+            for j in range(N):
+                new_tree[i][j] = tree1[i][j] | tree2[i][j]
+        
+        
+        return build(0,0,N,new_tree)
+
+############################################
+# 823. Binary Trees With Factors (REVISTED)
+# 26OCT23
+############################################
+class Solution:
+    def numFactoredBinaryTrees(self, arr: List[int]) -> int:
+        '''
+        this is a dp counting problem
+        let dp(i) be the number of trees with i at the root
+        and say we have factors j and k, such that j*k = i
+        the number of ways we can make i is dp(j)*dp(k)
+        
+        count of the numbers, then dp each number adding them up
+
+        '''
+        N = len(arr)
+        mod = 10**9 + 7
+        dp = Counter(arr)
+        arr.sort()
+        for i in range(N):
+            for j in range(i):
+                if arr[i] % arr[j] == 0 and (arr[i] != arr[j]):
+                    dp[arr[i]] += (dp[arr[i]//arr[j]]*dp[arr[j]]) % mod
+        
+        
+        return sum(dp.values()) % mod
+        
