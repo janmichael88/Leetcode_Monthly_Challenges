@@ -3335,3 +3335,93 @@ class Solution:
         
         return sum(dp.values()) % mod
         
+#########################################################
+# 5. Longest Palindromic Substring (REVISITED)
+# 27OCT23
+#########################################################
+#careful with sizes and indexing left and right bounds
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        '''
+        dp(i,j) gives longest palindromic substring from i to j
+        if string at s[i] == s[j]:
+            2 + dp(i+1,j-1)
+        otherwise knapsack but dont add 1
+        
+        expanad around center, treat each i as the cetner for i in range(len(s))
+        then treat i and i + 1 as center for i in range(len(s)-1)
+        '''
+        N = len(s)
+        ans = [0,0]
+        for i in range(N):
+            #one center
+            left = i
+            right = i
+            while left >= 0 and right < N and s[left] == s[right]:
+                left -= 1
+                right += 1
+            #get distance, should be even length for single centers
+            #get size of curren palindrome
+            size = right -left - 1
+            if size > ans[1] - ans[0] + 1:
+                #get the size of the partse
+                part = size // 2
+                ans = [i - part, i + part]
+            
+            #two centers
+            if i + 1 < N:
+                left = i
+                right = i + 1
+                while left >= 0 and right < N and s[left] == s[right]:
+                    left -= 1
+                    right += 1
+                size = right -left - 1
+                if size > ans[1] - ans[0] + 1:
+                    #there is no center
+                    part = (size // 2) - 1
+                    ans = [i - part, (i + 1) + part]
+        
+        i,j = ans
+        return s[i:j+1]
+
+#dp?
+class Solution:
+    def longestPalindrome(self, s: str) -> str:
+        '''
+        bottom up dp is actually more intuitive in this case
+        if s[i] == s[j] and dp(i+1,j-1) is palindrome, then (i,j) is palindrome
+        we start with all length 1 palindromes, and for odd, we check 3,5,7 and so on
+        for even, if s[i] == s[i+1], we check 2,4,6,8...
+        we use dp[][] array to show whether (i,j) is palindrome
+        fill in base cases for (i,j) and (i,i+1)
+        '''
+        N = len(s)
+        dp = [[False]*N for _ in range(N)]
+        
+        ans = [0,0]
+        
+        #base case 
+        for i in range(N):
+            dp[i][i] = True
+        
+        #for i and i + 1
+        for i in range(N-1):
+            if s[i] == s[i+1]:
+                dp[i][i+1] = True
+                #new ans
+                ans = [i,i+1]
+        
+        #try all palindrom lenghts 2 to n
+        for length in range(2,N):
+            #set i for start of palindrome
+            for i in range(N-length):
+                #j will start at end 
+                j = i + length
+                #transition
+                if s[i] == s[j] and dp[i+1][j-1]:
+                    #new palindrom with greater length
+                    dp[i][j] = True
+                    ans = [i,j]
+                    
+        i,j = ans
+        return s[i:j+1]
