@@ -3425,3 +3425,152 @@ class Solution:
                     
         i,j = ans
         return s[i:j+1]
+
+#############################################
+# 1220. Count Vowels Permutation (REVISITED)
+# 28OCT23
+###########################################
+class Solution:
+    def countVowelPermutation(self, n: int) -> int:
+        '''
+        rules:
+            (prev) -> (next)
+            a -> e
+            e -> (a,i)
+            i -> (a,e,o,u)
+            o -> (i,u)
+            u -> (a)
+        keep track of current number of characters and and the last vowel added
+        we just add ways up
+        '''
+        memo = {}
+        transitions = {'a': ['e'],
+                      'e': ['a','i'],
+                      'i': ['a','e','o','u'],
+                      'o': ['i','u'],
+                      'u': ['a']}
+        
+        mod = 10**9 + 7
+        def dp(length,last_vowel):
+            if length == n:
+                return 1
+            if (length, last_vowel) in memo:
+                return memo[(length,last_vowel)]
+            ways = 0
+            for next_char in transitions[last_vowel]:
+                ways += dp(length+1,next_char)
+                ways %= mod
+            
+            memo[(length,last_vowel)] = ways
+            return ways
+        
+        
+        ans = 0
+        for v in 'aeiou':
+            ans += dp(1,v)
+            ans %= mod
+        
+        return ans
+            
+#bottom up
+class Solution:
+    def countVowelPermutation(self, n: int) -> int:
+        '''
+        rules:
+            (prev) -> (next)
+            a -> e
+            e -> (a,i)
+            i -> (a,e,o,u)
+            o -> (i,u)
+            u -> (a)
+        keep track of current number of characters and and the last vowel added
+        we just add ways up
+        
+        
+        '''
+
+        transitions = {'a': ['e'],
+                      'e': ['a','i'],
+                      'i': ['a','e','o','u'],
+                      'o': ['i','u'],
+                      'u': ['a']}
+        
+        vowel_to_idx = {'a': 0, 'e': 1, 'i': 2, 'o':3,'u':4}
+        mod = 10**9 + 7
+        dp = [[0]*5 for _ in range(n+1)]
+        for v in range(5):
+            dp[n][v] = 1
+            
+        for length in range(n-1,0,-1):
+            for last_vowel in 'aeiou':
+                ways = 0
+                for next_char in transitions[last_vowel]:
+                    ways += dp[length+1][vowel_to_idx[next_char]]
+                    ways %= mod
+
+                dp[length][vowel_to_idx[last_vowel]] = ways % mod
+
+        return sum(dp[1]) % mod
+
+#linear time and linear space
+#only care about length and lenght -1
+class Solution:
+    def countVowelPermutation(self, n: int) -> int:
+        '''
+        rules:
+            (prev) -> (next)
+            a -> e
+            e -> (a,i)
+            i -> (a,e,o,u)
+            o -> (i,u)
+            u -> (a)
+        keep track of current number of characters and and the last vowel added
+        we just add ways up
+        
+        
+        '''
+        if n == 1:
+            return 5
+        transitions = {'a': ['e'],
+                      'e': ['a','i'],
+                      'i': ['a','e','o','u'],
+                      'o': ['i','u'],
+                      'u': ['a']}
+        
+        vowel_to_idx = {'a': 0, 'e': 1, 'i': 2, 'o':3,'u':4}
+        mod = 10**9 + 7
+        dp_plus_one = [1]*5
+        dp = [0]*5
+        
+        for length in range(n-1,0,-1):
+            for last_vowel in 'aeiou':
+                ways = 0
+                for next_char in transitions[last_vowel]:
+                    ways += dp_plus_one[vowel_to_idx[next_char]]
+                    ways %= mod
+
+                dp[vowel_to_idx[last_vowel]] = ways % mod
+            dp_plus_one = dp[:]
+        
+        return sum(dp) % mod
+    
+#linear time constance space
+#just swap counts
+class Solution:
+    def countVowelPermutation(self, n: int) -> int:
+        # initialize the number of strings ending with a, e, i, o, u
+        a_count = e_count = i_count = o_count = u_count = 1
+        MOD = 10 ** 9 + 7
+
+        for i in range(1, n):
+            a_count_new = (e_count + i_count + u_count) % MOD
+            e_count_new = (a_count + i_count) % MOD
+            i_count_new = (e_count + o_count) % MOD
+            o_count_new = (i_count) % MOD
+            u_count_new = (i_count + o_count) % MOD
+
+            # https://docs.python.org/3/reference/expressions.html#evaluation-order
+            a_count, e_count, i_count, o_count, u_count = \
+                a_count_new, e_count_new, i_count_new, o_count_new, u_count_new
+
+        return (a_count + e_count + i_count + o_count + u_count) % MOD
