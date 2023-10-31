@@ -3308,6 +3308,60 @@ class Solution:
         
         return build(0,0,N,new_tree)
 
+"""
+# Definition for a QuadTree node.
+class Node:
+    def __init__(self, val, isLeaf, topLeft, topRight, bottomLeft, bottomRight):
+        self.val = val
+        self.isLeaf = isLeaf
+        self.topLeft = topLeft
+        self.topRight = topRight
+        self.bottomLeft = bottomLeft
+        self.bottomRight = bottomRight
+"""
+
+class Solution:
+    def intersect(self, quadTree1: 'Node', quadTree2: 'Node') -> 'Node':
+        '''
+        val is boolean and isLeaf is boolean
+        val == True of node represents a grid of 1s, or False if grid of 0s
+        since we are doing OR, ad just return 1 or ther other!
+        notes:
+            you can assign the value of a node to True or False when isLeaf is False
+        if one node is leage, then return if it is True, else return the other node
+        if neight are leaves, intersect each of the 4 subtrees adn return a leaf
+            if they are all the same falue
+            else return a non-leaf value of False
+        '''
+        def dfs(tree1,tree2):
+            #base case OR, return 1 or the other
+            if tree1.isLeaf:
+                return tree1 if tree1.val else tree2 #OR
+            if tree2.isLeaf:
+                return tree2 if tree2.val else tree1
+            
+            #recurse
+            TL = dfs(tree1.topLeft,tree2.topLeft)
+            TR = dfs(tree1.topRight,tree2.topRight)
+            BL = dfs(tree1.bottomLeft,tree2.bottomLeft)
+            BR = dfs(tree1.bottomRight,tree2.bottomRight)
+            
+            children = [TL,TR,BL,BR]
+            sumValues = 0 #check all zeros or all 1s
+            areAllLeaves = 0
+            
+            for child in children:
+                sumValues += child.val
+                areAllLeaves += child.isLeaf
+            
+            if (areAllLeaves == 4) and (sumValues == 0 or sumValues == 4):
+                return Node(TL.val,True,None,None,None,None)
+            
+            return Node(False,False,TL,TR,BL,BR)
+        
+        return dfs(quadTree1,quadTree2)
+            
+
 ############################################
 # 823. Binary Trees With Factors (REVISTED)
 # 26OCT23
@@ -3574,3 +3628,139 @@ class Solution:
                 a_count_new, e_count_new, i_count_new, o_count_new, u_count_new
 
         return (a_count + e_count + i_count + o_count + u_count) % MOD
+
+#########################################
+# 458. Poor Pigs (REVISITED)
+# 29OCT23 
+#########################################
+class Solution:
+    def poorPigs(self, buckets: int, minutesToDie: int, minutesToTest: int) -> int:
+        '''
+        if i have unlimited minutes to test, then just use one pig per bucket
+        for ONE PIG examine:
+            if there is no time to test, i.e minutesToTest == 0:
+                well the pig has one state, it remains alive
+                
+            if minutesToTest/minustesToDie = 1, then there are two states, alive, dead
+            if ratio is 2,
+                then its alive, dead after 1, dead after two
+                
+        states = minUtesToTest / minutesToDie + 1
+        intuition:
+            find the number of states, then find the nnumber of pigs to cover each of the states
+            rather if we have T tests and X pigs, how many states can we generate to cover N scenarops
+            this is estimation + example problem
+            1. prove that we cannot make N biger than number and 
+            2. give ane xample wehre N is impossible
+        
+        how many buckets couldt est x pigs with 2 available states:
+            one pige could test 2 buckets, drink from buckert number 1 thenw wait minuts toDie
+            with 2 states, 2 bigs coudl test 4 buckets
+        
+        how many buckets could text x pigs with s states:
+            s^x buckets
+            (states)^x = buckets
+            x  = log2(buckets) / log2(states) rounded up
+            
+        rather problem becomes solve:
+            states^(x) >= buckets, or find number of pigs to cover states given buckets
+        
+        find number of pigs to encode all the states
+            
+        '''
+        states = minutesToTest // minutesToDie + 1
+        return math.ceil(math.log2(buckets) / math.log2(states))
+
+class Solution:
+    def poorPigs(self, buckets: int, minutesToDie: int, minutesToTest: int) -> int:
+        '''
+        https://leetcode.com/problems/poor-pigs/discuss/935172/Two-diagrams-to-help-understanding
+        another way is to view it as an encoding problem
+        assume we have one round of testing (i.e minuteToDie == minutesToTest)
+            then we can only do one test, and a pig is either dead or alive after the test
+            
+        using hints, minminze the function (T+1)^x >= N,
+        here N is buckets
+        
+        need to cover all possible test scenarios
+        '''
+        T = minutesToTest // minutesToDie
+        ans = left = 0
+        right = buckets
+        while left <= right:
+            mid = left + (right - left) // 2
+            #can cover buckets with mid pigs
+            if (T+1)**mid >= buckets:
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+
+#########################################################
+# 2099. Find Subsequence of Length K With the Largest Sum
+# 30OCT23
+#########################################################
+class Solution:
+    def maxSubsequence(self, nums: List[int], k: int) -> List[int]:
+        '''
+        if the subsequence starts with index, i can only take eleemnets after i, i.e if its >= i+1, or > i
+        if we could we'd just pick the k largest
+        
+        use min pq, and keep with indicies
+        '''
+        min_heap = []
+        
+        for i,num in enumerate(nums):
+            if not min_heap:
+                heapq.heappush(min_heap, (num,i))
+            if min_heap and num > min_heap[0][0]:
+                heapq.heappush(min_heap, (num,i))
+                if len(min_heap) > k:
+                    heapq.heappop(min_heap)
+            
+        min_heap.sort(key = lambda x: x[1])
+        return [num for num,idx in min_heap]
+
+class Solution:
+    def maxSubsequence(self, nums: List[int], k: int) -> List[int]:
+        '''
+        wel repeatedly removing the min works
+        '''
+        while len(nums) > k:
+            nums.remove(min(nums))
+        
+        return nums
+
+class Solution:
+    def maxSubsequence(self, nums: List[int], k: int) -> List[int]:
+        '''
+        pair with (num,i) for num and all indices
+        sort by value, and get the k largest ones
+        sort k largest ones by index then return by inorder
+        '''
+        num_idx = sorted([(num,i) for i,num in enumerate(nums)])
+        #get k largest
+        k_largest = num_idx[-k:]
+        #sort by index
+        k_largest.sort(key = lambda x : x[1])
+        #need the correct order gor indices
+        return [num for num,idx in k_largest]
+
+class Solution:
+    def maxSubsequence(self, nums: List[int], k: int) -> List[int]:
+        '''
+        use heap but keap indices, then return in sorted order
+        '''
+        min_heap = []
+        for i,num in enumerate(nums):
+            heapq.heappush(min_heap,(num,i))
+            if len(min_heap) > k:
+                heapq.heappop(min_heap)
+        
+        #sort on indicies
+        min_heap.sort(key = lambda x : x[1])
+        return [num for num,i in min_heap]
+
+#quick select
