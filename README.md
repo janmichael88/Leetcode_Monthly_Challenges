@@ -56,8 +56,6 @@
   </tr>
 </
 
-<<<<<<< HEAD
-=======
 <table>
   <tr>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-1.png" width="100"></td>
@@ -110,7 +108,6 @@
   </tr>
 </
 
->>>>>>> c38a3d4574647740f6826633d4f5d289f90b19e0
 
 
 * Also have solutions for premium content in the scripts as well as annotated notes!
