@@ -3764,3 +3764,197 @@ class Solution:
         return [num for num,i in min_heap]
 
 #quick select
+class Solution:
+    def maxSubsequence(self, nums: List[int], k: int) -> List[int]:
+        '''
+        we can also use quick select
+        use quick select to find the kth largest number, all numbers bigger than the kth largest should be in the resulting array
+        provided that they have enough counts
+        this is a variatino on the quick select alogrithm
+        
+        1. use quick select to find the kth largest in O(N) time, must use median of medians approach for O(N) deterministic
+        2. count occurence of the kth largest items
+        3. copy the subseuence into the output array
+        '''
+        def quickSelect(nums,k):
+            pivot = random.choice(nums)
+            left,mid,right = [],[],[]
+            
+            for num in nums:
+                if num > pivot:
+                    left.append(num)
+                elif num < pivot:
+                    right.append(num)
+                else:
+                    mid.append(num)
+            
+            if k <= len(left):
+                return quickSelect(left,k)
+            if len(left) + len(mid) < k:
+                return quickSelect(right, k - len(left) - len(mid))
+            return pivot
+        
+        kthlargest = quickSelect(nums,k)
+        freq_of_klargest = 0
+        for num in nums:
+            if num == kthlargest:
+                freq_of_klargest += 1
+        
+        ans = []
+        for num in nums:
+            if num >= kthlargest and freq_of_klargest > 0:
+                ans.append(num)
+                if num == kthlargest:
+                    freq_of_klargest -= 1
+        
+        return ans
+        
+#########################################################
+# 1671. Minimum Number of Removals to Make Mountain Array
+# 30OCT23
+#########################################################
+#two LIS, and consider each i as mountain
+class Solution:
+    def minimumMountainRemovals(self, nums: List[int]) -> int:
+        '''
+        for there to be a mountain array, there must be some i, and array is increasiny up to i, and decreasing from i
+        if i found the LIS and DIS, get their lengths and the answer would be N - (DIS + LIS)
+        but LIS must end at i
+        first generate LIS and DIS arrays
+        '''
+        #increasing from left to right
+        N = len(nums)
+        lis = [1]*N
+        for i in range(1,N):
+            for j in range(i):
+                if nums[i] > nums[j]:
+                    lis[i] = max(lis[i], lis[j] + 1)
+            
+        #decreasing right to left
+        #which is still increasing from left to right
+        dis = [1]*N
+        for i in range(N-2,-1,-1):
+            for j in range(N-1,i,-1):
+                if nums[i] > nums[j]:
+                    dis[i] = max(dis[i], dis[j] + 1)
+                    
+        print(lis)
+        print(dis)
+        
+        #consider each i as the mountain peak, then find the lis from the left
+        #and dis going to the right
+        ans = 0
+        for i in range(1,N-1):
+            #must be valid mountain array [1,3] is not valid, which woud mean lis[i where it == 3] == 1, so it must be greater than 1
+            if lis[i] > 1 and dis[i] > 1:
+                ans = max(ans, lis[i] + dis[i] -1,ans) #-1 for the peak
+        
+        return N-ans
+
+    #######################################################
+# 2433. Find The Original Array of Prefix Xor
+# 31AUG23
+#######################################################
+class Solution:
+    def findArray(self, pref: List[int]) -> List[int]:
+        '''
+        hint gave it away
+            we need to return the original array that allows us to reconstruct the pref array
+            we need to undo XOR ops
+            where pref[i] = arr[0] ^ .... arr[i]
+        
+        useful propertires a ^ a = 0
+        XOR is associative and commutative
+        pref[i] = arr[0] ^ arr[1] ^ ... ^ arr[i]
+        pref[i+1] = arr[0] ^ arr[1] ^ ... ^ arr[i] ^ arr[i+1]
+        pref[i] ^ pref[i+1] = (arr[0] ^ arr[1] ^ ... ^ arr[i]) ^ (arr[0] ^ arr[1] ^ ... ^ arr[i] ^ arr[i+1])
+        after grouping like terms base on indices
+        pref[i] ^ pref[i+1] = arr[i+1]
+        base case arr[0] = pref[i]
+        
+        
+        hint 
+            x^a = b
+            x = b^a or a ^ b
+            
+            arr[i]^pref[i-1] = pref[i]
+            arr[i] = pref[i]^pref[i-1]
+        
+        '''
+        N = len(pref)
+        arr = [0]*N
+        arr[0] = pref[0]
+        
+        for i in range(1,N):
+            arr[i] = pref[i-1]^pref[i]
+        
+        return arr
+    
+#########################################
+# 1197. Minimum Knight Moves (REVISTED)
+# 31OCT23
+####################################
+class Solution:
+    def minKnightMoves(self, x: int, y: int) -> int:
+        '''
+        dfs from (0,0)
+        if start == end:
+            return 0, no steps
+        issue is with if i go to a cell that leads t0 nothing
+        '''
+        dirrs = [(-2,1),(-1,2),(1,2),(2,1),(2,-1),(1,-2),(-1,-2),(-2,-1)]
+        
+        q = deque([(0,0,0)])
+        seen = set()
+        while q:
+            i,j,steps = q.popleft()
+            if (i,j) == (x,y):
+                return steps
+            seen.add((i,j))
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                if (neigh_x,neigh_y) not in seen:
+                    q.append((neigh_x, neigh_y, steps+1))
+                    #need to add it here for pruning
+                    seen.add((neigh_x,neigh_y))
+        
+        return -1
+    
+class Solution:
+    def minKnightMoves(self, x: int, y: int) -> int:
+        # the offsets in the eight directions
+        offsets = [(1, 2), (2, 1), (2, -1), (1, -2),
+                   (-1, -2), (-2, -1), (-2, 1), (-1, 2)]
+
+        # data structures needed to move from the origin point
+        origin_queue = deque([(0, 0, 0)])
+        origin_distance = {(0, 0): 0}
+
+        # data structures needed to move from the target point
+        target_queue = deque([(x, y, 0)])
+        target_distance = {(x, y): 0}
+
+        while True:
+            # check if we reach the circle of target
+            origin_x, origin_y, origin_steps = origin_queue.popleft()
+            if (origin_x, origin_y) in target_distance:
+                return origin_steps + target_distance[(origin_x, origin_y)]
+
+            # check if we reach the circle of origin
+            target_x, target_y, target_steps = target_queue.popleft()
+            if (target_x, target_y) in origin_distance:
+                return target_steps + origin_distance[(target_x, target_y)]
+
+            for offset_x, offset_y in offsets:
+                # expand the circle of origin
+                next_origin_x, next_origin_y = origin_x + offset_x, origin_y + offset_y
+                if (next_origin_x, next_origin_y) not in origin_distance:
+                    origin_queue.append((next_origin_x, next_origin_y, origin_steps + 1))
+                    origin_distance[(next_origin_x, next_origin_y)] = origin_steps + 1
+
+                # expand the circle of target
+                next_target_x, next_target_y = target_x + offset_x, target_y + offset_y
+                if (next_target_x, next_target_y) not in target_distance:
+                    target_queue.append((next_target_x, next_target_y, target_steps + 1))
+                    target_distance[(next_target_x, next_target_y)] = target_steps + 1

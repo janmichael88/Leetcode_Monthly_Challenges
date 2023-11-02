@@ -3,39 +3,49 @@ Just a code dump for all the monthly Leet code solutions.
 
 # Badges:
 
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-1.png) 
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-2.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-3.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-4.png)
-![alt_text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-5.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-7.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-8.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-9.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-10.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-11.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-12.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-1.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-2.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-3.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-4.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-5.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-6.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-7.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-8.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-9.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-10.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-11.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-12.png)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-01.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-02.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-03.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-04.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-05.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-06.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-07.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-08.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-09.gif)
-![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-10.gif)
+<div style="display: flex; flex-wrap: wrap;">
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-1.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-2.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-3.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-4.png){:height="100px" width="100px"}
+![alt_text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-5.png){:height="100px" width="100px"}
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-7.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-8.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-9.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-10.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-11.png){:height="100px" width="100px"}
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2021-12.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-1.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-2.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-3.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-4.png){:height="100px" width="100px"}
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-5.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-6.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-7.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-8.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-9.png){:height="100px" width="100px"}
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-10.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-11.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-12.png){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-01.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-02.gif){:height="100px" width="100px"}
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-03.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-04.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-05.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-06.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-07.gif){:height="100px" width="100px"}
+
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-08.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-09.gif){:height="100px" width="100px"}
+![alt text](https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-10.gif){:height="100px" width="100px"}
+
+</div>
 
 Also have solutions for premium content in the scripts as well as annotated notes!
 
