@@ -234,3 +234,47 @@ class Solution:
                 bikes_taken[j] = True
         
         return ans
+    
+#######################################################
+# 1503. Last Moment Before All Ants Fall Out of a Plank
+# 04NOV23
+#######################################################
+class Solution:
+    def getLastMoment(self, n: int, left: List[int], right: List[int]) -> int:
+        '''
+        given plank of length n, and two arrays left and right
+        left contains indicis of ants that are going left same with right
+        each at moves at 1 unit per unit time 
+        when ants collide they switch directions
+        return time when they fall out of the plank
+            reather last moment when the last ant falls off the plank
+        
+        if i have ant going at i going left, and j going right
+        
+        importnant for transistion:
+            they switch directions and both ants are at (j+i) // 2
+        
+        turns out ants colliding is the same as ants moving past each other
+        i can see the case where two ants from opposite directions hitting being the case
+        good strategy, think of a simple example and find pattern
+        
+        hints unfortunaely gave it away... :(
+            ans is just the max distance for one ant to reach the end
+
+        derivation
+        we have ant at i going right and and at j going left and j-i > 0
+        intersectino would be at (i + (j-i)/2) in (j - i)/2 unit time
+        at intsection the flip and have to walk the same distance in the same time
+        '''
+        ans = 0
+        
+        #distance for an ant going left to walk off 0
+        for l in left:
+            ans = max(ans, l)
+        
+        #distance for an ant walking off n
+        for r in right:
+            ans = max(ans,n-r)
+        
+        return ans
+        
