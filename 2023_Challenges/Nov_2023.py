@@ -278,3 +278,116 @@ class Solution:
         
         return ans
         
+##############################################
+# 1535. Find the Winner of an Array Game
+# 05NOV23
+###############################################
+class Solution:
+    def getWinner(self, arr: List[int], k: int) -> int:
+        '''
+        looks like it simulation week
+        given array of distinct integers
+        if arr[0] > arr[1], arr[0] stays theres and arr[1] goest to eht end
+        the array just shifts to the left
+        return which integer will win the game after winning k consecutiv times
+        k is too big to simulate
+        
+        the array rotates left
+        say we have first two as (i,j), i > j, j gets sent back and shifts
+        i, will continue to win of the array is decreasing and i+1 < i
+         
+        if k is bigger than the length of the array, just return max
+        we cant simply return max if k < len(arr), 
+            because there may be elements that win k consectuive times before the max is promoted to the first element in the array
+        we cant simply keep playing rounds until we get to k consective wins
+            k is can be too big, up to a billion
+        
+        
+        '''
+        N = len(arr)
+        if k >= N:
+            return max(arr)
+        #simulate, need to effencitenly rotate
+        #used deque
+        q = deque(arr)
+        curr_winner = -1
+        curr_streak = 0
+        
+        while q:
+            first = q.popleft()
+            second = q.popleft()
+            if first > second:
+                #continue streak
+                if curr_winner == first:
+                    curr_streak += 1
+                else:
+                    curr_winner = first
+                    curr_streak = 1
+                #rotate
+                q.append(second)
+                q.appendleft(first)
+                if curr_streak == k:
+                    return first
+            
+            else:
+                if curr_winner == second:
+                    curr_streak += 1
+                else:
+                    curr_winner = second
+                    curr_streak = 1
+                
+                #orate
+                q.append(first)
+                q.appendleft(second)
+                if curr_streak == k:
+                    return second
+                
+class Solution:
+    def getWinner(self, arr: List[int], k: int) -> int:
+        '''
+        effeicient queue,
+            let curr be arr[0] and the opponnets be q(arr[1:])
+            also keep track of the max of the whole array
+                if curr ever gets promoted to the max, the max should never lose
+        '''
+        max_num = max(arr)
+        curr = arr[0]
+        q = deque(arr[1:])
+        streak = 0
+        
+        while q:
+            opp = q.popleft()
+            if curr > opp:
+                q.append(opp)
+                streak += 1
+            else:
+                q.append(curr)
+                curr = opp
+                streak = 1
+            
+            if streak == k or curr == max_num:
+                return curr
+            
+#turns out we dont need a dequ
+class Solution:
+    def getWinner(self, arr: List[int], k: int) -> int:
+        '''
+        for a player that is not the max number, it either comes before or after
+        coming before, it would lose ad get sent to the back
+        coming after, it would never win
+        so if an opponent loses, it will never win again
+        '''
+        max_num = max(arr)
+        curr = arr[0]
+        streak = 0
+        
+        for opp in arr[1:]:
+            if curr > opp:
+                streak += 1
+            else:
+                curr = opp
+                streak = 1
+            
+            if streak == k or curr == max_num:
+                return curr         
+            
