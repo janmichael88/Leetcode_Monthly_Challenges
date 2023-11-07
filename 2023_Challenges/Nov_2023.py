@@ -391,3 +391,99 @@ class Solution:
             if streak == k or curr == max_num:
                 return curr         
             
+#############################################
+# 1845. Seat Reservation Manager
+# 06NOV23
+#############################################
+#minheap
+class SeatManager:
+
+    def __init__(self, n: int):
+        '''
+        hard part is trying to return the minimum seat that is available
+        two heaps, seats available
+        and seats taken, all seats are available
+        reserve always gets the minium, but unresever could unreserve any seat
+        '''
+        self.seats = [i for i in range(1,n+1)]
+
+    def reserve(self) -> int:
+        ans = heapq.heappop(self.seats)
+        return ans
+
+        
+
+    def unreserve(self, seatNumber: int) -> None:
+        heapq.heappush(self.seats, seatNumber)
+
+
+# Your SeatManager object will be instantiated and called as such:
+# obj = SeatManager(n)
+# param_1 = obj.reserve()
+# obj.unreserve(seatNumber)
+
+class SeatManager:
+
+    def __init__(self, n: int):
+        '''
+        can we do it without initializaing the constructor with n seats??
+        we keep track of a the smallest unservered seat
+            this means that all seats >= this curr seat is remain unreserved
+        the caveat with the design is that unreserve will only be called after some seat has been reserved
+        i.e  elements in the min heap will alwasy be less than the marker
+        if any element in this container then it contains the numun numbered seat
+        otherwise an empty container means the marker is the mininum un-reserved seat
+        '''
+        self.min_seat = 1
+        self.available_seats = []
+        
+
+    def reserve(self) -> int:
+        #if there is something on this heap, its the min
+        if self.available_seats:
+            return heapq.heappop(self.available_seats)
+        seat_number = self.min_seat
+        self.min_seat += 1
+        return seat_number
+        
+
+    def unreserve(self, seatNumber: int) -> None:
+        heapq.heappush(self.available_seats,seatNumber)
+
+
+# Your SeatManager object will be instantiated and called as such:
+# obj = SeatManager(n)
+# param_1 = obj.reserve()
+# obj.unreserve(seatNumber)
+
+#buultin, review Orderedset
+
+from sortedcontainers import SortedSet
+class SeatManager:
+
+    def __init__(self, n: int):
+        '''
+        instead of using heap use ordered set 
+        just a height balanced tree
+        '''
+        self.min_seat = 1
+        self.available_seats = SortedSet()
+        
+
+    def reserve(self) -> int:
+        #if there is something on this heap, its the min
+        if self.available_seats:
+            return self.available_seats.pop(0)
+        seat_number = self.min_seat
+        self.min_seat += 1
+        return seat_number
+        
+
+    def unreserve(self, seatNumber: int) -> None:
+        self.available_seats.add(seatNumber)
+
+
+# Your SeatManager object will be instantiated and called as such:
+# obj = SeatManager(n)
+# param_1 = obj.reserve()
+# obj.unreserve(seatNumber)
