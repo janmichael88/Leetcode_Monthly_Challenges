@@ -685,3 +685,32 @@ class Solution:
             #dist must be at least t seconds
             return d_cheb <= t
         
+#########################################
+# 573. Squirrel Simulation (REVISTED)
+# 08NOV23
+##########################################
+class Solution:
+    def minDistance(self, height: int, width: int, tree: List[int], squirrel: List[int], nuts: List[List[int]]) -> int:
+        '''
+        this kinda goes with LC. 2849, good follow up
+        if squirrel started at tree, the answer is just the distances for each of the nuts times two
+        but the squirrel doesn't start at the tree, in which case
+            we walk to the nut that is closest, walk it to the tree, then its just 2*(sum distance of remaing nuts)
+        '''
+        #find closes nut to squirrel
+        closest_nut = -1
+        smallest_dist = float('inf')
+        for i,(x,y) in enumerate(nuts):
+            dist = abs(squirrel[0] - x) + abs(squirrel[1] - y)
+            if dist < smallest_dist:
+                smallest_dist = dist
+                closest_nut = i
+        
+        #ans starts of with dist from sq to closest nut and from closes nut to tree
+        ans = smallest_dist + (abs(tree[0] - nuts[closest_nut][0]) + abs(tree[1] - nuts[closest_nut][1]))
+        for i,(x,y) in enumerate(nuts):
+            if i != closest_nut:
+                dist = abs(tree[0] - x) + abs(tree[1] - y)
+                ans += dist*2
+        
+        return ans
