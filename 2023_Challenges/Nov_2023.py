@@ -235,6 +235,89 @@ class Solution:
         
         return ans
     
+#bucket sort
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> List[int]:
+        '''
+        we can use bucket sort closed and known range
+        the coordinate for both bike and worker are in the range [0,1000), so the max range is 1998, 
+            rather entries are (0,0) to (999,999)
+        
+        we can use bucket sort, then just interate over the distancces
+        notes:
+            goal was to order pairs accoirding to distance first, worker index second, and thne bike index last
+            we got distances anyway by going from worker index 0 to len(workers) 
+            and then bike index from 0 to len(bikes) we are are sorted anway
+
+        '''
+        min_dist = float('inf')
+        dist_to_pairs = collections.defaultdict(list)
+        for i in range(len(workers)):
+            for j in range(len(bikes)):
+                dist = abs(workers[i][0] - bikes[j][0]) + abs(workers[i][1] - bikes[j][1])
+                dist_to_pairs[dist].append((i,j))
+                min_dist = min(min_dist, dist)
+                
+        #we could loop through all distances, but we are bounded by pairs, we do pair loopin invariant rathern than distance iteration
+        curr_dist = min_dist
+        bikes_taken = [False]*len(bikes)
+        workers_assigned = [-1]*len(workers)
+        pairs = 0
+        
+        while pairs < len(workers):
+            for w,b in dist_to_pairs[curr_dist]:
+                #work and bike not assigned
+                if not bikes_taken[b] and workers_assigned[w] == -1:
+                    bikes_taken[b] = True
+                    workers_assigned[w] = b
+                    pairs += 1
+            
+            curr_dist += 1
+    
+        return workers_assigned
+    
+#pq
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> List[int]:
+        '''
+        we can also use min heap
+            for a worker, push the min distance to a bike from the work into the heap
+            for the other (worker bike pairs), we same, but maintain some sorted order
+            in this way dont need to keep all (worker,bike) pairs, just the pairs that are closest
+        
+        when going through the heap,
+            if the bike hasn't been assigned to a work, assign it
+            otherwise fetch from the other pairs we have saved
+        '''
+        min_heap = []
+        #other pairs
+        other_pairs = []
+        for i in range(len(workers)):
+            curr_pairs = []
+            for j in range(len(bikes)):
+                dist = abs(workers[i][0] - bikes[j][0]) + abs(workers[i][1] - bikes[j][1])
+                entry = (dist,i,j)
+                curr_pairs.append(entry)
+            
+            #sort
+            curr_pairs.sort(reverse = True)
+            heapq.heappush(min_heap,curr_pairs.pop())
+            other_pairs.append(curr_pairs) #we we will have Array<Integer> len(workers) times
+                
+        #we could loop through all distances, but we are bounded by pairs, we do pair loopin invariant rathern than distance iteration
+        bikes_taken = [False]*len(bikes)
+        workers_assigned = [-1]*len(workers)
+        
+        while min_heap:
+            dist,w,b = heapq.heappop(min_heap)
+            if not bikes_taken[b] and workers_assigned[w] == -1:
+                bikes_taken[b] = True
+                workers_assigned[w] = b
+            else:
+                heapq.heappush(min_heap, other_pairs[w].pop())
+    
+        return workers_assigned
+
 #######################################################
 # 1503. Last Moment Before All Ants Fall Out of a Plank
 # 04NOV23
@@ -487,3 +570,118 @@ class SeatManager:
 # obj = SeatManager(n)
 # param_1 = obj.reserve()
 # obj.unreserve(seatNumber)
+
+#############################################
+# 1921. Eliminate Maximum Number of Monsters
+# 07NOV23
+##############################################
+#yeeeeee
+class Solution:
+    def eliminateMaximum(self, dist: List[int], speed: List[int]) -> int:
+        '''
+        we have dist and speed arrays
+            dist stores the current distance for the ith monster and speed gives speed at wchihc monster travels
+        
+        we can only use weapons once every minute
+            i.e weapon can only kill one monster every minute
+        we can only have a monster coming at every minute
+        we can get their arrival times by doing dist/speed for each eleemnt,
+        then sort, time in between must be greater than zero
+        
+        hard part is the logic for killing
+        can just compare differecnes, i can kill monsters with an arrow at any distance
+        '''
+        N = len(dist)
+        times = [dist[i]/speed[i] for i in range(N) ]
+        #sort
+        times.sort()
+        ans = 0
+        curr_time = 0
+        
+        for t in times:
+            if t > curr_time:
+                ans += 1
+                curr_time += 1
+            else:
+                return ans
+        
+        return ans
+    
+class Solution:
+    def eliminateMaximum(self, dist: List[int], speed: List[int]) -> int:
+        '''
+        take one unit time to reload, so we just compare time with the indices
+        '''
+        N = len(dist)
+        times = [dist[i]/speed[i] for i in range(N) ]
+        #sort
+        times.sort()
+        ans = 0
+        
+        for i in range(len(times)):
+            if times[i] > i:
+                ans += 1
+            else:
+                break
+        
+        return ans
+    
+#min heap
+class Solution:
+    def eliminateMaximum(self, dist: List[int], speed: List[int]) -> int:
+        '''
+        using heap, just make sure the current time isnt more than the smallest time we pull
+        '''
+        N = len(dist)
+        times = [dist[i]/speed[i] for i in range(N) ]
+        
+        heapq.heapify(times)
+        ans = 0
+        
+        while times:
+            if heapq.heappop(times) > ans:
+                ans += 1
+            else:
+                break
+        
+        return ans
+
+##########################################################
+# 2849. Determine if a Cell Is Reachable at a Given Time
+# 08NOV23
+##########################################################
+class Solution:
+    def isReachableAtTime(self, sx: int, sy: int, fx: int, fy: int, t: int) -> bool:
+        '''
+        inputs are two big, 10^9 to do bfs
+        we are allowed to move in all 8 directions
+        fastest way obviosuly is to walk diagonally for some distance, then finish up with going horiz or vert
+        find optimal path, and check if <= than t
+        chebyshev is max distance between two points along any dimnesion
+        also know as chesboard distance
+        
+        i dont understand the edge case though??
+        omfg, AFTER EXACTLT t seconds lmaooooooo
+        
+        if we are allowed to go in all eight directions, the shortest is just the chebyshev distance 
+        or the max(heigh,width)
+        
+        intution:
+            imagine width > hiehgt, when going diag steps, we can height diag steps and the remaning (width - height) horiz steps
+            so the distance is bounded by the maximum, same with height > widht, but just opposite
+        
+        the other caveat is the t seconds have to pass
+        we define min_time is the chebysehv distance, and if t >= min_time, we can do it
+        
+        edge case, when cells are the same and t == 1
+        we can revisit a cell, but going back adds another unit of time, we can't do it if t == 1, but for t > 1 we can do it
+        '''
+        d_cheb = max(abs(sx - fx), abs(sy - fy))
+        
+        #edge case
+        if (sx == fx) and (sy == fy) and t == 1:
+            return False
+        else:
+            #dist must be at least t seconds
+            return d_cheb <= t
+        
