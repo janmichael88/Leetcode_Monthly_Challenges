@@ -714,3 +714,266 @@ class Solution:
                 ans += dist*2
         
         return ans
+
+###############################################
+# 1759. Count Number of Homogenous Substrings
+# 09NOV23
+###############################################
+#bahhh, it works, butt it aint pretty
+class Solution:
+    def countHomogenous(self, s: str) -> int:
+        '''
+        a homogenous substring is where all characters are the same
+        this is a counting problem
+        brute force would be to examine all substrings where there is, then count them up
+        another way would be to build a homegenhoous string on the fly and put into count mapp
+        say we have zzzzz
+        1 + 2 + 3 + 4 + 5, its contribution is this sum
+        if we have a string of the same chars of length k
+        its contribution of homegenous substrings is (k*(k+1) // 2)
+        which is the same as (k choose 2) + k
+        count streaks
+        '''
+        ans = 0
+        curr_letter = s[0]
+        curr_streak_size = 1
+        mod = 10**9 + 7
+        
+        for ch in s[1:]:
+            if ch != curr_letter:
+                #get contribution of homgenous strings
+                count = (curr_streak_size*(curr_streak_size + 1) // 2) % mod
+                ans += count % mod
+                curr_streak_size = 1
+                curr_letter = ch
+            else:
+                curr_streak_size += 1
+        
+
+        count = (curr_streak_size*(curr_streak_size + 1) // 2) % mod
+        ans += count % mod
+        return ans
+        
+class Solution:
+    def countHomogenous(self, s: str) -> int:
+        '''
+        the resason why this approach doen'st work on the fly is because i have to wait for the streak to end 
+        then calculate the contribution count, 
+        because i have to wait for the streak to end, i need to add in the contribution count one more final time
+        
+        counting trick
+        if there is a string of length n, then there are n substring that end with the final character
+        i.e we lock the final character and can choose any of the n characters as the first
+        so answer is always the length of the string
+        
+        if we count streaks we can just add up the streak sizes
+        '''
+        ans = 0
+        curr_streak = 0
+        mod = 10**9 + 7
+        
+        for i in range(len(s)):
+            #edge case for startig at index zero
+            if i == 0 or s[i] == s[i-1]:
+                curr_streak += 1
+            else:
+                curr_streak = 1
+            
+            ans += (curr_streak) % mod
+        
+        return ans % mod
+        
+#############################################
+# 1743. Restore the Array From Adjacent Pairs
+# 10NOV23
+##############################################
+class Solution:
+    def restoreArray(self, adjacentPairs: List[List[int]]) -> List[int]:
+        '''
+        we need to restore the original array given the adjacent pairs
+        if the array has n elements, then adjacentPairs will have n-1 pairs
+        adjacentPairs guranteed to have pairs, and return any valid array
+        this is a graph problem
+        dfs from the first element
+        '''
+        #find first eleemnt
+        graph = defaultdict(list)
+        counts = Counter()
+        for u,v in adjacentPairs:
+            counts[u] += 1
+            counts[v] += 1
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        #find first element, it will appear only once
+        first = -1
+        for k,v in counts.items():
+            if v == 1:
+                first = k
+                break
+        
+        ans = []
+        seen = set()
+        
+        def dfs(node):
+            ans.append(node)
+            seen.add(node)
+            for neigh in graph[node]:
+                if neigh not in seen:
+                    dfs(neigh)
+        
+        dfs(first)
+        return ans
+    
+#dont forget parent prev pardigm so we dont go back
+#we also dont need a seperate counts object
+class Solution:
+    def restoreArray(self, adjacentPairs: List[List[int]]) -> List[int]:
+        '''
+        notice that we can form a double linked list
+        we just need to find the roots, and the root should have only one edge
+        '''
+        #find first eleemnt
+        graph = defaultdict(list)
+        for u,v in adjacentPairs:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        #find first element, it will appear only once
+        first = -1
+        for num in graph:
+            if len(graph[num]) == 1:
+                first = num
+                break
+        
+        ans = []
+        
+        def dfs(node,parent):
+            ans.append(node)
+            for neigh in graph[node]:
+                if neigh != parent:
+                    dfs(neigh,node)
+        
+        dfs(first,-1)
+        return ans
+    
+###################################################
+# 2642. Design Graph With Shortest Path Calculator
+# 11NOV23
+###################################################
+#yessss
+class Graph:
+
+    def __init__(self, n: int, edges: List[List[int]]):
+        '''
+        this is just djikstras but implement one edge at a time
+        graph is directed so we good
+        we are going to need a dist array of size n by n so we cn check the shorted paths from node1 to node2
+        initially all are far away, we can put edges in a min a heap
+        we cant just run djikstra in the contructor
+        add edge adds to our graph, but also adds to our min heap
+        we run djikstras on the shortedpath call
+        assume calls are all valid given graph build up to now, for add edge it is guaranteed that there is no edge betweenthe two noes before adding this one
+        so do we need states as for all starting nodes?
+            no because djikstrs already makes the paths optimal, so when we use node1 ad the startpoint
+            
+        problem is confusing, we can just do djikstras from node1
+        
+        '''
+        self.graph = defaultdict(list)
+        self.n = n
+        #there's an inital state for the grpah
+        for u,v,edge in edges:
+            self.graph[u].append((v,edge))
+
+    def addEdge(self, edge: List[int]) -> None:
+        #add to graph and pq
+        u,v,dist = edge
+        self.graph[u].append((v,dist))
+        
+
+    def shortestPath(self, node1: int, node2: int) -> int:
+        #do djikstras
+        dist = [float('inf')]*self.n
+        dist[node1] = 0
+        pq = [(0,node1)]
+        visited = set()
+        
+        while pq:
+            min_dist,node = heapq.heappop(pq)
+            #if its already smaller, no need to update
+            if dist[node] < min_dist:
+                continue
+            visited.add(node)
+            for neigh,dist_to in self.graph[node]:
+                if neigh in visited:
+                    continue
+                #we can also directly return from here
+                if node == node2:
+                    return min_dist
+                new_dist = dist[node] + dist_to
+                #update?
+                if new_dist < dist[neigh]:
+                    dist[neigh] = new_dist
+                    heapq.heappush(pq, (new_dist,neigh))
+        
+        #now we check for paths
+        if (dist[node1] == float('inf')) or (dist[node2] == float('inf')):
+            return -1
+        
+        return dist[node2]
+        
+
+
+# Your Graph object will be instantiated and called as such:
+# obj = Graph(n, edges)
+# obj.addEdge(edge)
+# param_2 = obj.shortestPath(node1,node2)
+
+#we can also use floyd warshall
+class Graph:
+    '''
+    for floyd warshall, we exmaine all start and ends (i,j) and for all start and end we examin all intermediatee nodes (k)
+    for all intermediate nodes k we just take the minimum
+    iniutally build graph but for add edge, we try all intermediate nodes and minimuze
+    brute force relaxation step
+    '''
+
+    def __init__(self, n: int, edges: List[List[int]]):
+        self.n = n
+        self.graph = [[float('inf')]*n for _ in range(n)]
+        for u,v,edge in edges:
+            self.graph[u][v] = edge
+        
+        #diag entries
+        for i in range(n):
+            self.graph[i][i] = 0
+        
+        #minimuze/relax
+        #i is all intermediate nodes
+        for i in range(n):
+            #j is all source nodes
+            for j in range(n):
+                #k is desintation node
+                for k in range(n):
+                    self.graph[j][k] = min(self.graph[j][k], self.graph[j][i] + self.graph[i][k])
+
+    def addEdge(self, edge: List[int]) -> None:
+        u,v,dist = edge
+        #update the minimum for all start and source nodes through this intermediate edge
+        for i in range(self.n):
+            for j in range(self.n):
+                self.graph[i][j] = min(self.graph[i][j], self.graph[i][u] + self.graph[v][j] + dist)
+
+    def shortestPath(self, node1: int, node2: int) -> int:
+        if self.graph[node1][node2] == float('inf'):
+            return -1
+        return self.graph[node1][node2]
+        
+
+
+# Your Graph object will be instantiated and called as such:
+# obj = Graph(n, edges)
+# obj.addEdge(edge)
+# param_2 = obj.shortestPath(node1,node2)
+
