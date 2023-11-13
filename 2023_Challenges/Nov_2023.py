@@ -977,3 +977,192 @@ class Graph:
 # obj.addEdge(edge)
 # param_2 = obj.shortestPath(node1,node2)
 
+#####################################
+# 815. Bus Routes
+# 12NOV23
+######################################
+#fuck....
+class Solution:
+    def numBusesToDestination(self, routes: List[List[int]], source: int, target: int) -> int:
+        '''
+        i can make a graph where each stop maps to every other stop
+        we are just counting number of buses, if im on some route i
+        then any stop in route i is reachable with 1 bus
+        '''
+        graph = defaultdict(set)
+        for r in routes:
+            for stop in r:
+                neighs = set(r)
+                neighs.remove(stop)
+                graph[stop] = neighs
+        
+        q = deque([(source,1,graph[source])]) #entry is (curr stop, number buses where i can eventuallt get to)
+        seen = set()
+        
+        if target == source:
+            return 0
+        while q:
+            curr_stop,curr_buses,possible = q.popleft()
+            if target in possible:
+                return curr_buses
+            if curr_stop in seen:
+                continue
+            seen.add(curr_stop)
+            
+            for neigh in graph[curr_stop]:
+                if neigh not in seen:
+                    next_possible = graph[neigh] | possible
+                    entry = (neigh, curr_buses + 1, next_possible)
+                    q.append(entry)
+        
+        return -1
+                
+#sheesh
+class Solution:
+    def numBusesToDestination(self, routes: List[List[int]], source: int, target: int) -> int:
+        '''
+        thre can be multiple routes that hae this stop, 
+        we cna go to any bus stop present in all these routes
+        we could store all bus stops in the routes, but that would take up too mush space
+        insteaf we only store the indices of the routes, i.e a bus stop maps to a route index
+        '''
+        if target == source:
+            return 0
+        adj_list = defaultdict(set)
+        for i, route in enumerate(routes):
+            for stop in route:
+                adj_list[stop].add(i)
+        q = deque([])
+        visited_routes = set()
+        busCount = 1
+        #insert all routes that have this source bus stop
+        for start_route in adj_list[source]:
+            q.append((start_route))
+            visited_routes.add(start_route)
+        
+        
+        while q:
+            N = len(q)
+            for _ in range(N):
+                curr_route = q.popleft()
+                
+                #get next stoprs
+                for next_stop in routes[curr_route]:
+                    if next_stop == target:
+                        return busCount
+                    
+                    #get next route for this stop
+                    for next_route in adj_list[next_stop]:
+                        if next_route not in visited_routes:
+                            visited_routes.add(next_route)
+                            q.append(next_route)
+            
+            busCount += 1
+        return -1
+
+
+#we need to map stops to route indices
+#then we know what stops we can eventually reach from this curr stop
+class Solution:
+    def numBusesToDestination(self, routes: List[List[int]], source: int, target: int) -> int:
+        '''
+        i can make a graph where each stop maps to every other stop
+        we are just counting number of buses, if im on some route i
+        then any stop in route i is reachable with 1 bus
+        '''
+        if target == source:
+            return 0
+        adj_list = defaultdict(set)
+        for i, route in enumerate(routes):
+            for stop in route:
+                adj_list[stop].add(i)
+        q = deque([(source, 0)])
+        visited = set()
+        
+        while q:
+            stop,buses = q.popleft()
+            if stop == target:
+                return buses
+            for group in adj_list[stop]:
+                for nei in routes[group]:
+                    if nei not in visited:
+                        visited.add(nei)
+                        q.append((nei, buses + 1))
+                #clear the group
+                #after vising this group we can clear it, becase we already would have seen any top from this group
+                routes[group] = []
+        return -1
+
+#routes as nodes
+class Solution:
+    def numBusesToDestination(self, routes: List[List[int]], source: int, target: int) -> int:
+        '''
+        we can also treat routes as the nodes, 
+        when making the graph, we need to find if there is shared stop between routes
+        then the graph becomes undirected,
+        we can keep visited set and use multipoint BFS
+        need to sort stops in each route increaisnly
+        '''
+        #same source and target
+        if source == target:
+            return 0
+        
+        #sort
+        N = len(routes)
+        for i in range(N):
+            routes[i].sort()
+        
+        graph = defaultdict(list)
+        for i in range(N):
+            for j in range(i+1,N):
+                if self.hasCommonNode(routes[i],routes[j]):
+                    graph[i].append(j)
+                    graph[j].append(i)
+        
+        #add starting routes that contain source
+        q = deque([])
+        for i in range(N):
+            if self.stopExsists(routes[i],source):
+                q.append(i)
+        visited_routes = set()
+        #same as before
+        busCount = 1
+        
+        while q:
+            N = len(q)
+            
+            for _ in range(N):
+                curr_route = q.popleft()
+                visited_routes.add(curr_route)
+                if self.stopExsists(routes[curr_route],target):
+                    return busCount
+                
+                #check net routes
+                for neigh_route in graph[curr_route]:
+                    if neigh_route not in visited_routes:
+                        q.append(neigh_route)
+            busCount += 1
+            
+        return -1
+        
+    
+    def hasCommonNode(self,route1,route2) -> bool:
+        i,j = 0,0
+        while i < len(route1) and j < len(route2):
+            if route1[i] == route2[j]:
+                return True
+            elif route1[i] < route2[j]:
+                i += 1
+            else:
+                j += 1
+        
+        return False
+    
+    def stopExsists(self,route,stop) -> bool:
+        for i in range(len(route)):
+            if route[i] == stop:
+                return True
+        
+        return False
+    
+    
