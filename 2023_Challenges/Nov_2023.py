@@ -1165,4 +1165,61 @@ class Solution:
         
         return False
     
-    
+#######################################################
+# 2785. Sort Vowels in a String
+# 13NOV23
+#######################################################
+class Solution:
+    def sortVowels(self, s: str) -> str:
+        '''
+        premute s, such that the voewls are sorted in nondecreassing ASCII values
+        unpack string into an array, identiy vowel indices
+        sort them and put them pack into array
+        
+        '''
+        s = list(s)
+        N = len(s)
+        vowels = 'AEIOUaeiou'
+        vowel_indicies = [False]*N
+        vowels_to_sort = []
+        
+        for i in range(N):
+            if s[i] in vowels:
+                vowel_indicies[i] = True
+                vowels_to_sort.append(s[i])
+        
+        vowels_to_sort.sort()
+        curr_vowel_ptr = 0
+        
+        for i in range(N):
+            if vowel_indicies[i]:
+                s[i] = vowels_to_sort[curr_vowel_ptr]
+                curr_vowel_ptr += 1
+        
+        return "".join(s)
+
+class Solution:
+    def sortVowels(self, s: str) -> str:
+        '''
+        we can also use counting sort 
+        our buckets will only be AEIOUaieou
+        for using counting sorts:
+            when the length is much greater than the number of distinct characters, in this case 10**5 >> number of vowels (ie cahracters)
+        '''
+        counts = Counter(s)
+        vowels = 'AEIOUaeiou' #keep in inceasing ASCII
+        i = 0 #ptr into vowels
+        res = ""
+        for ch in s:
+            if ch in vowels: #set it smalle anway
+                #need effeicent way to go through vowels in order
+                while counts[vowels[i]] == 0:
+                    i += 1
+                
+                res += vowels[i]
+                counts[vowels[i]] -= 1
+            
+            else:
+                res += ch
+        
+        return res
