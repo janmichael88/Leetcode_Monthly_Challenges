@@ -1223,3 +1223,59 @@ class Solution:
                 res += ch
         
         return res
+    
+#####################################
+# 248. Strobogrammatic Number III
+# 13NOV23
+#####################################
+class Solution:
+    def strobogrammaticInRange(self, low: str, high: str) -> int:
+        '''
+        mappings for strobgrammitc are
+        we already have the solution for strobrgammitc number II
+        which gives us all sb numbers of length n
+        we dont need all the actual numbers, just the count of the numbers
+        we can take the level order traversal solution from sb number II, and recreated valid sb numbers
+        whenver we add back into the level, we increment a count
+        
+        recap on strobrogrammtic number II
+        recursive idea;
+            odd lenghts, cetners can only be 0,1,8
+            even lenggth, n = 2, 11,69,88,96
+            transistion if to go back to dp(n-1) or dp(n-2)
+            and then we appened a digit left and right, checking or valid numbers of course
+        dp(n) = {
+            to_return = []
+            for num in dp(n-2):
+                for (digit1,digit2) in reversiblePairs:
+                    to_return.append(digit1 + num + digit2)
+            return to_return
+        }
+        
+        for level order traversal solution, we intelligently build a strobgrammitc number
+
+        '''
+        reversible_pairs = [
+            ['0', '0'], ['1', '1'], 
+            ['6', '9'], ['8', '8'], ['9', '6']
+        ]
+        #keep track og string lengthrs for low and high, we can't make an SB number smaller than this string length or greater than the high
+        low_limit = len(low)
+        hi_limit = len(high)
+        count = 0 
+        q = deque(["","0","1","8"]) #start off with base sb nubers of length 1
+        while q:
+            curr_sb_num = q.popleft() #remember this is a string
+            #if string length in bounds
+            if len(curr_sb_num) < hi_limit or len(curr_sb_num) == hi_limit and curr_sb_num <= high:
+                if len(curr_sb_num) > low_limit or len(curr_sb_num) == low_limit and curr_sb_num >= low:
+                    #increment count if this is the '0' or doen'st start with
+                    if curr_sb_num == '0' or not curr_sb_num.startswith("0"):
+                        count += 1
+                #check if we can append digits to start and end
+                if hi_limit - len(curr_sb_num) >= 2:
+                    for left,right in reversible_pairs:
+                        next_sb_num = left + curr_sb_num + right
+                        q.append(next_sb_num)
+        
+        return count
