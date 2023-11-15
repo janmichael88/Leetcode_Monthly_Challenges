@@ -1279,3 +1279,131 @@ class Solution:
                         q.append(next_sb_num)
         
         return count
+    
+#################################################
+# 1930. Unique Length-3 Palindromic Subsequences
+# 14NOV23
+#################################################
+#70/70 !! but judge says it took too long
+class Solution:
+    def countPalindromicSubsequence(self, s: str) -> int:
+        '''
+        we only care about length three palindromic subsequences
+        hints
+            1. what is the maximum number of length 3 palindromic strings?
+            2. how can we keep track of the characters that appeared to the left of a given position?
+        
+        say we are at index i, and we want to check if we can make a 3 length palindrome
+        we need to see if there is some char x before i and after i
+        try all charax a to z
+        i can use hashtable, and mapp chars to indices
+        we can use binary search
+        say we are at i = 5 and want to look left
+        need to find the insertion point of 4
+        [0,1,2,3]
+        '''
+        mapp = defaultdict(list)
+        for i,ch in enumerate(s):
+            mapp[ch].append(i)
+            
+        possible = set()
+        N = len(s)
+        
+        
+        def find_left(arr,target):
+            left = 0
+            right = len(arr) - 1
+            ans = 0
+            while left <= right:
+                mid = left + (right - left) // 2
+                if arr[mid] <= target:
+                    ans = mid
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            return ans
+        
+        def find_right(arr,target):
+            left = 0
+            right = len(arr) - 1
+            ans = right
+            while left <= right:
+                mid = left + (right - left) // 2
+                if arr[mid] >= target:
+                    ans = mid
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            return ans
+        
+
+        for i in range(1,N-1):
+            for j in range(26):
+                ends = chr(ord('a') + j)
+                candidate = ends+s[i]+ends
+                if candidate in possible:
+                    continue
+                #look for ends to the left of i and to the right of i
+                if ends not in mapp:
+                    continue
+                #for the left there needs to be an occurence of ends where the index <= i - 1 and >= 0
+                #for the right there needs to be an index where index >= i + 1 and < N - 1
+                left = find_left(mapp[ends],i-1)
+                right = find_right(mapp[ends],i+1)
+                if (0 <= mapp[ends][left] <= i - 1) and (i + 1 <= mapp[ends][right] < N):
+                    possible.add(candidate)
+        
+        return len(possible)
+    
+class Solution:
+    def countPalindromicSubsequence(self, s: str) -> int:
+        '''
+        turns out we can abuse .index methods in python here
+        for each letter, find its first occurence and last occurence
+        then we just checek for all unique chars between this first and last occurence
+        '''
+        letters = set(s)
+        count = 0
+        
+        for ch in letters:
+            left = s.index(ch)
+            right = s.rindex(ch)
+            
+            unique = set()
+            
+            for k in range(left+1,right):
+                unique.add(s[k])
+            
+            count += len(unique)
+        
+        return count
+            
+#without using builtin
+class Solution:
+    def countPalindromicSubsequence(self, s: str) -> int:
+        '''
+        no builtin .index
+        '''
+        letters = set(s)
+        count = 0
+        
+        for ch in letters:
+            left = -1
+            right = 0
+            
+            for k in range(len(s)):
+                if s[k] == ch: #first occurence
+                    if left == -1:
+                        left = k
+                    #update every other last occurence
+                    right = k
+                
+            unique = set()
+            for k in range(left+1,right):
+                unique.add(s[k])
+            
+            count += len(unique)
+        
+        return count
