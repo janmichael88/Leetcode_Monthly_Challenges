@@ -1407,3 +1407,87 @@ class Solution:
             count += len(unique)
         
         return count
+
+#########################################################
+# 1846. Maximum Element After Decreasing and Rearranging
+# 15NOV23
+########################################################
+#easy
+class Solution:
+    def maximumElementAfterDecrementingAndRearranging(self, arr: List[int]) -> int:
+        '''
+        we have two operations
+        1. decrease the value of any element of arr to a smaller positive interger
+        2. rearrange elements in arr to any order
+        
+        useing these operations we want an array that satisfies this criteria:
+        1. first value of arr must be 1
+        2. absolute difference between any two adjacent elements must be <= 1
+            i.e abs(arr[i] - arr[i - 1]) <= 1 for each i where 1 <= i < arr.length (0-indexed
+            
+        the obviouse answer is to just turn it into the increasing array [1,2,3...n]
+        sort the array and decrement each element to the next largest integer that satisfies the conditions
+        
+        [1,6]
+        after sorting its goint to be increasig, so we need to decremen it
+        we need i to be arr[i-1] + 1
+        
+        this problem is stupid lol
+        '''
+        arr.sort()
+        N = len(arr)
+        arr[0] = 1
+        for i in range(1,N):
+            if abs(arr[i] - arr[i-1]) > 1:
+                arr[i] = arr[i-1] + 1
+        
+
+        return max(arr)
+    
+class Solution:
+    def maximumElementAfterDecrementingAndRearranging(self, arr: List[int]) -> int:
+        '''
+        notes on official solution
+        strictly increasing array is not possible if the elements in the original array do no support the counting
+            becuase we are only allowed to decrease a number to a smallerr number
+            sort increasinly, if the max num of arr is k, we can't raise it beyond k
+        '''
+        arr.sort()
+        ans = 1 #start off at 1
+        for num in arr[1:]:
+            #is its more than run, we just raise it
+            if num >= ans + 1:
+                ans += 1
+        
+        return ans
+    
+#no sort
+class Solution:
+    def maximumElementAfterDecrementingAndRearranging(self, arr: List[int]) -> int:
+        '''
+        we can use counting sort;
+        keep in mind that we are only allowed to decrement numbers, not increment
+        recall in the best case we have the strictly increasing array [1,n], and its impossible to have elements greater than n, givne n is len(arr)
+        we can just count up the number of nums, since we can't be greater than n
+        if num >= n, we simply treat the num as n 
+        so counts array gives number of occurences in arr when num is min(num,n)
+        i.e in array [1,100,100,100], we cant use 100, since n is 4, so we treat 100 as 4
+        1. if ans + count[num] <= nums, it menas there are less occrucnes of num in arr than there are sports in the range [ans+1,num]
+            so we can REDUCE every instance of num to improve ans and do ans += counts[num]
+        2. if ans + count[num] > num, it means there are more num than there are spots in the array
+            so we set ans = num
+            
+        we can combine and get
+        ans = min(ans + counts[num],num)
+        '''
+        N = len(arr)
+        counts = [0]*(N+1)
+        
+        for num in arr:
+            counts[min(num,N)] += 1
+        
+        ans = 1
+        for num in range(2,N+1):
+            ans = min(ans + counts[num],num)
+        
+        return ans
