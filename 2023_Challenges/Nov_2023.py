@@ -1644,3 +1644,32 @@ class Solution:
             ans += '1' if nums[i][i] == '0' else '0'
         
         return ans
+
+########################################
+# 1877. Minimize Maximum Pair Sum in Array
+# 17NOV23
+########################################
+class Solution:
+    def minPairSum(self, nums: List[int]) -> int:
+        '''
+        need to pair such that
+            * each element of nums is in on pair
+            * the maximum pair sum is minimized
+        return minimuzed maximum pair
+        n is even so we will always have valid pairs
+        sort and two pointers and take one from each end
+
+        proof
+        assum nums is sorted ; [a1,a2,a3,a4]; a1 < a2 < a3 < a4
+        assume two nums a_i and a_j
+        proof by contradiction
+        assume the pairing [(a1,a_i), (a_j,a_n)] is optimal than [(a1,a_n), (a_i, a_j)]
+        this cont be true becase a_j + a_n is always bigger thatn a_i + a_1
+        '''
+        nums.sort()
+        N = len(nums)
+        ans = 0
+        for i in range(N//2):
+            ans = max(ans, nums[i] + nums[-(i+1)])
+        
+        return ans
