@@ -1491,3 +1491,156 @@ class Solution:
             ans = min(ans + counts[num],num)
         
         return ans
+    
+##########################################
+# 1980. Find Unique Binary String
+# 16NOV23
+###########################################
+#backtrakcnig works
+#but its slow
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        N is length 16, so we can use backtracking to generate the strings
+        the strings are binary, so we can just pick one that is not in nums
+        '''
+        N = len(nums)
+        nums = set(nums)
+        self.ans = ""
+        
+        def backtrack(N,path):
+            if len(path) == N:
+                temp = "".join(path)
+                if temp not in nums:
+                    self.ans = temp
+                return
+            
+            for char in ['0','1']:
+                path.append(char)
+                backtrack(N,path)
+                path.pop()
+        
+        backtrack(N,[])
+        return self.ans
+    
+#stupid way is to just generate sll integers
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        we dont even need to use backtracking
+        convert string binary strings to integers
+        '''
+        #convert binary strings to in
+        def convert(string):
+            ans = 0
+            power = 0
+            for ch in string[::-1]:
+                ans += int(ch)*2**power
+                power += 1
+            
+            return ans
+                
+        base_10 = []
+        for num in nums:
+            base_10.append(convert(num))
+        
+        N = len(nums)
+        seen = set(base_10)
+        
+        for n in range(2**N):
+            if n not in seen:
+                #convert to string base make sure to add 0s left to pad to lenght N
+                string_ans = bin(n)[2:]
+                string_ans = '0'*(N-len(string_ans)) + string_ans
+                return string_ans
+            
+#optimized recursion
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        trick to recursion is cache a call to the function and check if we want return here
+        if we check n+1 different string of length n, we will surely find an answer
+        early termination means we wont check more than n+1 string of length n, otherwise it becomes 2**n
+        '''
+        N = len(nums)
+        nums = set(nums)
+        
+        def check(string):
+            if len(string) == N:
+                if string not in nums:
+                    return string
+                return ""
+            
+            #first try with zero
+            zero = check(string + "0")
+            if zero: #len(zero) != 0
+                return zero
+            
+            return check(string + "1")
+        
+        return check("")
+    
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        iterative, length nums is bounded
+        since there are only n string in nums, i.e len(nums) = n, and each string is of size n, we dont need to chece n+1 different binary strings
+        its because each string in nums is of length(n)
+        carefully look at the n inputs, there are only going to be n strings in nums
+        which means at least of the integers from 0 to n is going to be missing!
+        '''
+        base_10 = set()
+        for num in nums:
+            base_10.add(int(num,2))
+            
+        N = len(nums)
+        for num in range(N+1):
+            if num not in base_10:
+                string_ans = bin(num)[2:]
+                string_ans = '0'*(N-len(string_ans)) + string_ans
+                return string_ans
+        
+        return ""
+    
+#random simulation
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        there are only n strings present
+        and in total there are 2**n strings possible
+        so the probability of randomly drawing one is:
+        (2**n - n) // 2**n
+        for n = 16, this is 99.9 %
+        so we keep drawing lol
+        '''
+        base_10 = set()
+        for num in nums:
+            base_10.add(int(num,2))
+            
+        N = len(nums)
+        ans = int(nums[0],2)
+        
+        while ans in base_10:
+            ans = random.randrange(0,2**N)
+        
+        string_ans = bin(ans)[2:]
+        string_ans = '0'*(N-len(string_ans)) + string_ans
+        return string_ans
+    
+#cantors diagnoal 
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        brief on cantor's diagonal arguement
+        proves that there are infinite sets which cannot be put into a one to one correspondence with the infinite set of natural numbers
+        example, examine enumerates of sequences s coming from elements T, we let T be chosen from 0 or 1
+        from these sets we make a new set, where we take an elmenet at the ith index, neagate it and make a new set
+        this new set is an enumerate, but cannot be part of the infinite set of all s
+        just proves that  T is uncountable, an uncountable set cannot be mapped to an infiniset set of numbers
+        '''
+        ans = ""
+        N = len(nums)
+        for i in range(N):
+            ans += '1' if nums[i][i] == '0' else '0'
+        
+        return ans
