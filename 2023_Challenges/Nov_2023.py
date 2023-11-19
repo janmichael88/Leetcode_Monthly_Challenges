@@ -1673,3 +1673,187 @@ class Solution:
             ans = max(ans, nums[i] + nums[-(i+1)])
         
         return ans
+
+##############################################
+# 1838. Frequency of the Most Frequent Element
+# 18NOV23
+##############################################
+#this doesn't quite work because its not always the best to increment all elements starting from the end
+#we need to be smart in how increment elements that are <= the curr_num we are trying to raise to
+#ideall we need them to be closer to num so we can raise more of them
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        '''
+        in one operation we can chose an index in nums and raise it by 1
+        return the maximum possible frequency of an element after peforming at most k opearations
+        doest it make sense to raise every element to the one that is already the most frequent?
+            in some cases yes, but the currnet most frequenct element may not be reachable from other numbers
+            we dont have to do operations if we are already maximum
+        
+        sort non-decreasing, we can only raise a number
+        [1,2,4], k = 5
+        try 1, its the smallest, so for 1 we only get a frequency of 1
+        try 2, we can only raise numbers <= 2 by their difference, so we raise the 1
+        try, 4, we can raise 1 and 2
+        so the currnet number we want to raising to is x, then for every number smaller than x we need to do:
+            steps
+            for num [less than x]:
+                steps  += x - num, 
+                until we cant get k
+        
+        '''
+        nums.sort()
+        N = len(nums)
+        ans = 1
+        for num in nums:
+            curr_freq = 0
+            start = 0
+            curr_k = k
+            while start < N and nums[start] <= num:
+                #find diff from num
+                diff = num - nums[start]
+                if curr_k - diff >= 0:
+                    curr_freq += 1
+                    curr_k -= diff
+                start += 1
+            
+            ans = max(ans, curr_freq)
+        
+        return ans
+    
+#TLE, this is essentially O(N^2)
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        '''
+        its clear that the number we want to raise to must already exsist in the range
+        say we want to raise to target-1 or target + 1, if neight are in the array we would was operations trying to make it
+        bascially we are trying to imporove the frequency
+        proof that number must be in nums is kinda hand wavy
+        the idea is to increment the elemnets that are closes to the target
+        i.e we treat each num in nums as a target to raise to, if we sort, the closest ones are to the left
+        '''
+        nums.sort()
+        N = len(nums)
+        ans = 0
+        for i, num in enumerate(nums):
+            curr_k = k
+            curr_freq = 0
+            while i >= 0:
+                diff = num - nums[i]
+                if curr_k - diff >= 0:
+                    curr_freq += 1
+                    curr_k -= diff
+                    i -= 1
+                else:
+                    break
+            
+            ans = max(ans,curr_freq)
+        
+        return ans
+    
+#sliding window
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        '''
+        short proof on why the target must exist in nums
+            examine some number absent in nums that is not in nums
+            now examine absent', the largest number in nums that is smaller than absent
+            it is always the case that we save operations raising to absent' than absent, 
+        we need to optimize the way we count opertoins
+        say we have target as num, and its current frequency is 4
+        the array will essentiall have sum = 4*target
+        then number of operations would be sum in the orignal array less than 4*target
+        example
+        [3,6,7,12,19,22,44,150]
+        and we are trying 12
+        so we want:
+        [12,12,12,12], which has sum 48
+        original sum = 3 + 6 + 7 + 12 = 28 
+            now think prefix sum!
+        so we need 48 - 28 = 20 operations
+        sliding window!
+            shrink windwo when we operations require more than k
+        
+        
+        '''
+        nums.sort()
+        N = len(nums)
+        left = 0
+        ans = 0
+        curr_sum = 0
+        for right,target in enumerate(nums):
+            curr_sum += target
+            while (right - left + 1)*target > k + curr_sum: # (right - left + 1)*traget - curr_sum > k
+                #shrink if it requires more than k operations
+                curr_sum -= nums[left]
+                left += 1
+            
+            ans = max(ans, right - left + 1)
+        
+        return ans
+    
+#advanced sliding window
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        '''
+        as with all sliding windows, we can optimize by not actually sliding
+        we only care about the length of the window and not what is actually in the window
+        if we find a valid window of length len, then we dont really care about windows that are smaller
+            because a smaller window implies a smaller frequeny
+            i.e once we have found a valid window, this is guaranteed to be maximum
+        
+        we just make it so that the current [left,right] is the best windwo so far
+        we always try to grow the window, we never shrink
+        note, left never increase by more than one in each iteration
+        '''
+        nums.sort()
+        N = len(nums)
+        left = 0
+        ans = 0
+        curr_sum = 0
+        for right,target in enumerate(nums):
+            curr_sum += target
+            if (right - left + 1)*target > k + curr_sum: # (right - left + 1)*traget - curr_sum > k
+                #only shrink when we have found a valid array BY ONLY expanding right
+                curr_sum -= nums[left]
+                left += 1
+            
+        
+        return N - left
+
+#binary search
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int) -> int:
+        def check(i):
+            target = nums[i]
+            left = 0
+            right = i
+            best = i
+            
+            while left <= right:
+                mid = (left + right) // 2
+                count = i - mid + 1
+                final_sum = count * target
+                original_sum = prefix[i] - prefix[mid] + nums[mid]
+                operations_required = final_sum - original_sum
+
+                if operations_required > k:
+                    left = mid + 1
+                else:
+                    best = mid
+                    right = mid - 1
+                    
+            return i - best + 1
+        
+        nums.sort()
+        prefix = [nums[0]]
+        
+        for i in range(1, len(nums)):
+            prefix.append(nums[i] + prefix[-1])
+        
+        ans = 0
+        for i in range(len(nums)):
+            ans = max(ans, check(i))
+            
+        return ans
+    
