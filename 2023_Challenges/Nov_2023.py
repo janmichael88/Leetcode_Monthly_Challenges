@@ -1857,3 +1857,106 @@ class Solution:
             
         return ans
     
+##############################################################
+# 1887. Reduction Operations to Make the Array Elements Equal
+# 19NOV23
+##############################################################
+#its not just the number between left and right
+#think of 1,2,3,4,5
+class Solution:
+    def reductionOperations(self, nums: List[int]) -> int:
+        '''
+        we want to make all numbers in nums equal, we are allowed one operation on these steps
+            1. finad largest values in nums, get its index, if there are ties, pick the smalllest i
+            2. find the next largest value in nums that is just smaller than largest, nextLargest
+            3. reduce nums[i] to next largest
+        
+        return number of operations to make all elements equal
+        sort the array and try to reduce all elements with maximum value to the next maximum value in one operation
+        eventuall all numbers will get sent to the smallest value
+        [5,1,3] after sorting [1,3,5]
+        need to reduce to 3
+        [1,3,3] one operation
+        need to reduce to 1
+        [1,1,1] twp operations, 3 in total
+        sort the array and work backwards
+         '''
+        nums.sort()
+        operations = 0
+        N = len(nums)
+        
+        right = N - 1
+        while right >= 0:
+            first_max = nums[right]
+            left = right - 1
+            while left > 0 and nums[left] == first_max:
+                left -= 1
+            
+            second_max = nums[left]
+            if second_max != first_max:
+                operations += right - left
+            
+            right = left
+        
+        return operations
+
+class Solution:
+    def reductionOperations(self, nums: List[int]) -> int:
+        '''
+        we want to make all numbers in nums equal, we are allowed one operation on these steps
+            1. finad largest values in nums, get its index, if there are ties, pick the smalllest i
+            2. find the next largest value in nums that is just smaller than largest, nextLargest
+            3. reduce nums[i] to next largest
+        
+        we can just use two poiners
+        imagine
+        [1,2,3,4,5]
+        (4,5) is (second,first)
+        [1,2,3,4,4] 1 op
+        (3,4)
+        [1,2,3,3,3] 2 ops
+        (2,3)
+        [1,2,2,2,2] 3 ops
+        (1,2)
+        [1,1,1,1,1] 4 ops
+        
+        10 ops in total
+         '''
+        nums.sort()
+        operations = 0
+        N = len(nums)
+        print(nums)
+        right = N - 1
+        while right >= 0:
+            first_max = nums[right]
+            left = right - 1
+            while left >= 0 and nums[left] == first_max:
+                left -= 1
+            
+            second_max = nums[left]
+            if second_max != first_max:
+                #need to to changer all numbers to the right, from right
+                operations += N - right - 1
+            
+            right = left
+        
+        return operations
+    
+#another way is to just go backwards and add N - i
+class Solution:
+    def reductionOperations(self, nums: List[int]) -> int:
+        '''
+        we can sort and just go backwards
+        we need to compare of nums[i-1] != nums[i]
+        '''
+        nums.sort()
+        N = len(nums)
+        ans = 0
+        for i in range(N-1,0,-1):
+            if nums[i-1] != nums[i]:
+                ans += N - i
+        
+        
+        return ans
+
+
