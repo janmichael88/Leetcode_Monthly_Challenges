@@ -1959,4 +1959,210 @@ class Solution:
         
         return ans
 
+###################################################
+# 2391. Minimum Amount of Time to Collect Garbage
+# 20NOV23
+###################################################
+class Solution:
+    def garbageCollection(self, garbage: List[str], travel: List[int]) -> int:
+        '''
+        we have N = len(garbage) houses, each having MPG
+        len(travel) = N - 1, and travel[i] is time it takes to go from i to i + 1
+        three garbage trucks, picks up each kind only, each starts at house 0, and msut visit in order, but do not need to visit every hous
+        only on truck may be used at any given moment (i.e we can split driving and pick up tasks)
+        return min time needed to pick up all garbage
+        pick up takes 1 unit of time
+        
+        we dont need to visit all the house
+        for each type of garbage, find the house the the highest index that has at least 1 unit of this type of garbage
+        ill need a fast way to get traval times
+            prefisum sum on travel times
+        '''
+        pref_travel = [0]
+        for num in travel:
+            pref_travel.append(num + pref_travel[-1])
+        #(i,j) inclusive j
+        #travel time (i,j) is pref_travel[j] - pref_travel[i]
+        #from_ = 3
+        #to_ = 3
+        #print(pref_travel[to_] - pref_travel[from_]) #this is how to calculate from_ and to_
+        
+        #now this is just a pref_sum problem
+        #mapp indices to chars, and follow paths
+        mapp = defaultdict(list)
+        for i,trash in enumerate(garbage):
+            for t in trash:
+                mapp[t].append(i)
+        
+        time = 0
+        for kind,houses in mapp.items():
+            start_house = 0
+            for end_house in houses:
+                travel_time = pref_travel[end_house] - pref_travel[start_house]
+                time += travel_time
+                time += 1
+                start_house = end_house
+        
+        return time
 
+class Solution:
+    def garbageCollection(self, garbage: List[str], travel: List[int]) -> int:
+        '''
+        turns out we dont need to roll the individual to and from times
+        if we just count up the numbers of each type of garbage and keep track of the last position for each type of garbage
+        we only need to keep track of the last position for each type of garbage
+            becaseu anything smaller than the last positino would have been picked up anyway!
+            stupid me!
+        '''
+        pref_travel = [0]
+        for num in travel:
+            pref_travel.append(num + pref_travel[-1])
+        #(i,j) inclusive j
+        #travel time (i,j) is pref_travel[j] - pref_travel[i]
+        #from_ = 3
+        #to_ = 3
+        #print(pref_travel[to_] - pref_travel[from_]) #this is how to calculate from_ and to_
+        
+        #now this is just a pref_sum problem
+        #mapp indices to chars, and follow paths
+        lastTrashPosition = defaultdict()
+        trashCounts = Counter()
+        for i,trash in enumerate(garbage):
+            for t in trash:
+                trashCounts[t] += 1
+                lastTrashPosition[t] = i
+        
+        time = 0
+        for t in 'MPG':
+            if t in lastTrashPosition:
+                last_position = lastTrashPosition[t]
+                garbageCount = trashCounts[t]
+                time += pref_travel[last_position] + garbageCount
+        
+        return time
+    
+##############################################
+# 2589. Minimum Time to Complete All Tasks
+# 20NOV23
+##############################################
+class Solution:
+    def findMinimumTime(self, tasks: List[List[int]]) -> int:
+        '''
+        O(N^2) works, and its alwasy better to run the task as late as possible so that other tasks can run simultanoeusly
+        this is an overlappping interval problem, need to determine if we sort or start or on ends
+        what if we try sorting on start
+        [1,5,1], [2,3,1]
+        we know we want to turn computer on at 2 or 3, becase we get both, but since this is sorted on start, we would have assumes pick time between [1,5]
+        [2,3] would have never been considered
+        so we at least try sorting on end, here's another example
+        [15,20,3],[10,25,5],[6,30,7], after sorting on ends
+        [15,20,3], need 3 units of overlap with other tasks
+            this happens at [18,19,20]
+        
+        we cant do ealier than 18
+        say we had a task like [13,16,2], because we sroted by end, we would enver see this taks after [15,20,2]
+        rather because we sort an end, we can only look at overlappint interval times ENDING and EQUAL to 2
+        
+        now examins [10,25,5], 
+        this ends at 25, we use 18,19,20, need duration of 2 more
+        [25,24]
+        
+        now [6,30,7]
+        ends at 30, need duration of (7-5)
+        so 29,30
+        
+        if the computer is on during a time in out interval, we want to use that time to run it
+        iterated and see whihc times our interval time our computer is on and subtract one from each duration for this task
+        then we still have any duration left, we will turn it on at the latest second possible so that we are most likely to overlap with another task
+        the next task has an end point >= the current task, its starting point is unknown
+        when we choose the latest ssecond possible, we minimize our computer usage in all cases
+        
+        essentially mark times when our compute should be on, but only when a task is running
+        after sorting of cours
+
+        extra notes:
+            for the first task with the closest end time, the best strategy is to finish it as late as possible
+            this allows for the best change for the compute time to be resued by tasks that end later
+            use array to mark time slows
+            could also have use BIT 
+        '''
+        tasks.sort(key = lambda x: (x[1],x[0]))
+        times = [False]*2001 #imes are fixes
+
+        for start,end,duration in tasks:
+            curr_durr, curr_end = duration,end
+            for s in range(start,end+1):
+                #if our copmute is altready on, we are covered
+                if times[s]:
+                    curr_durr -= 1
+            
+            #while we still need duratinos to cover, extend to other times
+            #we need to cover as many time spots from the current end that hasn't been covered
+            #while we still have a duration that needs to be covered
+            while curr_durr > 0:
+                if not times[curr_end]:
+                    times[curr_end] = True
+                    curr_durr -= 1
+                
+                curr_end -= 1
+        
+        #the array just stores the times the computer should be one
+        return sum(times)
+                
+##############################################
+# 1814. Count Nice Pairs in an Array
+# 20NOV23
+##############################################
+#unfortunately i don't think i could have gotten this without the hints
+class Solution:
+    def countNicePairs(self, nums: List[int]) -> int:
+        '''
+        reverse of a number is reverse, after trimming leading zeros if any
+        (i,j) is a nice pair if
+            0 <= i < j < len(nums)
+            nums[i] + rev(nums[j]) == nums[j] + rev(nums[i])
+        
+        return number of nice pairs
+        we can also write:
+            nums[i] - rev(nums[i]) == nums[j] - rev(nums[i])
+            transform each nums[i] to (nums[i] - rev(nums[i])), then count the pairs
+            then look if it exists in the hashmap
+
+        notes;
+        When you see something like this ...[i] + ...[j] == ...[j] + ...[i]
+        always regroup so that the terms with the same i/j are on the same side of the equation
+        e.g. ...[i] - ...[i] == [j] - ...[j]
+        '''
+        mod = 10**9 + 7
+        
+        def rev(num):
+            rev_num = 0
+            while num:
+                rev_num *= 10
+                rev_num += num % 10
+                num = num // 10
+            
+            return rev_num
+        
+        nums = [num - rev(num) for num in nums]
+        counts = Counter()
+        ans = 0
+        
+        for num in nums:
+            ans += counts[num] % mod
+            counts[num] += 1
+        
+        return ans % mod
+    
+'''
+notes on the math
+for some (i,j) we want pairs such that
+nums[i] + rev(nums[j]) == nums[j] + rev(nums[i])
+rewrite as
+nums[i] - rev(nums[i]) = nums[j] - rev(nums[j])
+
+tranforms some num to num - rev(num)
+the problem then becomes how manu pairs are equal
+count along the way, and check if we have seen this num
+each num we have sen before can be paired with the current one!
+'''
