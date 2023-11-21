@@ -2166,3 +2166,30 @@ the problem then becomes how manu pairs are equal
 count along the way, and check if we have seen this num
 each num we have sen before can be paired with the current one!
 '''
+
+###########################################
+# 2364. Count Number of Bad Pairs
+# 21NOV23
+###########################################
+class Solution:
+    def countBadPairs(self, nums: List[int]) -> int:
+        '''
+        a bad pair (i,j) is
+            i < j and 
+            j - i != nums[j] - nums[i]
+            rewrite as
+            -i + nums[i] != nums[j] - j
+            nums[i] - i != nums[j] - j
+        '''
+        counts = Counter()
+        N = len(nums)
+        ans = 0
+        for i,num in enumerate(nums):
+            temp = num - i
+            #need number of pairs not == temp and before i
+            #i - temp is the number of bad pairs, its good pair if its equal
+            ans += i - counts[temp]
+            counts[temp] += 1
+    
+        return ans
+
