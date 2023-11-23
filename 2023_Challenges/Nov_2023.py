@@ -2193,3 +2193,120 @@ class Solution:
     
         return ans
 
+#########################################
+# 1424. Diagonal Traverse II
+# 22NOV23
+#########################################
+#TLE, cant just walk diags
+class Solution:
+    def findDiagonalOrder(self, nums: List[List[int]]) -> List[int]:
+        '''
+        pad the array so that all have the same column size,
+        then walk the diagonals
+        only add to the ans if it wasn' part of the padding
+        each eleemnt will be >= 1, can use 0 to pad
+        
+        '''
+        rows = len(nums)
+        max_cols = 0
+        for r in nums:
+            max_cols = max(max_cols,len(r))
+        
+        new_rows = []
+        for r in nums:
+            r = r +[0]*(max_cols - len(r))
+            new_rows.append(r)
+        
+        ans = []
+        #walk diag up starting with each row from the first col
+        for r in range(rows):
+            start_row, start_col = r, 0
+            while start_row >= 0 and start_col < max_cols:
+                if new_rows[start_row][start_col] != 0:
+                    ans.append(new_rows[start_row][start_col])
+                
+                start_row -= 1
+                start_col += 1
+        
+        #whoops forgot the last row stargint with the first col
+        for c in range(1,max_cols):
+            start_row, start_col = rows - 1, c
+            while start_row >= 0 and start_col < max_cols:
+                if new_rows[start_row][start_col] != 0:
+                    ans.append(new_rows[start_row][start_col])
+                
+                start_row -= 1
+                start_col += 1
+        return ans
+
+#need to daig trick and doule sort
+class Solution:
+    def findDiagonalOrder(self, nums: List[List[int]]) -> List[int]:
+        '''
+        i need to use the diagonal trick T.T
+        '''
+        diags = defaultdict(list)
+        for i in range(len(nums)):
+            for j in range(len(nums[i])):
+                #entry = (i + j, i, nums[i][j])
+                d = i + j
+                diags[d].append((i, nums[i][j]))
+        
+        #print(diags)
+        ans = []
+        for d in sorted(diags.keys()):
+            for row,val in sorted(diags[d], key = lambda x: (-x[0],x[1])):
+                ans.append(val)
+        
+        return ans
+
+class Solution:
+    def findDiagonalOrder(self, nums: List[List[int]]) -> List[int]:
+        '''
+        we can start at the last row and first col, and keep doing in that direction
+        also note that the row + col diag identifes keeps increasing from 0 to the last diag
+        '''
+        diags = defaultdict(list)
+        for row in range(len(nums) - 1,-1,-1):
+            for col in range(len(nums[row])):
+                d = row + col
+                diags[d].append(nums[row][col])
+        
+        ans = []
+        curr_d = 0
+        while curr_d in diags:
+            ans.extend(diags[curr_d])
+            curr_d += 1
+        
+        return ans
+    
+#BFS
+class Solution:
+    def findDiagonalOrder(self, nums: List[List[int]]) -> List[int]:
+        '''
+        we can inteligently use BFS
+        we know we start from (0,0)
+        we only need to consider (row + 1, col) if we are the start of the diagonal
+            
+        otherwise for every other square in the diag , it mist have already been visited
+        if you didnt know this, we coul have used a hash set
+        intution
+            (0,0) is the source and each diagonal represents a distance from the source
+        
+        note the was add the square (row + 1,col) before (row,col+1)
+        queue will only be as large as the largest diagonal
+        '''
+        q = deque([(0,0)])
+        ans = []
+        while q:
+            row,col = q.popleft()
+            ans.append(nums[row][col])
+            
+            #if we are teh start of a diagonal
+            if col == 0 and row + 1 < len(nums):
+                q.append((row+1,col))
+            
+            if col + 1 < len(nums[row]):
+                q.append((row,col+1))
+    
+        return ans
