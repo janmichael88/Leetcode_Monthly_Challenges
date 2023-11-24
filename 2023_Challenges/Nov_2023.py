@@ -2310,3 +2310,34 @@ class Solution:
                 q.append((row,col+1))
     
         return ans
+    
+#############################################
+# 1630. Arithmetic Subarrays
+# 23NOV23
+#############################################
+#sort and check, ez pz
+class Solution:
+    def checkArithmeticSubarrays(self, nums: List[int], l: List[int], r: List[int]) -> List[bool]:
+        '''
+        for each query, we need to determine if the nums in the given array can be rearrange to for an arithmetic sequence
+        we can check if there is an arithmetic subsequence in each of the queries by sorting and checking the consectuive differences
+        '''
+        def check(arr):
+            arr.sort()
+            N = len(arr)
+            for i in range(1,N-1):
+                if arr[i] - arr[i-1] != arr[i+1] - arr[i]:
+                    return False
+            
+            return True
+        
+        N = len(nums)
+        M = len(l)
+        ans = [False]*M
+        
+        for i,(j,k) in enumerate(zip(l,r)):
+            ans[i] = check(nums[j:k+1])
+        
+        return ans
+            
+
