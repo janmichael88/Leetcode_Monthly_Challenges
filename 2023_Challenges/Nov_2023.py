@@ -2339,5 +2339,256 @@ class Solution:
             ans[i] = check(nums[j:k+1])
         
         return ans
+    
+#no sort
+class Solution:
+    def checkArithmeticSubarrays(self, nums: List[int], l: List[int], r: List[int]) -> List[bool]:
+        '''
+        for the check we dont need to sort
+        for a given array to check say we have MIN and MAX with N elements
+        the consecutive difference should be
+        (MIN - MAX) / (N-1)
+        we can hash all the elements and just make sure they are in the array when we advance by diff
+        '''
+        def check(arr):
+            MIN = min(arr)
+            MAX = max(arr)
             
+            #does not evenly divide
+            #if there n elements, we have n-1 gaps
+            #total diff should span array
+            if (MAX - MIN) % (len(arr) - 1) != 0:
+                return False
+            
+            diff = (MAX - MIN) // (len(arr) - 1)
+            seen = set(arr)
+            curr = MIN
+            while curr < MAX:
+                if curr not in seen:
+                    return False
+                curr += diff
+            
+            return True
+        
+        N = len(nums)
+        M = len(l)
+        ans = [False]*M
+        
+        for i,(j,k) in enumerate(zip(l,r)):
+            ans[i] = check(nums[j:k+1])
+        
+        return ans
+    
+#MOS algorithm
 
+    
+#############################################
+# 1561. Maximum Number of Coins You Can Get
+# 24NOV23
+#############################################
+#taking second max doesnt always work
+# class Solution:
+    def maxCoins(self, piles: List[int]) -> int:
+        '''
+        we have multiples of 3 piles, three players me, bob and alice
+        i always pick the 3 piles,
+        first alice takes, then me, then bob
+        since im picking and alice always picsk first, i just pick the second max of three every time
+        '''
+        ans = 0
+        #negate for max heap
+        new_piles = [-p for p in piles]
+        heapq.heapify(new_piles)
+        while new_piles:
+            alice = heapq.heappop(new_piles)
+            me = heapq.heappop(new_piles)
+            bob = heapq.heappop(new_piles)
+            ans -= me
+        
+        return ans
+
+#tricky two pointer
+class Solution:
+    def maxCoins(self, piles: List[int]) -> int:
+        '''
+        when we pick piles, alice will always get the max, and bob will always get the minimum
+        i can sort and use two pointers
+        alice gets r, bob gets l, and i should get the max of r + 1 or l + 1
+        '''
+        ans = 0
+        piles.sort()
+        left = 0
+        right = len(piles) - 1
+        while left < right:
+            #alice always takes max
+            right -= 1
+            #i take the bigger one
+            if piles[right] > piles[left]:
+                ans += piles[right]
+                right -= 1
+                left += 1
+            else:
+                ans += piles[left]
+                left += 1
+                right -= 1
+        
+        return ans
+
+#could have used deque
+class Solution:
+    def maxCoins(self, piles: List[int]) -> int:
+        '''
+        we can also use deque, and first two go to alice and me, and bob gets left
+        '''
+        piles.sort()
+        q = deque(piles)
+        ans = 0
+        
+        while q:
+            q.pop()
+            ans += q.pop()
+            q.popleft()
+        
+        return ans
+
+class Solution:
+    def maxCoins(self, piles: List[int]) -> int:
+        '''
+        bob will always get the smallest, so we can just assign the the bottom third to him
+        then for the upper two thirds it alternates between alice and me
+        '''
+        piles.sort()
+        ans = 0
+        
+        for i in range(len(piles) // 3, len(piles), 2):
+            ans += piles[i]
+        
+        return ans   
+
+#####################################################
+# 1685. Sum of Absolute Differences in a Sorted Array
+# 25NOV23
+#####################################################
+#not quite
+class Solution:
+    def getSumAbsoluteDifferences(self, nums: List[int]) -> List[int]:
+        '''
+        the array is sorting in non-dcreasing order
+        comptunig the summation of the absolute difference between nums[i] and all ther other elements in the array requires to go through all the elements
+        [a,b,c,d]
+        choose a
+        abs(a-b) + abs(a-a) + abc(a-c) + abc(a-d)
+        
+        really its just
+        abs(a-b) + abs(a-c) + abs(a-d)
+        abs difference is
+            max(a,b) - min(a,b)
+        
+        for nums[i] its:
+            (nums[i] - nums[0]) + (nums[i] - nums[1]) + ... + (nums[i] - nums[i-1]) + ... + (nums[n-1] - nums[i])
+        
+        [a,b,c,d]
+        (a - a) + (b - a) + (c - a) + (d - a)
+        (b + c + d) - a*3 
+        find pref and suff sums then substract out the number 
+        
+        (a - b) + (b-b) + (c-b) + (d-b)
+        (a + c + d) - 3*b
+        ''' 
+        pref_sums = [0]
+        for num in nums:
+            pref_sums.append(pref_sums[-1] + num)
+        
+        suff_sums = [0]
+        for num in reversed(nums):
+            suff_sums.append(suff_sums[-1] + num)
+        suff_sums.reverse()
+        
+        ans = []
+        N = len(nums)
+        
+        for i in range(N):
+            left_sum = pref_sums[i]
+            right_sum = suff_sums[i]
+            #print(left_sum,right_sum)
+            temp = nums[i] + left_sum + right_sum - nums[i]
+            temp -= nums[i]*(N-i-1)
+            ans.append(temp)
+        
+        return ans
+    
+class Solution:
+    def getSumAbsoluteDifferences(self, nums: List[int]) -> List[int]:
+        '''
+        issue is that there could be repeated eleements, in which case the abs differnce is zero
+        [a,b,c,d]
+        if a == b === c == d, everything clears and its all just zeros
+        that last algo didn't zero out the one where nums[i] could be multiple
+        we can use pref_sum array to find the left sum, not inclduing nums[i]
+            left_sum = pref_sum[i+1] - nums[i]
+            #note actual inclusive sum would have pref_sum[i+1]
+            right_sum = pref_sum[-1] - pref_sim[i+1]
+        
+        the sum of the absolute difference == the sum we would have to add to the numbers to make then equal to the current nums[i]
+        number of elements to the left not including nums[i] is just i
+            left_count = i
+            right_count = N -i - 1
+        
+        we  can get the totals on each sides as:
+            left_total = left_count*nums[i] - left_sum
+            right_total = right_sum - right_count*nums[i]
+        
+        ans is left_total + right_total
+        '''
+        n = len(nums)
+        prefix = [0]
+        for num in nums:
+            prefix.append(prefix[-1] + num)
+        
+        ans = []
+        for i in range(len(nums)):
+            left_sum = prefix[i+1] - nums[i]
+            #essentially suffix sum
+            #we dont need pref_sum and suff_sum if we know pref_sum
+            right_sum = prefix[-1] - prefix[i+1]
+            
+            left_count = i
+            right_count = n - i - 1
+            
+            #for the left side
+            left_total = left_count * nums[i] - left_sum
+            #for the right side
+            right_total = right_sum - right_count * nums[i]
+
+            ans.append(left_total + right_total)
+        
+        return ans
+    
+#one pass,pref_sum on the fly
+class Solution:
+    def getSumAbsoluteDifferences(self, nums: List[int]) -> List[int]:
+        '''
+        we dont need pref_sum array, we can just find it by building up left sum and substracting from the total_sum
+        '''
+        n = len(nums)
+        total_sum = sum(nums)
+        left_sum = 0
+        
+        ans = []
+        for i in range(len(nums)):
+            #essentially suffix sum
+            #we dont need pref_sum and suff_sum if we know pref_sum
+            right_sum = total_sum - left_sum - nums[i]
+            
+            left_count = i
+            right_count = n - i - 1
+            
+            #for the left side
+            left_total = left_count * nums[i] - left_sum
+            #for the right side
+            right_total = right_sum - right_count * nums[i]
+
+            ans.append(left_total + right_total)
+            left_sum += nums[i]
+        
+        return ans
