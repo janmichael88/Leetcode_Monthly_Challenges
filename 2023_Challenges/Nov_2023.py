@@ -2624,6 +2624,35 @@ class Solution:
         
         return entries[right][0] - entries[left][0]
 
+#linear scan
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        we can do linear scan, keep in mind that the arrays are already sorted non-decreasingly
+        brute force N**2 would be exmaine all (i,j) array pairs and find the maximum difference between the first and last values of the pairs
+            only examine extreme points
+            
+        given two arrays a and b, we just need to find  max(a[-1] - b[0], b[-1] - a[0])
+        we dont need to examine all array pairs, instgeaf we can keep on traversing over the arryas and keep track of the max distance found so far
+        
+        keep track of min_val and max_val of all the arrays
+        when considering some new array a, find distance a[-1] - min_val and max_val - a[0]
+            
+        '''
+        ans = float('-inf')
+        min_val = arrays[0][0]
+        max_val = arrays[0][-1]
+        
+        for a in arrays[1:]:
+            curr_min = a[0]
+            curr_max = a[-1]
+            
+            #update answer
+            ans = max(ans, abs(curr_max - min_val), abs(curr_min - max_val))
+            max_val = max(max_val, curr_max)
+            min_val = min(min_val, curr_min)
+        
+        return ans
 ###############################################
 # 1727. Largest Submatrix With Rearrangements
 # 26NOV23
