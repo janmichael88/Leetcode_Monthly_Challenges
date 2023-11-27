@@ -2592,3 +2592,111 @@ class Solution:
             left_sum += nums[i]
         
         return ans
+    
+#############################################
+# 624. Maximum Distance in Arrays (REVISITED)
+# 25NOV23
+#############################################
+#ez sort
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        keep track of the min and max and make sure when we pick the min and max, that they are from different arrays
+        '''
+        entries = []
+        for i,r in enumerate(arrays):
+            entry = (max(r),i)
+            entries.append(entry)
+            entry = (min(r),i)
+            entries.append(entry)
+        
+        entries.sort(key = lambda x: (x[0],x[1]))
+        
+        left = 0
+        right = len(entries) - 1
+        
+        while left < right and entries[left][1] == entries[right][1]:
+            #move the smaller
+            if entries[left+1][0] - entries[left][0] < entries[right][0] - entries[right-1][0]:
+                left += 1
+            else:
+                right -= 1
+        
+        return entries[right][0] - entries[left][0]
+
+###############################################
+# 1727. Largest Submatrix With Rearrangements
+# 26NOV23
+###############################################
+#EZ
+class Solution:
+    def largestSubmatrix(self, matrix: List[List[int]]) -> int:
+        '''
+        rows*cols is <= 10**5, so full traversal is allowed
+        if it were  just a single row, then we would want to find the longest streak of ones
+        0 0 1
+        1 1 2
+        2 0 3
+        
+        sort each row
+        1 0 0
+        2 1 1
+        3 2 0
+        
+        getting the conseuctive 1s along all the columns tells us how much height we can get from the column
+        here we just ned to find the largest submatrix where all the cells (i,j) are not zero
+        now we need to fit the largest matrix
+        we use the consecutive 1s to find the height contribution and when moving along this row, the index i + 1 is the base
+        so we can multiplye them
+        ''' 
+        rows = len(matrix)
+        cols = len(matrix[0])
+        
+        for c in range(cols):
+            for r in range(1,rows):
+                if matrix[r][c] == 1:
+                    matrix[r][c] += matrix[r-1][c]
+
+        #sorr non increasing
+        for i in range(rows):
+            matrix[i] = sorted(matrix[i], reverse = True)
+        
+        ans = 0
+        for r in matrix:
+            for c in range(cols):
+                ans = max(ans,r[c]*(c+1))
+        
+        return ans
+    
+#save space
+class Solution:
+    def largestSubmatrix(self, matrix: List[List[int]]) -> int:
+        '''
+        instead of counting all consective ones along a column for all columns, we can do this on the fly
+        we can only optimize the space
+            instead of allocating a new 2d array, we only need to keep track of the previous row
+        insteaf of goind down a column, we down row by row BUT we accumlate counts in prev_row
+        once we have counted, we can sort and check the biggest submatrix
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        prev_row = [0]*cols
+        ans = 0
+        
+        for r in range(rows):
+            curr_row = matrix[r][:]
+            for col in range(cols):
+                if curr_row[col] != 0:
+                    curr_row[col] += prev_row[col]
+                
+            #sort the row
+            sorted_row = sorted(curr_row, reverse = True)
+            for i in range(cols):
+                ans = max(ans, sorted_row[i]*(i+1))
+            
+            #reassigned
+            prev_row = curr_row
+        
+        return ans
+    
+
