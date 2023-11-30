@@ -2728,4 +2728,510 @@ class Solution:
         
         return ans
     
+########################################
+# 935. Knight Dialer
+# 27NOV23
+########################################
+#ez pz
+class Solution:
+    def knightDialer(self, n: int) -> int:
+        '''
+        we have a knight, we can only move the knight in L directions
+        we cannot step op on a * or '#', we cannot step of out bounds
+        we are allowed to start on any number and move
+        need to create a length N number
+        
+        let dp(n) be the count of phone numbers we can create using n steps
+        dp(n) = count_possible_start*dp(n-1)
+        s
+        issue is how we can map knight moves
+        turn number pad in to grid, with (0,0) as 1
+        then we can move
+        
+        states should be number of steps and (i,j) cel
+        i*j == 9
+        
+        
+        '''
+        grid = [
+                ['1','2','3'],
+               ['4','5','6'],
+                ['7','8','9'],
+                ["*","0","#"]
+               ]
+        #mapp 
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        memo = {}
 
+        #dirrs for knight
+        dirrs = []
+        for i in [-1,-2,1,2]:
+            for j in [-1,-2,1,2]:
+                #abs cannot be equal
+                if abs(i) != abs(j):
+                    dirrs.append([i,j])
+        
+        print(dirrs)
+        mod = 10**9 + 7
+        
+        def dp(i,j,steps):
+            #out of bounds
+            if (i < 0) or (i >= rows) or (j < 0) or (j >= cols):
+                return 0
+            #ends on "*" or "#"
+            elif grid[i][j] == '*' or grid[i][j] == '#':
+                return 0
+            elif steps == 1:
+                return 1
+
+            #retreive
+            if (i,j,steps) in memo:
+                return memo[(i,j,steps)]
+            ans = 0
+            for dx,dy in dirrs:
+                ans += dp(i + dx, j + dy,steps - 1)
+                ans %= mod
+            
+            ans %= mod
+            memo[(i,j,steps)] = ans
+            return ans
+        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans += dp(i,j,n)
+                ans %= mod
+        
+        return ans % mod
+            
+class Solution:
+    def knightDialer(self, n: int) -> int:
+        '''
+        instead of doing it like BFS and pruning out the edge conditions, we can mapp each number to all possible next jumps
+        then its just dp(n-1,with the next square)
+        push dp again, imagine recursion tree, carry and from child node to parent node, do for all nodes
+        0 -> [4,6]
+        1 -> [6,8]
+        2 -> [7,9]
+        3 -> [4,8]
+        4 -> [3,9,0]
+        5 -> []
+        6 -> [1,7,0]
+        8 -> [1,3]
+        9 -> [2,4]
+        '''
+        jumps = [[4, 6],[6, 8],[7, 9],[4, 8],
+            [3, 9, 0],[], [1, 7, 0], [2, 6], [1, 3], [2, 4]
+        ]
+        
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(steps,cell):
+            if steps == 1:
+                return 1
+            if (steps,cell) in memo:
+                return memo[(steps,cell)]
+            ans = 0
+            for neigh_cell in jumps[cell]:
+                ans += dp(steps-1,neigh_cell)
+                ans %= mod
+            
+            ans %= mod
+            memo[(steps,cell)] = ans
+            return ans
+        
+        ans = 0
+        for num in range(10):
+            ans += dp(n,num)
+            ans %= mod
+        
+        return ans % mod
+    
+#bottom up
+class Solution:
+    def knightDialer(self, n: int) -> int:
+        jumps = [
+            [4, 6],
+            [6, 8],
+            [7, 9],
+            [4, 8],
+            [3, 9, 0],
+            [],
+            [1, 7, 0],
+            [2, 6],
+            [1, 3],
+            [2, 4]
+        ]
+        
+        MOD = 10 ** 9 + 7
+        dp = [[0] * 10 for _ in range(n + 1)]
+        for square in range(10):
+            dp[0][square] = 1
+
+        for remain in range(1, n):
+            for square in range(10):
+                ans = 0
+                for next_square in jumps[square]:
+                    ans = (ans + dp[remain - 1][next_square]) % MOD
+                
+                dp[remain][square] = ans
+
+        ans = 0
+        for square in range(10):
+            ans = (ans + dp[n - 1][square]) % MOD
+        
+        return ans
+    
+#dp space optimized
+class Solution:
+    def knightDialer(self, n: int) -> int:
+        jumps = [
+            [4, 6],
+            [6, 8],
+            [7, 9],
+            [4, 8],
+            [3, 9, 0],
+            [],
+            [1, 7, 0],
+            [2, 6],
+            [1, 3],
+            [2, 4]
+        ]
+        
+        MOD = 10 ** 9 + 7
+        dp = [0] * 10
+        prev_dp = [1] * 10
+        
+        for remain in range(1, n):
+            dp = [0] * 10
+            for square in range(10):
+                ans = 0
+                for next_square in jumps[square]:
+                    ans = (ans + prev_dp[next_square]) % MOD
+                
+                dp[square] = ans
+                
+            prev_dp = dp
+
+        ans = 0
+        for square in range(10):
+            ans = (ans + prev_dp[square]) % MOD
+        
+        return ans
+
+#like the vowel problem
+class Solution:
+    def knightDialer(self, n: int) -> int:
+        '''
+        we can follow the same approach as the vowels problems
+        and that the phone pad exhibits symmetrys
+        imagine the numbers
+        1 2 3           A B A  
+        4 5 6           C E C   
+        7 8 9           A B A
+          0               D
+          
+         they are similar because they have same jump options
+         A -> [B,C]
+         B -> [A]
+         C -> [A,D]
+         D -> [C]
+         E -> [] non here
+         
+         jump groups are only [A,B,C,D]
+         we mapp [A,B,C,D] to the numbers [1,2,3,4]
+         now how do we update variables:
+            try this, to get to A, we can from from C and B, so maybe try add C + B
+            but remember we have different groups, and we could reach A from some number of ways
+            to get to A, we have 2B + 2C
+        
+        think about the grou[s]
+        transistions are
+        A = 2*B + 2*C
+        B = A
+        C = A + 2D
+        D = C
+        
+        just update n-1 times and retun A + B + C + D
+        '''
+        if n == 1:
+            return 1
+        #start
+        A,B,C,D = 4,2,2,1
+        mod = 10**9 + 7
+        
+        for _ in range(n-1):
+            A,B,C,D = (2*B + 2*C) % mod, A, (A + 2*D) % mod, C
+        
+        return (A + B + C + D) % mod
+
+################################################
+# 2147. Number of Ways to Divide a Long Corridor
+# 29NOV23
+################################################
+#bleaagh i had the right idea
+class Solution:
+    def numberOfWays(self, corridor: str) -> int:
+        '''
+        long corridor, S is seat and P is plant
+        we have room dividers at 0 and len(corridor) - 1 and we can place dividers between idnices [1,n-1]
+        at most one divider can be installed
+        divide the corridor into non overlapping sections where each section has exactly two seats with any number of plants
+        there are multiple ways to perfomr the dision
+            two ways are different if there is a position with a room dividers installed in teh first way but not in the second
+        
+        return number of ways todivide the corridor 
+        need to find the number of partitions where each partition has eaxctly two seats
+        brute force
+            try all possible partitions, and check each parition has two seats
+        
+        hints: 
+        * divide the corridor into segments, each segment has two seats, starts precicsely with one seat, and ends precisely with the other sear
+        * between teach adjacent segments, i must install precisley one, otherwise you would have created a section with exactly two seats
+        * if there are k plants between two adjacent segments, then there are k + 1 ways i could install the dividers
+        * problem now becomes find product of all possible positions between every two adjacent segments
+        
+        partition corridor into segments, going left to right
+        then answer is product of all plants in between
+        '''
+        #corner case
+        #im possible to do if there is % 2 has remainder
+        seats = 0
+        plants = 0
+        N = len(corridor)
+        for ch in corridor:
+            seats += ch == 'S'
+            plants += ch == 'P'
+            
+        if seats % 2 != 0:
+            return 0
+        
+        if plants == N:
+            return 0
+        ans = 1
+        #no we need to partition inteligently
+        intervals = [] #store plants in between
+        i = 0
+        
+        while i < N:
+            #capture seats
+            seats = 0
+            while i < N and seats != 2:
+                seats += corridor[i] == 'S'
+                i += 1
+            #now we shouod have two chairs, expand until w
+            plants = 0
+            while i < N and corridor[i] != 'S':
+                plants += corridor[i] == 'P'
+                i += 1
+            #check if there was an adjcanet segment alreayd
+            intervals.append(plants)
+            i += 1
+        
+        if len(intervals) > 1:
+            print(intervals)
+            for i in intervals:
+                if i != 0:
+                    ans *= i + 1
+            
+            return ans
+        return ans
+            
+
+#combinatorics is an easier solution
+class Solution:
+    def numberOfWays(self, corridor: str) -> int:
+        '''
+        intutino overview:
+            need non overlapping partitions where there are exactly two S's
+            there isn't any specificatino on the number of P's, i.e flexibility in P provides as muliple ways to do the partitioning
+            no seats, we cant divide the corridor, can't do with one seat, and must be mutiple of two
+            more so only two seats provides 1 way
+            if we have two partitons [p1] .... [p2], where p1 and p2 are valid and we have plants in between, we can place the divider anywhwere btween p1 and p2
+            provided that they are in between the plants
+            if there are zero flowes in between, there is only 1 way to paritions
+            is there is 1 P we can have 2 ways, for 2 P, we can have three ways
+            [p1] p p [p2], we can do three dividers
+            [p1] | p p [p2], [p1] p | p [p2], [p1] p p | [p2],
+            
+            in general if there are k plants between two valid paritions, there are k+1 ways to join them
+            more so, if the index of a second S is i and the index of a thrid S is j, then there are j-i ways of install the divider!
+        1. no seats or odd numbers of seats in the corridor means there are no ways to make a valid partitioning
+            contrapositive of converse is just the converse?
+        2. the number of plants does not determine the presence of a dividing way
+            but the number of plants is there is a vididing way, determine the number of ways can divide
+        3. seats for partitioning are always paired
+        4. we can only install a divider between two S that are neighbors, but not paired and plants in between them offer flexibility to install the divider in different ways
+            number of plants between already paired sets does not offer any flexbility to make a new devivison
+            
+        review on modular arithmetic
+            (a + b ) % mod = ((a % mod) + (b % mod)) % mod
+            (a - b) % mod = ((a % mod) - (b % mod) + mod) % mod
+                notice here we add mod back in, example
+                a = 6, b = 5, m = 5, ans is 2, but if we do (a % m - b % m) % m we get -3 % 5
+                adding 5 back in gives us 2
+            (a * b) % m = ((a % m) * (b % m)) % m
+            (a**b) % mod = ((a % mod) * (b % mod)) % mod
+        intuition, if we have two paths from A to B and 3 paths from B to C
+        then there are 2*3 = 6 paths fom A to C,
+        if we introduce another node D, and there are 2 ways from C to D, then there shold be 2*6 = 12 pahts from A to D
+        fundamental rule of coungint, rule of product
+        to find the number of plants between paired neighbors, we can get the difference in indices between the end of the pair to the left and the start of the pair on the right
+        
+        rule: what eventually matters is the difference between indices of non-paird S neighbors
+            hen we can store indices of S in an array, and then compute the differene between on paird S neighrbos
+        
+        note of caution on ans, to prevent overflow
+        count is restricted to be less than 10**9 + 7, so its max values reall is 10**9 + 6
+        which is 10**9, givine the inputs a difference can be as high as 10**5, and 10**5 *  10**9 = 10**14, and this wont fit in an unsighed integer, 2**31 - 1
+        for langs like C++ and java we need to use type long
+        '''
+        mod = 1_000_000_007
+        
+        #storidices for seats
+        seat_idxs = []
+        for i,ch in enumerate(corridor):
+            if ch == 'S':
+                seat_idxs.append(i)
+        
+        #no seats or impossible partitions
+        if len(seat_idxs) == 0 or len(seat_idxs) % 2 == 1:
+            return 0
+        
+        
+        ways = 1
+        #take product of non-paired intergers
+        #remember we take products between the last chair in the first pair and the first chair in the last pair
+        first_end = 1
+        second_start = 2
+        while second_start < len(seat_idxs):
+            #number of plants + 1 is just the difference in indices
+            ways *= (seat_idxs[second_start] - seat_idxs[first_end]) % mod
+            ways %= mod
+            first_end += 2
+            second_start += 2
+
+        return ways
+
+#hashmap has too much overhead
+class Solution:
+    def numberOfWays(self, corridor: str) -> int:
+        '''
+        for top down approach the transition is rather tricky
+        we traverse the corridor from left to right, and assume we have paritions, [p1] PPP [p2]
+        we can put divider at all positions in between plants, inlcuding start and ends
+        states wil be (index,seats)
+        index is current element in corridor, and seats are (0,1,2) indicating the number of seats in the current partition
+        if we close section heare, it means we dont have seats in the next
+        if we dont close, then we can keep growing the sectino
+        the moment we find nother S, we have to make a new parition
+        dp(index,seats) denotes number of ways to divide corrirode starting from index to last with seats in current section
+        want to solve dp(0,0)
+            * if index reaches n, then the curren sectino is vald only if seats == 2
+            * if index == 1 and seats == 2, return 1 else 0, emplying we found a valid paritioning
+            * PUSH DP from other states
+            
+            now if we are on a valid index, and the number of seats == 2, we can close the section or keep growing depending on whethet next index is S or P
+            if corridor[index] == S, we close and incremnet count:
+                dp(index + 1, 1)
+            if corridor[index] == P, then we have two opetions
+                close, set seats to 2
+                keep growing, dp(index+1,0) + dp(index+1,2)
+            if validindex and number of seats < 2, we need to keep growing
+            if corridor[index] = S, count(index+1,seats+1)
+            if corridor[index] = P, return count(index+1,seats)
+        '''
+        mod = 1_000_000_007
+        N = len(corridor)
+        memo = [[-1]*3 for _ in range(N)]
+        
+        
+        def dp(index,seats):
+            if index == N:
+                if seats == 2:
+                    return 1
+                return 0
+            
+            res = 0
+            if memo[index][seats] != -1:
+                return memo[index][seats]
+            if seats == 2:
+                if corridor[index] == 'S':
+                    #close section and we now hae one seat
+                    res = dp(index+1,1)
+                else:
+                    #if P, extend or keep goring
+                    res = ((dp(index+1,0) % mod) + (dp(index+1,2) % mod)) % mod
+            #we can keep growing
+            else:
+                if corridor[index] == "S":
+                    res = dp(index+1,seats+1)
+                else:
+                    res = dp(index+1,seats)
+            
+            memo[index][seats] = res % mod
+            return res % mod
+        
+        return dp(0,0) % mod
+    
+#bottom up
+class Solution:
+    def numberOfWays(self, corridor: str) -> int:
+        # Store 1000000007 in a variable for convenience
+        MOD = 1_000_000_007
+
+        # Initialize the array to store the result of each sub-problem
+        count = [[-1] * 3 for _ in range(len(corridor) + 1)]
+
+        # Base cases
+        count[len(corridor)][0] = 0
+        count[len(corridor)][1] = 0
+        count[len(corridor)][2] = 1
+
+        # Fill the array in a bottom-up fashion
+        for index in range(len(corridor) - 1, -1, -1):
+            if corridor[index] == "S":
+                count[index][0] = count[index + 1][1]
+                count[index][1] = count[index + 1][2]
+                count[index][2] = count[index + 1][1]
+            else:
+                count[index][0] = count[index + 1][0]
+                count[index][1] = count[index + 1][1]
+                count[index][2] = (count[index + 1][0] + count[index + 1][2]) % MOD
+
+        # Return the result
+        return count[0][0]
+    
+#########################################
+# 1370. Increasing Decreasing String
+# 29NOV23
+##########################################
+class Solution:
+    def sortString(self, s: str) -> str:
+        '''
+        count and keep going
+        alternat with increasing and decresing at each step
+        '''
+        counts = Counter(s)
+        
+        ans = ""
+        while sum(counts.values()) > 0:
+            #first try increasing
+            for i in range(26):
+                curr_char = chr(ord('a') + i)
+                if counts[curr_char] > 0:
+                    ans += curr_char
+                    counts[curr_char] -= 1
+                    
+                    
+            for i in range(26-1,-1,-1):
+                curr_char = chr(ord('a') + i)
+                if counts[curr_char] > 0:
+                    ans += curr_char
+                    counts[curr_char] -= 1
+        
+        return ans
+                    
