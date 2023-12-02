@@ -51,6 +51,7 @@
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-08.gif" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-09.gif" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-10.gif" width="100"></td>
+    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-11.gif" width="100"></td>
     <td></td>
     <td></td>
   </tr>
@@ -58,7 +59,7 @@
 * Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-* Nov 2023
+* Dec 2023
 
 ### Completed:
 Column 1 | Column 2 | Column 3
@@ -76,7 +77,7 @@ Sep 2022 | Oct 2022 | Nov 2022
 Dec 2022 | Jan 2023 | Feb 2023
 Mar 2023 | Apr 2023 | May 2023
 Jun 2023 | Jul 2023 | Aug 2023
-Sep 2023 | Oct 2023
+Sep 2023 | Oct 2023 | Nov 2023
 
 
 

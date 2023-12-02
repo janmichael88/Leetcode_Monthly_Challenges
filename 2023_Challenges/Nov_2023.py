@@ -3234,4 +3234,259 @@ class Solution:
                     counts[curr_char] -= 1
         
         return ans
-                    
+
+###########################################
+# 487. Max Consecutive Ones II (REVISITED)
+# 30NOV23
+##########################################
+#not sure if we can to top down with two states
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        this is just knap sack, keep track of index and current number of flips, 
+        then its just max
+        '''
+        N = len(nums)
+        memo = {}
+        
+        def dp(i,flips):
+            if i >= N:
+                return 0
+            if (i,flips) in memo:
+                return memo[(i,flips)]
+            #if its a zero, we can try flipping, or we can just not take it
+            if nums[i] == 0:
+                if flips == 1:
+                    flip = 1 + dp(i+1,0)
+                    no_flip = dp(i+1,flips)
+                    ans = max(flip,no_flip)
+                    memo[(i,flips)] = ans
+                    return ans
+                else:
+                    no_flip = dp(i+1,flips)
+                    memo[(i,flips)] = no_flip
+                    return no_flip
+            #ise a 1
+            else:
+                #we just take it
+                take = 1 + dp(i+1,flips)
+                no_take = dp(i+1,flips)
+                ans = max(take,no_take)
+                memo[(i,flips)] = ans
+                return ans
+        
+        return dp(0,1)
+
+#need to keep score in addition to flips and index
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        '''
+        use dp?
+        dp(i,False) be the state given the max number of conseuctive ones taking nums[:i] and not deleting
+        then dp(i,False)
+        
+        keep state (i,k,score)
+        where i is the current index, k is the number of deletions left, and score is the current score
+        ''' 
+        N = len(nums)
+        memo = {}
+        
+        def dp(i,k,score):
+            if i >= N:
+                return score
+            if nums[i] == 0 and k <= 0:
+                return score
+            
+            if (i,k,score) in memo:
+                return memo[(i,k,score)]
+            
+            #current number if zero
+            if nums[i] == 0:
+                take = dp(i+1,k-1,score+1)
+                no_take = dp(i+1,k,0)
+            #must be a 1
+            else:
+                take = dp(i+1,k,score+1)
+                no_take = dp(i+1,k,score+1)
+            
+            ans = max(take,no_take)
+            memo[(i,k,score)] = ans
+            return ans
+        
+        return dp(0,1,0)
+    
+#sliding window
+class Solution:
+    def findMaxConsecutiveOnes(self, nums: List[int]) -> int:
+        ans = 0
+        left = right = 0
+        num_zeros = 0
+        N = len(nums)
+        
+        while right < N:
+            if nums[right] == 0:
+                num_zeros += 1
+            
+            while num_zeros == 2:
+                if nums[left] == 0:
+                    num_zeros -= 1
+                left += 1
+            
+            ans = max(ans, right - left + 1)
+            right += 1
+        
+        return ans
+    
+#########################################################
+# 1611. Minimum One Bit Operations to Make Integers Zero
+# 30NOV23
+#########################################################
+class Solution:
+    def minimumOneBitOperations(self, n: int) -> int:
+        '''
+        return min number of opertaions to convert n to 0 
+        using:
+            * change the right most bit to 0
+            * change the ith bit if i-1 = 1 and i-2 to 0 = 0
+                example 1100
+                we want to change i = 3
+                i - 1 is 1 and everything is 0, so we can cahnge to 0100
+            
+        faste way is to convert n to zero is to remove all set bits starting from the lest most one
+        
+        110 try converting left most so we need 10, bascailly need to check if next bit is 1 and everything else is 00
+        we can use mask to check this
+        if this isn't the case we flipd the 0th bit
+        
+        1010101011
+        
+        if n is a power of 2, i.e n = 2*k
+        we need to set the k-1 bit to 1, then we can flip the leftmost bit, and it now becomes 2^(k-1)
+        but in order to this, k-1, must have already been a 1, basically we can move in both directions for operations
+        i.e 100 -> 110 implies 110 -> 100, proof by contradiction
+        this reversibility operations is what actually gives us the hammer to solve the problem
+        mininum number of operations for converting x to y for some abritray x,y is alwaysthe same as the minimum number of operations for convertin y to x
+        
+        define f(k) as the number of operations to reduce 2*k to 0
+        f(k) depends on f(k-1), we have to set k-1, in order to flip k, since operations are reverssbile
+        f(k) in the first steps is f(k-1)
+        f(k) = f(k-1) + 1 + f(k-1) #here  we need stpes needed to go from 0 to f(k-1) #1 is the flpiing the MSB #the additional f(k-1) is what we need to get to 0
+        f(k) = 2*f(k-1) + 1
+        f(0) = 0
+        
+        #first recurrence
+        def f(k):
+            if k == 0:
+                return 1
+
+            return 2 * f(k - 1) + 1
+        
+        we can actually rewrtie this as f(k) = 2^(k+1) - 1, proof by induction, basically we are turning  the recursive relatiionship into a an actual function
+        f(k) = 2*(2^k + 1) + 1 = 2*2^k + 2 - 1 = 2^(k+1) - 1
+        so this gives us the answer when n is a power of 2
+        
+        part2, gets tricky here
+        we can split the problme in two parts, f(k) = 2^(k+1) - 1, gives us the operations for turning  2^k into zero, then we get the bits to the right, which we call n'
+        we can get n' using XOR, n' = n XOR 2^k, and we just recurse again on this part!
+        if we have some number n, where n is expressed as 2**k, we can get the right bits using n ^ (2**(k-1))
+        
+        now let A(x) be number of operatrions to reduce some x to 0, cost would be A(n')
+        total cost is counter inuitive: f(k) - A(n')
+        
+        part 3, why?
+            keep in mind A(x) is another recurrence
+            ifs becase f(k) is under the assumption that that n is a power of two!
+            progress from f(k-1) to n operations
+            its mor expensive to reduce 2*k than it is to reduce n
+            reducing 2**k to n'
+            we would not want to go from 0 to 2**k and then 2**k to the n
+            we wouldn to go straight too to n, because we want the minimum steps
+            thats why we subtract A(n') from f(k) 
+                it would take us f(k) opertions to get to 2*k, but we dont go back to 2*k, we go to n, which is A(n') operations closer
+            
+        algo
+            base case, 0 return 0, 
+            use while loop to determine the most significant bit i.e first 1 going from right to left
+            then we can do f(k) - A(n')
+            f(k) = 2^(k+1) - 1
+            A(n') min operations (n XOR curr), where curr is n**k
+        '''
+        
+        def dp(n):
+            if n == 0:
+                return 0
+            #find first 1
+            curr = 1
+            k = 0
+            while (curr*2) <= n:
+                curr = curr*2
+                k += 1
+            
+            return 2**(k+1) - 1 - dp(n ^ curr)
+        
+        return dp(n)
+
+#bottom up
+class Solution:
+    def minimumOneBitOperations(self, n: int) -> int:
+        '''
+        for bottom up wee go from 0 to n, from the critical observation we know its possible to reverse steps
+        start from least significant bit at some positino k
+        we know this costs 2**(k+1) -1 steps to get
+        the next bit would be at k_1
+        to convert 0 to k_1 would require 2**(k_1 +1) -1 steps
+            but not necessarily because we have some set bit to the right at k
+            but k being set actuall counts as progress towards 2**(k_1)
+            so we can just subtract A(n') from 2**(k_1 +1) - 1
+        
+        so what is the value of A(n') at eack k step
+            k is curent bit position
+            mask is 2**k
+            ans, represnets the answer to the problem when considering n only up to the kth bit
+        '''
+        ans = 0
+        k = 0
+        mask = 1
+        
+        while mask <= n:
+            #meanind this bit is set
+            if (n & mask):
+                #we overcounted ans
+                ans = 2**(k+1) - 1 - ans
+            
+            mask <<= 1
+            k += 1
+        
+        return ans
+    
+#another way
+class Solution:
+    def minimumOneBitOperations(self, n: int) -> int:
+        '''
+        examine powers of 2
+        1 -> 0
+        10 -> 3
+        100 -> 15 steps
+        for powers of 2 is (2**(bit position + 1)) - 1
+        
+        how to reduce 11, 111, to 0
+        10 -> 11 -> 10 by f(10) = f(10 - 11) + f(11 - 0)
+        so f(11-0) = f(10) - f(10-11) => apply op1 + 2 => f(10) - f(01)
+        f(1110) = f(1000)-f(110)=f(1000)-(f(100)-f(10))=15-4=15-(7-3)=11 and so on...
+
+        8 = 15  1000: +(f(10000)-1) = 15
+        7 = 5    111: +(f(1000)-1) -((f(100)-1) -(f(10)-1)) = 7 - 3 + 1 = 5
+        6 = 4    110: +(f(1000)-1) -(f(100)-1) = 7 - 3 = 4
+        5 = 6    101: +(f(1000)-1) -(f(10)-1) = 7 - 1 = 6
+        4 = 7    100: +(f(1000)-1) = 7
+        3 = 2     11: +(f(100)-1) -(f(10)-1) = 3 - 1 = 2
+        2 = 3     10: +(f(100)-1) = 3
+        1 = 1      1: +(f(10)-1) = 1
+        '''
+        steps = 0
+        sign = 1
+        for bit in reversed(range(31)):
+            if n & (1 << bit) != 0:
+                steps += sign * ((1 << (bit + 1)) - 1)
+                sign *= -1
+        return steps
