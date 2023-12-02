@@ -55,7 +55,8 @@
     <td></td>
     <td></td>
   </tr>
-</
+</table>
+
 * Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
