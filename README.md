@@ -52,8 +52,6 @@
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-09.gif" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-10.gif" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2023-11.gif" width="100"></td>
-    <td></td>
-    <td></td>
   </tr>
 </table>
 
