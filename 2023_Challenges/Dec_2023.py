@@ -75,4 +75,34 @@ class Solution:
             dp[i] = (a % mod) + (b % mod) % mod
         
         return dp[n] % mod
-            
+    
+#######################################
+# 635. Design Log Storage System
+# 03NOV23
+#######################################
+#finally!   
+#just do string comparison
+#need to use hashamp as container
+class LogSystem:
+
+    def __init__(self):
+        self.times = {}
+        self.g = {"Year": 4, 
+                  "Month": 7, 
+                  "Day": 10, 
+                  "Hour": 13, 
+                  "Minute": 16, 
+                  "Second": 19}
+        
+    def put(self, id, timestamp):
+        self.times[id] = timestamp
+
+    def retrieve(self, s, e, gra):
+        ind = self.g[gra]
+        s, e = s[:ind], e[:ind]
+        return [i for i, time in self.times.items() if s <= time[:ind] <= e]
+
+# Your LogSystem object will be instantiated and called as such:
+# obj = LogSystem()
+# obj.put(id,timestamp)
+# param_2 = obj.retrieve(start,end,granularity)
