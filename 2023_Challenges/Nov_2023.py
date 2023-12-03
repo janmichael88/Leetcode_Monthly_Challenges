@@ -3482,6 +3482,27 @@ class Solution:
         3 = 2     11: +(f(100)-1) -(f(10)-1) = 3 - 1 = 2
         2 = 3     10: +(f(100)-1) = 3
         1 = 1      1: +(f(10)-1) = 1
+
+         this is how 100->0 and 10->0 looks like on paper if you apply the ops correctly:
+         100 - 7 (op1 100->101 op2 101->111 op1 111->110 op2 110->010 op1 010->011 op2 011->001 op1 001->000)
+        101 - 6 (op2 101->111 op1 111->110 op2 110->010 op1 010->011 op2 011->001 op1 001->000)
+        111 - 5 (op1 111->110 op2 110->010 op1 010->011 op2 011->001 op1 001->000)
+        110 - 4 (op2 110->010 op1 010->011 op2 011->001 op1 001->000)
+        010 - 3 (op1 010->011 op2 011->001 op1 001->000)
+        011 - 2 (op2 011->001 op1 001->000)
+        001 - 1 (op1 001->000)
+        000 - 0
+
+        The ops are reversible: going from 00->11 takes the same number of steps as going from 11->00.
+In order to get rid of leftmost set bit1xx, we can see that 111 -> 0 can be represented as 100 - g(011 remainder),
+btw, it's not "+" it's "-"...
+This is kind of: instead of going directly down 111->0, we can first go up: 111->100 and then from 100 subtract path 011->0
+
+Why do we care about 1000,100,10,1 and try to utilize it? Because with the step 1 we can calc any of them!
+The problem is reduced to: g(111->0) = f(100) - g(11->0)
+e.g.
+g(111) = f(100) - g(11)=f(100)-(f(10) - g(1)) = 7 - (3 - 1) = 5
+
         '''
         steps = 0
         sign = 1
