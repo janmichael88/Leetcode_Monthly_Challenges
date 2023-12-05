@@ -151,3 +151,130 @@ class Solution:
                     result = a
         
         return result
+    
+######################################
+# 641. Design Circular Deque
+# 04DEC23
+######################################
+#using builtin
+class MyCircularDeque:
+
+    def __init__(self, k: int):
+        #cheese it and just use deque?
+        self.q = deque([])
+        self.k = k
+
+    def insertFront(self, value: int) -> bool:
+        if self.isFull():
+            return False
+        self.q.appendleft(value)
+        return True
+
+    def insertLast(self, value: int) -> bool:
+        if self.isFull():
+            return False
+        self.q.append(value)
+        return True
+
+    def deleteFront(self) -> bool:
+        if self.isEmpty():
+            return False
+        self.q.popleft()
+        return True
+
+    def deleteLast(self) -> bool:
+        #check empty 
+        if self.isEmpty():
+            return False
+        self.q.pop()
+        return True
+        
+
+    def getFront(self) -> int:
+        if self.isEmpty():
+            return -1
+        return self.q[0]
+
+    def getRear(self) -> int:
+        if self.isEmpty():
+            return -1
+        return self.q[-1]
+
+    def isEmpty(self) -> bool:
+        return len(self.q) == 0
+        
+
+    def isFull(self) -> bool:
+        return len(self.q) == self.k
+        
+
+
+# Your MyCircularDeque object will be instantiated and called as such:
+# obj = MyCircularDeque(k)
+# param_1 = obj.insertFront(value)
+# param_2 = obj.insertLast(value)
+# param_3 = obj.deleteFront()
+# param_4 = obj.deleteLast()
+# param_5 = obj.getFront()
+# param_6 = obj.getRear()
+# param_7 = obj.isEmpty()
+# param_8 = obj.isFull()
+
+class MyCircularDeque:
+
+    def __init__(self, k: int):
+        '''
+        true solution using builtin array only
+        concept of ring buffer
+            two pointers head and tail
+            empty when head == tail
+            full when tail == head + 1
+        '''
+        self.q = [-1]*(k+1)
+        self.head = 0
+        self.tail = 0
+        self.size = k + 1
+
+    def insertFront(self, value: int) -> bool:
+        if self.isFull():
+            return False
+        self.head = (self.head - 1) % self.size
+        self.q[self.head] = value
+        return True
+        
+
+    def insertLast(self, value: int) -> bool:
+        if self.isFull():
+            return False
+        self.q[self.tail] = value
+        self.tail = (self.tail + 1) % self.size
+        return True
+
+
+    def deleteFront(self) -> bool:
+        if self.isEmpty():
+            return False
+        self.head = (self.head + 1) % self.size
+        return True
+
+    def deleteLast(self) -> bool:
+        if self.isEmpty():
+            return False
+        self.tail = (self.tail - 1) % self.size
+        return True
+
+    def getFront(self) -> int:
+        if self.isEmpty():
+            return -1
+        return self.q[(self.head) % self.size] 
+
+    def getRear(self) -> int:
+        if self.isEmpty():
+            return -1
+        return self.q[(self.tail - 1) % self.size]
+
+    def isEmpty(self) -> bool:
+        return self.tail == self.head
+
+    def isFull(self) -> bool:
+        return (self.tail + 1) % self.size == self.head
