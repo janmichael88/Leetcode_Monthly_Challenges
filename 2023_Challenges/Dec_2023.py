@@ -106,3 +106,48 @@ class LogSystem:
 # obj = LogSystem()
 # obj.put(id,timestamp)
 # param_2 = obj.retrieve(start,end,granularity)
+
+###################################################
+# 2264. Largest 3-Same-Digit Number in String
+# 04DEC23
+###################################################
+class Solution:
+    def largestGoodInteger(self, num: str) -> str:
+        '''
+        just count streaks, or use regex >.<
+        '''
+        ans = ""
+        curr_num = num[0]
+        
+        for ch in num[1:]:
+            #extend
+            if ch == curr_num[-1]:
+                curr_num += ch
+                #if size three
+                if len(curr_num) == 3:
+                    ans = max(ans,curr_num)
+                
+                #bigger than three
+                if len(curr_num) > 3:
+                    curr_num = curr_num[1:]
+            
+            else:
+                curr_num = ch
+        
+        return ans
+    
+#check in steps of 3
+class Solution:
+    def largestGoodInteger(self, s):
+        n = len(s)
+        num = 0
+        result = ""
+        
+        for i in range(n - 2):
+            if s[i] == s[i + 1] and s[i + 1] == s[i + 2]:
+                a = s[i:i + 3]
+                if int(a) >= num:
+                    num = int(a)
+                    result = a
+        
+        return result
