@@ -278,3 +278,247 @@ class MyCircularDeque:
 
     def isFull(self) -> bool:
         return (self.tail + 1) % self.size == self.head
+    
+#######################################
+# 1688. Count of Matches in Tournament
+# 05DEC23
+#######################################
+class Solution:
+    def numberOfMatches(self, n: int) -> int:
+        '''
+        just apply the operations
+        '''
+        matches = 0
+        
+        while n > 1:
+            #eveb
+            if n % 2 == 0:
+                matches += n // 2
+                n = n // 2
+            else:
+                matches += (n - 1) // 2
+                n = (n - 1) // 2 + 1
+        
+        return matches
+    
+class Solution:
+    def numberOfMatches(self, n: int) -> int:
+        '''
+        there are n teams, and there can only be 1 winner
+        so there must be n-1 matches
+        '''
+        return n- 1
+
+
+#######################################
+# 666. Path Sum IV
+# 04DEC23
+#######################################
+#nice try
+class Node:
+    def __init__(self,data,left=None,right=None):
+        self.data = data
+        self.left = None
+        self.right = None
+
+class Solution:
+    def pathSum(self, nums: List[int]) -> int:
+        '''
+        if depth is smaller than 5, we can represent tree with an array, where len(array) is number of nodes
+        from left to right
+            first digit is depth (1 <= d <= 4)
+            second digit is position at this depth (from left to right), (1 <= p <= 8)
+            third digit is the value of the node (0 <= v <= 9)
+        
+        return some of all paths from root to leaves
+        if i had three, the problem is solved
+        build tree using dfs/bfs
+        '''
+        def unpack(num):
+            if num == 0:
+                return []
+            
+            return unpack(num // 10) + [num % 10]
+        
+        def dfs(i,nums):
+            if i == len(nums):
+                return None
+            depth,pos,val = unpack(nums[i])
+            node = Node(val)
+            if i + 1 < len(nums):
+                if unpack(nums[i+1])[1] == pos:
+                    node.left = dfs(i+1,nums)
+                else:
+                    node.right = dfs(i+1,nums)
+            if not node.right and  i + 2 < len(nums):
+                if unpack(nums[i+2])[1] == pos + 1:
+                    node.right = dfs(i+2,nums)
+            
+            return node
+        
+        root = dfs(0,nums)
+        ans = [0]
+        
+        def dfs2(node,path):
+            if not node.left and not node.right:
+                ans[0] += path + node.data
+            
+            if node.left:
+                dfs2(node.left,path + node.data)
+            
+            if node.right:
+                dfs2(node.right,path + node.data)
+        
+        dfs2(root,0)
+        return ans[0]
+    
+#hashmap, store nodes (depth,pos)
+class Node:
+    def __init__(self,data,left=None,right=None):
+        self.data = data
+        self.left = None
+        self.right = None
+
+class Solution:
+    def pathSum(self, nums: List[int]) -> int:
+        '''
+        if depth is smaller than 5, we can represent tree with an array, where len(array) is number of nodes
+        from left to right
+            first digit is depth (1 <= d <= 4)
+            second digit is position at this depth (from left to right), (1 <= p <= 8)
+            third digit is the value of the node (0 <= v <= 9)
+        
+        return some of all paths from root to leaves
+        if i had three, the problem is solved
+        build tree using dfs/bfs
+        if im at index 0 in the array
+            its left is going to be 2**0 + 1
+            and its right is going to be 2**0 + 2
+            rather for some depth d
+            left index = 2**(d-1) + 1
+            right index = 2**(d-1) + 2
+            
+            order should be (using first two)
+            11
+            11 12
+            21 22 23 24
+            31 32 33 34 35 36 37 38
+            41 42 43 44 45 46 47 48
+        
+        critical obersation
+        for some node at p, its left will be 2*p, and its right will be 2*p + 1
+        left_child = 2*p, so parent would be at left_child // 2
+        right_child = 2*p + 1, so parent would be at (right_child -1) / 2
+        use hashmap, and key will be (depth,position) mapping to node,
+            
+        
+        '''
+        def unpack(num):
+            if num == 0:
+                return []
+            
+            return unpack(num // 10) + [num % 10]
+        
+        root = Node(nums[0] % 10)
+        nodes = {}
+        nodes[(1,1)] = root
+        
+        for num in nums[1:]:
+            depth,pos,val = unpack(num)
+            node = Node(val)
+            parent_pos = (pos + 1) // 2
+            parent_node = nodes[(depth - 1, parent_pos)]
+            
+            #attach left
+            if pos % 2 == 1:
+                parent_node.left = node
+            else:
+                parent_node.right = node
+            
+            #cache
+            nodes[(depth,pos)] = node
+        
+        ans = [0]
+        
+        def dfs(node,path):
+            if not node:
+                return
+            path += node.data
+            if not node.left and not node.right:
+                ans[0] += path
+            dfs(node.left,path)
+            dfs(node.right,path)
+        
+        dfs(root,0)
+        return ans[0]
+        
+class Node:
+    def __init__(self,data,left=None,right=None):
+        self.data = data
+        self.left = None
+        self.right = None
+
+class Solution:
+    def pathSum(self, nums: List[int]) -> int:
+        '''
+        we can also generate the tree without a hashamp
+        a node should be left or right is:
+            pos  - 1 < 2**(depth-2)
+        when depth = 4, we have pos - 1 < 2**(2) =
+            pos - 1 < 4
+            pos < 5, so its left when pos <= 4 and when depth is 4
+        
+        '''
+        def unpack(num):
+            if num == 0:
+                return []
+            
+            return unpack(num // 10) + [num % 10]
+        
+        root = Node(nums[0] % 10)
+        nodes = {}
+        
+        for num in nums[1:]:
+            depth,pos,val = unpack(num)
+            curr = root
+            pos -= 1
+            #zero index, first used for root, need to start at second
+            #this is the search where to place the node
+            for d in range(depth -2, -1, -1):
+                #look for half way point, either left or right
+                #really need to review counting with binary trees
+                if pos < 2**d:
+                    if curr.left == None:
+                        curr.left = Node(val)
+                    curr = curr.left
+                else:
+                    if curr.right == None:
+                        curr.right = Node(val)
+                    curr = curr.right
+                #prepare for next pos at the next depth
+                pos %= 2**d
+        
+        ans = [0]
+        
+        def dfs(node,path):
+            if not node:
+                return
+            path += node.data
+            if not node.left and not node.right:
+                ans[0] += path
+            dfs(node.left,path)
+            dfs(node.right,path)
+        
+        dfs(root,0)
+        return ans[0]
+        
+#bottom up approach
+import collections
+class Solution:
+    def pathSum(self, nums: List[int]) -> int:
+        total, counter = 0, collections.Counter()
+        for num in reversed(nums):
+            d, l, v = map(int, str(num))
+            total += v * counter[(d, l)] or v
+            counter[(d - 1, (l + 1) // 2)] += counter[(d, l)] or 1
+        return total
