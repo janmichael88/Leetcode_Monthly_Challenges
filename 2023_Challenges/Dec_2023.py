@@ -597,3 +597,59 @@ class Solution:
             final_week += monday + day
         
         return arithmetic_sum + final_week
+    
+#########################################
+# 1903. Largest Odd Number in String
+# 07DEC23
+##########################################
+class Solution:
+    def largestOddNumber(self, num: str) -> str:
+        '''
+        if number ends in odd digit, its odd
+        '''
+        last_odd = -1
+        N = len(num)
+        for i in range(N-1,-1,-1):
+            digit = num[i]
+            if int(digit) % 2 == 1:
+                last_odd = i
+                break
+        
+        return num[:last_odd+1]
+
+
+
+
+
+##########################################
+# 670. Maximum Swap
+# 06DEC23
+##########################################
+class Solution:
+    def maximumSwap(self, num: int) -> int:
+        '''
+        convert digits to array
+        does not make sense to swap that results in a larger number moving from left to right
+        and it does not make sense to move a smaller number from right to left
+        inputs are technically small enough tto try all
+        '''
+        digits = []
+        temp_num = num
+        while temp_num:
+            digits.append(str(temp_num % 10))
+            temp_num = temp_num // 10
+        
+        digits = digits[::-1]
+        ans = num
+        N = len(digits)
+        if N == 1:
+            return ans
+        for i in range(N):
+            for j in range(i+1,N):
+                digits[i],digits[j] = digits[j],digits[i]
+                ans = max(ans, int("".join(digits)))
+                digits[i],digits[j] = digits[j],digits[i] 
+        
+        return ans
+                
+    
