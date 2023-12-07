@@ -522,3 +522,78 @@ class Solution:
             total += v * counter[(d, l)] or v
             counter[(d - 1, (l + 1) // 2)] += counter[(d, l)] or 1
         return total
+
+#########################################
+# 1716. Calculate Money in Leetcode Bank
+# 06DEC23
+#########################################
+class Solution:
+    def totalMoney(self, n: int) -> int:
+        '''
+        keep array of 7 days, then just follow the rules
+        '''
+        days = [0]*7
+        bank = 0
+        
+        for day in range(n):
+            curr_day = day % 7
+            if curr_day == 0:
+                days[curr_day] += 1
+            else:
+                days[curr_day] = days[curr_day-1] + 1
+            
+            bank += days[curr_day]
+        
+        return bank
+    
+class Solution:
+    def totalMoney(self, n: int) -> int:
+        '''
+        without using days array
+        '''
+        bank = 0
+        curr_day = 1
+        
+        while n > 0:
+            for day in range(min(n,7)):
+                bank += curr_day + day
+            
+            n -= 7
+            curr_day += 1
+        
+        return bank
+    
+class Solution:
+    def totalMoney(self, n: int) -> int:
+        '''
+        time for math
+        for the first week we have
+        1+2+3+4+5+6+7 wk 1
+        2+3+4+5+6+7+8 wk 2
+        3+4+5+6+7+8+9 wk 3
+        
+        each sum is offset by 7
+        for if we have 3 weeks
+        28 + (28 + 7) + (28 + 7*2) 
+        which is just
+        28*(num_weeks) + 7*(num_weeks - 1)
+        sum of arithmetic seq:
+            (num elements in seq)*(first num)*(second num) / 2
+            
+        after k weeks, we wouldhave k + 1 dollars on monday
+        so add every day + 1
+        
+        now what if we have days left over
+        then its going to be some additinoa contribution after the last full week
+        '''
+        k = n // 7
+        F = 28
+        L = 28 + (k - 1) * 7
+        arithmetic_sum = k * (F + L) // 2
+        
+        monday = 1 + k
+        final_week = 0
+        for day in range(n % 7):
+            final_week += monday + day
+        
+        return arithmetic_sum + final_week
