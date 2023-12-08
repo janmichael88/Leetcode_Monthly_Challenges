@@ -618,9 +618,6 @@ class Solution:
         return num[:last_odd+1]
 
 
-
-
-
 ##########################################
 # 670. Maximum Swap
 # 06DEC23
@@ -652,4 +649,37 @@ class Solution:
         
         return ans
                 
-    
+#right maxes array, keep right max and index (non inclusive at some index i)
+class Solution:
+    def maximumSwap(self, num: int) -> int:
+        '''
+        keep track of the right most exclusive max of each nuber
+        i.e keep array, called max_to_right
+        where each element is length 2 list that stores the index and value
+        first entry is the number, second entry is the index
+        '''
+        num = list(str(num))
+        N = len(num)
+        right_maxes = [[0,0] for _ in range(N)]
+        right_maxes[N-1] = [-1,-1]
+        
+        for i in range(N-2,-1,-1):
+            number = int(num[i+1])
+            #update
+            if number > right_maxes[i+1][0]:
+                right_maxes[i] = [number,i+1]
+            #carry left
+            else:
+                right_maxes[i] = right_maxes[i+1]
+        
+        
+        for i in range(N):
+            number = int(num[i])
+            #if we can find a larger number swap it
+            if number < right_maxes[i][0]:
+                #swap
+                num[i], num[right_maxes[i][1]] = num[right_maxes[i][1]],num[i]
+                return int("".join(num))
+            
+        
+        return int("".join(num))
