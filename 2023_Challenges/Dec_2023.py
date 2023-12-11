@@ -713,3 +713,73 @@ class Solution:
         
         _ = dp(root)
         return count[0]
+    
+#######################################
+# 1380. Lucky Numbers in a Matrix
+# 08DEC23
+#######################################
+class Solution:
+    def luckyNumbers (self, matrix: List[List[int]]) -> List[int]:
+        rows,cols = len(matrix),len(matrix[0])
+        matrix_t = list(map(list,zip(*matrix)))
+        
+        row_mins = []
+        col_maxs = []
+        
+        for r in matrix:
+            row_mins.append(min(r))
+            
+        for c in matrix_t:
+            col_maxs.append(max(c))
+        
+        ans = []
+        
+        for i in range(rows):
+            for j in range(cols):
+                num = matrix[i][j]
+                if (num == row_mins[i] and num == col_maxs[j]):
+                    ans.append(num)
+        
+        return ans
+
+#########################################
+# 1360. Number of Days Between Two Dates
+# 09DEV23
+##########################################
+class Solution:
+    def daysBetweenDates(self, date1: str, date2: str) -> int:
+        def is_leap_year(year) -> bool:
+            return (year % 4 == 0 and year % 100 != 0) or (year % 400 == 0)
+            
+        def get_days(date: str) -> int:
+            days_in_month: dict[int, int] = {
+            1: 31,
+            2: 28,  # This value might be 29 for leap years
+            3: 31,
+            4: 30,
+            5: 31,
+            6: 30,
+            7: 31,
+            8: 31,
+            9: 30,
+            10: 31,
+            11: 30,
+            12: 31,
+        }
+            year, month, days = [int(number) for number in date.split("-")]
+
+            if is_leap_year(year): days_in_month[2] = 29
+                
+            total: int = 0
+            
+            for year in range(1971, year):
+                if is_leap_year(year): total += 366
+                else: total += 365
+                    
+            for month in range(1, month):
+                total += days_in_month[month]
+
+            total += days
+
+            return total
+        return abs(get_days(date1) - get_days(date2))
