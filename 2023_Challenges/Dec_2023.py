@@ -783,3 +783,31 @@ class Solution:
 
             return total
         return abs(get_days(date1) - get_days(date2))
+
+###################################################################
+# 1287. Element Appearing More Than 25% In Sorted Array (REVISTED)
+# 10DEC23
+##################################################################
+class Solution:
+    def findSpecialInteger(self, arr: List[int]) -> int:
+        '''
+        the candidante must be at (n/4), 2*(n//4), 3*(n//4)
+        for each candidate find the first ooccrunce using binary search, then check block size
+        '''
+        N = len(arr)
+        cands = []
+        block_size = N //4
+        for num in [1,2,3]:
+            cand = arr[block_size*num]
+            cands.append(cand)
+        cands = [arr[N // 4], arr[N // 2], arr[-N // 4]]
+
+        
+        for cand in cands:
+            #find its first position
+            first_pos = bisect.bisect_left(arr,cand)
+            print(first_pos,cand)
+            if arr[first_pos + block_size] == cand:
+                return cand
+        
+        return -1
