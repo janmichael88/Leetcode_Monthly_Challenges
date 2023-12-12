@@ -880,3 +880,50 @@ class Solution:
         
         return ans
             
+###################################################
+# 1464. Maximum Product of Two Elements in an Array
+# 11DEC23
+##################################################
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        '''
+        given input constraints brute force should be alllowed
+        '''
+        ans = float('-inf')
+        N = len(nums)
+        for i in range(N):
+            for j in range(i+1,N):
+                ans = max(ans, (nums[i]-1)*(nums[j]-1))
+        
+        return ans
+    
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        '''
+        just and grab the last sort
+        say we have (a-1)*(b-1), expands
+        a*b - a - b + 1
+        '''
+        nums.sort()
+        a = nums[-1]
+        b = nums[-2]
+        
+        return a*b - a - b + 1
+    
+#no sort
+class Solution:
+    def maxProduct(self, nums: List[int]) -> int:
+        '''
+        we dont need to sort, just keep track of first largest and second largest
+        '''
+        a = 0
+        b = 0 #given inputs, 0 is the smallest
+        
+        for num in nums:
+            if num > a:
+                b = a
+                a = num
+            else:
+                b = max(b,num)
+        
+        return a*b - a - b + 1
