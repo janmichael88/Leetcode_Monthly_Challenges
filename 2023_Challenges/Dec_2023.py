@@ -811,3 +811,72 @@ class Solution:
                 return cand
         
         return -1
+    
+########################################################
+# 1385. Find the Distance Value Between Two Arrays
+# 10DEC23
+########################################################
+class Solution:
+    def findTheDistanceValue(self, arr1: List[int], arr2: List[int], d: int) -> int:
+        '''
+        distance value is tnumber of elements arr[i] such that there is not any element arr2[j] where abs(arr1[i] - arr2[j]) <= d
+        brute force is allowed?
+        answer is going to be from 0 to len(arr1)
+        use count to check
+        '''
+        ans = 0
+        for i,n1 in enumerate(arr1):
+            count = 0
+            for n2 in arr2:
+                val = abs(n1 - n2)
+                #we dont want to count pairs
+                if val <= d:
+                    count += 1
+            if count == 0:
+                ans += 1
+            
+        
+        return ans
+
+class Solution:
+    def findTheDistanceValue(self, arr1: List[int], arr2: List[int], d: int) -> int:
+        '''
+        hint says to sort arr2 and use binary search to get the closes element for each arr1[i]
+        basically we want to find the number of elements in arr1 which are greater than d for all element sin arr2
+        arr1 = [4,5,8]
+        after sorting arr2
+        arr2 = [1,8,9,10]
+        d = 2
+        need to check if any element in arr2 is withing d, if its within d, return falsse, i.e this currentt num in arr1 cannot be valid
+
+        '''   
+        arr2.sort()
+        
+        def isValid(arr,num,d):
+            left = 0
+            right = len(arr) - 1
+            
+            while left <= right:
+                mid = left + (right - left) // 2
+                
+                #greater
+                if arr[mid] > num:
+                    diff = arr[mid] - num
+                    if diff <= d:
+                        return False
+                    right = mid - 1
+                else:
+                    diff = num - arr[mid]
+                    if diff <= d:
+                        return False
+                    left = mid + 1
+            
+            return True
+        
+        ans = 0
+        for num in arr1:
+            if isValid(arr2,num,d):
+                ans += 1
+        
+        return ans
+            
