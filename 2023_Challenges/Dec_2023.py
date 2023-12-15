@@ -927,3 +927,27 @@ class Solution:
                 b = max(b,num)
         
         return a*b - a - b + 1
+
+#####################################
+# 1436. Destination City
+# 14DEC23
+####################################
+class Solution:
+    def destCity(self, paths: List[List[str]]) -> str:
+        '''
+        its just a linked list, follow pointers
+        destination city is the city that has indegree of 1 and out degree of zero
+        or just follow path
+        '''
+        graph = defaultdict()
+        for u,v in paths:
+            graph[u] = v
+        
+        curr = paths[0][0]
+        
+        while curr in graph:
+            curr = graph[curr]
+        
+        return curr
+            
+            
