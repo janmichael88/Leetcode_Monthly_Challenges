@@ -1048,3 +1048,146 @@ class TopVotedCandidate:
 # Your TopVotedCandidate object will be instantiated and called as such:
 # obj = TopVotedCandidate(persons, times)
 # param_1 = obj.q(t)
+    
+############################################
+# 2353. Design a Food Rating System
+# 17NOV23
+############################################
+#TLE, need to speed up highest rated
+    class FoodRatings:
+
+    def __init__(self, foods: List[str], cuisines: List[str], ratings: List[int]):
+        '''
+        make mapping food to ratinng
+        and another one to many cuisine to food
+        '''
+        self.foodToRating = {f:r for (f,r) in zip(foods,ratings)}
+        self.cuisinesToFood = defaultdict(list)
+        for f,c in zip(foods,cuisines):
+            self.cuisinesToFood[c].append(f)
+
+    def changeRating(self, food: str, newRating: int) -> None:
+        self.foodToRating[food] = newRating
+
+    def highestRated(self, cuisine: str) -> str:
+        foods = self.cuisinesToFood[cuisine]
+        ans_food = foods[0]
+        ans_rating = self.foodToRating[ans_food]
+        for f in foods:
+            #new highest raiting
+            if self.foodToRating[f] > ans_rating:
+                ans_food = f
+                ans_rating = self.foodToRating[f]
+            #if equal take the lexogrphical smaller name
+            elif self.foodToRating[f] == ans_rating:
+                ans_food = min(ans_food,f)
+        
+        return ans_food
+    
+
+
+# Your FoodRatings object will be instantiated and called as such:
+# obj = FoodRatings(foods, cuisines, ratings)
+# obj.changeRating(food,newRating)
+# param_2 = obj.highestRated(cuisine)
+    
+#garbage head, with validation check
+#make class for food
+class Food:
+    def __init__(self, rating, name):
+        self.rating = rating
+        self.name = name
+        
+    def __lt__(self, other):
+        #concept is called overload, need to overload the less tahn operatir for cmoparsions
+        if self.rating == other.rating:
+            #compare names
+            return self.name < other.name
+        
+        return self.rating > other.rating
+        
+class FoodRatings:
+
+    def __init__(self, foods: List[str], cuisines: List[str], ratings: List[int]):
+        '''
+        make mapping food to ratinng
+        and another one to many cuisine to food
+        when i update the rating i also need to updat the highest
+        need to maintin max rating for each cuisine
+        keep heap of all raitings with foods and cuisines until we need it
+        '''
+        self.food_to_rating = {}
+        self.food_to_cuisine = {}
+        self.cuisine_to_food = defaultdict(list) #cusing will make to heap of Foods
+        for f,c,r in zip(foods,cuisines,ratings):
+            self.food_to_rating[f] = r
+            self.food_to_cuisine[f] = c
+            heapq.heappush(self.cuisine_to_food[c], Food(r,f))
+        
+
+
+    def changeRating(self, food: str, newRating: int) -> None:
+        #update
+        self.food_to_rating[food] = newRating
+        cuisine_name = self.food_to_cuisine[food]
+        #insert new rating into the cuisines heap
+        heapq.heappush(self.cuisine_to_food[cuisine_name], Food(newRating,food))
+
+    def highestRated(self, cuisine: str) -> str:
+        #we are combining foods and ratings with all its previous ratings
+        #we need to compare it back to wahts in the actually food_to_rating mapp!
+        highest_rated = self.cuisine_to_food[cuisine][0]
+        #make sure it matches
+        while self.food_to_rating[highest_rated.name] != highest_rated.rating:
+            heapq.heappop(self.cuisine_to_food[cuisine])
+            highest_rated = self.cuisine_to_food[cuisine][0]
+        
+        return highest_rated.name
+
+# Your FoodRatings object will be instantiated and called as such:
+# obj = FoodRatings(foods, cuisines, ratings)
+# obj.changeRating(food,newRating)
+# param_2 = obj.highestRated(cuisine)
+    
+#ordered set solution
+#using sorted sorted
+from sortedcontainers import SortedSet
+        
+class FoodRatings:
+
+    def __init__(self, foods: List[str], cuisines: List[str], ratings: List[int]):
+        '''
+        using sortedSet, cuisine to food map maps to sortedSet
+        '''
+        self.food_to_rating = {}
+        self.food_to_cuisine = {}
+        self.cuisine_to_food = defaultdict(SortedSet) #cusing will make to heap of Foods
+        for f,c,r in zip(foods,cuisines,ratings):
+            self.food_to_rating[f] = r
+            self.food_to_cuisine[f] = c
+            self.cuisine_to_food[c].add((-r,f))
+        
+
+
+    def changeRating(self, food: str, newRating: int) -> None:
+        #update
+        cuisine_name = self.food_to_cuisine[food]
+        #delete old elements
+        old_food = (-self.food_to_rating[food],food)
+        self.cuisine_to_food[cuisine_name].remove(old_food)
+        #update food to rating
+        self.food_to_rating[food] = newRating
+        self.cuisine_to_food[cuisine_name].add((-newRating,food))
+
+
+    def highestRated(self, cuisine: str) -> str:
+        #we are combining foods and ratings with all its previous ratings
+        #we need to compare it back to wahts in the actually food_to_rating mapp!
+        highest_rated = self.cuisine_to_food[cuisine][0]
+        
+        return highest_rated[1]
+
+# Your FoodRatings object will be instantiated and called as such:
+# obj = FoodRatings(foods, cuisines, ratings)
+# obj.changeRating(food,newRating)
+# param_2 = obj.highestRated(cuisine)
