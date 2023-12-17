@@ -950,4 +950,101 @@ class Solution:
         
         return curr
             
-            
+#############################################
+# 911. Online Election
+# 16DEC23
+#############################################
+#yes!! ugly but its works
+class TopVotedCandidate:
+
+    def __init__(self, persons: List[int], times: List[int]):
+        '''
+        need to keeep track of vote counts at a certain time
+        we have everything i the constructor
+        need to query the leader at a certain time
+        hash everything {t : {count maps}}
+        then during the query find the left bound of the time and pick that time
+        i can use an array, then just get the previous and carry over, may need to reconvert array back to hashmap later
+        this is going to take too long
+        make the counts array first, then apply consecutive differs
+        '''
+        self.votetimes = []
+        #pair together
+        pairs = [(t,p) for t,p in zip(times,persons)]
+        pairs.sort()
+        for t,p in pairs:
+            curr_vote = Counter()
+            curr_vote[p] += 1
+            self.votetimes.append(curr_vote)
+        
+        #apply differences
+        for i in range(1,len(self.votetimes)):
+            prev_vote = self.votetimes[i-1]
+            for k,v in prev_vote.items():
+                self.votetimes[i][k] += v
+        
+        #we only need the maxes
+        for i in range(len(self.votetimes)):
+            self.votetimes[i] = self.votetimes[i].most_common(1)[0][0]
+        
+        self.time_markers = sorted(times)
+
+
+    def q(self, t: int) -> int:
+        #find the index into votetimes
+        idx = bisect.bisect_left(self.time_markers,t)
+        if idx == len(self.time_markers):
+            idx -= 1
+        if self.time_markers[idx] <= t:
+            return self.votetimes[idx]
+        return self.votetimes[idx-1]
+
+
+# Your TopVotedCandidate object will be instantiated and called as such:
+# obj = TopVotedCandidate(persons, times)
+# param_1 = obj.q(t)
+    
+#binary search
+class TopVotedCandidate:
+    '''
+    there is actually a differene between bisect_left, bisect_right, and bisect!
+    but its better to code out binary search
+    intuition:
+        precompute top voted person for each time in times in orderedList
+        binarys earch topVOted
+        times will alays be increasing
+    '''
+
+    def __init__(self, persons: List[int], times: List[int]):
+        self.topVotes = [0]*len(times) #each time will store person with max votes
+        countVotes = Counter()
+        current_leader = persons[0]
+        
+        for i, (p,t) in enumerate(zip(persons,times)):
+            countVotes[p] += 1
+            if countVotes[p] >= countVotes[current_leader]:
+                #maintin most recentin case of times
+                current_leader = p
+            self.topVotes[i] = (t,current_leader) #topVotes is array for each time in times, but we also need tost oe the time
+
+    def q(self, t: int) -> int:
+        left, right = 0, len(self.topVotes) - 1
+
+        while left <= right:
+            mid = left + (right - left) // 2
+            time,top = self.topVotes[mid]
+            if time == t:
+                return top
+            if time < t:
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        time,top = self.topVotes[right]
+        return top
+        
+
+
+# Your TopVotedCandidate object will be instantiated and called as such:
+# obj = TopVotedCandidate(persons, times)
+# param_1 = obj.q(t)
