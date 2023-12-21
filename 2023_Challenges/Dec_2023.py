@@ -1191,3 +1191,23 @@ class FoodRatings:
 # obj = FoodRatings(foods, cuisines, ratings)
 # obj.changeRating(food,newRating)
 # param_2 = obj.highestRated(cuisine)
+    
+######################################################################
+# 1637. Widest Vertical Area Between Two Points Containing No Points
+# 21NOV23
+#####################################################################
+class Solution:
+    def maxWidthOfVerticalArea(self, points: List[List[int]]) -> int:
+        '''
+        need widest area, i,e widest gap between two points such that there are no points in between
+        sort based on col position and find largest consecutive difference
+        '''
+        points.sort(key = lambda x: x[0])
+        ans = 0
+        N = len(points)
+        for i in range(N-1):
+            left = points[i]
+            right = points[i+1]
+            ans = max(ans, right[0] - left[0])
+        
+        return ans
