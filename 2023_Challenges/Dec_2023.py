@@ -1211,3 +1211,49 @@ class Solution:
             ans = max(ans, right[0] - left[0])
         
         return ans
+
+################################################
+# 1422. Maximum Score After Splitting a String
+# 22NOV23
+################################################
+class Solution:
+    def maxScore(self, s: str) -> int:
+        '''
+        prefix sum with ones, then to find zero just subtract from the size of the array
+        '''
+        pref_sum = [0]
+        N = len(s)
+        for i in range(N):
+            pref_sum.append(pref_sum[-1] + (s[i] == '1'))
+        
+        
+        ans = 0
+        #make sure we look at substrings only
+        for i in range(N-1):
+            left_zeros = (i+1) - pref_sum[i+1]
+            right_ones = pref_sum[-1] - pref_sum[i+1]
+            #print(left_zeros,right_ones)
+            ans = max(ans,left_zeros + right_ones)
+        
+        return ans
+
+class Solution:
+    def maxScore(self, s: str) -> int:
+        '''
+        two pass, counts ones, then retraerse and decrement count of ones and incrment count of zeros
+        '''
+        ones = 0
+        for ch in s:
+            ones += ch == '1'
+        
+        ans = 0
+        zeros = 0
+        for ch in s:
+            if ch == '1':
+                ones -= 1
+            else:
+                zeros += 1
+            
+            ans = max(ans, zeros + ones)
+        
+        return ans
