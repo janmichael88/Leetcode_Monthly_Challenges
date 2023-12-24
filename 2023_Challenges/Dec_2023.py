@@ -1257,3 +1257,139 @@ class Solution:
             ans = max(ans, zeros + ones)
         
         return ans
+
+#########################
+# 1496. Path Crossing
+# 23DEC23
+##########################
+#other ways to represent two numbers in one number
+# Y = aX + b
+# a = Y // X
+# b = Y % X
+# a = horizontal direction, b = vertical direction
+def isPathCrossing3(self, path: str) -> bool:  # Beats 93%
+    cur = 0
+    seen = {cur}
+    X = 10**4 + 1  # max possible b + 1
+    for move in path:
+        match move:
+            case 'N':
+                cur += 1
+            case 'S':
+                cur += -1
+            case 'E':
+                cur += X
+            case 'W':
+                cur += -X
+
+        if cur in seen:
+            return True
+        else:
+            seen.add(cur)
+
+    return False
+
+# Store the 2 numbers in 1 number using bit manipulation
+# max possible direction = len of path = 10**4
+# this means all possible values can fit in the final 14 bits: 2^14=16384
+# int = 32 bits (usually); we can simply use the last 28 bits to store the number we want
+# we don't even have to worry about comparing bits with |, simply use addition
+def isPathCrossing4(self, path: str) -> bool:  # beats 93%
+    cur = 0
+    seen = {cur}
+    for move in path:
+        match move:
+            case 'N':
+                cur += 1
+            case 'S':
+                cur -= 1
+            case 'E':
+                cur += 1 << 14
+            case 'W':
+                cur -= 1 << 14
+
+        if cur in seen:
+            return True
+        else:
+            seen.add(cur)
+
+    return False
+
+###########################################################
+# 1758. Minimum Changes To Make Alternating Binary String
+# 24NOV23
+###########################################################
+class Solution:
+    def minOperations(self, s: str) -> int:
+        '''
+        final string will be '01010...' or '101010'
+        compare string to each final representatino and compare
+        '''
+        def test(s):
+            N = len(s)
+            first = "0"
+            second = "1"
+            for i in range(N-1):
+                first += str(int(first[-1]) ^ 1)
+                second += str(int(second[-1]) ^ 1)
+            
+            left = 0
+            for a,b in zip(s,first):
+                if a != b:
+                    left += 1
+            
+            right = 0
+            for a,b in zip(s,second):
+                if a != b:
+                    right += 1
+            
+            return min(left,right)
+        
+        return test(s)
+        
+class Solution:
+    def minOperations(self, s: str) -> int:
+        '''
+        if we start with a zero, then there should be zeros only on even indices
+        if we start with a one, then there should only be ones even indices
+        keep count of changese done if we had started with zero or started with one
+        then compare with the actual value in the string
+        '''
+        start0 = 0
+        start1 = 0
+        N = len(s)
+        
+        for i in range(N):
+            #even 
+            if i % 2 == 0:
+                if s[i] == '0':
+                    start1 += 1
+                else:
+                    start0 += 1
+            #odd
+            else:
+                if s[i] == '0':
+                    start0 += 1
+                else:
+                    start1 += 1
+        
+        return min(start0,start1)
+    
+class Solution:
+    def minOperations(self, s: str) -> int:
+        '''
+        we only need to check one of the starting strings
+        say we are comparing s with the alternating binary string starting with 0 and have x differences
+        if we had start with the alternatinve string with 0, then there are len(s) - x differences
+        '''
+        start0 = 0
+        N = len(s)
+        for i in range(N):
+            if i % 2 == 0:
+                if s[i] != '0':
+                    start0 += 1
+            else:
+                if s[i] != '1':
+                    start0 += 1
+        
+        return min(start0, N - start0)
