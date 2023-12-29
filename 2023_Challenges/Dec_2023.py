@@ -1393,3 +1393,137 @@ class Solution:
                     start0 += 1
         
         return min(start0, N - start0)
+    
+
+###############################################################
+# 159. Longest Substring with At Most Two Distinct Characters (REVISITED)
+# 26DEC23
+#################################################################
+#finally 
+class Solution:
+    def lengthOfLongestSubstringTwoDistinct(self, s: str) -> int:
+        '''
+        sliding window
+        cannot have more than two distint characters
+        '''
+        counts = Counter()
+        N = len(s)
+        left = right = 0
+        ans = 0
+        
+        while right < N:
+            curr_char = s[right]
+            counts[curr_char] += 1
+            ans = max(ans, (right - left) )
+            right += 1
+            while left < N and len(counts) >= 3:
+                curr_char = s[left]
+                counts[curr_char] -= 1
+                if counts[curr_char] == 0:
+                    del counts[curr_char]
+                left += 1
+            
+
+        #last one
+        ans = max(ans, (right - left) )
+        return ans
+                
+###########################################
+# 1578. Minimum Time to Make Rope Colorful
+# 27DEC23
+###########################################
+#dp uses up too much memory
+class Solution:
+    def minCost(self, colors: str, neededTime: List[int]) -> int:
+        '''
+        dp, what are the states? position and last color seen
+        if there isn't a same color, we can advance and spend no time
+        otherwise we cut, change color
+        take minimum of the two
+        '''
+        memo = {}
+        N = len(colors)
+        
+        def dp(last_color,idx):
+            if idx >= N:
+                return 0
+            if (last_color,idx) in memo:
+                return memo[(last_color,idx)]
+            #same color
+            if colors[idx] == last_color:
+                ans = neededTime[idx] + dp(last_color,idx+1)
+                memo[(last_color,idx)] = ans
+                return ans
+            else:
+                op1 = dp(colors[idx],idx+1)
+                op2 = neededTime[idx] + dp(last_color,idx+1)
+                ans = min(op1,op2)
+                memo[(last_color,idx)] = ans
+                return ans
+            
+        
+        return dp("",0)
+    
+##############################################
+# 1531. String Compression II (REVISTED)
+# 28DEC23
+##############################################
+#fuckkk
+class Solution:
+    def getLengthOfOptimalCompression(self, s: str, k: int) -> int:
+        '''
+        states,
+        need last letter in block
+        position in string
+        curr_size
+        deletions left
+        '''
+        
+        memo = {}
+        N = len(s)
+        
+        def dp(letter,i,size,k):
+            #no deletions
+            if k < 0:
+                return float('inf')
+            if i >= N:
+                if len(str(size)) > 1:
+                    return 1 + len(str(size))
+                else:
+                    return 1
+            if (letter,i,size,k) in memo:
+                return memo[(letter,i,size,k)]
+            #fist, we have to take it
+            if letter == "":
+                ans = dp(s[i], i+1, size+1,k)
+                memo[(letter,i,size,k)] = ans
+                return ans
+            #matching
+            if s[i] == letter:
+                #extend size
+                extend = dp(s[i],i+1,size+1,k)
+                #delte
+                delete = dp(s[i],i+1,size,k-1)
+                ans = min(extend,delete)
+                memo[(letter,i,size,k)] = ans
+                return ans
+                
+            
+            #no matching if
+            if s[i] != letter:
+                #extend
+                if len(str(size)) > 1:
+                    extend = (1 + len(str(size))) + dp(s[i], i+1,1,k)
+                    delete =  (1 + len(str(size))) + dp(letter,i+1,size,k-1)
+                    ans = min(extend,delete)
+                    memo[(letter,i,size,k)] = ans
+                    return ans
+                else:
+                    extend = 1 + dp(s[i], i+1,1,k)
+                    delete = 1 + dp(letter,i+1,size,k-1)
+                    ans = min(extend,delete)
+                    memo[(letter,i,size,k)] = ans
+                    return ans
+        
+        
+        return dp("",0,0,k)
