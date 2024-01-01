@@ -1527,3 +1527,239 @@ class Solution:
         
         
         return dp("",0,0,k)
+
+#######################################################
+# 1335. Minimum Difficulty of a Job Schedule (REVISTED)
+# 29DEC23
+#######################################################
+#three state dp
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        question really is partition the array into d parts, such that the sum(min(part) for parts) is minimum
+        so we need to maintin index, number partitions, and the current max in this partition
+        '''
+        memo = {}
+        N = len(jobDifficulty)
+        
+        def dp(i,curr_max,d):
+            if d < 0:
+                return float('inf')
+            if i == N:
+                if d == 0:
+                    return curr_max
+                else:
+                    return float('inf')
+            
+            if (i,curr_max,d) in memo:
+                return memo[(i,curr_max,d)]
+            
+            take = dp(i+1, max(curr_max,jobDifficulty[i]),d)
+            no_take = curr_max + dp(i+1,jobDifficulty[i],d-1)
+            ans = min(take,no_take)
+            memo[(i,curr_max,d)] = ans
+            return ans
+        
+        ans = dp(0,0,d)
+        if ans == float('inf'):
+            return -1
+        return ans
+            
+#two state but trea like rod cutting
+    class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        question really is partition the array into d parts, such that the sum(min(part) for parts) is minimum
+        so we need to maintin index, number partitions, and the current max in this partition
+        we can reduce from 3 states to 2 states
+        states are (index,days remaining)
+        we just need to find the max on the remaining days for any given day
+        dp(i,d) = {
+            min for all j from 0 to <= i-1 dp(j,d-1)
+            but for each day j we use one less day, so of these j days we need to find the max to the remaining and add it
+            since we go from j to i and j is < i, we can maintain a max a find iteraviely
+        }
+        '''
+        N = len(jobDifficulty)
+        if d > N:
+            return -1
+        memo = {}
+        
+        max_left = jobDifficulty[:]
+        for i in range(N-2,-1,-1):
+            max_left[i] = max(max_left[i], max_left[i+1])
+        
+        
+        def dp(i,d):
+            if d == 1:
+                return max_left[i]
+            
+            if (i,d) in memo:
+                return memo[(i,d)]
+            
+            ans = float('inf')
+            daily_max = 0
+            for j in range(i,N - d + 1):
+                daily_max = max(daily_max,jobDifficulty[j])
+                ans = min(ans, daily_max + dp(j+1,d-1))
+            
+            memo[(i,d)] = ans
+            return ans
+        
+        
+        return dp(0,d)
+
+
+#bottom up, its kind hard to translate, 
+class Solution:
+    def minDifficulty(self, jobDifficulty: List[int], d: int) -> int:
+        '''
+        question really is partition the array into d parts, such that the sum(min(part) for parts) is minimum
+        so we need to maintin index, number partitions, and the current max in this partition
+        we can reduce from 3 states to 2 states
+        states are (index,days remaining)
+        we just need to find the max on the remaining days for any given day
+        dp(i,d) = {
+            min for all j from 0 to <= i-1 dp(j,d-1)
+            but for each day j we use one less day, so of these j days we need to find the max to the remaining and add it
+            since we go from j to i and j is < i, we can maintain a max a find iteraviely
+        }
+        '''
+        N = len(jobDifficulty)
+        if d > N:
+            return -1
+        memo = {}
+        
+        max_left = jobDifficulty[:]
+        for i in range(N-2,-1,-1):
+            max_left[i] = max(max_left[i], max_left[i+1])
+            
+        dp = [[float('inf')]*(d+1) for _ in range(N+1)]
+              
+        
+        #base case fill, wheneever d = 1
+        for i in range(N):
+            dp[i][1] = max_left[i]
+        
+        for days_remaining in range(1,d+1):
+            for i in range(N - days_remaining + 1):
+                ans = float('inf')
+                daily_max = 0
+                for j in range(i,N - days_remaining + 1):
+                    daily_max = max(daily_max,jobDifficulty[j])
+                    ans = min(ans, daily_max + dp[j+1][days_remaining-1])
+                dp[i][days_remaining] = ans
+                
+        print(dp)
+        
+########################################
+# 813. Largest Sum of Averages
+# 31DEC23
+########################################
+#not knapsack, more like rod cutting
+class Solution:
+    def largestSumOfAverages(self, nums: List[int], k: int) -> float:
+        '''
+        maximize score of the subarrays, where we can have no more then k non-empty subarrays
+        states
+            (index,current size of partition, and k left) thats too many states
+        need to reduce to two states
+        dp(i,k) gives ans using nums[i:] and k deletions
+        so we want dp(0,k)
+        
+        we can use pref_sum array, no need to add starting becaue empty subarrays are not allowed
+        i need to keep start,end and partitions left
+        '''
+        N = len(nums)
+        pref_sum = [0]
+        for num in nums:
+            pref_sum.append(pref_sum[-1] + num) #for som indices [i:j] inclusive pref_sum[j+1] - pref_sum[i]
+            
+        memo = {}
+        
+        def dp(left,right,k):
+            #just the single elemenet
+            if left == right:
+                return pref_sum[right+1] - pref_sum[left]
+            #got to the end
+            if right == N-1:
+                return (pref_sum[right+1] - pref_sum[left]) / (right - left)
+            #no more parittions need then we need the averge
+            if k == 0:
+                return (pref_sum[right+1] - pref_sum[left]) / (right - left)
+            
+            if (left,right,k) in memo:
+                return memo[(left,right,k)]
+            
+            #we either partitino or we dont partition
+            curr_avg = (pref_sum[right+1] - pref_sum[left]) / (right - left)
+            partition = curr_avg + dp(right+1,right+1,k-1)
+            no_partition = dp(left,right+1,k)
+            ans = max(partition,no_partition)
+            memo[(left,right,k)] = ans
+            return ans
+        
+        return dp(0,N-1,k)
+
+#rodcutting
+class Solution:
+    def largestSumOfAverages(self, nums: List[int], k: int) -> float:
+        '''
+        maximize score of the subarrays, where we can have no more then k non-empty subarrays
+        states
+            (index,current size of partition, and k left) thats too many states
+        need to reduce to two states
+        dp(i,k) gives ans using nums[i:] and k deletions
+        so we want dp(0,k)
+        
+        we can use pref_sum array, no need to add starting becaue empty subarrays are not allowed
+        i need to keep start,end and partitions left
+        
+        use pref_sum and k, then look all pref-sums before
+        '''
+        N = len(nums)
+        memo = {}
+        
+        def dp(i,k):
+            if i >= N:
+                return 0
+            if k <= 0:
+                return float('-inf')
+            if (i,k) in memo:
+                return memo[(i,k)]
+            curr_sum = 0
+            ans = float('-inf')
+            for j in range(i,N):
+                curr_sum += nums[j]
+                ans = max(ans, curr_sum / (j - i + 1) + dp(j+1,k-1) )
+            
+            memo[(i,k)] = ans
+            return ans
+        
+        return dp(0,k)
+    
+#bottom up
+class Solution:
+    def largestSumOfAverages(self, nums: List[int], k: int) -> float:
+        '''
+        bottom up
+        '''
+        N = len(nums)
+        dp = [[float('-inf')] * (k + 1) for _ in range(N + 1)]
+        
+        for i in range(N+1):
+            for curr_k in range(k+1):
+                if i == N:
+                    dp[i][curr_k] = 0
+        
+        for curr_k in range(1,k+1):
+            for i in range(N-1,-1,-1):
+                curr_sum = 0
+                ans = float('-inf')
+                for j in range(i,N):
+                    curr_sum += nums[j]
+                    ans = max(ans, curr_sum / (j-i+1) + dp[j+1][curr_k-1])
+                
+                dp[i][curr_k] = ans
+        
+        return dp[0][k]
