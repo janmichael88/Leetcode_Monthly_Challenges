@@ -91,4 +91,39 @@ class Solution:
 
         return res
 
+########################################
+# 2125. Number of Laser Beams in a Bank
+# 03JAN24
+########################################
+class Solution:
+    def numberOfBeams(self, bank: List[str]) -> int:
+        '''
+        keep track of the curr row and next row,
+        if the nextrow has devices then there are count(ones curr_row)*count(ones next_row)
+        then update the rows
+        '''
+        ans = 0
+        N = len(bank)
+        curr_row = bank[0]
+
+        for next_row in bank[1:]:
+            if next_row.count('1') > 0:
+                ans += curr_row.count('1')*next_row.count('1')
+                curr_row = next_row
         
+        return ans
+    
+class Solution:
+    def numberOfBeams(self, bank: List[str]) -> int:
+        '''
+        not storing rows just prev count and ans
+        '''
+        prev = ans = 0
+        
+        for r in bank:
+            count = r.count('1')
+            ans += prev*count
+            if count:
+                prev = count
+        
+        return ans
