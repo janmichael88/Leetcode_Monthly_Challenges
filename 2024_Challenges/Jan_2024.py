@@ -127,3 +127,64 @@ class Solution:
                 prev = count
         
         return ans
+
+########################################################
+# 2870. Minimum Number of Operations to Make Array Empty
+# 04DEC23
+########################################################
+#easssssy
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        its always more optimum to delete three eleements if we can
+        heap with counts
+        if top of heap only ahs counts 1, return -1
+        other wise take three if we can
+        or take two
+        wait, we cant always take three first, if counts are multiple of three, then ops is just count // 3
+        if its 4, we need to take it twice or use three until we can get remainder of two, then is plus count//3 
+        say we have count like 7
+        we cant do 3 3 1,
+        we need to do 3 2 2
+        what about like 14
+        could do 14/2 = 7 times or
+        3 3 3 3 3
+        
+        need to be careful if count % 3 == 2 or count % 3 == 1
+        '''
+        counts = Counter(nums)
+        
+        ops = 0
+        for num, count in counts.items():
+            if count == 1:
+                return -1
+            #goes into three
+            elif count % 3 == 0:
+                ops += count // 3
+            #if remainder by three is 2, we optimize the use of three
+            elif count % 3 == 2:
+                ops += (count // 3) + 1
+            #if its one, we need to leave at least 4
+            else:
+                ops += ((count // 3) - 1) + 2
+        
+        return ops
+                
+#looking back we can redidce the last one to the count//3 - 1 +2 to count//3 + 1
+#now this is just ceiling
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        just ceiling now
+        '''
+        counts = Counter(nums)
+        
+        ops = 0
+        for num, count in counts.items():
+            if count == 1:
+                return -1
+            else:
+                ops += math.ceil(count / 3)
+        
+        return ops
+                
