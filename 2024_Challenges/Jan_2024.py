@@ -188,3 +188,47 @@ class Solution:
         
         return ops
                 
+###########################################
+# 1066. Campus Bikes II (REVISTED)
+# 05DEC23
+###########################################
+#bottom up direct
+class Solution:
+    def assignBikes(self, workers: List[List[int]], bikes: List[List[int]]) -> int:
+        '''
+        set cover problem?
+        state is (bike_index, mask of available workers)
+        if we get to the last bike and not all the workers have been assigned, invalid state return float('inf')
+        otherwise all are assigned return 0
+        dp with backtracking
+        if its backtrackng with dp, translation isn't always clear
+        if we went bottom up right with backtracking, we dont actually need to implement backtracking
+        why? because of the order in which we calculate the sub problems
+        by the time we calcule dp(i,mask), we could have already computed, but in top down, we keep going until
+        we haven computed the subproblem or can access the state through memoization
+        '''
+        def manhattan(worker, bike):
+            return abs(worker[0] - bike[0]) + abs(worker[1] - bike[1])
+
+        numWorkers, numBikes = len(workers), len(bikes)
+        
+        #dp table is (numWorkers + 1 by (1 << numBikes))
+        dp = [[float('inf')] * (1 << numBikes) for _ in range(numWorkers + 1)]
+
+        # Base case: no workers left, distance is 0
+        for bikeState in range(1 << numBikes):
+            dp[numWorkers][bikeState] = 0
+
+
+        for workerIndex in range(numWorkers - 1, -1, -1):
+            for bikeState in range(1 << numBikes):
+                smallestSoFar = float('inf')
+                for bikeIndex in range(numBikes):
+                    if (bikeState & (1 << bikeIndex)) == 0:
+                        toAdd = manhattan(workers[workerIndex], bikes[bikeIndex])
+                        potentialSmallest = toAdd + dp[workerIndex + 1][bikeState | (1 << bikeIndex)]
+                        smallestSoFar = min(smallestSoFar, potentialSmallest)
+
+                dp[workerIndex][bikeState] = smallestSoFar
+
+        return dp[0][0]
