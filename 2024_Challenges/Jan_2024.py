@@ -232,3 +232,74 @@ class Solution:
                 dp[workerIndex][bikeState] = smallestSoFar
 
         return dp[0][0]
+    
+#####################################
+# 672. Bulb Switcher II
+# 05JAN24
+#######################################
+class Solution:
+    def flipLights(self, n: int, m: int) -> int:
+        '''
+        we have n bulbs, all initally turned on, and 4 buttons
+        1. flip all bulbs
+        2. flip even bulbs
+        3. flip odd bulbs
+        4. flip every third bulb
+        
+        need to do exactly n presses, can do any press
+        return number of different possible statuses
+        
+        intutions:
+            1. order of opertions does not matter, if i do 1 then 2, it is the same as 2 then 1
+            2. two operations done in succession does nothing i.e 1 then 1, 2 then 2
+            3. using button 1 and 2 always gives the affect of button 3, 
+            4. using button 1 and 3 gives 2
+            5. using button 2 and 3 gives 1
+            6. state of all bubls only depends on the first 2 or 3 builbs
+        so there are only 8 cases
+        All_on, 1, 2, 3, 4, 1+4, 2+4, 3+4
+        we can get all these cases when  n > 2 and m >= 3
+        so we just chek cases for all n < 3 and m < 3
+        '''
+        if n == 0:
+            return 1
+        if n == 1:
+            return 2
+        if n == 2 and m == 1:
+            return 3
+        if n == 2:
+            return 4
+        if m == 1:
+            return 4
+        if m == 2:
+            return 7
+        if m >= 3:
+            return 8
+        return 8
+
+class Solution:
+    def flipLights(self, n: int, m: int) -> int:
+        '''
+        there are not many states
+            1. operations are reversible
+            2. operations can be reproduced by other operations
+        
+        beyond 3, n and m become irrelevant because there are at most 8 states all of which become achievable when m and n are large enough;
+        below 3, fn(n, m) = fn(n-1, m-1) + fn(n-1, m).
+        
+        n/m 0 1 2 3 4 5		
+        0   1 1 1 1 1 1	 
+        1   1 2 2 2 2 2
+        2   1 3 4 4 4 4
+        3   1 4 7 8 8 8
+        4   1 4 7 8 8 8
+        5   1 4 7 8 8 8
+
+
+        '''
+        def fn(n,m):
+            if m*n == 0:
+                return 1
+            return fn(n-1,m-1) + fn(n-1,m)
+        
+        return fn(min(n,3), min(m,3))
