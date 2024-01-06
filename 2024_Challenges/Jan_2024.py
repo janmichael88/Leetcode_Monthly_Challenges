@@ -303,3 +303,72 @@ class Solution:
             return fn(n-1,m-1) + fn(n-1,m)
         
         return fn(min(n,3), min(m,3))
+    
+###################################################
+# 1235. Maximum Profit in Job Scheduling (REVISTED)
+# 06DEC23
+###################################################
+#good review
+class Solution:
+    def jobScheduling(self, startTime: List[int], endTime: List[int], profit: List[int]) -> int:
+        '''
+        sort and use dp(i) as the maximum profift using using jobs[i:]
+        want dp(0)
+        sort by starting time
+        '''
+        entries = []
+        for s,e,p in zip(startTime,endTime,profit):
+            entries.append((s,e,p))
+        
+        entries.sort(key = lambda x: x[0])
+        #best resplit back into arrays for the search
+        starts = []
+        ends = []
+        profs = []
+        
+        for s,e,p in entries:
+            starts.append(s)
+            ends.append(e)
+            profs.append(p)
+        
+        N = len(starts)
+        memo = {}
+        
+        def bin_search(arr,next_end): #arr will be the ends array
+            left = 0
+            right = len(arr)
+            while left < right:
+                mid = left + (right - left) // 2
+                if arr[mid] < next_end:
+                    left = mid + 1
+                else:
+                    right = mid
+            
+            return left
+        
+        
+        #test = bin_search(ends,3)
+        #print(ends[test])
+            
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            #knapsack take job starting at i, or move to the next i+1 job
+            #ans is the max of these two options
+            next_end = bin_search(starts,ends[i])
+            take = profs[i] + dp(next_end)
+            no_take = dp(i+1)
+            ans = max(take,no_take)
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+            
+#bottom up
+    #####
+    
+            
+            
