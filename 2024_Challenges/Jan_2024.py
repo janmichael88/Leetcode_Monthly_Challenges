@@ -306,7 +306,7 @@ class Solution:
     
 ###################################################
 # 1235. Maximum Profit in Job Scheduling (REVISTED)
-# 06DEC23
+# 06DEC24
 ###################################################
 #good review
 class Solution:
@@ -417,7 +417,7 @@ class Solution:
     
 ############################################
 # 2008. Maximum Earnings From Taxi
-# 06JAN23
+# 06JAN24
 ############################################
 class Solution:
     def maxTaxiEarnings(self, n: int, rides: List[List[int]]) -> int:
@@ -493,3 +493,121 @@ class Solution:
             dp[i] = ans
         
         return dp[0]
+    
+############################################
+# 301. Remove Invalid Parentheses
+# 06JAN24
+#############################################
+#gotta love AC brute force solutions
+class Solution:
+    def removeInvalidParentheses(self, s: str) -> List[str]:
+        '''
+        try all removals and check balance
+        need to check balance at the end
+        '''
+        valid = []
+        N = len(s)
+        mapp = {'(': 1, ')':-1}
+        self.min = N
+        
+        def is_valid(s):
+            balance = 0
+            for ch in s:
+                if ch in mapp:
+                    balance += mapp[ch]
+                if balance < 0:
+                    return False
+            
+            return balance == 0
+        def rec(i,path):
+            if i == N:
+                if is_valid(path):
+                    valid.append((path, N - len(path)))
+                    self.min = min(self.min,N - len(path))
+                return
+            if s[i] in mapp:
+                rec(i+1, path+s[i])
+                rec(i+1,path)
+            else:
+                rec(i+1, path+s[i])
+        
+        rec(0,"")
+        ans = set()
+        for p,d in valid:
+            if d == self.min:
+                ans.add(p)
+        
+        return ans
+        
+###################################################
+# 446. Arithmetic Slices II - Subsequence (REVISTED)
+# 07JAN23
+###################################################
+#doesn't pass in python but barely passes in JAVA
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        '''
+        count all arithmetic subequeces, then subtract out the weak ones
+        state should be index and common difference d, call it (i,diff)
+        if we are some index i, we can pick and num at index j with j being [i+1,N-1]
+            so long as nums[j] == diff
+        
+        the we just check all (i,j) and sum up dp(i, nums[j] - nums[i])
+            
+        
+        '''
+        N = len(nums)
+        memo = {}
+        
+        def dp(i,diff):
+            if i == N:
+                return 0
+            
+            if (i,diff) in memo:
+                return memo[(i,diff)]
+            
+            curr_ways = 0
+            for j in range(i+1,N):
+                next_diff = nums[j] - nums[i]
+                if next_diff == diff:
+                    curr_ways += dp(j,next_diff) + 1
+            
+            memo[(i,diff)] = curr_ways
+            return curr_ways
+        
+        ways = 0
+        for i in range(N):
+            for j in range(i+1,N):
+                ways += dp(j,nums[j] - nums[i])
+        
+        return ways
+    
+#bottom up keep dp array of Counter objects and keep count of 2 lenght arith sequences, which is just any pair
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        N = len(nums)
+        dp = [Counter() for _ in range(N)]
+        
+        for i in range(N):
+            for j in range(i):
+                diff = nums[i] - nums[j]
+                dp[i][diff] += dp[j][diff] + 1
+        
+        
+        return sum(sum(count.values()) for count in dp) - (N*(N-1)//2)
+    
+#without subtracint out week arithmetic sequences
+class Solution:
+    def numberOfArithmeticSlices(self, nums: List[int]) -> int:
+        N = len(nums)
+        dp = [Counter() for _ in range(N)]
+        
+        ans = 0
+        for i in range(N):
+            for j in range(i):
+                diff = nums[i] - nums[j]
+                dp[i][diff] += dp[j][diff] + 1
+                #add the ones ending at j
+                ans += dp[j][diff]
+        
+        return ans
