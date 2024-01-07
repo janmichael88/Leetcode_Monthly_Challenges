@@ -368,9 +368,128 @@ class Solution:
         return dp(0)
             
 #bottom up
-
-'''
-sdfadfsfadf
-'''
+class Solution:
+    def jobScheduling(self, startTime: List[int], endTime: List[int], profit: List[int]) -> int:
+        '''
+        sort and use dp(i) as the maximum profift using using jobs[i:]
+        want dp(0)
+        sort by starting time
+        '''
+        entries = []
+        for s,e,p in zip(startTime,endTime,profit):
+            entries.append((s,e,p))
+        
+        entries.sort(key = lambda x: x[0])
+        #best resplit back into arrays for the search
+        starts = []
+        ends = []
+        profs = []
+        
+        for s,e,p in entries:
+            starts.append(s)
+            ends.append(e)
+            profs.append(p)
+        
+        N = len(starts)
+        dp = [0]*(N+1)
+        
+        def bin_search(arr,next_end): #arr will be the ends array
+            left = 0
+            right = len(arr)
+            while left < right:
+                mid = left + (right - left) // 2
+                if arr[mid] < next_end:
+                    left = mid + 1
+                else:
+                    right = mid
             
+            return left
+        
+        
+        for i in range(N-1,-1,-1):
+            next_end = bin_search(starts,ends[i])
+            take = profs[i] + dp[next_end]
+            no_take = dp[i+1]
+            ans = max(take,no_take)
+            dp[i] = ans
+        
+        return dp[0]
+    
+############################################
+# 2008. Maximum Earnings From Taxi
+# 06JAN23
+############################################
+class Solution:
+    def maxTaxiEarnings(self, n: int, rides: List[List[int]]) -> int:
+        '''
+        sort in starts
+        n doesn't fucking matter lmaooooo
+        '''
+        rides.sort(key = lambda x: x[0])
+        N = len(rides)
+        memo = {}
+        
+        def bin_search(arr,next_start): #arre is rides array
+            left = 0
+            right = len(arr)
+            while left < right:
+                mid = left + (right - left) // 2
+                if arr[mid][0] < next_start:
+                    left = mid + 1
+                else:
+                    right = mid
             
+            return left
+        
+        def dp(i):
+            if i >= N:
+                #make surew we didn't go past n
+                return 0
+            
+            if i in memo:
+                return memo[i]
+            
+            next_start = bin_search(rides,rides[i][1])
+            prof = rides[i][1] - rides[i][0] + rides[i][2]
+            take = prof + dp(next_start)
+            no_take = dp(i+1)
+            ans = max(take,no_take)
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+    
+#bottom up
+class Solution:
+    def maxTaxiEarnings(self, n: int, rides: List[List[int]]) -> int:
+        '''
+        sort in starts
+        n doesn't fucking matter lmaooooo
+        '''
+        rides.sort(key = lambda x: x[0])
+        N = len(rides)
+        memo = {}
+        
+        def bin_search(arr,next_start): #arre is rides array
+            left = 0
+            right = len(arr)
+            while left < right:
+                mid = left + (right - left) // 2
+                if arr[mid][0] < next_start:
+                    left = mid + 1
+                else:
+                    right = mid
+            
+            return left
+        
+        dp = [0]*(N+1)
+        
+        for i in range(N-1,-1,-1):
+            next_start = bin_search(rides,rides[i][1])
+            prof = rides[i][1] - rides[i][0] + rides[i][2]
+            take = prof + dp[next_start]
+            no_take = dp[i+1]
+            ans = max(take,no_take)
+            dp[i] = ans
+        
+        return dp[0]
