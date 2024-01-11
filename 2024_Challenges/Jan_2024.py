@@ -538,10 +538,73 @@ class Solution:
                 ans.add(p)
         
         return ans
+    
+#pruning
+class Solution:
+    
+    def __init__(self):
+        self.valid_expressions = None
+        self.min_removed = None
+        
+    def reset(self):
+        self.valid_expressions = set()
+        self.min_removed = float('inf')
+    
+    def backtrack(self,string, i, left, right, path, removals):
+        #end of string
+        if i == len(string):
+            #validate
+            if left == right:
+                #next smallest removels
+                if removals <= self.min_removed:
+                    possible = "".join(path)
+                    #new min
+                    if removals < self.min_removed:
+                        self.valid_expressions = set()
+                        self.min_removed = removals
+                    #add in
+                    self.valid_expressions.add(possible)
+        
+        else:
+            curr_char = string[i]
+            #not a bracket
+            if curr_char not in '()':
+                path.append(curr_char)
+                self.backtrack(string,i+1,left,right,path,removals)
+                path.pop()
+            else:
+                #deletion
+                self.backtrack(string,i+1,left,right,path,removals+1)
+                #add char to path
+                path.append(curr_char)
+                if curr_char == '(':
+                    self.backtrack(string,i+1,left+1,right,path,removals)
+                elif right < left:
+                    #consinde onle when we dont have enough closing
+                    self.backtrack(string,i+1,left,right+1,path,removals)
+                path.pop()
+        
+        
+    def removeInvalidParentheses(self, s: str) -> List[str]:
+        '''
+        we can prune base on closing bracket
+        we can't early termiante on opening, because there could be closing to make it valid
+        but closing, we can
+            if we have too many closing then this path would eventually become invalid
+        
+        states are index, left_count, right_count, expre, rem_count
+        left_count and right_counts are counts of parenthese
+        rem_count is the number of removals
+        keep expression in [] and pop when we are done
+        use getter and setter methods
+        '''
+        self.reset()
+        self.backtrack(s,0,0,0,[],0)
+        return self.valid_expressions
         
 ###################################################
 # 446. Arithmetic Slices II - Subsequence (REVISTED)
-# 07JAN23
+# 07JAN24
 ###################################################
 #doesn't pass in python but barely passes in JAVA
 class Solution:
@@ -611,3 +674,213 @@ class Solution:
                 ans += dp[j][diff]
         
         return ans
+    
+##############################################
+# 872. Leaf-Similar Trees (REVISTED)
+# 09JAN24
+##############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def leafSimilar(self, root1: Optional[TreeNode], root2: Optional[TreeNode]) -> bool:
+        '''
+        leaves should read left node right
+        '''
+        def getLeaves(node):
+            if not node:
+                return []
+            if not node.left and not node.right:
+                return [node.val]
+            left = getLeaves(node.left)
+            right = getLeaves(node.right)
+            return left + right
+        
+        
+        return getLeaves(root1) == getLeaves(root2)
+            
+#####################################################
+# 2385. Amount of Time for Binary Tree to Be Infected
+# 10JAN24
+####################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def amountOfTime(self, root: Optional[TreeNode], start: int) -> int:
+        '''
+        turn the tree into a directed graph
+        then just do BFS
+        but we need to keep track of the longest path, not the number of layers we explore
+        '''
+        graph = defaultdict(list)
+        def dfs(node,parent):
+            if not node:
+                return
+            if parent:
+                graph[node.val].append(parent.val)
+                graph[parent.val].append(node.val)
+            dfs(node.left,node)
+            dfs(node.right,node)
+        
+        dfs(root,None)
+        time = 0
+        q = [(start,0)]
+        visited = set()
+        
+        
+        while len(q) > 0:
+            N = len(q)
+            next_q = []
+            for i in range(N):
+                curr,curr_time = q[i]
+                time = max(time,curr_time)
+                visited.add(curr)
+                for neigh in graph[curr]:
+                    if neigh not in visited:
+                        next_q.append((neigh,curr_time + 1))
+            
+            q = next_q
+    
+        return time
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def amountOfTime(self, root: Optional[TreeNode], start: int) -> int:
+        '''
+        can also just count layers
+        '''
+        graph = defaultdict(list)
+        def dfs(node,parent):
+            if not node:
+                return
+            if parent:
+                graph[node.val].append(parent.val)
+                graph[parent.val].append(node.val)
+            dfs(node.left,node)
+            dfs(node.right,node)
+        
+        dfs(root,None)
+        time = 0
+        q = [start]
+        visited = set()
+        
+        
+        while len(q) > 0:
+            N = len(q)
+            next_q = []
+            for i in range(N):
+                curr = q[i]
+                visited.add(curr)
+                for neigh in graph[curr]:
+                    if neigh not in visited:
+                        next_q.append(neigh)
+            
+            q = next_q
+            time += 1
+        return time - 1
+    
+#one pass
+class Solution:
+    def __init__(self):
+        self.max_dist = 0
+        
+    def amountOfTime(self, root: Optional[TreeNode], start: int) -> int:
+        '''
+        if start node were the root of three, the answer would just be the depth
+        need to find the maximum dista from the start node using the depths
+        say the start node is at some depth k (From the root)
+        which means from the root, it is k away, do take depth from one of the subtrees and it to k (this would be for the subtree above the start node if the
+        start node were not the root)
+        to find the subtree below this node, answer if just the depth from this node, or (Depth for while tree) - k
+        ans is the max
+        
+        need to find the max distance of the start node using the depths of the subtrees
+        if we have found the start note in this subtree return a negative depth
+        wwehn we encounter a negative depth, we know this subtree contains the start node
+        
+        we might be in the case that we have caluclated max depth before finding the start node, so we need to save the max distnace and continue searching
+        '''
+        a = self.dfs(root,start)
+        print(a)
+        return self.max_dist
+        
+    def dfs(self,root,start): #this function should return the max depth with start node start
+        #no depth
+        depth = 0
+        if not root:
+            return depth
+        
+        left = self.dfs(root.left,start)
+        right = self.dfs(root.right,start)
+        
+        if root.val == start:
+            self.max_dist = max(left,right)
+            depth -= 1
+        elif left >= 0 and right >= 0:
+            #just the max depth calcualtion
+            depth = max(left,right) + 1
+        else:
+            #when root is not start node, but subttree contains startnode, this is just  the ditance from the root to start
+            dist = abs(left) + abs(right) #dist from this node to the root
+            self.max_dist = max(self.max_dist,dist)
+            #depth for this start node
+            depth = min(left,right) - 1
+        
+        return depth
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def amountOfTime(self, root: Optional[TreeNode], start: int) -> int:
+        '''
+        dfs with two returns
+        1. whther we find number or not, and max distance to that node
+        '''
+        self.ans = 0
+        def dfs(node,start):
+            if not node:
+                return [False,0] #[found start, max depth ot that cell]
+            
+            found_left, depth_left = dfs(node.left,start)
+            found_right, depth_right = dfs(node.right,start)
+            
+            if node.val == start:
+                curr_max = max(depth_left,depth_right)
+                self.ans = max(self.ans,curr_max)
+                return [True,0] #pass max disatnce to that cell, weve found it, so return true and we are 0 away
+            
+            #if we found it in the left subtree
+            if found_left:
+                #we need left and right + 1
+                self.ans = max(self.ans, depth_left + depth_right + 1)
+                #pass down going left
+                return [True,depth_left+1]
+            
+            #same thing with right
+            elif found_right:
+                self.ans = max(self.ans, depth_left + depth_right + 1)
+                return [True, depth_right+1]
+            
+            #just find max depth
+            return [False, max(depth_left,depth_right) + 1]
+        
+        
+    
+        dfs(root,start)
+        return self.ans
