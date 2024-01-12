@@ -884,3 +884,199 @@ class Solution:
     
         dfs(root,start)
         return self.ans
+    
+####################################################################
+# 1026. Maximum Difference Between Node and Ancestor (REVISTED)
+# 11JAN24
+#####################################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        looks like binry tree week but with multiple returns and global update answer
+        pass min and max in both directions and calculate??
+        '''
+        self.ans = float('-inf')
+        
+        
+        def dfs(node,curr_min,curr_max):
+            if not node:
+                return
+            min_compare = abs(curr_min - node.val)
+            max_compare = abs(curr_max - node.val)
+            self.ans = max(self.ans, min_compare, max_compare)
+            dfs(node.left, min(curr_min, node.val), max(curr_max,node.val))
+            dfs(node.right, min(curr_min, node.val), max(curr_max,node.val))
+            
+            
+        dfs(root,root.val,root.val)
+        return self.ans
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def maxAncestorDiff(self, root: Optional[TreeNode]) -> int:
+        '''
+        make this dp
+        
+        '''
+        if not root:
+            return 0
+        
+        def dp(node,curr_max,curr_min):
+            if not node:
+                return curr_max - curr_min
+            left = dp(node.left, min(curr_min, node.val), max(curr_max,node.val))
+            right = dp(node.right, min(curr_min, node.val), max(curr_max,node.val))
+            return max(left,right)
+        
+        
+        return dp(root,root.val,root.val)
+    
+################################################
+# 676. Implement Magic Dictionary
+# 11JAN24
+################################################
+#brute force works
+class MagicDictionary:
+
+    def __init__(self):
+        '''
+        hash everything ans check
+        '''
+    def buildDict(self, dictionary: List[str]) -> None:
+        self.D = set(dictionary)
+        
+
+    def search(self, searchWord: str) -> bool:
+        #for each letter change it to all lower cases and check
+        #make surew we change!
+        N = len(searchWord)
+        for i in range(N):
+            for j in range(26):
+                sub_char = chr(ord('a') + j)
+                temp = searchWord[:i] + sub_char + searchWord[i+1:]
+                if sub_char != searchWord[i] and temp in self.D:
+                    return True
+        
+        return False
+
+
+# Your MagicDictionary object will be instantiated and called as such:
+# obj = MagicDictionary()
+# obj.buildDict(dictionary)
+# param_2 = obj.search(searchWord)
+    
+#now do Trie solution
+class Node:
+    def __init__(self):
+        self.children = defaultdict()
+        self.end = False
+        
+class Trie:
+    def __init__(self):
+        self.root = Node()
+    
+    def insert(self,word):
+        curr = self.root
+        for ch in word:
+            if ch not in curr.children:
+                curr.children[ch] = Node()
+            curr = curr.children[ch]
+        
+        #mark
+        curr.end = True
+        
+    #check function, but keep track of replacements, we cant replace more the
+    #problem is that if we have a replacement, when should we replace
+    def check(self,word,k,node):
+        if k < 0:
+            return False
+        if not word:
+            if k == 0 and node.end == True:
+                return True
+            return False
+        
+        for char, next_node in node.children.items():
+            if char == word[0]:
+                if self.check(word[1:],k,next_node):
+                    return True
+                else:
+                    if self.check(word[1:],k - 1,next_node):
+                        return True
+        
+        return False
+                
+
+class MagicDictionary:
+
+    def __init__(self):
+        self.trie = Trie()
+        
+
+    def buildDict(self, dictionary: List[str]) -> None:
+        for word in dictionary:
+            self.trie.insert(word)
+        
+        
+
+    def search(self, searchWord: str) -> bool:
+        return self.trie.check(searchWord,1,self.trie.root)
+        
+# Your MagicDictionary object will be instantiated and called as such:
+# obj = MagicDictionary()
+# obj.buildDict(dictionary)
+# param_2 = obj.search(searchWord)
+    
+#another way
+class TrieNode(object):
+    #don't forget about nesting clases
+    def __init__(self):
+        self.isAend = False
+        self.contains = defaultdict(TrieNode)
+        
+class MagicDictionary(object):
+    
+    def __init__(self):
+        self.root = TrieNode()
+        
+    def addWord(self, word):
+        r = self.root
+        for ch in word:
+            if ch not in r.contains:
+                r.contains[ch] = TrieNode()
+            r = r.contains[ch]
+        r.isAend = True
+
+    def findWord(self, remain, r, word):
+        if not word:
+            return True if remain == 0 and r.isAend else False
+        for key,next_ in r.contains.items():
+            if key == word[0]:
+                if self.findWord(remain, next_, word[1:]):
+                    return True
+            elif remain == 1:
+                if self.findWord(0, next_, word[1:]):
+                    return True
+        return False
+    
+    def buildDict(self, dict):
+        for word in dict:
+            self.addWord(word)
+    
+    def search(self, word):
+        return self.findWord(1, self.root, word)
+
+# Your MagicDictionary object will be instantiated and called as such:
+# obj = MagicDictionary()
+# obj.buildDict(dictionary)
+# param_2 = obj.search(searchWord)
