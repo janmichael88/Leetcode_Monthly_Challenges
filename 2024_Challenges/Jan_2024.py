@@ -1080,3 +1080,42 @@ class MagicDictionary(object):
 # obj = MagicDictionary()
 # obj.buildDict(dictionary)
 # param_2 = obj.search(searchWord)
+    
+#############################################################
+# 1347. Minimum Number of Steps to Make Two Strings Anagram
+# 13JAN24
+#############################################################
+class Solution:
+    def minSteps(self, s: str, t: str) -> int:
+        '''
+        strings are same length
+        strings are anagrams if sorted orders equal or freq chars are equal
+        count up freq chars in s
+        then for through t, and increment the counts of there aren't any
+        find all the matching chars with counts in each
+        ans is just the difference
+        '''
+        N = len(s)
+        counts_s = Counter(s)
+        counts_t = Counter(t)
+        matched = counts_s & counts_t
+        
+        return N - sum(matched.values())
+    
+class Solution:
+    def minSteps(self, s: str, t: str) -> int:
+        '''
+        we can just record the differnces of characters on the fly
+        '''
+        counts = [0]*26
+        for s_char,t_char in zip(s,t):
+            counts[ord(s_char) - ord('a')] += 1
+            counts[ord(t_char) - ord('a')] -= 1
+        
+        
+        ans = 0
+        for c in counts:
+            if c >= 0:
+                ans += c
+        
+        return ans
