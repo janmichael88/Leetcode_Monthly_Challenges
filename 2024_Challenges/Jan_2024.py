@@ -1119,3 +1119,115 @@ class Solution:
                 ans += c
         
         return ans
+    
+##############################################
+# 681. Next Closest Time
+# 15JAN24
+###############################################
+#meh too many edge cases
+class Solution:
+    def nextClosestTime(self, time: str) -> str:
+        '''
+        input is small enough to try all enumerations
+        generate all enumerations
+        modul 24*60, convert each time to seconds after 0000
+        its next time, ans can be itself
+        
+        '''
+        digits = list(time.replace(":",""))
+        possible = []
+        
+        def convertSeconds(time):
+            h = time // 60
+            m = time % 60
+            if h < 10:
+                h = "0"+str(h)
+            else:
+                h = str(h)
+            return h+":"+str(m)
+        
+        def backtrack(i,digits,path):
+            if i == len(digits):
+                #validate
+                temp = "".join(path)
+                if 0 <= int(temp[:2]) <= 24 and 0 <= int(temp[2:]) <= 59:
+                    possible.append(temp)
+                return
+            
+            for d in digits:
+                path.append(d)
+                backtrack(i+1,digits,path)
+                path.pop()
+        
+        backtrack(0,digits,[])
+        #convert each to seconds
+        seconds = []
+        for t in possible:
+            s = int(t[:2])*60 + int(t[2:])
+            seconds.append(s)
+
+        print(seconds)
+        #sort
+        seconds.sort()
+        h,m = time.split(":")
+        search_time = int(h)*60 + int(m)
+        idx = bisect.bisect_left(seconds,search_time)
+        if idx == len(seconds)-1:
+            return convertSeconds(seconds[0])
+        
+        return convertSeconds(seconds[idx+1])
+        
+#step by step
+class Solution:
+    def nextClosestTime(self, time: str) -> str:
+        '''
+        move one minute a time until we get to a time that has all the digits
+        '''
+        digits = set(list(time.replace(":","")))
+        h,m = time.split(":")
+        curr_time = int(h)*60 + int(m)
+        
+        while True:
+            curr_time = (curr_time + 1) % (24*60)
+            #check that curr_time uses all the digits
+            curr_h,curr_m = divmod(curr_time, 60)
+            test = '%02d:%02d' % divmod(curr_time, 60)
+            test_digits = list(test.replace(":",""))
+            if all([d in digits for d in test_digits]):
+                return test
+        
+        return time
+    
+#cool way with min comparison of tuples size 2
+class Solution:
+    def nextClosestTime(self, time):
+        """Time O(1) Space O(1)
+        Easy to read and understand although not
+        necessarily fastest-executing algorithm."""
+        
+        solutions = []
+
+        # it is easiest to think of all possible times in terms of minues. Also, 24 * 60 means
+        # we will never go over the total possible number of minutes (or hours, when we convert
+        # back in next step) in a day.
+        for i in range(24 * 60):
+
+            # using divmod returns (number of whole divisions, remainder). This is a helpful
+            # trick for making sure that minutes are valid. Hours will not exceed 24 due to
+            # above loop.
+            for t in ['%02d:%02d' % divmod(i, 60)]:
+
+                # in python set intersection/union/subset can be done with standard boolean
+                # operators. This is saying that all elements of t must be a subset or equivalent
+                # set to all elements in time
+                if set(t) <= set(time):
+
+                    # creates tuple where first element is bool. min() will then select the lowest False
+                    # element (meaning the new time is in the same day as the input time), and only if that
+                    # doesn't exist will it select the lowest True tuple (aka closest time is next day).
+                    solutions.append((t<=time, t))
+
+        # elements in solutions will look like
+        # (True, '11:12'),
+        # (False, '11:21'), etc
+        return min(solutions)[1]
