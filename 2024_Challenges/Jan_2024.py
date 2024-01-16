@@ -1231,3 +1231,187 @@ class Solution:
         # (True, '11:12'),
         # (False, '11:21'), etc
         return min(solutions)[1]
+
+###############################################
+# 2484. Count Palindromic Subsequences
+# 15JAN24
+###############################################
+#MLE, need to use cache decorator
+class Solution:
+    def countPalindromes(self, s: str) -> int:
+        '''
+        we can use dp with 4 states, first digit pair and second digit pair
+        then its just knap sack
+        '''
+        N = len(s)
+        memo = {}
+        
+        def dp(ind,first,second,i):
+            mod = 10**9 + 7
+            #found a subsequence
+            if i == 5:
+                return 1
+            if ind >= N:
+                return 0
+            #retreive
+            if (ind,first,second,i) in memo:
+                return memo[(ind,first,second,i)]
+            #dont take
+            ways = dp(ind+1,first,second,i)
+            #first digit in length 5 subsequence
+            if i == 0:
+                ways += dp(ind+1,int(s[ind]),second,i+1)
+                ways %= mod
+            #second digit in sequence
+            elif i == 1:
+                ways += dp(ind+1,first,int(s[ind]),i+1)
+                ways %= mod
+            #third digit, this is the center, it doesn't need to match
+            elif i == 2:
+                ways += dp(ind+1,first,second,i+1)
+                ways %= mod
+            #fourth digit, must match second
+            elif i == 3:
+                if int(s[ind]) == second:
+                    ways += dp(ind+1,first,second,i+1)
+                    ways %= mod
+            #fifth digit, must macht first
+            elif i == 4:
+                if int(s[ind]) == first:
+                    ways += dp(ind + 1, first,second,i+1)
+                    ways %= mod
+            
+            memo[(ind,first,second,i)] = ways % mod
+            return ways % mod
+            
+        
+        return dp(0,0,0,0)
+    
+class Solution:
+    def countPalindromes(self, s: str) -> int:
+        '''
+        we can use dp with 4 states, first digit pair and second digit pair
+        then its just knap sack
+        '''
+        N = len(s)
+
+        @cache
+        def dp(ind,first,second,i):
+            mod = 10**9 + 7
+            #found a subsequence
+            if i == 5:
+                return 1
+            if ind >= N:
+                return 0
+
+            #dont take
+            ways = dp(ind+1,first,second,i)
+            #first digit in length 5 subsequence
+            if i == 0:
+                ways += dp(ind+1,int(s[ind]),second,i+1)
+                ways %= mod
+            #second digit in sequence
+            elif i == 1:
+                ways += dp(ind+1,first,int(s[ind]),i+1)
+                ways %= mod
+            #third digit, this is the center, it doesn't need to match
+            elif i == 2:
+                ways += dp(ind+1,first,second,i+1)
+                ways %= mod
+            #fourth digit, must match second
+            elif i == 3:
+                if int(s[ind]) == second:
+                    ways += dp(ind+1,first,second,i+1)
+                    ways %= mod
+            #fifth digit, must macht first
+            elif i == 4:
+                if int(s[ind]) == first:
+                    ways += dp(ind + 1, first,second,i+1)
+                    ways %= mod
+            
+
+            return ways % mod
+            
+        
+        return dp(0,0,0,0)
+                
+class Solution:
+    def countPalindromes(self, s: str) -> int:
+        '''
+        we can use dp with 4 states, first digit pair and second digit pair
+        then its just knap sack
+        '''
+        N = len(s)
+        mod = 10 ** 9 + 7
+        @cache
+        def solve(i, curr, mid_after):
+            if mid_after and curr == '':  
+                return 1
+            if i >= N:  
+                return 0	
+            res = solve(i + 1, curr, mid_after)  # skip current char
+            if len(curr) < 2 and not mid_after: # adding chars to pref
+                return res + solve(i + 1, curr + s[i], 0)
+            
+            if len(curr) == 2 and not mid_after: 
+                return res + solve(i + 1, curr, 1)
+            
+            if mid_after and curr[-1] == s[i]: 
+                return res + solve(i + 1, curr[:-1], mid_after)
+            return res 
+              
+        ans = solve(0, '', 0) % mod
+        return ans
+    
+###############################################
+# 380. Insert Delete GetRandom O(1) (REVISTED)
+# 16JAN24
+###############################################
+class RandomizedSet:
+    '''
+    for the get random method, just use random choice module
+    use hashmap to store index to value pair
+    and use array to keep values
+    
+    
+    for the delete operation, we just move the last element to the deleted index
+    we can get the last element using an array
+    '''
+    def __init__(self):
+        """
+        Initialize your data structure here.
+        """
+        self.dict = {}
+        self.list = []
+
+        
+    def insert(self, val: int) -> bool:
+        """
+        Inserts a value to the set. Returns true if the set did not already contain the specified element.
+        """
+        if val in self.dict:
+            return False
+        self.dict[val] = len(self.list)
+        self.list.append(val)
+        return True
+        
+
+    def remove(self, val: int) -> bool:
+        """
+        Removes a value from the set. Returns true if the set contained the specified element.
+        """
+        if val in self.dict:
+            # move the last element to the place idx of the element to delete
+            last_element, idx = self.list[-1], self.dict[val]
+            self.list[idx], self.dict[last_element] = last_element, idx
+            # delete the last element
+            self.list.pop()
+            del self.dict[val]
+            return True
+        return False
+
+    def getRandom(self) -> int:
+        """
+        Get a random element from the set.
+        """
+        return choice(self.list)
