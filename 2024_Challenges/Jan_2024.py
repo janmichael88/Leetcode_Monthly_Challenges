@@ -1415,3 +1415,124 @@ class RandomizedSet:
         Get a random element from the set.
         """
         return choice(self.list)
+    
+#################################################
+# 686. Repeated String Match
+# 16JAN24
+#################################################
+#try all k
+class Solution:
+    def repeatedStringMatch(self, a: str, b: str) -> int:
+        '''
+        need to repeat a some number of times so that b is a substring of a
+        if i have string a, concatenating it k times, i can have only so many substrings
+        
+        '''
+        temp = ""
+        k = 0
+        while len(temp) < len(b):
+            temp += a
+            k += 1
+            if b in temp:
+                return k
+
+        #one more
+        temp += a
+        k += 1
+        if b in temp:
+            return k
+        
+        return -1
+
+class Solution:
+    def repeatedStringMatch(self, a: str, b: str) -> int:
+        '''
+        need to repeat a some number of times so that b is a substring of a
+        if i have string a, concatenating it k times, i can have only so many substrings
+        
+        abcabc
+        
+        i concat a twice, and for this new string, i can hve any prefix repeated some number of times
+        if we were to wrtie S = A+A+A ... (i.e concatenate some number of times)
+        we only need to check all suffixes, as long as S is long enough to contain B and S has period at most len(a)
+        
+        suppose q is the least number for which len(b) <= len(A*q)
+        we only need to check whther B is a subtring of A*q or A*(q+1)
+        if we try k < q, then B has a larger length than A*q and therefore can't be a substring
+        if we do one more (i.e q+1), then the concatenated a will be long enough to contain b
+        rather:
+            check that a[i:i+len(b)] = B for i in range(len(A))
+            
+        https://leetcode.com/problems/repeated-string-match/discuss/108090/Intuitive-Python-2-liner
+        better explanation
+        
+        Let n be the answer, the minimum number of times A has to be repeated.
+
+        For B to be inside A, A has to be repeated sufficient times such that it is at least as long as B (or one more), hence we can conclude that the theoretical lower bound for the answer would be length of B / length of A.
+
+        Let x be the theoretical lower bound, which is ceil(len(B)/len(A)).
+
+        The answer n can only be x or x + 1 (in the case where len(B) is a multiple of len(A) like in A = "abcd" and B = "cdabcdab") and not more. Because if B is already in A * n, B is definitely in A * (n + 1).
+
+        Hence we only need to check whether B in A * x or B in A * (x + 1), and if both are not possible return -1.
+        
+        #note ceiling can also be written this way
+        -(-len(B) // len(A)) # Equal to ceil(len(b) / len(a)
+        '''
+        q = math.ceil(len(b) / len(a))
+        for i in [0,1]:
+            a_concat = a*(q+i)
+            if b in a_concat:
+                return q + i
+        
+        return -1
+    
+#rabin karp
+#same intition as above, but insteaf of checking in string, we use rabin karp
+class Solution:
+    def repeatedStringMatch(self, a: str, b: str) -> int:
+        '''
+        insteaf of checking (b in a_concat) we can use rabin karp, reviet on rabin karp
+        for some string s, s[i] is some integer ascii rode, then for some prime p:
+        hash(S) = \sum{0 <= i < len(s)}p^{i}*S[i]
+        rather
+        hash[S[1:] + x], where x is the next character we want to add
+        '''
+        def RabinKarp(s, t):
+            #we want to find a in t
+            p, m = 31, 10**9 + 9
+            S, T = len(s), len(t)
+            
+            #calculate powers mod m for each position starting after 1
+            power = [1] * max(S, T)
+            for i in range(1, len(power)):
+                power[i] = (power[i - 1] * p) % m
+            
+            #hasing the text string
+            #this is hash for prefix string
+            H = [0] * (T + 1)
+            for i in range(T):
+                H[i + 1] = (H[i] + (ord(t[i]) - ord('a') + 1) * power[i]) % m
+            
+            #get hash for pattern s
+            HS = 0
+            for i in range(S):
+                HS = (HS + (ord(s[i]) - ord('a') + 1) * power[i]) % m
+
+            #sliding window comparisons, slide s through t, and get hash for each window
+            currHS = 0
+            for i in range(T - S + 1):
+                currHS = (H[i + S] - H[i] + m) % m
+                if currHS == HS * power[i] % m:
+                    return True
+
+            return False
+        
+        q = math.ceil(len(b) / len(a))
+        for i in [0,1]:
+            a_concat = a*(q+i)
+            if RabinKarp(b,a_concat):
+                return q + i
+        
+        return -1
+        
