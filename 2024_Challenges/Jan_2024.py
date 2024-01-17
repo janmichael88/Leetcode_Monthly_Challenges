@@ -1536,3 +1536,63 @@ class Solution:
         
         return -1
         
+##############################
+# 1417. Reformat The String
+# 17JAN24
+##############################
+class Solution:
+    def reformat(self, s: str) -> str:
+        '''
+        intelligently build the string
+        take chars and digits and place alternatingly
+        '''
+        letters = []
+        digits = []
+        for ch in s:
+            #is digit
+            if '0' <= ch <= '9':
+                digits.append(ch)
+            else:
+                letters.append(ch)
+        
+        #the can be unequal, but cant be more than 1
+        if abs(len(letters) - len(digits)) > 1:
+            return ""
+        
+        ans = ""
+        first = None
+        second = None
+        if len(letters) >= len(digits):
+            first = letters
+            second = digits
+        else:
+            first = digits
+            second = letters
+            
+        for i in range(max(len(first),len(second))):
+            ans += first[i] if i < len(first) else ""
+            ans += second[i] if i < len(second) else ""
+        
+        return ans
+
+class Solution:    
+    def reformat(self, s: str) -> str:
+        a, b = [], []
+        for c in s:
+            if 'a' <= c <= 'z':
+                a.append(c)
+            else:
+                b.append(c)
+        #a get priority over b
+        if len(a) < len(b):
+            a, b = b, a
+        if len(a) - len(b) >= 2:
+            return ''
+        ans = ''
+        for i in range(len(a)+len(b)):
+            #even is first
+            if i % 2 == 0:
+                ans += a[i//2]
+            else:
+                ans += b[i//2]
+        return ans
