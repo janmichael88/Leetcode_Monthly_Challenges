@@ -1596,3 +1596,107 @@ class Solution:
             else:
                 ans += b[i//2]
         return ans
+
+#####################################
+# 1427. Perform String Shifts
+# 18JAN24
+######################################
+#brute force
+class Solution:
+    def stringShift(self, s: str, shift: List[List[int]]) -> str:
+        '''
+        rebuild sting for each operation
+        '''
+        for d,k in shift:
+            k = k % len(s)
+            #left shift
+            if d == 0:
+                s = s[k:] + s[:k]
+            else:
+                s = s[len(s) - k:] + s[:len(s) - k]
+        
+        return s
+
+#using q
+class Solution:
+    def stringShift(self, s: str, shift: List[List[int]]) -> str:
+        '''
+        we can use deque to simulate shifting
+        shifts are cumulative, a shift of left by k is cancelled by shift of right by k
+        accumlate shifts and apply the final shift
+        i can apply the reaminder of abs(shifts_accum)
+        '''
+        shifts_accum = 0
+        for d,k in shift:
+            #if left shift
+            if d == 0:
+                shifts_accum -= k
+            else:
+                shifts_accum += k
+        
+        sign = -1 if shifts_accum < 0 else 1
+        size = abs(shifts_accum) % len(s)
+        if sign == -1:
+            #shift left
+            q = deque(list(s))
+            while size:
+                size -= 1
+                q.append(q.popleft())
+            
+            return "".join(q)
+        
+        else:
+            q = deque(list(s))
+            while size:
+                size -= 1
+                q.appendleft(q.pop())
+            
+            return "".join(q)
+        
+#using index after getting next shift
+class Solution:
+    def stringShift(self, s: str, shift: List[List[int]]) -> str:
+        '''
+        rebuild sting for each operation
+        '''
+        shifts_accum = 0
+        for d,k in shift:
+            #if left shift
+            if d == 0:
+                shifts_accum -= k
+            else:
+                shifts_accum += k
+        
+        sign = -1 if shifts_accum < 0 else 1
+        size = abs(shifts_accum) % len(s)
+        
+        if sign == -1:
+            s = s[size:] + s[:size]
+        else:
+            s = s[len(s) - size:] + s[:len(s) - size]
+            #could also so
+            #s = s[-size:] + s[:-size]
+        
+        return s
+    
+#treat right shifts as negative left shifts
+#apply final shift as left shift
+#dont forget to mod to make it positive again
+class Solution:
+    def stringShift(self, s: str, shift: List[List[int]]) -> str:
+        '''
+        just use left shifts
+        '''
+        left_shifts = 0
+        for d,k in shift:
+            #if left shift
+            if d == 1:
+                left_shifts -= k
+            else:
+                left_shifts += k
+        
+        left_shifts %= len(s)
+        
+        s = s[left_shifts:] + s[:left_shifts]
+        
+        return s
