@@ -1344,24 +1344,36 @@ class Solution:
         N = len(s)
         mod = 10 ** 9 + 7
         @cache
+        #states
+        #i is position in string, curr is current 2 length subsequence, mid_after means we are looking for the part after the center
         def solve(i, curr, mid_after):
+            #we have finished looking for the right part
             if mid_after and curr == '':  
                 return 1
+            #no matches
             if i >= N:  
-                return 0	
+                return 0
+            #dont include this char
             res = solve(i + 1, curr, mid_after)  # skip current char
+            #trying to build up left part
             if len(curr) < 2 and not mid_after: # adding chars to pref
                 return res + solve(i + 1, curr + s[i], 0)
             
+            #build up left part, now at center
             if len(curr) == 2 and not mid_after: 
                 return res + solve(i + 1, curr, 1)
             
+            #we have a mid after, check we can extend
             if mid_after and curr[-1] == s[i]: 
+                #match and look at net suffix, i.e the last char in the left side
                 return res + solve(i + 1, curr[:-1], mid_after)
             return res 
               
         ans = solve(0, '', 0) % mod
         return ans
+    
+#true dp
+
     
 ###############################################
 # 380. Insert Delete GetRandom O(1) (REVISTED)
@@ -1700,3 +1712,131 @@ class Solution:
         s = s[left_shifts:] + s[:left_shifts]
         
         return s
+    
+############################################
+# 931. Minimum Falling Path Sum (REVISTED)
+# 19JAN24
+#############################################
+#top down
+class Solution:
+    def minFallingPathSum(self, matrix: List[List[int]]) -> int:
+        '''
+        let dp(i,j) be the minimum falling path starting with (i,j)
+        if we are beyond last row, return 0
+        dont forget to check DOWN!!! mofo!
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        memo = {}
+
+        def dp(i,j):
+            if i >= rows:
+                return 0
+            #out of bounds
+            if j < 0 or j >= cols:
+                return float('inf')
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #then we just check down and left, and down and right
+            left = dp(i+1,j-1)
+            right = dp(i+1,j+1)
+            down = dp(i+1,j)
+            ans = min(left,right,down) + matrix[i][j]
+            memo[(i,j)] = ans
+            return ans
+
+        ans = float('inf')
+        for col in range(cols):
+            ans = min(ans, dp(0,col))
+        
+        return ans
+    
+#bottom up
+class Solution:
+    def minFallingPathSum(self, matrix: List[List[int]]) -> int:
+        '''
+        for bottom up, dont do it in place, just make a copy
+        '''
+        rows = len(matrix)
+        cols = len(matrix[0])
+        dp = [[0]*(cols+1) for _ in range(rows+1)]
+
+        #fill start from just before last row
+        for row in range(rows-1,-1,-1):
+            for col in range(cols):
+                #check if first col
+                if col == 0:
+                    dp[row][col] = matrix[row][col] + min(dp[row+1][col], dp[row+1][col+1])
+                #last col
+                elif col == cols - 1:
+                    dp[row][col] = matrix[row][col] + min(dp[row+1][col], dp[row+1][col-1])
+                else:
+                    dp[row][col] = matrix[row][col] + min(dp[row+1][col], dp[row+1][col-1], dp[row+1][col+1])
+
+        print(dp)
+        return min(dp[0][:-1])
+    
+############################################
+# 907. Sum of Subarray Minimums (REVISTED)
+# 20JAN24
+############################################
+#monostack
+class Solution:
+    def sumSubarrayMins(self, arr: List[int]) -> int:
+        '''
+        find given range for which arr[i] is smallest
+        then find number of subarrays using arr[i]
+        contribution is (count sub_arrays)*arr[i]
+        to find which range element is smallest, we can use monostack
+        when we come to a point where we didn't maintain an icnreasing stack, it means the num at the top of stack was
+        the smallest we ecounter so far
+        so we need to find the contributomp
+        while findinf the boundary elements for a range, we look for elements that are strictly less than then current elemetn on the left
+        to decide the right bonudary, we look for elements <= to the current eleemetn
+        previous smaller index is whwat is at the top
+        curr index is top
+        right is the current index i, rememebr are mainting range where the current elementat the top is smallest
+        '''
+        mod = 10**9 + 7
+        stack = []
+        sum_of_mins = 0
+        
+        for i in range(len(arr)): 
+            '''
+            think of [1,2,3,4,1]
+            4 is smalest in the range [4] (left index would be 3, curr index would be 4, right would be 5)
+            3 is smallestt i the range [3,4] (left index owuld be 2, curr index owuld be 3, right is still 5)
+            2 is smallest in tange [2,3,4]
+            1 is smallest in the range [1,2,3,4]
+            one we're don, we go back to add 1
+            '''
+            while stack and arr[stack[-1]] >= arr[i]:
+                
+                 # Notice the sign ">=", This ensures that no contribution
+                # is counted twice. right_boundary takes equal or smaller 
+                # elements into account while left_boundary takes only the
+                # strictly smaller elements into account
+                
+                #do this every time, since the array is montonic increasing, we have found a place where nums[i] can be a minimum
+                mid = stack.pop()
+                left = -1 if not stack else stack[-1]
+                right = i
+                
+                #contribution to min sum for the current element at the top
+                count = (mid - left)*(right - mid)
+                sum_of_mins += count*arr[mid]
+                sum_of_mins %= mod
+            
+            stack.append(i)
+        #stack left over
+        while stack:
+            mid = stack.pop()
+            left = -1 if not stack else stack[-1]
+            right = i
+            
+            #contribution to min sum but with the end of the array
+            count = (mid - left)*(len(arr) - mid)
+            sum_of_mins += count*arr[mid]
+
+            
+        return sum_of_mins % mod
