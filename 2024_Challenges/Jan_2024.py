@@ -1840,3 +1840,131 @@ class Solution:
 
             
         return sum_of_mins % mod
+
+########################################
+# 2104. Sum of Subarray Ranges
+# 20JAN24
+#########################################
+#brute force passes
+class Solution:
+    def subArrayRanges(self, nums: List[int]) -> int:
+        '''
+        find sum of all subarray ranges
+        similar to 907. Sum of Subarray Minimums
+        build up icnreasing monostack, we dont need to keep indices, just the actual nums
+        what doest it mean to maintain an increasing subarray?
+            [1,2,3]
+        
+        bruter force should pass
+        '''
+        ans = 0
+        N = len(nums)
+        for left in range(N):
+            curr_min,curr_max = float('inf'),float('-inf')
+            for right in range(left,N):
+                curr_min = min(curr_min, nums[right])
+                curr_max = max(curr_max, nums[right])
+                ans += curr_max - curr_min
+        
+        return ans
+    
+#mono stack is hard
+#basically just two monostack passes
+class Solution:
+    def subArrayRanges(self, nums: List[int]) -> int:
+        '''
+        find sum of all subarray ranges
+        similar to 907. Sum of Subarray Minimums
+        build up icnreasing monostack, we dont need to keep indices, just the actual nums
+        what doest it mean to maintain an increasing subarray?
+            [1,2,3]
+        
+        bruter force should pass
+        if we knew the number of subarrys with some minimum k
+        and if we knew the number of subarray with some maximum l
+        then the answer would just num_subarrays*l - num_subarrays*k
+        meaning we can calculate partial sums seperately
+        so we just re-use solution from 907 twice!
+        '''
+        #find sum of mins
+        stack = []
+        sum_mins = 0
+        N = len(nums)
+        for i in range(N):
+            #montonic increasing
+            while stack and nums[stack[-1]] >= nums[i]:
+                mid = stack.pop()
+                left = -1 if not stack else stack[-1]
+                right = i
+                count = (mid - left)*(right - mid)
+                sum_mins += count*nums[mid]
+            stack.append(i)
+    
+        #remainder of stack
+        while stack:
+            mid = stack.pop()
+            left = -1 if not stack else stack[-1]
+            count = (mid - left)*(N - mid)
+            sum_mins += count*nums[mid]
+
+        #now find sum of maxs
+        sum_maxs = 0
+        stack = []
+        for i in range(N):
+            #montonic decreasing this time
+            while stack and nums[stack[-1]] <= nums[i]:
+                mid = stack.pop()
+                left = -1 if not stack else stack[-1]
+                right = i
+                count = (mid - left)*(right - mid)
+                sum_maxs += count*nums[mid]
+            stack.append(i)
+    
+        #remainder of stack
+        while stack:
+            mid = stack.pop()
+            left = -1 if not stack else stack[-1]
+            count = (mid - left)*(N - mid)
+            sum_maxs += count*nums[mid]
+
+
+        return sum_maxs - sum_mins
+    
+#insteaf of adding in extra while loop for the rest of stack
+#go to N+1, which forces use to pop from the remaainder of the stack
+class Solution:
+    def subArrayRanges(self, nums: List[int]) -> int:
+        '''
+        we can skip the extra while loop, 
+        go to N+1, and if we are at the end, we HAVE to clear it
+        '''
+        #find sum of mins
+        stack = []
+        sum_mins = 0
+        N = len(nums)
+        for i in range(N+1):
+            #montonic increasing
+            while stack and (i == N or nums[stack[-1]] >= nums[i]):
+                mid = stack.pop()
+                left = -1 if not stack else stack[-1]
+                right = i
+                count = (mid - left)*(right - mid)
+                sum_mins += count*nums[mid]
+            stack.append(i)
+    
+
+        #now find sum of maxs
+        sum_maxs = 0
+        stack = []
+        for i in range(N+1):
+            #montonic decreasing
+            while stack and (i == N or nums[stack[-1]] <= nums[i]):
+                mid = stack.pop()
+                left = -1 if not stack else stack[-1]
+                right = i
+                count = (mid - left)*(right - mid)
+                sum_maxs += count*nums[mid]
+            stack.append(i)
+    
+
+        return sum_maxs - sum_mins
