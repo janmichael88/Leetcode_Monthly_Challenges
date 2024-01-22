@@ -1968,3 +1968,142 @@ class Solution:
     
 
         return sum_maxs - sum_mins
+    
+###########################################
+# 687. Longest Univalue Path
+# 20JAN24
+###########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def longestUnivaluePath(self, root: Optional[TreeNode]) -> int:
+        """
+        issue is that it might not just be root to leaf path
+        if im at node, and value to a child is same value, the path can be exteneded by one
+        if both at the same, i can same them up
+        really its just the number of nodes in a subtree if all the nodes are the same, this would be brute force
+
+        say we are at a node, if we have our functino that returns number of node vals == to node.val (as left and right)
+        then the answer is just left + right
+        really its just the diamtere of the tree max(dp(node.left) + dp(node.right)) + 1
+        if its not the same, we just return 0
+        """
+        self.ans = 0
+
+        def dp(node, parent):
+            if not node:
+                return 0
+            left = dp(node.left, node.val)
+            right = dp(node.right, node.val)
+            self.ans = max(self.ans, left + right)
+            if node.val == parent:
+                return max(left, right) + 1
+            else:
+                return 0
+
+        dp(root, -1)
+        return self.ans
+
+#########################################
+# 720. Longest Word in Dictionary
+# 21NOV24
+#########################################
+class Solution:
+    def longestWord(self, words: List[str]) -> str:
+        '''
+        hash all prefixes of each word
+        then check for each word if we can build it up
+        as we check validate size and lexographical order
+        '''
+        prefs = set()
+        words = set(words)
+        for w in words:
+            for i in range(len(w)):
+                p = w[:i+1]
+                if p in words:
+                    prefs.add(p)
+        
+        
+        #now check each word
+        def check(word,prefs):
+            for i in range(len(word)):
+                p = word[:i+1]
+                if p not in prefs:
+                    return False
+            return True
+        
+        ans = ""
+        for w in words:
+            if check(w,prefs):
+                #min on negative length and then lexo on sting
+                ans = min([ans,w], key = lambda x : (-len(x),x))
+        
+        return ans
+
+#trie solution
+class TrieNode:
+    def __init__(self):
+        self.children = defaultdict(TrieNode)
+        self.is_word = False
+    
+    def insert(self,word):
+        curr = self
+        for ch in word:
+            curr = curr.children[ch] #willd default to a new TrieNode
+        
+        curr.is_word = True
+    
+    def contains(self,word):
+        curr = self
+        for ch in word:
+            if ch not in curr.children:
+                return False
+            curr = curr.children[ch]
+        
+        return curr.is_word == True
+    
+class Solution:
+    def longestWord(self, words: List[str]) -> str:
+        '''
+        using Trie, dont foreget recursive implementaion
+        '''
+        trie = TrieNode()
+        for word in words:
+            trie.insert(word)
+            
+        #now check each word
+        def check(word,trie):
+            for i in range(len(word)):
+                p = word[:i+1]
+                if not trie.contains(p):
+                    return False
+            return True
+        
+        ans = ""
+        for w in words:
+            if check(w,trie):
+                #min on negative length and then lexo on sting
+                ans = min([ans,w], key = lambda x : (-len(x),x))
+        
+        return ans
+            
+class Solution:
+    def longestWord(self, words: List[str]) -> str:
+        '''
+        sort words alphabetically so shorter words alays come first
+        initally seen is just the null string, so the first prefix of string length 1 is just empty
+        try building up the word one prefix at a time if we can
+        '''
+        words.sort()
+        seen = set([""])
+        ans = ""
+        for word in words:
+            if word[:-1] in seen:
+                seen.add(word)
+                if len(word) > len(ans):
+                    ans = word
+        return ans
