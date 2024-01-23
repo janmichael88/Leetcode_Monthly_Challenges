@@ -2233,3 +2233,201 @@ class Solution(object):
                 res.append(buffer)
                 buffer = ''
         return res
+    
+##################################################################################
+# 1239. Maximum Length of a Concatenated String with Unique Characters (REVISTED)
+# 23JAN24
+##################################################################################
+#jeeezus
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        '''
+        states are index into arr and mask for chars used in the subsequence
+        fiter our seqs that aren't uniqe
+        '''
+
+        
+        #filter unique sequences
+        f = lambda x: len(x) == len(set(x))
+        arr = list(filter(f,arr))
+        N = len(arr)
+        memo = {}
+        
+        def dp(i,mask):
+            if i >= N:
+                return 0
+            if (i,mask) in memo:
+                return memo[(i,mask)]
+            
+            ans = dp(i+1,mask)
+            for j in range(i,N):
+                #take j only if we the chars in this current mask haven't been used
+                next_seq = arr[j]
+                next_mask = 0
+                for ch in next_seq:
+                    pos = ord(ch) - ord('a')
+                    next_mask |= (1 << pos)
+                #check positions all 26
+                is_uniq = True
+                for i in range(26):
+                    check_mask = 1 << i
+                    if mask & next_mask & check_mask > 0:
+                        is_uniq = False
+                        break
+                #check no overlapping
+                if is_uniq:
+                    ans = max(ans, len(next_seq) + dp(j+1,mask | next_mask))
+            
+            memo[(i,mask)] = ans
+            return ans
+                              
+        
+        ans = 0
+        for i in range(N):
+            #validate
+            if len(arr[i]) == len(set(arr[i])):
+                ans = max(ans, dp(i,0))
+        
+        return ans
+
+#cheese way
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        
+        N = len(arr)
+        memo = {}
+        
+        def dp(i,path):
+            if len(path) != len(set(path)):
+                return 0
+            if (i,path) in memo:
+                return memo[(i,path)]
+            
+            ans = len(path)
+            for j in range(i,N):
+                ans = max(ans, dp(j+1, path + arr[j]))
+            
+            memo[(i,path)] = ans
+            return ans
+        
+        return dp(0,"")
+
+#cheese iteraive way
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        '''
+        build all possible solutions iteratively
+        start with empty string and concat only if it results in one that doesn't have repeated chars
+        '''
+        possible = [""]
+        ans = 0
+        for word in arr:
+            N = len(possible)
+            for i in range(N):
+                next_seq = possible[i] + word
+                if len(next_seq) != len(set(next_seq)):
+                    continue
+                possible.append(next_seq)
+                ans = max(ans, len(next_seq))
+        
+        return ans
+        
+#iterative with mask
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        '''
+        in the bit mask, include taken chars at bit positions as well as the length
+        length will be capped at 26 anway
+        read_lenghth:
+            length = mask >> 26
+        read_mask:
+            (1 << 26) - 1, mask of 1s in each of the 26 spots
+            bitset = mask & ((1 << 26) - 1)
+        
+        store seens results at set of masks intead of their string representations
+        '''
+        seen = set([0])
+        
+        def addWord(word,seen):
+            char_mask = 0
+            for ch in word:
+                mask = 1 << ord(ch) - ord('a')
+                #if weve seen char return 0
+                if char_mask & mask:
+                    return 0
+                #add to mask
+                char_mask += mask
+            
+            #check to see if wen've seen this mask in seen
+            if char_mask + (len(word) << 26) in seen:
+                return 0
+            
+            #check all results in seen
+            ans = 0
+            for res in list(seen):
+                if res & char_mask:
+                    continue
+                
+                #new entry
+                new_len = (res >> 26) + len(word)
+                new_mask = char_mask + res & ((1 << 26) - 1)
+                
+                seen.add((new_len << 26) + new_mask)
+                ans = max(ans, new_len)
+            
+            return ans
+        
+        ans = 0
+        for word in arr:
+            ans = max(ans,addWord(word,seen))
+        
+        return ans
+            
+#backtracking
+class Solution:
+    def maxLength(self, arr: List[str]) -> int:
+        '''
+        backtracking
+        '''
+        #convert arr to character bitset
+        arr_mask = set()
+        for w in arr:
+            if self.getMask(w):
+                arr_mask.add(self.getMask(w))
+        #convert back to list
+        arr_mask = list(arr_mask)
+        return self.backtrack(arr_mask, 0,0,0)
+        
+        
+    
+    def backtrack(self, arr_mask, pos, res_chars, res_len):
+        best = res_len
+        for i in range(pos,len(arr_mask)):
+            #get mask and length
+            new_chars = arr_mask[i] & ((1 << 26) - 1)
+            new_len = arr_mask[i] >> 26
+            
+            #intserction
+            if new_chars & res_chars:
+                continue
+            
+            #add in
+            res_chars += new_chars
+            res_len += new_len
+            best = max(best, self.backtrack(arr_mask, i+1, res_chars,res_len))
+            
+            #backtrack
+            res_chars -= new_chars
+            res_len -= new_len
+        
+        return best
+        
+    def getMask(self,word):
+        mask = 0
+        for ch in word:
+            pos = 1 << ord(ch) - ord('a')
+            if mask & pos:
+                return None
+            mask += pos
+
+        return mask + (len(word) << 26)
