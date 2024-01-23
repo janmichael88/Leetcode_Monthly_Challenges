@@ -1372,7 +1372,56 @@ class Solution:
         ans = solve(0, '', 0) % mod
         return ans
     
-#true dp
+#counting
+class Solution:
+    def countPalindromes(self, s: str) -> int:
+        '''
+        this is more of a counting problem
+        for some middle at index i, count number of pairs (2 length subsequences) to the left of i and to the right of i
+        intuition:
+            count number of ordered pairs that mirror before and after each middle index (2,len(s) -2)
+        
+        * if length of string is less than 5 cant be done
+        * get number of ordered pairs before and after
+        * count number of matching pais before and after each index
+        '''
+        if len(s) < 5:
+            return 0
+        
+        #Returns the running pair counts for each index
+        def get_pairs(s):
+            seen_cnt = {str(num):0 for num in range(10)}
+            seen_cnt[s[0]] = 1 #We have seen the first character since we start the loop at 1
+            pair_cnts = defaultdict(int)
+            res = [defaultdict(int)] #Filler empty dict (index = 0 / end index)
+            
+            #Getting running pairs
+            for idx in range(1, len(s) - 1):
+                res.append(pair_cnts.copy()) #Append running pair counts
+                for num in seen_cnt.keys():
+                    pair_cnts[(num, s[idx])] += seen_cnt[num]
+                seen_cnt[s[idx]] += 1
+                
+            #Filler empty dict (index = 0 / end index)
+            res.append(defaultdict(int)) 
+            #we need to pad the arrays with None
+            return res
+        
+        ans = 0 
+        mod = 10**9 + 7
+        #get pre and post pair counts
+        pre = get_pairs(s)
+        post = get_pairs(s[::-1])[::-1]
+        
+        for i in range(2,len(s) - 2):
+            #check all pairs before i and pairs after i
+            #number of palindromic subsequences is just the product
+            for k,v in pre[i].items():
+                if k in post[i]:
+                    ans += post[i][k]*v
+                    ans %= mod
+        
+        return ans
 
     
 ###############################################
@@ -2107,3 +2156,80 @@ class Solution:
                 if len(word) > len(ans):
                     ans = word
         return ans
+    
+#############################################
+# 722. Remove Comments
+# 22JAN24
+##############################################
+class Solution:
+    def removeComments(self, source: List[str]) -> List[str]:
+        '''
+        from hints we need to parse line by line
+        rules:
+            * If we start a block comment and we aren't in a block, then we will skip over the next two characters and change our state to be in a block.
+            * If we end a block comment and we are in a block, then we will skip over the next two characters and change our state to be not in a block.
+            * If we start a line comment and we aren't in a block, then we will ignore the rest of the line.
+            * If we aren't in a block comment (and it wasn't the start of a comment), we will record the character we are at.
+            * At the end of each line, if we aren't in a block, we will record the line.
+        '''
+        in_block = False
+        ans = []
+        for line in source:
+            i = 0
+            if not in_block:
+                new_line = []
+                #idea is the we can span multiple lines until we hit a block comment
+            while i < len(line):
+                #not in block and start block
+                if line[i:i+2] == '/*' and not in_block:
+                    in_block = True
+                    i += 1
+                #in block and end of block
+                elif line[i:i+2] == '*/' and in_block:
+                    in_block = False
+                    i += 1
+                #single line comment
+                elif not in_block and line[i:i+2] == "//":
+                    break #skip line
+                #no block, no comment, we need this line
+                elif not in_block:
+                    new_line.append(line[i])
+                i += 1
+            
+            if new_line and not in_block:
+                ans.append("".join(new_line))
+        
+        return ans
+    
+#another solution
+#https://leetcode.com/problems/remove-comments/discuss/109210/Simple-Python-one-pass-with-clear-inline-explanation!!!
+class Solution(object):
+    def removeComments(self, source):
+        """
+        :type source: List[str]
+        :rtype: List[str]
+        """
+        res, buffer, block_comment_open = [], '', False
+        for line in source:
+            i = 0
+            while i < len(line):
+                char = line[i]
+                # "//" -> Line comment.
+                if char == '/' and (i + 1) < len(line) and line[i + 1] == '/' and not block_comment_open:
+                    i = len(line) # Advance pointer to end of current line.
+                # "/*" -> Start of block comment.
+                elif char == '/' and (i + 1) < len(line) and line[i + 1] == '*' and not block_comment_open:
+                    block_comment_open = True
+                    i += 1
+                # "*/" -> End of block comment.
+                elif char == '*' and (i + 1) < len(line) and line[i + 1] == '/' and block_comment_open:
+                    block_comment_open = False
+                    i += 1
+                # Normal character. Append to buffer if not in block comment.
+                elif not block_comment_open:
+                    buffer += char
+                i += 1
+            if buffer and not block_comment_open:
+                res.append(buffer)
+                buffer = ''
+        return res
