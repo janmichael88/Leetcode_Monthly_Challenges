@@ -1384,6 +1384,8 @@ class Solution:
         * if length of string is less than 5 cant be done
         * get number of ordered pairs before and after
         * count number of matching pais before and after each index
+        count pairs before and after can be done in N^2 time
+        we need an O(N) to count pairs!
         '''
         if len(s) < 5:
             return 0
@@ -1399,9 +1401,12 @@ class Solution:
             for idx in range(1, len(s) - 1):
                 res.append(pair_cnts.copy()) #Append running pair counts
                 for num in seen_cnt.keys():
-                    pair_cnts[(num, s[idx])] += seen_cnt[num]
+                    pair_cnts[(num, s[idx])] += seen_cnt[num] #this is a runnig sum of pairs
                 seen_cnt[s[idx]] += 1
                 
+            #the res array is read like this, for some index i, we can retrieve pair counts by accessing res[i]
+            #its going to be pairs to the left os this index
+            #becareful when going in reverse
             #Filler empty dict (index = 0 / end index)
             res.append(defaultdict(int)) 
             #we need to pad the arrays with None
@@ -1422,7 +1427,6 @@ class Solution:
                     ans %= mod
         
         return ans
-
     
 ###############################################
 # 380. Insert Delete GetRandom O(1) (REVISTED)
@@ -2431,3 +2435,261 @@ class Solution:
             mask += pos
 
         return mask + (len(word) << 26)
+    
+#############################################################
+# 1457. Pseudo-Palindromic Paths in a Binary Tree (REVISTED)
+# 24JAN24
+##############################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pseudoPalindromicPaths (self, root: Optional[TreeNode]) -> int:
+        '''
+        node values in path form a palindrome if at most one digit has odd frequence (parity)
+        only need to check root to leaves
+        keep counter object, then validate at the leaves
+        issue is copying count object i have to copy before!
+        '''
+        self.ans = 0
+        
+        def dfs(node,counts):
+            if not node:
+                return
+            #leaf node
+            new_counts = counts.copy()
+            new_counts[node.val] += 1
+            if not node.left and not node.right:
+                odd = 0
+                for k,v in new_counts.items():
+                    if v % 2 == 1:
+                        odd += 1
+                if odd <= 1:
+                    self.ans += 1
+                return
+            dfs(node.left,new_counts)
+            dfs(node.right,new_counts)
+        
+        
+        dfs(root,Counter())
+        return self.ans
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def pseudoPalindromicPaths (self, root: Optional[TreeNode]) -> int:
+        '''
+        just mark whether or not weve seen this node in the path
+        even occurencces will set bit position to 0
+        odd occruence will set position to 1
+        essentially keep a mask, and in the mask only one position can have a set bit
+        rather power of two
+        '''
+        ans = [0]
+        
+        def dfs(node,mask):
+            if not node:
+                return
+            #flip bit
+            mask ^= (1 << node.val)
+            if not node.left and not node.right:
+                if mask & (mask -1) == 0:
+                    ans[0] += 1
+            
+            dfs(node.left,mask)
+            dfs(node.right,mask)
+        
+        dfs(root,0)
+        return ans[0]
+
+
+##################################################
+# 2573. Find the String with LCP
+# 23JAN24
+##################################################
+class Solution:
+    def findTheString(self, lcp: List[List[int]]) -> str:
+        '''
+        lcp[i][j] gives length of longest common prefix between substrings  word[i,n-1] amd word[j,n-1]
+        hint 1; use lcp array to determine which groups of elements must be equal
+        hint 2: match smallest letter to the group that contains the smallest unassigned idnex
+        hint 3: build lcp matrix of resulting string then check if == to lcp
+        
+        intutions:
+            if lcp[i][j] > 0, then A[i] == A[j]
+            if lcp[i][j] == 0, then A[i] != A[j], where A is the canddiate string
+        transistions
+            lcp[i][j] = lcp[i+1][j+1] + 1
+        
+        build candidate dp lcp, and compare to lcp
+        return ans otherwise impossible
+        
+        we try to build smallest string the follows lcp array, start with a
+        if lcp[i][j] == 0, and the char do not equal, the we need to use the next smallest
+        if char is beyong 0, then it can't be donw
+        '''
+        N = len(lcp)
+        cand = [0]*N #convert back to stirng using ord('a') offset
+        
+        for i in range(N):
+            for j in range(N):
+                if (lcp[i][j] == 0 and cand[i] == cand[j]):
+                    cand[j] += 1
+        
+        #check if we are grater than 26
+        for num in cand:
+            if num > 26:
+                return ""
+        #build candidate lcp array using transition
+        cand_lcp = [[0]*(N+1) for _ in range(N+1)]
+        for i in range(N-1,-1,-1):
+            for j in range(N-1,-1,-1):
+                if cand[i] == cand[j]:
+                    cand_lcp[i][j] = 1 + cand_lcp[i+1][j+1]
+        
+        #compare
+        for i in range(N):
+            for j in range(N):
+                if lcp[i][j] != cand_lcp[i][j]:
+                    return ""
+        
+        ans = ""
+        for num in cand:
+            ans += chr(ord('a') + num)
+        
+        return ans
+    
+#################################################
+# 737. Sentence Similarity II
+# 24JAN24
+################################################
+#dfs
+class Solution:
+    def areSentencesSimilarTwo(self, sentence1: List[str], sentence2: List[str], similarPairs: List[List[str]]) -> bool:
+        '''
+        make mapp of similar pairs and check all are similar
+        if there's a connected path between words they are similar need to use union find and see if they are in the same group
+        or we can traverse do both
+        '''
+        if len(sentence1) != len(sentence2):
+            return False
+        
+        graph = defaultdict(set)
+        for u,v in similarPairs:
+            graph[u].add(v)
+            graph[v].add(u)
+            
+            
+        #function to check if similar, basically a path from start to end
+        def isSimilar(start,end,seen,graph):
+            if start == end:
+                return True
+            seen.add(start)
+            for neigh in graph[start]:
+                if neigh not in seen:
+                    if isSimilar(neigh,end,seen,graph):
+                        return True
+            
+            return False
+        
+        for u,v in zip(sentence1,sentence2):
+            seen = set()
+            if not isSimilar(u,v,seen,graph):
+                return False
+        
+        return True
+
+#bfs
+class Solution:
+    def areSentencesSimilarTwo(self, sentence1: List[str], sentence2: List[str], similarPairs: List[List[str]]) -> bool:
+
+        if len(sentence1) != len(sentence2):
+            return False
+        
+        graph = defaultdict(set)
+        for u,v in similarPairs:
+            graph[u].add(v)
+            graph[v].add(u)
+            
+            
+        #function to check if similar, basically a path from start to end
+        def isSimilar(start,end,seen,graph):
+            q = deque([start])
+            while q:
+                start = q.popleft()
+                if start == end:
+                    return True
+                seen.add(start)
+                for neigh in graph[start]:
+                    if neigh not in seen:
+                        q.append(neigh)
+
+            return False
+        
+        for u,v in zip(sentence1,sentence2):
+            seen = set()
+            if not isSimilar(u,v,seen,graph):
+                return False
+        
+        return True
+            
+#union find
+class DSU:
+    def __init__(self,words):
+        self.parent = {w:w for w in words}
+        self.size = {w:1 for w in words}
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        #no union
+        if x_par == y_par:
+            return
+        
+        #swap groups
+        if self.size[x_par] >= self.size[y_par]:
+            self.parent[y_par] = x_par
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+        
+class Solution:
+    def areSentencesSimilarTwo(self, sentence1: List[str], sentence2: List[str], similarPairs: List[List[str]]) -> bool:
+        '''
+        new way to do union find, insteaf of array we need words pointing to themselves
+        once we get union find, we just check that each word pair points to the same parent
+        need all the workds
+        '''
+        if len(sentence1) != len(sentence2):
+            return False
+        
+        words = set(chain(*similarPairs))
+        for u,v in zip(sentence1,sentence2):
+            words.add(u)
+            words.add(v)
+            
+        dsu = DSU(words)
+        for u,v in similarPairs:
+            dsu.union(u,v)
+        
+        for u,v in zip(sentence1,sentence2):
+            if dsu.find(u) != dsu.find(v):
+                return False
+        return True
