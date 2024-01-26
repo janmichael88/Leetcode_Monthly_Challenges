@@ -2760,3 +2760,74 @@ class Solution:
             ans = ans*10 + num
         
         return ans
+    
+########################################
+# 576. Out of Boundary Paths (REVISTED)
+# 26JAN24
+#########################################
+#top down
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        states should be (i,j,moves) 
+        then we check all moves, out of bounds return 1, otherwise add them up
+
+        '''
+        memo = {}
+        
+        def dp(i,j,moves):
+            #out of bounds 
+            mod = 10**9 + 7
+            if i < 0 or i >= m or j < 0 or j >= n:
+                if moves >= 0:
+                    return 1
+                return 0
+            
+            #careful with the moves condition
+            if moves < 0:
+                return 0
+            
+            if (i,j, moves) in memo:
+                return memo[(i,j,moves)]
+            
+            ans = 0
+            for dx,dy in [(1,0),(-1,0),(0,1),(0,-1)]:
+                ans += dp(i + dx, j + dy,moves-1) % mod
+            
+            ans %= mod
+            memo[(i,j,moves)] = ans
+            return ans
+        
+        
+        return dp(startRow,startColumn,maxMove)
+    
+#bottom up
+class Solution:
+    def findPaths(self, m: int, n: int, maxMove: int, startRow: int, startColumn: int) -> int:
+        '''
+        states should be (i,j,moves) 
+        then we check all moves, out of bounds return 1, otherwise add them up
+
+        '''
+        mod = 10**9 + 7
+        dp = [[[0]*(maxMove + 1) for _ in range(n)] for _ in range(m)]
+        
+        #one away from base case
+        for moves in range(1,maxMove+1):
+            for i in range(m):
+                for j in range(n):
+                    ans = 0
+                    for dx,dy in [(1,0),(-1,0),(0,1),(0,-1)]:
+                        neigh_x = i + dx
+                        neigh_y = j + dy
+                        #in bounds
+                        if 0 <= neigh_x < m and 0 <= neigh_y < n:
+                            ans += dp[neigh_x][neigh_y][moves-1]
+                            dp[i][j][moves] = ans % mod
+                        else:
+                            ans += 1
+                            ans %= mod
+                    dp[i][j][moves] = ans % mod
+                    
+        
+        return dp[startRow][startColumn][maxMove] % mod
