@@ -2693,3 +2693,70 @@ class Solution:
             if dsu.find(u) != dsu.find(v):
                 return False
         return True
+
+##################################
+# 738. Monotone Increasing Digits
+# 25JAN24
+##################################
+class Solution:
+    def monotoneIncreasingDigits(self, n: int) -> int:
+        '''
+        n is too big to try all permutations of some number b
+        build digit one by one, adding the largest possible that makes is less than or equal to n
+        i can use stack to build the digit
+        intuition:
+            if a number is not montone increasing, we will need to convert to 9 as much as we can
+            but such that we dont make the number more than n
+        
+        55627 -> 55599
+        55427 -> 49999
+        99996 -> 89999
+        100 -> 99
+        
+        travesre digits right to left and whenever a digit to the left is amller than its right, we decrease 1, then change to 9 to rhr gith
+        '''
+        #single digit case
+        if n < 10:
+            return n
+        
+        digits = [int(ch) for ch in str(n)]
+        N = len(digits)
+        
+        for i in range(N-1,0,-1):
+            if digits[i] < digits[i-1]:
+                digits[i-1] -= 1
+                for j in range(i,N):
+                    digits[j] = 9
+        
+        ans = 0
+        for num in digits:
+            ans = ans*10 + num
+        
+        return ans
+    
+class Solution:
+    def monotoneIncreasingDigits(self, n: int) -> int:
+        '''
+        instead of changing all numbers to the right of i to 9, we mark the last i
+        '''
+        #single digit case
+        if n < 10:
+            return n
+        
+        digits = [int(ch) for ch in str(n)]
+        N = len(digits)
+        last = n
+        
+        for i in range(N-1,0,-1):
+            if digits[i] < digits[i-1]:
+                digits[i-1] -= 1
+                last = i
+        
+        for j in range(last,N):
+            digits[j] = 9
+        
+        ans = 0
+        for num in digits:
+            ans = ans*10 + num
+        
+        return ans
