@@ -2831,3 +2831,40 @@ class Solution:
                     
         
         return dp[startRow][startColumn][maxMove] % mod
+    
+#################################################################
+# 2120. Execution of All Suffix Instructions Staying in a Grid
+# 26JAN24
+#################################################################
+class Solution:
+    def executeInstructions(self, n: int, startPos: List[int], s: str) -> List[int]:
+        '''
+        extension of 576. Out of Boundary Paths 
+        for each suffix i, do the path, and if we end up walking off the path, we coudn't do that last instsruction
+        careful when doing down, which mean index goes up
+        when going up, index goes down!
+        '''
+        dirrs = {'U':[-1,0],
+                'D':[1,0],
+                'L':[0,-1],
+                'R':[0,1]}
+        
+        def move(startPos,suffix):
+            x,y = startPos
+            k = 0
+            for ch in suffix:
+                x += dirrs[ch][0]
+                y += dirrs[ch][1]
+                if not (0 <= x < n) or not (0 <= y < n):
+                    return k
+                k += 1
+            return k
+        
+        start_x,start_y = startPos
+        N = len(s)
+        
+        ans = []
+        for i in range(N):
+            ans.append(move(startPos,s[i:]))
+        
+        return ans
