@@ -2868,3 +2868,56 @@ class Solution:
             ans.append(move(startPos,s[i:]))
         
         return ans
+    
+
+##############################################
+# 629. K Inverse Pairs Array (REVISTED)
+# 28JAN24
+##############################################
+class Solution:
+    def kInversePairs(self, n: int, k: int) -> int:
+        '''
+        for an inverse pair
+        i < j and both i and j are indexable and nums[i] > nums[j]
+        for some number n, from 1 to n, return number of different arrays where there  are exactly k inverse pairs
+        if k = 1
+            only increasing array
+        needs to be O(n*k)
+        say we have the previous (n-1) array and we are placing n, we can place n somewhere in the array that it generates additional inverse pairs
+        call array, a_0 the beigning array like [1,2,3,4]
+        if we want to have k inverser pairs, we need to shift some number in a_0 to the left k times
+        for more than on number we can combine shifts such that there sum == k
+        example
+        [1,2,4,3] 1 inver pairs, shifted 4 to the left 1 time
+        [2,4,1,3], 3 inverse pairs, shifted 2 to the left 1 time, and shifted 4 to the left 1 time, ans is 1 + 2 = 3
+        add ways from n-1 and k - shift
+        dp(n,k) =
+            sum ways for dp(n-1,k-1) + dp(n-1,k-2) ... dp(0,0) 
+            but we cannot go more than n shifts and we cannot for more than k inverse pairs
+        if we alread have the desired arrangement n with exactly k shifts, we jusst add the next and to the end
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(n,k):
+            if n == 0:
+                return 0
+            if k == 0:
+                return 1
+            if (n,k) in memo:
+                return memo[(n,k)]
+            ways = 0
+            position = 0
+            #upper limit on position, k - positions < 0, no arrangment exists with engtiave inverse pairs
+            
+            while position < n and position <= k:
+                ways += dp(n-1,k-position) % mod
+                ways %= mod
+                position += 1
+            
+            ways %= mod
+            memo[(n,k)] = ways
+            return ways
+        
+        
+        return dp(n,k)
