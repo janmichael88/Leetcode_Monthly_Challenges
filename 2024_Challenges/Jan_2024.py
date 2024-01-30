@@ -2921,3 +2921,52 @@ class Solution:
         
         
         return dp(n,k)
+    
+#########################################################
+# 1567. Maximum Length of Subarray With Positive Product
+# 29JAN24
+#########################################################
+class Solution:
+    def getMaxLen(self, nums: List[int]) -> int:
+        '''
+        if subarray contains even number of 0's product will be positive
+        any subarray with a zero in it will be 0
+        split array into subarray by zeros
+        '''
+        subarrays = []
+        curr_sub = []
+        for num in nums:
+            if num == 0:
+                subarrays.append(curr_sub)
+                curr_sub = []
+            else:
+                curr_sub.append(num)
+        
+        if curr_sub:
+            subarrays.append(curr_sub)
+        
+        ans = 0
+        #test each subarray
+        for arr in subarrays:
+            #check count negatives
+            count_negatives = 0
+            for num in arr:
+                if num < 0:
+                    count_negatives += 1
+            #if even
+            if count_negatives % 2 == 0:
+                ans = max(ans, len(arr))
+            else:
+                #find first negative from front
+                i = 0
+                while i < len(arr) and arr[i] > 0:
+                    i += 1
+                ans = max(ans, len(arr) - (i+1))
+                
+                #find first negative from end
+                i = len(arr) - 1
+                while i >= 0 and arr[i] > 0:
+                    i -= 1
+                
+                ans = max(ans, i)
+        return ans
