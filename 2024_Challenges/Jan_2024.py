@@ -2970,3 +2970,171 @@ class Solution:
                 
                 ans = max(ans, i)
         return ans
+
+######################################################
+# 1265. Print Immutable Linked List in Reverse
+# 31JAN24
+######################################################
+class Solution:
+    def printLinkedListInReverse(self, head: 'ImmutableListNode') -> None:
+        def recurse(curr):
+            if (curr == None):
+                return
+            recurse(curr.getNext())
+            curr.printValue()
+        
+        recurse(head)
+
+class Solution:
+    def printLinkedListInReverse(self, head: 'ImmutableListNode') -> None:
+        '''
+        #just need to traverse, we can use recursion
+        curr = head
+        while curr:
+            curr.printValue()
+            curr = curr.getNext()
+
+        '''
+        stack = []
+        curr = head
+        
+        while curr:
+            stack.append(curr)
+            curr = curr.getNext()
+        
+        while stack:
+            curr = stack.pop()
+            curr.printValue()
+
+#Square root decomposition
+
+
+#######################################################
+# 1552. Magnetic Force Between Two Balls
+# 31JAN24
+#######################################################
+class Solution:
+    def maxDistance(self, position: List[int], m: int) -> int:
+        '''
+        balls need to be placed in baskets, we want the minimum magnetic force between any two balls to be maximum
+        if we have more ballls than we do baskets, we can't do it
+        brute force woul be to try all pairings
+        binary search for workable solution
+        need funcions thats runs in O(N) time
+        if we can do with some some number k, check if we can do k+1
+        we will always have more than 2 baskets and more than 2 balls
+        will we always need to place a ball on the first basket?
+        there will be multiple solutions for some min force
+        min force would be 1, what about the max force?
+        low = 1
+        high = max(position) - min(position)
+        '''
+        #sort buckets
+        position.sort()
+        def minForce(cand, arr, balls):
+            #neeed to maintain cand distance between prev basket and currbasket
+            prev = arr[0]
+            balls -= 1
+            for next_ in arr[1:]:
+                #if we can place
+                if abs(next_ - prev) >= cand:
+                    balls -= 1
+                    prev = next_
+                if balls == 0:
+                    return True
+            
+            return balls == 0
+        
+        
+        low = 1
+        high = max(position) - min(position)
+        while low <= high:
+            mid = low + (high - low) // 2
+            if minForce(mid,position,m):
+                low = mid + 1
+            else:
+                high = mid - 1
+        
+        return low - 1
+    
+###############################################################
+# 2556. Disconnect Path in a Binary Matrix by at Most One Flip
+# 29JAN24
+##############################################################
+#doenst work, cant just count paths because the pathts intserct
+class Solution:
+    def isPossibleToCutPath(self, grid: List[List[int]]) -> bool:
+        '''
+        count number of paths from (0,0) to (m-1,n-1)
+        return true of there is only one path
+        cant flip cells (0,0) or (rows-1,cols-1)
+        can't just count paths
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        memo = {}
+        
+        def dp(i,j):
+            if (i,j) == (rows-1,cols-1):
+                return 1
+            if (i,j) in memo:
+                return memo[(i,j)]
+            down = 0
+            if i + 1 < rows and grid[i+1][j] == 1:
+                down = dp(i+1,j)
+            
+            right = 0
+            if j + 1 < cols and grid[i][j+1] == 1:
+                right = dp(i,j+1)
+            
+            ans = right + down
+            memo[(i,j)] = ans
+            return ans
+        
+        
+        paths = dp(0,0)
+        if paths == 0:
+            return True
+        return paths == 1
+
+class Solution:
+    def isPossibleToCutPath(self, grid):
+        '''
+        see if we can reach the ending cell from the start cell
+        we need to do thiw twice, remember we need to make it disconnected using at most one flip, (we dont have to flip, i.e they may already be disconnected)
+        omg we can flip a 0 to 1 or a 1 to 0, but we cannot fli[]
+        
+        '''
+        m, n = len(grid), len(grid[0])
+    
+        def dfs(i,j):
+            #if we can reach (m-1,n-1) from (0,0)
+            if i == m-1 and j == n-1:
+                return True
+
+            #invalid move
+            if (i == m or j == n or grid[i][j] == 0):
+                return False
+            
+            #not the first cell,  (0,0) will change to 0 for anything else, and only if its a 1
+            if (i+j): 
+                grid[i][j] = 0
+
+            return dfs(i+1,j) or dfs(i,j+1)
+
+        #if we can do it, return true
+        if dfs(0,0) == False:
+            return True
+        for r in grid:
+            print(r)
+        
+        print("--------")
+        #try one more time
+        if dfs(0,0) == False:
+            return True
+        
+        for r in grid:
+            print(r)
+        
+        #otherwise we can't do it
+        return False
