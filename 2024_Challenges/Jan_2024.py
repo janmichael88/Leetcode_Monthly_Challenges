@@ -3127,8 +3127,7 @@ class Solution:
             return True
         for r in grid:
             print(r)
-        
-        print("--------")
+
         #try one more time
         if dfs(0,0) == False:
             return True
@@ -3138,3 +3137,33 @@ class Solution:
         
         #otherwise we can't do it
         return False
+
+class Solution:
+    def isPossibleToCutPath(self, grid: List[List[int]]) -> bool:
+        '''
+        start at (0,1), to the right and (1,0)  down
+        we search for two non-intersecting paths from these points
+        for the first search we go right first, and only go down if we cannot reach the last cell by going right
+        for the second search, we flip the direction
+        that ay the first path is closes to the top-right borders of the grid, and the second path to the bottom left border
+        if we find both paths, then we cannot make the matrix disconnected
+            when we traverse a path, we change the values in the matrix to zero, so we canot reuse them a second time
+        since we flip values for the first path, we do not need to flip directions for the second one
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        def dfs(i,j):
+            #out of bounds or zero, false
+            if (i == rows) or (j == cols) or (grid[i][j] == 0):
+                return False
+            #reached end
+            if (i,j) == (rows -1, cols - 1):
+                return True
+            #mark
+            if (i != 0) or (j != 0):
+                grid[i][j] = 0
+            
+            return dfs(i+1,j) or dfs(i,j+1)
+        
+        return not (dfs(0,0) and dfs(0,0))
