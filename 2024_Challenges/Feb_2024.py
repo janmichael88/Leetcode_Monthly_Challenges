@@ -258,4 +258,54 @@ class Solution:
 # 2800. Shortest String That Contains Three Strings
 # 02FEB24
 ####################################################
+class Solution:
+    def minimumString(self, a: str, b: str, c: str) -> str:
+        '''
+        strings a,b,c must exists
+        i can concatenate a,b,c together this would be the maximum
+        we also need the lexographically smallest one
+        try all permutations that can generate a,b,c 
+            a,b,c
+            a,c,b
+            b,c,a ...
+            there are 6 of them
+        
+        '''
+        def merge(s1,s2):
+            #if s2 in s1, best we can so is s1
+            if s2 in s1:
+                return s1
+            #otherwise find prefix that matches suffix
+            #we are checking suffixes of s1
+            #we can speed this up with kmp
+            for i in range(len(s1)):
+                if s2.startswith(s1[i:]): #longest shared segment between s1 and s2
+                    return s1[:i] + s2 #if s2 starts with this suffix of s1, we can concatenate prefix with s2
+            
+            #otherwise concat both
+            return s1+s2
+        
+        res = ""
+        size = float('inf')
+        for s1,s2,s3 in itertools.permutations([a,b,c]):
+            s = merge(merge(s1,s2),s3)
+            if len(s) < size:
+                #smallest size
+                res = s
+                size = len(s)
+            elif len(s) == size:
+                #equal size, want lexographically smallest one
+                res = min(res,s)
+        
+        return res
     
+#another solution
+#https://leetcode.com/problems/shortest-string-that-contains-three-strings/discuss/3836344/Python-Check-all-Permuations
+class Solution:
+    def minimumString(self, a: str, b: str, c: str) -> str:
+        def f(a, b):
+            if b in a: return a
+            for k in range(len(a), -1, -1):
+                if a.endswith(b[:k]):
+                    return a + b[k:]
+        return min((f(f(a,b), c) for a,b,c in permutations((a,b,c))), key=lambda a: (len(a), a))
