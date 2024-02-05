@@ -151,6 +151,108 @@ class Solution:
     
 #note: wouldn't it work if we wanted to find the maximum i for each arr[i] for each i
     
+####################################################
+# 76. Minimum Window Substring (REVISTED)
+# 04FEB24
+####################################################
+class Solution:
+    def minWindow(self, s: str, t: str) -> str:
+        '''
+        need to find min substring of s, such that every char in t (including counts) is in the window
+        maintain sliding window, we have a valid substring if the counts in t are all zero
+        '''
+        count_t = Counter(t)
+        count_s = Counter()
+        
+        def isValid(count_s,count_t):
+            #should be eqaul in cont_s
+            for k,v in count_t.items():
+                #we dont have enough
+                if count_s[k] < v:
+                    return False
+            return True
+        
+        N = len(s)
+        left = right = 0
+        ans = float('inf')
+        smallest_left, smallest_right = -1,-1
+        
+        while right < N:
+            #expand
+            curr_char = s[right]
+            count_s[curr_char] += 1
+            
+            #try to shrink
+            while left <= right and isValid(count_s,count_t):
+                curr_char = s[left]
+                count_s[curr_char] -= 1
+                
+                curr_size = right - left + 1
+                if curr_size < ans:
+                    ans = curr_size
+                    smallest_left = left
+                    smallest_right = right
+                left += 1
+            
+            right += 1
+        
+        if ans == float('inf'):
+            return ""
+        return s[smallest_left:smallest_right+1]
+
+#we can filter s, for only the chars that are in t
+#insteaf of advancing 1 by 1, we skip right to the next position
+#so insteaf of going through the entire string s, we move through an array of letters and their indices
+#only if chars are in t
+class Solution:
+    def minWindow(self, s: str, t: str) -> str:
+        '''
+        need to find min substring of s, such that every char in t (including counts) is in the window
+        maintain sliding window, we have a valid substring if the counts in t are all zero
+        '''
+        count_t = Counter(t)
+        count_s = Counter()
+        
+        def isValid(count_s,count_t):
+            #should be eqaul in cont_s
+            for k,v in count_t.items():
+                #we dont have enough
+                if count_s[k] < v:
+                    return False
+            return True
+        
+        filtered_s = []
+        for i,ch in enumerate(s):
+            if ch in count_t:
+                filtered_s.append((ch,i))
+        
+        N = len(filtered_s)
+        left = right = 0
+        ans = float('inf')
+        smallest_left, smallest_right = -1,-1
+        
+        while right < N:
+            #expand
+            curr_char,right_ptr = filtered_s[right]
+            count_s[curr_char] += 1
+            
+            #try to shrink
+            while left <= right and isValid(count_s,count_t):
+                curr_char,left_ptr = filtered_s[left]
+                count_s[curr_char] -= 1
+                
+                curr_size = right_ptr - left_ptr + 1
+                if curr_size < ans:
+                    ans = curr_size
+                    smallest_left = left_ptr
+                    smallest_right = right_ptr
+                left += 1
+            
+            right += 1
+        
+        if ans == float('inf'):
+            return ""
+        return s[smallest_left:smallest_right+1]
 
 #####################################################
 # 2800. Shortest String That Contains Three Strings
