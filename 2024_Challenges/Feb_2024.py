@@ -309,3 +309,333 @@ class Solution:
                 if a.endswith(b[:k]):
                     return a + b[k:]
         return min((f(f(a,b), c) for a,b,c in permutations((a,b,c))), key=lambda a: (len(a), a))
+    
+#############################################################
+# 2982. Find Longest Special Substring That Occurs Thrice II
+# 05FEB24
+#############################################################
+class Solution:
+    def maximumLength(self, s: str) -> int:
+        '''
+        a special string is a string that contains only one character
+        want the length of the longest special substring which occurs at least thrice
+        sliding window, and for each speical substring, store its number of occurences, 
+        find the ones that occur three times, and take the lognest by length
+        use dp array to keep track of the longest special string ending at i
+        then it becomes a conting problem
+        if dp[i] = 3
+        then for speicial string length 1, we have 3
+        speicial string length 2 of we have 2
+        special string length 3 we have 1
+        so its 3 - size + 1
+        
+        need to store counts by char
+        '''
+        N = len(s)
+        counts = defaultdict(Counter)
+        prev = s[0]
+        length = 1
+        counts[prev][length] += 1
+        
+        for i in range(1,N):
+            curr = s[i]
+            #extend
+            if curr == prev:
+                length += 1
+                counts[prev][length] += 1
+            else:
+                length = 1
+                counts[curr][length] += 1
+                prev = curr
+        
+        #search for one that occurs thrices
+        ans = -1
+        
+        for i in range(26):
+            char = chr(ord('a') + i)
+            sum_ = 0
+            #try all sizes from N to 1,
+            #this is a cunting problem
+            for j in range(N,0,-1):
+                sum_ += counts[char][j]
+                if sum_ >= 3:
+                    ans = max(ans,j)
+                    break
+        return ans
+    
+#####################################################
+# 2273. Find Resultant Array After Removing Anagrams
+# 06FEB24
+#####################################################
+class Solution:
+    def removeAnagrams(self, words: List[str]) -> List[str]:
+        '''
+        just keep checking anagrams, use delete 
+        '''
+        def encode(word):
+            counts = [0]*26
+            for ch in word:
+                counts[ord(ch) - ord('a')] += 1
+            
+            return tuple(counts)
+        
+        
+        while True:
+            to_delete = set()
+            N = len(words)
+            for i in range(N-1):
+                if encode(words[i]) == encode(words[i+1]):
+                    to_delete.add(i+1)
+            
+            if len(to_delete) == 0:
+                break
+            
+            #remove words
+            new_words = []
+            for i in range(N):
+                if i not in to_delete:
+                    new_words.append(words[i])
+            
+            words = new_words
+        
+        return words
+            
+class Solution:
+    def removeAnagrams(self, words: List[str]) -> List[str]:
+        '''
+        #groupby?
+        for a,b in groupby(words,sorted):
+            print(a,b)
+            print("----")
+            print(next(b))
+        '''
+        return [next(g) for _,g in groupby(words,sorted)]
+
+#################################################
+# 1463. Cherry Pickup II (REVISTED)
+# 11FEB24
+################################################
+#4 state
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        '''
+        three state dp; cell (i,j) and k (robot 0 or robot 1)
+        robot 1 is initially on (0,0) and robot 2 is one (0,cols-1)
+        robots need to reach the bottom row
+        we can start iwht 4 states (x_1,y_1,x_2,y_2), where we store the max cherries for each state
+        the we move
+        notice how we can only move down
+        '''
+        rows,cols = len(grid),len(grid[0])
+        memo = {}
+        
+        def dp(x1,y1,x2,y2):
+            #reached the bottomw row and are in bounds
+            if (x1 == rows - 1) and (x2 == rows - 1):
+                if (0 <= y1 < cols) and (0 <= y2 < cols):
+                    if y1 != y2:
+                        return grid[x1][y1] + grid[x2][y2]
+                    else:
+                        return grid[x1][y1]
+            #out of bounds robot 1
+            if (x1 < 0) or (x1 == rows) or (y1 < 0) or (y1 == cols):
+                return float('-inf')
+            if (x2 < 0) or (x2 == rows) or (y2 < 0) or (y2 == cols):
+                return float('-inf')
+            if (x1,y1,x2,y2) in memo:
+                return memo[(x1,y1,x2,y2)]
+            ans = float('-inf')
+            
+            #find next states, such that they are not overlapping
+            next_states = set()
+            for a in [-1,0,-1]:
+                for b in [-1,0,1]:
+                    temp = (x1 + 1, y1 + a, x2 + 1, y2 + b)
+                    next_states.add(temp)
+            for state in next_states:
+                #can only take one
+                if y1 == y2:
+                    ans = max(ans, grid[x1][y1] + dp(*state))
+                #take both
+                else:
+                    ans = max(ans, grid[x1][y1] + grid[x2][y2] + dp(*state))
+            memo[(x1,y1,x2,y2)] = ans
+            return ans
+        
+        
+        return dp(0,0,0,cols-1)
+
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        rows,cols = len(grid),len(grid[0])
+        memo = {}
+        
+        def dp(x1,y1,x2,y2):
+            #reached the bottomw row and are in bounds
+            if (x1 == rows - 1) and (x2 == rows - 1):
+                if (0 <= y1 < cols) and (0 <= y2 < cols):
+                    return 0
+                else:
+                    return float('-inf')
+            #out of bounds robot 1
+            if (x1 < 0) or (x1 == rows) or (y1 < 0) or (y1 == cols):
+                return float('-inf')
+            if (x2 < 0) or (x2 == rows) or (y2 < 0) or (y2 == cols):
+                return float('-inf')
+            if (x1,y1,x2,y2) in memo:
+                return memo[(x1,y1,x2,y2)]
+            cherries = 0
+            cherries += grid[x1][y1]
+            ans = 0
+            if y1 != y2:
+                cherries += grid[x2][y2]
+            
+            #find next states, such that they are not overlapping
+            next_states = set()
+            for a in [-1,0,-1]:
+                for b in [-1,0,1]:
+                    temp = (x1 + 1, y1 + a, x2 + 1, y2 + b)
+                    next_states.add(temp)
+            for state in next_states:
+                ans = max(ans, dp(*state))
+            memo[(x1,y1,x2,y2)] = ans + cherries
+            return ans +cherries
+        
+        
+        return dp(0,0,0,cols-1)
+
+#reduction to 3,becuase we alwyas move down 1
+class Solution:
+    def cherryPickup(self, grid: List[List[int]]) -> int:
+        m, n = len(grid), len(grid[0])
+
+        @lru_cache(None)
+        def dfs(r, c1, c2):
+            if r == m: return 0
+            cherries = grid[r][c1] if c1 == c2 else grid[r][c1] + grid[r][c2]
+            ans = 0
+            for nc1 in range(c1 - 1, c1 + 2):
+                for nc2 in range(c2 - 1, c2 + 2):
+                    if 0 <= nc1 < n and 0 <= nc2 < n:
+                        ans = max(ans, dfs(r + 1, nc1, nc2))
+            return ans + cherries
+
+        return dfs(0, 0, n - 1)
+    
+    
+#####################################################
+# 2787. Ways to Express an Integer as Sum of Powers
+# 08FEB24
+######################################################
+#MLE, too many states
+class Solution:
+    def numberOfWays(self, n: int, x: int) -> int:
+        '''
+        generate powers of x, then dp
+        oooo it must be unique1
+        i can keep a mask of what number ive taken
+        no i can use another index into the powers array
+        so it becomes dp(i,j)
+        
+        
+        '''
+        powers = []
+        
+        i = 1
+        while i**x <= n:
+            powers.append(i**x)
+            i += 1
+        N = len(powers)
+        
+        
+        memo = {}
+        mod = 10**9 + 7
+        
+        def dp(i,j):
+            if i == 0:
+                return 1
+            if j >= N:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #knapsack, take this jth one and increment
+            #or skip ip
+            take = 0
+            if i - powers[j] >= 0:
+                take = dp(i - powers[j],  j+1)
+            no_take = dp(i,j+1)
+            ways = take + no_take
+            ways %= mod
+            memo[(i,j)] = ways
+            return ways
+        
+        
+        return dp(n,0)
+    
+
+class Solution:
+    def numberOfWays(self, n: int, x: int) -> int:
+        '''
+        i dont need to generate all powers
+        state is (num,largest power)
+        
+        '''
+        MOD = 10 ** 9 + 7
+        memo = {}
+        def dfs(n, x, m):
+            r = n - m ** x
+            if r == 0:
+                return 1
+            if (n,m) in memo:
+                return memo[(n,m)]
+            elif r > 0:
+                ans = dfs(n, x, m + 1) + dfs(r, x, m + 1)
+                ans %= MOD
+                memo[(n,m)] = ans
+                return ans
+            else:
+                return 0
+        return dfs(n, x, 1) % MOD
+    
+###################################################
+# 2943. Maximize Area of Square Hole in Grid
+# 11FEB24
+###################################################
+#FML, the bars are already there, we just need to chose from hBars and vBars
+class Solution:
+    def maximizeSquareHoleArea(self, n: int, m: int, hBars: List[int], vBars: List[int]) -> int:
+        '''
+        the hold needs to be square, 
+        the initial grid however does not need to be square
+        need to sort hBars and vBars consider them seperately
+        compute the longest sequnece of sonectuive itereges values in each array
+        notice the dimensinos of the grid are (n + 2) x (m + 2)
+        if i have an array like 3,4,5,6,7,  i can remove 4,5,6 and keeep 7 as the boundaries
+        fuck the bars could be repeated, need to remove duplicatees
+        
+        omg all the bars are already there, we just need to 
+        '''
+        #need longest consecutive streak
+        def getLongest(barset):
+            longest = 1
+            for num in barset:
+                size = 1
+                curr = num
+                while curr + 1 in barset:
+                    curr += 1
+                    size += 1
+                
+                longest = max(longest,size)
+            
+            return longest
+        
+        if len(hBars) == 0 or len(vBars) == 0:
+            return 1
+        hBars = set(hBars)
+        vBars = set(vBars)
+        
+        longest_h = getLongest(hBars)
+        longest_v = getLongest(vBars)
+        
+        edge = min(longest_h,longest_v) + 1
+        return edge*edge
