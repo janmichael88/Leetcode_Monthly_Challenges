@@ -639,3 +639,57 @@ class Solution:
         
         edge = min(longest_h,longest_v) + 1
         return edge*edge
+
+###########################################
+# 2149. Rearrange Array Elements by Sign
+# 14FEB2
+###########################################
+class Solution:
+    def rearrangeArray(self, nums: List[int]) -> List[int]:
+        '''
+        need to preserve order
+        every consecutive pair of integers must have opposite signs
+        start with positive
+        i can pull apart with two lists and rebuidlg
+        '''
+        pos = []
+        neg = []
+        for num in nums:
+            if num > 0:
+                pos.append(num)
+            else:
+                neg.append(num)
+        
+        ans = []
+        for p,n in zip(pos,neg):
+            ans.append(p)
+            ans.append(n)
+        
+        return ans
+    
+#now do in place
+class Solution:
+    def rearrangeArray(self, nums: List[int]) -> List[int]:
+        '''
+        kinda like bubble sort,
+        seach for the first number that isn't the right sign
+        '''
+        N = len(nums)
+        sign = 1
+        for i in range(N):
+            #not at right sign
+            if nums[i]*sign < 0:
+                j = i + 1
+                #seach for next number with correct sign
+                while j < N and nums[j]*sign < 0:
+                    j += 1
+                #bubble back
+                while j > i:
+                    nums[j], nums[j - 1] = nums[j - 1],nums[j]
+                    j -= 1
+            
+            #flip sign
+            sign *= -1
+        
+        return nums
+            
