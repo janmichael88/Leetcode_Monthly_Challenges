@@ -693,3 +693,67 @@ class Solution:
         
         return nums
             
+##############################################
+# 2971. Find Polygon With the Largest Perimeter
+# 15FEB24
+###############################################
+class Solution:
+    def largestPerimeter(self, nums: List[int]) -> int:
+        '''
+        polygon needs at least three sides, which we will always have
+        given sides a1,a2,a3...ak
+        and we have a1 <= a2 <= a3 ... <= ak
+        and a1 + a2 + a3 + ak-1 > a_k, then were always exists a polygon with k sides
+        sort the sides
+        [5,5,5]
+        [0,5,10,15]
+        use the first side, 5, 
+        pref_sum and check how far we can go?
+        if i take the largest side, call it at position i, i need to ensure that the sume of th previous sides is bigger
+        after soriting, pick side i, and check that sum[0 to i-1] is greater than i
+        greddily start with the largest side and work down
+        
+        '''
+        nums.sort()
+        pref_sum = [nums[0]]
+        for num in nums[1:]:
+            pref_sum.append(pref_sum[-1] + num)
+        
+        
+        #pointer to largst side
+        ptr = len(nums) - 1
+        while ptr >= 3 and pref_sum[ptr-1] <= nums[ptr]:
+            ptr -= 1
+            
+        
+        #validate
+        if pref_sum[ptr-1] > nums[ptr]:
+            return pref_sum[ptr]
+        
+        return -1
+            
+class Solution:
+    def largestPerimeter(self, nums: List[int]) -> int:
+        '''
+        we can just sort and accumulate along the way, and stop when we can't use the enxt longest side
+        the intuition is that the longest side must be greater than the sum of the other remaining sides
+        if the current side is smaller than the sum of the previous sides, we can still make a polygon due to the inequality
+        
+        turns out the check for i >= 2 is uncessary
+        when i = 0, prev__sum initally is zero and so largest wouyld still never updates
+        when i = 1, prev_sum takes first element, and since the array is sorted, the first element cannot be < prev_sum when i == 1
+        
+        '''
+        nums.sort()
+        largest = -1
+        prev_sum = 0
+        for i in range(len(nums)):
+            
+            if (i >= 2 and nums[i] < prev_sum):
+                largest = prev_sum + nums[i]
+            
+            prev_sum += nums[i]
+        
+        return largest
+    
+
