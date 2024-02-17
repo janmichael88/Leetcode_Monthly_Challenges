@@ -756,4 +756,105 @@ class Solution:
         
         return largest
     
+################################################
+# 2171. Removing Minimum Number of Magic Beans
+# 16FEB24
+#################################################
+class Solution:
+    def minimumRemoval(self, beans: List[int]) -> int:
+        '''
+        we need the minimum number of beans to remove in order to make the bags equal, some bags can be zero
+        after sorting
+        [1,4,5,6]
+        if we select beans[i] as the number of beans remaning in each bag, then the number of beans to be removed is just:
+            sum(beans) - (len(beans) - i)*beans[i]
+        
+        for some j < i; the are all removed, which is just sum of beas[0:i-1]
+        for some j >= i, they become A[i], contributing A[i:len(beans)]
+        summing them both gives sum(beans) - (len(beans) - i)*beans[i]
+        '''
+        beans.sort()
+        ans = float('inf')
+        N = len(beans)
+        SUM = sum(beans)
+        
+        for i in range(N):
+            #choose this as the bag we want to bring everything down to
+            ans = min(ans,SUM - (N - i)*beans[i] )
+        
+        return ans
+    
+#brute force inutition
+class Solution:
+    def minimumRemoval(self, beans: List[int]) -> int:
+        '''
+        pref_sum, sort beans and choose beans[i] as the one we want to bring down to
+        then count beans needed for removal to the left and to the right and minimize
+        '''
+        beans.sort()
+        N = len(beans)
+        
+        pref_sum = [0]
+        for b in beans:
+            pref_sum.append(pref_sum[-1] + b)
+        
+        ans = float('inf')
+        
+        for i in range(N):
+            left = beans[:i]
+            right = beans[i+1:]
+            removals_right = sum(right) - beans[i]*(N-i-1) #maintin beans[i]
+            removals_left = sum(left)
+            ans = min(ans,removals_left + removals_right)
+        
+        return ans
+    
 
+# optimize with pref _sum
+class Solution:
+    def minimumRemoval(self, beans: List[int]) -> int:
+        '''
+        pref_sum, sort beans and choose beans[i] as the one we want to bring down to
+        then count beans needed for removal to the left and to the right and minimize
+        '''
+        beans.sort()
+        N = len(beans)
+        
+        pref_sum = [0]
+        for b in beans:
+            pref_sum.append(pref_sum[-1] + b)
+        
+        ans = float('inf')
+        
+      # brute force 
+      #  for i in range(N):
+      #      left = beans[:i]
+      #      right = beans[i+1:]
+      #      removals_right = sum(right) - beans[i]*(N-i-1) #maintin beans[i]
+      #      removals_left = sum(left)
+      #      ans = min(ans,removals_left + removals_right)
+        
+        for i in range(N):
+            removals_right = (pref_sum[-1] - pref_sum[i+1]) - beans[i]*(N-i-1)
+            removals_left = pref_sum[i]
+            ans = min(ans, removals_left + removals_right)
+        return ans
+    
+#we dont need pref sum, if we have sum of left removals, we can find the some of the right removals
+class Solution:
+    def minimumRemoval(self, beans: List[int]) -> int:
+        '''
+        pref_sum, sort beans and choose beans[i] as the one we want to bring down to
+        then count beans needed for removal to the left and to the right and minimize
+        '''
+        beans.sort()
+        N = len(beans)
+        ans = float('inf')
+        SUM = sum(beans)
+        removals_left = 0
+        
+        for i in range(N):
+            removals_left += beans[i]
+            removals_right = (SUM - removals_left - beans[i]) - beans[i]*(N-i-1)
+            ans = min(ans, removals_left + removals_right)
+        return ans
