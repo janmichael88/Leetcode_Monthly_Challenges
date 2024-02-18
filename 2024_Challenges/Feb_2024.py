@@ -858,3 +858,169 @@ class Solution:
             removals_right = (SUM - removals_left - beans[i]) - beans[i]*(N-i-1)
             ans = min(ans, removals_left + removals_right)
         return ans
+    
+######################################################
+# 1642. Furthest Building You Can Reach (REVISTED)
+# 17FEB24
+#######################################################
+#doesn't quite work
+#71/78
+class Solution:
+    def furthestBuilding(self, heights: List[int], bricks: int, ladders: int) -> int:
+        '''
+        can either use ladders or brickets to climb the buildings
+        intution is to use bricks to clear the smallest gaps first, then use ladders
+        ladders on the biggest jumps
+        '''
+        jumps = [] #need to keep track of the largest jumps, max heap
+        N = len(heights)
+        for i in range(N-1):
+            if heights[i+1] > heights[i]:
+                jumps.append(-(heights[i+1] - heights[i]))
+        
+        heapq.heapify(jumps)
+        
+        i = 0
+        while i < N-1:
+            #can move
+            if heights[i+1] <= heights[i]:
+                i += 1
+            else:
+                #we have a gap
+                jump = heights[i+1] - heights[i]
+                #if this jump is the biggest and correspons to the biggest jump, use a ladder if we have it
+                if len(jumps) > 0 and -jumps[0] == jump:
+                    if ladders > 0:
+                        ladders -= 1
+                        heapq.heappop(jumps)
+                        i += 1
+                    #no ladders check if we can use bricks
+                    elif bricks >= -jumps[0]:
+                        bricks += heapq.heappop(jumps)
+                        i += 1
+                    #no bricks or ladders
+                    else:
+                        return i
+                #current gap is not the largest, then use bricks
+                else:
+                    if bricks >= jump:
+                        #i need to clear this jump from the heap! but this would take even longer
+                        bricks -= jump
+                        i += 1
+                    elif ladders > 0:
+                        ladders -= 1
+                        i += 1
+                    else:
+                        return i
+        
+        return i
+    
+class Solution:
+    def furthestBuilding(self, heights: List[int], bricks: int, ladders: int) -> int:
+        '''
+        ladder variant
+        '''
+        ladder_allocations = [] #used ladders
+        N = len(heights)
+        for i in range(N-1):
+            #find gap
+            gap = heights[i+1] - heights[i]
+            if gap <= 0:
+                continue
+            
+            #if ladders remaning
+            if ladders > 0:
+                heapq.heappush(ladder_allocations, gap)
+                ladders -= 1
+            else:
+                #try relcaming ladder by using bricks
+                if not ladder_allocations or gap < ladder_allocations[0]:
+                    bricks -= gap
+                else:
+                    #swap ladderw with bricks
+                    bricks -= heapq.heappop(ladder_allocations)
+                    heapq.heappush(ladder_allocations, gap)
+                if bricks < 0:
+                    return i
+        
+        return N - 1
+    
+#brick variant
+class Solution:
+    def furthestBuilding(self, heights: List[int], bricks: int, ladders: int) -> int:
+        '''
+        ladder variant
+        insteaf of reclaiming a ladder, we reclaim bricks
+        when we are out of bricks, we relace the largest climb with a ladder and get bricks bacj
+        '''
+        brick_allocations = [] #max heap
+        N = len(heights)
+        for i in range(N-1):
+            #find gap
+            gap = heights[i+1] - heights[i]
+            if gap <= 0:
+                continue
+            #push into max heap and use bricks
+            bricks -= gap
+            heapq.heappush(brick_allocations, -gap)
+            
+            #still good to conitue
+            if bricks >= 0:
+                continue
+            
+            #we cant go forward
+            if ladders <= 0:
+                return i
+            
+            #relcaim bricks and user ladder
+            bricks += -heapq.heappop(brick_allocations)
+            ladders -= 1
+        
+        return N - 1
+    
+#binary search workable solution paradigm
+    
+
+################################################
+# 2599. Make the Prefix Sum Non-negative
+# 18FEB24
+################################################
+class Solution:
+    def makePrefSumNonNegative(self, nums: List[int]) -> int:
+        '''
+        if pref sum suddenly became negative, then the numbe we just added to the rolling sum is the issue
+        we can replace it with another number, but we are only allowed to move a number to the end of nums
+        ending sum will always be the same
+        '''
+        moves = 0
+        pref_sum = 0
+        min_heap = []
+        
+        for num in nums:
+            pref_sum += num
+            heapq.heappush(min_heap, num)
+            if pref_sum < 0:
+                #undo to minimum
+                moves += 1 
+                pref_sum -= heapq.heappop(min_heap)
+        
+        return moves
+    
+class Solution:
+    def makePrefSumNonNegative(self, nums: List[int]) -> int:
+        '''
+        the test cases are written always so that such a pref sum exsits
+        if pre sum becomes negative, we just keep taking it back until it becomes positive again
+        '''
+        min_heap = []
+        moves = 0
+        pref_sum = 0
+        
+        for num in nums:
+            pref_sum += num
+            heapq.heappush(min_heap,num)
+            while len(min_heap) > 0 and pref_sum < 0:
+                moves += 1
+                pref_sum -= heapq.heappop(min_heap)
+        
+        return moves
