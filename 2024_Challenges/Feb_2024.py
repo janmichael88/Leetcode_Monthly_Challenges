@@ -979,8 +979,43 @@ class Solution:
         return N - 1
     
 #binary search workable solution paradigm
-    
-
+class Solution:
+    def furthestBuilding(self, heights: List[int], bricks: int, ladders: int) -> int:
+        '''
+        try and see if we can reach some index i, if we can reach index i, then we can reach everything less than i
+        for each index i, min sort the climbs and allocate bricks and ladders
+        '''
+        def can_reach(building_idx,heights,bricks,ladders):
+            climbs = []
+            for i in range(1,building_idx):
+                if heights[i] > heights[i-1]:
+                    climbs.append(heights[i] - heights[i-1])
+            
+            #sort
+            climbs.sort()
+            for c in climbs:
+                if bricks >= c:
+                    bricks -= c
+                elif ladders > 0:
+                    ladders -= 1
+                else:
+                    return False
+            
+            return True
+        
+        
+        #binary search
+        left = 0
+        right = len(heights) - 1
+        while left < right:
+            mid = left + (right - left+1) // 2
+            if can_reach(mid,heights,bricks,ladders):
+                left = mid
+            else:
+                right = mid - 1
+        
+        return left-1
+            
 ################################################
 # 2599. Make the Prefix Sum Non-negative
 # 18FEB24
