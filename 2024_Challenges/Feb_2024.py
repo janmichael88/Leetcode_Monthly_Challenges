@@ -987,7 +987,7 @@ class Solution:
         '''
         def can_reach(building_idx,heights,bricks,ladders):
             climbs = []
-            for i in range(1,building_idx):
+            for i in range(1,building_idx+1):
                 if heights[i] > heights[i-1]:
                     climbs.append(heights[i] - heights[i-1])
             
@@ -1006,15 +1006,15 @@ class Solution:
         
         #binary search
         left = 0
-        right = len(heights) - 1
+        right = len(heights)-1
         while left < right:
-            mid = left + (right - left+1) // 2
+            mid = left + (right - left +1) // 2 #need upper middle for this one
             if can_reach(mid,heights,bricks,ladders):
                 left = mid
             else:
                 right = mid - 1
         
-        return left-1
+        return left
             
 ################################################
 # 2599. Make the Prefix Sum Non-negative
@@ -1059,3 +1059,228 @@ class Solution:
                 pref_sum -= heapq.heappop(min_heap)
         
         return moves
+
+##############################################
+# 2402. Meeting Rooms III
+# 18FEB24
+##############################################
+class Solution:
+    def mostBooked(self, n: int, meetings: List[List[int]]) -> int:
+        '''
+        need to return the number of the room that held the most meetings, tie break with lowest room number
+        n rooms, labeled n-1, meetings time is half closd interval, all start times are unique
+        rules:
+        1. each meeting will takc eplace in unused room with lowesst number
+        2. if there are no available rooms, meeting will be delayed until room becomes free, meeting time duration should be the same
+        3. when a room becomes unused, meetings that have an ealier original start time should be given the room
+        
+        sort on starts
+        min heap for avialbel roomms, 
+        '''
+        meetings.sort(key = lambda x : x[0])
+        room_counts = [0]*n
+        
+        rooms_available = [i for i in range(n)] #min heap
+        heapq.heapify(rooms_available)
+        
+        end_times = [] #min heap
+        
+        for start,end in meetings:
+            duration = end - start
+            #take from used rooms and put back into available
+            while end_times and end_times[0][0] <= start:
+                next_end, next_room = heapq.heappop(end_times)
+                heapq.heappush(rooms_available, next_room)
+            #we have avialable roomrs
+            if len(rooms_available) > 0:
+                next_room = heapq.heappop(rooms_available)
+                #move to used rooms
+                heapq.heappush(end_times, [end,next_room])
+            #otherwise wait for the next available room
+            else:
+                #in the case we can't find a room, look for the earliest available end time and update it byt adding duration to end time
+                next_end,next_room = heapq.heappop(end_times)
+                heapq.heappush(end_times, [next_end + duration,next_room])
+            
+            room_counts[next_room] += 1
+        
+        #print(room_counts)
+        max_count = max(room_counts)
+        return room_counts.index(max_count)
+    
+#brute force
+class Solution:
+    def mostBooked(self, n: int, meetings: List[List[int]]) -> int:
+        '''
+        brute force would be to sort and scan rooms from smallest to largest
+        allocate first smallest index room if available, if there are none available, delay maeeting until room becomes free
+        in this case grab the first open room
+        room_availability_time and counts
+        1. if we find available room, assign meeting to that room, and upate availability tome
+        2. no room available, serach for room the becomes available soongest, take and update duration
+        '''
+        counts = [0]*n
+        earliest_available_time = [0]*n
+        meetings.sort(key = lambda x : x[0])
+        
+        for start,end in meetings:
+            duration = end - start
+            min_available_room = 0
+            min_available_time = float('inf')
+            found_unused_room = False
+            #search rooms increasninly
+            for i in range(n):
+                #if we can use this room take and update
+                if earliest_available_time[i] <= start:
+                    found_unused_room = True
+                    counts[i] += 1
+                    earliest_available_time[i] = end
+                    break
+                #need to updated the next avilable time
+                if min_available_time > earliest_available_time[i]:
+                    min_available_time = earliest_available_time[i]
+                    min_available_room = i
+            
+            #if we havent found one, yes the one that will become next available
+            if not found_unused_room:
+                earliest_available_time[min_available_room] += duration
+                counts[min_available_room] += 1
+        
+        return counts.index(max(counts))
+                
+    
+##############################################
+# 2946. Matrix Similarity After Cyclic Shifts
+# 19FEB24
+###############################################
+class Solution:
+    def areSimilar(self, mat: List[List[int]], k: int) -> bool:
+        '''
+        reduce k mod cols
+        '''
+        k = k % len(mat[0])
+        for i,row in enumerate(mat):
+            if i % 2 == 0: #left shift
+                l,r = row[:k],row[k:]
+                temp = r + l
+            else:
+                l,r = row[:len(row) - k], row[len(row) - k:]
+                temp = r + l
+            
+            if temp != row:
+                return False
+        
+        return True
+    
+#################
+# 751. IP to CIDR
+# 20FEB24
+#################
+class Solution:
+    def ipToCIDR(self, ip: str, n: int) -> List[str]:
+        '''
+        this is a cool problem, buts its bitch
+        need to return the shortest list of CIDR blocks that covers the range of IP addresses
+        we need minimum intervals that cover the necessary ip addresses from start ip to ip + n
+        hint: 1. convert the ip addresses to and from long integer
+        want to know the most addresses we can put in this block, starting from "start" ip to n, 
+        it is the smallest between the lowest bit of start and the highest bit of n, then repeat this process with new start and n
+        '''
+        def ip_to_bin(ip): #convert ip to len 32 bit mask
+            vals = []
+            for num in map(int, ip.split(".")):
+                vals.append("{:08b}".format(num)) #format zeros, padding left
+            
+            return "".join(vals)
+        
+        def bin_to_ip(b):
+            vals = []
+            for i in range(0,32,8):
+                part = str(int(b[i:i+8],2))
+                vals.append(part)
+            
+            return ".".join(vals)
+        
+        
+        #print(ip_to_bin(ip))
+        #print(bin_to_ip(ip_to_bin(ip)))
+        ans = []
+        cur_ip = ip_to_bin(ip)
+        while n > 0:
+            last_one = 31
+            while last_one> -1 and cur_ip[last_one] != '1':
+                last_one -= 1
+            trailing_zero = 31 - last_one
+            while n - (1 << trailing_zero) < 0:
+                trailing_zero -= 1
+                
+            cidr = "{0}/{1}".format(bin_to_ip(cur_ip), 32 - trailing_zero)
+            ans.append(cidr)
+            n -= 2 ** trailing_zero
+            cur_ip = "{:032b}".format(int(cur_ip, 2) + (1 << trailing_zero))
+        return ans
+    
+class Solution:
+    def ipToCIDR(self, ip: str, n: int) -> List[str]:
+        '''
+        idea is to find the minimum cover for the n ip addresses starting from ip
+        rather, we can want the the minmum number of CIDR blocks that cover ip + n
+        n can't be more than 1000
+        if we have an ip 255.0.0.7/x, then 2^(32-x) can be covereed
+        mask is the first x bits from the front
+        utility to convert ip to num and num to up
+        check low bit, given position if first set bit starting frm the right
+            say we have 255.0.0.8 -  11111111 00000000 00000000 00001000
+            and         255.0.0.15 - 11111111 00000000 00000000 00001111
+            both have bits set at position 4
+        
+        countdown from the given ip address
+        number of the slash can't be more than 32, if /32, theres only one ip adress it can cover
+        '''
+        num = self.ip_to_num(ip)
+        ans = []
+        
+        #while we have ips to cover
+        while n > 0:
+            #find first bit position and get number of ips in this range
+            upper_bound = self.lowbit(num)
+            #if we covered too many
+            while upper_bound > n:
+                upper_bound = upper_bound >> 1
+            
+            #we can cover up tp upper_bound ips, so reduce n by such
+            n = n - upper_bound
+            
+            #get this CIDR block using upperbound IPs to cover
+            cidr_block = self.num_to_ip(num) + "/" + str(32 - self.ilowbit(upper_bound))
+            ans.append(cidr_block)
+            #increase by the number of ips we just covered
+            num = num + upper_bound
+        
+        return ans
+                
+    
+    def ip_to_num(self,ip):
+        nums = list(map(int, ip.split(".")))
+        ans = 0
+        for i,num in enumerate(nums):
+            ans += (num << (8*(4-i-1)))
+        
+        return ans
+    
+    def num_to_ip(self,num):
+        parts = []
+        for i in range(4):
+            parts.append(str((num >> (8*(4-i-1)) & 255)))
+        
+        return ".".join(parts)
+    
+    def ilowbit(self,num):
+        for i in range(32):
+            if num & (1 << i):
+                return i
+        
+        return 32
+    
+    def lowbit(self, num):
+        return 1 << self.ilowbit(num) #2^i
