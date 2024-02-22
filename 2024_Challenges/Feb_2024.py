@@ -1352,3 +1352,52 @@ class Solution:
             ans = max(ans, right - left + 1)
         
         return ans
+
+################################################
+# 2768. Number of Black Blocks
+# 22FEB24
+################################################
+class Solution:
+    def countBlackBlocks(self, m: int, n: int, coordinates: List[List[int]]) -> List[int]:
+        '''
+        input is too big to traverse the whole grid
+        block is defined as 2 x 2 submatrix,
+            rather a block with a cell [x,y] as its top left corner contains
+            [x, y], [x + 1, y], [x, y + 1], and [x + 1, y + 1]
+        arr array can lony have values 0,1,2,3,4
+        arr[i] is number of blocks that contains exactly one black cells
+        there can be (m-2)*(n-2) blocks
+        notice m and n are at least 2
+        iterate on cooridantes, and see what block it is a part of
+        for every cell, it could be a part of 4 blocks
+        say we have cell (i,j) need to find to top lefts
+        (i,j) -> (i-1,j-1), (i-1,j), (i,j-1), and (i,j)
+        '''
+        #this will only count if black cell belong to block
+        #what about count not a back cell (white, cell) belonging to a block?
+        #get total blocks and when we assign block mark as used
+        #then get difference
+        total_blocks = (m-1)*(n-1)
+        counts = Counter()
+        used_blocks = set()
+        for i,j in coordinates:
+            #find blocks this (x,y) could belong too
+            for dx,dy in [(i-1,j-1), (i-1,j), (i,j-1),(i,j)]:
+                #in bounds
+                #this wont record the number of zero blocks
+                if 0 <= dx < m-1 and 0 <= dy < n-1:
+                    used_blocks.add((dx,dy))
+                    counts[(dx,dy)] += 1
+        
+        ans = [0]*5
+        ans[0] = total_blocks - len(used_blocks)
+        
+        #print(counts)
+        #print(used_blocks)
+        #print(ans)
+        
+        #count of counts
+        for k,v in Counter(counts.values()).items():
+            ans[k] = v
+        
+        return ans
