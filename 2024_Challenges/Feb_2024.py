@@ -1284,3 +1284,71 @@ class Solution:
     
     def lowbit(self, num):
         return 1 << self.ilowbit(num) #2^i
+    
+###############################################
+# 2401. Longest Nice Subarray
+# 21FEB24
+###############################################
+#had the right idea, but we cant' just & numbers, we need to set them
+#note this is wrong
+class Solution:
+    def longestNiceSubarray(self, nums: List[int]) -> int:
+        '''
+        for the largest number 10**9, we can use 30 bits to represent it
+        in order for a subarray to be nice, bitwise AND for all numbers must be zero, which there cant be a one in the same 
+        bit position for any two numbers
+        idk why length 1 is a nice subarray
+        
+        
+        '''
+        ans = 1
+        left = 0
+        right = left + 1
+        
+        curr_bitwise_and = nums[left]
+        N = len(nums)
+        while right < N:
+            if curr_bitwise_and & nums[right] != 0:
+                left = right
+                right = left + 1
+                curr_bitwise_and = nums[left-1]
+            else:
+                while right < N and curr_bitwise_and & nums[right] == 0:
+                    curr_bitwise_and = curr_bitwise_and & nums[right]
+                    right += 1
+                ans = max(ans, right - left + 1)
+                left = right
+                right = left + 1
+                curr_bitwise_and = nums[left-1]
+        
+        return ans
+    
+class Solution:
+    def longestNiceSubarray(self, nums: List[int]) -> int:
+        '''
+        need to treat it like we're storing the bit positions of each number
+        idea, collect 1 indices,
+            for example, 10 = (1010), so we have (1,3)
+        
+        say we have temp as the current AND of all numbers, if temp & next num == 0, its ok to add the right bound
+        otherwise we on take
+        
+        take is |
+        untake is XOR, ^
+        '''
+        ans = 1
+        left  = 0
+        curr_state = nums[left]
+        
+        for right in range(1,len(nums)):
+            #if we aren't in a nice subarray move left
+            while left < right and (curr_state & nums[right]):
+                #untake 
+                curr_state = curr_state ^ nums[left]
+                left += 1
+            
+            #its ok to take the number
+            curr_state = curr_state | nums[right]
+            ans = max(ans, right - left + 1)
+        
+        return ans
