@@ -1501,6 +1501,52 @@ class Solution:
         
         return N//2 - comps
     
+#union find solution
+class DSU:
+    def __init__(self, n):
+        self.parent = [i for i in range(n)]
+        self.comps = n
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        if x_par != y_par:
+            self.comps -= 1
+            self.parent[x_par] = y_par
+
+class Solution:
+    def minSwapsCouples(self, row: List[int]) -> int:
+        '''
+        we can also do union find, when we join a group, just decrement the component size
+        '''
+        #convert poeple to couple indicies
+        #(0,1) -> 0, (2,3) -> 1
+        
+        N = len(row)
+        for i in range(N):
+            row[i] = row[i] // 2
+        
+        #make adj_list, for each i connect to i+1
+        adj_list = defaultdict(set)
+        for i in range(0,N,2):
+            adj_list[row[i]].add(row[i+1])
+            adj_list[row[i+1]].add(row[i])
+            
+        
+        UF = DSU(N//2)
+        for i in range(0,N//2):
+            a = row[2*i]
+            b = row[2*i+1]
+            UF.union(a,b)
+        
+        return N//2 - UF.comps
+    
 ###################################################
 # 787. Cheapest Flights Within K Stops (REVISTED)
 # 23FEB24
@@ -1609,4 +1655,47 @@ class Solution:
                     heapq.heappush(heap, (cost + w, cur_stops + 1, nei))        
         return -1
 
-                
+##################################################
+# 2093. Minimum Cost to Reach City With Discounts
+# 23FEB24
+##################################################
+class Solution:
+    def minimumCost(self, n: int, highways: List[List[int]], discounts: int) -> int:
+        '''
+        the problem is that the graph is undirected
+        treat this like dp
+        djikstras, make sure to keep track of discounts used
+        need to used djikstras with two states insteaf of one
+        '''
+        pq = [(0, 0, discounts)]
+        graph = collections.defaultdict(list)
+        visited = dict()
+        cost = dict()
+
+        for a, b, dist in highways:
+            graph[a].append(b)
+            graph[b].append(a)
+            cost[(a, b)] = dist
+            cost[(b, a)] = dist
+
+        while pq:
+            curr_cost, node, curr_disc = heapq.heappop(pq)
+
+            # Because of how djikstra works, when we reach this node the first time,
+            # we will reach there with the lowest cost.  However, we may reach this node
+            # again with a highest cost, but more discount tickets, which can lead to a 
+            # more optimal soln at the end.  If we ever come back to this node with the same or 
+            # fewer discounts, the soln is not optimal.
+            if node in visited and curr_disc <= visited[node]: #only update if we can use more discounts, not less
+                continue
+            visited[node] = curr_disc
+
+            if node == n - 1:
+                return curr_cost
+            for neigh in graph[node]:
+                if curr_disc > 0:
+                    heapq.heappush(pq, (cost[(node, neigh)] // 2 + curr_cost, neigh, curr_disc - 1))
+                heapq.heappush(pq, (cost[(node, neigh)] + curr_cost, neigh, curr_disc))
+        # no soln
+        return -1
+    
