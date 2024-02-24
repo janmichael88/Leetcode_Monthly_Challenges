@@ -1401,3 +1401,212 @@ class Solution:
             ans[k] = v
         
         return ans
+    
+##########################################
+# 765. Couples Holding Hands
+# 22FEB24
+##########################################
+#if pairs are good, keep them
+#otherwise swap with the one we want to find
+#idk why this greedy swapping works?
+class Solution:
+    def minSwapsCouples(self, row: List[int]) -> int:
+        '''
+        question is given an array of len 2*n, with numbers [0 to 2*n-1]
+        find minimum number of swaps to make them ordered, such that (i and i+1) are next to each other
+        rather for all indices from 0 to n//2
+        we want 2*i and 2*i+1 next to each other in the array
+        hint1, say there are N two seat couches, for each couple draw an edge from the cout of one partner to the couch of another partner
+        N = len(row)
+        for i in range(N//2):
+            print(2*i,2*i+1)
+        [0,2,1,3]
+        dist from 0 to 1 is 1
+        dist from 2 to 3 is 1
+        we need them to be 0
+        if there are an even number of couples that are the same dist away, then number of swaps is just count(couples) // 2
+        '''
+        #greedy just swap wit the next value if we can't
+        N = len(row)
+        num_to_id = {num:i for i,num in enumerate(row)}
+        swaps = 0
+        
+        #step on even pairs, i.e left couple of pair
+        for i in range(0,N,2):
+            #dont touch good pairs
+            if row[i] % 2 == 0 and row[i+1] == row[i] + 1:
+                continue
+            if row[i+1] % 2 == 0 and row[i] == row[i+1] + 1:
+                continue
+            #invalid pair
+            if row[i] % 2 == 0:
+                num_to_move = row[i+1]
+                next_pos = num_to_id[row[i] + 1] #find matching pair
+            elif row[i+1] % 2 == 0:
+                num_to_move = row[i]
+                next_pos = num_to_id[row[i+1] + 1] #find matching pair
+            elif row[i] % 2 == 1:
+                num_to_move = row[i+1]
+                next_pos = num_to_id[row[i] - 1] #instead of left to right, its right to left
+            
+            swaps += 1
+            #move them
+            row[next_pos] = num_to_move
+            num_to_id[num_to_move] = next_pos
+        
+        return swaps
+    
+class Solution:
+    def minSwapsCouples(self, row: List[int]) -> int:
+        '''
+        if there are N couples, we treat each couple as node
+        now if in positions 2*i and 2*i + 1 we have a person from couple u and a person from couple v,
+        then the permutations are going to involve u and v
+        so there is an edge between u and v
+        the min number of swpas is just N - number of connected componenets
+        
+        comes from theory of permutations
+            an perm can be decompsose into a composition of cyclic swaps
+            if a cylic perm has k elements, we need k -1 swaps
+        
+        could also use dfs to find the connected compoenents
+        '''
+        #convert poeple to couple indicies
+        #(0,1) -> 1, (2,3) -> 2
+        
+        N = len(row)
+        for i in range(N):
+            row[i] = row[i] // 2
+        
+        #make adj_list, for each i connect to i+1
+        adj_list = defaultdict(set)
+        for i in range(0,N,2):
+            adj_list[row[i]].add(row[i+1])
+            adj_list[row[i+1]].add(row[i])
+        
+        #use dfs to count up number of components
+        comps = 0
+        seen = set()
+        
+        def dfs(node,seen):
+            seen.add(node)
+            for neigh in adj_list[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen)
+        
+        for i in row:
+            if i not in seen:
+                dfs(i,seen)
+                comps += 1
+        
+        return N//2 - comps
+    
+###################################################
+# 787. Cheapest Flights Within K Stops (REVISTED)
+# 23FEB24
+#################################################
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        '''
+        
+        dp:
+            states are (curr_stop,k)
+        '''
+        graph = defaultdict(list)
+        for u,v,weight in flights:
+            graph[u].append((v,weight))
+            
+        memo = {}
+        
+        def dp(curr,k):
+            if curr == dst:
+                return 0
+            if k < 0:
+                return float('inf')
+            if (curr,k) in memo:
+                return memo[(curr,k)]
+            
+            ans = float('inf')
+            for neigh,weight in graph[curr]:
+                ans = min(ans, weight + dp(neigh,k-1))
+            
+            memo[(curr,k)] = ans
+            return ans
+        
+        
+        ans = dp(src,k)
+        if ans != float('inf'):
+            return ans
+        return -1
+    
+#bfs level by level
+#but keep dists array from djikstra
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        '''
+        bfs, but with levels limited by k
+        works because in one step we get the minimum
+        we just keep distances array and minimze the profits
+        '''
+        adj_list = defaultdict(list)
+        for u,v,w in flights:
+            adj_list[u].append((v,w))
+        price = [float(inf)] * n
+        next_level = deque([(src,0)]) # node,cost_so_far
+        #need to store next_level for the current k
+        for _ in range(k + 1):
+            level = next_level
+            next_level = deque()
+            while level:                
+                node,cost = level.popleft()
+                for nei,w in adj_list[node]:
+                    if price[nei] > cost + w:
+                        price[nei] = cost + w
+                        next_level.append((nei, price[nei]))
+
+        return -1 if price[dst] == float(inf) else price[dst]
+    
+#bfs, store level in entries and
+#keep dist array
+class Solution:
+    def findCheapestPrice(self, n: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        '''
+        bfs, but with levels limited by k
+        works because in one step we get the minimum
+        we just keep distances array and minimze the profits
+        '''
+        adj_list = defaultdict(list)
+        for u,v,w in flights:
+            adj_list[u].append((v,w))
+        price = [float(inf)] * n
+        q = deque([(src,0,k)]) # (node,cost_so_far,stops)
+        while q:                
+            node,cost,stops = q.popleft()
+            for nei,w in adj_list[node]:
+                if price[nei] > cost + w:
+                    price[nei] = cost + w
+                    #only add if we have enough stops
+                    if stops > 0:
+                        q.append((nei, price[nei],stops-1))
+        return -1 if price[dst] == float(inf) else price[dst]
+                
+
+#greedy usingg djikstras, need to first entry to be (cost_so_far)
+#and instead of prices, we keep track of stops
+class Solution:
+    def findCheapestPrice(self, N: int, flights: List[List[int]], src: int, dst: int, k: int) -> int:
+        adj_list = defaultdict(list)
+        for u,v,w in flights: adj_list[u].append((v,w))
+        heap = [(0, 0, src)]
+        stops = [float(inf)] * N
+        while heap:            
+            cost, cur_stops, node = heapq.heappop(heap)
+            if node == dst:
+                return cost
+            if stops[node] > cur_stops and cur_stops <= k:
+                stops[node] = cur_stops
+                for nei,w in adj_list[node]:
+                    heapq.heappush(heap, (cost + w, cur_stops + 1, nei))        
+        return -1
+
+                
