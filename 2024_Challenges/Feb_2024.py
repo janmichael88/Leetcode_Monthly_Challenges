@@ -1698,4 +1698,406 @@ class Solution:
                 heapq.heappush(pq, (cost[(node, neigh)] + curr_cost, neigh, curr_disc))
         # no soln
         return -1
+
+#djikstras butt used visited set
+class Solution:
+    def minimumCost(self, n: int, highways: List[List[int]], discounts: int) -> int:
+        '''
+        the problem is that the graph is undirected
+        treat this like dp
+        djikstras, make sure to keep track of discounts used
+        need to used djikstras with two states insteaf of one
+        we are LOOKING for the cheapest costs at diffferent states
+            states are (distcounts and cuty)
+        '''
+        pq = [(0, 0, discounts)]
+        graph = collections.defaultdict(list)
+        visited = set()
+
+        for a, b, cost in highways:
+            graph[a].append((b,cost))
+            graph[b].append((a,cost))
+        
+        #this is just pruning (can do with BFS too)
+        while pq:
+            curr_cost, curr_city, curr_discounts = heapq.heappop(pq)
+            #if weve seen this hear, we can skip, since its already minimum
+            if (curr_city,curr_discounts) in visited:
+                continue
+            
+            #found destination
+            if curr_city == n-1:
+                return curr_cost
+            
+            visited.add((curr_city,curr_discounts))
+            
+            for neigh,toll in graph[curr_city]:
+                #no discount
+                if (neigh,curr_discounts) not in visited:
+                    heapq.heappush(pq,(curr_cost + toll, neigh,curr_discounts))
+                
+                #disctounts to be applied we haven't seen this state
+                if curr_discounts > 0 and (neigh,curr_discounts -1) not in visited:
+                    heapq.heappush(pq, (curr_cost + toll // 2,neigh,curr_discounts-1))
+        
+        return -1
+            
     
+#######################################################
+# 2092. Find All People With Secret 
+# 24FEB24
+#######################################################
+#close but no cigar
+class DSU:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        #i dont think we need size array here
+        self.size = [1 for i in range(n)]
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if x_par == y_par:
+            return
+        
+        #swap groups
+        if self.size[x_par] >= self.size[y_par]:
+            self.parent[y_par] = x_par
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+        else:
+            self.parent[x_par] = y_par
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            
+#bfs with djikstras dist array
+class Solution:
+    def findAllPeople(self, n: int, meetings: List[List[int]], firstPerson: int) -> List[int]:
+        '''
+        notes, a person can attend multiple meetings at the same time, meetings are transitive in nature
+        person 0 tells firstPerson
+        meetings can also be disjoint
+        in order for a person to know a secret, the previous person they met with must know the secret at or before the time they meet
+        say we have [0, 1, 3], [0, 2, 5], [0, 3, 6]
+        then we have [1,4,2], [1,9,4], [1,0,3], note last has been processed already
+        only 9 knows the secret since, 1 and 4 met a time 2, but 1 didn't know the secret until time 3
+        start with 0 and firstPerson, since they know the secret at time 0
+        process people whome they meet after the time at which they learned the secret
+        important
+        we may come to process a node again IF we can reach it at an earlier time -> Djikstras
+        its really just multi source BFS
+        
+        BFS with distances array, but we we time as the contraint we wish to minimize
+        if we can reach this person at an earlier time we update,
+        then we just check for each person, if the earliest time != float('inf')
+        '''
+        #make graph
+        graph = defaultdict(list)
+        for u,v,time in meetings:
+            graph[u].append((v,time))
+            graph[v].append((u,time))
+            
+        earliest_times = [float('inf')]*n #earliest times at which a person learned the secret
+        #mark earliest
+        earliest_times[0] = 0
+        earliest_times[firstPerson] = 0
+        
+        q = deque([])
+        q.append((0,0))
+        q.append((firstPerson,0)) #entries start (person, and earliest time they knew the secret)
+        
+        while q:
+            curr_person, learned_secret_time = q.popleft()
+            for neigh,next_time in graph[curr_person]:
+                #the time for this neigh must be after the time curr person leanerd the secret
+                if next_time >= learned_secret_time:
+                    #if we can make an improvment
+                    if earliest_times[neigh] > next_time:
+                        earliest_times[neigh] = next_time
+                        q.append((neigh, next_time ))
+                        
+        ans = []
+        for i in range(n):
+            if earliest_times[i] != float('inf'):
+                ans.append(i)
+        
+        return ans
+    
+#note, its not always distances, sometimes it can be an improvment on time
+#rather, an improvment on an dist/time hueristic
+#we are allowed to revisit a state if its an improvment
+    
+#we can do dfs instead of bfs
+#we just do dfs for 0 and first person
+class Solution:
+    def findAllPeople(self, n: int, meetings: List[List[int]], firstPerson: int) -> List[int]:
+        '''
+        dfs variant
+        '''
+        #make graph
+        graph = defaultdict(list)
+        for u,v,time in meetings:
+            graph[u].append((v,time))
+            graph[v].append((u,time))
+            
+        earliest_times = [float('inf')]*n #earliest times at which a person learned the secret
+        #mark earliest
+        earliest_times[0] = 0
+        earliest_times[firstPerson] = 0
+        
+        
+        def dfs(curr_person,learned_secret_time):
+            for neigh,next_time in graph[curr_person]:
+                #the time for this neigh must be after the time curr person leanerd the secret
+                if next_time >= learned_secret_time:
+                    #if we can make an improvment
+                    if earliest_times[neigh] > next_time:
+                        earliest_times[neigh] = next_time
+                        dfs(neigh, next_time)
+                        
+        dfs(0,0)
+        dfs(firstPerson,0)
+                        
+        ans = []
+        for i in range(n):
+            if earliest_times[i] != float('inf'):
+                ans.append(i)
+        
+        return ans
+    
+class Solution:
+    def findAllPeople(self, n: int, meetings: List[List[int]], firstPerson: int) -> List[int]:
+        '''
+        for djikstras we need to process them in order of learned times first
+        because of djikstras, the time we meet them, will be the earliest time they learned the secret
+        bfs we are allowed to revisit if we can make an improvement
+        djikstra's we visit only once, and is guarnteeed to be the minimum
+        so we need to djikstras on earliest time a person learned the secret
+        '''
+        #make graph
+        graph = defaultdict(list)
+        for u,v,time in meetings:
+            graph[u].append((v,time))
+            graph[v].append((u,time))
+            
+        
+        seen = [False]*n
+        pq = []
+        #entries are (time and person)
+        heapq.heappush(pq, (0,0))
+        heapq.heappush(pq, (0,firstPerson))
+        
+        while pq:
+            learned_secret_time, curr_person = heapq.heappop(pq)
+            #state is guaranteed to be minimum
+            if seen[curr_person]:
+                continue
+            
+            seen[curr_person] = True
+            for neigh,neigh_time in graph[curr_person]:
+                #if an improvment and times comes after
+                if not seen[neigh] and neigh_time >= learned_secret_time:
+                    heapq.heappush(pq, (neigh_time, neigh))
+        
+        ans = []
+        for i in range(n):
+            if seen[i]:
+                ans.append(i)
+        
+        return ans
+        
+
+#################################################
+# 2709. Greatest Common Divisor Traversal
+# 25FEB24
+##################################################
+#need back edge
+#TLE
+class Solution:
+    def canTraverseAllPairs(self, nums: List[int]) -> bool:
+        '''
+        we can only traverse indices if: given index i and j and != j
+            gcd(nums[i], gcd(nums[j])) > 1
+        
+        need to determine if every pair of indices i and j, where i < j, there exsists a traversal
+        input is too big to try all pairs
+        create prime factors list for all indices
+        add edge between the neighbors of prime factors
+        then just check all indicies are connected
+        '''
+        if len(nums) == 1:
+            return True
+
+
+        def getPrimeFactors(num):
+            factors = set()
+            curr_factor = 2
+            while num > 1:
+                while num % curr_factor == 0:
+                    num = num // curr_factor
+                    factors.add(curr_factor)
+                curr_factor += 1
+            
+            return factors
+        
+        graph = defaultdict(set)
+        
+        for num in set(nums):
+            neighs = getPrimeFactors(num)
+            for neigh in neighs:
+                graph[num].add(neigh)
+                graph[neigh].add(num)
+                #need back edge
+                
+        if not graph:
+            return False
+        
+        def dfs(node,seen,graph):
+            seen.add(node)
+            for neigh in graph[node]:
+                if neigh not in seen:
+                    dfs(neigh,seen,graph)
+                    
+        seen = set()
+        comps = 0
+        for num in nums:
+            if num not in seen:
+                dfs(num,seen,graph)
+                comps += 1
+        
+        return comps == 1
+    
+#need to use visited index and visited prime
+class Solution:
+    def canTraverseAllPairs(self, nums: List[int]) -> bool:
+        '''
+        we can only traverse indices if: given index i and j and != j
+            gcd(nums[i], gcd(nums[j])) > 1
+        
+        need to determine if every pair of indices i and j, where i < j, there exsists a traversal
+        input is too big to try all pairs
+        create prime factors list for all indices
+        add edge between the neighbors of prime factors
+        then just check all indicies are connected
+        
+        we need to map each primefactor to the indices
+        and we need to map index to primefactor
+        
+        then we just do dfs and check that there is only one component
+        '''
+        #edge cases
+        if len(nums) == 1:
+            return True
+        if 1 in set(nums):
+            return False
+
+        prime_to_index = defaultdict(list)
+        index_to_prime = defaultdict(list)
+        
+        for i, num in enumerate(nums):
+            curr_num = num
+            #get all prime factors for num
+            for j in range(2,int(num**0.5) + 1):
+                if curr_num % j == 0:
+                    prime_to_index[j].append(i)
+                    index_to_prime[i].append(j)
+                    while curr_num % j == 0:
+                        curr_num = curr_num // j
+            #final factor
+            if curr_num > 1:
+                prime_to_index[curr_num].append(i)
+                index_to_prime[i].append(curr_num)
+        visited_prime = set()
+        visited_index = set()
+        comps = 0
+        for i in range(len(nums)):
+            if i not in visited_index:
+                self.dfs(i,visited_index,visited_prime,prime_to_index,index_to_prime)
+                comps += 1
+        
+        return comps == 1
+       
+    #need to seen sets, for index and prime
+    def dfs(self, index, visited_index, visited_prime, prime_to_index, index_to_prime):
+        visited_index.add(index)
+        for next_prime in index_to_prime[index]:
+            if next_prime in visited_prime:
+                continue
+            visited_prime.add(next_prime)
+            for neigh_index in prime_to_index[next_prime]:
+                if neigh_index not in visited_index:
+                    self.dfs(neigh_index, visited_index,visited_prime,prime_to_index,index_to_prime)
+
+#union find solution
+class DSU:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.size = [1]*n
+        self.comps = n
+        
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        if x_par == y_par:
+            return
+        #updates
+        if self.size[x_par] >= self.size[y_par]:
+            self.parent[y_par] = x_par
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 1
+        else:
+            self.parent[x_par] = y_par
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 1
+        self.comps -= 1
+    
+class Solution:
+    def canTraverseAllPairs(self, nums: List[int]) -> bool:
+        '''
+        union find solution
+        we can go from index i to index j, if there is an edge, an edge being gcd(nums[i], nums[j]) > 1
+        edges are undirected, gcd is transitive, so all nodes must be connected,
+        the problem is that we can't check all (i,j) pairs, its justt too many, imagine we have array with all evenes
+        every node is connected - complete graph
+        
+        note, using union find after checking all pairs to for gcd > 1 would work, but we could have too many pairs
+        we need to precompute all primes first! inteaf of checking for all prime factors for each number
+        we need to compute prime factors with seive,
+        https://leetcode.com/problems/greatest-common-divisor-traversal/discuss/4778362/Detailed-Intuition-and-Explanation-(Python-Solution)
+        consider going throual all primes, there are only about 1000, but we would need to check all primes are divisible 
+        for each number n, which is 1000*10**5 which is still to big
+        thankfully we can decompose the largest number in only 5 primes
+            2*3*5*7*11 > 10**5
+        basically we need access to all primes for each number up to n, we can get this using seive
+        '''
+        n = len(nums)
+        largest = max(nums)
+        prime_divisors = [[] for _ in range(largest+1)]
+        for p in range(2,largest+1):
+            if len(prime_divisors[p]) == 0:
+                i = p
+                while i <= largest:
+                    prime_divisors[i].append(p)
+                    i += p
+        
+        uf = DSU(n)
+        multiple_idx = {} #need to mapp a prive divisor to an index
+        for i,num in enumerate(nums):
+            for p_div in prime_divisors[num]:
+                multiple_idx[p_div] = multiple_idx.get(p_div,i)
+                uf.union(i,multiple_idx[p_div])
+        
