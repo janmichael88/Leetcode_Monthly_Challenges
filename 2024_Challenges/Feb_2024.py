@@ -1913,8 +1913,91 @@ class Solution:
                 ans.append(i)
         
         return ans
-        
 
+#uf solution
+class DSU:
+    def __init__(self,n):
+        self.parent = [i for i in range(n)]
+        self.size = [1]*n
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        if x_par == y_par:
+            return
+        #updates
+        if self.size[x_par] >= self.size[y_par]:
+            self.parent[y_par] = x_par
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 1
+        else:
+            self.parent[x_par] = y_par
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 1
+            
+    def disunite(self,x):
+        self.parent[x] = x
+        self.size[x] = 1
+        
+    def connected(self,x,y):
+        return self.find(x) == self.find(y)
+    
+class Solution:
+    def findAllPeople(self, n: int, meetings: List[List[int]], firstPerson: int) -> List[int]:
+        '''
+        for union find, we need to sort the meetings by time, and group meetings by time
+        then for each meeting we try to unite them
+        if the meetins were connected to zero, then they know the secret, 
+        otherwise we can disunite them
+            this is a cool addon to DSU
+        why? do we need to check to zero after uniting
+        because they have to know the secret to propogate it to others
+        so for after uniting all the meetings for time t, we check for zero
+            disunite those that aren't pointing to zero
+        keeping a flag array won't work either
+            why? if a person is connected to 0, then he/she knows the secret
+        
+        inuition 1
+            suppose that one participant of a transitive meeting gets to know secret after time t, if they come to
+            know the secret at anyt time after t, it will not affect meetings happening at time t
+        intuition 2
+            if none of the (x,y) people knew the secret ebfore or at time t, and assume one of them
+            get to konw the secret after time t, it would not matter becasue they didnt know the secret at time t anyway!
+        
+        so we disunite if they didn't konw the meeting
+        if we left them united, then when we check for 0, it would incorreclt imply that (x,y) new a secret then in fact they did not
+        disunite prevent them from being incorrectly propogated
+        for diunite, we just have them point to themselves
+        '''
+        meetings_mapp = defaultdict(list)
+        for x,y,t in meetings:
+            meetings_mapp[t].append((x,y))
+        
+        uf = DSU(n)
+        #0 and first
+        uf.union(0,firstPerson)
+        
+        for t in sorted(meetings_mapp):
+            for x,y in meetings_mapp[t]:
+                uf.union(x,y)
+            
+            #disunite all those not connected to zero
+            for x,y in meetings_mapp[t]:
+                #we just joined x and y, so check that either of them are not pointing to zero
+                if not uf.connected(x,0):
+                    #disunite
+                    uf.disunite(x)
+                    uf.disunite(y)
+        
+        #check all those point to 0
+        return [i for i in range(n) if uf.connected(i,0)]
+        
 #################################################
 # 2709. Greatest Common Divisor Traversal
 # 25FEB24
@@ -2100,4 +2183,54 @@ class Solution:
             for p_div in prime_divisors[num]:
                 multiple_idx[p_div] = multiple_idx.get(p_div,i)
                 uf.union(i,multiple_idx[p_div])
+        
+#######################
+# 1245. Tree Diameter
+# 26FEB24
+########################
+#the bfs passes
+class Solution:
+    def treeDiameter(self, edges: List[List[int]]) -> int:
+        '''
+        this is just longest path in undirect graph,
+        but we have a tree, the root of three has zero indegree, so we can use dp
+        if this were longest path in undirected graph, thats NP hard
+        hints
+            1. start at any node, and find furthest node from it
+            2. then found furtherest node from this
+            3. dimeter is dis between the two nodes
+        '''
+        if not edges:
+            return 0
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        def bfs(start,graph):
+            N = len(graph)
+            dist = [float('-inf')]*N
+            dist[start] = 0
+            q = deque([start])
+            seen = set()
+            
+            while q:
+                curr = q.popleft()
+                seen.add(curr)
+                for neigh in graph[curr]:
+                    if neigh not in seen:
+                        if dist[neigh] < dist[curr] + 1:
+                            dist[neigh] = dist[curr] + 1
+                            q.append(neigh)
+            return dist
+        
+        dist = bfs(0,graph)
+        #find furthest node, call it a
+        B = dist.index(max(dist))
+        #bfs
+        dist = bfs(B,graph)
+        C = dist.index(max(dist))
+        #one more time
+        dist = bfs(B,graph)
+        return dist[C]
         
