@@ -2234,3 +2234,98 @@ class Solution:
         dist = bfs(B,graph)
         return dist[C]
         
+#################################################
+# 2689. Extract Kth Character From The Rope Tree
+# 27FEB24
+#################################################
+# Definition for a rope tree node.
+# class RopeTreeNode(object):
+#     def __init__(self, len=0, val="", left=None, right=None):
+#         self.len = len
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getKthCharacter(self, root: Optional[object], k: int) -> str:
+        """
+        :type root: Optional[RopeTreeNode]
+        """
+        '''
+        use recursino to concat the string, then return the kth char
+        '''
+        def rec(node):
+            if not node:
+                return ""
+            if node.len == 0:
+                return node.val
+            left = rec(node.left)
+            right = rec(node.right)
+            return left + right
+        
+        return rec(root)[k-1]
+            
+#top down, divide and conquer
+# Definition for a rope tree node.
+# class RopeTreeNode(object):
+#     def __init__(self, len=0, val="", left=None, right=None):
+#         self.len = len
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getKthCharacter(self, root: Optional[object], k: int) -> str:
+        """
+        :type root: Optional[RopeTreeNode]
+        """
+        '''
+        another way would be to pass in k and check
+        if the length of the left node is >= k we can go left
+        '''
+        def rec(node,k):
+            if node.len > 0:
+                left_length = 0
+                if node.left:
+                    left_length = max(node.left.len, len(node.left.val))
+                
+                if left_length >= k:
+                    return rec(node.left,k)
+                else:
+                    return rec(node.right, k - left_length)
+            
+            return node.val[k-1]
+        
+        return rec(root,k)
+                
+# Definition for a rope tree node.
+# class RopeTreeNode(object):
+#     def __init__(self, len=0, val="", left=None, right=None):
+#         self.len = len
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getKthCharacter(self, root: Optional[object], k: int) -> str:
+        """
+        :type root: Optional[RopeTreeNode]
+        """
+        '''
+        another way would be to pass in k and check
+        if the length of the left node is >= k we can go left
+        '''
+        def rec(node,k):
+            #if leaf, we can get this char
+            if node.len == 0:
+                return node.val[k-1]
+            
+            #need to check if we can go left
+            else:
+                left_length = 0
+                if node.left:
+                    left_length = max(node.left.len, len(node.left.val))
+                if left_length >= k:
+                    return rec(node.left,k)
+                else:
+                    return rec(node.right, k - left_length)
+        
+        return rec(root,k)
+            
