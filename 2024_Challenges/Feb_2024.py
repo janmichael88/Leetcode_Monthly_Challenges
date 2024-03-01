@@ -2233,7 +2233,78 @@ class Solution:
         #one more time
         dist = bfs(B,graph)
         return dist[C]
+
+class Solution:
+    def treeDiameter(self, edges: List[List[int]]) -> int:
+        '''
+        we dont need to keep the distances array in the BFS approach
+        we also can do it with two passes of BFS
         
+        for bfs, the last node we see is the extreme distance
+        so we walk as far a possible to this node, then walk as far as possible again
+        '''
+        if not edges:
+            return 0
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        def bfs(start,graph):
+            N = len(graph)
+            q = deque([(start,0)])
+            seen = set()
+            dist = -1
+            last_node = start
+            
+            while q:
+                curr,curr_dist = q.popleft()
+                dist = max(dist,curr_dist)
+                seen.add(curr)
+                for neigh in graph[curr]:
+                    if neigh not in seen:
+                        q.append((neigh,curr_dist + 1))
+                        last_node = neigh
+            return last_node,dist
+        
+        a,dist1 = bfs(0,graph)
+        b,dist2 = bfs(a,graph)
+        return dist2
+    
+class Solution:
+    def treeDiameter(self, edges: List[List[int]]) -> int:
+        '''
+        this is similart to the diameter of N-ary tree
+        we just need to find the the nodes with the two longest diamterers and add them
+        also since the graph is not specifically a tree, we just make sure we dont go back to a parent in each call
+        '''
+        if not edges:
+            return 0
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        ans = [0]
+        
+        def dp(node,parent):
+            first_longest, second_longest = 0,0
+            for neigh in graph[node]:
+                if neigh == parent:
+                    continue
+                    
+                child_ans = dp(neigh,node)
+                if first_longest < second_longest:
+                    first_longest = max(child_ans,first_longest)
+                else:
+                    second_longest = max(child_ans,second_longest)
+                
+            
+            ans[0] = max(ans[0], first_longest + second_longest)
+            return max(first_longest,second_longest) + 1
+        
+        dp(0,None)
+        return ans[0]
+    
 #################################################
 # 2689. Extract Kth Character From The Rope Tree
 # 27FEB24
@@ -2329,3 +2400,199 @@ class Solution:
         
         return rec(root,k)
             
+#######################################
+# 1740. Find Distance in a Binary Tree
+# 28FEB24
+#######################################
+#bfs with dist array
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findDistance(self, root: Optional[TreeNode], p: int, q: int) -> int:
+        '''
+        easy way is to convert tree to graph and then do bfs from p and check dist q
+        '''
+        graph = defaultdict(list)
+        
+        def dfs(node,parent,graph):
+            if not node:
+                return
+            if parent:
+                graph[parent.val].append(node.val)
+                graph[node.val].append(parent.val)
+            
+            dfs(node.left,node,graph)
+            dfs(node.right,node,graph)
+        
+        dfs(root,None,graph)
+        dist = defaultdict(lambda: float('inf'))
+        #start with p
+        dist[p] = 0
+        queue = deque([p])
+        
+        while queue:
+            curr = queue.popleft()
+            for neigh in graph[curr]:
+                if dist[neigh] > dist[curr] + 1:
+                    dist[neigh] = dist[curr] + 1
+                    queue.append(neigh)
+        
+        return dist[q]
+    
+#dfs using lca
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def findDistance(self, root: Optional[TreeNode], p: int, q: int) -> int:
+        '''
+        trick is to find the LCA of p and q
+        then get dists from p to lca and q to lca
+        the ans is the sum
+        '''
+        def lca(node,p,q):
+            if not node or node.val == p or node.val == q:
+                return node
+            left = lca(node.left,p,q)
+            right = lca(node.right,p,q)
+            if left and right:
+                return node
+            else:
+                return left or right #can do (None or 5)
+        
+        #dist function
+        def dist(node,target):
+            if not node:
+                return float('inf')
+            if node.val == target:
+                return 0
+            
+            left = dist(node.left,target)
+            right = dist(node.right,target)
+            return 1 + min(left,right)
+        
+        LCA = lca(root,p,q)
+        return dist(LCA,p) + dist(LCA,q)
+        
+#####################
+# 1609. Even Odd Tree
+# 29FEB24
+#####################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isEvenOddTree(self, root: Optional[TreeNode]) -> bool:
+        '''
+        bfs and check level requirments, either on the fly or after the fact
+        even indexed level : odd values strictly increasing
+        odd indes level : even values strictly decreasing
+        the problem is that i need to validate a row at a time
+        '''
+        def validate(q,row):
+            N = len(q)
+            #even
+            if row % 2 == 0:
+                if N == 1:
+                    if q[0].val % 2 == 0:
+                        return False
+                else:
+                    for i in range(N-1):
+                        if q[i+1].val % 2 == 0:
+                            return False
+                        elif q[i+1].val - q[i].val <= 0:
+                            return False
+            #odd
+            else:
+                if N == 1:
+                    if q[0].val % 2 == 1:
+                        return False
+                else:
+                    for i in range(N-1):
+                        if q[i+1].val % 2 == 1:
+                            return False
+                        elif q[i+1].val - q[i].val >= 0:
+                            return False
+            return True
+            
+        curr_level = 0
+        q = deque([root])
+        
+        while q:
+            N = len(q)
+            if not validate(q,curr_level):
+                #row = []
+                #for t in q:
+                #    row.append(t.val)
+                #print(row)
+                
+                return False
+            for i in range(N):
+                curr = q.popleft()
+                if curr.left:
+                    q.append(curr.left)
+                if curr.right:
+                    q.append(curr.right)
+            
+            curr_level += 1
+        
+        return True
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def isEvenOddTree(self, root: Optional[TreeNode]) -> bool:
+        '''
+        dfs, 
+        but store previous level last nodes in temp array
+        and we check that:
+            nodes on even levels must have odd values
+            nodes on odd levels must have even value, so parities must be different
+        
+        for increasing odd condition we check
+            node.val <= prev[level]
+        
+        for decreasing even condition we check
+            node.val >= prev[level]
+        
+        empty nodes are triviallly odd/even
+        '''
+        prev_values = [] #store last values by level
+        def dfs(node,curr_level):
+            if not node:
+                return True
+            #if same parity, return falsse
+            if node.val % 2 == curr_level % 2:
+                return False
+            #prepare future levels to store last values
+            while len(prev_values) <= curr_level:
+                prev_values.append(-1)
+            
+            #if we have a previous value, we need to validate
+            if prev_values[curr_level] != -1:
+                if curr_level % 2 == 0 and node.val <= prev_values[curr_level]:
+                    return False
+                if curr_level % 2 == 1 and node.val >= prev_values[curr_level]:
+                    return False
+            
+            #set new prev_value
+            prev_values[curr_level] = node.val
+            
+            return dfs(node.left,curr_level + 1) and dfs(node.right, curr_level + 1)
+        
+        return dfs(root,0)
+                
