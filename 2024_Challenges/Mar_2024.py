@@ -81,3 +81,33 @@ class Solution:
             return 'Even'
         else:
             return 'Tie'
+
+#####################################################
+# 1474. Delete N Nodes After M Nodes of a Linked List
+# 03MAR24
+#####################################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteNodes(self, head: ListNode, m: int, n: int) -> ListNode:
+        curr = head
+        prev = head
+        
+        while curr:
+            curr_m = m
+            curr_n = n
+            while curr and curr_m > 0:
+                prev = curr
+                curr = curr.next
+                curr_m -= 1
+            
+            while curr and curr_n > 0:
+                curr = curr.next
+                curr_n -= 1
+            
+            prev.next = curr
+        
+        return head
