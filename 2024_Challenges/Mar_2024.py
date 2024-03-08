@@ -301,3 +301,86 @@ class Solution:
             first[strs[0]].add(p[len(strs[0]):])
             last[strs[-1]].add(p)
         return sorted(list(res))
+
+##############################################
+# 2570. Merge Two 2D Arrays by Summing Values
+# 07MAR24
+###############################################
+class Solution:
+    def mergeArrays(self, nums1: List[List[int]], nums2: List[List[int]]) -> List[List[int]]:
+        '''
+        they are sorted so use two pointers
+        '''
+        ans = []
+        i,j = 0,0
+        
+        while i < len(nums1) and j < len(nums2):
+            if nums1[i][0] < nums2[j][0]:
+                ans.append(nums1[i])
+                i += 1
+            elif nums2[j][0] < nums1[i][0]:
+                ans.append(nums2[j])
+                j += 1
+            
+            #if they are equal, combine
+            else:
+                entry = [nums1[i][0], nums1[i][1] + nums2[j][1]]
+                ans.append(entry)
+                i += 1
+                j += 1
+        
+
+        #reached the end of one array but not the other
+        while i < len(nums1):
+            ans.append(nums1[i])
+            i += 1
+        
+        while j < len(nums2):
+            ans.append(nums2[j])
+            j += 1
+        
+        return ans
+        
+################################################
+# 3005. Count Elements With Maximum Frequency
+# 08MAR24
+#################################################
+class Solution:
+    def maxFrequencyElements(self, nums: List[int]) -> int:
+        '''
+        find max frequency then count up elements who's max freq is that
+        '''
+        counts = Counter(nums)
+        max_freq = max(counts.values())
+        ans = 0
+        for k,v in counts.items():
+            if v == max_freq:
+                ans += v
+        
+        return ans
+    
+#one pass
+class Solution:
+    def maxFrequencyElements(self, nums: List[int]) -> int:
+        '''
+        we can do it on the fly
+        just keep of current max freq
+        either add to ans or update max_freq and reset
+        '''
+        counts = {}
+        max_freq = 0
+        max_freq_count = 0
+        
+        for num in nums:
+            counts[num] = counts.get(num,0) + 1
+            curr_freq = counts[num]
+            
+            #update
+            if curr_freq > max_freq:
+                max_freq = curr_freq
+                max_freq_count = curr_freq
+            #increment
+            elif curr_freq == max_freq:
+                max_freq_count += curr_freq
+        
+        return max_freq_count
