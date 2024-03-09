@@ -384,3 +384,123 @@ class Solution:
                 max_freq_count += curr_freq
         
         return max_freq_count
+    
+#######################################
+# 2540. Minimum Common Value
+# 09MAR24
+#######################################
+#two pointer
+class Solution:
+    def getCommon(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        this is just merge sort
+        keep moving two pointers until we find a common one
+        '''
+        i,j = 0,0
+        while i < len(nums1) and j < len(nums2):
+            if nums1[i] < nums2[j]:
+                i += 1
+            elif nums2[j] < nums1[i]:
+                j += 1
+            else:
+                return nums1[i]
+        
+        return -1
+        
+#binary search
+class Solution:
+    def getCommon(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we can also use binary search, search for one in the other
+        to make the algorithm more effecient we need to do binary search on the larger array
+        '''
+        if len(nums1) > len(nums2):
+            return self.getCommon(nums2,nums1)
+        
+        for num in nums1:
+            if self.binary_search(num,nums2):
+                return num
+        
+        return -1
+    
+    
+    def binary_search(self, num,arr):
+        left = 0
+        right = len(arr) - 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            #found it
+            if arr[mid] == num:
+                return True
+            elif arr[mid] > num:
+                right = mid - 1
+            elif arr[mid] < num:
+                left = mid + 1
+        
+        return False
+
+
+#####################################
+# 3063. Linked List Frequency
+# 08MAR24
+#####################################
+#two pass
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def frequenciesOfElements(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        traverse and keep temp count map
+        '''
+        counts = {}
+        curr = head
+        while curr:
+            counts[curr.val] = counts.get(curr.val,0) + 1
+            curr = curr.next
+        
+        dummy = ListNode(-1)
+        curr = dummy
+        for k,v in counts.items():
+            newNode = ListNode(v)
+            curr.next = newNode
+            curr = curr.next
+        
+        return dummy.next
+    
+#one pass
+#map value of num to counts but a ListNode objects
+#then pointer manip
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def frequenciesOfElements(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can do it in any more
+        so just map an element to a ListNode with its current count
+        '''
+        counts = {}
+        curr = head
+        dummy = ListNode(-1)
+        freq_head = dummy
+        
+        while curr:
+            if curr.val in counts:
+                #get the count node
+                count_node = counts[curr.val]
+                count_node.val += 1
+            else:
+                #create new node
+                newNode = ListNode(1)
+                freq_head.next = newNode
+                counts[curr.val] = newNode
+                freq_head = freq_head.next
+            
+            curr = curr.next
+        
+        return dummy.next
