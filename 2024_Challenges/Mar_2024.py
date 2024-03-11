@@ -550,6 +550,29 @@ class Solution:
         
         return discounted
                 
+############################################
+# 2545. Sort the Students by Their Kth Score
+# 11MAR24
+############################################
+class Solution:
+    def sortTheStudents(self, score: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        custom comparator
+        '''
+        #store is [student id, kth score]
+        pairs = []
+        N = len(score)
+        for i in range(N):
+            pairs.append([i,score[i][k]])
+        
+        #sort high to low
+        pairs.sort(key = lambda x : -x[1])
+        
+        ans = []
+        for i,kth in pairs:
+            ans.append(score[i][:])
+        
+        return ans
 
 
 #########################
