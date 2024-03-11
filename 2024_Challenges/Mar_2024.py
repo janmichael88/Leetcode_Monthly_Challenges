@@ -504,3 +504,129 @@ class Solution:
             curr = curr.next
         
         return dummy.next
+    
+########################################################
+# 1475. Final Prices With a Special Discount in a Shop
+# 10MAR24
+########################################################
+#brute force
+class Solution:
+    def finalPrices(self, prices: List[int]) -> List[int]:
+        '''
+        search for the minimum j
+        '''
+        ans = []
+        N = len(prices)
+        
+        for i in range(N):
+            discount = 0
+            for j in range(i+1,N):
+                if prices[j] <= prices[i]:
+                    discount = prices[j]
+                    break
+            
+            ans.append(prices[i] - discount)
+        
+        return ans
+    
+#monostack solution
+class Solution:
+    def finalPrices(self, prices: List[int]) -> List[int]:
+        '''
+        monostack
+        '''
+        N = len(prices)
+        discounted = prices[:]
+        stack = [] #store as [idx]
+        
+        #strictly increasing prices
+        for i,p in enumerate(prices):
+            #apply discounts for all indices who's price is larger than current price
+            while stack and prices[stack[-1]] >= p:
+                idx = stack.pop()
+                discounted[idx] -= p
+            #add back in
+            stack.append(i)
+        
+        return discounted
+                
+
+
+#########################
+# 699. Falling Squares
+# 10MAR24
+#########################
+class Solution:
+    def fallingSquares(self, positions: List[List[int]]) -> List[int]:
+        '''
+        advent of code problem!
+        say we given sqaure with left edge i and side length k
+        then it covers i to i + k
+        initialy each is at height 0
+        but sidelngth is too big
+        now the question is given range [i, i+k], efficiently find the largest height
+        or, given state (i,i+k) what can we do to make the search more mangageable
+        
+        N squared works!
+        '''
+        height = defaultdict(lambda : 0)
+        ans = []
+        for left,side in positions:
+            start = left
+            end = left + side
+            curr_height = 0
+            for k in range(start,end+1):
+                height[k] += side
+                curr_height = max(curr_height, height[k])
+            ans.append(curr_height)
+        
+
+        max_ans = [ans[0]]
+        for num in ans[1:]:
+            max_ans.append(max(num,max_ans[-1]))
+        
+        return max_ans
+            
+#offline prop/coor compression
+class Solution:
+    def fallingSquares(self, positions: List[List[int]]) -> List[int]:
+        '''
+        framework alludes to segment tree
+        we have two operations -> update (after dropping square)
+                                -> query (find largest height)
+        since there are only up to 2*len(postitions) critical points, the left and rights of each sqyar
+        we can use "coordinate compression" which maps these critical points to adjacent integers
+        example:
+            coords = set()
+            for left,size in positions:
+                coords.add(left)
+                coords.add(left + size - 1)
+        index = {x:i for i,x in enumerated(sorted(coords))}
+        
+        approach 1; offline propgations
+            insteaf of asking the qeustions what quares effect this query, we cask what queries are affected by this square
+            let aans be the max height of the interval specified by posiitions[i]
+            in the end return running max of q ans
+        
+        for each square at positions[i], the max height will get higher by the size fo the swuare we drop
+        then for any future squares in the interval [left,right], where left = pos[i][0], right = pos[i][0] + pos[i][1] we update the height
+        '''
+        N = len(positions)
+        ans = [0]*N
+        for i,(left,size) in enumerate(positions):
+            right = left + size
+            ans[i] += size
+            #look ahead and see if we get another max height update
+            for j in range(i+1,N):
+                left2,size2 = positions[j]
+                right2 = left2 + size2
+                #intersect, which means heights get update
+                if left2 < right and left < right2:
+                    ans[j] = max(ans[j], ans[i])
+        
+        #need running max
+        final_ans = [ans[0]]
+        for num in ans[1:]:
+            final_ans.append(max(final_ans[-1],num))
+        
+        return final_ans
