@@ -574,6 +574,10 @@ class Solution:
         
         return ans
 
+class Solution:
+    def sortTheStudents(self, score: List[List[int]], k: int) -> List[List[int]]:
+        #one liner
+        return sorted(score, key = lambda x : -x[k])
 
 #########################
 # 699. Falling Squares
@@ -653,3 +657,125 @@ class Solution:
             final_ans.append(max(final_ans[-1],num))
         
         return final_ans
+    
+#############################################################
+# 1171. Remove Zero Sum Consecutive Nodes from Linked List
+# 12MAR24
+###############################################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        keep running sum, when zero, we need to delete
+        there are regions in where sum == 0, not running sum
+        '''
+        dummy = ListNode(0)
+        dummy.next = head
+        left = dummy
+        while left:
+            curr_sum = 0
+            right = left.next
+            while right:
+                curr_sum += right.val
+                #everythign between left and right inclusive is 0
+                if curr_sum == 0:
+                    #print(left.val,right.val)
+                    right = right.next
+                    left.next = right
+                    left = right
+                    if right:
+                        right = right.next
+                else:
+                    right = right.next
+            if left:
+                left = left.next
+        
+        
+        return dummy.next
+    
+#finally!
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        keep running sum, when zero, we need to delete
+        there are regions in where sum == 0, not running sum
+        '''
+        dummy = ListNode(0)
+        dummy.next = head
+        left = dummy
+        while left:
+            curr_sum = 0
+            right = left.next
+            while right:
+                curr_sum += right.val
+                #everythign between left and right inclusive is 0
+                if curr_sum == 0:
+                    #print(left.val,right.val)
+                    left.next = right.next
+                right = right.next
+                    
+            left = left.next
+        
+        
+        return dummy.next
+    
+#one pass
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def removeZeroSumSublists(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        imagine that we were working with an array intead of a linked list
+        [1, 2, -3, 3, 1]
+        generating pref sum
+        [0, 1, 3, 0, 3, 4]
+               ^     ^
+        these two spots have the same pref_sum
+        which means the subarray between these two must be zero
+        intuition -> a zero sum conescutive sequence will have a pref sum of zer0
+        rather the prefum before and at the end of the sequence will be the same
+        
+        subarray sum equals K
+        so we have pref_sum[j] == pref_sum[i], where j >= i
+        then the sum between i and j must be zero, this must be the case inorder to make the two differnt pref_sums equal
+        
+        so when we enctouner a pref sum we have seen before, then we know that this curren subequence must be zero sum
+        If you accumulate a prefix sum, any repeating values necessitate that the segment in the middle equals 0. 
+        For example, in a prefix sum of [1,2,5,2], the values in between the 2nd and 4th nodes must sum to 0, or the prefix sum would not have repeated
+        
+        crucial insight:
+        pref_sum from the front of some node A == the sum of the front of some node B, if and only if the sum from A.next to B is zero
+        we use hasmap and store pref_sum values to their nodes
+        '''
+        dummy = ListNode(0)
+        dummy.next = head
+        pref_sum = 0
+        mapp = {0:dummy}
+        
+        curr = dummy
+        while curr:
+            pref_sum += curr.val
+            mapp[pref_sum] = curr
+            curr = curr.next
+        
+        curr = dummy
+        pref_sum = 0
+        
+        while curr:
+            pref_sum += curr.val
+            curr.next = mapp[pref_sum].next
+            curr = curr.next
+        
+        return dummy.next
