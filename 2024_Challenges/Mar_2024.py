@@ -779,3 +779,93 @@ class Solution:
             curr = curr.next
         
         return dummy.next
+    
+#########################################
+# 2485. Find the Pivot Integer
+# 13MAR24
+##########################################
+class Solution:
+    def pivotInteger(self, n: int) -> int:
+        '''
+        we can get the pref_sum from to n, then just check if we can pivot
+        '''
+        pref_sum = [0]
+        for i in range(1,n+1):
+            pref_sum.append(pref_sum[-1] + i)
+        
+        for i in range(len(pref_sum)):
+            if (pref_sum[i] == pref_sum[-1] - pref_sum[i] + i):
+                return i
+        
+        return -1
+    
+#binary search, weeee!
+class Solution:
+    def pivotInteger(self, n: int) -> int:
+        '''
+        we can use binary search
+        just use gauss trick to get sum of eleemnts for some number n
+        '''
+        def getSum(num):
+            return (num*(num+1)) // 2
+        
+        left = 1
+        right = n
+        SUM = getSum(n)
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            #compute pivot
+            pivot_sum = getSum(mid)
+            if pivot_sum == SUM - pivot_sum + mid:
+                return mid
+            elif pivot_sum > SUM - pivot_sum + mid:
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return -1
+            
+#o(1) true
+class Solution:
+    def pivotInteger(self, n: int) -> int:
+        '''
+        we want
+        1 + 2 + ... x = x + (x+1) + ... +  (x+n)
+        which is just (x*(x+1)) // 2 = ((x+n)*(n-x+1)) // 2
+        
+        here we can get
+        x * (x*x) /2 = (nx - x*x + x + n*n - n*x + n) / 2
+        simplygin we can get
+        2x*x = n*n + n
+        x = sqrt((n*n + n) / 2)
+        '''
+        SUM = (n*(n+1)) // 2
+        pivot = int(math.sqrt(SUM))
+        if pivot*pivot == SUM:
+            return pivot
+        return -1
+
+#########################################
+# 930. Binary Subarrays With Sum
+# 14MAR24
+#########################################
+#subarray sum == k
+#if pref_sum[i] == pref_sum[j] + k, then in between sum is k
+class Solution:
+    def numSubarraysWithSum(self, nums: List[int], goal: int) -> int:
+        '''
+        this is just subarray sum equals k
+        but it cannot be an empty subarray
+        '''
+        count = 0
+        curr_sum = 0
+        count_mapp = {}
+        count_mapp[0] = 1
+        
+        for num in nums:
+            curr_sum += num
+            count += count_mapp.get(curr_sum - goal , 0)
+            count_mapp[curr_sum] = count_mapp.get(curr_sum,0) + 1
+        
+        return count
