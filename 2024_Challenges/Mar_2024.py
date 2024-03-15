@@ -845,6 +845,74 @@ class Solution:
         if pivot*pivot == SUM:
             return pivot
         return -1
+    
+###############################################
+# 238. Product of Array Except Self (REVISTED)
+# 15MAR24
+#############################################
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        use products going to the left and products going to the right
+        '''
+        N = len(nums)
+        left_prods = [0]*(N)
+        left_prods[0] = 1
+        for i in range(1,N):
+            left_prods[i] = left_prods[i-1]*nums[i-1]
+        
+        right_prods = [0]*N
+        right_prods[N-1] = 1
+        for i in range(N-2,-1,-1):
+            right_prods[i] = nums[i+1]*right_prods[i+1]
+        
+        ans = [0]*N
+        for i in range(N):
+            ans[i] = left_prods[i]*right_prods[i]
+        
+        return ans
+
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        we could also padd, and keep prefix up to
+        and suffix up t0
+        '''
+        N = len(nums)
+        left_prods = [1]
+        for num in nums:
+            left_prods.append(left_prods[-1]*num)
+        
+        right_prods = [1]
+        for num in nums[::-1]:
+            right_prods.append(right_prods[-1]*num)
+        right_prods = right_prods[::-1]
+        
+        ans = []
+        for i in range(len(left_prods)-1):
+            ans.append(left_prods[i]*right_prods[i+1])
+        
+        return ans
+    
+#optomized
+class Solution:
+    def productExceptSelf(self, nums: List[int]) -> List[int]:
+        '''
+        accumulate into ans is 0(1)
+        '''
+        N = len(nums)
+        ans = [0]*N
+        ans[0] = 1
+        for i in range(1,N):
+            ans[i] = ans[i-1]*nums[i-1]
+            
+        right_prods = 1
+        for i in reversed(range(N)):
+            ans[i] *= right_prods
+            right_prods *= nums[i]
+        
+        return ans
+
 
 #########################################
 # 930. Binary Subarrays With Sum
