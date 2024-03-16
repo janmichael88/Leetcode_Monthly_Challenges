@@ -937,3 +937,66 @@ class Solution:
             count_mapp[curr_sum] = count_mapp.get(curr_sum,0) + 1
         
         return count
+    
+class Solution:
+    def numSubarraysWithSum(self, nums: List[int], goal: int) -> int:
+        '''
+        if we have seen a pref sum up to know we increment a count
+        if we see pref_sum - goal, we also increment up
+        idea is that pref_sum (up until now) - goal represents another subarray that when added tot he current subarray, makes goal
+        '''
+        count = 0
+        freq_count = {}
+        curr_sum = 0
+        
+        for num in nums:
+            curr_sum += num
+            if (curr_sum == goal):
+                count += 1
+            
+            if (curr_sum - goal) in freq_count:
+                count += freq_count[(curr_sum - goal)]
+            
+            freq_count[(curr_sum)] = freq_count.get(curr_sum,0) + 1
+        
+        return count
+
+#indireclty count
+class Solution:
+    def numSubarraysWithSum(self, nums: List[int], goal: int) -> int:
+        '''
+        the problem with regular sliding window is that adding a zero does not increment
+        the current window sum, in regular sliding window problems we keep adding until some constraint is satisfied
+        if we were to keep adding zero's we might miss valid arrays
+            i.e the presence of zeros allows us to combine them to reach the goal
+        
+        subarrays exceeding the goal are not needed
+        we only care about the arrays where sum <= goal
+        
+        so we can indirectly count the binary subarrays <= goal
+        after find this count we need to isolate the subarrays that strictly meet the target goal
+        say we had a function sliding window at most, that counts subarrays at most goal
+        the answer is just sliding_window_at_most(nums,goal) - sliding_window_at_most(nums,goal-1)
+        '''
+        
+        return self.count_at_most(nums,goal) - self.count_at_most(nums,goal-1) 
+        
+    
+    def count_at_most(self, nums : List[int], goal : int) -> int:
+        start = 0
+        curr_sum = 0
+        count = 0
+        
+        for end in range(len(nums)):
+            curr_sum += nums[end]
+            #shrink window if we are over
+            while start <= end and curr_sum > goal:
+                curr_sum -= nums[start]
+                start += 1
+            
+            
+            #get count for current subarray
+            #if subarray has length k, and curr sum is < goal, then number of subarray is just k
+            count += end - start + 1
+        
+        return count
