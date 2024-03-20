@@ -894,7 +894,7 @@ class Solution:
         
         return ans
     
-#optomized
+#optimized
 class Solution:
     def productExceptSelf(self, nums: List[int]) -> List[int]:
         '''
@@ -1000,3 +1000,112 @@ class Solution:
             count += end - start + 1
         
         return count
+
+########################################
+# 525. Contiguous Array (REVISTED)
+# 17MAR24
+########################################
+class Solution:
+    def findMaxLength(self, nums: List[int]) -> int:
+        '''
+        sliding window with count mapp
+        counts will be increasing
+        if we are in a subarray where the counts are uneuqal, we keep tring to incorportate elements
+        for an array with counts 1s == count 0s
+        sum(curr_sub_array) == count 0s
+        
+        subarray sum == k, but instead of counts, keep track of index
+        instead of counting for equal zeros and ones, record difference
+
+        idea is that we see another occurence of cumlative difference, there are the same number of 0s and 1s
+        '''
+        mapp = {}
+        mapp[0] = -1
+        
+        max_length = 0
+        curr = 0
+        
+        for i,num in enumerate(nums):
+            curr += 1 if num == 1 else -1
+            if curr in mapp:
+                max_length = max(max_length, i - mapp[curr])
+            else:
+                mapp[curr] = i
+        
+        return max_length
+
+###########################################
+# 621. Task Scheduler (REVISTED)
+# 20MAR24
+###########################################
+class Solution:
+    def leastInterval(self, tasks: List[str], n: int) -> int:
+        '''
+        first show that using lowest freqs increases minimum time
+        using high freq taskses decreases minimum time
+        need to consider cycle length + 1 (n+1)
+            pick highest, and if tie it doesn't matter
+            reduce task by 1
+            when picking the next counts maintain temp array to pick tasks and make sure it doesn't go beyong the cycle length
+        
+        the issue is that there needs to be at least n intervals between the next scheduled task
+        '''
+        counts = Counter(tasks)
+        #we actually dont need the task chars, just their counts
+        pq = [-v for _,v in counts.items()]
+        heapq.heapify(pq)
+        
+        total_time = 0
+        while pq:
+            cycle_time = n + 1 #cooling interval for a cycle
+            counts_used = []
+            task_count = 0
+            while cycle_time > 0 and pq:
+                curr_freq = heapq.heappop(pq)
+                curr_freq += 1
+                task_count += 1
+                cycle_time -= 1
+                if curr_freq < 0:
+                    counts_used.append(curr_freq)
+            
+            for c in counts_used:
+                heapq.heappush(pq,c)
+            
+            #if there needs to be a cooling time
+            if len(pq) > 0:
+                total_time += n + 1
+            #otherwise increment by the cooling time
+            else:
+                total_time += task_count
+            #total_time += task_count if not pq else n + 1
+        
+        return total_time
+    
+#heap and waiting queue paradigm
+class Solution:
+    def leastInterval(self, tasks: List[str], n: int) -> int:
+        '''
+        use heap and waiting queue,
+        if a task needs cool down put it in the q
+        '''
+        counts = Counter(tasks)
+        #we actually dont need the task chars, just their counts
+        pq = [-v for _,v in counts.items()]
+        heapq.heapify(pq)
+        q = deque([])
+        
+        time = 0
+        while q or pq:
+            time += 1
+            if pq:
+                curr_freq = heapq.heappop(pq)
+                curr_freq += 1
+                if curr_freq < 0:
+                    q.append([curr_freq, time + n])
+            
+            if q and q[0][1] <= time:
+                #put back into heap
+                heapq.heappush(pq, q.popleft()[0])
+        
+        return time
+            
