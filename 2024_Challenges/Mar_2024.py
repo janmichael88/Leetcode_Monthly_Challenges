@@ -1109,3 +1109,41 @@ class Solution:
         
         return time
             
+#####################################
+# 1669. Merge In Between Linked Lists
+# 20MAR24
+#####################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeInBetween(self, list1: ListNode, a: int, b: int, list2: ListNode) -> ListNode:
+        '''
+        advance to the ath nodes, and keep prev and curr pointers
+        then advance to the bith node and keep prev and curr pointers
+        then connect
+        '''
+        a_prev,a_curr = None,list1
+        for _ in range(a):
+            a_prev = a_curr
+            a_curr = a_curr.next
+        
+        b_prev,b_curr = a_prev,a_curr
+        for _ in range(b-a+1):
+            b_prev = b_curr
+            b_curr = b_curr.next
+        
+        a_prev.next = list2
+        #print(a_prev.val,a_curr.val)
+        #print(b_prev.val,b_curr.val)
+        #need to connect end of list2 to b_curr
+        c_prev,c_curr = None,list2
+        while c_curr:
+            c_prev = c_curr
+            c_curr = c_curr.next
+        
+        c_prev.next = b_curr
+        
+        return list1
