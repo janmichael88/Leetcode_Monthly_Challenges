@@ -1147,3 +1147,26 @@ class Solution:
         c_prev.next = b_curr
         
         return list1
+    
+######################################
+# 2365. Task Scheduler II
+# 21MAR24
+######################################
+class Solution:
+    def taskSchedulerII(self, tasks: List[int], space: int) -> int:
+        '''
+        tasks must be done in order, can only do one task in one day
+        space must be in between tasks of the same type
+        say i have completed task 1 on day i, if i see it again on some day j, j - i > space, its its not take a break until we get space
+        so keep track of last time done
+        '''
+        ans = 0
+        time_last = {}
+        for t in tasks:
+            ans += 1
+            if t in time_last and ans - time_last[t] <= space:
+                ans += space - (ans - time_last[t]) + 1
+            #updae
+            time_last[t] = ans
+        
+        return ans
