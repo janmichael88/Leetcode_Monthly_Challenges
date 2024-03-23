@@ -1170,3 +1170,65 @@ class Solution:
             time_last[t] = ans
         
         return ans
+    
+########################################
+# 2848. Points That Intersect With Cars
+# 21MAR24
+#########################################
+class Solution:
+    def numberOfPoints(self, nums: List[List[int]]) -> int:
+        '''
+        just need number of points touchiung cars
+        sort on starts, then used cooridnate compression
+        '''
+        points = [False]*(100+1)
+        for s,e in nums:
+            for p in range(s,e+1):
+                points[p] = True
+        
+        return sum(points)
+    
+class Solution:
+    def numberOfPoints(self, nums: List[List[int]]) -> int:
+        '''
+        just need number of points touchiung cars
+        sort on starts, then used cooridnate compression
+        '''
+        nums.sort(key = lambda x: x[0])
+        points = 0
+        curr_start,curr_end = nums[0]
+        
+        for s,e in nums[1:]:
+            if s <= curr_end:
+                curr_end = max(curr_end,e)
+            else:
+                points += (curr_end - curr_start) + 1
+                curr_start,curr_end = s,e
+        
+        points += (curr_end - curr_start) + 1
+        return points
+    
+#line sweep
+#https://leetcode.com/discuss/study-guide/2166045/line-sweep-algorithms
+class Solution:
+    def numberOfPoints(self, nums: List[List[int]]) -> int:
+        '''
+        just need number of points touchiung cars
+        sort on starts, then used cooridnate compression
+        +1 for all in range
+        -1 just after to negate the change, then we can count them all up
+        '''
+        points = [0]*(100+2)
+        
+        for s,e in nums:
+            points[s] += 1
+            points[e+1] -= 1
+        
+        ans = 0
+        pref_sum = 0
+        for num in points:
+            pref_sum += num
+            if pref_sum > 0:
+                ans += 1
+        
+        return ans
