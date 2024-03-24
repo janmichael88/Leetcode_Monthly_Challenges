@@ -1232,3 +1232,34 @@ class Solution:
                 ans += 1
         
         return ans
+    
+###########################################
+# 1054. Distant Barcodes
+# 24MAR24
+##########################################
+class Solution:
+    def rearrangeBarcodes(self, barcodes: List[int]) -> List[int]:
+        
+        counts = Counter(barcodes)
+        pq = [(-count,code) for code,count in counts.items()]
+        #ans will always exsists
+        heapq.heapify(pq)
+        ans = []
+        
+        while pq:
+            first_count,first_code = heapq.heappop(pq)
+            first_count += 1
+            ans.append(first_code)
+            if not pq:
+                return ans
+            second_count,second_code = heapq.heappop(pq)
+            second_count += 1
+            ans.append(second_code)
+            
+            if first_count < 0:
+                heapq.heappush(pq, (first_count,first_code))
+            
+            if second_count < 0:
+                heapq.heappush(pq, (second_count, second_code))
+        
+        return ans
