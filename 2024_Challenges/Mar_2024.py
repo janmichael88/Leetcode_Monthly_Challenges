@@ -1263,3 +1263,25 @@ class Solution:
                 heapq.heappush(pq, (second_count, second_code))
         
         return ans
+    
+####################################################
+# 442. Find All Duplicates in an Array (REVISTED)
+# 25MAR24
+####################################################
+#dont forget negative indexing
+class Solution:
+    def findDuplicates(self, nums: List[int]) -> List[int]:
+        '''
+        negative indexing
+        '''
+        ans = []
+        for num in nums:
+            idx = abs(num) - 1
+            if nums[idx] < 0:
+                ans.append(abs(num))
+            nums[idx] *= -1
+        
+        #dont forget to restore
+        for i in range(len(nums)):
+            nums[i] = abs(nums[i])
+        return ans
