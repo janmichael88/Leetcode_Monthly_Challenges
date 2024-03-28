@@ -1285,3 +1285,94 @@ class Solution:
         for i in range(len(nums)):
             nums[i] = abs(nums[i])
         return ans
+
+######################################
+# 41. First Missing Positive (REVISTED)
+#  26MAR24
+######################################
+class Solution:
+    def firstMissingPositive(self, nums: List[int]) -> int:
+        '''
+        sort the array, the find the first smallest missing
+        find the smallest first....
+        '''
+        nums.sort()
+        ans = 1
+        for num in nums:
+            if num < ans:
+                continue
+            
+            elif num == ans:
+                ans += 1
+        
+        return ans
+    
+#cycle sort
+class Solution:
+    def firstMissingPositive(self, nums: List[int]) -> int:
+        '''
+        cycle sort, allows us to sort a sequence in the range from a to n+1
+        in linear time
+        put eleent at the index it corresponds to
+        '''
+        N = len(nums)
+        i = 0
+        while i < N:
+            correct_index = nums[i] - 1
+            #only place positive
+            if 0 < nums[i] <= N and nums[i] != nums[correct_index]:
+                nums[i], nums[correct_idx] = nums[correct_index],nums[i]
+            else:
+                i += 1
+        
+        for i in range(N):
+            if nums[i] != i+1:
+                return i+1
+        
+        return N+1
+    
+############################################################
+# 2554. Maximum Number of Integers to Choose From a Range I
+# 26MAR24
+############################################################
+class Solution:
+    def maxCount(self, banned: List[int], n: int, maxSum: int) -> int:
+        '''
+        keep banned numbers less than n in a set
+        loop from 1 to n
+        need to maximize numbers used, so use smaller ones first
+        '''
+        banned = set(banned)
+        ans = 0
+        curr_sum = 0
+        for num in range(1,n+1):
+            if num + curr_sum <= maxSum and num not in banned:
+                ans += 1
+                curr_sum += num
+        
+        return ans
+
+##############################################################
+# 2958. Length of Longest Subarray With at Most K Frequency
+# 28MAR24
+##############################################################
+class Solution:
+    def maxSubarrayLength(self, nums: List[int], k: int) -> int:
+        '''
+        sliding window and identify subarray characteristic with hashmap
+        expannd until invalid characteristic
+        '''
+        curr_window = {}
+        N = len(nums)
+        left = 0
+        ans = 0
+        
+        for right,num in enumerate(nums):
+            curr_window[num] = curr_window.get(num,0) + 1
+            while curr_window[num] > k:
+                curr_window[nums[left]] -= 1
+                left += 1
+            ans = max(ans, right - left + 1)
+        
+        return ans
+            
