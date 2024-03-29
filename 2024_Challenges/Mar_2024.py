@@ -1376,3 +1376,93 @@ class Solution:
         
         return ans
             
+###########################################
+# 769. Max Chunks To Make Sorted
+# 28MAR24
+###########################################
+#nice idea
+class Solution:
+    def maxChunksToSorted(self, arr: List[int]) -> int:
+        '''
+        if im at the zeroth position, then this subarray would need to contain zero
+        '''
+        N = len(arr)
+        placed = [False]*N
+        
+        chunks = 0
+        curr_num = 0
+        i = 0
+        while sum(placed) < N:
+            while i < N and arr[i] != curr_num:
+                placed[arr[i]] = True
+                i += 1
+            
+            #got to the minimum
+            placed[arr[i]] = True
+            i += 1
+            chunks += 1
+            #find the next curr_num
+            if sum(placed) < N:
+                curr_num = i
+        
+        return chunks
+    
+class Solution:
+    def maxChunksToSorted(self, arr: List[int]) -> int:
+        '''
+        keep pref max array
+        then compare pref max with the sorted array
+        if pref_max[i] == num at sorted position, use up a chunk
+        '''
+        N = len(arr)
+        pref_max = [0]*N
+        pref_max[0] = arr[0]
+        for i in range(1,N):
+            pref_max[i] = max(arr[i],pref_max[i-1])
+        
+        chunks = 0
+        for i in range(N):
+            if pref_max[i] == i:
+                chunks += 1
+        
+        return chunks
+    
+###############################################
+# 713. Subarray Product Less Than K (REVISTED)
+# 29MAR24
+###############################################
+#binary search soln, 
+#sliding window is trivial
+class Solution:
+    def numSubarrayProductLessThanK(self, nums: List[int], k: int) -> int:
+        '''
+        binary search,
+        recall log(a*b*c*d) = log(a) + log(b) + log(c) + log(d)
+        products could be very large (1000**5000) given the input conditions -> might cause overflow,
+        taking logs reduces this problem, -> summation of logs instead
+        the binary search for the right bound
+        careful with precision errors
+        '''
+        if k == 0:
+            return 0
+        logK = math.log(k)
+
+        # Calculate prefix sum of logarithms of elements
+        logs_prefix_sum = [0]
+        for num in nums:
+            logs_prefix_sum.append(logs_prefix_sum[-1] + math.log(num))
+
+        total_count = 0
+        # Calculate subarray count with product less than k
+        for i, log_num in enumerate(logs_prefix_sum):
+            comp = log_num +logK - 1e-9
+            low = i + 1
+            high = len(nums) + 1
+            while low < high:
+                mid = low + (high - low) // 2
+                if (logs_prefix_sum[mid] < comp):
+                    low = mid + 1
+                else:
+                    high = mid
+            total_count += low - i - 1
+        return total_count
