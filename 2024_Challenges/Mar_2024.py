@@ -1466,3 +1466,120 @@ class Solution:
                     high = mid
             total_count += low - i - 1
         return total_count
+    
+###################################################################
+# 2962. Count Subarrays Where Max Element Appears at Least K Times
+# 29MAR24
+###################################################################
+class Solution:
+    def countSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        sliding window
+        find max and keep count max
+        need to be at least k in order to be a subarray
+        we need to keep expanding until we have at least k
+        idea is to count the number of subarrays given a start
+        we have some index j, where the array from i to j has == k
+        we move i until we dont have k, which means there were 0 to i subarrays that satisfied the condition
+        '''
+        max_num = max(nums)
+        count_max = 0
+        N = len(nums)
+        left = 0
+        ans = 0
+        
+        
+        for right,num in enumerate(nums):
+            count_max += num == max_num
+            while count_max == k:
+                count_max -= nums[left] == max_num
+                left += 1
+                ans += 1
+            ans += left
+        
+        return ans
+                
+#another way
+class Solution:
+    def countSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        solve indirectly
+        find number of subarrays < k occruences, then return n*(n+1) 2
+        '''
+        max_num = max(nums)
+        count_max = 0
+        N = len(nums)
+        left = 0
+        count = 0
+        
+        for right,num in enumerate(nums):
+            count_max += num == max_num
+            while count_max >= k:
+                count_max -= nums[left] == max_num
+                left += 1
+            
+            count += right - left + 1
+        
+        return (N*(N+1) // 2) - count
+    
+###########################################
+# 992. Subarrays with K Different Integers
+# 30MAR24
+############################################
+#close one....
+class Solution:
+    def subarraysWithKDistinct(self, nums: List[int], k: int) -> int:
+        '''
+        kee count map of current window, and expand
+        if len of count map == k, its valid
+        '''
+        curr_window = {}
+        count = 0
+        left = 0
+        
+        for right,num in enumerate(nums):
+            curr_window[num] = curr_window.get(num,0) + 1
+            
+            #just adding this num at right violates k, it means we were good just before right
+            while len(curr_window) > k:
+                curr_window[nums[left]] -= 1
+                if curr_window[nums[left]] == 0:
+                    del curr_window[nums[left]]
+                
+                left += 1
+                count += left
+        
+        return count
+                
+#its another one of this tricky counting problems, draw veen digram and subract out duplicates
+class Solution:
+    def subarraysWithKDistinct(self, nums: List[int], k: int) -> int:
+        '''
+        notes on sliding window:
+            expand until some condition is met, one this is met the number of subarrays is right - left + 1
+            represents subarrays ending at right and start from the current left bonudary
+        
+        for this problem we dont need to consider subarrays with > k, only <= k
+        to find the count == k, we need two different things
+        count <= k and count <= (k-1), then we substract
+        '''
+        
+        return self.slidWinMost(nums,k) - self.slidWinMost(nums,k-1)
+    def slidWinMost(self,nums,k):
+        curr_window = {}
+        left = 0
+        count = 0
+        
+        for right,num in enumerate(nums):
+            curr_window[num] = curr_window.get(num,0) + 1
+            #just adding this num at right violates k, it means we were good just before right
+            while len(curr_window) > k:
+                curr_window[nums[left]] -= 1
+                if curr_window[nums[left]] == 0:
+                    del curr_window[nums[left]]
+                
+                left += 1
+            
+            count += right - left + 1
+        
+        return count
