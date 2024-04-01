@@ -1583,3 +1583,35 @@ class Solution:
             count += right - left + 1
         
         return count
+
+###################################################
+# 2444. Count Subarrays With Fixed Bounds (REVISITED)
+# 01APR24
+####################################################
+class Solution:
+    def countSubarrays(self, nums: List[int], minK: int, maxK: int) -> int:
+        '''
+        say we had some subarray where all numbers are between minK and maxK
+        if we were to add some element to this array that changed the min and max, then we can't include it
+        which means including this number violates, so we need to shrink
+        '''
+        count = 0
+        N = len(nums)
+        min_idx = max_idx = left_oob = -1
+        
+        for i,num in enumerate(nums):
+            if num < minK or num > maxK:
+                left_oob = i
+                
+            #most recent
+            if num == minK:
+                min_idx = i
+            if num == maxK:
+                max_idx = i
+                
+            #if we didn't have one, the left would be negative, and that means we dont have a valid subarray
+            temp = min(min_idx,max_idx) - left_oob
+            if temp >= 0:
+                count += temp
+        
+        return count
