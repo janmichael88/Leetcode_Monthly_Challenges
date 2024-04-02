@@ -89,80 +89,81 @@ class Solution:
 # 885. Spiral Matrix III
 # 02APR24
 ################################
-#close one
 class Solution:
     def spiralMatrixIII(self, rows: int, cols: int, rStart: int, cStart: int) -> List[List[int]]:
         '''
-        walk the spiral and keep going until we touch all visit all cells
-        spiral is
-        (start) , (right,one), (down,one),(left,two), (up,two),(right,three)
-        so its R,D,L,U repeating, increase dist by 1 every time
+        increase dist by 1 every two turns
         '''
-        dirrs = [
-            [1,0],[0,1],[-1,0],[0,-1]
-        ]
+        dirrs = [[1,0],[0,1],[-1,0],[0,-1]]
         
         cells = rows*cols
-        visited = []
+        visited = [(rStart,cStart)]
         dirr_ptr = 0
-        curr_step = -1
         step_size = 1
-        
-        #start
-        visited.append([rStart,cStart])
-        cells -= 1
-        
-        while cells > 0:
-            if curr_step % 2 == 0:
-                step_size += 1
-            d_y,d_x = dirrs[dirr_ptr]
-            #move to next cell using dirr_ptr and step_size
-            rStart = rStart + d_x*step_size
-            cStart = cStart + d_y*step_size
-            print(rStart,cStart)
-            #if in bounds, add it
-            if 0 <= rStart < rows and 0 <= cStart < cols:
-                visited.append([rStart,cStart])
-                cells -= 1
-            
-            dirr_ptr = (dirr_ptr + 1) % 4
-            curr_step += 1
-        
+
+        while len(visited) < rows*cols:
+            #right down
+            for _ in range(2):
+                for i in range(step_size):
+                    d_y,d_x = dirrs[dirr_ptr]
+                    #move to next cell using dirr_ptr and step_size
+                    rStart = rStart + d_x
+                    cStart = cStart + d_y
+                    #if in bounds, add it
+                    if 0 <= rStart < rows and 0 <= cStart < cols:
+                        visited.append([rStart,cStart])
+                dirr_ptr = (dirr_ptr + 1) % 4
+            step_size += 1
+            #left up
+            for _ in range(2):
+                for i in range(step_size):
+                    d_y,d_x = dirrs[dirr_ptr]
+                    #move to next cell using dirr_ptr and step_size
+                    rStart = rStart + d_x
+                    cStart = cStart + d_y
+                    #if in bounds, add it
+                    if 0 <= rStart < rows and 0 <= cStart < cols:
+                        visited.append([rStart,cStart])
+                dirr_ptr = (dirr_ptr + 1) % 4
+            step_size += 1
         return visited
 
 #right idea, just break it into 4 walks
 #incremnt step size by 2 each time
-class Solution(object):
-    
-    def spiralMatrixIII(self, R, C, r0, c0):
-        ret = [(r0, c0)] 
-        is_valid = lambda row, col: row >= 0 and row < R and col >= 0 and col < C 
+class Solution:
+    def spiralMatrixIII(self, rows: int, cols: int, rStart: int, cStart: int) -> List[List[int]]:
+        '''
+        increase dist by 1 every two turns
+        '''
+        r,c = rStart,cStart
+        visited = [(r,c)]
         
-        steps = 1 
-        r, c = r0, c0 
-        while len(ret) < R * C: 
-            # Go east 1
-            for step in range(steps):
-                r, c = r, c + 1 
-                if is_valid(r, c): ret.append((r, c))
-                    
-            # Go down 1 
-            for step in range(steps):
-                r, c = r + 1, c 
-                if is_valid(r, c): ret.append((r, c))
-                    
-            steps += 1
-                    
-            # Go west 2 
-            for step in range(steps):
-                r, c = r, c - 1
-                if is_valid(r, c): ret.append((r, c))           
+        is_valid = lambda r,c : 0 <= r < rows and 0 <= c < cols
+        steps = 1    
+        
+        while len(visited) < rows*cols:
+            #go right
+            for i in range(steps):
+                r,c = r,c+1
+                if is_valid(r,c):
+                    visited.append((r,c))
+            #go down
+            for i in range(steps):
+                r,c = r+1,c
+                if is_valid(r,c):
+                    visited.append((r,c))
             
-            # Go north 2 
-            for step in range(steps):
-                r, c = r - 1, c 
-                if is_valid(r, c): ret.append((r, c))           
-                    
             steps += 1
+            #go left
+            for i in range(steps):
+                r,c = r,c-1
+                if is_valid(r,c):
+                    visited.append((r,c))
             
-        return ret 
+            #go up
+            for i in range(steps):
+                r,c = r-1,c
+                if is_valid(r,c):
+                    visited.append((r,c))
+            steps += 1
+        return visited
