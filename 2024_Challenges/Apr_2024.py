@@ -167,3 +167,116 @@ class Solution:
                     visited.append((r,c))
             steps += 1
         return visited
+
+#############################################
+# 842. Split Array into Fibonacci Sequence
+# 03APR24
+#############################################
+class Solution:
+    def splitIntoFibonacci(self, num: str) -> List[int]:
+        '''
+        try all splits
+        review on all possible concenations
+        N = len(num)
+        
+        def rec(i,num,path):
+            print(path)
+            if i == N:
+                return
+            
+            for j in range(i,N):
+                temp = num[i:j+1]
+                rec(j+1,num,path + [temp])
+                
+        
+        rec(0,num,[])
+        '''
+        N = len(num)
+        ans = []
+        
+        def rec(i,num,path):
+            #print(path)
+            if i == N:
+                if len(path) > 2:
+                    ans.append(path[:])
+                return
+            
+            for j in range(i,N):
+                temp = num[i:j+1]
+                if len(temp) > 1 and temp[0] == '0':
+                    #print(temp)
+                    continue
+                if int(temp) > 2**31:
+                    continue
+                if len(path) < 2:
+                    rec(j+1,num,path + [int(temp)])
+                if len(path) >= 2:
+                    if path[-1] + path[-2] == int(temp):
+                        rec(j+1,num,path + [int(temp)])
+                
+        
+        rec(0,num,[])
+        if not ans:
+            return []
+        return ans[0]
+    
+#true backtracking
+class Solution:
+    def splitIntoFibonacci(self, num: str) -> List[int]:
+        '''
+        can treat this as backtracking, but need to return something
+        so we just return if this path is valid
+        '''
+        N = len(num)
+        ans = []
+        
+        def rec(i,num,path):
+            if len(path) > 2 and path[-3] + path[-2] != path[-1]:
+                return False
+            if i == N:
+                if len(path) > 2 and ans == None:
+                    ans.append(path[:])
+                    return True
+                return False
+
+            for j in range(i,N):
+                temp = num[i:j+1]
+                if len(temp) > 1 and temp[0] == '0':
+                    #print(temp)
+                    continue
+                if int(temp) > 2**31:
+                    continue
+                path.append(temp)
+                if rec(j+1,num,path):
+                    return True
+                path.pop()
+            
+            return False
+        
+        rec(0,num,[])
+        if not ans:
+            return []
+        return ans[0]
+
+##################################################
+# 1614. Maximum Nesting Depth of the Parentheses
+# 04APR24
+###################################################
+class Solution:
+    def maxDepth(self, s: str) -> int:
+        '''
+        balance and take the max
+        '''
+        ans = float('-inf')
+        curr_bal = 0
+        
+        for ch in s:
+            if ch == '(':
+                curr_bal += 1
+            elif ch == ')':
+                curr_bal -= 1
+            
+            ans = max(ans,curr_bal)
+        
+        return ans
+    
