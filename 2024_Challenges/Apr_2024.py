@@ -339,3 +339,43 @@ class Solution:
                 stack.append(ch)
         
         return "".join(stack)
+    
+###################################
+# 769. Max Chunks To Make Sorted
+# 05APR24
+###################################
+class Solution:
+    def maxChunksToSorted(self, arr: List[int]) -> int:
+        '''
+        keep pref max array
+        then compare pref max with the sorted array
+        if pref_max[i] == num at sorted position, use up a chunk
+        idea is to find some splitting line so that numbers being left of this line are smaller than numbers
+        to the right of the line
+            no we can ask how many lines exist
+        imagine the sorted array [0,1,2,3,4,5], we can do 6 chunks
+        if swap the ends : [5,1,2,3,4,0], we have to use the whole chunk
+        intutition:
+        The key to understand this algorithms lies in the fact that when max[index] == index, 
+        all the numbers before index must be smaller than max[index] (also index), 
+        so they make up of a continuous unordered sequence, i.e {0,1,..., index}
+
+        This is because numbers in array only vary in range [0, 1, ..., arr.length - 1], 
+        so the most numbers you can find that are smaller than a certain number, say arr[k], 
+        would be arr[k] - 1, i.e [0, 1, ..., arr[k] - 1]. So when arr[k] is the max number 
+        in [arr[0], arr[1], ..., arr[k]], all the k - 1 numbers before it can only lies in [0, 1, ..., arr[k] - 1], 
+        so they made up of a continuous sequence. 
+
+        '''
+        N = len(arr)
+        pref_max = [0]*N
+        pref_max[0] = arr[0]
+        for i in range(1,N):
+            pref_max[i] = max(arr[i],pref_max[i-1])
+        
+        chunks = 0
+        for i in range(N):
+            if pref_max[i] == i:
+                chunks += 1
+        
+        return chunks
