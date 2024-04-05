@@ -280,3 +280,62 @@ class Solution:
         
         return ans
     
+#############################################
+# 1544. Make The String Great (REVISITED)
+# 05ARP24
+#############################################
+class Solution:
+    def makeGood(self, s: str) -> str:
+        '''
+        doesn't matter what two chars we remove
+        '''
+        def isGreat(s):
+            N = len(s)
+            for i in range(0,N-1):
+                #diff must be abs(32)
+                left,right = s[i],s[i+1]
+                if abs(ord(left) - ord(right)) == 32:
+                    return False
+            
+            return True
+        
+        while not isGreat(s):
+            N = len(s)
+            for i in range(0,N-1):
+                #diff must be abs(32)
+                left,right = s[i],s[i+1]
+                if abs(ord(left) - ord(right)) == 32:
+                    break
+            
+            s = s[:i] + s[i+2:]
+        
+        return s
+
+#recursion
+class Solution:
+    def makeGood(self, s: str) -> str:
+        #recursion
+        
+        def rec(s):
+            if not s:
+                return ""
+            N = len(s)
+            for i in range(0,N-1):
+                left,right = s[i],s[i+1]
+                if abs(ord(left) - ord(right)) == 32:
+                    return rec(s[:i] + s[i+2:])
+            return s
+        
+        return rec(s)
+    
+#stack, make sure to clear both
+class Solution:
+    def makeGood(self, s: str) -> str:
+        stack = []
+        for ch in s:
+            if stack and abs(ord(stack[-1]) - ord(ch)) == 32:
+                stack.pop()
+            else:
+                stack.append(ch)
+        
+        return "".join(stack)
