@@ -379,3 +379,100 @@ class Solution:
                 chunks += 1
         
         return chunks
+    
+#########################################
+# 768. Max Chunks To Make Sorted II
+# 05APR24
+##########################################
+#well, i can't belive that shieet worked
+class Solution:
+    def maxChunksToSorted(self, arr: List[int]) -> int:
+        '''
+        same problem, just that the numbers can be repeating
+        [2,1,3,4,4], now sort
+        [1,2,3,4,4]
+        each k which some perm of arr[:k] == sorted(ar)[:k] is where we should cut
+        so cut [2,1], [3], [4],[4]
+        how can we effeciently check then?
+        
+        say we are int index i in arr
+        if arr[:i+1] contains elements in sorted(arr[:i+1]) we split here
+        holy shit worked! lmaooooo
+        '''
+        N = len(arr)
+        sorted_arr = sorted(arr)
+        chunks = 0
+        
+        for i in range(N):
+            pref = arr[:i+1]
+            if sorted(pref) == sorted_arr[:i+1]:
+                chunks += 1
+                
+        
+        return chunks
+    
+#################################################
+# 678. Valid Parenthesis String (REVISTED)
+# 07APR24
+#################################################
+#easssy
+class Solution:
+    def checkValidString(self, s: str) -> bool:
+        '''
+        keep track of balane use recursion
+        can i cache states
+        '''
+        N = len(s)
+        def dp(i,balance):
+            if balance >= 1:
+                return False
+            if i == N:
+                if balance == 0:
+                    return True
+                return False
+            if s[i] == '(':
+                return dp(i+1,balance-1)
+            if s[i] == ')':
+                return dp(i+1,balance+1)
+            if s[i] == '*':
+                return dp(i+1,balance) or dp(i+1,balance-1) or dp(i+1,balance+1)
+            return False
+        
+        return dp(0,0)
+    
+#two stacks
+class Solution:
+    def checkValidString(self, s: str) -> bool:
+        '''
+        two stacks and greedy
+        one stores indices of opened, the other stores indicies of asterisks
+        '''
+        opened = []
+        stars = []
+        
+        for i,ch in enumerate(s):
+            if ch == '(':
+                opened.append(i)
+            elif ch == '*':
+                stars.append(i)
+            #open
+            else:
+                #try closing
+                if opened:
+                    opened.pop()
+                #resort to using asterisk
+                elif stars:
+                    stars.pop()
+                #can't do
+                else:
+                    return False #nothing to pair this closing one
+        
+        
+        #now check remaining opeened, we can close this opened if there is a star after it
+        while opened and stars:
+            if opened[-1] > stars[-1]:
+                return False
+            opened.pop()
+            stars.pop()
+
+        return not opened
