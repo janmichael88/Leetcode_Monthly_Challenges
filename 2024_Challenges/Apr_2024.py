@@ -476,3 +476,86 @@ class Solution:
             stars.pop()
 
         return not opened
+    
+#############################################################
+# 1963. Minimum Number of Swaps to Make the String Balanced
+# 08APR24
+#############################################################
+class Solution:
+    def minSwaps(self, s: str) -> int:
+        '''
+        string can always be made balanced
+        what string can we turn it into so that we swap a minimum number of times?
+        swap and update at the same time
+        check for largest disbalance in absolute value???
+
+        idea is to just clear out the balanced parts
+        put the unbalanced halves in the stack
+        then we are left wil all the un balance halfs only
+        ans is just size of stack + 1 // 2
+        	    Pattern                          Result                      stack in the end         stack size
+		 "]["                             1                                "["                  1
+		"]][["                            1                                "[["                 2
+		"]]][[["                          2                                "[[["                3
+		"]]]][[[["                        2                                "[[[["               4
+		"]]]]][[[[["                      3                                "[[[[["              5
+		 
+		 If you notice, result = (stack.size()+1)/2;
+        '''
+        stack = []
+        for ch in s:
+            if ch == '[':
+                stack.append(ch)
+            else:
+                if stack:
+                    stack.pop()
+        
+        return (len(stack) + 1) // 2
+
+
+#################################################
+# 1700. Number of Students Unable to Eat Lunch
+# 08APR24
+################################################
+#ugly as hell but it works
+class Solution:
+    def countStudents(self, students: List[int], sandwiches: List[int]) -> int:
+        '''
+        theres'a cycle
+        if i were to simulate id need a terminating conditiion, can be empty sanwiches stack, because there are somes students 
+        who won't be able to eat
+        we're eventuall going to get to a state where all the students will be of one kind and that they can't eat the first sandwich
+        '''
+        N = len(students)
+        eaten = 0
+        students = deque(students)
+        counts = Counter(students)
+        i = 0
+        
+        while self.check(counts, sandwiches[i]):
+            if students[0] == sandwiches[i]:
+                eaten += 1
+                i += 1
+                if i == len(sandwiches):
+                    i -= 1
+                counts[students[0]] -= 1
+                if counts[students[0]] == 0:
+                    del counts[students[0]]
+                students.popleft()
+            else:
+                students.append(students.popleft())
+        
+        return N - eaten
+        
+    def check(self, counts, sandwich):
+        #checking to keep simultating
+        if len(counts) == 2:
+            return True
+        elif len(counts) == 1:
+            if counts[0] > 0 and 0 == sandwich:
+                return True
+            elif counts[1] > 0 and 1 == sandwich:
+                return True
+        
+        return False
+        
