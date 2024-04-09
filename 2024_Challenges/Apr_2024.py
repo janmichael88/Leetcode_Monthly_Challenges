@@ -559,3 +559,62 @@ class Solution:
         
         return False
         
+class Solution:
+    def countStudents(self, students: List[int], sandwiches: List[int]) -> int:
+        '''
+        another queue way, but how do we know when none of the students want to take top
+        keep track of lastServed, and if lastServed goes all the way, we know none of them want the top
+        otherwise take top and update lastServed to 0\
+        
+        the answer is just those students waiting in the queue
+        '''
+        N = len(students)
+        student_q = deque([])
+        sandwich_stack = []
+        
+        for i in range(N):
+            student_q.append(students[i])
+            sandwich_stack.append(sandwiches[N-i-1])
+        
+        #keep track of last studnet served
+        last_served = 0
+        while len(student_q) > 0 and last_served < len(student_q):
+            #match with first student and top sandwich
+            if student_q[0] == sandwich_stack[-1]:
+                sandwich_stack.pop()
+                student_q.popleft()
+                last_served = 0
+            else:
+                student_q.append(student_q.popleft())
+                last_served += 1
+        
+        return len(student_q)
+
+#counting is tricky
+class Solution:
+    def countStudents(self, students: List[int], sandwiches: List[int]) -> int:
+        '''
+        just count and decrement
+        when we want to server a sandwich but are out of students to give it too, we are done
+        '''
+        circle_count = 0
+        square_count = 0
+        
+        for s in students:
+            if s == 0:
+                circle_count += 1
+            else:
+                square_count += 1
+        
+        for s in sandwiches:
+            if s == 1 and square_count == 0:
+                return circle_count
+            if s == 0 and circle_count == 0:
+                return square_count
+            if s == 0:
+                circle_count -= 1
+            if s == 1:
+                square_count -= 1
+        
+        
+        return 0
