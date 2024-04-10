@@ -618,3 +618,101 @@ class Solution:
         
         
         return 0
+
+#########################################
+# 2073. Time Needed to Buy Tickets
+# 09APR24
+#########################################
+class Solution:
+    def timeRequiredToBuy(self, tickets: List[int], k: int) -> int:
+        '''
+        use q but pair with indices
+        '''
+        time = 0
+        q = deque([])
+        for i,count in enumerate(tickets):
+            q.append([i,count])
+            
+        kth_still_in = True
+        while kth_still_in:
+            curr,count = q.popleft()
+            count -= 1
+            if count > 0:
+                q.append([curr,count])
+            elif count == 0 and curr == k:
+                kth_still_in = False
+            time += 1
+        
+        return time
+    
+class Solution:
+    def timeRequiredToBuy(self, tickets: List[int], k: int) -> int:
+        '''
+        dont need to pair
+        just use indices
+        '''
+        time = 0
+        q = deque([])
+        for i,count in enumerate(tickets):
+            q.append(i)
+            
+        while q:
+            time += 1
+            curr = q.popleft()
+            tickets[curr] -= 1
+            if curr == k and tickets[curr] == 0:
+                return time
+            if tickets[curr] > 0:
+                q.append(curr)
+        
+        return time
+    
+#no q
+class Solution:
+    def timeRequiredToBuy(self, tickets: List[int], k: int) -> int:
+        n = len(tickets)
+        time = 0
+
+        # If person k only needs one ticket, return the time to buy it
+        if tickets[k] == 1:
+            return k + 1
+
+        # Continue buying tickets until person k buys all their tickets
+        while tickets[k] > 0:
+            for i in range(n):
+                # Buy a ticket at index 'i' if available
+                if tickets[i] != 0:
+                    tickets[i] -= 1
+                    time += 1
+
+                # If person k bought all their tickets, return the time
+                if tickets[k] == 0:
+                    return time;
+
+        return time
+    
+#one pass is tricky 
+#O(N)
+class Solution:
+    def timeRequiredToBuy(self, tickets: List[int], k: int) -> int:
+        '''
+        one pass
+        intutition:
+            determine if ith person is <= k or if i > k
+                then this person can get up to at at most tickets[k]
+                so min(tickets[k], tickets[i])
+            
+            determine if i > k, ith person will have less chances to get tickets, if tickets[k] < tickets[i]
+                min(tickets[k] - 1, tickets[i])
+                if they have less they can get all of them
+                if they have more, then they can only get one less than tickets[k]
+            
+        '''
+        ans = 0
+        for i,num in enumerate(tickets):
+            if i <= k:
+                ans += min(tickets[i],tickets[k])
+            else:
+                ans += min(tickets[k] -1, tickets[i])
+        
+        return ans
