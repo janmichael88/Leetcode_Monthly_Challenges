@@ -716,3 +716,79 @@ class Solution:
                 ans += min(tickets[k] -1, tickets[i])
         
         return ans
+    
+########################################
+# 950. Reveal Cards In Increasing Order
+# 10APR24
+#########################################
+#christ im getting old..
+class Solution:
+    def deckRevealedIncreasing(self, deck: List[int]) -> List[int]:
+        '''
+        notice how the ordering alternates, increasing on one index,
+        decreasing on the other
+        sort, weave and merge, nope its not that simple
+        order the deck and reverse the operations!
+        smallest card will alwasy be first
+        need this order
+        [2, 3, 5, 7, 11, 13, 17]
+        
+        [2, _, 3, _, 5, _, 7, ] what about thre order of [11,13,17]?
+        if i have [11,13,17] left
+        [11,17,13] nope
+        alterntates
+        we reveal smallest, but then next smallest gets sent to the end
+        i can always place the the first n/2 numbers at even positision
+        [17]
+        [17,13]
+        [11,17,13]
+        [7,13,11,17]
+        [5,17,7,13,11]
+        [3,11,5,17,7,13]
+        [2,13,3,11,5,17,7]
+        '''
+        N = len(deck)
+        if N == 1:
+            return deck
+        deck.sort()
+        q = deque([])
+        while deck:
+            if not q:
+                q.appendleft(deck.pop())
+            
+            last_elem = q.pop()
+            q.appendleft(last_elem)
+            q.appendleft(deck.pop())
+        
+        return q
+            
+#we dont need to check for edge case if N == 1
+class Solution:
+    def deckRevealedIncreasing(self, deck: List[int]) -> List[int]:
+        '''
+        no edge case
+        '''
+        deck.sort()
+        q = deque([deck.pop()])
+        while deck:
+            
+            last_elem = q.pop()
+            q.appendleft(last_elem)
+            q.appendleft(deck.pop())
+        
+        return q
+    
+#there' a rotate method for deque
+class Solution:
+    def deckRevealedIncreasing(self, deck: List[int]) -> List[int]:
+        '''
+        no edge case
+        '''
+        deck.sort()
+        q = deque([deck.pop()])
+        while deck:
+            q.rotate()
+            q.appendleft(deck.pop())
+        
+        return list(q)
+    
