@@ -792,3 +792,151 @@ class Solution:
         
         return list(q)
     
+####################################################
+# 2844. Minimum Operations to Make a Special Number
+# 11APR24
+####################################################
+class Solution:
+    def minimumOperations(self, num: str) -> int:
+        '''
+        a number is diviible by 25 if the last digits are are divisibly by 25
+        '''
+        N = len(num)
+        ans = N if '0' not in num else N-1
+        for i in range(N):
+            for j in range(i+1,N):
+                last_two = int(num[i])*10 + int(num[j])
+                if last_two in [0,25,50,75]:
+                    ans = min(ans,N - i - 2)
+        
+        return ans
+
+class Solution:
+    def minimumOperations(self, num: str) -> int:
+        '''
+        we can also do prefix dp
+        index i, and mod 25
+        '''
+        memo = {}
+        N = len(num)
+        
+        def dp(i,mod):
+            if i >= N:
+                if mod == 0:
+                    return 0
+                return float('inf')
+            
+            if (i,mod) in memo:
+                return memo[(i,mod)]
+            
+            next_mod = (mod*10 + int(num[i])) % 25
+            take = dp(i+1,next_mod)
+            remove = 1 + dp(i+1,mod)
+            ans = min(take,remove)
+            memo[(i,mod)] = ans
+            return ans
+        
+        
+        return dp(0,0)
+
+###################################################################
+# 255. Verify Preorder Sequence in Binary Search Tree (REVISITED)
+# 13APR24
+###################################################################
+class Solution:
+    def verifyPreorder(self, preorder: List[int]) -> bool:
+        '''
+        stack problem monostack
+        pre order is node, left, right, so explore left subtree first
+        maintain min and update it, if at any point in time we are smaller than the min, 
+        it means this should have been explore first in order to have a valid bst, return false
+        otherwise we are still good, and can contiue going right
+        recall that regualr dfs we need to backtrack to the originl caller (the parent)
+            in stack oringinal called would have been the node at the top of stack
+        '''
+        stack = []
+        curr_min = float('inf')
+        for num in preorder:
+            #need to maintain largest min, not more than the next num
+            while stack and stack[-1] < num:
+                curr_min = stack.pop()
+            #invalid bst, invalid preorder!
+            if num <= curr_min:
+                return False
+            stack.append(num)
+        
+        return True
+
+#constant space
+class Solution:
+    def verifyPreorder(self, preorder: List[int]) -> bool:
+        '''
+        we can reduce to constant space if we simiulate stack with array
+        append -> i++, set at [i]
+        pop -> i--
+        '''
+        i = 0
+        curr_min = float('-inf')
+        for num in preorder:
+            #need to maintain largest min, not more than the next num
+            while i > 0 and preorder[i-1] < num:
+                curr_min = preorder[i-1]
+                i -= 1
+            #invalid bst, invalid preorder!
+            if num <= curr_min:
+                return False
+            preorder[i] = num
+            i += 1
+        
+        return True
+
+
+########################################
+# 407. Trapping Rain Water II
+# 12APR24
+########################################
+#nice try.....
+class Solution:
+    def trapRainWater(self, heightMap: List[List[int]]) -> int:
+        '''
+        apply the original algorithm across each row???
+        try along both rows and cols and take minimum
+        '''
+        rows = len(heightMap)
+        cols = len(heightMap[0])
+        row_volume = 0
+        
+        #try along rows
+        for r in heightMap:
+            row_volume += self.trap(r)
+        
+        col_volume = 0
+        heightMap_T = [list(row) for row in zip(*heightMap)]
+        
+        for col in heightMap_T:
+            col_volume += self.trap(col)
+        
+        return min(row_volume,col_volume)
+    def trap(self, height: List[int]) -> int:
+        '''
+        left max and right max for each height
+        we also need to store the indics to find the distances
+        '''
+        ans = 0
+        current = 0
+        st = []
+        
+        while current < len(height):
+            while st and height[current] > height[st[-1]]:
+                top = st.pop()
+                if not st:
+                    break
+                distance = current - st[-1] - 1
+                #how much water is trapped in this gap?
+                bounded_height = min(height[current], height[st[-1]]) - height[top]
+                ans += distance * bounded_height
+            
+            st.append(current)
+            current += 1
+        
+        return ans
