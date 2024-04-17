@@ -940,3 +940,97 @@ class Solution:
             current += 1
         
         return ans
+
+class Solution:
+    def trapRainWater(self, heightMap: List[List[int]]) -> int:
+        '''
+        scan the grid for the lowest (i,j) cell
+        if its surrounded by all 4 insides it can hold water, in fact i can fill this with water with
+            volumne = (second smallest height - first smallest height)
+            fill smallest heights first
+            group cells by height, then order the heights increasinly
+        '''
+        heights = defaultdict(list)
+        rows = len(heightMap)
+        cols = len(heightMap[0])
+        
+        for i in range(rows):
+            for j in range(cols):
+                h = heightMap[i][j]
+                heights[h].append((i,j))
+        
+        #sort on increasiny hieghts
+        height_vals = [k for k,_ in heights.items()]
+        height_vals.sort()
+        N = len(height_vals)
+        ans = 0
+        for i in range(1,N):
+            prev = height_vals[i-1]
+            curr = height_vals[i]
+            increase = curr - prev
+            for i,j in heights[prev]:
+                #cannnot be on the edge
+                if i == 0 or j == 0 or i == rows - 1 or j == cols - 1:
+                    continue
+                #i need to move these cells over to the next level
+                ans += increase
+                heights[curr].append((i,j))
+        
+        return ans
+
+########################################
+# 623. Add One Row to Tree (REVISTED)
+# 17APR24
+########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def addOneRow(self, root: TreeNode, v: int, d: int, left: bool = True) -> TreeNode:
+        
+        if d == 1:
+            new_node = TreeNode(v)
+            if left:
+                new_node.left = root
+            else:
+                new_node.right = root
+            return new_node
+            #return TreeNode(v, root if left else None, root if not left else None)
+        elif root:
+            root.left = self.addOneRow(root.left, v, d - 1, True)
+            root.right = self.addOneRow(root.right, v, d - 1, False)
+        return root
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def addOneRow(self, root: Optional[TreeNode], val: int, depth: int) -> Optional[TreeNode]:
+        #edge case
+        if depth == 1:
+            new_node = TreeNode(val)
+            new_node.left = root
+            return new_node
+        
+        def rec(node,curr_depth,insertion_depth,val):
+            if not node:
+                return
+            if curr_depth == insertion_depth - 1:#  just before
+                temp = node.left
+                node.left = TreeNode(val)
+                node.left.left = temp
+                temp = node.right
+                node.right =  TreeNode(val)
+                node.right.right = temp
+            else:
+                rec(node.left,curr_depth+1,insertion_depth,val)
+                rec(node.right,curr_depth+1,insertion_depth,val)
+        rec(root,1,depth,val)
+        return root
+
