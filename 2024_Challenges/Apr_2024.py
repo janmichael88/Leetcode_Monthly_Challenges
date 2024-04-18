@@ -1034,3 +1034,59 @@ class Solution:
         rec(root,1,depth,val)
         return root
 
+############################################
+# 988. Smallest String Starting From Leaf 
+# 17APR24
+############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def smallestFromLeaf(self, root: Optional[TreeNode]) -> str:
+        '''
+        dont need self variable since its string, 
+        get smallest, numnodes in tree is 8500
+        python cheese is great!
+        '''
+        ans = ['z'*8501]
+        
+        def dfs(node,path,ans):
+            path += chr(ord('a') + node.val)
+            #check leaf
+            if not node.left and not node.right:
+                ans[0] = min(ans[0],path[::-1])
+                return
+            if node.left:
+                dfs(node.left,path,ans)
+            if node.right:
+                dfs(node.right,path,ans)
+        
+        dfs(root,"",ans)
+        return ans[0]
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def smallestFromLeaf(self, root: Optional[TreeNode]) -> str:
+        '''
+        no global
+        '''        
+        def dfs(node,path):
+            if not node:
+                return 'z'*8501
+            path += chr(ord('a') + node.val)
+            #check leaf
+            if not node.left and not node.right:
+                return path[::-1]
+            left = dfs(node.left,path)
+            right = dfs(node.right,path)
+            return min(left,right)
+        
+        return dfs(root,"")
