@@ -977,6 +977,8 @@ class Solution:
                 heights[curr].append((i,j))
         
         return ans
+    
+#true solution is using heap
 
 ########################################
 # 623. Add One Row to Tree (REVISTED)
@@ -1090,3 +1092,132 @@ class Solution:
             return min(left,right)
         
         return dfs(root,"")
+    
+################################################
+# 1560. Most Visited Sector in a Circular Track
+# 19MAR24
+###############################################
+class Solution:
+    def mostVisited(self, n: int, rounds: List[int]) -> List[int]:
+        '''
+        n is the number of sectors, i can simulate and just do mod n
+        sectors are numbered 1 to n
+        '''
+        mapp = {}
+        for i in range(1,n):
+            mapp[i] = i+1
+        mapp[n] = 1
+        counts = [0]*(n+1)
+        is_first = True
+        for i in range(len(rounds)-1):
+            if is_first:
+                start = rounds[i]
+                end = rounds[i+1]
+                is_first = False
+            else:
+                start = rounds[i]
+                start = mapp[start]
+                end = rounds[i+1]
+                
+            while start != end:
+                counts[start] += 1
+                start = mapp[start]
+            counts[start] += 1
+        
+        #now find the max
+        max_ = max(counts)
+        ans = []
+        for i in range(1,n+1):
+            if counts[i] == max_:
+                ans.append(i)
+        
+        return ans
+
+class Solution:
+    def mostVisited(self, n: int, rounds: List[int]) -> List[int]:
+        '''
+        Explanation:
+        if n = 4, rounds = [1,3,1,2]
+        than [1,2,3,4,1,2]
+        output is [1,2]
+
+        if n = 3 rounds = [3,1,2,3,1]
+        than [3,1,2,3,1]
+        output is [1,3]
+
+        if n = 4 rounds = [1,4,2,3]
+        than [1,2,3,4,1,2,3]
+        output is [1,2,3]
+
+        which means all steps moved in the middle will happen again and again and again, so they are useless.
+        The only important things are start point and end point.
+        '''
+        first = rounds[0]
+        last = rounds[-1]
+        
+        if last >= first:
+            return [i for i in range(first,last+1)]
+        return [i for i in range(1,n+1) if i <= last or i >= first]
+    
+##############################################
+# 407. Trapping Rain Water II
+# 19MAR24
+###############################################
+class Solution(object):
+    def trapRainWater(self, heightMap):   
+        m, n = len(heightMap), len(heightMap[0])
+        heap = []
+        visited = [[0]*n for _ in range(m)]
+
+        # Push all the block on the border into heap
+        for i in range(m):
+            for j in range(n):
+                if i == 0 or j == 0 or i == m-1 or j == n-1:
+                    heapq.heappush(heap, (heightMap[i][j], i, j))
+                    visited[i][j] = 1
+        
+        result = 0
+        while heap:
+            #get smalest from heap
+            height, i, j = heapq.heappop(heap)    
+            for x, y in ((i+1, j), (i-1, j), (i, j+1), (i, j-1)):
+                #neighbores and in bounds check
+                if 0 <= x < m and 0 <= y < n and not visited[x][y]:
+                    #we can store water with differeunt, up to though
+                    result += max(0, height-heightMap[x][y])
+                    heapq.heappush(heap, (max(heightMap[x][y], height), x, y))
+                    #mark
+                    visited[x][y] = 1
+        return result
+    
+class Solution(object):
+    def trapRainWater(self, heightMap):
+        '''
+        heap but starting with border cells
+        '''
+        rows,cols = len(heightMap),len(heightMap[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        seen = [[False]*cols for _ in range(cols)]
+        
+        heap = []
+        for i in range(rows):
+            for j in range(cols):
+                if i == 0 or j == 0 or i == rows - 1 or j == cols - 1:
+                    entry = (heightMap[i][j], i,j)
+                    heapq.heappush(heap,entry)
+        
+        water = 0
+        while heap:
+            curr_height, curr_row,curr_col = heapq.heappop(heap)
+            seen[curr_row][curr_col] = True
+            for dx,dy in dirrs:
+                neigh_row = curr_row + dx
+                neigh_col = curr_col + dy
+                if 0 <= neigh_row < rows and 0 <= neigh_col < cols and not seen[neigh_row][neigh_col]:
+                    if heightMap[neigh_row][neigh_col] <= curr_height:
+                        water += curr_height - heightMap[neigh_row][neigh_col] 
+                    entry = (heightMap[neigh_row][neigh_col], neigh_row,neigh_col)
+                    heapq.heappush(heap,entry)
+        
+        return water
+            
