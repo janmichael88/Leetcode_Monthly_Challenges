@@ -1221,3 +1221,141 @@ class Solution(object):
         
         return water
             
+########################################
+# 1992. Find All Groups of Farmland
+# 20APR24
+########################################
+class Solution:
+    def findFarmland(self, land: List[List[int]]) -> List[List[int]]:
+        '''
+        0 is forested land, 1 is farmland
+        there are groups of farmland, not two groups are conected
+        and groups of farmland are not four directinoally adajacent
+        for each group of ones, return [topleft coords, bottomright coords]
+        groups of farmland will always be in rectangular shape
+        dfs on each group and find the coners
+            upper left will be min of allxs and ys
+            bottom right will be max of allxs and ys
+        '''
+        rows = len(land)
+        cols = len(land[0])
+        dirrs = [(1,0), (-1,0), (0,1), (0,-1)]
+        seen = [[False]*cols for _ in range(rows)]
+        
+        ans = []
+        for i in range(rows):
+            for j in range(cols):
+                if land[i][j] == 1 and not seen[i][j]:
+                    upper_left = [i,j]
+                    bottom_right = [i,j]
+                    self.dfs(land,[i,j],upper_left,bottom_right,seen,dirrs,rows,cols)
+                    entry = upper_left + bottom_right
+                    ans.append(entry)
+        return ans
+        
+    
+    def dfs(self, land, curr_point, upper_left,bottom_right,seen,dirrs,rows,cols):
+        r,c = curr_point
+        #mark
+        seen[r][c] = True
+        #minimze
+        upper_left[0] = min(upper_left[0],r)
+        upper_left[1] = min(upper_left[1],c)
+        #maximize
+        bottom_right[0] = max(bottom_right[0],r)
+        bottom_right[1] = max(bottom_right[1],c)
+        for dx,dy in dirrs:
+            neigh_row = r + dx
+            neigh_col = c + dy
+            if 0 <= neigh_row < rows and 0 <= neigh_col < cols:
+                if not seen[neigh_row][neigh_col] and land[neigh_row][neigh_col] == 1:
+                    self.dfs(land, [neigh_row,neigh_col], upper_left, bottom_right,seen,dirrs,rows,cols)
+        
+
+##########################################
+# 752. Open the Lock (REVISTED)
+# 22APR24
+############################################
+class Solution:
+    def openLock(self, deadends: List[str], target: str) -> int:
+        '''
+        need neighbor function to generate net moves
+        then use bfs dist dist array
+        '''
+        deadends = set(deadends)
+        #edge cases
+        if target in deadends: 
+            return -1
+        if '0000' in deadends: 
+            return -1
+        dists =  {}
+        dists['0000'] = 0
+        q = deque(['0000'])
+        
+        while q:
+            curr = q.popleft()
+            for neigh in self.get_neighbors(curr):
+                if neigh not in deadends:
+                    next_dist = 1 + dists[curr]
+                    if next_dist < dists.get(neigh,float('inf')):
+                        dists[neigh] = next_dist
+                        q.append(neigh)
+        
+        ans = dists.get(target,float('inf'))
+        if ans != float('inf'):
+            return ans
+        return -1
+    
+    def get_neighbors(self,code):
+        N = len(code)
+        for i in range(N):
+            left = code[:i]
+            right = code[i+1:]
+            #can only turn one at a time!            
+            for j in [1,-1]:
+                temp = str((int(code[i]) + j) % 10)
+                neigh = left + temp + right
+                if neigh != code:
+                    yield neigh
+                
+################################################
+# 2368. Reachable Nodes With Restrictions
+# 22APR24
+#################################################
+class Solution:
+    def reachableNodes(self, n: int, edges: List[List[int]], restricted: List[int]) -> int:
+        '''
+        bfs with dists array
+        if node is unreachable starting from 0 it doen'st count
+        '''
+        
+        #make graph
+        adj_list = defaultdict(list)
+        for u,v in edges:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+    
+        restricted = set(restricted)
+        dists = [float('inf')]*n
+        
+        #start from ther 0th node
+        dists[0] = 0
+        q = deque([0])
+        
+        while q:
+            curr = q.popleft()
+            for neigh in adj_list[curr]:
+                if neigh not in restricted:
+                    next_dist = 1 + dists[curr]
+                    if dists[neigh] > next_dist:
+                        dists[neigh] = next_dist
+                        q.append(neigh)
+                        
+        ans = 0
+        for d in dists:
+            if d != float('inf'):
+                ans += 1
+        
+        return ans
+        
+        
