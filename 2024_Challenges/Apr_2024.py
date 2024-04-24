@@ -1358,4 +1358,202 @@ class Solution:
         
         return ans
         
+#without keeping dists array
+class Solution:
+    def reachableNodes(self, n: int, edges: List[List[int]], restricted: List[int]) -> int:
+        '''
+        bfs with dists array
+        if node is unreachable starting from 0 it doen'st count
+        '''
         
+        #make graph
+        adj_list = defaultdict(list)
+        for u,v in edges:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+    
+        restricted = set(restricted)
+        seen = [False]*n
+        ans = 0
+        q = deque([0])
+        
+        while q:
+            curr = q.popleft()
+            seen[curr] = True
+            ans += 1
+            for neigh in adj_list[curr]:
+                if neigh in restricted:
+                    continue
+                if not seen[neigh]:
+                    q.append(neigh)
+                        
+        return ans
+    
+#dfs
+class Solution:
+    def reachableNodes(self, n: int, edges: List[List[int]], restricted: List[int]) -> int:
+        '''
+        bfs with dists array
+        if node is unreachable starting from 0 it doen'st count
+        '''
+        
+        #make graph
+        adj_list = defaultdict(list)
+        for u,v in edges:
+            adj_list[u].append(v)
+            adj_list[v].append(u)
+    
+        restricted = set(restricted)
+        seen = [False]*n
+        ans = [0]
+        
+        def dfs(curr,seen,ans):
+            seen[curr] = True
+            ans[0] += 1
+            for neigh in adj_list[curr]:
+                if neigh in restricted:
+                    continue
+                if not seen[neigh]:
+                    dfs(neigh,seen,ans)
+        dfs(0,seen,ans)              
+        return ans[0]
+
+################################################
+# 310. Minimum Height Trees (REVISITED)
+# 23APR24
+################################################
+#first brute force
+class Solution:
+    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        first of all do brute force and dfs on each node and finds its depth
+        
+        '''
+        indegree = [0]*n
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            indegree[u] += 1
+            indegree[v] += 1
+        
+        depths = []
+        for i in range(n):
+            depths.append(self.dfs(i,None,graph))
+        
+        min_depth = min(depths)
+        ans = []
+        for i in range(n):
+            if depths[i] == min_depth:
+                ans.append(i)
+        
+        return ans
+        
+    
+    def dfs(self, curr,parent,graph):
+        ans = 0
+        for neigh in graph[curr]:
+            if neigh != parent:
+                ans = max(ans,1 + self.dfs(neigh,curr,graph))
+        
+        return ans
+        
+#top sort, but special way
+class Solution:
+    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        if a graph has n nodes, then it can have at most n-1 mht trees?
+        im thkning top sort, the nodes that are left must be the the roots of mht
+        start off with nodes that have smallest indegree
+        the thing is how do i know when to stop?
+        
+        essentially we are looking for the centroids of a graph
+        for a tree-like graph, number of centroids <= 2
+        even nodes, there could be two centroids
+        odd nodes, there would be only one
+        if we have more than two centroids, the graph must contain a cycle, which is not the case
+        if there were three centroids, really it would justt be one
+        problem boils down to finding the centroids of a tree
+        trim from the leaves until we have two remaining nodes
+        https://leetcode.com/problems/minimum-height-trees/discuss/827284/c%2B%2B99-TC-with-explanation-using-bfs-top-sort-%3A)
+        MHT must be the midpoints of the longest leaf to leaf path in tree (could have solved it this way by finding the longest path)
+        to find the longest path, first find the fathest leaf from any node, then find the fathest leafe from the found node above
+        then these two nodes we found are the end points of the longest path
+        '''
+        if n == 0:
+            return []
+        
+        if n == 1:
+            return [0]
+        
+        indegree = [0]*n
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            indegree[u] += 1
+            indegree[v] += 1
+        
+        q = deque([])
+        for i in range(n):
+            if indegree[i] == 1:
+                q.append(i)
+        
+        ans = []
+        while q:
+            ans = []
+            N = len(q)
+            for _ in range(N):
+                curr = q.popleft()
+                ans.append(curr)
+                for neigh in graph[curr]:
+                    indegree[neigh] -= 1
+                    if indegree[neigh] == 1:
+                        q.append(neigh)
+        return ans
+    
+#two dfs, find diameter
+class Solution:
+    def findMinHeightTrees(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        another way would be to find the furthest node from any node, once we find that node, find the futherst node from that
+        and recreate path, the middle/s of the path are centroids
+        '''
+        if n == 0:
+            return []
+        if n == 1:
+            return [0]
+        
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        #first dfs, find furthest node from 0
+        dist,parent = [-1]*n, [None]*n
+        dist[0] = 0
+        self.dfs(0,graph,dist,parent)
+        furthest_from_zero = dist.index(max(dist))
+
+        #second dfs, furthest from furtherst
+        dist,parent = [-1]*n, [None]*n
+        dist[furthest_from_zero] = 0
+        self.dfs(furthest_from_zero,graph,dist,parent)
+        
+        furthest_from_furthest = dist.index(max(dist))
+        path = []
+        while furthest_from_furthest != None:
+            path.append(furthest_from_furthest)
+            furthest_from_furthest = parent[furthest_from_furthest]
+            
+        #get middle nodes
+        N = len(path)
+        temp = [path[N//2],path[(N-1)//2]] #careful with the middle, need lower, but N-1/(2) and now N//2 - 1
+        return set(temp)
+
+    def dfs(self,curr,graph,dist,parent):
+        for neigh in graph[curr]:
+            if dist[neigh] == -1:
+                dist[neigh] = dist[curr] + 1
+                parent[neigh] = curr
+                self.dfs(neigh,graph,dist,parent)
