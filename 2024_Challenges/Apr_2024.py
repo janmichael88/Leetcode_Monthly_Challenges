@@ -1557,3 +1557,34 @@ class Solution:
                 dist[neigh] = dist[curr] + 1
                 parent[neigh] = curr
                 self.dfs(neigh,graph,dist,parent)
+
+#########################################
+# 1656. Design an Ordered Stream
+# 24APR24
+##########################################
+#stupid ass problem
+class OrderedStream:
+
+    def __init__(self, n: int):
+        '''
+        maintin pointer
+        '''
+        self.arr = [None]*(n+1)
+        self.ptr = 1
+
+    def insert(self, idKey: int, value: str) -> List[str]:
+        self.arr[idKey] = value
+        if idKey > self.ptr:
+            return []
+        if idKey == self.ptr:
+            to_return = []
+            while self.ptr < len(self.arr) and self.arr[self.ptr] != None:
+                to_return.append(self.arr[self.ptr])
+                self.ptr += 1
+            
+            return to_return
+
+
+# Your OrderedStream object will be instantiated and called as such:
+# obj = OrderedStream(n)
+# param_1 = obj.insert(idKey,value)
