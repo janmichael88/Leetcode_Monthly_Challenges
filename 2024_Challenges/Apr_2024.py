@@ -1588,3 +1588,177 @@ class OrderedStream:
 # Your OrderedStream object will be instantiated and called as such:
 # obj = OrderedStream(n)
 # param_1 = obj.insert(idKey,value)
+        
+####################################################
+# 2370. Longest Ideal Subsequence 
+# 25APR24
+####################################################
+#close one
+class Solution:
+    def longestIdealString(self, s: str, k: int) -> int:
+        '''
+        dp, extend or don't extend and save max, thankfully we only need to return the length and not the actual string
+        dp(i) gives longest ideal string ending at i
+        need ending index and last char at that index as the states
+        rather ending at i, and last char before ending at i
+        '''
+        N = len(s)
+        memo = {}
+        
+        def dp(i,s,k,memo):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            extend = 1
+            if i < N - 1:
+                curr_char,next_char = ord(s[i]),ord(s[i+1])
+                if abs(curr_char - next_char) <= k:
+                    extend = 1 + dp(i+1,s,k,memo)
+            
+            no_extend = dp(i+1,s,k,memo)
+            ans = max(extend,no_extend)
+            memo[i] = ans
+            return ans
+        
+        ans = 0
+        for i in range(N):
+            ans = max(ans, dp(i,s,k,memo))
+        
+        return ans
+            
+#TLE
+class Solution:
+    def longestIdealString(self, s: str, k: int) -> int:
+        '''
+        dp, extend or don't extend and save max, thankfully we only need to return the length and not the actual string
+        dp(i) gives longest ideal string ending at i
+        need ending index and last char at that index as the states
+        rather ending at i, and last char before ending at i
+        '''
+        N = len(s)
+        memo = {}
+        
+        def dp(i,last_char,s,k,memo): #use '#' as dummy char
+            if i >= N:
+                return 0
+            if (i,last_char) in memo:
+                return memo[(i,last_char)]
+            extend = 0
+            curr_char_num,last_char_num = ord(s[i]), ord(last_char)
+            if abs(curr_char_num - last_char_num) <= k or last_char == '#': #no last char, this case we mut extend
+                extend = 1 + dp(i+1,s[i],s,k,memo)
+            no_extend = dp(i+1,last_char,s,k,memo)
+            ans = max(extend,no_extend)
+            memo[(i,last_char)] = ans
+            return ans
+        
+        
+        return dp(0,'#',s,k,memo)
+
+#bottom up
+#this TLE's too
+class Solution:
+    def longestIdealString(self, s: str, k: int) -> int:
+        '''
+        dp, extend or don't extend and save max, thankfully we only need to return the length and not the actual string
+        dp(i) gives longest ideal string ending at i
+        need ending index and last char at that index as the states
+        rather ending at i, and last char before ending at i
+        '''
+        N = len(s)
+        dp = [[0]*(123) for _ in range(N+1)]
+        
+        for i in range(N-1,-1,-1):
+            for last_char in range(123):
+                extend = 0
+                curr_char_num,last_char_num = ord(s[i]) - ord('a'), last_char
+                if i == len(dp) - 1 or abs(curr_char_num - last_char_num) <= k or chr(last_char) == '#': #no last char, this case we mut extend
+                    extend = 1 + dp[i+1][curr_char_num]
+                no_extend = dp[i+1][last_char]
+                dp[i][last_char] = max(extend,no_extend)
+        
+        return dp[0][ord('#')]
+
+class Solution:
+    def longestIdealString(self, s: str, k: int) -> int:
+        N = len(s)
+
+        # Initialize all dp values to -1 to indicate non-visited states
+        dp = [[-1] * 26 for _ in range(N)]
+
+        def dfs(i: int, c: int, dp: list, s: str, k: int) -> int:
+            # Memoized value
+            if dp[i][c] != -1:
+                return dp[i][c]
+
+            # State is not visited yet
+            dp[i][c] = 0
+            match = c == (ord(s[i]) - ord('a'))
+            if match:
+                dp[i][c] = 1
+
+            # Non base case handling
+            if i > 0:
+                dp[i][c] = dfs(i - 1, c, dp, s, k)
+                if match:
+                    for p in range(26):
+                        if abs(c - p) <= k:
+                            dp[i][c] = max(dp[i][c], dfs(i - 1, p, dp, s, k) + 1)
+            return dp[i][c]
+
+        # Find the maximum dp[N-1][c] and return the result
+        res = 0
+        for c in range(26):
+            res = max(res, dfs(N - 1, c, dp, s, k))
+        return res
+
+class Solution:
+    def longestIdealString(self, s: str, k: int) -> int:
+        '''
+        bottom up
+        '''
+        N = len(s)
+        dp = [0]*26
+        
+        for i in range(N):
+            curr_char = ord(s[i]) - ord('a')
+            local_best = 0
+            for prev in range(26):
+                if abs(prev - curr_char) <= k:
+                    local_best = max(local_best, dp[prev])
+            
+            dp[curr_char] = max(dp[curr_char], local_best + 1)
+        
+        return max(dp)
+
+#####################################################################
+# 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
+# 24APR24
+######################################################################
+#closeeee
+class Solution:
+    def countPairsOfConnectableServers(self, edges: List[List[int]], signalSpeed: int) -> List[int]:
+        '''
+        notice how nodes with only degree 1 will always have zero
+        for a node to be even considered connectable, it must be in the middle
+        hint1: take each node as root, run dfs rooted at that node i and get nodes whose distnace is divisible by signal speed
+        '''
+        graph = defaultdict(list)
+        for u,v,w in edges:
+            graph[u].append((v,w))
+            graph[v].append((u,w))
+        
+        n = len(graph)
+        num = [0]*n
+        
+        for i in range(n):
+            self.dfs(i,i,None,graph,num,signalSpeed,0)
+        print(num)
+    def dfs(self, root,node, parent, graph, num, signalSpeed,curr_dist):
+        if curr_dist % signalSpeed == 0:
+            num[root] += 1
+        for neigh,weight in graph[node]:
+            if neigh != parent:
+                self.dfs(root,neigh,node,graph,num,signalSpeed,curr_dist + weight)
+
