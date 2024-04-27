@@ -1731,6 +1731,114 @@ class Solution:
             dp[curr_char] = max(dp[curr_char], local_best + 1)
         
         return max(dp)
+    
+#note instead trying all 26, we can bound the search space
+class Solution:
+   def longestIdealString(self, s: str, k: int) -> int:
+       substr_map = collections.defaultdict(lambda : 0)
+       ans = 0
+       for c in s:
+           max_length = 0
+           for i in range(max(ord(c)-k, ord('a')), min(ord(c)+k+1, ord('z')+1)):
+               max_length = max(substr_map[chr(i)] + 1,max_length)
+           substr_map[c] = max_length
+           ans = max(max_length, ans)
+       return ans
+   
+######################################
+# 1289. Minimum Falling Path Sum II
+# 26APR24
+#######################################
+   #TLE, but its right
+class Solution:
+    def minFallingPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        if we are at cell (i,j), we cannot go to (i+1,j) because it shares the same column
+        we need to choose any of the rest
+        need to optimize to pass
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        memo = {}
+        
+        def dp(i,j,grid,memo,rows,cols):
+            #if we reached the last row
+            if i == rows - 1:
+                return grid[i][j]
+            #out of bounds
+            if i < 0 or i > rows or j < 0 or j > cols:
+                return float('inf')
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = float('inf')
+            for k in range(cols):
+                if k != j:
+                    ans = min(ans, grid[i][j] + dp(i+1,k,grid,memo,rows,cols))
+            memo[(i,j)] = ans
+            return ans
+        
+        ans = float('inf')
+        for j in range(cols):
+            ans = min(ans, dp(0,j,grid,memo,rows,cols))
+        
+        return ans
+
+#need to use cache
+class Solution:
+    def minFallingPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        if we are at cell (i,j), we cannot go to (i+1,j) because it shares the same column
+        we need to choose any of the rest
+        need to optimize to pass
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+
+        @cache
+        def dp(i,j):
+            #if we reached the last row
+            if i == rows - 1:
+                return grid[i][j]
+            #out of bounds
+            if i < 0 or i > rows or j < 0 or j > cols:
+                return float('inf')
+            ans = float('inf')
+            for k in range(cols):
+                if k != j:
+                    ans = min(ans, grid[i][j] + dp(i+1,k))
+            return ans
+        
+        ans = float('inf')
+        for j in range(cols):
+            ans = min(ans, dp(0,j))
+        
+        return ans
+    
+#bottom up
+class Solution:
+    def minFallingPathSum(self, grid: List[List[int]]) -> int:
+        '''
+        bottom up
+        
+        '''
+        N = len(grid)
+        dp = [[float('inf')]*N for _ in range(N)]
+        
+        #fill in last roow
+        for col in range(N):
+            dp[N-1][col] = grid[N-1][col]
+            
+        for row in range(N-2,-1,-1):
+            for col in range(N):
+                ans = float('inf')
+                for k in range(N):
+                    if k != col:
+                        ans = min(ans, dp[row+1][k] + grid[row][col])
+                
+                dp[row][col] = ans
+        
+
+        return min(dp[0])
 
 #####################################################################
 # 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
