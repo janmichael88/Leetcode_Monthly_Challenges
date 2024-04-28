@@ -1840,6 +1840,137 @@ class Solution:
 
         return min(dp[0])
 
+#############################################
+# 514. Freedom Trail
+# 28APR24
+##############################################
+#ex dp with weighted graph
+class Solution:
+    def findRotateSteps(self, ring: str, key: str) -> int:
+        '''
+        we can treat this like a graph problem and find the shortest path
+        note: for each matcher char placed at  top this counts as 1 step
+        so its min dist + len(key)
+        find min dist
+        make adj list by char, since we can rotate CW, or CCW, we need minimum
+        step depends on what char we are at, and we want the min dist to the next char
+        '''
+        N = len(ring)
+        graph = [[float('inf')]*N for _ in range(N)]
+        
+        for i in range(N):
+            for j in range(N):
+                forward_dist = abs(i-j)
+                rev_dist = N - forward_dist
+                graph[i][j] = min(graph[i][j],forward_dist,rev_dist)
+        
+
+        #now just do dp
+        memo = {}
+        
+        #states are position we are at now in ring and position where we are at in key
+        def dp(ring_idx,key_idx):
+            if (ring_idx,key_idx) in memo:
+                return memo[(ring_idx,key_idx)]
+            if key_idx == len(key):
+                return 0
+            ans = float('inf')
+            for next_index,dist in enumerate(graph[ring_idx]):
+                if ring[next_index] == key[key_idx]:
+                    next_dist = dist + 1 + dp(next_index,key_idx+1)
+                    ans = min(ans, next_dist)
+            
+            memo[(ring_idx,key_idx)] = ans
+            return ans
+        
+        return dp(0,0)
+    
+#bottom up
+class Solution:
+    def findRotateSteps(self, ring: str, key: str) -> int:
+        '''
+        bottom up
+        '''
+        N = len(ring)
+        graph = [[float('inf')]*N for _ in range(N)]
+        
+        for i in range(N):
+            for j in range(N):
+                forward_dist = abs(i-j)
+                rev_dist = N - forward_dist
+                graph[i][j] = min(graph[i][j],forward_dist,rev_dist)
+        
+
+        #now just do dp
+        dp = [[float('inf')]*(len(key) + 1) for _ in range(len(ring)+1)]
+        
+        #base case fill
+        for ring_idx in range(len(ring)+1):
+            for key_idx in range(len(key)+1):
+                if key_idx == len(key):
+                    dp[ring_idx][key_idx] = 0
+
+        
+        for key_idx in range(len(key)-1,-1, -1):
+            for ring_idx in range(len(ring)):
+                ans = float('inf')
+                for next_index,dist in enumerate(graph[ring_idx]):
+                    if ring[next_index] == key[key_idx]:
+                        next_dist = dist + 1 + dp[next_index][key_idx+1]
+                        ans = min(ans, next_dist)
+            
+                #minimize at each steap
+                dp[ring_idx][key_idx] = ans
+        
+
+        return dp[0][0]
+        
+#djikstras
+class Solution:
+    def findRotateSteps(self, ring: str, key: str) -> int:
+        '''
+        we can use djikstras to find the shortest path
+        shortest path is number of turns needed
+        but we need to do for each press
+        so its len(shortest_path) + len(key)
+        '''
+        N = len(ring)
+        graph = [[float('inf')]*N for _ in range(N)]
+        
+        for i in range(N):
+            for j in range(N):
+                forward_dist = abs(i-j)
+                rev_dist = N - forward_dist
+                graph[i][j] = min(graph[i][j],forward_dist,rev_dist)
+        
+        #first node is (0,0), (ring_idx,key_idx)
+        dists = defaultdict(lambda: float('inf'))
+        dists[(0,0)] = 0
+        
+        pq = [(0,0,0)] #entry is (min_dist,ring_idx,key_idx)
+        visited = set()
+        min_path = 0
+        
+        while pq:
+            min_dist, ring_idx,key_idx = heapq.heappop(pq)
+            if dists[(ring_idx,key_idx)] < min_dist:
+                continue
+            if (ring_idx,key_idx) in visited:
+                continue
+            #if we have finished the work
+            if key_idx == len(key):
+                min_path = min_dist
+                break
+            visited.add((ring_idx,key_idx))
+            for next_index,dist in enumerate(graph[ring_idx]):
+                next_dist = min_dist + dist + 1
+                #optimize
+                if next_dist < dists[(next_index,key_idx+1)]:
+                    dists[(next_index,key_idx+1)] = next_dist
+                    entry = (next_dist, next_index,key_idx+1)
+                    heapq.heappush(pq,entry)
+        return min_path + len(key)
+
 #####################################################################
 # 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
 # 24APR24
