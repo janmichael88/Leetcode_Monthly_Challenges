@@ -1971,6 +1971,59 @@ class Solution:
                     heapq.heappush(pq,entry)
         return min_path + len(key)
 
+###########################################
+# 834. Sum of Distances in Tree (REVISTED)
+# 28APR24
+###########################################
+#https://leetcode.com/problems/sum-of-distances-in-tree/discuss/1443467/Python-2-dfs-solution-explained
+class Solution:
+    def sumOfDistancesInTree(self, N: int, edges: List[List[int]]) -> List[int]:
+        '''
+        1. dfs starting from node 0 and store two things
+            a. the number of nodes in that subtree, must be at least 1
+            b. how far it is from the root, i.e 0
+        2. dfs2(node,parent,w), let w be the answer for the current node
+            how can we find neigh as if we already now ans for node?
+                it must be w + N - 2*counts[neigh] because we moved from node to neigh 
+                for weights[neigh] the number of nodes distances increased by 1 and for N - weights[neigh] (i.e the rest) it decreased by 1
+                
+        The answer for a node is the same as the answer for it's parent (w) except it is one unit distance closer 
+        to all the members of its subtree (- weights[node]) and it is one unit farther away from every node 
+        in the graph that is not in its subtree (+ N - weights[node]).
+
+        All together the answer for a node is answer_for_parent - weights[node] + N - weights[node] which is the same as w + N - 2*weights[neib].
+        
+        intuition:
+        The insight that the "sum of the depths" for any node we dfs from is the answer for that node is beautiful.
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        def dfs1(node,parent,depth,counts,depths):
+            count = 1
+            for neigh in graph[node]:
+                if neigh != parent:
+                    count += dfs1(neigh,node,depth+1,counts,depths)
+            counts[node] = count
+            depths[node] = depth
+            return count
+        
+        def dfs2(node,parent,w,counts,ans):
+            ans[node] = w
+            for neigh in graph[node]:
+                if neigh != parent:
+                    dfs2(neigh,node, w + N - 2*counts[neigh],counts,ans)
+        
+        counts = [0]*N
+        depths = [0]*N
+        ans = [0]*N
+        dfs1(0,None,0,counts,depths)
+        dfs2(0,None,sum(depths),counts,ans) #inital ans for the first root would just be some of the depths
+        return ans
+
+
 #####################################################################
 # 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
 # 24APR24
