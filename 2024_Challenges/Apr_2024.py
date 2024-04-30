@@ -2023,6 +2023,191 @@ class Solution:
         dfs2(0,None,sum(depths),counts,ans) #inital ans for the first root would just be some of the depths
         return ans
 
+########################################
+# 305. Number of Islands II (REVISITED)
+# 28APR24
+########################################
+#pretty much got it!
+#be happy on this one!
+class DSU:
+    def __init__(self, rows,cols):
+        self.parent = {}
+        self.size = {}
+        for i in range(rows):
+            for j in range(cols):
+                self.parent[(i,j)] = (i,j)
+                self.size[(i,j)] = 1
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+            
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if x_par == y_par:
+            return False
+        
+        if self.size[x_par] > self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = y_par
+        
+        return True #means we did do a union operation
+    
+        
+class Solution:
+    def numIslands2(self, m: int, n: int, positions: List[List[int]]) -> List[int]:
+        '''
+        union find on ith posiition
+        when making the current (row,col) a 1, check its neighbors (up,down,left,right)
+        all these should be
+        '''
+        dsu = DSU(m,n)
+        grid = [[0]*n  for _ in range(m)]
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        islands = 0
+        ans = [0]*len(positions)
+        for i,(r,c) in enumerate(positions):
+            grid[r][c] = 1
+            connected = 0
+            for dx,dy in dirrs:
+                neigh_row = r + dx
+                neigh_col = c + dy
+                if 0 <= neigh_row < m and 0 <= neigh_col < n and grid[neigh_row][neigh_col] == 1:
+                    if dsu.find((r,c)) == dsu.find((neigh_row,neigh_col)):
+                        connected += 1
+                        dsu.union((r,c),(neigh_row,neigh_col))
+            islands += 1 - connected
+            ans[i] = islands
+        return ans
+                
+class UnionFind:
+    def __init__(self, n):
+        self.root = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, node):
+        if self.root[node] == node:
+            return node
+        else:
+            self.root[node] = self.find(self.root[node])
+            return self.root[node]
+
+    def union(self, node1, node2):
+        root1 = self.find(node1)
+        root2 = self.find(node2)
+
+        if self.rank[root1] > self.rank[root2]:
+            self.root[root2] = self.root[root1]
+        elif self.rank[root1] < self.rank[root2]:
+            self.root[root1] = self.root[root2]
+        else:
+            self.root[root2] = self.root[root1]
+            self.rank[root1] += 1
+
+    def is_connected(self, node1, node2):
+        return self.find(node1) == self.find(node2)
+
+class Solution:
+    def numIslands2(self, m: int, n: int, positions: List[List[int]]) -> List[int]:
+        dsu = UnionFind(m * n)
+        grid = [[0] * n for _ in range(m)]
+        islands = 0
+        ans = [0] * len(positions)
+
+        for i, (new_r, new_c) in enumerate(positions):
+            # skip repeated islands by doing nothing if it's already an island
+            if grid[new_r][new_c]:
+                ans[i] = islands
+                continue
+
+            connected = 0
+            grid[new_r][new_c] = 1
+            for old_r, old_c in ((new_r + 1, new_c), (new_r - 1, new_c), (new_r, new_c + 1), (new_r, new_c - 1)):
+                if old_r in range(m) and old_c in range(n) and grid[old_r][old_c]:
+                    new_land = n * new_r + new_c
+                    old_land = n * old_r + old_c
+                    if not dsu.is_connected(old_land, new_land):
+                        connected += 1
+                        dsu.union(old_land, new_land)
+
+            islands += 1 - connected
+            ans[i] = islands
+
+        return ans
+    
+###################################################################
+# 2997. Minimum Number of Operations to Make Array XOR Equal to K
+# 29APR24
+####################################################################
+class Solution:
+    def minOperations(self, nums: List[int], k: int) -> int:
+        '''
+        in one operation, chose any element of the array and flip a bit in its binary representation
+        
+        return minimum number of operations to make the bitwise XOR of all elements == k
+        we can flip leading bits that are zero
+        101 -> 110
+        0101 -> 1101
+        
+        geeks for geeks problem
+        to have it XOR to k, we need at least 1 in all the positions of k
+        
+        hints
+        1. get bitwise XOR of all elements in nums and compare to k
+        2. for each different bit, we need to flip exaclty one one bit of an eleemnt in nums
+        
+        the real insight is that XOR is mod2 addition,
+        if there's an odd number of set bits, its XOR is 1
+        if there's an even number of set bit, its XOR is 0
+        
+        we need the XOR of all nums to be equal to k
+        if there is a mismatch as this position, we can flip 1 to make it equal at this position in k
+        this works because flipping any bit, at any position in any num in nums, will flip this position in k
+        '''
+        xor_orig = nums[0]
+        for num in nums[1:]:
+            xor_orig = xor_orig ^ num
+        
+        ans = 0
+        curr_pos = 0
+        
+        while xor_orig or k: #need to go through at least one of them
+            mask = 1 << curr_pos
+            if (k & mask) != (xor_orig & mask):
+                ans += 1
+            
+            k = k >> 1
+            xor_orig = xor_orig >> 1
+        
+        return ans
+
+class Solution:
+    def minOperations(self, nums: List[int], k: int) -> int:
+        '''
+        we can also just count the differences
+        xor all the numbers and xor again with k,
+        where there's a one, means there's a mismatch, so we need to flip a bit in any of the nums
+        '''
+        xor_orig = 0 #can also just start with 0
+        for num in nums:
+            xor_orig = xor_orig ^ num
+            
+        joined = xor_orig ^ k
+        ans = 0
+        while joined:
+            ans += joined & 1
+            joined = joined >> 1
+        
+        return ans               
 
 #####################################################################
 # 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
