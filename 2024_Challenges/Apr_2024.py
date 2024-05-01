@@ -2209,6 +2209,67 @@ class Solution:
         
         return ans               
 
+#############################################
+# 1915. Number of Wonderful Substrings
+# 30APR24
+#############################################
+class Solution:
+    def wonderfulSubstrings(self, word: str) -> int:
+        '''
+        a string is wonderful if there is a most one letter that appears an odd number of times
+        note, we only have the first 10 letters
+            also note you can't have zero chars appearing an odd number of times
+            also, count each occurence of a substring supeaaretly? what if it asked only unique ones?
+        string will be non empty
+        use bit masks to identitfy string as wondeful
+        if a string is wonderful, then there will only be a single 1 or or no ones in the mask
+        
+        'aba', (0,0,0,0,0,0,0,0,0,0)
+        a :    (1,0,0,0,0,0,0,0,0,0)
+        ab :   (1,1,0,0,0,0,0,0,0,0)
+        aba:   (0,1,0,0,0,0,0,0,0,0) 
+        note how (a and aba have the same mask)
+        use hashmap to store counts of current masks and do the counting trick
+        
+        we can find parity of a count of letter doing mod 2, or XOR
+        two types of wonerful strings 
+            no letters appearing an odd number of times, and having one letterr appearing an odd number of times
+        
+        need to count number of substrings with mask of 0
+        inutition:
+            for any substring, we can represent it as the prefix between two prefixes os s
+            for example, substring[2,5] is diff between substring[0,5] and substring[0,1], this mask should == 0 if
+            substring[0,5] == substring[0,1], essentially we are subtracting prefixes
+            XOR == subtration under mod 2
+            we can combine prefix bit masks using XOR together to get the mask
+        mask_of_whole_word = mask_word[0] ^ mask_word[1] .... ^ mas_word[end]
+        if we xor a previous prefix with the current prefix, we are going to get a mask that corresponds to a wonderul string anway
+        
+        to count substrings with all even letters ending at some index r
+            take the prefix ending at r with partiy mask m
+            the differente of the two prefixes with the same bitmask == 0
+        next we just need to coun up the caes where exactly one letter appears an odd number of times
+            so we flip each bit in all 10 positions -> i.e its counterpart
+            example, curr mask is 111, we can have 011, 101,110
+        '''
+        ans = 0
+        counts =  Counter()
+        #dont forget the zero mask
+        counts[0] = 1
+        curr_mask = 0
+        for ch in word:
+            char_idx = ord(ch) - ord('a')
+            #flip it in mask
+            curr_mask = curr_mask ^ (1 << char_idx) #mask will always correspond to a string that is wonderful
+            ans += counts[curr_mask]
+            counts[curr_mask] += 1
+            
+            for j in range(10):
+                complement_mask = curr_mask ^ (1 << j)
+                ans += counts[complement_mask]
+        return ans
+
+
 #####################################################################
 # 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
 # 24APR24
