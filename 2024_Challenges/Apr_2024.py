@@ -2269,34 +2269,78 @@ class Solution:
                 ans += counts[complement_mask]
         return ans
 
-
-#####################################################################
-# 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
-# 24APR24
-######################################################################
-#closeeee
+###############################################
+# 2505. Bitwise OR of All Subsequence Sums
+# 30APR24
+################################################
 class Solution:
-    def countPairsOfConnectableServers(self, edges: List[List[int]], signalSpeed: int) -> List[int]:
+    def subsequenceSumOr(self, nums: List[int]) -> int:
         '''
-        notice how nodes with only degree 1 will always have zero
-        for a node to be even considered connectable, it must be in the middle
-        hint1: take each node as root, run dfs rooted at that node i and get nodes whose distnace is divisible by signal speed
+        all bits in array elements will be set
+        and all bits in pref sum array will be set
         '''
-        graph = defaultdict(list)
-        for u,v,w in edges:
-            graph[u].append((v,w))
-            graph[v].append((u,w))
+        pref_sum = [nums[0]]
+        for num in nums[1:]:
+            pref_sum.append(pref_sum[-1] + num)
         
-        n = len(graph)
-        num = [0]*n
+        ans = 0
+        for num in nums:
+            ans = ans | num
+        for num in pref_sum:
+            ans = ans | num
         
-        for i in range(n):
-            self.dfs(i,i,None,graph,num,signalSpeed,0)
-        print(num)
-    def dfs(self, root,node, parent, graph, num, signalSpeed,curr_dist):
-        if curr_dist % signalSpeed == 0:
-            num[root] += 1
-        for neigh,weight in graph[node]:
-            if neigh != parent:
-                self.dfs(root,neigh,node,graph,num,signalSpeed,curr_dist + weight)
+        return ans
+
+class Solution:
+    def subsequenceSumOr(self, nums: List[int]) -> int:
+        '''
+        recally bitwise or is just addition with carryover
+        set each bit individually for each num in nums and check for carry
+        becasue we want subsequences, we need to check if we cary over a bit using OR
+        100000000000000
+        18446744073709551616
+        we need enough bit posistions to cover all subsequence sums, which can be no bigger than (10**9)*(10**9)
+        2 | (2 + 1)
+        think about actually adding the bits in binary format, the next number gets set!
+        '''
+        max_ = 64
+        bit_set_counts = [0] * max_
+        result = 0
+        
+        #this part would be treating each number as a single sum
+        for num in nums:
+            for i in range(31):
+                mask = 1 << i
+                if (num & mask):
+                    bit_set_counts[i] += 1
+                    
+        for pos in range(max_ - 1):
+            #if we have an occurence of this bit
+            if bit_set_counts[pos] > 0:
+                result = result | (1 << pos)
+            #carry under mod two addition
+            bit_set_counts[pos+1] += bit_set_counts[pos] // 2
+        
+        return result
+        
+class Solution:
+    def subsequenceSumOr(self, nums: List[int]) -> int:
+        '''
+        we can just do bitwise or with the current num and its running sum
+        for example [2,1,3]
+        we have 2, we or with 1, and its sum, 3
+        2,1, we wor with 3 and its sum 5
+        this gives us the bitwise or of all subsequence sums
+        
+        so we have three numbers (a,b,c)
+        what we want is a | b | c | (a + b) | (b + c) | (a + b + c) = a | b | c | (a + b) | (a + b + c)
+        we dont need the other subsequences
+        '''
+        res = 0
+        pref_sum = 0
+        for num in nums:
+            pref_sum += num
+            res = res | num | pref_sum
+        
+        return res
 
