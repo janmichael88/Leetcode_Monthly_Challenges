@@ -156,4 +156,118 @@ class Solution:
         
         return ans
     
+#############################################################
+# 3125. Maximum Number That Makes Result of Bitwise AND Zero
+# 05MAY24
+#############################################################
+class Solution:
+    def maxNumber(self, n: int) -> int:
+        '''
+        so we have 7
+        111 need to make this 0
+        when performing bitwise and operations from n, the last set bit to turn 0, identieis the higehst set bit
+        find the num with the higest set bit
+        we need to clear all the bits anyway, might as well find the largest number that clears the left most bit position
+        '''
+        #find index of highest set bit
+        for i in range(64,-1,-1):
+            mask = 1 << i
+            if n & mask:
+                return 2**i - 1
+            
+class Solution:
+    def maxNumber(self, n: int) -> int:
+        '''
+        keep shifting and count positiosn
+        '''
+        pos = 0
+        while n:
+            n = n >> 1
+            pos += 1
+        
+        return 2**(pos-1) - 1
     
+class Solution:
+    def maxNumber(self, n: int) -> int:
+        '''
+        keep shifting and count positiosn
+        '''
+        pos = 0
+        while n:
+            n = n >> 1
+            pos += 1
+        
+        return (1 << (pos - 1)) - 1
+    
+#########################################
+# 1885. Count Pairs in Two Arrays
+# 06MAY24
+#########################################
+#binary search
+class Solution:
+    def countPairs(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we can rewrite: 
+            nums1[i] + nums1[j] > nums2[i] + nums2[j]
+        
+        as:
+            nums1[i] - nums2[j] > nums2[i] - nums1[j]
+        
+        now we are left with finding (i,j) pairs such that they satisfy this inequailtiy
+        we can further rewrite as:
+            (nums1[i] - nums2[j]) + (nums1[i] - nums2[j]) > 0
+        
+        now we have context from nums1 - nums2, and we need to find (i,j) pairs such that if we add them their differences, the ans is > 0
+        sort and use binary search
+        the only constraint is that i < j,
+            binary search into the differences array and find the idx, where nums1[idx] - nums2[idx] > 0
+        '''
+        N = len(nums1)
+        diffs = [nums1[i] - nums2[i] for i in range(N)]
+        diffs.sort()
+        
+        count = 0
+        for i in range(N):
+            if diffs[i] > 0:
+                #anything to the right would make a pair with the current i
+                count += N - i - 1
+            else:
+                left = i+1
+                right = N - 1
+                while left <= right:
+                    mid = left + ((right - left) // 2)
+                    #look for the smallest index that satisfies the ineaulity
+                    if diffs[mid] + diffs[i] > 0:
+                        right = mid - 1
+                    else:
+                        left = mid + 1
+                
+                count += N - left
+        
+        return count
+    
+#two pointers
+class Solution:
+    def countPairs(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        two pointers
+        left and right and just count pairs
+        (nums1[i] - nums2[j]) + (nums1[i] - nums2[j]) > 0
+        '''
+        N = len(nums1)
+        diffs = [nums1[i] - nums2[i] for i in range(N)]
+        diffs.sort()
+        
+        count = 0
+        left = 0
+        right = N - 1
+        
+        while left < right:
+            if diffs[left] + diffs[right] > 0:
+                count += right - left
+                right -= 1
+            else:
+                left += 1
+        
+        return count
+            
