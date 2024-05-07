@@ -271,3 +271,108 @@ class Solution:
         
         return count
             
+########################################
+# 2487. Remove Nodes From Linked List
+# 06MAY24
+########################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def removeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        say if we had the array
+        [5,2,13,3,8]
+        keep array max to right
+        [13,13,13,8,8]
+        then we can rebuild
+        '''
+        arr = []
+        curr = head
+        while curr:
+            arr.append(curr.val)
+            curr = curr.next
+        
+        right_maxs = [0]*len(arr)
+        right_maxs[-1] = arr[-1]
+        for i in range(len(arr)-2,-1,-1):
+            right_maxs[i] = max(arr[i],right_maxs[i+1])
+        
+        ans = ListNode(-1)
+        curr = ans
+        for i in range(len(arr)):
+            if arr[i] >= right_maxs[i]:
+                curr.next = ListNode(arr[i])
+                curr = curr.next
+        
+        return ans.next
+
+#reverse once, then pass and build
+#in order to add to head of LL, we need to add in reverse
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def removeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        iterate in reverse order and save max
+        then just make new head
+        '''
+        revd = self.reverse(head)
+        curr_max = revd.val
+        ans = ListNode(revd.val)
+        revd = revd.next
+        
+        while revd:
+            if revd.val < curr_max:
+                revd = revd.next
+            else:
+                new_node = ListNode(revd.val)
+                new_node.next = ans
+                ans = new_node
+                curr_max = revd.val
+                revd = revd.next
+        
+        return ans
+    
+    def reverse(self, node):
+        prev = None
+        curr = node
+        while curr:
+            next_ = curr.next
+            curr.next = prev
+            prev = curr
+            curr = next_
+        
+        return prev
+    
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def removeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        recursion 
+        rec(node) deltes node if there is a larger node to the right
+        base cases empty node or single node, then just return it 
+        otherwise recurse 
+        '''
+        def rec(node):
+            if not node or not node.next:
+                return node
+            #call to next node
+            next_ = rec(node.next)
+            #delete if smaller, or just return the next node
+            if node.val < next_.val:
+                return next_
+            #otherwise we can include this node, and it should come before next_
+            node.next = next_
+            return node
+        
+        return rec(head)
