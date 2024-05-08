@@ -376,3 +376,139 @@ class Solution:
             return node
         
         return rec(head)
+    
+######################################################
+# 2816. Double a Number Represented as a Linked List
+# 07MAY24
+######################################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def doubleIt(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        reverse and implement carry
+        '''
+        revd = self.rev(head)
+        carry = 0
+        #hold prev in case we have carry
+        prev = None
+        curr = revd
+        while curr:
+            new_val = curr.val*2 + carry
+            curr.val = new_val % 10
+            carry = new_val // 10
+            prev = curr
+            curr = curr.next
+        
+        if carry:
+            prev.next = ListNode(1)
+        
+        return self.rev(revd)
+    
+    def rev(self, node):
+        prev = None
+        curr = node
+        while curr:
+            next_ = curr.next
+            curr.next = prev
+            prev = curr
+            curr = next_
+        
+        return prev
+    
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def doubleIt(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        using stack
+        '''
+        vals = []
+        curr = head
+        while curr:
+            vals.append(curr.val)
+            curr = curr.next
+        
+        ans = None
+        carry = 0
+        while vals:
+            curr_val = vals.pop()
+            ans = ListNode(0,ans)
+            ans.val = (curr_val*2 + carry) % 10
+            carry = (curr_val*2 + carry) // 10
+        
+        if carry:
+            ans = ListNode(1,ans)
+        return ans
+
+#recursion
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def doubleIt(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        for recrsion, we will have it return the doubled value, 
+        since we need to reverse it, recursino should work perfectly since in recursion we will move through the whole LL
+        and return the value that should be the node
+        '''
+        
+        def rec(node):
+            if not node:
+                return 0
+            #get the double value
+            next_node = rec(node.next) + 2*node.val
+            node.val = next_node % 10
+            return next_node // 10
+        
+        #find final carry
+        carry = rec(head)
+        if carry:
+            head = ListNode(carry,head)
+        
+        return head #remember we modified this in place during the recursion
+
+#two pointers
+# Definition for singly-linked list.
+class ListNode:
+     def __init__(self, val=0, next=None):
+         self.val = val
+         self.next = next
+class Solution:
+    def doubleIt(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        we can actually add left to right, not just right to left!
+        but if there's carry on this node, it should go to the previous node
+        and if there isn't a previous node, we make one
+        there are 3 cases
+        1. doubled value < 10, we can just dounle it
+        2. doubled value >= 10, then prev should get the carry
+        3. if first node need to be updated, we make a new node
+        '''
+        curr = head
+        prev = None
+        
+        while curr:
+            doubled = curr.val*2
+            if doubled < 10:
+                curr.val = doubled
+            elif prev:
+                curr.val = doubled % 10
+                prev.val += doubled // 10
+            else:
+                #first node, make a new one
+                head = ListNode(1,curr)
+                curr.val = doubled % 10
+            
+            prev = curr
+            curr = curr.next
+        
+        return head
