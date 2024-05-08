@@ -512,3 +512,95 @@ class Solution:
             curr = curr.next
         
         return head
+
+######################################################################
+# 3067. Count Pairs of Connectable Servers in a Weighted Tree Network
+# 07MAY24
+######################################################################
+class Solution:
+    def countPairsOfConnectableServers(self, edges: List[List[int]], signalSpeed: int) -> List[int]:
+        '''
+        for it to be path, there must be > 2 nodes in the path
+        let dp(nodes) be the number of nodes in this subtree 
+        then the number of paths for this node is
+            paths = 1
+            for child dp(nocde):
+                paths *= child
+        dfs is doing two things
+            count number of nodes at distances divisible by speed from this node
+            count number of pairs for each root
+        '''
+        adj = defaultdict(list)
+        for s,d,w in edges:
+            adj[s].append([d,w])
+            adj[d].append([s,w])
+        
+        def dfs(node,prev,dist):
+            #this node has count 1 if we have some dist and its path is divisible by signal spee
+            count = 1 if dist > 0 and dist % signalSpeed == 0 else 0
+            #count pairs in all directions
+            pairs = 0
+            for nei,weight in adj[node]:
+                if nei != prev:
+                    child_count = dfs(nei, node, dist + weight)
+                    pairs += count*child_count #count pairs
+                    #count for children at this node
+                    count += child_count
+            #just return the pairs for the node
+            if node == prev:
+                return pairs
+            #return the count
+            return count
+        
+        n = len(edges) + 1
+        res = [0]*n
+        for node in range(n):
+            paths = dfs(node, node, 0)
+            res[node] = paths
+        return res
+
+##########################################
+# 755. Pour Water
+# 08MAY24
+##########################################
+class Solution:
+    def pourWater(self, heights: List[int], volume: int, k: int) -> List[int]:
+        '''
+        this is kinda like an advent of code problem
+        make the chamber, as boolean array, 2d, then you just drop until we cant
+            no chance of overflow because the walls on left and right are infinitely high
+        start backwards from where it would drop to?
+            it would drop to its left, closted to k towards the bottom
+            update the next drop spot, this is the hard part of the problem
+        look left, and drop at lowest point
+        if we can't look right and drop at lowest point
+        '''
+        while volume > 0:
+            #try finding left first
+            left_index = -1
+            for i in range(k-1,-1,-1):
+                if heights[i] > heights[i+1]:
+                    break
+                elif heights[i] < heights[i+1]:
+                    left_index = i
+            
+            if left_index != -1:
+                heights[left_index] += 1
+            else:
+
+                #try finding right
+                right_index = -1
+                for i in range(k+1,len(heights)):
+                    if heights[i] > heights[i-1]:
+                        break
+                    elif heights[i] < heights[i-1]:
+                        right_index = i
+
+                if right_index != -1:
+                    heights[right_index] += 1
+                else:
+                    heights[k] += 1
+            volume -= 1
+        
+        return heights
+        
