@@ -604,3 +604,261 @@ class Solution:
         
         return heights
         
+##################################
+# 506. Relative Ranks (REVISTED)
+# 08MAY24
+##################################
+class Solution:
+    def findRelativeRanks(self, score: List[int]) -> List[str]:
+        '''
+        linear or rather O(n + max(score)) can be done with counting sort variant, sincce all scores are unique
+        '''
+        max_score = max(score)
+        marked_scores = []
+        for _ in range(max_score+1):
+            marked_scores.append([False,-1])
+        
+        for i,s in enumerate(score):
+            marked_scores[s] = [True,i]
+        
+        N = len(score)
+        ranks = [0]*N
+        medals = ['Bronze Medal', 'Silver Medal', 'Gold Medal']
+        place = 1
+        for i in range(max_score,-1,-1):
+            if marked_scores[i][0]:
+                s,idx = marked_scores[i]
+                if medals:
+                    ranks[idx] = medals.pop()
+                else:
+                    ranks[idx] = str(place)
+                place += 1
+        
+        return ranks
+
+########################################
+# 2473. Minimum Cost to Buy Apples
+# 08MAY24
+########################################
+#fucking ez bruhhhhh
+class Solution:
+    def minCost(self, n: int, roads: List[List[int]], appleCost: List[int], k: int) -> List[int]:
+        '''
+        use dp with states, pass in curr and parent to make sure we dont go back and minimize
+        we only want to be one apple, all costs are positive, so it makes sense to chose the cheapest one
+        we need to come back to the city we started at
+        its the return path that could be different, im not convinced that some path to a city will have the same path returning
+        use djikstras on each city, this time we will actually need to save the shortest path
+        then find the min cost
+        '''
+        graph = defaultdict(list)
+        for u,v,weight in roads:
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        ans = []
+        for city in range(1,n+1):
+            dists = self.ssp(n,graph,city)
+            local_ans = float('inf')
+            for j,dist in enumerate(dists):
+                if dist != float('inf'):
+                    local_ans = min(local_ans, dist + dist*k + appleCost[j-1])
+            ans.append(local_ans)
+        
+        return ans
+                    
+    def ssp(self,n,graph,start):
+        dists = [float('inf')]*(n+1)
+        dists[start] = 0
+        pq = [(0,start)]
+        visited = set()
+        
+        while pq:
+            curr_dist,curr_city = heapq.heappop(pq)
+            #cant minmize
+            if dists[curr_city] < curr_dist:
+                continue
+            visited.add(curr_city)
+            for neigh_city,weight in graph[curr_city]:
+                if neigh_city in visited:
+                    continue
+                new_dist = dists[curr_city] + weight
+                #can improve?
+                if new_dist < dists[neigh_city]:
+                    #update and add
+                    dists[neigh_city] = new_dist
+                    heapq.heappush(pq, (new_dist,neigh_city))
+        
+        return dists
+
+#we dont need to process the dists array, but we can do it on the fly
+class Solution:
+    def minCost(self, n: int, roads: List[List[int]], appleCost: List[int], k: int) -> List[int]:
+        '''
+        we dont need to process the dits array, after doing djikstra
+        we can include the cost of buying the apple with the road cost as well as the return cost back to the starting city
+        new_cost = curr_cost + (k+1)*road_cost + appleCost ; for the nieghbor
+        '''
+        graph = defaultdict(list)
+        for u,v,weight in roads:
+            graph[u-1].append((v-1,weight))
+            graph[v-1].append((u-1,weight))
+            
+        ans = []
+        for i in range(n):
+            min_cost = self.ssp(n,graph,i,appleCost,k)
+            ans.append(min_cost)
+        
+        return ans
+                    
+    def ssp(self,n,graph,start,apples,k):
+        dists = [float('inf')]*(n)
+        dists[start] = 0
+        pq = [(0,start)]
+        visited = set()
+        min_cost = float('inf')
+        
+        while pq:
+            curr_dist,curr_city = heapq.heappop(pq)
+            #cant minmize
+            if dists[curr_city] < curr_dist:
+                continue
+            min_cost = min(min_cost, curr_dist*(k+1) + apples[curr_city])
+            visited.add(curr_city)
+            for neigh_city,weight in graph[curr_city]:
+                if neigh_city in visited:
+                    continue
+                new_dist = dists[curr_city] + weight
+                #can improve?
+                if new_dist < dists[neigh_city]:
+                    #update and add
+                    dists[neigh_city] = new_dist
+                    heapq.heappush(pq, (new_dist,neigh_city))
+        
+        return min_cost
+    
+#we can do in one pass if we just start with the appleCost at each city
+class Solution:
+    def minCost(self, n: int, roads: List[List[int]], appleCost: List[int], k: int) -> List[int]:
+        '''
+        we dont need to process the dits array, after doing djikstra
+        we can include the cost of buying the apple with the road cost as well as the return cost back to the starting city
+        new_cost = curr_cost + (k+1)*road_cost + appleCost ; for the nieghbor
+        
+        we can even do one pass by just starting with appleCost for each city
+        then we can do djikstras with multi-point source
+        the intuition is that for at least one city, it is chepeast to buy apples from that one city, so long as we dont travel to other cities
+        also note, the return path is shortest if we just take it back, since the path to that city was already shortest
+        
+        so we compute the total min cost starting with cities with the minimum apple cost
+        we also need to stroe info about any city visited during thessp, not just tarting
+        '''
+        graph = defaultdict(list)
+        for u,v,weight in roads:
+            graph[u-1].append((v-1,weight))
+            graph[v-1].append((u-1,weight))
+            
+        return self.ssp(n,graph,appleCost,k)
+            
+                    
+    def ssp(self,n,graph,apples,k):
+        #we know we are at a minimum if we dont travel and just take applecost
+        dists = apples[:]
+        pq = [(apple_cost,city) for (city,apple_cost) in enumerate(apples)]
+        heapq.heapify(pq)
+        visited = set()
+        
+        while pq:
+            curr_dist,curr_city = heapq.heappop(pq)
+            #cant minmize
+            if dists[curr_city] < curr_dist:
+                continue
+            visited.add(curr_city)
+            for neigh_city,weight in graph[curr_city]:
+                if neigh_city in visited:
+                    continue
+                new_dist = dists[curr_city] + (k + 1)*weight
+                #can improve?
+                if new_dist < dists[neigh_city]:
+                    #update and add
+                    dists[neigh_city] = new_dist
+                    heapq.heappush(pq, (new_dist,neigh_city))
+        
+        return dists
+
+#dp, but it tles
+class Solution:
+    def minCost(self, n: int, roads: List[List[int]], appleCost: List[int], k: int) -> List[int]:
+        '''
+        we can also use dp to find shortest paths
+        '''
+        graph = defaultdict(list)
+        for u,v,weight in roads:
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        
+        ans = []
+        for start in range(1,n+1):
+            dists = []
+            visited = set()
+            for end in range(1,n+1):
+                dists.append(self.dp(graph,start,end,visited))
+            local_ans = float('inf')
+            for i,d in enumerate(dists):
+                local_ans = min(local_ans, d + d*k + appleCost[i])
+            ans.append(local_ans)
+        
+        return ans
+                
+    def dp(self,graph,curr,end,visited):
+        if curr == end:
+            return 0
+        visited.add(curr)
+        ans = float('inf')
+        for neigh,weight in graph[curr]:
+            if neigh not in visited:
+                visited.add(neigh)
+                ans = min(ans, weight + self.dp(graph,neigh,end,visited))
+                visited.remove(neigh)
+        
+        return ans
+        
+#tles still
+class Solution:
+    def minCost(self, n: int, roads: List[List[int]], appleCost: List[int], k: int) -> List[int]:
+        '''
+        we can also us dp and backtracking
+        '''
+        graph = defaultdict(list)
+        for u,v,weight in roads:
+            graph[u-1].append((v-1,weight))
+            graph[v-1].append((u-1,weight))
+            
+        ans = []
+        visited = set()
+        for i in range(n):
+            visited.add(i)
+            ans.append(self.dp(appleCost,i,graph,k,0,float('inf'),visited))
+            visited.remove(i)
+        
+        return ans
+            
+                    
+    def dp(self,apples,curr,graph,k,roadCost,minPrice,visited):
+        
+        totalRoadCost = (k+1)*roadCost
+        #minmize final
+        if minPrice < totalRoadCost:
+            return minPrice
+        ans = min(minPrice, apples[curr] + totalRoadCost)
+        for neigh,weight in graph[curr]:
+            if neigh in visited:
+                continue
+            
+            visited.add(neigh)
+            next_dist = self.dp(apples,neigh,graph,k,roadCost + weight,minPrice,visited)
+            ans = min(ans,next_dist)
+            visited.remove(neigh)
+        
+        return ans
