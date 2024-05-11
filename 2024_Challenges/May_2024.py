@@ -862,3 +862,166 @@ class Solution:
             visited.remove(neigh)
         
         return ans
+    
+################################################
+# 3075. Maximize Happiness of Selected Children
+# 09MAY24
+################################################
+class Solution:
+    def maximumHappinessSum(self, happiness: List[int], k: int) -> int:
+        '''
+        n children in happiness, want k children in k turns
+        in each turn, when child is selected, the happiness value of all children that have not been select until decrease by 1
+        happiness cannot be negtaive, and only decremented if positive
+        return max sum of happiness after selecting k children
+        makes sens to take the largest happiness, but after taking we need to decrement the sum
+        get whole sum first, and decrement by (len of children left)
+        [1,2,3]
+        take 3
+        [1,2] becomes [0,1]
+        issue is now to make sure if happiness is zero, we dont count it as a decrement
+        keep track of children that has some happiness left
+        '''
+        ans = 0
+        children_taken = 0
+        happiness.sort(reverse = True)
+        left = 0
+        for _ in range(k):
+            #calculate new happiness
+            new_happiness = max(happiness[left] - children_taken,0)
+            ans += new_happiness
+            left += 1
+            children_taken += 1
+        
+        return ans
+    
+############################################
+# 786. K-th Smallest Prime Fraction
+# 10MAY24
+############################################
+class Solution:
+    def kthSmallestPrimeFraction(self, arr: List[int], k: int) -> List[int]:
+        '''
+        its increasing, 
+        we need kth
+        '''
+        temp = []
+        N = len(arr)
+        for i in range(N):
+            for j in range(i+1,N):
+                temp.append((arr[i]/arr[j], arr[i],arr[j]))
+        
+        temp.sort(key = lambda x: x[0])
+        k -= 1
+        return [temp[k][1],temp[k][2]]
+    
+#this solution is really fast
+class Solution:
+    def kthSmallestPrimeFraction(self, arr: List[int], k: int) -> List[int]:
+        '''
+        they are all sorted
+        if i fix i as the num, than any of the other js will be the denom
+        find lcm of numbers?
+        
+        intuition:
+            say we have som fraction with pairs (arr[i],arr[j])
+            since the array is sorted, the number of fractions smaller than this pair
+            is when (arr[i] / arr[k]) > (arr[i],arr[j]), this will occur when k > j 
+        
+        its workable solution paradigm, count all fractions from some given fraction
+        if this fraction works we can move up one
+        we need to use binary search to find the kth smallest fraction
+        
+        intuition 2:
+            if we have encounter k or more fractions smaller than or euqal to this amx fraction, this this max fraction is the kth smallest
+            
+        '''
+        n = len(arr)
+        left,right = 0, 1.0
+        
+        #binary search on a workable fraction, and check count (i,j) pairs where arr[i]/arr[j] < fraction
+        while left < right:
+            mid = left + ((right - left) / 2)
+            max_frac = 0.0
+            count_smaller = 0
+            num_idx,denom_idx = 0,0 #initall start at beginnging
+            j = 1
+            
+            #try all arr[i]
+            for i in range(n-1):
+                while j < n and arr[i] >= mid*arr[j]: #want largest (arr[i] / arr[j]) < mid  in order to contribute count
+                    #essentially findinf upper bound of current numerator
+                    j += 1
+                
+                count_smaller += (n - j)
+                #got to the end
+                if j == n:
+                    break
+                
+                #update fraction to store index
+                fraction = arr[i] / arr[j]
+                if fraction > max_frac:
+                    max_frac = fraction
+                    num_idx = i
+                    denom_idx = j
+            
+            #adjust search on workable fraction
+            if count_smaller == k:
+                return [arr[num_idx], arr[denom_idx]]
+            elif count_smaller > k:
+                #try a smaller frac
+                right = mid
+            else:
+                left = mid
+        
+        return []
+    
+class Solution:
+    def kthSmallestPrimeFraction(self, arr: List[int], k: int) -> List[int]:
+        '''
+        heap is easier,
+        fractions are smallest when the arr[i] / arr[j] where j is just the last index
+        when we pop, we need to introduce the next smallest
+        do this k-1 times
+        '''
+        N = len(arr)
+        min_heap = []
+        for i in range(N):
+            fraction = arr[i] / arr[-1]
+            min_heap.append((-fraction,i,N-1))
+            
+        heapq.heapify(min_heap)
+        for _ in range(k-1):
+            curr = heapq.heappop(min_heap)
+            #get nest smallest
+            num_idx = curr[1]
+            denom_idx = curr[2] - 1
+            next_frac = arr[num_idx] / arr[denom_idx]
+            entry = (-next_frac, num_idx,denom_idx)
+            if denom_idx > num_idx:
+                heapq.heappush(min_heap,entry)
+        
+        curr_frac, num_idx, denom_idx = heapq.heappop(min_heap)
+        
+        return [arr[num_idx],arr[denom_idx]]
+    
+class Solution:
+    def kthSmallestPrimeFraction(self, arr: List[int], k: int) -> List[int]:
+        '''
+        heap is easier,
+        fractions are smallest when the arr[i] / arr[j] where j is just the last index
+        when we pop, we need to introduce the next smallest
+        do this k-1 times
+        '''
+        heap = []
+        n = len(arr)
+        for i in range(n-1):
+            heappush(heap,(arr[i]/arr[-1],i,n-1))
+        
+        for i in range(k-1):
+            res,l,r = heappop(heap)
+            heappush(heap,(arr[l]/arr[r-1],l,r-1))
+
+        res,l,r = heappop(heap)
+
+        return [arr[l],arr[r]]
