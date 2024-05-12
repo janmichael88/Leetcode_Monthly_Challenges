@@ -1025,3 +1025,78 @@ class Solution:
         res,l,r = heappop(heap)
 
         return [arr[l],arr[r]]
+    
+#########################################
+# 857. Minimum Cost to Hire K Workers
+# 11MAY24
+##########################################
+class Solution:
+    def mincostToHireWorkers(self, quality: List[int], wage: List[int], k: int) -> float:
+        '''
+        need min cost to satisfy paid group
+        workers pay must be direclty proportioanl to their quality
+            if work's quality is double that of another worke in the group, that worker must be paid twise as much as the other worker
+        if we have k workers, we need to ensure the the pay is directly proportional amoung the other k-1 woekrs
+        they didn't give enough examples for balacing the proportions....
+        
+        say we have two workers (i,j), the conditions must be
+        wage[i]/wage[j] = quality[i]/quality[j]
+        rewrite as:
+        wage[i] /quality[i] = wage[j]/quality[j]
+        say we have two workers with i and j quality, then i should get:
+            quality[i] / (quality[i] + quality[j]) of the payment
+            and j should get: 
+            quality[j] / (quality[i] + quality[j]) 
+        
+        infact for any ith person in k people, the ith person should get:
+            quality[i] / (sum of qualities for all k people) * payment for all
+        in the given example, worker 0 gets (2/3) of payment and worker 2 gets (1/3) of payment
+        worker 0 has the higher min wage so we can do:
+        (1/3) / (2/3) = x / 70 x -> 35
+        we need to find the least  amount of money to form such a group
+        we need to use the wage/quaility ratio for each person
+        to determine the optimal worker ppol, we compute the max quality per unit multiplie by total quantiy for every 2 woekrs
+        For worker 0 and 1: max quaility ratio = 7
+        7*(10 + 20) = 210, going through the other pairs (0,1) ans (1,2), we get 105,150, so 105 is the smallest
+        how can we build up the k people to minimize, instead of checkking all k?
+        depends on workes quality and ratio of wage/quality
+        intution: try taking workers with lowest wage/quality ratio -> implies sorting
+        also need to keep track of qualities of workers so far
+            max heap stores quality of workers
+            recall total cost == sum of quality of chosen workers * max ratio
+        
+        if size > k, we need to remove the worker with the highest quality 
+        once we have k workers in pq, we can calc the total cost for the curent set of workers by multiplying each workers euqailty 
+        by their wage to quality ratio and summing products
+        basically we need to maintin the current total quality, and the smalest wage to quality ratio for the k workers
+        because we are limited by the smallest ratio
+    
+        '''
+        N = len(quality)
+        min_cost = float('inf')
+        curr_total_quality = 0
+        ratios = []
+        for i in range(N):
+            entry = (wage[i]/quality[i], quality[i])
+            ratios.append(entry)
+        
+        #sort ratios
+        ratios.sort(key = lambda x: x[0])
+        highest_qualities = [] #max heap
+        
+        #go in increasing ratios
+        for i in range(N):
+            heapq.heappush(highest_qualities, -ratios[i][1])
+            curr_total_quality += ratios[i][1]
+            
+            #if we have too many workers
+            if len(highest_qualities) > k:
+                curr_total_quality += heapq.heappop(highest_qualities)
+            
+            #if we have a valid k group, find min
+            if len(highest_qualities) == k:
+                curr_cost = curr_total_quality*ratios[i][0]
+                min_cost = min(min_cost,curr_cost)
+        
+        return min_cost
+        
