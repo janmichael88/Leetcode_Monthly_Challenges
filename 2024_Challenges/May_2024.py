@@ -1100,3 +1100,168 @@ class Solution:
         
         return min_cost
         
+#########################################
+# 2373. Largest Local Values in a Matrix
+# 12MAY24
+#########################################
+class Solution:
+    def largestLocal(self, grid: List[List[int]]) -> List[List[int]]:
+        '''
+        need to partition in smaller 3 by 3 grids
+        '''
+        N = len(grid)
+        ans = []
+        for i in range(N-2):
+            row_ans = []
+            for j in range(N-2):
+                max_ = self.getMax(i+1,j+1,grid)
+                row_ans.append(max_)
+            
+            ans.append(row_ans)
+        
+        return ans
+    
+    def getMax(self,i,j,grid):
+        
+        max_ = 0
+        for d_i in [-1,0,1]:
+            for d_j in [-1,0,1]:
+                max_ = max(max_, grid[i + d_i][j + d_j])
+        
+        return max_
+    
+##########################################
+# 861. Score After Flipping Matrix
+# 13MAY24
+#########################################
+#good idea though...
+class Solution:
+    def matrixScore(self, grid: List[List[int]]) -> int:
+        '''
+        we can flip bits along rows or along cols, but score is row sum of all the bits
+        if we can turn each row to all ones, we know our score is maximized
+        does it matter of we flips rows before cols? what about cols before rows?
+        0011
+        1010
+        1100
+        
+        go down rows, and if it results in abigger number, flip it
+        then go across cols, if it results in a bigger number flip it
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        #flip along rows
+        for i in range(rows):
+            curr_num = 0
+            flipped_num = 0
+            for j in range(cols):
+                curr_num = (curr_num << 1) | grid[i][j]
+                flipped_num = (flipped_num << 1) | (0 if grid[i][j] == 1 else 1)
+            #if its bigger, flip the bits
+            if flipped_num > curr_num:
+                for j in range(cols):
+                    grid[i][j] = 0 if grid[i][j] == 1 else 1
+        
+        #flip along cols
+        for col in range(cols):
+            curr_num = 0
+            flipped_num = 0
+            for row in range(rows):
+                curr_num = (curr_num << 1) | grid[row][col]
+                flipped_num = (flipped_num << 1) | (0 if grid[row][col] == 1 else 1)
+            if flipped_num > curr_num:
+                for row in range(rows):
+                    grid[row][col] = 0 if grid[row][col] == 1 else 1
+        
+        score = 0
+        for row in grid:
+            num = 0
+            for r in row:
+                num = (num << 1) | r
+            
+            score += num
+        
+        return score
+
+#ezzzzz
+class Solution:
+    def matrixScore(self, grid: List[List[int]]) -> int:
+        '''
+        maximize rows in the first position (i.e at first col)
+        then maximize cols based on the number of zeros and ones
+        if we have more zeros flip that entire column
+        we dont need to modify row by row then col by col, if we already optimized a row in the first position
+        because on the nex steps we optimize cols
+        its because the score is based on only the rows
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        #promote in the first col of each row if we can
+        for row in range(rows):
+            if grid[row][0] == 0:
+                for col in range(cols):
+                    grid[row][col] ^= 1
+        
+        #now optimize columns
+        for col in range(1,cols):
+            count_zeros = 0
+            for row in range(rows):
+                count_zeros += grid[row][col] == 0
+            
+            if count_zeros > rows - count_zeros:
+                for row in range(rows):
+                    grid[row][col] ^= 1
+        
+        score = 0
+        for row in grid:
+            num = 0
+            for r in row:
+                num = (num << 1) | r
+            
+            score += num
+        
+        return score
+
+#in place
+class Solution:
+    def matrixScore(self, grid: List[List[int]]) -> int:
+        '''
+        we don't need to overwrite the grid, we can just cant on the fly and accumulate the bits in our ans
+        for the first col of each row, we need to promote to 1
+        so we just add (1 << first position), since they are going to be one anway
+        break up the numbers into its parts, for exmple:
+            20 + 12 = 10 + 10 + 6 + 6, as long as the sums add up
+            
+        now for cols, we just need to count up the bits that we change
+        if the first element in a particular row is 0, it means this rows been flipped, becasue we made it 1
+        first_elem  curr_elem   curr_elem(after flipping)
+        0           0           1
+        0           1           0
+        1           0           0
+        1           1           1
+        
+        count_zeros after fliping is when they aren't the same
+        so we count of up the ones, then we need to check if flipping to get all these ones is profitable
+        we either use all the current ones or the ones we get from flipping (we take the max of these two)
+        the col_score is contributed base on the position k
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        score = 0
+        for row in range(rows):
+            score += (1 << (cols - 1))
+        
+        #now optimize columns
+        for col in range(1,cols):
+            count_same_bits = 0
+            for row in range(rows):
+                count_same_bits += grid[row][col] == grid[row][0]
+            
+            count_same_bits = max(count_same_bits,rows - count_same_bits)
+            column_score = (1 << (cols - col - 1))*count_same_bits
+            score += column_score
+
+        return score
