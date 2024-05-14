@@ -28,6 +28,83 @@ class Solution:
             if neigh != parent:
                 self.dfs(root,neigh,node,graph,num,signalSpeed,curr_dist + weight)
 
+class Solution:
+    def countPairsOfConnectableServers(self, edges: List[List[int]], signalSpeed: int) -> List[int]:
+        '''
+        for it to be path, there must be > 2 nodes in the path
+        let dp(nodes) be the number of nodes in this subtree 
+        then the number of paths for this node is
+            paths = 1
+            for child dp(nocde):
+                paths *= child
+        dfs is doing two things
+            count number of nodes at distances divisible by speed from this node
+            count number of pairs for each root
+        '''
+        adj = defaultdict(list)
+        for s,d,w in edges:
+            adj[s].append([d,w])
+            adj[d].append([s,w])
+        
+        def dfs(node,prev,dist):
+            #this node has count 1 if we have some dist and its path is divisible by signal spee
+            count = 1 if dist > 0 and dist % signalSpeed == 0 else 0
+            #count pairs in all directions
+            pairs = 0
+            for nei,weight in adj[node]:
+                if nei != prev:
+                    child_count = dfs(nei, node, dist + weight)
+                    pairs += count*child_count #count pairs
+                    #count for children at this node
+                    count += child_count
+            #just return the pairs for the node
+            if node == prev:
+                return pairs
+            #return the count
+            return count
+        
+        n = len(edges) + 1
+        res = [0]*n
+        for node in range(n):
+            paths = dfs(node, node, 0)
+            res[node] = paths
+        return res
+    
+class Solution:
+    def countPairsOfConnectableServers(self, edges: List[List[int]], signalSpeed: int) -> List[int]:
+        '''
+        count nodes divisible by distnacce (for each node)
+        then count pairs
+        '''
+        graph, res = defaultdict(list), []
+        for startNode, endNode, weight in edges:
+            graph[startNode].append((endNode, weight))
+            graph[endNode].append((startNode, weight))
+            
+        for node in range(len(edges) + 1):
+            res.append(self.solve(node,graph,signalSpeed))
+        return res
+
+    #counts nodes divisible by signalSpeed from curNode
+    def dfs(self, curNode: int, parent: int, weight: int,signalSpeed,graph) -> int:
+        res = 1 if weight % signalSpeed == 0 else 0
+        for childNode, curWeight in graph[curNode]:
+            if childNode == parent: continue
+            res += self.dfs(childNode, curNode, weight + curWeight,signalSpeed,graph)
+        return res
+
+    def solve(self, curNode: int,graph,signalSpeed) -> int:
+        res = cur = 0
+        for neighbor, weight in graph[curNode]:
+            dfsResult = self.dfs(neighbor, curNode, weight,signalSpeed,graph)
+            res += (dfsResult * cur)
+            cur += dfsResult
+        return res
+
+        for node in range(len(edges) + 1):
+            res.append(solve(node))
+        return res
+        
 ###############################################################
 # 2441. Largest Positive Integer That Exists With Its Negative
 # 02MAY24
