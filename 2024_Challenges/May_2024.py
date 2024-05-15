@@ -1342,3 +1342,133 @@ class Solution:
             score += column_score
 
         return score
+    
+######################################
+# 1219. Path with Maximum Gold
+# 14MAY24
+#######################################
+#ezzz
+class Solution:
+    def getMaximumGold(self, grid: List[List[int]]) -> int:
+        '''
+        back tracking with global maximum value
+        '''
+        self.ans = 0
+        rows = len(grid)
+        cols = len(grid[0])
+           
+        def rec(i,j,gold,seen):
+            self.ans = max(self.ans,gold)
+            seen.add((i,j))
+            for di,dj in [[1,0],[-1,0],[0,1],[0,-1]]:
+                neigh_i = i + di
+                neigh_j = j + dj
+                if 0 <= neigh_i < rows and 0 <= neigh_j < cols:
+                    if (neigh_i,neigh_j) not in seen and grid[neigh_i][neigh_j] != 0:
+                        rec(neigh_i,neigh_j,gold + grid[neigh_i][neigh_j],seen)
+                        seen.remove((neigh_i,neigh_j))
+                
+            return
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] != 0:
+                    seen = set()
+                    rec(i,j,grid[i][j],seen)
+        
+        return self.ans
+
+#no global
+class Solution:
+    def getMaximumGold(self, grid: List[List[int]]) -> int:
+        '''
+        we can also keep it as no global variable and inplace grid to mark as visited
+        base case it when are outside the bounds, there's no gold here, so return 0
+        also for directions we can do
+        dirrs = [0,1,0,-1,0]
+            then we can get all pairs doing [i,i+1]
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [0,1,0,-1,0]
+        def rec(i,j,grid,rows,cols):
+            #out of bounds
+            if not (0 <= i < rows) or not (0 <= j < cols):
+                return 0
+            #if zero cell/visited
+            if grid[i][j] == 0:
+                return 0
+            
+            max_gold = 0
+            #mark
+            curr_gold = grid[i][j]
+            grid[i][j] = 0
+            
+            for d in range(4):
+                neigh_i = i + dirrs[d]
+                neigh_j = j + dirrs[d+1]
+                #maximize
+                max_gold = max(max_gold, rec(neigh_i,neigh_j,grid,rows,cols) + curr_gold)
+            
+            #backtrack
+            grid[i][j] = curr_gold
+            return max_gold
+        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans = max(ans,rec(i,j,grid,rows,cols))
+        
+        return ans
+    
+class Solution:
+    def getMaximumGold(self, grid: List[List[int]]) -> int:
+        DIRECTIONS = [0, 1, 0, -1, 0]
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        def bfs_backtrack(row: int, col: int) -> int:
+            queue = deque()
+            visited = set()
+            max_gold = 0
+            visited.add((row, col))
+            queue.append((row, col, grid[row][col], visited))
+            while queue:
+                curr_row, curr_col, curr_gold, curr_vis = queue.popleft()
+                max_gold = max(max_gold, curr_gold)
+
+                # Search for gold in each of the 4 neighbor cells
+                for direction in range(4):
+                    next_row = curr_row + DIRECTIONS[direction]
+                    next_col = curr_col + DIRECTIONS[direction + 1]
+
+                    # If the next cell is in the matrix, has gold, 
+                    # and has not been visited, add it to the queue
+                    if 0 <= next_row < rows and 0 <= next_col < cols and \
+                            grid[next_row][next_col] != 0 and \
+                            (next_row, next_col) not in curr_vis:
+                        curr_vis.add((next_row, next_col))
+                        queue.append((next_row, next_col, 
+                                      curr_gold + grid[next_row][next_col], 
+                                      curr_vis.copy()))
+                        curr_vis.remove((next_row, next_col))
+            return max_gold
+
+        # Find the total amount of gold in the grid
+        total_gold = sum(sum(row) for row in grid)
+        
+        # Search for the path with the maximum gold starting from each cell
+        max_gold = 0
+        for row in range(rows):
+            for col in range(cols):
+                if grid[row][col] != 0:
+                    max_gold = max(max_gold, bfs_backtrack(row, col))
+                    # If we found a path with the total gold, it's the max gold
+                    if max_gold == total_gold:
+                        return total_gold
+        return max_gold
+    
+##################################################
+# 2128. Remove All Ones With Row and Column Flips
+# 13MAY24
+##################################################
