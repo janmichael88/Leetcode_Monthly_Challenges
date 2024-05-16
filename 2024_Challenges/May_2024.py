@@ -1467,8 +1467,183 @@ class Solution:
                     if max_gold == total_gold:
                         return total_gold
         return max_gold
+
+################################################
+# 2812. Find the Safest Path in a Grid (REVISTED)
+# 16MAY24
+################################################
+class Solution:
+    def maximumSafenessFactor(self, grid: List[List[int]]) -> int:
+        '''
+        need to find safness factor for each cell
+            multipoint bfs and get distances
+        then we can check if there is a path this some safeness factor
+            binary search for workable solution
+            
+        '''
+        dists = self.findDists(grid)
+        left,right,res = 0,0,-1
+        for i in range(len(dists)):
+            for j in range(len(dists[0])):
+                right = max(right,dists[i][j])
+        
+        while left <= right:
+            mid = left + (right - left)//2
+            seen = set()
+            if self.dfsWithSafness(0,0,dists,seen,mid):
+                res = mid 
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return res
+            
     
+    def dfsWithSafness(self,curr_row,curr_col,grid,seen,v):
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [0,1,0,-1,0]
+        if grid[0][0] < v or grid[rows-1][cols-1] < v:
+            return False
+        if (curr_row,curr_col) == (rows-1,cols-1):
+            return True
+        seen.add((curr_row,curr_col))
+        for i in range(4):
+            neigh_row = curr_row + dirrs[i]
+            neigh_col = curr_col + dirrs[i+1] 
+            if (neigh_row,neigh_col) in seen:
+                continue
+            if 0 <= neigh_row < rows and 0 <= neigh_col < cols and grid[neigh_row][neigh_col] >= v:
+                if self.dfsWithSafness(neigh_row,neigh_col,grid,seen,v):
+                    return True
+        
+        return False
+        
+        
+    def findDists(self,grid):
+        rows = len(grid)
+        cols = len(grid[0])
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dirrs = [0,1,0,-1,0]
+        q = deque([])
+        #find safness
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    q.append((i,j,0))
+        
+        while q:
+            curr_row,curr_col,curr_dist = q.popleft()
+            dists[curr_row][curr_col] = curr_dist
+            
+            for i in range(4):
+                neigh_row = curr_row + dirrs[i]
+                neigh_col = curr_col + dirrs[i+1]
+                if 0 <= neigh_row < rows and 0 <= neigh_col < cols and dists[neigh_row][neigh_col] > curr_dist:
+                    q.append((neigh_row,neigh_col,curr_dist+1))
+        
+        return dists
+            
+#using djikstras
+class Solution:
+    def maximumSafenessFactor(self, grid: List[List[int]]) -> int:
+        '''
+        we can also use djikstras, note finding longest path in undirected graph is NP-hard
+            paths can be infinitely long (going back and forth between nodes)
+        
+        but we can use it to find longest path in DAG, which is the case for this problem
+        '''
+        rows = len(grid)
+        cols = len(grid)
+        dists = self.findDists(grid)
+        dirrs = [0,1,0,-1,0]
+        pq_dists = [[float('inf')]*cols for _ in range(rows)]
+        seen = set()
+        pq = []
+        pq.append((-dists[0][0],0,0)) #maxheap to get largest safeness factors first, then minimize in pq_dists
+        while pq:
+            curr_safeness,curr_row,curr_col = heapq.heappop(pq)
+            pq_dists[curr_row][curr_col] = min(pq_dists[curr_row][curr_col],-curr_safeness)
+            seen.add((curr_row,curr_col))
+            for i in range(4):
+                neigh_row = curr_row + dirrs[i]
+                neigh_col = curr_col + dirrs[i+1]
+                if 0 <= neigh_row < rows and 0 <= neigh_col < cols and (neigh_row,neigh_col) not in seen:
+                    entry = (-dists[neigh_row][neigh_col], neigh_row,neigh_col)
+                    heapq.heappush(pq,entry)
+        
+        return pq_dists[rows-1][cols-1]
+            
+    def findDists(self,grid):
+        rows = len(grid)
+        cols = len(grid[0])
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dirrs = [0,1,0,-1,0]
+        q = deque([])
+        #find safness
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    q.append((i,j,0))
+        
+        while q:
+            curr_row,curr_col,curr_dist = q.popleft()
+            dists[curr_row][curr_col] = curr_dist
+            
+            for i in range(4):
+                neigh_row = curr_row + dirrs[i]
+                neigh_col = curr_col + dirrs[i+1]
+                if 0 <= neigh_row < rows and 0 <= neigh_col < cols and dists[neigh_row][neigh_col] > curr_dist:
+                    q.append((neigh_row,neigh_col,curr_dist+1))
+        
+        return dists
+
+
 ##################################################
 # 2128. Remove All Ones With Row and Column Flips
 # 13MAY24
 ##################################################
+class Solution:
+    def removeOnes(self, grid: List[List[int]]) -> bool:
+        '''
+        on the last operation, it had to be the case that there was all 1s in a col or all 1s in a row
+        doing more the one operation on a row or col jsut flips it back, so we dont need to flip more than once (if we do flip)
+        for each row and col
+        if counts ones
+        pattern of each row should be the same as the first row or its invers
+        '''
+        pattern = grid[0]
+        pattern_inv = [1 - v for v in grid[0]]
+        for r in grid[1:]:
+            if r != pattern and r != pattern_inv:
+                return False
+        
+        return True
+            
+class Solution:
+    def removeOnes(self, grid: List[List[int]]) -> bool:
+        '''
+        the actual way is to flip a row, if leading column is zero
+        then count up the column values
+            each col should be either all zero or call ones
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        for col in range(cols):
+            if grid[0][col] == 1:
+                for row in range(rows):
+                    grid[row][col] = 1 - grid[row][col]
+                    
+        #check rows all zeros
+        for row in range(1,rows):
+            count_ones = 0
+            for col in range(cols):
+                count_ones += grid[row][col]
+            
+            if count_ones != cols and count_ones != 0:
+                return False
+        
+        return True
+        
+        
