@@ -1646,4 +1646,99 @@ class Solution:
         
         return True
         
+##################################################
+# 2061. Number of Spaces Cleaning Robot Cleaned
+# 17MAY24
+###################################################
+#ezzzz bruv
+class Solution:
+    def numberOfCleanRooms(self, room: List[List[int]]) -> int:
+        '''
+        directions will be R->D->L->U, and then it just repeats
+        when do we stop?
+            when the robot reaches a space that it has already cleaned and is facing the same direction as before
+            so keep states (i,j,k) (i,j) is cell and k is directions
+        '''
+        dirrs = [[0,1],[1,0],[0,-1],[-1,0]]
+        rows = len(room)
+        cols = len(room[0])
+        seen = set()
+        cleaned_cells = set()
         
+        curr_state = (0,0,0)
+        while curr_state not in seen:
+            seen.add(curr_state)
+            curr_row,curr_col,curr_dirr = curr_state
+            cleaned_cells.add((curr_row,curr_col))
+            #get next move
+            for i in range(4):
+                next_dirr = (curr_dirr + i) % 4
+                d_row,d_col = dirrs[next_dirr]
+                next_row = curr_row + d_row
+                next_col = curr_col + d_col
+                #must not be 1 and in bounds
+                if 0 <= next_row < rows and 0 <= next_col < cols and room[next_row][next_col] == 0:
+                    curr_state = (next_row,next_col,next_dirr)
+                    break
+            
+        return len(cleaned_cells)
+
+#can also use DFS
+class Solution:
+    def numberOfCleanRooms(self, room: List[List[int]]) -> int:
+        DIRECTIONS = (0, 1, 0, -1, 0)
+        rows, cols = len(room), len(room[0])
+        visited = set()
+        cleaned = set()
+
+        def clean(row, col, direction):
+            #alrady seen
+            if (row, col, direction) in visited:
+                return len(cleaned)
+
+            # mark
+            visited.add((row, col, direction))
+            cleaned.add((row, col))
+
+            # clean next cell
+            next_row = row + DIRECTIONS[direction] 
+            next_col = col + DIRECTIONS[direction + 1]
+            if 0 <= next_row < rows and 0 <= next_col < cols and not room[next_row][next_col]:
+                return clean(next_row, next_col, direction)
+
+            return clean(row, col, (direction + 1) % 4)
+
+        return clean(0, 0, 0)
+    
+##############################################
+# 1325. Delete Leaves With a Given Value
+# 17MAY24
+#############################################
+#Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+class Solution:
+    def removeLeafNodes(self, root: Optional[TreeNode], target: int) -> Optional[TreeNode]:
+        '''
+        resursion if leaf just return none
+        '''
+        def rec(node,target):
+            if not node:
+                return None
+            if not node.left and not node.right:
+                if node.val == target:
+                    return None
+                return node
+            node.left = rec(node.left,target)
+            node.right = rec(node.right,target)
+            if not node.left and not node.right:
+                if node.val == target:
+                    return None
+
+            return node
+        
+        return rec(root,target)
+            
