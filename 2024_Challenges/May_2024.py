@@ -1709,6 +1709,45 @@ class Solution:
             return clean(row, col, (direction + 1) % 4)
 
         return clean(0, 0, 0)
+
+#bfs
+class Solution:
+    def numberOfCleanRooms(self, room: List[List[int]]) -> int:
+        '''
+        we can also use BFS and bit masks for each direction
+        2,4,6,8, R,D,L,U
+        then we just upate the celss states with 1 << curr_dirr
+        if a cell is marked 0, we know it hasn't been visited yet
+        '''
+        rows = len(room)
+        cols = len(room[0])
+        dirrs = (0,1,0,-1,0)
+        visited = [[0]*cols for _ in range(rows)] #note we could have overwtied the 2d array
+        cleaned = 0
+        
+        q = deque([])
+        q.append((0,0,0))
+        
+        while q:
+            c_r, c_c, c_d = q.popleft()
+            #un cleand room
+            if visited[c_r][c_c] == False:
+                cleaned += 1
+            #mark this cell with thid direction
+            visited[c_r][c_c] |= 1 << c_d
+            for i in range(4):
+                n_d = (c_d + i) % 4
+                n_r = c_r + dirrs[n_d]
+                n_c = c_c + dirrs[n_d+1]
+                if 0 <= n_r < rows and 0 <= n_c < cols and room[n_r][n_c] == 0:
+                    #check direction
+                    if (visited[n_r][n_c] >> n_d) & 1:
+                        return cleaned
+                    else:
+                        q.append((n_r,n_c,n_d))
+                        break
+        
+        return cleaned
     
 ##############################################
 # 1325. Delete Leaves With a Given Value
@@ -1742,3 +1781,49 @@ class Solution:
         
         return rec(root,target)
             
+###################################################
+# 979. Distribute Coins in Binary Tree (REVISITED)
+# 17MAY24
+###################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def distributeCoins(self, root: Optional[TreeNode]) -> int:
+        '''
+        number of coins == number of nodes
+        represent extra coins as positive values and needed coins as negative values (for node)
+        if we examine leaf nodes
+        we can calculate the coints exchanged in the subtree rooted ad the a node
+        curr.val = curr.val + left_counts + right_counts
+        there are three cases for distributing coins from a leaf node
+            1. the leaf node doesn't have any coins, so we take from parent
+            2. leaf node has exactly one coin, no exchagne here
+            3. leaf node has more than coint, leave one to it and move the rest
+        
+        from leaf node we can determing how to distribute coins -> the only neighbor is its parent!
+        so we hand child nodes before parent nodes -> need post order, L,R,N
+        at each node, ask, how many coints can the current node pass to its parent
+        we could modify the nodes and pass them up, but its easier to pass the exchanging
+            try coding modifying solution after
+        
+        we calculate the number of coins a parent node can pass on to its parent by subtracting one from its value
+        then add the number of conts its left and right subtrees need to exahcnage, then add up for all the ndoes
+        so dfs(node) passes the number of coins it needs to exhcange from some node
+        the answer is just the sum of all the exchanges
+        and the function returnes the exhcnage
+        '''
+        ans = [0]
+        def dfs(node):
+            if not node:
+                return 0
+            left = dfs(node.left)
+            right = dfs(node.right)
+            ans[0] += abs(left) + abs(right)
+            return (node.val - 1) + left + right
+        
+        dfs(root)
+        return ans[0]
