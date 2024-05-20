@@ -1827,3 +1827,57 @@ class Solution:
         
         dfs(root)
         return ans[0]
+    
+#######################################
+# 789. Escape The Ghosts
+# 18MAY24
+#######################################
+#close one
+class Solution:
+    def escapeGhosts(self, ghosts: List[List[int]], target: List[int]) -> bool:
+        '''
+        grid is infinite, cant just BFS and move them all at once -> it may never terminate
+        if a single ghost blocks my path, i cant reach it
+        there can be multiple ghosts in one location
+        
+        X 0 0 1
+        1 0 0 0 
+        0 0 0 0
+        0 0 0 0
+        
+        there just needs to be a time, where i am in the desintations row or col, and no ghosts are blocking me
+        for each ghosts find its L2 distance to x, if any are less then my L2, we cann't do it
+        '''
+        my_l2 = sum(target)
+        for x,y in ghosts:
+            g_l2 = abs(x - target[0]) + abs(y - target[1])
+            if g_l2 <= my_l2:
+                return False
+        return True
+    
+#ezzz
+class Solution:
+    def escapeGhosts(self, ghosts: List[List[int]], target: List[int]) -> bool:
+        '''
+        grid is infinite, cant just BFS and move them all at once -> it may never terminate
+        if a single ghost blocks my path, i cant reach it
+        there can be multiple ghosts in one location
+        
+        X 0 0 1
+        1 0 0 0 
+        0 0 0 0
+        0 0 0 0
+        
+        there just needs to be a time, where i am in the desintations row or col, and no ghosts are blocking me
+        for each ghosts find its L2 distance to x, if any are less then my L2, we cann't do it
+        '''
+        def l2(p,q):
+            return abs(p[0] - q[0])  + abs(p[1] - q[1])
+        
+        for g in ghosts:
+            my_dist = l2([0,0],target)
+            ghost_dist = l2(g,target)
+            if ghost_dist <= my_dist:
+                return False
+        return True
+            
