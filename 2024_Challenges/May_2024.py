@@ -1832,7 +1832,6 @@ class Solution:
 # 789. Escape The Ghosts
 # 18MAY24
 #######################################
-#close one
 class Solution:
     def escapeGhosts(self, ghosts: List[List[int]], target: List[int]) -> bool:
         '''
@@ -1848,7 +1847,7 @@ class Solution:
         there just needs to be a time, where i am in the desintations row or col, and no ghosts are blocking me
         for each ghosts find its L2 distance to x, if any are less then my L2, we cann't do it
         '''
-        my_l2 = sum(target)
+        my_l2 = abs(target[0]) + abs(target[1])
         for x,y in ghosts:
             g_l2 = abs(x - target[0]) + abs(y - target[1])
             if g_l2 <= my_l2:
@@ -1880,4 +1879,237 @@ class Solution:
             if ghost_dist <= my_dist:
                 return False
         return True
+    
+################################################
+# 3068. Find the Maximum Sum of Node Values
+# 19MAY24
+###############################################
+#nice try
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        we have n nodes and we are given n-1 edges
+        graph will be a tree, and we have values at each node, given by nums
+        maximize sum of node values
+        we can perform the following operation
+            choes any edge [u,v] and update nums[u] = nums[u] ^ k
+        any node in the tree can be the root
+        essecntially indices are connected through the edge list
+        flipping the edge more than once, just returns it back to the original
+        and xoring with itse;f result zero
+        a ^ a = 0
+        a ^ b ^ b = 0
+        a ^ b = b ^ a
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        #flip or dont flip
+        memo = {}
+        def dp(curr,prev,k):
+            if (curr,prev) in memo:
+                return memo[(curr,prev)]
+            ans = float('-inf')
+            flip_sum = 0
+            no_flip_sum = 0
             
+            for neigh in graph[curr]:
+                if neigh == prev:
+                    continue
+                #flip
+                flip_sum = (nums[curr] ^ k) + (nums[neigh] ^ k)
+                #dont
+                no_flip_sum = (nums[curr] + nums[neigh])
+                ans = max(flip_sum,no_flip_sum) + dp(neigh,curr,memo)
+            
+            ans = max(ans,flip_sum,no_flip_sum)
+            memo[(curr,prev)] = ans
+            return ans
+        
+        return max(dp(0,-1,k) + nums[0], dp(0,-1,k) + nums[0] ^ k)
+    
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        its turn out the path doesn't matter
+        so we had path form u to v 
+        u -> p -> p1 -> p2 ... -> v
+        because of the nature of the opertiona the sum would be
+        u^k + p1 ^ k + (p1 ^ k + p2 ^ k) ... + (p2 ^ k + v ^ k)
+        intutiion:
+            if we apply the operations on a path from u to v, the nodes in that path remain unchainged
+            only u and v get xord
+            so we can choose to apply the operation, but its only valid if we applied the operation an evne number of times
+            odd number of times is invalud
+        all the p's would remain unchanged, only node vals at u and k would be XORd with k, the internal nodes would remain unchanged
+        so eseentially there is a path that conect all thd noes, and it doesn't matter the order which we apply the operation
+        and applying the operations more than once on an edge is pointless
+        we need to maximize the sum of the values, wheere there is an even number of operations performed
+            because operations are done on pairs
+        
+        base case is when we have gone through all the nodes
+            if even ops, return 0, other return float('inf')
+        
+        states become even and parity of operations (could also do number, but that would be more states)
+        parity determines if its a valid assignment (i.e a valid taking of edges to apply the operations)
+        '''
+        memo = {}
+        
+        #better way is to use number of operations
+        #parity += 1, and check
+        def dp(i,parity):
+            if i == len(nums):
+                if parity % 2 == 0:
+                    return 0
+                return float('-inf')
+            if (i,parity) in memo:
+                return memo[(i,parity)]
+            no_op = nums[i] + dp(i+1,parity)
+            op = (nums[i] ^ k) + dp(i+1, 1 - parity)
+            ans = max(no_op,op)
+            memo[(i,parity)] = ans
+            return ans
+        
+        return dp(0,0)
+    
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        bottom up
+        '''
+        n = len(nums)
+        dp = [[0]*2 for _ in range(n+1)]
+        #base case inf fill
+        for i in range(n+1):
+            for parity in range(2):
+                if i == n and parity % 2 == 1:
+                    dp[i][parity] = float('-inf')
+        
+        for i in range(n-1,-1,-1):
+            for parity in range(2):
+                no_op = nums[i] + dp[i+1][parity]
+                op = (nums[i] ^ k) + dp[i+1][1 - parity]
+                ans = max(no_op,op)
+                dp[i][parity] = ans
+        
+        return dp[0][0]
+    
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        if we do an operation at some node u
+        nums[u] = nums[u] ^ k, we can do this for every node and find the net change
+        netChage[u] = (nums[u] ^ k) - (nums[u])
+        we want the apply the aoperations that have a bigger (positive net change)
+        chose opertions that provide the greaest increment to node sum
+        we need to do them in pairs,
+            all the nodes are connected
+            we never needed the edges anyway
+            
+        our smallest sum will just be the sum of all nums
+        so we only need to find the positive changes
+        '''
+        N = len(nums)
+        change = []
+        for i in range(N):
+            delta = (nums[i] ^ k) - nums[i]
+            change.append(delta)
+        
+        change.sort(reverse = True)
+        node_sum = sum(nums)
+        
+        for i in range(0,N,2):
+            if i + 1 < N:
+                pair_sum = change[i] + change[i+1]
+                if pair_sum > 0:
+                    node_sum += pair_sum
+        
+        return node_sum
+    
+######################################
+# 1863. Sum of All Subset XOR Totals
+# 20MAY24
+#####################################
+#recursion
+class Solution:
+    def subsetXORSum(self, nums: List[int]) -> int:
+        #recursion
+        N = len(nums)
+        
+        def rec(i,curr_sum):
+            if i >= N:
+                return curr_sum
+            
+            xor = rec(i+1, curr_sum^nums[i])
+            noxor = rec(i+1,curr_sum)
+            return xor + noxor
+        
+        return rec(0,0)
+    
+#bit magic
+class Solution:
+    def subsetXORSum(self, nums: List[int]) -> int:
+        '''
+        idea is to count up the number of times each bit it set in each subset
+        example
+        nums = [1,2], ans = 6 ->110
+        nums = [5,1,6] ans = 26 -> 11100
+        right most bits are 0
+        try breaking rule
+        nums = [5,20] ans = 42 -> 101010
+        
+        need way to determine most significant bits
+        any set bit in num, is set in the out put
+        '''
+        ans = 0
+        N = len(nums)
+        for num in nums:
+            for i in range(32):
+                #check if set
+                mask = 1 << i
+                if num & mask != 0:
+                    ans |= mask
+        
+        return ans << (N-1) #need to append N-1 zeros to the answer
+    
+class Solution:
+    def subsetXORSum(self, nums: List[int]) -> int:
+        '''
+        idea is to count up the number of times each bit it set in each subset
+        example
+        nums = [1,2], ans = 6 ->110
+        nums = [5,1,6] ans = 26 -> 11100
+        right most bits are 0
+        try breaking rule
+        nums = [5,20] ans = 42 -> 101010
+        
+        need way to determine most significant bits
+        any set bit in num, is set in the out put
+        intution, all th binary representations fo the XOR subsets will have each set bi appear 2^(n-1) times
+        for a bit position to be set in the subset XOR total, it must be set in an odd number of elements
+        a given element will be included in half of the subsets
+        if we have 2**N subsets, then it will be set in 2**(N-1) of them
+        
+        for a given bit position x, how many subset XOR totals have the xth bit set
+            if not set anywhere, it will remain unset in the XOR totals
+            if set somewhere it will be set 2**(N-1) times
+        '''
+        ans = 0
+        xor_sum = 0
+        N = len(nums)
+        for num in nums:
+            for i in range(32):
+                #check if set
+                mask = 1 << i
+                if num & mask != 0:
+                    ans |= mask
+        
+        #in ans mask, each set bit will apear 2**(N-1) times
+        for i in range(32):
+            mask = 1 << i
+            if ans & mask:
+                xor_sum += mask*(1 << len(nums)-1)
+        
+        return xor_sum
