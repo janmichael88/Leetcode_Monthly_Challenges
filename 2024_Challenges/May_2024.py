@@ -2113,3 +2113,126 @@ class Solution:
                 xor_sum += mask*(1 << len(nums)-1)
         
         return xor_sum
+    
+###################################
+# 78. Subsets (REVISTED)
+# 21MAY24
+##################################
+class Solution:
+    def subsets(self, nums: List[int]) -> List[List[int]]:
+        '''
+        just use recursion
+        '''
+        
+        def rec(i):
+            if i >= len(nums):
+                return [[]]
+            first_num = nums[i]
+            
+            subsets_without = rec(i+1)
+            subsets_with = []
+            for s in subsets_without:
+                temp = [first_num] + s
+                subsets_with.append(temp)
+            
+            return subsets_without + subsets_with
+        
+        return rec(0)
+    
+###################################################
+# 2044. Count Number of Maximum Bitwise-OR Subsets
+# 21MAY24
+##################################################
+class Solution:
+    def countMaxOrSubsets(self, nums: List[int]) -> int:
+        '''
+        generate subsets with mask ans find xors
+        '''
+        entries = []
+        N = len(nums)
+        max_OR = 0
+        for mask in range(2**N):
+            OR = 0
+            for i in range(N):
+                if mask & (1 << i):
+                    OR = OR | nums[i]
+            
+            entries.append((mask,OR))
+            max_OR = max(max_OR,OR)
+        
+        ans = set()
+        for mask,OR in entries:
+            if OR == max_OR:
+                ans.add(mask)
+        
+        return len(ans)
+    
+#knap sack with bitmasks solution
+class Solution:
+    def countMaxOrSubsets(self, nums: List[int]) -> int:
+        '''
+        we can actually find max OR, and check each subset
+        sum(nums) is max and accumulating OR is also max
+        '''
+        entries = []
+        N = len(nums)
+        max_OR = 0
+        for num in nums:
+            max_OR |= num
+        ans = 0
+        
+        for mask in range(2**N):
+            OR = 0
+            for i in range(N):
+                if mask & (1 << i):
+                    OR = OR | nums[i]
+            if OR == max_OR:
+                ans += 1
+        
+        return ans
+        
+    
+##########################################
+# 131. Palindrome Partitioning (REVISTED)
+# 22MAY24
+#########################################
+class Solution:
+    def partition(self, s: str) -> List[List[str]]:
+        '''
+        just try all partitions
+        '''
+        ans = []
+        N = len(s)
+        
+        def rec(i,path):
+            if i >= N:
+                ans.append(path[:])
+                return
+            for j in range(i+1,N+1):
+                temp = s[i:j]
+                if temp == temp[::-1]:
+                    rec(j,path + [temp])
+                    
+        rec(0,[])
+        return ans
+    
+class Solution:
+    def partition(self, s: str) -> List[List[str]]:
+        '''
+        we can also pass reference to substrings
+        '''
+        ans = []
+        N = len(s)
+        
+        def rec(s,path):
+            if not s:
+                ans.append(path[:])
+                return
+            for i in range(1,len(s)+1):
+                temp = s[:i]
+                if temp == temp[::-1]:
+                    rec(s[i:],path + [temp])
+                    
+        rec(s,[])
+        return ans
+
