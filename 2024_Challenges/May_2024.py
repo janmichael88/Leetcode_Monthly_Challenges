@@ -2236,3 +2236,71 @@ class Solution:
         rec(s,[])
         return ans
 
+#########################################
+# 1745. Palindrome Partitioning IV
+# 22MAY24
+########################################
+#almost!
+#right idea, need to build it up the right way first
+class Solution:
+    def checkPartitioning(self, s: str) -> bool:
+        '''
+        pre-process checking palindromes
+        then fix the start and ends, and check inside for a palindrome
+        '''
+        N = len(s)
+        memo = {}
+        for i in range(N):
+            for j in range(N-1,i-1,-1):
+                if (i == j):
+                    memo[(i,j)] = True
+                else:
+                    self.dp(i,j,memo,s)
+        for i in range(N+1):
+            for j in range(N-2,i,-1):
+                pref = memo[(0,i)]
+                #print(s[:i+1], pref)
+                middle = memo[(i+1,j)]
+                suff = memo[(j+1,N-1)]
+                if sum([pref,middle,suff]) == 3:
+                    return True
+        return False
+                
+        
+
+    def dp(self, i,j,memo,s):
+        if i >= j:
+            return True
+        if (i,j) in memo:
+            return memo[(i,j)]
+        if s[i] == s[j] and self.dp(i+1,j-1,memo,s):
+            memo[(i,j)] = True
+            return True
+        memo[(i,j)] = False
+        return False
+        
+class Solution:
+    def checkPartitioning(self, s: str) -> bool:
+        '''
+        pre-process checking palindromes
+        then fix the start and ends, and check inside for a palindrome
+        '''
+        N = len(s)
+        dp = [[False]*(N) for _ in range(N)]
+        
+        for i in range(N-1,-1,-1):
+            for j in range(N):
+                if i >= j:
+                    dp[i][j] = True
+                elif s[i] == s[j]:
+                    dp[i][j] = dp[i+1][j-1] 
+                    
+        for i in range(N+1):
+            for j in range(N-2,i,-1):
+                pref = dp[0][i]
+                #print(s[:i+1], pref)
+                middle = dp[i+1][j]
+                suff = dp[j+1][N-1]
+                if sum([pref,middle,suff]) == 3:
+                    return True
+        return False
