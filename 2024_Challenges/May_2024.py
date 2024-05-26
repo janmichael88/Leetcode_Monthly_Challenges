@@ -2304,3 +2304,294 @@ class Solution:
                 if sum([pref,middle,suff]) == 3:
                     return True
         return False
+
+########################################
+# 2597. The Number of Beautiful Subsets
+# 23MAY24
+#######################################
+class Solution:
+    def beautifulSubsets(self, nums: List[int], k: int) -> int:
+        '''
+        genearting all subsets fits in TC, but need fast way of determining if absolute difference is allowable
+        we need to do counts, because there could be repeated elements!
+        '''
+        nums.sort()
+        N = len(nums)
+        curr_subset = defaultdict(int)
+        ans = [0]
+        def rec(i,curr_subset):
+            if i >= N:
+                ans[0] += 1
+                return
+            #we always need to skip
+            rec(i+1,curr_subset)
+            prev = nums[i] - k
+            if prev not in curr_subset:
+                curr_subset[nums[i]] += 1
+                rec(i+1,curr_subset)
+                curr_subset[nums[i]] -= 1
+                if curr_subset[nums[i]] == 0:
+                    del curr_subset[nums[i]]
+        
+        rec(0,curr_subset)
+        return ans[0] - 1
+
+class Solution:
+    def beautifulSubsets(self, nums: List[int], k: int) -> int:
+        '''
+        no global solution
+        '''
+        nums.sort()
+        N = len(nums)
+        curr_subset = defaultdict(int)
+        def rec(i,curr_subset):
+            if i >= N:
+                return 1
+            #we always need to skip
+            skip = rec(i+1,curr_subset)
+            prev = nums[i] - k
+            no_skip = 0
+            if prev not in curr_subset:
+                curr_subset[nums[i]] += 1
+                no_skip = rec(i+1,curr_subset)
+                curr_subset[nums[i]] -= 1
+                if curr_subset[nums[i]] == 0:
+                    del curr_subset[nums[i]]
+            return skip + no_skip
+        return rec(0,curr_subset) - 1
+    
+#recursion tree (count up n-nary tree problem)
+class Solution:
+    def beautifulSubsets(self, nums: List[int], k: int) -> int:
+        '''
+        we can examine all subsets using mask
+        keep index i and current mask, and check that adding this index to this subset is allowed
+        then count up the ways, benefit of this solution is that we dont need to sort
+        dont forget counting in n-ary tree recursino problems
+        '''
+        N = len(nums)
+        
+        def rec(i,mask,k):
+            if i >= N:
+                if mask != 0:
+                    return 1
+                return 0
+            
+            can_add = True
+            #check all in curr mask
+            for j in range(N):
+                pos_mask = (1 << j)
+                if (mask & pos_mask == 0) or abs(nums[i] - nums[j]) != k:
+                    continue
+                else:
+                    can_add = False
+                    break
+            
+            skip = rec(i+1,mask,k)
+            no_skip = 0
+            if can_add:
+                #take i
+                next_mask = mask | (1 << i)
+                no_skip = rec(i+1, next_mask,k)
+            
+            return skip + no_skip
+        
+        return rec(0,0,k)
+    
+##############################################
+# 1255. Maximum Score Words Formed by Letters
+# 24MAY24
+############################################
+#not the most effecitny but it works
+class Solution:
+    def maxScoreWords(self, words: List[str], letters: List[str], score: List[int]) -> int:
+        '''
+        need to find max score for any valid set of words
+        find the possible subsets we can create using the letters, then find the max score for of all subsets
+        there aren't that many subsets
+        '''
+        ans = 0
+        letters = Counter(letters)
+        N = len(words)
+        for subset in range(2**N):
+            curr_subset = []
+            for i in range(N):
+                pos_mask = (1 << i)
+                if (subset & pos_mask):
+                    curr_subset.append(i)
+            
+            curr_score = 0
+            is_valid = True
+            curr_letters = Counter()
+            for i in curr_subset:
+                for ch in words[i]:
+                    curr_letters[ch] += 1
+            
+            for ch,cnt in curr_letters.items():
+                if cnt > letters[ch]:
+                    is_valid = False
+                    break
+                else:
+                    idx = ord(ch) - ord('a')
+                    curr_score += score[idx]*cnt
+            
+            if is_valid:
+                ans = max(ans,curr_score)
+        
+        return ans
+    
+#anohter iterative way
+class Solution:
+    def maxScoreWords(self, words: List[str], letters: List[str], score: List[int]) -> int:
+        W = len(words)
+        # Count how many times each letter occurs
+        freq = [0 for i in range(26)]
+        for c in letters:
+            freq[ord(c) - 97] += 1
+
+        # Calculate score of subset
+        def subset_score(subset_letters, score, freq):
+            total_score = 0
+            for c in range(26):
+                total_score += subset_letters[c] * score[c]
+                # Check if we have enough of each letter to build this subset of words
+                if subset_letters[c] > freq[c]:
+                    return 0
+            return total_score
+
+        max_score = 0
+        # Iterate over every subset of words
+        subset_letters = {}
+        for mask in range(1 << W):
+            # Reset the subset_letters map
+            subset_letters = [0 for i in range(26)]
+            # Find words in this subset
+            for i in range(W):
+                if (mask & (1 << i)) > 0:
+                    # Count the letters in this word
+                    L = len(words[i])
+                    for j in range(L):
+                        subset_letters[ord(words[i][j]) - 97] += 1
+            # Calculate score of subset
+            max_score = max(max_score, subset_score(subset_letters, score, freq))
+        # Return max_score as the result
+        return max_score
+    
+class Solution:
+    def maxScoreWords(self, words: List[str], letters: List[str], score: List[int]) -> int:
+        '''
+        backtracking, pass in index, subset letters and curr score
+        '''
+        ans = [0]
+        N = len(words)
+        all_letters = [0]*26
+        for ch in letters:
+            all_letters[ord(ch) - ord('a')] += 1
+        subset_letters = [0]*26
+        
+        self.backtrack(0,words,subset_letters,score,all_letters,ans,0)
+        return ans[0]
+    
+    def backtrack(self,i,words,subset_letters,score,all_letters,ans,total_score):
+        print(total_score)
+        if i >= len(words):
+            ans[0] = max(ans[0],total_score)
+            return
+        
+        self.backtrack(i+1,words,subset_letters,score,all_letters,ans,total_score)
+        curr_word = words[i]
+        for ch in curr_word:
+            subset_letters[ord(ch) - ord('a')] += 1
+            total_score += score[ord(ch) - ord('a')]
+            
+        if self.is_valid_subset(subset_letters,all_letters):
+            self.backtrack(i+1,words,subset_letters,score,all_letters,ans,total_score)
+        #backtrack
+        for ch in curr_word:
+            subset_letters[ord(ch) - ord('a')] -= 1
+            total_score -= score[ord(ch) - ord('a')]
+            
+    
+    def is_valid_subset(self, subset_letters, all_letters):
+        for i in range(26):
+            if all_letters[i] < subset_letters[i]:
+                return False
+        
+        return True
+
+###########################################
+# 140. Word Break II (REVISTED)
+# 25MAY24
+############################################
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> List[str]:
+        '''
+        backtracking
+        if we can make a word, break it and add to is path
+        '''
+        wordDict = set(wordDict)
+        ans = set()
+        
+        def rec(i,s,ans,path,seen):
+            if i >= len(s):
+                ans.add(path[1:])
+                return
+            for j in range(i,len(s)+1):
+                temp = s[i:j+1]
+                if temp in seen:
+                    rec(j+1,s,ans,path+" "+temp,seen)
+        
+        rec(0,s,ans,"",wordDict)
+        return ans
+    
+#bactrakcing if we want too
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> List[str]:
+        '''
+        backtracking
+        if we can make a word, break it and add to is path
+        '''
+        wordDict = set(wordDict)
+        ans = []
+        
+        def rec(i,s,ans,path,seen):
+            if i == len(s):
+                ans.append(" ".join(path))
+                return
+            for j in range(i,len(s)+1):
+                temp = s[i:j+1]
+                if temp in seen:
+                    path.append(temp)
+                    rec(j+1,s,ans,path,seen)
+                    path.pop()
+        
+        rec(0,s,ans,[],wordDict)
+        return ans
+                
+#we can cache states if we pass in string instead of string suffix
+class Solution:
+    def wordBreak(self, s: str, wordDict: List[str]) -> List[str]:
+        '''
+        backtracking
+        if we can make a word, break it and add to is path
+        '''
+        wordDict = set(wordDict)
+        memo = {}
+        
+        def rec(i,s,memo,seen):
+            if i == len(s):
+                return [""]
+            if i in memo:
+                return memo[i]
+            ans = []
+            for j in range(i,len(s)+1):
+                temp = s[i:j+1]
+                if temp in seen:
+                    for child_ans in rec(j+1,s,memo,seen):
+                        entry = temp + (" " if child_ans else "") + child_ans
+                        ans.append(entry)
+            memo[i] = ans
+            return ans
+        
+        return rec(0,s,memo,wordDict)
+                
