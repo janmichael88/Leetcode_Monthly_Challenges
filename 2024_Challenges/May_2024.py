@@ -2595,3 +2595,263 @@ class Solution:
         
         return rec(0,s,memo,wordDict)
                 
+
+###########################################
+# 552. Student Attendance Record II (REVISTED)
+# 26MAY24
+############################################
+#YESSS
+#dictionaries are just too much overrhead
+class Solution:
+    def checkRecord(self, n: int) -> int:
+        '''
+        valid state is:
+            only 1 A, or < 2
+            no can only be LL, or L, not more than 
+        so we really only need to keep track of A's and is there were a previous L and a previous previous L
+        A cant be more than 1, and for L's we can (false,false), (false,true)..etc
+        we can have L and LL anywhere in the perm, 
+        A or no A perm
+        and P anywhere
+        '''
+        memo = {}
+        
+        def dp(i,count_A,prev_L,prev_prev_L):
+            if i >= n:
+                return 1
+            if (i,count_A,prev_L,prev_prev_L) in memo:
+                return memo[(i,count_A,prev_L,prev_prev_L)]
+            mod = 1_000_000_007
+            ways = 0
+            #add P, remember we break states when adding A or P
+            ways += dp(i+1,count_A,False,False)
+            #add A
+            if (count_A < 1):
+                ways += dp(i+1,count_A + 1, False,False)
+            #ways we can add L
+            if not prev_L and not prev_prev_L:
+                ways += dp(i+1,count_A,True,False)
+            if prev_L and not prev_prev_L:
+                ways += dp(i+1,count_A,True,True)
+            ways %= mod
+            memo[(i,count_A,prev_L,prev_prev_L)] = ways
+            return ways
+        
+        return dp(0,0,False,False)
+    
+#gets MLE,
+class Solution:
+    def checkRecord(self, n: int) -> int:
+        '''
+        valid state is:
+            only 1 A, or < 2
+            no can only be LL, or L, not more than 
+        so we really only need to keep track of A's and is there were a previous L and a previous previous L
+        A cant be more than 1, and for L's we can (false,false), (false,true)..etc
+        we can have L and LL anywhere in the perm, 
+        A or no A perm
+        and P anywhere
+        
+        track count As and consective Ls and prine
+        '''
+        memo = {}
+        
+        def dp(i,count_A,consec_L):
+            if count_A >= 2 or consec_L >= 3:
+                return 0
+            if i == n:
+                return 1
+            if (i,count_A,consec_L) in memo:
+                return memo[(i,count_A,consec_L)]
+            mod = 1_000_000_007
+            ways = 0
+            #add P
+            ways += dp(i+1,count_A,0)
+            #add A
+            ways += dp(i+1,count_A + 1, 0)
+            #add L
+            ways += dp(i+1,count_A,consec_L+1)
+            ways %= mod
+            memo[(i,count_A,consec_L) ] = ways
+            return ways
+        
+        return dp(0,0,0)
+    
+#need to use int array
+class Solution:
+    def checkRecord(self, n: int) -> int:
+        MOD = 1000000007
+        # Initialize the cache to store sub-problem results.
+        memo = [[[-1] * 3 for _ in range(2)] for _ in range(n + 1)]
+
+        # Recursive function to return the count of combinations 
+        # of length 'n' eligible for the award.
+        def eligible_combinations(n, total_absences, consecutive_lates):
+            # If the combination has become not eligible for the award,
+            # then we will not count any combinations that can be made using it.
+            if total_absences >= 2 or consecutive_lates >= 3:
+                return 0
+            # If we have generated a combination of length 'n' we will count it.
+            if n == 0:
+                return 1
+            # If we have already seen this sub-problem earlier, 
+            # we return the stored result.
+            if memo[n][total_absences][consecutive_lates] != -1:
+                return memo[n][total_absences][consecutive_lates]
+
+            # We choose 'P' for the current position.
+            count = eligible_combinations(n - 1, total_absences, 0)
+            # We choose 'A' for the current position.
+            count = (
+                count + 
+                eligible_combinations(n - 1, total_absences + 1, 0)
+            ) % MOD
+            # We choose 'L' for the current position.
+            count = (
+                count + 
+                eligible_combinations(n - 1, 
+                                      total_absences, 
+                                      consecutive_lates + 1)
+            ) % MOD
+
+            # Return and store the current sub-problem result in the cache.
+            memo[n][total_absences][consecutive_lates] = count
+            return count
+
+        # Return count of combinations of length 'n' eligible for the award.
+        return eligible_combinations(n, 0, 0)
+    
+#######################################################################
+# 1608. Special Array With X Elements Greater Than or Equal X (REVISTED)
+# 27MAY24
+#######################################################################
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        sort and check all numbers from 0 to len(nums)
+        intuition:
+            the values of x cannot be more than the length of the array, because this is the last number in the array
+            and some other number bust be >= x
+            minimum value of x is 1, and it can't be zerom, becuase that would imply an empty array, which isn't allowed
+            so binary search for the upper bound
+        init starting answer to len(nums)
+        if all elements are less than i, we wil retyrn N as the answer
+        '''
+        nums.sort()
+        N = len(nums)
+        for i in range(1,N+1):
+            left = 0
+            right = N - 1
+            ans_idx = N
+            while left <= right:
+                mid = left + (right - left) // 2
+                if nums[mid] >= i:
+                    ans_idx = mid
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            if i == N-ans_idx:
+                return i
+        
+        return -1
+
+#binary search on workable
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        you can also binary search on answer
+        try ans x, if x works, then
+        '''
+        N = len(nums)
+        left = 1
+        right = len(nums)
+        ans = right
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            if self.f(nums,mid) == mid:
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        if self.f(nums,ans) == ans:
+            return ans
+        return -1
+    
+    def f(self, arr,x):
+        count = 0
+        for num in arr:
+            count += num >= x
+        
+        return count
+    
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        def count_numbers_gr_or_equal_to_x(x):
+            return sum(num >= x for num in nums)
+            
+        left = 0
+        right = len(nums)
+        while left < right:
+            mid = (left + right) // 2
+            if count_numbers_gr_or_equal_to_x(mid) <= mid:
+                right = mid
+            else:
+                left = mid + 1
+        return left if count_numbers_gr_or_equal_to_x(left) == left else -1
+    
+#prefix sum
+class Solution:
+    def specialArray(self, nums: List[int]) -> int:
+        '''
+        use pref sum
+        get frequencies if each number in nums and use prefsum
+        we need to take the prefix sum from the ends 
+        we keep adding up frequencies from the end until we are equal
+        
+        store counts >= num for a number
+        '''
+        N = len(nums)
+        counts = [0]*(N+1)
+        
+        for num in nums:
+            counts[min(num,N)] += 1
+        
+        count_greater_than_or_equal = 0
+        for i in range(N, 0,-1):
+            count_greater_than_or_equal += counts[i]
+            if count_greater_than_or_equal== i:
+                return i
+        
+        return -1
+    
+############################################
+# 1208. Get Equal Substrings Within Budget
+# 28MAY24
+#############################################
+class Solution:
+    def equalSubstring(self, s: str, t: str, maxCost: int) -> int:
+        '''
+        s and t are the same length, cost to change is abs diff in ascii
+        need to change s to t not entirely only a substring, need max length not more than maxCost
+        sliding window, and maint length, where cost isnt more than maxCost
+        expanding add cost, contracting subtract back in
+        '''
+        ans = 0
+        left = 0
+        N = len(s)
+        curr_cost = 0
+        
+        for right in range(N):
+            curr_cost += abs(ord(s[right]) - ord(t[right]))
+            
+            if curr_cost > maxCost:
+                curr_cost -= abs(ord(s[left]) - ord(t[left]))
+                left += 1
+            
+            ans = max(ans, right - left + 1)
+        
+        return ans
+        
