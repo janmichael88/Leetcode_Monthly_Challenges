@@ -2855,3 +2855,150 @@ class Solution:
         
         return ans
         
+#######################################
+# 291. Word Pattern II (REVISTED)
+# 28MAY24
+#######################################
+#nice try
+#cant just prefixes and suffixes
+#from some index starting in s, we need to check s to s+1, s to s+2, s to s+3 and so one
+class Solution:
+    def wordPatternMatch(self, pattern: str, s: str) -> bool:
+        '''
+        try all mappings,
+        a singgle char in pattern must map to some non-empty non empty string in s
+        pass in mapping
+        '''
+        def rec(pattern,s,mapping):
+            if pattern == "" and s == "":
+                return True
+            for ch in pattern:
+                for i in range(len(s)):
+                    mapp_to = s[:i+1]
+                    if ch in mapping:
+                        if mapping[ch] != mapp_to:
+                            return False
+                    
+                    #make mapping
+                    mapping[ch] = mapp_to
+                    if rec(pattern[1:],s[i+1:],mapping):
+                        return True
+                    #backtrack
+                    del mapping[ch]
+            
+            return False
+        
+        return rec(pattern,s,{})
+
+class Solution:
+    def wordPatternMatch(self, pattern: str, s: str) -> bool:
+        symbol_map = {}
+        #need word set to validate the bijection
+        word_set = set()
+
+        def is_match(p_index, s_index):
+            # Base case: reached end of pattern
+            if p_index == len(pattern):
+                return s_index == len(s)  # True iff also reached end of s
+
+            # Get current pattern character
+            symbol = pattern[p_index]
+
+            # This symbol already has an associated word
+            if symbol in symbol_map:
+                word = symbol_map[symbol]
+                # Check if we can use it to match s[sIndex...sIndex + word.length()]
+                if s[s_index : s_index + len(word)] != word:
+                    return False
+                # If it matches continue to match the rest
+                return is_match(p_index + 1, s_index + len(word))
+
+            # This symbol does not exist in the map
+            for k in range(s_index + 1, len(s) + 1):
+                new_word = s[s_index:k]
+                if new_word in word_set:
+                    continue
+                # Create or update it
+                symbol_map[symbol] = new_word
+                word_set.add(new_word)
+                # Continue to match the rest
+                if is_match(p_index + 1, s_index + len(new_word)):
+                    return True
+                # Backtracking
+                del symbol_map[symbol]
+                word_set.remove(new_word)
+
+        return is_match(0, 0)
+            
+##########################################
+# 691. Stickers to Spell Word
+# 28MAY24
+##########################################
+#aye yai yai, idkwtf im doing
+class Solution:
+    def minStickers(self, stickers: List[str], target: str) -> int:
+        '''
+        if i have some sticker 'abc', i can use 'a','b','c', 'ab', 'bc', 'abc'
+        precompute all stickers, then try to build target
+        then include this sticker or dont include it
+        '''
+        sticker_map = defaultdict(Counter)
+        for s in stickers:
+            for start in range(len(s)):
+                for size in range(1,len(s)+1-start):
+                    substring = s[start:start+size]
+                    if substring in target:
+                        sticker_map[s][substring] += 1
+        
+        target_counts = Counter(target)
+        curr_counts = Counter()
+        
+        print(sticker_map)
+            
+class Solution:
+    def minStickers(self, stickers: List[str], target: str) -> int:
+        '''
+        if i have some sticker 'abc', i can use 'a','b','c', 'ab', 'bc', 'abc'
+        precompute all stickers, then try to build target
+        then include this sticker or dont include it
+        inputs are small, i could pass in target as count array, but that would use up more space than actually needed
+        '''
+        memo = {}
+        res =  self.dp(0,target,stickers,memo)
+        if res == float('inf'):
+            return -1
+        return res
+        
+    def dp(self, idx,target,stickers,memo):
+        #empty string
+        if target == "":
+            return 0
+        #invalid state
+        if idx == len(stickers):
+            return float("inf")
+        key = (idx, target)
+        if key in memo:
+            return memo[key]
+        
+        skip = self.dp(idx+1, target, stickers, memo)
+        no_skip = float('inf')
+        # choice 2 try to take the current sticker
+        currentSticker = stickers[idx]
+        newTarget = target
+        somethingRemoved = False
+        for c in currentSticker:
+            idxToRemove = newTarget.find(c)
+            if idxToRemove != -1:
+                newTarget = newTarget[:idxToRemove] + newTarget[idxToRemove+1:]
+                #we keep deleting char by char!
+                somethingRemoved = True
+        
+        # only try this sticker again if we were able to remove something from
+        # the target string
+        if somethingRemoved:
+            no_skip = 1 + self.dp(idx, newTarget, stickers, memo)
+        
+        result = min(skip,no_skip)
+        memo[key] = result
+        return result
+            
