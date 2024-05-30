@@ -3002,3 +3002,268 @@ class Solution:
         memo[key] = result
         return result
             
+###########################################################################
+# 1404. Number of Steps to Reduce a Number in Binary Representation to One
+# 29MAY24
+############################################################################
+class Solution:
+    def numSteps(self, s: str) -> int:
+        '''
+        need to bring to 1
+        rules
+            if even divide by 2
+            else add 1
+        this is just dp, get the int versino of number
+        '''
+        memo = {}
+        num = 0
+        power = 0
+        for ch in s[::-1]:
+            num += int(ch)*2**power
+            power += 1
+            
+        def dp(num):
+            if num == 1:
+                return 0
+            if num in memo:
+                return memo[num]
+            if (num % 2 == 0):
+                ans = 1 + dp(num//2)
+                memo[num] = ans
+                return ans
+            
+            else:
+                ans = 1 + dp(num+1)
+                memo[num] = ans
+                return ans
+        
+        return dp(num)
+
+class Solution:
+    def numSteps(self, s: str) -> int:
+        '''
+        need to bring to 1
+        rules
+            if even divide by 2
+            else add 1
+        this is just dp, get the int versino of number
+        '''
+        memo = {}
+        num = 0
+        power = 0
+        for ch in s[::-1]:
+            num += int(ch)*2**power
+            power += 1
+            
+            
+        ans = 0
+        while num > 1:
+            if num % 2 == 0:
+                num >>= 1
+            else:
+                num += 1
+            
+            ans += 1
+        
+        return ans
+            
+class Solution:
+    def numSteps(self, s: str) -> int:
+        '''
+        read string from right to left
+        if digit is 0, its even so add 1
+        otherwise we raise it by 1 and we can reduce
+        dont forget carry for when we add 1, we need to propogate it
+        '''
+        N = len(s)
+        carries = 0
+        ops = 0
+        for i in range(N-1,0,-1): #dont need to go all the way
+            digit = int(s[i]) + carries
+            if digit % 2 == 1:
+                ops += 2
+                carries = 1
+            else:
+                ops += 1
+        
+        return ops + carries
+
+####################################
+# 2802. Find The K-th Lucky Number
+# 29MAY24
+#####################################
+#too big to try all
+class Solution:
+    def kthLuckyNumber(self, k: int) -> str:
+        '''
+        use recursino to generate the lucky numbers
+        we can eitherr add 4 or 7
+        sort them and find the kth one
+        '''
+        luckies = []
+        
+        def rec(num):
+            if num != "" and int(num) > 10**9:
+                return
+            if len(num) > 0:
+                luckies.append(int(num))
+            
+            rec(num+"7")
+            rec(num+"4")
+        
+        rec("")
+        luckies.sort()
+        return str(luckies[k-1])
+    
+#aye yai yai, thank fucking god
+class Solution:
+    def kthLuckyNumber(self, k: int) -> str:
+        '''
+        its a tree
+        
+                        x
+                4               7
+            44      47      74      77
+         444  447  .......        774 777
+        
+        for 1 digit luckies : 4,7                             2 count
+        for 2 digit luckies : 44,47,74,77                     4 count 
+        for 3 digit luckies we have, 447,474, 744,747,774,777 8 count
+        
+        first find how many digits the kth lucky number has
+        2 + 4 + 8 + 16 until we go over k
+        
+        how many numbers with c digits exists before the kth lucky number
+        '''
+        digits = 0
+        power = 1
+        new_k = k
+        while new_k > 0:
+            new_k -= 2**power
+            power += 1
+            digits += 1
+        
+        #print("Digits: " , digits)
+        count_before_kth = k - (2**(digits) - 1) 
+        #print(count_before_kth)
+        #prepend 0
+        bin_form = bin(count_before_kth)[2:]
+        bin_form = '0'*(digits - len(bin_form))+bin_form
+        
+        #replace 0 with 4 and 1 with 7
+        ans = ""
+        for ch in bin_form:
+            if ch == '0':
+                ans += '4'
+            else:
+                ans += '7'
+        
+        return ans
+
+#official solution
+class Solution:
+    def kthLuckyNumber(self, k: int) -> str:
+        '''
+        intuition:
+            if a kth lucky number has c digits, then there are 2**c lucky numbers with c digits
+            we can make some ith lucky number by prepedning a 4 or 7 from the ith lucky number with c -1 digits
+            we can use 0's and 1s for place holders
+            the pth lucky number c digits has the same pattern as the p-1 represent in binary
+            kth luckies are 1 indexed and binary numbers are 0 indexed
+            
+        to determine the pth lucky number wit c digits, we set x = p -1 
+        we convert x to its binary rep, and replace 0 with 4 and 1 with 7
+        if number has fewew than c digits we prepend 4 until it gets to length c
+        
+        key is to find number of digits 'c' for kth lucky, then find x, were x is the number of lucky numbers with c digits 
+        less than the kth lucky
+        '''
+        c = 0
+        num_count_less_c = 0
+        while num_count_less_c < k:
+            c += 1 #increamnet first
+            num_count_less_c += 2*c
+        
+        #get number of luckies with length c before the kth lucky
+        count_luckies_equal_c = num_count_less_c - 2**c
+        count_before_k = k - 1 - count_luckies_equal_c
+        
+        ans = ""
+        for _ in range(c):
+            digit = ""
+            if count_before_k % 2 == 1:
+                digit = '7'
+            else:
+                digit = '4'
+            
+            ans += digit
+            count_before_k //= 2
+        
+        return ans[::-1]
+    
+class Solution:
+    def kthLuckyNumber(self, k: int) -> str:
+        '''
+        intuition:
+            if a kth lucky number has c digits, then there are 2**c lucky numbers with c digits
+            we can make some ith lucky number by prepedning a 4 or 7 from the ith lucky number with c -1 digits
+            we can use 0's and 1s for place holders
+            the pth lucky number c digits has the same pattern as the p-1 represent in binary
+            kth luckies are 1 indexed and binary numbers are 0 indexed
+            
+        to determine the pth lucky number wit c digits, we set x = p -1 
+        we convert x to its binary rep, and replace 0 with 4 and 1 with 7
+        if number has fewew than c digits we prepend 4 until it gets to length c
+        
+        key is to find number of digits 'c' for kth lucky, then find x, were x is the number of lucky numbers with c digits 
+        less than the kth lucky
+        '''
+        c = 0
+        num_count_less_c = 0
+        while num_count_less_c < k:
+            c += 1 #increamnet first
+            num_count_less_c += 2*c
+        
+        #get number of luckies with length c before the kth lucky
+        count_luckies_equal_c = num_count_less_c - 2**c
+        count_before_k = k - 1 - count_luckies_equal_c
+        
+        ans = ""
+        for _ in range(c):
+            digit = ""
+            if count_before_k % 2 == 1:
+                digit = '7'
+            else:
+                digit = '4'
+            
+            ans += digit
+            count_before_k //= 2
+        
+        return ans[::-1]
+        
+class Solution:
+    def kthLuckyNumber(self, k: int) -> str:
+        '''
+        pattern is incremtn k by one, and conver to its binary rep, drop the most sig bit and replace 0 0->4 and 1-> 7
+        '''
+        res = []
+        k += 1
+        while k != 1:
+            res.append('7' if k & 1 else '4')
+            k >>= 1
+        return ''.join(reversed(res))
+
+class Solution:
+    def kthLuckyNumber(self, k: int) -> str:
+        '''
+        we can use recursion
+        '''
+        def rec(k):
+            if k == 0:
+                return ""
+            if k % 2 == 1:
+                return rec((k-1)//2)+'4'
+            else:
+                return rec((k-1)//2)+'7'
+        
+        return rec(k)
