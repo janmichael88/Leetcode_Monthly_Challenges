@@ -3267,3 +3267,152 @@ class Solution:
                 return rec((k-1)//2)+'7'
         
         return rec(k)
+
+#############################################################
+# 1442. Count Triplets That Can Form Two Arrays of Equal XOR
+# 30MAY24
+#############################################################
+#brute force still passes!
+class Solution:
+    def countTriplets(self, arr: List[int]) -> int:
+        '''
+        if we have some (i,j,k) 
+        i < j <=k, j can be k
+        then we want xor(arr[i:j-1]) == xor(arr[j:k])
+        can i treat pref_sum as pref_xor? for 
+        need xor of left == xor of right
+        which means we need another subarray to 0
+        
+        say we have a = arr[i] ^ arr[i+1] ^ ... ^ arr[j-1]
+        and we have b = arr[j] ^ arr[j+1] ^ ... ^ arr[k]
+        a = b -> a^b = 0
+        so we have arr[i] ^ arr[i+1] ^ ... arr[k] = 0
+        lets call this X(i,k) which is xor from i to k , X(i,k) = 0
+        this means that any j in between i and k inclusive creates a triplet
+        find pref_xor, reduce problem to finding indices where pref_xor[i-1] == pref_xor[k]
+        brute force woul be to check all (i,j,k) and check xors from (i,j-1) and (j to k) are the same
+        '''
+        count = 0
+        N = len(arr)
+        for i in range(N-1):
+            left_xor = 0 #xor for [start,mid-1]
+            for j in range(i+1,N):
+                #include this in left
+                left_xor ^= arr[j-1]
+                right_xor = 0
+                #examine all ends
+                for k in range(j,N):
+                    right_xor ^= arr[k]
+                    #valid triple (i,j,k)
+                    if left_xor == right_xor:
+                        count += 1
+        
+        return count
+    
+class Solution:
+    def countTriplets(self, arr: List[int]) -> int:
+        '''
+        easy brute force
+        '''
+        count = 0
+        N = len(arr)
+        for i in range(N):
+            for j in range(i+1,N):
+                left_xor = 0
+                for ij in range(i,j):
+                    left_xor ^= arr[ij]
+                right_xor = 0
+                for jk in range(j,N):
+                    right_xor ^= arr[jk]
+                
+                    if left_xor == right_xor:
+                        count += 1
+        
+        return count
+    
+class Solution:
+    def countTriplets(self, arr: List[int]) -> int:
+        count = 0
+        N = len(arr)
+        for start in range(N):
+            xor = 0
+            for end in range(start,N):
+                xor ^= arr[end]
+                if xor == 0:
+                    count += end - start
+        return count
+    
+class Solution:
+    def countTriplets(self, arr: List[int]) -> int:
+        '''
+        we can use prefix xor, and try all possible start and ends, {i,k}
+        if prefix[start] == prefx[end], then this while subarray between is zero
+            subsporblem, counting triplets in an array
+            its just size of array - 1
+        pref_xor[i-1] == pref_xor[k]
+        pref_xor[k] = pref_xor[j-1] ^ (arr[j] ^ arr[j+1] ^ ... arr[k])
+        ^[i, j) = ^[j, k] -> (^[i, j)) ^ (^[j, k]) = 0 -> find ^[i,k] = 0
+        then k-i is the number of triplets
+        '''
+        pref_XOR = [0]
+        for num in arr:
+            pref_XOR.append(pref_XOR[-1] ^ num)
+        
+        count = 0
+        for start in range(len(pref_XOR)):
+            for end in range(start+1,len(pref_XOR)):
+                if pref_XOR[start] == pref_XOR[end]:
+                    count += end - start - 1
+        
+        return count
+    
+class Solution:
+    def countTriplets(self, arr: List[int]) -> int:
+        '''
+        similar to subarray sum == k, or subarry xor == k
+        if we have seen sum previous xor value, call it x, then the contribution to the total count
+        if the number of occureences of x, multipliet by the sum of the indicies where we have previosuly seen this x
+        PREVIOUSLY seen xors are the key, along with the indicies
+        example, so we are at index i = 5 with xor of 6, and we've seen xor of 6 at indices 1 and 2
+        contribution with i is 2 X (5 - 1) - 3 = 2 X 4 - 3 = 5
+        
+        triplets are:
+            (2, 3, 5) • (2, 4, 5) • (2, 5, 5) • (3, 4, 5) • (3, 5, 5)
+            
+        maintain count map, initialized with {0:1} to handle the case when XOR == 0
+        update countMap and totalMap, and increment sum by
+        countMap[pref_xor[i]] * (i-1) - totalMap[pref_xor[i]]
+        '''
+        pref_xor = [0]
+        for num in arr:
+            pref_xor.append(pref_xor[-1]^num)
+        
+        N = len(pref_xor)
+        count = 0
+        
+        count_map = defaultdict(int)
+        total_idx_map = defaultdict(int)
+        
+        for i in range(N):
+            curr_xor = pref_xor[i]
+            count += count_map[curr_xor]*(i-1) - total_idx_map[curr_xor]
+            
+            #update mapps
+            count_map[curr_xor] += 1
+            total_idx_map[curr_xor] += i
+        
+        return count
+
+###########################
+# 1720. Decode XORed Array
+# 31MAY24
+###########################
+class Solution:
+    def decode(self, encoded: List[int], first: int) -> List[int]:
+        
+        ans = [first]
+        for num in encoded:
+            ans.append(first ^ num)
+            first ^= num
+        
+        return ans
