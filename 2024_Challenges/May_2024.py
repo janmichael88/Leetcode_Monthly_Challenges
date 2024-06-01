@@ -3382,6 +3382,12 @@ class Solution:
         maintain count map, initialized with {0:1} to handle the case when XOR == 0
         update countMap and totalMap, and increment sum by
         countMap[pref_xor[i]] * (i-1) - totalMap[pref_xor[i]]
+
+        easier understandinng for count
+        For each index i of the prefixXOR array, let j1, j2, ..., jn be the indices where previous prefixXOR[i] values occurred. 
+        The number of valid triplets at i can be easily obtained according to approach 2: 
+        (i - j1 - 1) + (i - j2 -1) + ... + (i - jn - 1) = n * (i - 1) - (j1 + j2 + ... + jn)
+        which is just the index n times minus the sum of the indicies
         '''
         pref_xor = [0]
         for num in arr:
