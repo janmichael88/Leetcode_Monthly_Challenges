@@ -229,12 +229,146 @@ class Solution:
             return 0
 
         left = 1
+        ans = 1
         right = len(sequence) - len(word) + 1
         while left <= right:
             mid = (left + right) // 2
             if word * mid in sequence:
+                ans = mid
                 left = mid + 1
             else:
                 right = mid - 1 
                 
-        return left - 1
+        return ans
+
+#########################################
+# 1002. Find Common Characters (REVISTED)
+# 05JUN24
+########################################
+#kinda tricky actually
+class Solution:
+    def commonChars(self, words: List[str]) -> List[str]:
+        '''
+        count each char for each word
+        contribution for this letter will be the minimum of its count
+        '''
+        count_words = []
+        for w in words:
+            count_words.append(Counter(w))
+        
+        ans = []
+        for i in range(26):
+            curr_char = chr(ord('a') + i)
+            min_ans = float('inf')
+            for w in count_words:
+                min_ans = min(min_ans,w[curr_char])
+            
+            ans += [curr_char]*min_ans
+        
+        return ans
+    
+class Solution:
+    def commonChars(self, words: List[str]) -> List[str]:
+        '''
+        we can abuse counters and
+        '''
+        first = Counter(words[0])
+        
+        for w in words[1:]:
+            first = first & Counter(w)
+        
+        return [v for v in first.elements()]
+    
+class Solution:
+    def commonChars(self, words: List[str]) -> List[str]:
+        '''
+        using map and reduce
+        '''
+        return reduce(lambda x,y : x & y, map(collections.Counter,words)).elements()
+
+######################################
+# 1763. Longest Nice Substring
+# 05JUN24
+#####################################
+#brute force works
+class Solution:
+    def longestNiceSubstring(self, s: str) -> str:
+        '''
+        brute force works
+        '''
+        N = len(s)
+        ans = ""
+        for start in range(N):
+            for end in range(start+1,N+1):
+                sub = s[start:end]
+                if self.isNice(sub):
+                    if len(sub) > len(ans):
+                        ans = sub
+        
+        return ans
+    
+    def isNice(self, s : str) -> bool:
+        chars = set(s)
+        for ch in chars:
+            if ch.islower() and ch.upper() not in chars:
+                return False
+            if ch.isupper() and ch.lower() not in chars:
+                return False
+        
+        return True
+    
+#divide and conquer
+class Solution:
+    def longestNiceSubstring(self, s: str) -> str:
+        '''
+        divide and conquer
+        introducing swapcase
+        split on all prefixes and suffices of s
+        need earliest occurence
+        '''
+        def rec(s):
+            if not s:
+                return ""
+            print(s)
+            seen = set(s)
+            for i,c in enumerate(s):
+                if c.swapcase() not in seen:
+                    left = rec(s[:i])
+                    right = rec(s[i+1:])
+                    if len(right) > len(left):
+                        return right
+                    return left
+            
+            return s
+        
+        return rec(s)
+    
+########################################
+# 846. Hand of Straights
+# 06JUN24
+#########################################
+class Solution:
+    def isNStraightHand(self, hand: List[int], groupSize: int) -> bool:
+        '''
+        if the numbers were in order, i could just keep creating a groups
+        but there can be dupliates
+        i count count them up and keep creating
+        hints 1. if smallest number in a partition is V, then V+1,V+2,..V+k must also be in the array
+        '''
+        N = len(hand)
+        
+        #cannot divide evenly
+        if N % groupSize != 0:
+            return False
+        counts = Counter(hand)
+        ordered_nums = sorted(list(set(hand)))
+        
+        for num in ordered_nums:
+            while counts[num] > 0:
+                for k in range(groupSize):
+                    if counts[num+k] == 0:
+                        return False
+                    counts[num+k] -= 1
+        
+        return True
+        
