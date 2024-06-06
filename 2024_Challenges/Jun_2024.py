@@ -372,3 +372,32 @@ class Solution:
         
         return True
         
+class Solution:
+    def isNStraightHand(self, hand: List[int], groupSize: int) -> bool:
+        '''
+        we dont need to start with the smallest card
+        we cant just pick any card, and check for streaks, 
+        but we can pick a card, then decremnet to safe state,
+        the trick is to identify where to start the streaks
+        process is called reverse decrement
+        '''
+        N = len(hand)
+        
+        #cannot divide evenly
+        if N % groupSize != 0:
+            return False
+        
+        counts = Counter(hand)
+        for num in hand:
+            start = num
+            #find start
+            while counts[start-1] > 0:
+                start -= 1
+                
+            while counts[start] > 0:
+                for k in range(groupSize):
+                    if counts[start + k] == 0:
+                        return False
+                    counts[start + k] -= 1
+        
+        return True
