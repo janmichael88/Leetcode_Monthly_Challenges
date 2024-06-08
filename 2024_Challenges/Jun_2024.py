@@ -401,3 +401,141 @@ class Solution:
                     counts[start + k] -= 1
         
         return True
+
+############################################
+# 648. Replace Words (REVISITED)
+# 07JUN24
+############################################
+class Node:
+    def __init__(self):
+        self.children = defaultdict()
+        self.end = False
+        
+class Trie:
+    def __init__(self,):
+        self.root = Node()
+        
+    def insert(self,word):
+        curr = self.root
+        for ch in word:
+            if ch not in curr.children:
+                curr.children[ch] = Node()
+            
+            #move 
+            curr = curr.children[ch]
+        
+        #mark
+        curr.end = True
+        
+    def search(self,word):
+        curr = self.root
+        pref = ""
+        for ch in word:
+            if ch not in curr.children:
+                if curr.end:
+                    return pref
+                return word
+            #check before ending
+            if curr.end:
+                return pref
+            pref += ch
+            curr = curr.children[ch]
+            
+        
+        if curr.end:
+            return pref
+        return word
+            
+class Solution:
+    def replaceWords(self, dictionary: List[str], sentence: str) -> str:
+        '''
+        build trie of roots, and also add state for ending word
+        need to check all possible roots!
+        '''
+        trie = Trie()
+        for w in dictionary:
+            trie.insert(w)
+        
+        sentence = sentence.split(" ") 
+        ans = []
+        for w in sentence:
+            ans.append(trie.search(w))
+        
+        return " ".join(ans)
+    
+#########################################
+# 826. Most Profit Assigning Work
+# 07JUN24
+#########################################
+class Solution:
+    def maxProfitAssignment(self, difficulty: List[int], profit: List[int], worker: List[int]) -> int:
+        '''
+        ideally we'd like to perform the least difficult job with the greatest ammount of profit
+        we'd like to perform this as many times as a worker can
+        its not always the case that the most difficult job will have the highest profit
+        assign each work the most profitable job it can do, given the difficulty
+        say for example worker has j difficulty
+        we want to chose the largest profitable job such that thae difficulty <= j
+        
+        edge cases obvie, but a generalize algo might not need for that
+        
+        need fast way to find maximum in certain range -> dp
+        search will always be bounded left, starting 0
+        
+        sort by difficulty, then build prefix max
+        then binary search on each worker
+        '''
+        pairs = [(diff,prof) for diff,prof in zip(difficulty,profit)]
+        pairs.sort(key = lambda x: x[0])
+        
+        sorted_diffs = []
+        ordered_profs = []
+        for diff,prof in pairs:
+            sorted_diffs.append(diff)
+            ordered_profs.append(prof)
+        
+        pref_max = [0]
+        for p in ordered_profs:
+            pref_max.append(max(pref_max[-1],p))
+        
+        max_prof = 0
+        for w in worker:
+            left = 0
+            right = len(sorted_diffs) - 1
+            ans = left
+            while left <= right:
+                mid = left + (right  - left) // 2
+                if w >= sorted_diffs[mid]:
+                    ans = mid
+                    left = mid + 1
+                else:
+                    right = mid - 1
+            
+            #print(w,ans,pref_max[ans])
+            if sorted_diffs[ans] <= w:
+                max_prof += pref_max[ans+1]
+        
+        return max_prof
+
+#we can also just simply sort the events and find the max profitable one w
+class Solution:
+    def maxProfitAssignment(self, difficulty: List[int], profit: List[int], worker: List[int]) -> int:
+        '''
+        we can pair them and use two pointers
+        '''
+        jobs = zip(difficulty,profit)
+        jobs = sorted(list(jobs))
+        ans = 0
+        i = 0
+        best_prof = 0
+        
+        for w in sorted(worker):
+            while i < len(jobs) and w >= jobs[i][0]:
+                best_prof = max(best_prof, jobs[i][1])
+                i += 1
+            
+            ans += best_prof
+        
+        return ans
+    
+    
