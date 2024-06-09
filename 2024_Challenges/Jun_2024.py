@@ -538,4 +538,43 @@ class Solution:
         
         return ans
     
-    
+#########################################
+# 523. Continuous Subarray Sum (REVISITED)
+# 08JUN24
+##########################################
+class Solution:
+    def checkSubarraySum(self, nums: List[int], k: int) -> bool:
+        '''
+        what we want to look for are pref_mods % k
+        say we have some array
+        [a,b,c,d,e,f,g] and says some array [b + c + d + e] % k == 0
+        
+        say we have some some pref_sum with [i+1,j]
+        and in this interval its % k, rather
+        pref_sum[j] - pref_sum[i] % k = 0
+        we can express in divisor, dividend, and remainder
+        pref_sum[i] = Qi*k + Ri
+        pref_sum[j] = Qj*k + Rj
+        
+        we have -> Qi*k + Ri - (Qj*k + Rj_) % k == 0
+        (Qi - Qj)*k + (Ri - Rj) % k == 0
+        (Qi - Qk) is % k and
+        both remainders like in range [0,k-1]
+        (Ri - Rj) is % k if
+        Ri - Rj = 0 or Ri = Rj
+        so we want pref_mods that are equal to each other
+        pref_sums  up to index j, % k should == pref_sum up to index i mode k
+        
+        '''
+        curr_sum = 0
+        pref_mods_mapp = {0:-1}
+        
+        for i,num in enumerate(nums):
+            curr_sum += num
+            if (curr_sum % k) in pref_mods_mapp:
+                if i - pref_mods_mapp[curr_sum % k] > 1:
+                    return True
+            else:
+                pref_mods_mapp[curr_sum % k] = i
+        
+        return False
