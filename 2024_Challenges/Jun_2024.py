@@ -578,3 +578,138 @@ class Solution:
                 pref_mods_mapp[curr_sum % k] = i
         
         return False
+    
+#############################################
+# 1588. Sum of All Odd Length Subarrays
+# 09JUN24
+#############################################
+class Solution:
+    def sumOddLengthSubarrays(self, arr: List[int]) -> int:
+        '''
+        i can use pref_sum and check all add length subarrays
+        '''
+        N = len(arr)
+        pref_sum = [0]*(N+1)
+        curr_sum = 0
+        for i in range(N):
+            curr_sum += arr[i]
+            pref_sum[i+1] = curr_sum
+        
+
+        ans = 0
+        for start in range(N):
+            for end in range(start,N,2):
+                #print(arr[start:end+1], pref_sum[end+1]-pref_sum[start])
+                ans += pref_sum[end+1] - pref_sum[start]
+        
+        return ans
+    
+#without pref_sum, just keep track of sums serpataltey
+class Solution:
+    def sumOddLengthSubarrays(self, arr: List[int]) -> int:
+        
+        N = len(arr)
+        ans = 0
+        
+        for start in range(N):
+            curr_sum = 0
+            for end in range(start,N):
+                curr_sum += arr[end]
+                if (end - start + 1) % 2 == 1:
+                    ans += curr_sum
+        
+        return ans
+    
+#O(N)
+class Solution:
+    def sumOddLengthSubarrays(self, arr: List[int]) -> int:
+        '''
+        count the number of times and index occurs
+        then for each index its contribution is (num_times index occured)*value_at_index
+        we can use dp to figure out how many times an index occurs in a subarray
+        say we are given the array
+        https://www.youtube.com/watch?v=J5IIH35EBVE&t=13s
+        given index, find how many subarrays start with i and end with i, total number is the product
+        for index i
+            count start is N - i
+            count end is i + 1
+            total is (N-i)*(i+1)
+        
+        now half will be even, and half will be odd
+        but there could be extra odd
+        if N is odd there is an extra one
+        need to pay attention to parity of the total number of subarrays
+        but we need odd length for each of these
+        '''
+        N = len(arr)
+        count_inidices = [1]*N
+        ans = 0
+        for i in range(N):
+            #count possible subarrays using this index on left and right
+            count_start = N-i
+            count_end = i+1
+            #print(i,count_start,count_end)
+            total_subarrays = count_start*count_end
+            odd_length = total_subarrays // 2
+            odd_length += total_subarrays % 2
+            ans += arr[i]*odd_length
+        
+        return ans
+    
+################################################
+# 974. Subarray Sums Divisible by K (REVISITED)
+# 09JUN24
+################################################
+class Solution:
+    def subarraysDivByK(self, nums: List[int], k: int) -> int:
+        '''
+        just keep track of pref_mods
+        '''
+        curr_sum = 0
+        pref_mods_mapp = defaultdict(int)
+        pref_mods_mapp[0] = 1
+        count = 0
+        
+        for i,num in enumerate(nums):
+            curr_sum += num
+            if (curr_sum % k) in pref_mods_mapp:
+                count += pref_mods_mapp[curr_sum % k]
+            pref_mods_mapp[curr_sum % k] += 1
+            
+        
+        return count
+        
+#############################################
+# 1590. Make Sum Divisible by P
+# 09JUN24
+#############################################
+class Solution:
+    def minSubarray(self, nums: List[int], p: int) -> int:
+        '''
+        we need to remove a subarray to make sum divivibsle by p
+        say we have subarray [a,b,c,d,e]
+        we want (a+b+c+d+e) % p == 0
+        
+        if (a+b+c+d+e) % p == k, where k != 0
+        then we need to find the smallest subarray == k
+        '''
+        SUM = sum(nums)
+        if SUM % p == 0:
+            return 0
+        N = len(nums)
+        k = SUM % p
+        ans = N
+        
+        mapp = {}
+        mapp[0] = -1
+        curr_sum = 0
+        for i,num in enumerate(nums):
+            curr_sum += num
+            if (curr_sum - k) % p in mapp:
+                ans = min(ans, i - mapp[(curr_sum - k) % p ] )
+    
+            mapp[curr_sum % p] = i
+        
+        if ans < N:
+            return ans
+        return -1
