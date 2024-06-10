@@ -691,7 +691,7 @@ class Solution:
         we want (a+b+c+d+e) % p == 0
         
         if (a+b+c+d+e) % p == k, where k != 0
-        then we need to find the smallest subarray == k
+        then we need to find the smallest subarray == k where sum(subarray) % p == k
         '''
         SUM = sum(nums)
         if SUM % p == 0:
@@ -705,6 +705,7 @@ class Solution:
         curr_sum = 0
         for i,num in enumerate(nums):
             curr_sum += num
+            #need to find its complement mod p
             if (curr_sum - k) % p in mapp:
                 ans = min(ans, i - mapp[(curr_sum - k) % p ] )
     
