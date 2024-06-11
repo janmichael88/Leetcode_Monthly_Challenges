@@ -714,3 +714,97 @@ class Solution:
         if ans < N:
             return ans
         return -1
+
+#################################################
+# 1636. Sort Array by Increasing Frequency
+# 10JUN24
+#################################################
+class Solution:
+    def frequencySort(self, nums: List[int]) -> List[int]:
+        '''
+        just use counting sort on count of counts
+        if there are ties do decreasing order
+        '''
+        counts = Counter(nums)
+        entries = [(count,num) for num,count in counts.items()]
+        entries.sort(key = lambda x: (x[0],-x[1]))
+        ans = []
+        for count,num in entries:
+            for _ in range(count):
+                ans.append(num)
+        
+        return ans
+    
+################################################
+# 2575. Find the Divisibility Array of a String
+# 10JUN24
+################################################
+class Solution:
+    def divisibilityArray(self, word: str, m: int) -> List[int]:
+        '''
+        just keep track of number going left to right
+        the issue is that the number might be really big
+        say we have some digit abc
+        we can right as a*100 + b*10 + c*1
+        (a*100 + b*10 + c*1) % m
+        ((a*100 % m) + (b*10 % m) + (c*1 % m)) % m
+        need to multiply by 10 each time but take mod m so it doesnt grow
+        '''
+        N = len(word)
+        arr = [0]*N
+        
+        curr_rem = 0
+        for i,ch in enumerate(word):
+            curr_rem = (curr_rem*10 % m + int(ch) % m) % m
+            if curr_rem == 0 :
+                arr[i] = 1
+        
+        return arr
+            
+######################################
+# 1122. Relative Sort Array (REVISTED)
+# 11JUN24
+######################################
+class Solution:
+    def relativeSortArray(self, arr1: List[int], arr2: List[int]) -> List[int]:
+        '''
+        we can use comparator
+        '''
+        mapp = defaultdict()
+        MAX = max(arr1)
+        for i,num in enumerate(arr1):
+            mapp[num] = MAX + num
+        
+        for i,num in enumerate(arr2):
+            mapp[num] = i
+        arr1.sort(key = lambda x : mapp[x])
+        return arr1
+    
+class Solution:
+    def relativeSortArray(self, arr1: List[int], arr2: List[int]) -> List[int]:
+        '''
+        we can use counting sort
+        '''
+        max_ = max(arr1)
+        counts = [0]*(max_ + 1)
+        N = len(arr1)
+        
+        for num in arr1:
+            counts[num] += 1
+        
+        ans = [-1]*N
+        i = 0
+        for num in arr2:
+            while counts[num] > 0:
+                ans[i] = num
+                counts[num] -= 1
+                i += 1
+                
+        #remaning
+        for num in range(max_ + 1):
+            while counts[num] > 0:
+                ans[i] = num
+                counts[num] -= 1
+                i += 1
+        
+        return ans
