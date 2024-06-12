@@ -808,3 +808,75 @@ class Solution:
                 i += 1
         
         return ans
+
+#############################################
+# 2845. Count of Interesting Subarrays
+# 11JUN24
+#############################################
+#TLE
+class Solution:
+    def countInterestingSubarrays(self, nums: List[int], modulo: int, k: int) -> int:
+        '''
+        for some subarray [l,r]
+        i need count(nums[i] % module == kin range(l,r+1)
+        this array is intereating
+        
+        say an interesting subarray is [a,b,c,d]
+        we can decode the array as nums[i] % mod == k, which will be 0 or 1
+        then we can just sum,
+        the idea now involves finding subarrays where curr_sum % modulo == 0
+        warm up with this first because i can't fucking think tonight
+        '''
+        N = len(nums)
+        count = [0]*N
+        for i in range(N):
+            count[i] = 1 if nums[i] % modulo == k else 0
+        
+        
+        #fill in sums
+        for i in range(1,N):
+            count[i] += count[i-1]
+        
+        count = [0] + count
+        ans = 0
+        for start in range(N):
+            for end in range(start,N):
+                cnt = count[end+1] - count[start]
+                if cnt % modulo == k:
+                    ans += 1
+        
+        return ans
+    
+class Solution:
+    def countInterestingSubarrays(self, nums: List[int], modulo: int, k: int) -> int:
+        '''
+        for some subarray [l,r]
+        i need count(nums[i] % module == kin range(l,r+1)
+        this array is intereating
+        
+        say an interesting subarray is [a,b,c,d]
+        we can decode the array as nums[i] % mod == k, which will be 0 or 1
+        then we can just sum,
+        the idea now involves finding subarrays where curr_sum % modulo == 0
+        warm up with this first because i can't fucking think tonight
+        how many indicies statify
+        (count[i] - count[j]) % modulo == k
+        can rewrite as
+        ((count[i] % modulo) - (count[j] % modulo)) % modulo == k
+        
+        
+        
+        '''
+        N = len(nums)
+        mapp = defaultdict(int)
+        mapp[0] = 1
+        curr_count = 0
+        ans = 0
+        for num in nums:
+            curr_count += num % modulo == k
+            #looks for its complement count
+            #subarray sum == k
+            ans += mapp[(curr_count + modulo - k) % modulo]
+            mapp[curr_count % modulo] += 1
+    
+        return ans
