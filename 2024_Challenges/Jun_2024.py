@@ -864,8 +864,19 @@ class Solution:
         can rewrite as
         ((count[i] % modulo) - (count[j] % modulo)) % modulo == k
         
-        
-        
+        say we have x = sum[0,i-1] and y = [0,r]
+        y-x = sum[i,j]
+        need (y - x) % modulo == l
+        ((y % modulo) - (x % modulo)) % modulo == k
+        k < modulo so k % modulo == k
+         ((y % modulo) - (x % modulo)) % modulo == k % modulo
+         (y % modulo) - (x % modulo) == k
+         (y % modulo) - (x % modulo) == k % modulo
+         (y % modulo) - (k % modulo) = (x % modulo)
+         distrubutive property
+         (y - k) % modulo == (x % modulo)
+         so we know some prefix sum y, we can find the other
+        https://leetcode.com/problems/count-of-interesting-subarrays/discuss/3994985/JavaC%2B%2BPython-Prefix-O(n)
         '''
         N = len(nums)
         mapp = defaultdict(int)
@@ -877,6 +888,37 @@ class Solution:
             #looks for its complement count
             #subarray sum == k
             ans += mapp[(curr_count + modulo - k) % modulo]
+            #this will also work
+            #ans += mapp[(curr_count  - k) % modulo]
+            #modular arithmetic in python is different than in javo C++
             mapp[curr_count % modulo] += 1
     
         return ans
+#####################################
+# 781. Rabbits in Forest
+# 12JUN24
+#####################################
+#tricky counting
+class Solution:
+    def numRabbits(self, answers: List[int]) -> int:
+        '''
+        if im rabbit of color x, and my ans i,
+        then for color x, there is at least 2 of x
+        use index of rabbit as color and check previous answers
+        there can't be more than len(ans) diffiernt colors
+        each unique answer means there are at least ans + 1 rabbits
+        each unique answer can repeate at most ans + 1 times
+        [2,2,2], all are same color
+        but [2,2,2,2] will have 6 raabits
+        [2,2,2] make 3 raabits, but the next 2, cant be the same color at the first 3, so its 3 + (2+1)
+        i.e the last two needs two rabbits of a different color
+        so we need to find how many groups [2,2,2] -> math.ceil(v/(k+1))
+        
+        '''
+        counts = Counter(answers)
+        ans = 0
+        for k,v in counts.items():
+            ans += math.ceil(v/(k+1))*(k+1)
+        
+        return ans
+        
