@@ -894,6 +894,7 @@ class Solution:
             mapp[curr_count % modulo] += 1
     
         return ans
+    
 #####################################
 # 781. Rabbits in Forest
 # 12JUN24
@@ -922,3 +923,146 @@ class Solution:
         
         return ans
         
+################################################
+# 2037. Minimum Number of Moves to Seat Everyone
+# 13JUN24
+################################################
+class Solution:
+    def minMovesToSeat(self, seats: List[int], students: List[int]) -> int:
+        '''
+        just sort both
+        '''
+        seats.sort()
+        students.sort()
+        
+        ans = 0
+        for i,j in zip(seats,students):
+            ans += abs(i-j)
+        
+        return ans
+    
+#counting sort
+class Solution:
+    def minMovesToSeat(self, seats: List[int], students: List[int]) -> int:
+        '''
+        we can use counting sort
+        then we record the differecnes
+        +1 seat for seat in seats
+        -1 student for student in students
+        
+        keep unmatche variable to keep track of number of unseated studenets or empty seats that have not been matched yet
+        its positive if there are extra seats and engative if there are extra students
+        if unmathced is -1, it means there is an unmatched student
+        if its +1, it means there is an unmatched seat, each postition without a seat requires a move!
+        so increment ans by abs(unmatched)
+        
+        then we just accumlate unmatched
+        '''
+        max_num = max(max(seats),max(students))
+        
+        diffs = [0]*(max_num+1)
+        
+        for s in seats:
+            diffs[s] += 1
+        
+        for s in students:
+            diffs[s] -= 1
+        
+        moves = 0
+        unmatched = 0
+        for d in diffs:
+            moves += abs(unmatched)
+            unmatched += d
+        
+        return moves
+
+################################################
+# 945. Minimum Increment to Make Array Unique
+# 14Jun24
+###############################################
+class Solution:
+    def minIncrementForUnique(self, nums: List[int]) -> int:
+        '''
+        what if i sort the array
+        [3,2,1,2,1,7]
+        after sorting
+        [1, 1, 2, 2, 3, 7] + 1
+        [1, 2, 2, 2, 3, 7] + 1
+        [1, 2, 3, 2, 3, 7] + 1
+        [1, 2, 3, 4, 3, 7]
+        
+        sort and rais each one
+        doing thus with one hand too while on plane lmaoooo fyck yeh
+        '''
+        N = len(nums)
+        nums.sort()
+        ans = 0
+        curr_smallest = nums[0]
+        
+        
+        for i in range(1,N):
+            if nums[i] == nums[i-1]:
+                ans += 1
+                nums[i] += 1
+                curr_smallest = nums[i]
+            elif nums[i] < nums[i-1]:
+                curr_smallest += 1
+                ans += abs(nums[i] - curr_smallest)
+                nums[i] = curr_smallest
+        
+        return ans
+                
+class Solution:
+    def minIncrementForUnique(self, nums: List[int]) -> int:
+        '''
+        sort and check sonsecutie elements
+        since we  need them to be uniqe, we always try to make the ith elemet just greatser
+        we also need to make them increasing
+        '''
+        min_moves = 0
+        nums.sort()
+        N = len(nums)
+        
+        for i in range(1,N):
+            if nums[i] <= nums[i-1]:
+                steps = nums[i-1] - nums[i] + 1
+                min_moves += steps
+                nums[i] = nums[i-1] + 1
+            
+        
+        return min_moves
+    
+class Solution:
+    def minIncrementForUnique(self, nums: List[int]) -> int:
+        '''
+        counting sort
+        count the dupliates
+        if there is an occurence of 1 for a num, we are good, otherwise we need to promote the 
+        count of duplicate to the next value i.e carrythem
+        but first we need to find the range for the counts array
+        its just max(nums) + n + 1
+        we could have an array of size n, where all the nums are max, in this case we'd be carrying over all n
+        '''
+        N = len(nums)
+        MAX = max(nums)
+        min_moves = 0
+        
+        counts = [0]*(N + MAX + 1)
+        
+        for num in nums:
+            counts[num] += 1
+            
+        for i in range(len(counts)):
+            if counts[i] <= 1:
+                continue
+            
+            #find duplicates and carry over
+            duplicates = counts[i] - 1
+            counts[i+1] += duplicates
+            #we dont need to do this part
+            #counts[i] = 1
+            min_moves += duplicates
+        
+        return min_moves
+    
+    
