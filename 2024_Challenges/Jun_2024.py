@@ -915,13 +915,50 @@ class Solution:
         i.e the last two needs two rabbits of a different color
         so we need to find how many groups [2,2,2] -> math.ceil(v/(k+1))
         
+        another way
+        if x + 1 rabbits have the same color, then we get x + 1 rabbits who all answer x
+        now if n rabbits answer x
+        If n % (x + 1) == 0, we need n / (x + 1) groups of x + 1 rabbits.
+        If n % (x + 1) != 0, we need n / (x + 1) + 1 groups of x + 1 rabbits.
+
+        the number of groups is math.ceil(n / (x + 1)) and it equals to (n + x) / (x + 1) , which is more elegant.
+        
         '''
         counts = Counter(answers)
         ans = 0
         for k,v in counts.items():
+            #groups of raabits for k unique answers
             ans += math.ceil(v/(k+1))*(k+1)
         
         return ans
+        
+#one pass, count on the fly
+class Solution:
+    def numRabbits(self, answers: List[int]) -> int:
+        '''
+        ans rabbit says 0, there is one unique count for this colored rabbit
+        otherwise check if we've already seen thie colorwe need to keep rabbits to a minimum. so if answer, 
+        what the author calls i, for a rabbit has i == d[i], then we need to make a new group, and increment by i+1. 
+        when making a new group, the counts are set to 0 again.
+        '''
+        min_rabbits = 0
+        counts = defaultdict(int)
+        
+        for ans in answers:
+            if ans == 0:
+                min_rabbits += 1
+            else:
+                if ans not in counts or ans == counts[ans]:
+                    #for a group of colore rabbits with ith color, the minimum can't be more than ans
+                    #For example [2,2,2] and [2,2] has the same result (i.e) 3 but [2,2,2,2] should    
+                    counts[ans] = 0
+                    min_rabbits += 1 + ans
+                else:
+                    counts[ans] += 1
+        
+        return min_rabbits
+        
+        
         
 ################################################
 # 2037. Minimum Number of Moves to Seat Everyone
