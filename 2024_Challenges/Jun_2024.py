@@ -1065,4 +1065,196 @@ class Solution:
         
         return min_moves
     
+########################################################
+# 2168. Unique Substrings With Equal Digit Frequency
+# 14JAN24
+########################################################
+class Solution:
+    def equalDigitFrequency(self, s: str) -> int:
+        '''
+        we need to count unique substrings
+        inputs are small enough to find all unique
+        we just need a fast way to compute the digit counts -> precompute
+        need pref_counts[i] for all digits 1 to 9
+        then 
+        '''
+        unique = set()
+        N = len(s)
+        for start in range(N):
+            substring = ""
+            counts = Counter()
+            for end in range(start,N):
+                substring += s[end]
+                counts[s[end]] += 1
+                #need all values in counts to be the same
+                if len(set(counts.values())) == 1:
+                    unique.add(substring)
+        
+        return len(unique)
+
+#####################################################
+# 2813. Maximum Elegance of a K-Length Subsequence
+# 16JUN24
+#####################################################
+#not quite
+class Solution:
+    def findMaximumElegance(self, items: List[List[int]], k: int) -> int:
+        '''
+        elegance of a subsequence is total_profit + distinct_categories**2
+        where total_profit is sum of all profits and distinct_categories is number of distinct cats
+        find max elegance  from all subseqeucnes with size k
+        total profit will be increasing, so it makes sense to take the most profitibale items
+            but we can get mor elegane if we use unique categories
+        
+        select the first k items,
+        then for the remaing n-k items, try replacing the candidate set using the current tiem
+        keep the k items in a heap, then if we can go up in score swap them
+        when we add in a item, we can keep track of the cateogires in a set, in a hashmap, counting the categories
+        elegance goes up by len(mapp)**2
+        '''
+        items.sort(key = lambda x: -x[0])
+        klargest = [] #sum at the end
+        mapp = defaultdict(int)
+        N = len(items)
+        
+        for prof,cat in items[:k]:
+            heapq.heappush(klargest, (prof,cat))
+            mapp[cat] += 1
+            
+        for prof,cat in items[k:]:
+            #if we can add this new cat in
+            if cat not in mapp:
+                #check count of minim
+                if mapp[klargest[0][1]] > 1:
+                    mapp[klargest[0][1]] -= 1
+                    mapp[cat] += 1
+                    heapq.heappop(klargest)
+                    heapq.heappush(klargest, (prof,cat))
+                    
+        
+        max_profit = 0
+        for prof,cat in klargest:
+            max_profit += prof
+        
+        return max_profit + len(mapp)**2
+            
+class Solution:
+    def findMaximumElegance(self, items: List[List[int]], k: int) -> int:
+        '''
+        elegance of a subsequence is total_profit + distinct_categories**2
+        where total_profit is sum of all profits and distinct_categories is number of distinct cats
+        find max elegance  from all subseqeucnes with size k
+        total profit will be increasing, so it makes sense to take the most profitibale items
+            but we can get mor elegane if we use unique categories
+        
+        select the first k items,
+        then for the remaing n-k items, try replacing the candidate set using the current tiem
+        keep the k items in a heap, then if we can go up in score swap them
+        when we add in a item, we can keep track of the cateogires in a set, in a hashmap, counting the categories
+        elegance goes up by len(mapp)**2
+        '''
+        items.sort(reverse=True, key=lambda x: x[0])
+        
+        # Use a min-heap to store the minimum elements at the top
+        minHeap = []
+        s = set()
+        total_sum = 0
+        
+        # Process the first k elements
+        for i in range(k):
+            total_sum += items[i][0]
+            if items[i][1] in s:
+                heapq.heappush(minHeap, items[i][0])
+            else:
+                s.add(items[i][1])
+        
+        # Calculate the initial elegance score
+        n = len(s)
+        max_elegance = total_sum + n * n
+        
+        # Process the remaining elements
+        for i in range(k, len(items)):
+            if items[i][1] not in s and minHeap:
+                s.add(items[i][1])
+                total_sum -= heapq.heappop(minHeap)
+                total_sum += items[i][0]
+                n = len(s)
+                max_elegance = max(max_elegance, total_sum + n * n)
+        
+        return max_elegance
     
+class Solution:
+    def findMaximumElegance(self, items: List[List[int]], k: int) -> int:
+        '''
+        use set and heap to track duplicates
+        '''
+        items.sort(key = lambda x: -x[0])
+        
+        # Use a min-heap to store the minimum elements at the top
+        minHeap = []
+        s = set()
+        total_sum = 0
+        
+        # Process the first k elements
+        for i in range(k):
+            total_sum += items[i][0]
+            #if ive already seen this, ad dto heap so we know it can be elemenint
+            if items[i][1] in s:
+                heapq.heappush(minHeap, items[i][0])
+            #otherwise first occurence
+            else:
+                s.add(items[i][1])
+        
+        # Calculate the initial elegance score
+        n = len(s)
+        max_elegance = total_sum + n * n
+        
+        # Process the remaining elements
+        for i in range(k, len(items)):
+            if items[i][1] not in s and minHeap:
+                s.add(items[i][1])
+                total_sum -= heapq.heappop(minHeap)
+                total_sum += items[i][0]
+                n = len(s)
+                max_elegance = max(max_elegance, total_sum + n * n)
+        
+        return max_elegance
+                    
+#usings stack
+class Solution:
+    def findMaximumElegance(self, items: List[List[int]], k: int) -> int:
+        '''
+        use set and heap to track duplicates
+        '''
+        items.sort(key = lambda x: -x[0])
+        
+        # Use a min-heap to store the minimum elements at the top
+        stack = []
+        s = set()
+        total_sum = 0
+        
+        # Process the first k elements
+        for i in range(k):
+            total_sum += items[i][0]
+            #if ive already seen this, ad dto heap so we know it can be elemenint
+            if items[i][1] in s:
+                stack.append(items[i][0])
+            #otherwise first occurence
+            else:
+                s.add(items[i][1])
+        
+        # Calculate the initial elegance score
+        n = len(s)
+        max_elegance = total_sum + n * n
+        
+        # Process the remaining elements
+        for i in range(k, len(items)):
+            if items[i][1] not in s and stack:
+                s.add(items[i][1])
+                total_sum -= stack.pop()
+                total_sum += items[i][0]
+                n = len(s)
+                max_elegance = max(max_elegance, total_sum + n * n)
+        
+        return max_elegance
+                    
