@@ -1328,3 +1328,57 @@ class Solution:
         if mid*mid > n:
             return self.bin_search(left,mid-1,n)
         return self.bin_search(left + 1, right,n)
+    
+###########################################
+# 330. Patching Array (REVISITED)
+# 17JUN24
+###########################################
+class Solution:
+    '''
+    convert nums into intervals
+     0, 1, 2, 4, 5, 12 is [[0, 2], [4, 5], [12, 12]]
+     the find smallest numbers to add
+    '''
+    def merge(self, intervals):
+        intervals.sort(key=lambda x: x[0])
+        merged = []
+        
+        for interval in intervals:
+            if not merged or merged[-1][1] < interval[0] - 1:
+                merged.append(interval)
+            else:
+                merged[-1][1] = max(merged[-1][1], interval[1])
+
+        return merged
+
+
+    def minPatches(self, nums, n):
+        ints, patches = [[0,0]], 0
+        for num in nums:
+            ints = self.merge(ints + [[i+num, j+num] for i,j in ints])
+
+        while ints[0][1] < n:
+            ints = self.merge(ints + [[i+ints[0][1]+1, j+ints[0][1]+1] for i,j in ints])
+            patches += 1
+
+        return patches
+
+############################################################
+# 1798. Maximum Number of Consecutive Values You Can Make
+# 17JUN24
+##########################################################
+class Solution:
+    def getMaximumConsecutive(self, coins: List[int]) -> int:
+        '''
+        sort and count what sums i can make
+        sums needs to start at 0
+        '''
+        coins.sort()
+        curr_sum = 0
+        for c in coins:
+            if curr_sum + 1 >= c:
+                curr_sum += c
+            else:
+                return curr_sum + 1
+        
+        return curr_sum + 1
