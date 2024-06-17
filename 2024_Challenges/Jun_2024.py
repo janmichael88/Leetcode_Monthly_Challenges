@@ -1258,3 +1258,73 @@ class Solution:
         
         return max_elegance
                     
+#############################################
+# 633. Sum of Square Numbers (REVISTED)
+# 17JUN24
+#############################################
+#using square root function, 
+#cheeky way to check if float == int for some number x is x == int(x)
+class Solution:
+    def judgeSquareSum(self, c: int) -> bool:
+        '''
+        two pointers starting at 0 and 2**31 - 1, then advance 
+        if we fix a, then we can look for b
+        a^2 + b ^2 = c
+        b = (c - a^2)^0.5
+        now we can just check if b == int(b)
+        '''
+        for a in range(0,int(c**.5)+1):
+            b = (c - a*a)**.5
+            if b == int(b):
+                return True
+        
+        return False
+    
+class Solution:
+    def judgeSquareSum(self, c: int) -> bool:
+        '''
+        two pointers starting at 0 and 2**31 - 1, then advance 
+        if we fix a, then we can look for b
+        a^2 + b ^2 = c
+        b = (c - a^2)^0.5
+        
+        check if perfect square
+        the sqaure of nth positive integer can be represented as a sum of the frist odd positives
+        n**2 = \sum_{i=1}^{n} (2*i-1)
+        '''
+        a = 0
+        while a*a <= c:
+            b = c - a*a
+            i = 1
+            sum_odds = 0
+            while (sum_odds < b):
+                sum_odds += i
+                i += 2
+            if sum_odds == b:
+                return True
+            a += 1
+        
+        return False
+    
+#binary search
+class Solution:
+    def judgeSquareSum(self, c: int) -> bool:
+        '''
+        instead of usinr sqrt funtion we can also use binary search
+        '''
+        for a in range(0,int(c**.5)+1):
+            b = (c - a*a)**.5
+            if self.bin_search(0,int(b),int(b)):
+                return True
+        
+        return False
+    
+    def bin_search(self, left, right,n):
+        if left > right:
+            return False
+        mid = left + (right - left) // 2
+        if mid*mid == n:
+            return True
+        if mid*mid > n:
+            return self.bin_search(left,mid-1,n)
+        return self.bin_search(left + 1, right,n)
