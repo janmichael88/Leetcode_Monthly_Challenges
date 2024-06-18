@@ -538,6 +538,35 @@ class Solution:
         
         return ans
     
+#revisited on 18JUN24
+#diificulty variant
+class Solution:
+    def maxProfitAssignment(self, difficulty: List[int], profit: List[int], worker: List[int]) -> int:
+        '''
+        since the constraint on difficulty[i] and worker[i] are small, 
+        can can just do it O(max(dificulty,worker))
+        we dont need to know profits for jobs are higher than a worker can handle -> max_so_far
+        use an array of max worker ability and store the max profit for this workers ability
+        '''
+        max_ability = max(worker)
+        max_profits = [0]*(max_ability + 1)
+        
+        for i,diff in enumerate(difficulty):
+            #if there is a job difficulty smaller than the max, update it
+            #i.e there is job who's dififculty can be done but with a high profit
+            if diff <= max_ability:
+                max_profits[diff] = max(max_profits[diff], profit[i])
+        
+        #find max for each difficulrt
+        for i in range(1,len(max_profits)):
+            max_profits[i] = max(max_profits[i], max_profits[i-1])
+        
+        ans = 0
+        for w in worker:
+            ans += max_profits[w]
+        
+        return ans
+    
 #########################################
 # 523. Continuous Subarray Sum (REVISITED)
 # 08JUN24
@@ -1419,3 +1448,31 @@ class Solution:
                 return curr_sum + 1
         
         return curr_sum + 1
+    
+##################################################
+# 2410. Maximum Matching of Players With Trainers
+# 18JUN24
+##################################################
+class Solution:
+    def matchPlayersAndTrainers(self, players: List[int], trainers: List[int]) -> int:
+        '''
+        sort trainers, then use binary search on each player
+        check if we can find a trainer to matches
+        sort both players and trainers, then use two pointers
+        after sorting
+        [4,7,9]
+        [2,5,8,8]
+        '''
+        players.sort()
+        trainers.sort()
+        pairs = 0
+        i,j = 0,0
+        while i < len(players) and j < len(trainers):
+            if players[i] <= trainers[j]:
+                pairs += 1
+                i += 1
+                j += 1
+            elif players[i] > trainers[j]:
+                j += 1
+        
+        return pairs
