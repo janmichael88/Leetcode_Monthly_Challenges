@@ -1476,3 +1476,80 @@ class Solution:
                 j += 1
         
         return pairs
+    
+##################################################
+# 1482. Minimum Number of Days to Make m Bouquets
+# 19JUN24
+##################################################
+class Solution:
+    def minDays(self, bloomDay: List[int], m: int, k: int) -> int:
+        '''
+        this binary search on workable solution paraigm
+        need linear time function to check if we wan make m bouqets with k flowers given some day
+        '''
+        left = min(bloomDay)
+        right = max(bloomDay)
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            #try to make m boquets
+            candidate_boquets = self.func(bloomDay,m,k,mid)
+            if candidate_boquets >= m:
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+    
+    def func(self, flowers, m,k,day):
+        boquets_made = 0
+        curr_boquet = 0
+        
+        for f in flowers:
+            if f <= day:
+                #increment
+                curr_boquet += 1
+                if curr_boquet == k:
+                    boquets_made += 1
+                    curr_boquet = 0
+            #cant uese
+            else:
+                curr_boquet = 0
+        
+        return boquets_made
+
+
+############################################
+# 1580. Put Boxes Into the Warehouse II
+# 18JUN24
+############################################
+#nice try
+class Solution:
+    def maxBoxesInWarehouse(self, boxes: List[int], warehouse: List[int]) -> int:
+        '''
+        keep mins on left and mins on right, 
+        then sort boxes and check like in warehouse 1
+        '''
+        N = len(warehouse)
+        mins_left = warehouse[:]
+        for i in range(1,N):
+            mins_left[i] = min(mins_left[i-1], warehouse[i])
+        
+        mins_right = warehouse[:]
+        for i in range(N-2,-1,-1):
+            mins_right[i] = min(mins_right[i+1],warehouse[i])
+        
+        boxes.sort()
+        count = 0
+        for i in range(N):
+            if count < len(boxes):
+                if boxes[count] <= mins_left[i]:
+                    count += 1
+                
+        for i in range(N):
+            if count < len(boxes):
+                if boxes[count] <= mins_right[N-i-1]:
+                    count += 1
+        
+        return count + 1
