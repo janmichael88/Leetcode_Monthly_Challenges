@@ -1556,6 +1556,45 @@ class Solution:
         
         return balls_used
 
+#############################################
+# 2594. Minimum Time to Repair Cars
+# 20JUN24
+#############################################
+class Solution:
+    def repairCars(self, ranks: List[int], cars: int) -> int:
+        '''
+        a mechanic an repair n cars in r*n^2 minutes
+        use all mechanisn and check minutes
+        n = sqrt(minutes/r)
+        int((mins / r)**.5) , cant do partial cars per mechanic, they need to fix it
+        now what are the bounds?
+            lower bound is 1 minute
+            uppower bound just max out each mechanic, i.e find max time each mecanic needs to fix cars
+        '''
+        left = 1
+        right = sum(ranks)*cars*cars
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            cand_cars_repaired = self.func(ranks,cars,mid)
+            if cand_cars_repaired >= cars:
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+        #for m in range(1,20):
+        #    print(m,self.func(ranks,cars,m))
+    
+    #func to check all cars repaired given minutes
+    def func(self, ranks, cars,mins):
+        cars_repaired = 0
+        for r in ranks:
+            cars_repaired += int((mins / r)**.5)
+        
+        return cars_repaired
+            
 ############################################
 # 1580. Put Boxes Into the Warehouse II
 # 18JUN24
