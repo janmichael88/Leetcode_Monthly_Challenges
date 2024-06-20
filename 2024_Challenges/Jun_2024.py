@@ -1518,7 +1518,43 @@ class Solution:
                 curr_boquet = 0
         
         return boquets_made
-
+    
+####################################################
+# 1552. Magnetic Force Between Two Balls (REVISTED)
+# 20JUN24
+###################################################
+class Solution:
+    def maxDistance(self, position: List[int], m: int) -> int:
+        '''
+        binary search for a workable force
+        need function to place at least m balls
+        '''
+        left = 0
+        right = max(position) - min(position)
+        position.sort()
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            candidate_balls_used = self.func(position,m,mid)
+            #if we can do, save ans and look for better onw
+            if candidate_balls_used >= m:
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return ans
+    
+    def func(self, baskets, m, min_force):
+        balls_used = 1
+        last_ball_position = baskets[0]
+        for b in baskets:
+            mag_force = abs(b - last_ball_position)
+            if mag_force >= min_force:
+                balls_used += 1
+                last_ball_position = b
+        
+        return balls_used
 
 ############################################
 # 1580. Put Boxes Into the Warehouse II
