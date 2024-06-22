@@ -1594,7 +1594,68 @@ class Solution:
             cars_repaired += int((mins / r)**.5)
         
         return cars_repaired
+
+############################################
+# 1052. Grumpy Bookstore Owner
+# 21JUN24
+############################################
+class Solution:
+    def maxSatisfied(self, customers: List[int], grumpy: List[int], minutes: int) -> int:
+        '''
+        1 is grumpy, 0 is not grumpy
+        n minutes, where n == len(customres) == len(grumpy)
+        first compute the overall satisfaction as is,
+        then second pass to see if we can got more satisfactiion using sliding window
+            i.e find additional max satifaction
+        '''
+        n = len(customers)
+        max_satisfaction = 0
+        for i in range(n):
+            if grumpy[i] == 0:
+                max_satisfaction += customers[i]
             
+        curr_additional = 0
+        for i in range(minutes):
+            if grumpy[i] == 1:
+                curr_additional += customers[i]
+        
+        max_additional = curr_additional
+        for i in range(minutes,n):
+            if grumpy[i] == 1:
+                curr_additional += customers[i]
+            if grumpy[i-minutes] == 1:
+                curr_additional -= customers[i-minutes]
+            
+            max_additional = max(max_additional,curr_additional)
+        
+        return max_satisfaction + max_additional
+                
+#one pass
+class Solution:
+    def maxSatisfied(self, customers: List[int], grumpy: List[int], minutes: int) -> int:
+        '''
+        we can do this one pass just track both max_satisfaction and max_additional
+        '''
+        n = len(customers)
+        max_satisfaction = 0
+        max_additional = 0
+        curr_additional = 0
+        
+        
+        for i in range(n):
+            if i >= minutes and grumpy[i-minutes] == 1:
+                curr_additional -= customers[i-minutes]
+            if grumpy[i] == 1:
+                curr_additional += customers[i]
+            if grumpy[i] == 0:
+                max_satisfaction += customers[i]
+            
+            max_additional = max(max_additional, curr_additional)
+        
+        
+        return max_satisfaction + max_additional
+
+
 ############################################
 # 1580. Put Boxes Into the Warehouse II
 # 18JUN24
