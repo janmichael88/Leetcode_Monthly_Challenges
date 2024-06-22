@@ -1655,6 +1655,56 @@ class Solution:
         
         return max_satisfaction + max_additional
 
+########################################
+# 1248. Count Number of Nice Subarrays
+# 22JUN24
+#########################################
+#brute force
+class Solution:
+    def numberOfSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        i can use a count array to keep track of of the number of odd integers up to i
+        brute force would be to check all (i,j)
+        better would be to find complement count 
+        '''
+        N = len(nums)
+        counts = [0]
+        for num in nums:
+            if num % 2 == 1:
+                counts.append(counts[-1] + 1)
+            else:
+                counts.append(counts[-1])
+        
+        ans = 0
+        for end in range(1,N+1):
+            for start in range(end):
+                if counts[end] - counts[start] == k:
+                    ans += 1
+        return ans
+    
+#sub array sum == k
+#idea really stems from equation of prefsum for all start and ends
+class Solution:
+    def numberOfSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        i can use a count array to keep track of of the number of odd integers up to i
+        brute force would be to check all (i,j)
+        better would be to find complement count like subarray sum == k
+        '''
+        N = len(nums)
+        counts = defaultdict(int)
+        counts[0] = 1
+        
+        ans = 0
+        curr_count = 0
+        for num in nums:
+            curr_count += num % 2 == 1
+            if (curr_count - k) in counts:
+                ans += counts[curr_count - k]
+            
+            counts[curr_count] += 1
+        
+        return ans
 
 ############################################
 # 1580. Put Boxes Into the Warehouse II
@@ -1689,3 +1739,65 @@ class Solution:
                     count += 1
         
         return count + 1
+
+#try adding largest from both ends
+class Solution:
+    def maxBoxesInWarehouse(self, boxes: List[int], warehouse: List[int]) -> int:
+        '''
+        we can oush the biggest box from eather left or right
+        intution, idea is that if we fit the largest in first, we certainly could have fit it something smaller before hand
+        since we can insert from both ends, we use two pointers for leftmost and rightmost rooms
+            we try to fit the lefmots room or the rightmost room with the larest box
+        
+        idea:
+            by iterating over boxes from largest to smallest, we ensure that smaller boxes have a chance to be placed
+            even if largesr boxes cannot fit in the remaining rooms
+        '''
+        boxes.sort(reverse = True)
+        left = 0
+        right = len(warehouse) - 1
+        
+        ans = 0
+        for i in range(len(boxes)):
+            if left <= right:
+                if boxes[i] <= warehouse[left]:
+                    left += 1
+                    ans += 1
+                elif boxes[i] <= warehouse[right]:
+                    right -= 1
+                    ans += 1
+        
+        return ans
+    
+#like warehouse I
+class Solution:
+    def maxBoxesInWarehouse(self, boxes: List[int], warehouse: List[int]) -> int:
+        '''
+        like warehouse1, we need to find the limiting heights from boths sides
+        only then we can slide and try addin in smallest
+        we first find the min heights going left to right
+        '''
+        n = len(warehouse)
+        left_mins = warehouse[:]
+        for i in range(1,n):
+            left_mins[i]= min(left_mins[i-1],warehouse[i])
+        
+        right_mins = warehouse[:]
+        for i in range(n-2,-1,-1):
+            right_mins[i] = min(right_mins[i+1], warehouse[i])
+        
+        useable_heights = [0]*n
+        for i in range(n):
+            useable_heights[i] = max(left_mins[i],right_mins[i])
+        
+        #sort effetive heights!, because we can add from left or right
+        #note we didn't do this in part 1
+        useable_heights.sort()
+        #treat like warehouse 1
+        boxes.sort()
+        count = 0
+        for h in useable_heights:
+            if count < len(boxes) and boxes[count] <= h:
+                count += 1
+        
+        return count
