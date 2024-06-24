@@ -1801,3 +1801,116 @@ class Solution:
                 count += 1
         
         return count
+
+###################################################################################
+# 1438. Longest Continuous Subarray With Absolute Diff Less Than or Equal to Limit
+# 23JUN24
+###################################################################################
+#use sortedList
+from sortedcontainers import SortedList
+class Solution:
+    def longestSubarray(self, nums: List[int], limit: int) -> int:
+        '''
+        two pointer technique, we need to make it as long as possible need to keep expanding
+        need fast way to find min and maximum between some interval (i,j) inclusive
+        then we can use two poiniter effeciently
+        need to use Sorted List to represent the subarray, then we can check
+        use .remove
+        '''
+        sl = SortedList([])
+        ans = 1
+        left = 0
+        N = len(nums)
+        for right in range(N):
+            sl.add(nums[right])
+            while left < right and sl[-1] - sl[0] > limit:
+                sl.remove(nums[left])
+                left += 1
+            
+            if sl[-1] - sl[0] <= limit:
+                ans = max(ans,len(sl))
+        
+        return ans
+    
+#two heap solution
+class Solution:
+    def longestSubarray(self, nums: List[int], limit: int) -> int:
+        '''
+        instead of using multiset paradigm, or sorted container, wee need to use two heaps
+        one heap stores max in current window and the other stores min in current window
+        in addition, we store the indices in the heaps
+        we need to keep the heaps updates by deleting the elements outside the new window after moving the left pointers
+        '''
+        ans = 1
+        N = len(nums)
+        
+        max_heap = []
+        min_heap = []
+        
+        left = 0
+        
+        for right,num in enumerate(nums):
+            heapq.heappush(min_heap, (num,right))
+            heapq.heappush(max_heap, (-num,right))
+            
+            while -max_heap[0][0] - min_heap[0][0] > limit:
+                #move left
+                #we need the left most one
+                #all we know if the number's value in the array, we dont know where
+                left = min(max_heap[0][1], min_heap[0][1]) + 1
+                
+                #we need to exclude eleemnts oustide the range, or less than left
+                while max_heap[0][1] < left:
+                    heapq.heappop(max_heap)
+                
+                while min_heap[0][1] < left:
+                    heapq.heappop(min_heap)
+            
+            ans = max(ans, right - left + 1)
+        
+        return ans
+    
+#montonic deque
+class Solution:
+    def longestSubarray(self, nums: List[int], limit: int) -> int:
+        '''
+        instead of two heaps we can can uses two deques
+            one is motonic decreasing, so the largest it always first
+            the other is montonic increasing, so the smallest is always first
+        
+        adding to the deques at each step,
+        how do we shrink?
+            popleft 
+        
+        before adding we need to maintain the invariants in the dequest
+        '''
+        max_q = deque([])
+        min_q = deque([])
+        left = 0
+        ans = 1
+        n = len(nums)
+        
+        for right,num in enumerate(nums):
+            #maintain invariants
+            while max_q and max_q[-1] < num:
+                max_q.pop()
+            
+            max_q.append(num)
+            
+            while min_q and min_q[-1] > num:
+                min_q.pop()
+            
+            min_q.append(num)
+            
+            #srhink
+            while max_q[0] - min_q[0] > limit:
+                #remove the eleemnts that are out of the current window, tha are not the max of the minimum
+                if max_q[0] == nums[left]:
+                    max_q.popleft()
+                if min_q[0] == nums[left]:
+                    min_q.popleft()
+                left += 1
+            
+            ans = max(ans, right - left + 1)
+        
+        return ans
