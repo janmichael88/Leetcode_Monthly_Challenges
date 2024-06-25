@@ -1914,3 +1914,238 @@ class Solution:
             ans = max(ans, right - left + 1)
         
         return ans
+
+##################################################
+# 995. Minimum Number of K Consecutive Bit Flips
+# 24JUN24
+#################################################
+#brute force
+class Solution:
+    def minKBitFlips(self, nums: List[int], k: int) -> int:
+        '''
+        we need to flip so that nums has no zeros, or sum(nums) == len(nums)
+        we can flip a lenght k subarray, and flips bits
+        return min number of flips
+        greedy?
+        in order of this to work, on the last flip, there had to b a subarray of [0]s of length k
+        there could be multiple ways
+        if we could use any k, then we just flip the streaks of zeros
+        
+        intution
+            order of flips does not mater
+            find what indices to flip regardless of sequence
+                does not matter if we flip at indices [0,4,5] or [4,0,5]
+            number of times index is flipped, determine its values
+            if its a 1, then even flips, sends it back to 1, odd flips, leaves it at 1
+            opposite if oringially 0
+                i.e if flipped an odd number of times, its value is flipped, remains same if even number of flips
+
+        #brute force, for each index i, flip i to k-1, then check all are 1s, then reduce the indices
+        '''
+        zero_idxs = []
+        n = len(nums)
+        for i in range(n):
+            if nums[i] == 0:
+                zero_idxs.append(i)
+                if i + k - 1 < n:
+                    for j in range(i,i+k):
+                        nums[j] = 1 - nums[j]
+        
+        #check if we can do
+        if sum(nums) != n:
+            return -1
+        
+        #reduce indices
+        return len(zero_idxs)
+        
+class Solution:
+    def minKBitFlips(self, nums: List[int], k: int) -> int:
+        '''
+        we need to flip so that nums has no zeros, or sum(nums) == len(nums)
+        we can flip a lenght k subarray, and flips bits
+        return min number of flips
+        greedy?
+        in order of this to work, on the last flip, there had to b a subarray of [0]s of length k
+        there could be multiple ways
+        if we could use any k, then we just flip the streaks of zeros
+        
+        intution
+            order of flips does not mater
+            find what indices to flip regardless of sequence
+                does not matter if we flip at indices [0,4,5] or [4,0,5]
+            number of times index is flipped, determine its values
+            if its a 1, then even flips, sends it back to 1, odd flips, leaves it at 1
+            opposite if oringially 0
+                i.e if flipped an odd number of times, its value is flipped, remains same if even number of flips
+            
+        we can sort the sequence by increasing index, once sorted we minimize the size using parity
+        say for example we flip at indidces
+        [0,1,2,4,5,6,5,6,7], and k = 3
+        its relly just [0..2] -> [4..6] -> [5..7],
+        we can write as [0,4,5]
+        indices are sorted, so subsequent flips with larger indices cannot alter the value at prior indices
+        
+        if nums[0] = 0 and is not in the flip sequence, it should remain 0 in the final result
+        if nums[0] = 1 and 0 is in the flip sequence, nums[0] -> 0 in final result
+        
+        if nums[i] = 0, then i must be present in t he flip sequence [i to i+k-1]
+        if nums[i] == 1, the i must not be in the sequence, and we do not flip [0 to k-1]
+        
+        we can use isFlipped array to keep trakc of the indices where kth bit flip needs to jappen
+        conditions
+            if flipped is false and nums[i] = 0, flip is required
+            if flippes is true and nums[i] = 1, flip is required
+        '''
+        n = len(nums)
+        isFlipped = [False]*n
+        flips_needed = 0
+        prev_flips = 0
+        
+        for i in range(n):
+            if i >= k:
+                if isFlipped[i-k]:
+                    prev_flips -= 1
+            
+            if prev_flips % 2 == nums[i]:
+                if i + k > n:
+                    return -1
+                
+                prev_flips += 1
+                flips_needed += 1
+                isFlipped[i] = True
+        
+        return flips_needed
+    
+#################################################
+# 1038. Binary Search Tree to Greater Sum Tree
+# 25JUN24
+#################################################
+#three pass
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def bstToGst(self, root: TreeNode) -> TreeNode:
+        '''
+        make nodes value == to the some of nodes >= to node.val
+        to visit nodes in in sorted order we can use inorder
+        i can precompute the sum in order
+        thens econd pass, subtracting pref_sum in order
+        its original key + sum vals greater
+        '''
+        nums = self.inorder(root)
+        total = sum(nums)
+        sum_less_than = 0
+        for i in range(len(nums)):
+            sum_less_than += nums[i]
+            nums[i] = total - sum_less_than + nums[i]
+            
+        #now do in order2
+        idx = [0]
+        self.inorder2(root,nums,idx)
+        return root
+        
+    
+    def inorder(self, node):
+        if not node:
+            return []
+        
+        left = self.inorder(node.left)
+        right = self.inorder(node.right)
+        return left + [node.val] + right
+    
+    def inorder2(self,node,nums,idx):
+        if not node:
+            return
+        self.inorder2(node.left,nums,idx)
+        node.val = nums[idx[0]]
+        idx[0] += 1
+        self.inorder2(node.right,nums,idx)
+
+#two pass
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def bstToGst(self, root: TreeNode) -> TreeNode:
+        '''
+        prescompute the sum then keep track of sumless than
+        '''
+        total_sum = self.sumTree(root)
+        sum_less_than = [0]
+        self.inorder(root,sum_less_than,total_sum)
+        return root
+    
+    def sumTree(self, node):
+        if not node:
+            return 0
+        return node.val + self.sumTree(node.left) + self.sumTree(node.right)
+    
+    def inorder(self,node,sum_less_than,total_sum):
+        if not node:
+            return
+        self.inorder(node.left,sum_less_than,total_sum)
+        sum_less_than[0] += node.val
+        node.val = total_sum - sum_less_than[0] + node.val
+        self.inorder(node.right,sum_less_than,total_sum)
+
+#one pass?
+#need to reverse inorder the get values larger
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def bstToGst(self, root: TreeNode) -> TreeNode:
+        '''
+        one pass, need to use reverse in order traversal and get larger values on the fly
+        
+        '''
+        node_sum_greater = [0]
+        self.postorder(root,node_sum_greater)
+        return root
+    
+    def postorder(self,node, node_sum_greater):
+        if not node:
+            return
+        self.postorder(node.right, node_sum_greater)
+        node_sum_greater[0] += node.val
+        node.val = node_sum_greater[0]
+        self.postorder(node.left,node_sum_greater)
+
+#iterative postorder
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def bstToGst(self, root: TreeNode) -> TreeNode:
+        '''
+        iterative
+        keep stack and process while we have stuff in stack or node isnt null
+        '''
+        stack = []
+        curr = root
+        greater_sum = 0
+        
+        while len(stack) > 0 or curr != None:
+            while curr != None:
+                stack.append(curr)
+                curr = curr.right
+            
+            curr = stack.pop()
+            greater_sum += curr.val
+            curr.val = greater_sum
+            curr = curr.left
+        
+        return root
