@@ -2163,6 +2163,9 @@ class Solution:
         we can do morris traversal in reverse -> we just swap the left ans the rights
         in original morris traversal, we use inorder predecessor and thread when we can and sever when already threded
         for reverse inorder we need inorder successor
+
+        thread back to succ, when we can,
+        sever when its already threaded
         '''
         total = 0
         curr = root
@@ -2196,3 +2199,98 @@ class Solution:
             succ = succ.left
         
         return succ
+    
+###########################################
+# 1382. Balance a Binary Search Tree
+# 26JUN24
+############################################
+#two pass
+#Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        
+        self.right = right
+class Solution:
+    def balanceBST(self, root: TreeNode) -> TreeNode:
+        '''
+        get the inorder and rebuild it
+        '''
+        vals = self.inorder(root)
+        return self.build(vals,0,len(vals)-1)
+    
+    def inorder(self,root : TreeNode) -> List[int]:
+        if not root:
+            return []
+        left = self.inorder(root.left)
+        right = self.inorder(root.right)
+        return left + [root.val] + right
+    
+    def build(self, vals : List[int], left : int, right : int) -> TreeNode:
+        if left > right:
+            return None
+        
+        mid = left + (right - left) // 2
+        node = TreeNode(val = vals[mid])
+        node.left = self.build(vals,left,mid-1)
+        node.right = self.build(vals,mid+1,right)
+        return node
+        
+#balacing in place
+class Solution:
+    def balanceBST(self, root: TreeNode) -> TreeNode:
+        if not root:
+            return None
+
+        # Step 1: Create the backbone (vine)
+        # Temporary dummy node
+        vine_head = TreeNode(0)
+        vine_head.right = root
+        current = vine_head
+        while current.right:
+            if current.right.left:
+                self.right_rotate(current, current.right)
+            else:
+                current = current.right
+
+        # Step 2: Count the nodes
+        node_count = 0
+        current = vine_head.right
+        while current:
+            node_count += 1
+            current = current.right
+
+        # Step 3: Create a balanced BST
+        m = 2 ** math.floor(math.log2(node_count + 1)) - 1
+        self.make_rotations(vine_head, node_count - m)
+        while m > 1:
+            m //= 2
+            self.make_rotations(vine_head, m)
+
+        balanced_root = vine_head.right
+        # Delete the temporary dummy node
+        vine_head = None
+        return balanced_root
+
+    # Function to perform a right rotation
+    def right_rotate(self, parent: TreeNode, node: TreeNode):
+        tmp = node.left
+        node.left = tmp.right
+        tmp.right = node
+        parent.right = tmp
+
+    # Function to perform a left rotation
+    def left_rotate(self, parent: TreeNode, node: TreeNode):
+        tmp = node.right
+        node.right = tmp.left
+        tmp.left = node
+        parent.right = tmp
+
+    # Function to perform a series of left rotations to balance the vine
+    def make_rotations(self, vine_head: TreeNode, count: int):
+        current = vine_head
+        for _ in range(count):
+            tmp = current.right
+            self.left_rotate(current, tmp)
+            current = current.right
