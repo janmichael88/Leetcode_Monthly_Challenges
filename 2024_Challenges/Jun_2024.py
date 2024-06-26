@@ -2149,3 +2149,50 @@ class Solution:
             curr = curr.left
         
         return root
+
+#constant space, morris traversal
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def bstToGst(self, root: TreeNode) -> TreeNode:
+        '''
+        we can do morris traversal in reverse -> we just swap the left ans the rights
+        in original morris traversal, we use inorder predecessor and thread when we can and sever when already threded
+        for reverse inorder we need inorder successor
+        '''
+        total = 0
+        curr = root
+        while curr != None:
+            #no right subtree, process current node
+            if curr.right == None:
+                total += curr.val
+                curr.val = total
+                curr = curr.left
+            else:
+                #find inorder succ
+                succ = self.get_successor(curr)
+                #if there is no left subtree (or right subtree) we thread back
+                if succ.left == None:
+                    succ.left = curr
+                    curr = curr.right
+                #otherwise its already threaded
+                #i.e if there is a left subtree, it was connect, so we need to sever
+                else:
+                    succ.left = None
+                    total += curr.val
+                    curr.val = total
+                    curr = curr.left
+        
+        return root
+        
+    def get_successor(self,node):
+        succ = node.right
+        #left as far as we can and as long as its not threaded
+        while succ.left != None and succ.left != node:
+            succ = succ.left
+        
+        return succ
