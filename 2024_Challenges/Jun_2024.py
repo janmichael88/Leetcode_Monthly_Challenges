@@ -1157,7 +1157,41 @@ class Solution:
                     unique.add(substring)
         
         return len(unique)
-
+    
+#rolling hash
+class Solution:
+    def equalDigitFrequency(self, s: str) -> int:
+        '''
+        we can use rolling rash, compute hash of string in constant time from existing hash
+        need prime number larger than alphabet
+        need fast way to determine uniqe counts for string
+        '''
+        N = len(s)
+        seen = set()
+        mod = 10**9 + 7
+        base = 11
+        
+        for i in range(N):
+            counts = [0]*10
+            s_hash = 0
+            max_count = 0
+            unique = 0
+            for j in range(i,N):
+                dig = ord(s[j]) - ord('0')
+                #count unique digits
+                unique += 1 if counts[dig] == 0 else 0
+                counts[dig] += 1
+                max_count = max(max_count,counts[dig])
+                #rolling hahs O(1)
+                s_hash = (s_hash*base + dig + 1) % mod
+                #if substring has digit with equal frequency
+                #we counted the unique number of digits
+                #its length == unique_count times max_count
+                if max_count*unique == j - i + 1:
+                    seen.add(s_hash)
+        
+        return len(seen)
+        
 #####################################################
 # 2813. Maximum Elegance of a K-Length Subsequence
 # 16JUN24
@@ -2016,6 +2050,64 @@ class Solution:
         
         return flips_needed
     
+class Solution:
+    def minKBitFlips(self, nums: List[int], k: int) -> int:
+        '''
+        https://leetcode.com/problems/minimum-number-of-k-consecutive-bit-flips/discuss/238609/JavaC%2B%2BPython-One-Pass-and-O(1)-Space
+        theres only one way to flip A[0] and A[0] will tell us if we need to flip from A[0] ~A[k-1]
+        really its just an understaning the mechanics if k bit flips
+        isFlipped array 1 or 0 if we have flipped from i-k
+        maintain flipped variable iff current bit is flipped
+        '''
+        N = len(nums)
+        flipped = 0
+        res = 0
+        isFlipped = [False]*N
+        
+        for i in range(N):
+            if i >= k:
+                #flip it back
+                flipped ^= isFlipped[i-k]
+            
+            if flipped == nums[i]:
+                if i + k > N:
+                    return -1
+                
+                isFlipped[i] = True
+                flipped ^= 1
+                res += 1
+        
+        return res
+    
+#deque solution
+class Solution:
+    def minKBitFlips(self, nums: List[int], k: int) -> int:
+        '''
+        instead of using isFlipped array if size len(nums)
+        we maintin q of size k
+        '''
+        N = len(nums)
+        dq = deque([])
+        flipped = 0
+        res = 0
+        
+        for i,num in enumerate(nums):
+            if i >= k:
+                flipped ^= dq[0]
+            
+            if flipped == num:
+                if i + k > N:
+                    return -1
+                dq.append(1)
+                flipped ^= 1 #could also do 1 - flipped
+                res += 1
+            else:
+                dq.append(0)
+            if len(dq) > k:
+                dq.popleft()
+        
+        return res
+    
 #################################################
 # 1038. Binary Search Tree to Greater Sum Tree
 # 25JUN24
@@ -2294,3 +2386,166 @@ class Solution:
             tmp = current.right
             self.left_rotate(current, tmp)
             current = current.right
+
+######################################################
+# 2743. Count Substrings Without Repeating Character
+# 26JUN24
+#####################################################
+#nice try
+class Solution:
+    def numberOfSpecialSubstrings(self, s: str) -> int:
+        '''
+        if we find a special substring of length k, then there are k*(k+1) // 2 substrings that are also special
+        '''
+        ans = 0
+        left = 0
+        
+        chars = set()
+        
+        for right,ch in enumerate(s):
+            if ch not in chars:
+                chars.add(ch)
+                ans += right - left + 1
+            else:
+                while left < right and s[left] == ch:
+                    chars.remove(s[left])
+                    left += 1
+                chars.add(ch)
+                ans += right - left + 1
+        return ans
+    
+class Solution:
+    def numberOfSpecialSubstrings(self, s: str) -> int:
+        '''
+        keep count mapp and add
+        '''
+        counts = Counter()
+        left = 0
+        ans = 0
+        
+        for right,ch in enumerate(s):
+            counts[ch] += 1
+            
+            #shrink back until the number we added is 1 again
+            
+            while counts[ch] > 1:
+                counts[s[left]] -= 1
+                left += 1
+            
+            ans += right - left + 1
+    
+        return ans
+
+class Solution:
+    def numberOfSpecialSubstrings(self, s: str) -> int:
+        '''
+        keep count mapp and add
+        keep track of last seen char indexx and get right most last seen
+        '''
+        last_seen_char = {}
+        left = 0
+        ans = 0
+        
+        for right,ch in enumerate(s):
+            if ch in last_seen_char:
+                left = max(left,last_seen_char[ch] + 1)
+            
+            last_seen_char[ch] = right
+            ans += right - left + 1
+    
+        return ans
+    
+###################################
+# 1791. Find Center of Star Graph
+# 27JUN24
+###################################
+class Solution:
+    def findCenter(self, edges: List[List[int]]) -> int:
+        '''
+        constant time,
+        a center must exsist, and if it exsists the center must be a common node 
+        pick any two edges and return the node thats in both of them
+        '''
+        a,b = edges[0],edges[1]
+        if a[0] in b:
+            return a[0]
+        return a[1]
+    
+##########################################################
+# 1790. Check if One String Swap Can Make Strings Equal
+# 27JUN24
+##########################################################
+class Solution:
+    def areAlmostEqual(self, s1: str, s2: str) -> bool:
+        '''
+        if chars are already equal we dont need to swap them
+        we are only allowed one swap, so there can only be 2 positions where chars dont match
+        '''
+        unequal_spots = 0
+        a = set()
+        b = set()
+        
+        for u,v in zip(s1,s2):
+            if u != v:
+                unequal_spots += 1
+                a.add(u)
+                b.add(v)
+        
+        if unequal_spots not in (0,2):
+            return False
+        return a == b
+
+class Solution:
+    def areAlmostEqual(self, s1: str, s2: str) -> bool:
+        '''
+        need to check that frequencies are the same
+        use sum difference check
+        then check uneuqal spots
+        '''
+        
+        counts = Counter()
+        unequal_spots = 0
+        
+        for u,v in zip(s1,s2):
+            counts[u] += 1
+            counts[v] -= 1
+            if u != v:
+                unequal_spots += 1
+        
+        for k,v in counts.items():
+            if v != 0:
+                return False
+        
+        return unequal_spots  in (0,2)
+    
+################################################
+# 2285. Maximum Total Importance of Roads
+# 28JUN24
+################################################
+#lucky guess lmaoo
+class Solution:
+    def maximumImportance(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        graph is undirected
+        we need maximum total imporance of all roads
+        the cities that appear larger in frequency should be given a higher weight from to 1 to n
+        count indegree? 
+        but how to break ties
+        '''
+        indegree = [0]*n
+        for u,v in roads:
+            indegree[u] += 1
+            indegree[v] += 1
+        
+        #pair with indices
+        pairs = [(i,v) for i,v in enumerate(indegree)]
+        pairs.sort(key = lambda x : -x[1])
+        importances = [0]*n
+        for rank,(i,v) in enumerate(pairs):
+            importances[i] = n - rank
+        
+        ans = 0
+        for u,v in roads:
+            ans += importances[u] + importances[v]
+        
+        return ans
