@@ -2573,3 +2573,69 @@ class Solution:
             rank += 1
         
         return max_importance
+    
+##################################################
+# 1315. Sum of Nodes with Even-Valued Grandparent
+# 28JUN24
+##################################################
+# Definition for a binary tree node.
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+class Solution:
+    def sumEvenGrandparent(self, root: TreeNode) -> int:
+        '''
+        grand parent is two steps away
+        keep two variables parent val and grand parent val
+        '''
+        ans = [0]
+        self.dfs(root,None,None,ans)
+        return ans[0]
+    
+    def dfs(self, node, parentVal, grandParentVal,ans):
+        if not node:
+            return
+        if grandParentVal and grandParentVal % 2 == 0:
+            ans[0] += node.val
+        self.dfs(node.left,node.val,parentVal,ans)
+        self.dfs(node.right,node.val,parentVal,ans)
+
+#bottom up
+class Solution:
+    def sumEvenGrandparent(self, root: TreeNode) -> int:
+        # you had it before
+        def dp(node, parent, grandParent):
+            if not node:
+                return 0
+            
+            left = dp(node.left,node.val,parent)
+            right = dp(node.right,node.val,parent)
+            if grandParent % 2 == 0:
+                return left + right + node.val
+            return left + right
+        
+        return dp(root, -1,-1)
+    
+class Solution:
+    def sumEvenGrandparent(self, root: TreeNode) -> int:
+        #two down
+        def dp(node, is_parent_even):
+            if not node:
+                return 0
+            
+            left = dp(node.left, node.val % 2 == 0)
+            right = dp(node.right, node.val % 2 == 0)
+            sum_so_far = left + right
+            #need sum for this tree as well as additional  sum if granparent is even
+            if is_parent_even:
+                if node.left:
+                    sum_so_far += node.left.val
+                if node.right:
+                    sum_so_far += node.right.val
+            
+            return sum_so_far
+        
+        return dp(root,False)
+        
