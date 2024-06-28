@@ -2549,3 +2549,27 @@ class Solution:
             ans += importances[u] + importances[v]
         
         return ans
+    
+class Solution:
+    def maximumImportance(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        we dont need to to do three passes, we can just multiply by indegree
+        say we have roads [a,b], [c,d], [a,c], [a,d]
+        we need a + b + c + d + a + c + a + d =
+        (a + a + a) + (b) + (c + c) + (d + d) to be maximum
+        order by indegree then use largest ranks
+        '''
+        indegree = [0]*n
+        for u,v in roads:
+            indegree[u] += 1
+            indegree[v] += 1
+            
+        max_importance = 0
+        indegree.sort()
+        rank = 1
+        
+        for d in indegree:
+            max_importance += rank*d
+            rank += 1
+        
+        return max_importance
