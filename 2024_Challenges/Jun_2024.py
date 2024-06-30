@@ -2639,3 +2639,114 @@ class Solution:
         
         return dp(root,False)
         
+###########################################################
+# 2192. All Ancestors of a Node in a Directed Acyclic Graph
+# 29JUN24
+############################################################
+class Solution:
+    def getAncestors(self, n: int, edges: List[List[int]]) -> List[List[int]]:
+        '''
+        build graph and start on nodes with zero indegree
+        take too long to dfs/bfs on each one,
+        top sort!
+        '''
+        edges.sort()
+        graph = defaultdict(list)
+        indegree = [0]*n
+        
+        for u,v in edges:
+            graph[u].append(v)
+            indegree[v] += 1
+        
+        ans = [set() for _ in range(n)]
+        
+        def dfs(starting_node,node,graph,seen,ans):
+            seen.add(node)
+            for neigh in graph[node]:
+                ans[neigh].add(starting_node)
+                if neigh not in seen:
+                    dfs(starting_node,neigh,graph,seen,ans)
+        
+        for i in range(n):
+            seen = set()
+            dfs(i,i,graph,seen,ans)
+        
+        for i in range(n):
+            ans[i] = sorted(list(ans[i]))
+        
+        return ans
+            
+#without set
+class Solution:
+    def getAncestors(self, n: int, edges: List[List[int]]) -> List[List[int]]:
+        '''
+        build graph and start on nodes with zero indegree
+        take too long to dfs/bfs on each one,
+        top sort!
+        '''
+        edges.sort()
+        graph = defaultdict(list)
+        
+        for u,v in edges:
+            graph[u].append(v)
+        
+        ans = [[] for _ in range(n)]
+        
+        def dfs(starting_node,node,graph,ans):
+            for neigh in graph[node]:
+                #no ancestor yet for this child node
+                #or we have a new ancestor to add
+                if not ans[neigh] or ans[neigh][-1] != starting_node:
+                    ans[neigh].append(starting_node)
+                    dfs(starting_node,neigh,graph,ans)
+        
+        for i in range(n):
+            dfs(i,i,graph,ans)
+        
+        return ans
+    
+#top sort
+class Solution:
+    def getAncestors(self, n: int, edges: List[List[int]]) -> List[List[int]]:
+        '''
+        we can first use top sort to get the order, and then for each node add its ancestor
+        need to keep ans array and ancestor set list
+        we need track each nodes ancestor
+        '''
+        edges.sort()
+        graph = defaultdict(list)
+        indegree = [0]*n
+        
+        for u,v in edges:
+            graph[u].append(v)
+            indegree[v] += 1
+        
+
+        ancestors_set = [set() for _ in range(n)]
+        top_order = []
+        
+        q = deque([])
+        for i in range(n):
+            if indegree[i] == 0:
+                q.append(i)
+        
+
+        while q:
+            curr = q.popleft()
+            top_order.append(curr)
+            for neigh in graph[curr]:
+                indegree[neigh] -= 1
+                if indegree[neigh] == 0:
+                    q.append(neigh)
+        
+        for node in top_order:
+            for neigh in graph[node]:
+                ancestors_set[neigh].add(node)
+                ancestors_set[neigh].update(ancestors_set[node])
+        
+        for i in range(n):
+            ancestors_set[i] = sorted(list(ancestors_set[i]))
+        
+        return ancestors_set
+                
+        
