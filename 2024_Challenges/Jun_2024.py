@@ -2749,4 +2749,82 @@ class Solution:
         
         return ancestors_set
                 
+##############################################################################
+# 1579. Remove Max Number of Edges to Keep Graph Fully Traversable (REVISTED)
+# 30JUN24
+#############################################################################
+class DSU:
+    def __init__(self,n):
+        self.ranks = [1]*n
+        self.parents = [i for i in range(n)]
+        self.components = n
+    
+    def find(self,x):
+        if self.parents[x] != x:
+            self.parents[x] = self.find(self.parents[x])
+        
+        return self.parents[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        #if they point to the same parent, then they are already connected
+        if x_par == y_par:
+            return False
+        #otherwise join and reduce c
+        if self.ranks[x_par] > self.ranks[y_par]:
+            self.ranks[x_par] += self.ranks[y_par]
+            self.ranks[y_par] = 0
+            self.parents[y_par] = x_par
+        else:
+            self.ranks[y_par] += self.ranks[x_par]
+            self.ranks[x_par] = 0
+            self.parents[x_par] = y_par
+        
+        self.components -= 1
+        return True
+    
+    def isConnected(self,):
+        return self.components == 1
+        
+class Solution:
+    def maxNumEdgesToRemove(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        union find with componense count,
+        the graph is fully traversible if the component count is of size 1
+        need to build graph on the fly
+            befor adding in an edge, check that it is still connected
+            if both can reach it, we then drop the edge
+            priotrize type three edges first
+        
+        need to solve for needed edges, the remove the uncesscary ones!
+        '''
+        alice = DSU(n)
+        bob = DSU(n)
+        needed_edges = 0
+        
+        #do type 3 first
+        for type_,u,v in edges:
+            if type_ == 3:
+                #need to do both!
+                a = alice.union(u-1,v-1)
+                b = bob.union(u-1,v-1)
+                if a or b:
+                    needed_edges += 1
+                    
+        #now to the remaning
+        for type_,u,v in edges:
+            #type 1
+            if type_ == 1:
+                if alice.union(u-1,v-1):
+                    needed_edges += 1
+            #type 2
+            elif type_ == 2:
+                if bob.union(u-1,v-1):
+                    needed_edges += 1
+
+        if alice.isConnected() and bob.isConnected():
+            return len(edges) - needed_edges
+        return -1
         
