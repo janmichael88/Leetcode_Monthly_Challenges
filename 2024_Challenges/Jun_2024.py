@@ -2828,3 +2828,72 @@ class Solution:
             return len(edges) - needed_edges
         return -1
         
+###################################
+# 776. Split BST
+# 01JUL24
+###################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def splitBST(self, root: Optional[TreeNode], target: int) -> List[Optional[TreeNode]]:
+        '''
+        all vales to the left < parent and all values to the right of parent and > than parent
+        if we find a node with values < targer, this node and its left subtree belong to the subtree containg nodes <= target
+        then recursively adjust the right subtree to ensure its correclty slit
+            right subtree may contain nodes that both less and > targer
+        
+        for each node return pair
+        first element is root of subtree with nodess <= target
+        second element is root of subtree with ndoes > target
+        
+        i.e recursive function splits left and right and returns the values
+        when we split at target left subtree should be vals <= target and right subtree should be vals > target
+        '''
+        def rec(node,target):
+            #this part i got
+            if not node:
+                return [None,None]
+            if node.val > target:
+                left = rec(node.left,target)
+                node.left = left[1]
+                return [left[0],node]
+            else:
+                right = rec(node.right,target)
+                node.right = right[0]
+                return [node,right[1]]
+        
+        return rec(root,target)
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def splitBST(self, root: Optional[TreeNode], target: int) -> List[Optional[TreeNode]]:
+        '''
+        usin names
+        '''
+        def rec(node,target):
+            #this part i got
+            if not node:
+                return None,None
+            #value is bigger than target, so we need split on the left side
+            if node.val > target:
+                #currenot node and its right subtree are > target
+                left,right = rec(node.left,target)
+                #need parts > target on the right side, whics is to the left of this node
+                node.left = right
+                return left,node
+            else:
+                #opposite
+                left,right = rec(node.right,target)
+                node.right = left
+                return node,right
+        
+        return rec(root,target)
