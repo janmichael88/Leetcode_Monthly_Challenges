@@ -245,3 +245,234 @@ class Solution:
             min_diff = min(min_diff, max(temp) - min(temp))
         
         return min_diff     
+    
+#################################################
+# 2307. Check for Contradictions in Equations
+# 03JUL24
+################################################
+#close one
+class Solution:
+    def checkContradictions(self, equations: List[List[str]], values: List[float]) -> bool:
+        '''
+        we can follow along a path
+        say we start at node u and through some path end up at v, then (u/v) is the product of the edges
+        '''
+        graph = defaultdict(list)
+        eqns_mapp = {}
+        N = len(equations)
+        
+        for i in range(N):
+            u,v = equations[i]
+            w = values[i]
+            eqns_mapp[(u,v)] = w
+            eqns_mapp[(v,u)] = 1/w
+            graph[u].append((v,w))
+            graph[v].append((u,1/w))
+        
+        
+        def dfs(start,curr,parent,product):
+            if (start,curr) in eqns_mapp:
+                #contradiction
+                if eqns_mapp[(start,curr)] != product:
+                    return False
+                return True
+            if (curr,start) in eqns_mapp:
+                if eqns_mapp[(curr,start)] != product:
+                    return False
+                return True
+            for neigh,weight in graph[curr]:
+                if neigh == parent:
+                    continue
+                if not dfs(start,neigh,curr,product*weight):
+                    return False
+            
+            return True
+        
+        for node in graph:
+            if not dfs(node,node,None,1):
+                return True
+        
+        return False
+    
+#dfs, 
+#endition condition is that nodes computed value is within tolerance
+class Solution:
+    def checkContradictions(self, equations: List[List[str]], values: List[float]) -> bool:
+        '''
+        convert equations to graph
+            a to b has weight 2
+            b to a has weight 1/w
+        
+        dfs from any univisted node, mark value as 1
+        if we reach anode that already has a value, check if the xisting value is the same as we computed so far
+        if not its a contraction
+        '''
+        graph = defaultdict(list)
+        N = len(equations)
+        
+        for i in range(N):
+            u,v = equations[i]
+            w = values[i]
+            graph[u].append((v,w))
+            graph[v].append((u,1/w))
+        
+        visited = {}
+        for node in graph:
+            if node not in visited:
+                if self.dfs(node,visited,graph,1.0):
+                    return True
+        return False
+        
+    
+    def dfs(self,node,visited,graph,path):
+        if node not in visited:
+            visited[node] = path
+            for neigh,weight in graph[node]:
+                if self.dfs(neigh,visited,graph,path/weight):
+                    return True
+        
+        #return in tolerance
+        return abs(visited[node] - path) >= 0.000001
+    
+#union find
+
+
+
+##################################################
+# 2181. Merge Nodes in Between Zeros
+#  04JUL24
+##################################################
+#no dummy head
+#two pass though
+#need to remove last zero
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        two pointers, if we are at a node and its zero, advance it and accumlate the sum,
+        then move reconnect its next  pointer
+        need dummy node
+        '''
+        curr = head
+        
+        
+        while curr != None:
+            if curr.val != 0:
+                prev = curr
+                curr = curr.next
+            else:
+                fast = curr.next
+                while fast != None and fast.val != 0:
+                    curr.val += fast.val
+                    fast = fast.next
+                
+                curr.next = fast
+                prev = curr
+                curr = fast
+        #trim last zero
+        prev = None
+        curr = head
+        
+        while curr != None:
+            if curr.val == 0:
+                prev.next = None
+                break
+            prev = curr
+            curr = curr.next
+        return head
+    
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        two pointers, if we are at a node and its zero, advance it and accumlate the sum,
+        then move reconnect its next  pointer
+        need dummy node
+        '''
+
+        curr = head
+        
+        while curr != None:
+            #leave it
+            if curr.val != 0:
+                prev = curr
+                curr = curr.next
+            #if we are at a zero
+            else:
+                fast = curr.next
+                while fast != None and fast.val != 0:
+                    curr.val += fast.val
+                    fast = fast.next
+                
+                if fast.next == None:
+                    curr.next = None
+                    break
+                curr.next = fast
+                curr = fast
+        return head
+                
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        omg first and ending nodes will always be zero
+        '''
+        fast  = head.next
+        slow = head
+        
+        while fast:
+            #if its not a zero, accumlate
+            if fast.val:
+                slow.val += fast.val
+            elif fast.next:
+                slow = slow.next
+                slow.val = 0
+            else:
+                slow.next = None
+            
+            fast = fast.next
+        
+        return head
+
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def mergeNodes(self, head: Optional[ListNode]) -> Optional[ListNode]:
+        '''
+        recursion, finish a block and return the sum
+        '''
+        
+        def rec(node):
+            node = node.next
+            if not node:
+                return node
+            curr = node
+            curr_sum = 0
+            while curr.val != 0:
+                curr_sum += curr.val
+                curr = curr.next
+            
+            #this node's val becomes sum
+            node.val = curr_sum
+            #recurse on the next part
+            node.next = rec(curr)
+            return node
+        
+        return rec(head)         
+            
+            
