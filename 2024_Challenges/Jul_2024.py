@@ -584,6 +584,64 @@ class Solution:
             return [-1,-1]
         return [min_dist, last_cp - first_cp]
         
-                        
-                        
-                
+#################################################
+# 2582. Pass the Pillow
+# 06JUL24 
+################################################     
+class Solution:
+    def passThePillow(self, n: int, time: int) -> int:
+        '''
+        i cant use an array of 2*n people
+        then return at index = time % len(arrayy)
+        the array should be
+        1,2,3,4,3,2
+        its a circular array
+        '''
+        people = [i for i in range(1,n+1)] + [i for i in range(n-1,1,-1)]
+        print(people)
+        return people[time % len(people)]
+
+#constant space
+class Solution:
+    def passThePillow(self, n: int, time: int) -> int:
+        '''
+        constant space
+        
+        if time < n
+            return time + 1
+            1,2,3,4,5
+            
+        if time > n, are we in the forward regime or reverse regime?
+            complete forward pass takes, n-1 time
+            1,2,3,4
+            complete reverse pass takes another n-1 time
+            4,3,2,1
+        
+        so every (n-1) seconds a pass is completed
+        
+        '''
+        if time < n:
+            return time + 1
+        
+        passes,position = divmod(time,n-1)
+        #forward pass
+        if passes % 2 == 0:
+            return position + 1
+        #reverse pass
+        else:
+            return n - position
+        
+#simulte,
+class Solution:
+    def passThePillow(self, n: int, time: int) -> int:
+        current_pillow_position = 1
+        current_time = 0
+        direction = 1
+        while current_time < time:
+            if 0 < current_pillow_position + direction <= n:
+                current_pillow_position += direction
+                current_time += 1
+            else:
+                # Reverse the direction if the next position is out of bounds
+                direction *= -1
+        return current_pillow_position
