@@ -476,3 +476,114 @@ class Solution:
         return rec(head)         
             
             
+#############################################################################
+# 2058. Find the Minimum and Maximum Number of Nodes Between Critical Points
+# 05JUL24
+#############################################################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def nodesBetweenCriticalPoints(self, head: Optional[ListNode]) -> List[int]:
+        '''
+        just keep track of positions of each node,
+        then update min and max distance between any two critical points
+        to check critical points, i need to have prev and a next
+        max distance is the distance between the first and last cp
+        min is just the min between the two points
+        '''
+        min_dist = float('inf')
+
+        first_cp = float('inf') 
+        last_cp = float('-inf')
+        last_seen_cp = -1
+        curr = head
+        prev = None
+        i = 0
+        
+        while curr:
+            #if there is a critical point
+            if prev and curr.next:
+                #maximum
+                if prev.val < curr.val and curr.val > curr.next.val:
+                    first_cp = min(first_cp,i)
+                    last_cp = max(last_cp,i)
+                    if last_seen_cp == -1:
+                        last_seen_cp = i
+                    else:
+                        min_dist = min(min_dist, i - last_seen_cp)
+                        last_seen_cp = i
+                        
+                elif prev.val > curr.val and curr.val < curr.next.val:
+                    first_cp = min(first_cp,i)
+                    last_cp = max(last_cp,i)
+                    if last_seen_cp == -1:
+                        last_seen_cp = i
+                    else:
+                        min_dist = min(min_dist, i - last_seen_cp)
+                        last_seen_cp = i
+            prev = curr
+            curr = curr.next
+            i += 1
+        
+        #now compute
+        #if onyl on cp
+        if first_cp == last_cp:
+            return [-1,-1]
+        
+        #not criptical point
+        if first_cp == float('inf') or last_cp == float('-inf'):
+            return [-1,-1]
+        return [min_dist, last_cp - first_cp]
+        
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def nodesBetweenCriticalPoints(self, head: Optional[ListNode]) -> List[int]:
+        '''
+        clearning up code
+        removing second conditional
+        '''
+        min_dist = float('inf')
+
+        first_cp = float('inf') 
+        last_cp = float('-inf')
+        last_seen_cp = -1
+        curr = head
+        prev = None
+        i = 0
+        
+        while curr:
+            #if there is a critical point
+            if prev and curr.next:
+                #maximum
+                if (prev.val < curr.val and curr.val > curr.next.val) or (prev.val > curr.val and curr.val < curr.next.val):
+                    first_cp = min(first_cp,i)
+                    last_cp = max(last_cp,i)
+                    if last_seen_cp == -1:
+                        last_seen_cp = i
+                    else:
+                        min_dist = min(min_dist, i - last_seen_cp)
+                        last_seen_cp = i
+            prev = curr
+            curr = curr.next
+            i += 1
+        
+        #now compute
+        #if onyl on cp
+        if first_cp == last_cp:
+            return [-1,-1]
+        
+        #not criptical point
+        if first_cp == float('inf') or last_cp == float('-inf'):
+            return [-1,-1]
+        return [min_dist, last_cp - first_cp]
+        
+                        
+                        
+                
