@@ -645,3 +645,147 @@ class Solution:
                 # Reverse the direction if the next position is out of bounds
                 direction *= -1
         return current_pillow_position
+    
+########################################
+# 1518. Water Bottles (REVISTED)
+# 07JUL24
+########################################
+class Solution:
+    def numWaterBottles(self, numBottles: int, numExchange: int) -> int:
+        '''
+        we can drink d bottles, and go down to d / numExhange
+        try all possible drinks
+        '''
+        memo = {}
+        def dp(numBottles,numExchange):
+            #no bottles, no drinks
+            if numBottles == 0:
+                return 0
+            if numBottles in memo:
+                return memo[numBottles]
+            ans = 0
+            for drink in range(1,numBottles+1):
+                new_bottles = numBottles - drink + (drink // numExchange)
+                ans = max(ans, drink + dp(new_bottles,numExchange))
+            
+            memo[numBottles] = ans
+            return ans
+        
+        return dp(numBottles,numExchange)
+    
+
+class Solution:
+    def numWaterBottles(self, numBottles: int, numExchange: int) -> int:
+        '''
+        need to keep track of empty and full
+        '''
+        full = numBottles
+        empty = 0
+        max_drank = 0
+        
+        while full > 0:
+            #drink all full ones
+            max_drank += full
+            #exchange
+            new_full,left_over_empty = divmod(full + empty, numExchange)
+            empty = left_over_empty
+            full = new_full
+        
+        return max_drank
+    
+##########################################################
+# 1836. Remove Duplicates From an Unsorted Linked List
+# 08JUL24
+##########################################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteDuplicatesUnsorted(self, head: ListNode) -> ListNode:
+        '''
+        keep count map and only include nodes that are unique, two pass
+        '''
+        counts = Counter()
+        curr = head
+        while curr != None:
+            counts[curr.val] += 1
+            curr = curr.next
+        
+        dummy = ListNode(-1)
+        prev = dummy
+        curr = head
+        
+        while curr != None:
+            if counts[curr.val] == 1:
+                prev.next = ListNode(curr.val)
+                prev = prev.next
+            curr = curr.next
+        
+        return dummy.next
+    
+    
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteDuplicatesUnsorted(self, head: ListNode) -> ListNode:
+        '''
+        keep count map and only include nodes that are unique, two pass
+        '''
+        counts = Counter()
+        curr = head
+        while curr != None:
+            counts[curr.val] += 1
+            curr = curr.next
+        
+        dummy = ListNode(-1)
+        dummy.next = head
+        prev = dummy
+        curr = head
+        
+        while curr:
+            if counts[curr.val] > 1:
+                prev.next = curr.next
+            else:
+                prev = curr
+            curr = curr.next
+        
+        return dummy.next
+    
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def deleteDuplicatesUnsorted(self, head: ListNode) -> ListNode:
+        '''
+        keep count map and only include nodes that are unique, two pass
+        '''
+        counts = Counter()
+        curr = head
+        while curr != None:
+            counts[curr.val] += 1
+            curr = curr.next
+            
+        return self.delete(head,counts)
+    
+    def delete(self, node, counts):
+        if not node:
+            return None
+        
+        removed = self.delete(node.next,counts)
+        node.next = removed
+        
+        if counts[node.val] > 1:
+            return removed
+        return node
+        
+        
+        
+        
+        
