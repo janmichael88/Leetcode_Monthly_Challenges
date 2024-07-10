@@ -335,7 +335,65 @@ class Solution:
         return abs(visited[node] - path) >= 0.000001
     
 #union find
-
+class DSU:
+    def __init__(self,):
+        self.parents = {}
+        self.values = {}
+    
+    def add(self,x):
+        if x not in self.parents:
+            self.parents[x] = x
+            self.values[x] = 1
+            
+    def find(self,x):
+        if self.parents[x] != x:
+            self.parents[x], val = self.find(self.parents[x])
+            #not really like path compression
+            self.values[x] *= val
+        
+        return self.parents[x], self.values[x]
+    
+    def union(self,x,y,val):
+        (x_par,x_val) = self.find(x)
+        (y_par,y_val) = self.find(y)
+        
+        self.parents[x_par] = y_par
+        self.values[x_par] *= (y_val/x_val)*val
+        
+class Solution:
+    def checkContradictions(self, equations: List[List[str]], values: List[float]) -> bool:
+        '''
+        we can use union find, to detect contractions, but slighlty modified
+        keep nodes value at 1, and update when there is a relationshop
+        idea:
+            knowing a/b, a/c, a/d, this is all just one group
+            a/root, b/root, c/root, d/root
+        
+        say for example, if we want to know b/d, we can just do
+        b/root *(root/d) = b/d
+        initially all roots are just 1
+        idea is that if we have already found a value, we can check in constant time using union find
+        need to initialize the struct with parents to itself, and values as 1
+        '''
+        #initilaize
+        dsu = DSU()
+        for u,v in equations:
+            dsu.add(u)
+            dsu.add(v)
+        
+        for (x,y),val in zip(equations,values):
+            x_par,x_val = dsu.find(x)
+            y_par,y_val = dsu.find(y)
+            
+            #point to same root, checl
+            if x_par == y_par:
+                to_check = x_val/y_val
+                if abs(to_check - val) > 0.00001:
+                    return True
+            else:
+                dsu.union(x,y,val)
+            
+        return False
 
 
 ##################################################
@@ -756,6 +814,7 @@ class Solution:
         
         return dummy.next
     
+#recursive 
 # Definition for singly-linked list.
 # class ListNode:
 #     def __init__(self, val=0, next=None):
@@ -784,8 +843,124 @@ class Solution:
         if counts[node.val] > 1:
             return removed
         return node
+    
+############################################
+# 3100. Water Bottles II
+# 08JUL24
+############################################
+#top down dp works just fine
+class Solution:
+    def maxBottlesDrunk(self, numBottles: int, numExchange: int) -> int:
+        '''
+        try dp first
+        '''
+        memo = {}
+        def dp(full,empty,k):
+            #no fulls, check if we can make more
+            if full == 0:
+                if empty < k:
+                    #cant drink anymore
+                    return 0
+                return dp(full + 1, empty - k, k+1)
+            if (full,empty,k) in memo:
+                return memo[(full,empty,k)]
+            #get more fulls from empty
+            exchange = 0
+            if empty >= k:
+                exchange = dp(full + 1, empty - k, k+1)
+            
+            for drink in range(1,full+1):
+                exchange = max(exchange, drink + dp(full - drink, empty + drink,k))
+            
+            memo[(full,empty,k)] = exchange
+            return exchange
+        
+        return dp(numBottles,0,numExchange)
         
         
         
+#######################################
+# 1701. Average Waiting Time
+# 09JUL24
+########################################
+class Solution:
+    def averageWaitingTime(self, customers: List[List[int]]) -> float:
+        '''
+        cheif can only prepare one meal at a time
+        arrives, then cooks -> waititime time is cooked_time - arrived
+        order of arrival is given in the interal input
+        just comute total waiting time and get average
+        the issue is that customers could arrive at the same time, and they'll be waiting for all other customers to be done
+        '''
+        N = len(customers)
+        total_wait_time = 0
+        earliest_available_time = 0
+        for arrival,prep in customers:
+            #chef is available
+            if earliest_available_time < arrival:
+                total_wait_time += prep
+                earliest_available_time = arrival + prep
+            else:
+                total_wait_time += (earliest_available_time - arrival) + prep
+                earliest_available_time += prep
         
         
+        return total_wait_time / N
+    
+class Solution:
+    def averageWaitingTime(self, customers: List[List[int]]) -> float:
+        '''
+        we can keep update using max
+        '''
+        N = len(customers)
+        total_wait_time = 0
+        earliest_available_time = 0
+        for arrival,prep in customers:
+            earliest_available_time = max(earliest_available_time, arrival) + prep
+            total_wait_time += earliest_available_time - arrival
+        
+        return total_wait_time / N
+    
+#################################################
+# 1752. Check if Array Is Sorted and Rotated
+# 10JUL24
+#################################################
+class Solution:
+    def check(self, nums: List[int]) -> bool:
+        '''
+        try all rotations and check that its sorted
+        '''
+        N = len(nums)
+        for i in range(N+1):
+            rotated = self.rotate(nums,i)
+            if self.isSorted(rotated):
+                return True
+        return False
+    
+    def rotate(self,nums,k):
+        return nums[k:] + nums[:k]
+    
+    def isSorted(self,nums):
+        N = len(nums)
+        for i in range(1,N):
+            if nums[i] < nums[i-1]:
+                return False
+        return True
+        
+class Solution:
+    def check(self, nums: List[int]) -> bool:
+        '''
+        there can only be one peak
+        only works becasue rotation from 0 is allowed
+        '''
+        peaks = 0
+        for i in range(len(nums)): 
+            if nums[i-1] > nums[i]: peaks += 1
+        return peaks <= 1
+    
+class Solution:
+    def check(self, nums: List[int]) -> bool:
+        cnt = 0
+        for i in range(1, len(nums)): 
+            if nums[i-1] > nums[i]: cnt += 1
+        return cnt == 0 or cnt == 1 and nums[-1] <= nums[0]
