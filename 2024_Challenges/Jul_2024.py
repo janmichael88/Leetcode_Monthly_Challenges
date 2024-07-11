@@ -877,8 +877,57 @@ class Solution:
         
         return dp(numBottles,0,numExchange)
         
+class Solution:
+    def maxBottlesDrunk(self, numBottles: int, numExchange: int) -> int:
+        '''
+        keep drinking numExchange
+        '''
+        ans = 0
+        while numBottles >= numExchange:
+            ans += numExchange
+            numBottles -= numExchange
+            #dont forget we gain a bottle
+            numBottles += 1
+            numExchange += 1
+            
+        return ans + numBottles #dont forget to add the remanining
         
-        
+#constant space, mathzzz
+'''
+Let's formulate the problem setup in mathematical terms. Define the following:
+
+$$N$$ = numBottles
+$$d$$ = numExchange
+$$x$$ = number of exchanges possible (earned bottles)
+Hence, the total number of available bottles is:
+$$N + x$$
+
+The total number of bottles exchanged can be expressed as the sum:
+$$\sum_{i=0}^{x - 1} (d + i)$$
+
+Given that it's impossible to exchange more bottles than we possess, we derive the inequality:
+$$\sum_{i=0}^{x - 1} (d + i) \leq N + x$$
+$$\sum_{i=0}^{x - 1} d + \sum_{i=1}^{x - 1} i \leq N + x$$
+$$xd + \frac{x(x-1)}{2} \leq N + x$$
+$$x^2 + (2d-3)x - 2N \leq 0$$
+
+We aim to find the maximal positive $$x$$ that satisfies this inequality. The left side forms a parabola with branches pointing upwards, so we seek the larger root, rounded down.
+
+Approach
+To solve the equation $$x^2 + (2d-3)x - 2N = 0$$, we use the discriminant:
+$$D = (2d-3)^2 + 8N$$
+$$x = \Big\lceil{\frac{-(2d-3) + \sqrt{D}}{2}}\Big\rceil$$
+'''
+
+from math import sqrt
+
+class Solution:
+    def maxBottlesDrunk(self, numBottles: int, numExchange: int) -> int:
+        numBottles -= 1
+        D = (2 * numExchange - 3)**2 + 8 * numBottles
+        res = int((-(2 * numExchange - 3) + sqrt(D)) / 2)
+        return numBottles + res + 1
+
 #######################################
 # 1701. Average Waiting Time
 # 09JUL24
@@ -964,3 +1013,90 @@ class Solution:
         for i in range(1, len(nums)): 
             if nums[i-1] > nums[i]: cnt += 1
         return cnt == 0 or cnt == 1 and nums[-1] <= nums[0]
+
+############################################################
+# 1190. Reverse Substrings Between Each Pair of Parentheses 
+# 11JUL24
+############################################################
+class Solution:
+    def reverseParentheses(self, s: str) -> str:
+        '''
+        when we hit a close, we need to revese the chars in the stack, up until thw first opening
+        '''
+        stack = []
+        for ch in s:
+            if ch == ')':
+                on_stack = []
+                while stack and stack[-1] != '(':
+                    on_stack.append(stack.pop())
+                
+                #matching opening
+                stack.pop()
+                stack.extend(on_stack)
+            else:
+                stack.append(ch)
+        
+        return "".join(stack)
+                
+class Solution:
+    def reverseParentheses(self, s: str) -> str:
+        '''
+        instead of ferrying with list and stack, we can use one q to store the lengths of our result so far
+        each time we hit an opening '(' we push the current length
+        when we encounter a ')' we pop the lat index from the stack
+        then we can reverse from the last '(' to the current ')'
+        
+        '''
+        open_brackets_idxs = []
+        result = []
+        
+        for ch in s:
+            #opening, mark starting of reverse
+            if ch == '(':
+                open_brackets_idxs.append(len(result))
+            #clsoing,reverse up to heare
+            elif ch == ')':
+                starting = open_brackets_idxs.pop()
+                result[starting:] = result[starting:][::-1]
+            else:
+                result.append(ch)
+        
+        return "".join(result)
+    
+#wormhole teleportation technique, LMAOOO
+class Solution:
+    def reverseParentheses(self, s: str) -> str:
+        '''
+        O(N) wormhole technique
+        firt pass:
+            use stack to pair up matchind parantheses idxs with each other using stack
+        
+        second pass:
+            travse string but keep pointers into string and direction
+            if ch is in '()' then move to its matching parantehse and swap direction
+            otherwise add to char to the result
+        '''
+        N = len(s)
+        open_ps_stack = []
+        pairs = [0]*N
+        
+        for i,ch in enumerate(s):
+            if ch == '(':
+                open_ps_stack.append(i)
+            elif ch == ')':
+                j = open_ps_stack.pop()
+                pairs[i] = j
+                pairs[j] = i
+            
+        ans = []
+        i = 0
+        direction = 1
+        while i < N:
+            if s[i] in '()':
+                i = pairs[i]
+                direction *= -1
+            else:
+                ans.append(s[i])
+            i += direction
+        
+        return "".join(ans)
