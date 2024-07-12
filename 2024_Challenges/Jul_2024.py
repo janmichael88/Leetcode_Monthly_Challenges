@@ -1100,3 +1100,114 @@ class Solution:
             i += direction
         
         return "".join(ans)
+    
+################################################
+# 1717. Maximum Score From Removing Substrings
+# 12JUL24
+################################################
+class Solution:
+    def maximumGain(self, s: str, x: int, y: int) -> int:
+        '''
+        we can only remove 'ab' from s, if 'ab' isn't in there we can't gain any points
+        does order matter in this removal? probably not, constraints are 10**5
+        length 2
+            ab, ba
+        length 4
+            abab, baba, abba baab
+        if ab and ab (or wtv other pair combo) is sperated by a substring not a pair combo, 
+        then removing the pair combon wont bring them together
+        
+        take the more optimal substring
+        cdbcbbaaabab
+        
+        cdbc
+        
+        remove high priorty pair first, then low priority
+        bbaaabab
+        
+        
+        '''
+        high_score, high_code = None,None
+        low_score, low_code = None,None
+        
+        if x >= y:
+            high_score,high_code = x, 'ab'
+            low_score, low_code =  y, 'ba'
+        else:
+            high_score,high_code = y, 'ba'
+            low_score, low_code =  x, 'ab'
+            
+        #do high first
+        stack = []
+        score = 0
+        for ch in s:
+            if stack and stack[-1] == high_code[0] and ch == high_code[1]:
+                stack.pop()
+                score += high_score
+            else:
+                stack.append(ch)
+        
+        
+        #now low score, but do on removed characters from high code
+        s = stack
+        stack = []
+        for ch in s:
+            if stack and stack[-1] == low_code[0] and ch == low_code[1]:
+                stack.pop()
+                score += low_score
+            else:
+                stack.append(ch)
+        
+        return score
+    
+#consolidate 
+class Solution:
+    def maximumGain(self, s: str, x: int, y: int) -> int:
+        
+        codes = [('a','b',x), ('b','a',y)]
+        if x < y:
+            codes[0],codes[1] = codes[1],codes[0]
+        
+        ans = 0
+        for left,right,score in codes:
+            stack = []
+            for ch in s:
+                if stack and stack[-1] == left and ch == right:
+                    stack.pop()
+                    ans += score
+                else:
+                    stack.append(ch)
+            
+            #swap
+            s = stack
+        
+        return ans
+    
+#greedy, stack and counting
+class Solution:
+    def maximumGain(self, s: str, x: int, y: int) -> int:
+        '''
+        another way is to removal, and find the different in lengths between removals
+        the difference // 2 is multiplied by the corresponding score
+        '''
+        score = 0
+        high = 'ab' if x > y else 'ba'
+        low = 'ba' if high == 'ab' else 'ab'
+        
+        first_pass = self.remove_target(s,high)
+        score += ((len(s) - len(first_pass))//2)*max(x,y)
+        
+        second_pass = self.remove_target(first_pass,low)
+        score += ((len(first_pass) - len(second_pass))//2)*min(x,y)
+        
+        return score
+    
+    def remove_target(self,s,target_pair):
+        stack = []
+        for ch in s:
+            if stack and stack[-1] == target_pair[0] and ch == target_pair[1]:
+                stack.pop()
+            else:
+                stack.append(ch)
+        
+        return "".join(stack)
