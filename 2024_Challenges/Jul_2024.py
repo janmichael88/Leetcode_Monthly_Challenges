@@ -1211,3 +1211,155 @@ class Solution:
                 stack.append(ch)
         
         return "".join(stack)
+    
+#########################################
+# 2751. Robot Collisions
+# 13JUL24
+#########################################
+class Solution:
+    def survivedRobotsHealths(self, positions: List[int], healths: List[int], directions: str) -> List[int]:
+        '''
+        rules:
+            if two robots collide and have same health:
+                remove robot with lower health and larger health -= 1
+                surviving robot continues in same direction
+            if both robots have == health:
+                remove them from the line
+        only include them if they survive
+        make sure to return the array in the initial order they were given in positions
+        simulating would take too long
+        
+        theres only one way it can collide, stack robot must be doing right, the other one must be going left
+        '''
+        #first sort them
+        sortedEntries = []
+        for p,h,d in zip(positions,healths,directions):
+            entry = [p,h,d]
+            sortedEntries.append(entry)
+        
+        sortedEntries.sort()
+        stack = [sortedEntries[0]]
+        for i in range(1,len(sortedEntries)):
+            curr_robot = sortedEntries[i]
+            while stack and stack[-1][2] == 'R' and curr_robot[2] == 'L':
+                #equal healths
+                if stack[-1][1] == curr_robot[1]:
+                    stack.pop()
+                    break
+                #curr robot can keep going left
+                elif curr_robot[1] > stack[-1][1]:
+                    stack.pop()
+                    curr_robot[1] -= 1
+                #curr robot cant beat top of stack robot
+                elif stack[-1][1] > curr_robot[1]:
+                    stack[-1][1] -= 1
+                    break
+            else:
+                stack.append(curr_robot)
+        
+        #rebuild ans
+        mapp = {}
+        for p,h,d in stack:
+            mapp[p] = h
+        
+        ans = []
+        
+        for p in positions:
+            if p in mapp:
+                ans.append(mapp[p])
+        
+        return ans
+            
+#############################################
+# 2196. Create Binary Tree From Descriptions
+# 15JUL24
+#############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def createBinaryTree(self, descriptions: List[List[int]]) -> Optional[TreeNode]:
+        '''
+        values are unique, we need to build the graph and start with the root
+        the build the tree, left to right
+        '''
+        graph = defaultdict(list)
+        indegree = defaultdict(int)
+        
+        for parent,child,direction in descriptions:
+            graph[parent].append((child,direction))
+            if parent not in indegree:
+                indegree[parent] = 0
+            indegree[child] += 1
+            
+        #find root
+        root = None
+        for node,count in indegree.items():
+            if count == 0:
+                root = TreeNode(node)
+                break
+                
+        curr = root
+        q = deque([curr])
+        while q:
+            node = q.popleft()
+            children = graph[node.val]
+            #sort
+            children.sort(key = lambda x: -x[1])
+            for v,direction in children:
+                if direction == 1:
+                    left = TreeNode(v)
+                    node.left = left
+                    q.append(left)
+                if direction == 0:
+                    right = TreeNode(v)
+                    node.right = right
+                    q.append(right)
+        return curr
+        
+#no need to sort
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def createBinaryTree(self, descriptions: List[List[int]]) -> Optional[TreeNode]:
+        '''
+        values are unique, we need to build the graph and start with the root
+        the build the tree, left to right
+        using dfs
+        '''
+        graph = defaultdict(list)
+        indegree = defaultdict(int)
+        
+        for parent,child,direction in descriptions:
+            graph[parent].append((child,direction))
+            if parent not in indegree:
+                indegree[parent] = 0
+            indegree[child] += 1
+            
+        #find root
+        root = None
+        for node,count in indegree.items():
+            if count == 0:
+                root = node
+                break
+        
+        def build(val,graph):
+            node = TreeNode(val)
+            for child,is_left in graph[val]:
+                #we dont need to sort
+                if is_left == 1:
+                    node.left = build(child,graph)
+                else:
+                    node.right = build(child,graph)
+            
+            return node
+        
+        
+        return build(root,graph)
