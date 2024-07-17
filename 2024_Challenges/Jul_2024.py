@@ -1363,3 +1363,193 @@ class Solution:
         
         
         return build(root,graph)
+    
+###################################################################
+# 2096. Step-By-Step Directions From a Binary Tree Node to Another
+# 16JUL24
+###################################################################
+#yessss
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getDirections(self, root: Optional[TreeNode], startValue: int, destValue: int) -> str:
+        '''
+        find LCA for start value and end value
+        need reverse directions from start to LCA, and forward directions from lcs to dest
+        '''
+        lca = self.lca(root,startValue,destValue)
+        _,lca_to_s = self.getPath(lca,startValue)
+        _,lca_to_d = self.getPath(lca,destValue)
+
+        return "U"*len(lca_to_s) + lca_to_d
+    
+    def lca(self,root,p,q):
+        if not root:
+            return None
+        if root.val == p or root.val == q:
+            return root
+        left = self.lca(root.left,p,q)
+        right = self.lca(root.right,p,q)
+        #ans is root
+        if left != None and right != None:
+            return root
+        #get left of right acnestors
+        elif left:
+            return left
+        return right
+
+    def getPath(self,root,val):
+        if not root:
+            return [False,""]
+        if root.val == val:
+            return [True, ""]
+        found_left,path_left = self.getPath(root.left,val)
+        found_right,path_right = self.getPath(root.right,val)
+        if found_left:
+            return [True,"L"+path_left]
+        elif found_right:
+            return [True,"R"+path_right]
+        return [False, ""]
+        
+#converting to graph
+class Solution:
+    def getDirections(
+        self, root: TreeNode, startValue: int, destValue: int
+    ) -> str:
+        # Map to store parent nodes
+        parent_map = {}
+
+        # Find the start node and populate parent map
+        start_node = self._find_start_node(root, startValue)
+        self._populate_parent_map(root, parent_map)
+
+        # Perform BFS to find the path
+        q = deque([start_node])
+        visited_nodes = set()
+        # Key: next node, Value: <current node, direction>
+        path_tracker = {}
+        visited_nodes.add(start_node)
+
+        while q:
+            current_element = q.popleft()
+
+            # If destination is reached, return the path
+            if current_element.val == destValue:
+                return self._backtrack_path(current_element, path_tracker)
+
+            # Check and add parent node
+            if current_element.val in parent_map:
+                parent_node = parent_map[current_element.val]
+                if parent_node not in visited_nodes:
+                    q.append(parent_node)
+                    path_tracker[parent_node] = (current_element, "U")
+                    visited_nodes.add(parent_node)
+
+            # Check and add left child
+            if (
+                current_element.left
+                and current_element.left not in visited_nodes
+            ):
+                q.append(current_element.left)
+                path_tracker[current_element.left] = (current_element, "L")
+                visited_nodes.add(current_element.left)
+
+            # Check and add right child
+            if (
+                current_element.right
+                and current_element.right not in visited_nodes
+            ):
+                q.append(current_element.right)
+                path_tracker[current_element.right] = (current_element, "R")
+                visited_nodes.add(current_element.right)
+
+        # This line should never be reached if the tree is valid
+        return ""
+
+    def _backtrack_path(self, node, path_tracker):
+        path = []
+        # Construct the path
+        while node in path_tracker:
+            # Add the directions in reverse order and move on to the previous node
+            path.append(path_tracker[node][1])
+            node = path_tracker[node][0]
+        path.reverse()
+        return "".join(path)
+
+    def _populate_parent_map(self, node, parent_map):
+        if not node:
+            return
+
+        # Add children to the map and recurse further
+        if node.left:
+            parent_map[node.left.val] = node
+            self._populate_parent_map(node.left, parent_map)
+
+        if node.right:
+            parent_map[node.right.val] = node
+            self._populate_parent_map(node.right, parent_map)
+
+    def _find_start_node(self, node, start_value):
+        if not node:
+            return None
+
+        if node.val == start_value:
+            return node
+
+        left_result = self._find_start_node(node.left, start_value)
+
+        # If left subtree returns a node, it must be StartNode. Return it
+        # Otherwise, return whatever is returned by right subtree.
+        if left_result:
+            return left_result
+        return self._find_start_node(node.right, start_value)
+    
+#find longest common prefix in paths
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def getDirections(self, root: Optional[TreeNode], startValue: int, destValue: int) -> str:
+        '''
+        instead of fiding the LCA, we can directly find the full pahts from root to both startValue and destValue
+        then trim off the common parts, then reverse the directions from root to startValue and replace them with U
+        for finding paths, we can use backtracking
+        '''
+        start_path = []
+        dest_path = []
+        
+        self.getPath(root,startValue,start_path)
+        self.getPath(root,destValue,dest_path)
+        
+        #find longest common prefix
+        i = 0
+        while i < len(start_path) and i < len(dest_path) and start_path[i] == dest_path[i]:
+            i += 1
+        
+        
+        return 'U'*(len(start_path) - i)+"".join(dest_path[i:])
+    
+    def getPath(self, node, target,path):
+        if not node:
+            return False
+        if node.val == target:
+            return True
+        path.append('L')
+        if self.getPath(node.left,target,path):
+            return True
+        path.pop()
+        
+        #try going right
+        path.append('R')
+        if self.getPath(node.right,target,path):
+            return True
+        path.pop()
+        
+        return False
