@@ -1812,3 +1812,46 @@ class Solution:
             counts[s] += 1
             
         return counts[maxLen]
+    
+
+class Solution:
+    def countGoodRectangles(self, rectangles: List[List[int]]) -> int:
+        '''
+        just try making the squares
+        '''
+        maxLen = float('-inf')
+        for l,w in rectangles:
+            if l <= w:
+                s = l
+            else:
+                s = w
+            maxLen = max(maxLen,s)
+        
+        counts = 0
+        for l,w in rectangles:
+            if l <= w:
+                s = l
+            else:
+                s = w
+            counts += s == maxLen
+        return counts
+    
+class Solution:
+    def countGoodRectangles(self, rectangles: List[List[int]]) -> int:
+        '''
+        one pass, keep count and update
+        '''
+        maxLen = float('-inf')
+        counts = 1
+        for l,w in rectangles:
+            if l <= w:
+                s = l
+            else:
+                s = w
+            
+            if s > maxLen:
+                maxLen = s
+                counts = 1
+            elif s == maxLen:
+                counts += 1
+        return counts
