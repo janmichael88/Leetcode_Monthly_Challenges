@@ -1553,3 +1553,262 @@ class Solution:
         path.pop()
         
         return False
+    
+##################################################
+# 1110. Delete Nodes And Return Forest (REVISTED)
+# 17JUL24
+#################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def delNodes(self, root: Optional[TreeNode], to_delete: List[int]) -> List[TreeNode]:
+        '''
+        keep global forest, and if we need to delete, add its children
+        as we recurse, we need to delete in place!
+        '''
+        forest = []
+        to_delete = set(to_delete)
+        
+        def rec(node,to_delete):
+            if not node:
+                return node
+            
+            #first delete on the subtrees
+            node.left = rec(node.left,to_delete)
+            node.right = rec(node.right,to_delete)
+            if node.val in to_delete:
+                #add children
+                if node.left:
+                    forest.append(node.left)
+                if node.right:
+                    forest.append(node.right)
+                #delete current node
+                return None
+            
+            return node
+    
+        root = rec(root,to_delete)
+        if root:
+            forest.append(root)
+        
+        return forest
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def delNodes(self, root: Optional[TreeNode], to_delete: List[int]) -> List[TreeNode]:
+        '''
+        we can do bfs, check if we need to delte node, if we need to delete, set children to non
+        '''
+        if not root:
+            return []
+        
+        to_delete = set(to_delete)
+        forest = []
+        
+        q = deque([root])
+        
+        while q:
+            curr = q.popleft()
+            if curr.left:
+                q.append(curr.left)
+                if curr.left.val in to_delete:
+                    curr.left = None
+            
+            if curr.right:
+                q.append(curr.right)
+                if curr.right.val in to_delete:
+                    curr.right = None
+            
+            if curr.val in to_delete:
+                if curr.left:
+                    forest.append(curr.left)
+                if curr.right:
+                    forest.append(curr.right)
+        
+        if root.val not in to_delete:
+            forest.append(root)
+        
+        return forest
+
+#############################################
+# 1530. Number of Good Leaf Nodes Pairs
+# 18JUL24
+#############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countPairs(self, root: TreeNode, distance: int) -> int:
+        '''
+        there are 2**10 nodes, 1024, if i had the graph, i could just do pairwise dists for each
+        fuck, values won't be unique, need to mapp nodes to other nodes instead
+        oh fuck its shortes path
+        make sure to acutally start at the leaf nodes
+        '''
+        graph = defaultdict(list)
+        degree = defaultdict(int)
+        leaf_nodes = []
+        self.populate(root,None,graph,degree,leaf_nodes)
+        #print([v.val for v in leaf_nodes])
+        #for k,v in graph.items():
+        #    print(k.val, [x.val for x in v ])
+        #dfs on each leaf node
+        ans = 0
+        for l in leaf_nodes:
+            ans += self.dfs(l,None,graph,distance)
+        
+        return ans // 2
+    
+    def populate(self,node,parent,graph,degree,leaf_nodes):
+        if not node:
+            return
+        if not node.left and not node.right:
+            leaf_nodes.append(node)
+        if parent != None:
+            graph[node].append(parent)
+            graph[parent].append(node)
+            degree[node] += degree.get(node,0) + 1
+            degree[parent] += degree.get(parent,0) + 1
+        
+        self.populate(node.left,node,graph,degree,leaf_nodes)
+        self.populate(node.right,node,graph,degree,leaf_nodes)
+    
+    def dfs(self,node,parent,graph,steps):
+        if not node:
+            return 0
+        if steps < 0:
+            return 0
+        #cant be the first node we start at
+        if parent != None and not node.left and not node.right and steps >= 0:
+            return 1
+        count = 0
+        for neigh in graph[node]:
+            if neigh != parent:
+                count += self.dfs(neigh,node,graph,steps-1)
+        return count
+            
+#bfs
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countPairs(self, root: TreeNode, distance: int) -> int:
+        '''
+        we can also do bfs
+        but we only do bfs in distance stpes
+        '''
+        graph = defaultdict(list)
+        leaf_nodes = set()
+        self.populate(root,None,graph,leaf_nodes)
+        ans = [0]
+        for l in leaf_nodes:
+            self.bfs(l,graph,distance,leaf_nodes,ans)
+        
+        return ans[0] // 2
+    
+    def populate(self,node,parent,graph,leaf_nodes):
+        if not node:
+            return
+        if not node.left and not node.right:
+            leaf_nodes.add(node)
+        if parent != None:
+            graph[node].append(parent)
+            graph[parent].append(node)
+        
+        self.populate(node.left,node,graph,leaf_nodes)
+        self.populate(node.right,node,graph,leaf_nodes)
+    
+    def bfs(self,node,graph,steps,leaf_nodes,ans):
+        q = deque([node])
+        seen = set()
+        seen.add(node)
+        for _ in range(steps+1):
+            N = len(q)
+            for _ in range(N):
+                curr_node = q.popleft()
+                if curr_node in leaf_nodes and curr_node != node:
+                    ans[0] += 1
+                for neigh in graph[curr_node]:
+                    if neigh not in seen:
+                        q.append(neigh)
+                        seen.add(neigh)
+            
+#lca intuition
+
+
+############################################
+# 1380. Lucky Numbers in a Matrix (REVISTED)
+# 19JUL24
+############################################
+class Solution:
+    def luckyNumbers (self, matrix: List[List[int]]) -> List[int]:
+        '''
+        there can only be one lucky number
+        proff by contraction
+        assume we have X and its lucky at (r1,c1)
+        and assume we have another Y and its lucky at (r2,c2)
+        now let A be (r2,c1)
+        if Y is lucky,
+        Y < A, (Y is minimum here)
+        X > A, (X is maximum here)
+        
+        but this cannot be, because if Y is also lucky, then there is another number B at (r1,c2)
+        Y > B (Y ix max here)
+        X < B (X is min here)
+        
+        so Y > X, contradiction!
+        
+        first find the min element in reach row, then max them up
+        then find the max of each col, and min them up
+        if == , then we have our answer
+        '''
+        rows, cols = len(matrix),len(matrix[0])
+        
+        r_min_max = float('-inf')
+        for r in matrix:
+            r_min_max = max(r_min_max,min(r))
+        
+        c_max_min = float('inf')
+        #find max along cols
+        for c in zip(*matrix):
+            c_max_min = min(c_max_min, max(c))
+        
+        if r_min_max == c_max_min:
+            return [r_min_max]
+        return []
+    
+#################################################################
+# 1725. Number Of Rectangles That Can Form The Largest Square
+# 19JUL24
+#################################################################
+class Solution:
+    def countGoodRectangles(self, rectangles: List[List[int]]) -> int:
+        '''
+        just try making the squares
+        '''
+        counts = Counter()
+        maxLen = float('-inf')
+        for l,w in rectangles:
+            if l <= w:
+                s = l
+            else:
+                s = w
+            maxLen = max(maxLen,s)
+            counts[s] += 1
+            
+        return counts[maxLen]
