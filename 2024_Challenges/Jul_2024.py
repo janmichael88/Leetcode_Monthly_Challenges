@@ -1955,3 +1955,82 @@ class Solution:
             elif s == maxLen:
                 counts += 1
         return counts
+    
+#######################################################
+# 1605. Find Valid Matrix Given Row and Column Sums
+# 20JUN24
+######################################################
+#greedy
+class Solution:
+    def restoreMatrix(self, rowSum: List[int], colSum: List[int]) -> List[List[int]]:
+        '''
+        its guaranteed to exist
+        notice the sum(rowSum) == sum(colSum)
+        start with smallest rowSum or colSum
+        it works, but idk why
+        
+        cant place negatives, so sums never go below zero
+        we are free to place 0s -> put down limit and fill with 0s
+        so at (r,c) what rowSum or colSum fo we use
+        if we go over limit, we can build matix
+        but what if we put min, put min and decrement
+        '''
+        rows, cols = len(rowSum),len(colSum)
+        ans = [[0]*cols for _ in range(rows)]
+        
+        for i in range(rows):
+            for j in range(cols):
+                entry = min(rowSum[i],colSum[j])
+                ans[i][j] = entry
+                rowSum[i] -= entry
+                colSum[j] -= entry
+        
+        return ans
+            
+#brute force
+class Solution:
+    def restoreMatrix(self, rowSum: List[int], colSum: List[int]) -> List[List[int]]:
+        '''
+        place as much as we can at each (i,j) up the the minimum limit base on rows and cols,
+        '''
+        rows,cols = len(rowSum),len(colSum)
+        ans = [[0 for _ in range(cols)] for _ in range(rows)]
+        
+        currRowSums = [0]*rows
+        currColSums =[0]*cols
+        
+        for i in range(rows):
+            for j in range(cols):
+                entry = min(rowSum[i] - currRowSums[i], colSum[j] - currColSums[j])
+                ans[i][j] = entry
+                #tally up
+                currRowSums[i] += entry
+                currColSums[j] += entry
+        
+        return ans
+    
+#space optimized
+class Solution:
+    def restoreMatrix(self, rowSum: List[int], colSum: List[int]) -> List[List[int]]:
+        '''
+        effecient traversal is like saddleback search
+        If we dont have a rowSum or colSum to contribute to an (i,j) just go on to the next one.
+        '''
+        rows,cols = len(rowSum),len(colSum)
+        ans = [[0 for _ in range(cols)] for _ in range(rows)]
+        
+        i,j = 0,0
+        
+        while i < rows and j < cols:
+            entry = min(rowSum[i],colSum[j])
+            ans[i][j] = entry
+            
+            rowSum[i] -= entry
+            colSum[j] -= entry
+            
+            if rowSum[i] == 0:
+                i += 1
+            elif colSum[j] == 0:
+                j += 1
+        
+        return ans
