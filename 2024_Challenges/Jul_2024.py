@@ -1749,7 +1749,107 @@ class Solution:
                         seen.add(neigh)
             
 #lca intuition
-
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countPairs(self, root: TreeNode, distance: int) -> int:
+        '''
+        post-order traversal
+        intuition: the shortest path between any to nodes will always go through their LCA
+        for every node n, we consider paths between all pairs of decendatns in the current subtree rooted at n and check if they are wthin the 
+        specified distance, since n servers as the LCA for these leaves, these paths are inherntly the shortest
+        at each call we need to return the number of leaf nodes and the distance that each leaf node is at -> YIKES
+        
+        intution 2
+        each recursive call return the count of leaf nodes that are a distance d way for all possible values of d
+        base case is if leaf node, return distnace 0 and 1 leaf node from current subtree
+        
+        rec(node) returns the number of leaf nodes that that are a distance d, for each d not more than the given distance
+        knowing the number of "leaf" nodes that are some distance d, we can count paths
+        
+        given some node, the distance of thee shortest leaf node path thropugh node is
+            number of leaf nodes rooted at 2 + rec(node.left) + rec(node.right)
+            number of pairs is just the product of left and right
+            we only count the pairs whose shortest path distance is < our given distance
+        
+        the next step is to return the counts of leaf nodes for all distances d from t he current node
+        we can get this by shifting all the counts returned from left and right by 1
+        exmplae, 1 leaf node that is distance 0 from some node X will translate to 1 leaf node taht is a distance 1 from another node Y
+        
+        '''
+        def dp(node,distance):
+            #input d <= 10
+            if node == None:
+                return [0]*12
+            elif node.left == None and node.right == None:
+                current = [0]*12
+                current[0] = 1 #we have one leaf node that is 0 distance away from itselft
+                return current
+            
+            left = dp(node.left,distance)
+            right = dp(node.right,distance)
+            
+            current = [0]*12
+            #combine counts from left and rights
+            for i in range(10):
+                current[i+1] += left[i] + right[i] #counts at each distance d
+            #initialize to total number of good leaf nodes pairs from left and right
+            current[-1] = left[-1] + right[-1]
+            #iterate through possible leaf node distance pairs
+            for d1 in range(distance+1):
+                for d2 in range(distance + 1):
+                    if 2 + d1 + d2 <= distance:
+                        current[-1] += left[d1]*right[d2]
+            
+            return current
+        
+        return dp(root,distance)[-1]
+    
+#another way
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def countPairs(self, root: TreeNode, distance: int) -> int:
+        
+        res = [0]
+        
+        #dp returns an array of distances where each d in distances is a  distance of a leafnode from the
+        #current subtree we recursed on
+        #global count and increment when we have a leaf to leaf node path not more than distance
+        def dp(node):
+            if not node:
+                return [] #no leafs nodes that are distance 1 
+            #leaf node, dist 1 away
+            if not node.left and not node.right:
+                return [1]
+            
+            left_dists = dp(node.left)
+            right_dists = dp(node.right)
+            
+            #count up pairs that are less than distance
+            for l in left_dists:
+                for r in right_dists:
+                    res[0] += l + r <= distance
+            
+            new_dists = []
+            for d in left_dists + right_dists:
+                #we are now one more away
+                d += 1
+                new_dists.append(d)
+            
+            return new_dists
+        
+        dp(root,)
+        return res[0]
+    
 
 ############################################
 # 1380. Lucky Numbers in a Matrix (REVISTED)
