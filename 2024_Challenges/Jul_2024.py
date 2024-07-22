@@ -2034,3 +2034,194 @@ class Solution:
                 j += 1
         
         return ans
+    
+############################################
+# 2392. Build a Matrix With Conditions
+# 21JUL24
+#############################################
+#right idea
+class Solution:
+    def buildMatrix(self, k: int, rowConditions: List[List[int]], colConditions: List[List[int]]) -> List[List[int]]:
+        '''
+        need to build k by k matrix and matrix must follow rowConditions and colConditions
+        must use numbers uniqely from 1 to k,
+        makes sense to build it from topleft to bottom right
+        i need ordering going left to right and order from top to bottom
+        top sort, even if i had the ordering i still have to build the matrix
+        treat conditions as edges and get top sort
+        '''
+        topOrderRows = self.topSort(k,rowConditions)
+        topOrderCols = self.topSort(k,colConditions)
+
+        #can't do
+        if not topOrderRows or not topOrderCols:
+            return []
+        
+        #how on earth to i figure out how to build
+        ans = [[0]*k for _ in range(k)]
+        
+        for i in range(k):
+            for j in range(k):
+                if topOrderRows[i] == topOrderCols[j]:
+                    ans[i][j] = topOrderRows[i]
+        return ans
+        
+    def topSort(self,k,edges):
+        #need to check for cycles too
+        graph = defaultdict(list)
+        indegree = {}
+        for u,v in edges:
+            if u not in indegree:
+                indegree[u] = 0
+            if v not in indegree:
+                indegree[v] = 0
+            
+            graph[u].append(v)
+            indegree[v] += 1
+        
+        #start with nodes that have 0 indegree
+        q = deque([])
+        for node,ind in indegree.items():
+            if ind == 0:
+                q.append(node)
+        visited = set()
+        ordering = []
+        while q:
+            curr = q.popleft()
+            visited.add(curr)
+            ordering.append(curr)
+            for neigh in graph[curr]:
+                indegree[neigh] -= 1
+                if indegree[neigh] == 0:
+                    q.append(neigh)
+        
+        return ordering
+        
+#finally
+class Solution:
+    def buildMatrix(self, k: int, rowConditions: List[List[int]], colConditions: List[List[int]]) -> List[List[int]]:
+        '''
+        need to build k by k matrix and matrix must follow rowConditions and colConditions
+        must use numbers uniqely from 1 to k,
+        makes sense to build it from topleft to bottom right
+        i need ordering going left to right and order from top to bottom
+        top sort, even if i had the ordering i still have to build the matrix
+        treat conditions as edges and get top sort
+        
+        notes for top order
+        need to make sure we visit all k rows and all k cols
+        if we dont return []
+        make sure there isn't a cycle too
+        
+        how to generate the matrix though
+        need to compare the order in rows to the order in cols
+        if they match, then that number belongs there
+        '''
+        topOrderRows = self.topSort(k,rowConditions)
+        topOrderCols = self.topSort(k,colConditions)
+
+        #can't do
+        if not topOrderRows or not topOrderCols:
+            return []
+        
+        #how on earth to i figure out how to build
+        ans = [[0]*k for _ in range(k)]
+        
+
+        for i in range(k):
+            for j in range(k):
+                if topOrderRows[i] == topOrderCols[j]:
+                    ans[i][j] = topOrderRows[i]
+        return ans
+        
+    def topSort(self,k,edges):
+        #need to check for cycles too
+        graph = defaultdict(list)
+        indegree = [0]*(k+1)
+        for u,v in edges:            
+            graph[u].append(v)
+            indegree[v] += 1
+        
+        #start with nodes that have 0 indegree
+        q = deque([])
+        for i in range(1,k+1):
+            if indegree[i] == 0:
+                q.append(i)
+        visited = set()
+        ordering = []
+        while q:
+            curr = q.popleft()
+            visited.add(curr)
+            ordering.append(curr)
+            for neigh in graph[curr]:
+                indegree[neigh] -= 1
+                if indegree[neigh] == 0:
+                    q.append(neigh)
+        if len(visited) != k:
+            return []
+        return ordering
+        
+#we can also use dfs and cycle detection to find the topolgical ordering
+class Solution:
+    def buildMatrix(self, k: int, rowConditions: List[List[int]], colConditions: List[List[int]]) -> List[List[int]]:
+        '''
+        need to build k by k matrix and matrix must follow rowConditions and colConditions
+        must use numbers uniqely from 1 to k,
+        makes sense to build it from topleft to bottom right
+        i need ordering going left to right and order from top to bottom
+        top sort, even if i had the ordering i still have to build the matrix
+        treat conditions as edges and get top sort
+        
+        notes for top order
+        need to make sure we visit all k rows and all k cols
+        if we dont return []
+        make sure there isn't a cycle too
+        
+        how to generate the matrix though
+        need to compare the order in rows to the order in cols
+        if they match, then that number belongs there
+        '''
+        topOrderRows = self.topSort(k,rowConditions)
+        topOrderCols = self.topSort(k,colConditions)
+
+        #can't do
+        if not topOrderRows or not topOrderCols:
+            return []
+        
+        #how on earth to i figure out how to build
+        ans = [[0]*k for _ in range(k)]
+        
+        for i in range(k):
+            for j in range(k):
+                if topOrderRows[i] == topOrderCols[j]:
+                    ans[i][j] = topOrderRows[i]
+        return ans
+        
+    def topSort(self,k,edges):
+        #need to check for cycles too
+        graph = defaultdict(list)
+        ordering = []
+        visited = set()
+        for u,v in edges:            
+            graph[u].append(v)
+        
+        for i in range(1,k+1):
+            if i not in visited:
+                if self.has_cycle(i,graph,visited,ordering):
+                    return []
+        
+        return ordering[::-1]
+            
+    
+    def has_cycle(self,node,graph,visited,ordering):
+        visited.add(node)
+        for neigh in graph[node]:
+            if neigh not in visited:
+                visited.add(neigh)
+                if self.has_cycle(neigh,graph,visited,ordering):
+                    return True
+
+
+        ordering.append(node)
+        return False
+        
