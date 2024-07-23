@@ -2217,7 +2217,6 @@ class Solution:
         visited.add(node)
         for neigh in graph[node]:
             if neigh not in visited:
-                visited.add(neigh)
                 if self.has_cycle(neigh,graph,visited,ordering):
                     return True
 
@@ -2225,3 +2224,100 @@ class Solution:
         ordering.append(node)
         return False
         
+################################################################
+# 2093. Minimum Cost to Reach City With Discounts (REVISITED)
+# 22JUL24
+################################################################
+class Solution:
+    def minimumCost(self, n: int, highways: List[List[int]], discounts: int) -> int:
+        '''
+        need to use djikstras ssp, but in addition to the edge weight for a toll
+        we need to keep track of the number of discounts
+        state is min distatance to each vertex with d discounts, when taking the smallest edge and we have a discount apply it
+        apply and dont apply
+        
+        need 2d array for dists, node and number if discounts
+        '''
+        
+        graph = defaultdict(list)
+        for u,v,w in highways:
+            graph[u].append((v,w))
+            graph[v].append((u,w))
+        
+        #like in djisktras where state is node, here state is (node,curr_number_discounts)
+        dists = [[float('inf')]*(discounts + 1) for _ in range(n)]
+        dists[0][discounts] = 0
+        pq = [(0,discounts,0)] #entry is (min_dist,discounts left, node)
+        #can keep visited to prune if we want too
+        visited = set()
+
+        while pq:
+            min_dist_so_far, curr_discounts, node = heapq.heappop(pq)
+            #if we cant improve
+            if dists[node][curr_discounts] < min_dist_so_far:
+                continue
+            visited.add((node,curr_discounts))
+            for neigh,dist_to in graph[node]:
+                if (neigh,curr_discounts) in visited:
+                    continue
+                #if we can apply a discount
+                if curr_discounts > 0:
+                    new_dist = min_dist_so_far + dist_to // 2
+                    if dists[neigh][curr_discounts - 1] > new_dist:
+                        dists[neigh][curr_discounts - 1] = new_dist
+                        heapq.heappush(pq, (new_dist,curr_discounts - 1, neigh))
+                #no discount
+                if curr_discounts == 0:
+                    new_dist = min_dist_so_far + dist_to
+                    if dists[neigh][curr_discounts] > new_dist:
+                        dists[neigh][curr_discounts] = new_dist
+                        heapq.heappush(pq, (new_dist,curr_discounts, neigh))
+        
+        min_cost = min(dists[n-1])
+        return min_cost if min_cost != float('inf') else -1
+    
+#bleaghhh
+class Solution:
+    def minimumCost(self, n: int, highways: List[List[int]], discounts: int) -> int:
+        # Construct the graph from the given highways array
+        graph = [[] for _ in range(n)]
+        for highway in highways:
+            u, v, toll = highway
+            graph[u].append((v, toll))
+            graph[v].append((u, toll))
+
+        # Min-heap priority queue to store tuples of (cost, city, discounts used)
+        pq = [(0, 0, 0)]  # Start from city 0 with cost 0 and 0 discounts used
+
+        # 2D array to track minimum distance to each city with a given number of discounts used
+        dist = [[float("inf")] * (discounts + 1) for _ in range(n)]
+        dist[0][0] = 0
+
+        visited = [[False] * (discounts + 1) for _ in range(n)]
+
+        while pq:
+            current_cost, city, discounts_used = heapq.heappop(pq)
+
+            # Skip processing if already visited with the same number of discounts used
+            if visited[city][discounts_used]:
+                continue
+            visited[city][discounts_used] = True
+
+            # Explore all neighbors of the current city
+            for neighbor, toll in graph[city]:
+
+                # Case 1: Move to the neighbor without using a discount
+                if current_cost + toll < dist[neighbor][discounts_used]:
+                    dist[neighbor][discounts_used] = current_cost + toll
+                    heapq.heappush(pq,(dist[neighbor][discounts_used],neighbor,discounts_used,),) #interesting bit with the commas here
+
+                # Case 2: Move to the neighbor using a discount if available
+                if discounts_used < discounts:
+                    new_cost_with_discount = current_cost + toll // 2
+                    if (new_cost_with_discount < dist[neighbor][discounts_used + 1]):
+                        dist[neighbor][discounts_used + 1] = new_cost_with_discount
+                        heapq.heappush(pq,(new_cost_with_discount,neighbor,discounts_used + 1,),)
+
+        # Find the minimum cost to reach city n-1 with any number of discounts used
+        min_cost = min(dist[n - 1])
+        return -1 if min_cost == float("inf") else min_cost
