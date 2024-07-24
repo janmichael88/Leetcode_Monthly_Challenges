@@ -2545,3 +2545,53 @@ class Solution:
             num = num & (num - 1)
         
         return count
+
+#########################################
+# 2191. Sort the Jumbled Numbers
+# 24JUL24
+#########################################
+class Solution:
+    def sortJumbled(self, mapping: List[int], nums: List[int]) -> List[int]:
+        '''
+        sort lexographically based on the mapping
+        but order should be presevered in case of ties, so we keep the index too
+        sorted non-decreasing on new numbers conversion, then increasing on its original index position
+        
+        wtf is this edge case
+        '''
+            
+        new_nums = []
+        for i,num in enumerate(nums):
+            new_num = self.convert_number(num,mapping)
+            entry = (new_num,i,num)
+            new_nums.append(entry)
+        
+        new_nums.sort(key = lambda x : (x[0],x[1]))
+
+        
+        return [v for _,_,v in new_nums]
+    
+    def convert_number(self,num,mapping):
+        new_num = 0
+        mult = 0
+        #ah the problem is that it begins with a zero
+        if num == 0:
+            return mapping[0]
+        while num:
+            digit = num % 10
+            new_digit = mapping[digit]
+            new_num += new_digit*(10**mult)
+            mult += 1
+            num = num // 10
+        
+        return new_num
+
+#functinoal programming oy vay
+class Solution:
+    def sortJumbled(self, mapping: List[int], nums: List[int]) -> List[int]:
+        #one line just for kicks
+        
+        def f(num,mapping):
+            return int("".join(map(lambda x : str(mapping[int(x)]),str(num))))
+        
+        return sorted(nums, key = lambda num : f(num,mapping))
