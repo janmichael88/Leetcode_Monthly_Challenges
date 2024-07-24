@@ -2321,3 +2321,227 @@ class Solution:
         # Find the minimum cost to reach city n-1 with any number of discounts used
         min_cost = min(dist[n - 1])
         return -1 if min_cost == float("inf") else min_cost
+    
+######################################################
+# 1636. Sort Array by Increasing Frequency (REVISTED)
+# 23JUL24
+######################################################
+class Solution:
+    def frequencySort(self, nums: List[int]) -> List[int]:
+        '''
+        counting sort, nums can only be in range -100 to 100
+        '''
+        #get the frequency array
+        counts = [0]*201
+        for num in nums:
+            counts[num + 100] += 1
+        
+        #get count of counts
+        count_of_counts = [0]*(max(counts) + 1)
+        #if nums have same frequence, we need to bucket them
+        #i.e for each count, store the numbers that have that count
+        bucket_of_counts = defaultdict(list)
+        
+        #need array in increasing order of frequency, if ties, sort values decreasingly
+        for i in range(len(counts)-1,-1,-1):
+            if counts[i]:
+                #print(i-k,counts[i])
+                count_of_counts[counts[i]] += 1
+                #this essentially puts the largest values first in the bucket for shared counts
+                bucket_of_counts[counts[i]].append(i - 100)
+        
+        print(bucket_of_counts)
+        print(count_of_counts)
+        
+        #build the array
+        ans = []
+        #by increasing frequency
+        for i in range(len(count_of_counts)):
+            #ordering decreasing values
+            for num in bucket_of_counts[i]:
+                for _ in range(i):
+                    ans.append(num)
+        
+###########################################
+# 1742. Maximum Number of Balls in a Box
+# 23JUL24
+###########################################
+class Solution:
+    def countBalls(self, lowLimit: int, highLimit: int) -> int:
+        '''
+        the anser is just the the number whos sum digits appear the most
+        we dont want the number though,we just need the count
+        '''
+        counts = defaultdict(int)
+        
+        for num in range(lowLimit,highLimit + 1):
+            sum_digits = self.sumDigits(num)
+            counts[sum_digits] += 1
+        
+        max_count = 0
+        
+        for k,v in counts.items():
+            if v > max_count:
+                max_count = v
+       
+        return max_count
+    
+    def sumDigits(self,num):
+        ans = 0
+        while num > 0:
+            ans += num % 10
+            num = num // 10
+        
+        return ans
+
+###############################################
+# 2247. Maximum Cost of Trip With K Highways
+# 23JUL24
+###############################################
+#nice try
+class Solution:
+    def maximumCost(self, n: int, highways: List[List[int]], k: int) -> int:
+        '''
+        dp on graphs
+        store visited nodes in mask
+        we are done when we have the ones mask ans k is zero
+        ending mask is (1 << n) - 1
+        
+        '''
+        graph = defaultdict(list)
+        for u,v,toll in highways:
+            graph[u].append((v,toll))
+            graph[v].append((u,toll))
+        
+        memo = {}
+        
+        def dp(path,last_node,k):
+            if path == (1 << n) - 1:
+                if k == 0:
+                    return 0
+                return float('-inf')
+            
+            if k < 0:
+                return float('-inf')
+            
+            if (path,last_node,k) in memo:
+                return memo[(path,last_node,k)]
+            
+            child_ans = 0
+            for i in range(n):
+                if (path & (1 << i)) == 1:
+                    for neigh,weight in graph[i]:
+                        if neigh != last_node and (path & (1 << neigh)) == 0:
+                            next_path = path | (1 << neigh)
+                            child_ans = max(child_ans, weight + dp(next_path,i,k-1))
+            
+            memo[(path,last_node,k)] = child_ans
+            return child_ans
+        
+        for i in range(n):
+            print(dp(1 << i,-1,k))
+
+#fuck yeah
+class Solution:
+    def maximumCost(self, n: int, highways: List[List[int]], k: int) -> int:
+        '''
+        need to keep track of the last node in path
+        we dont need to touch all cities! we just cant visit a previosuly visited city
+        ending mask is when we have k+1 set bits
+        need fast way to count set bits -> brian kernighan
+        '''
+        #corner case, too many edges
+        if k + 1 > n:
+            return -1
+        graph = defaultdict(list)
+        for u,v,toll in highways:
+            graph[u].append((v,toll))
+            graph[v].append((u,toll))
+        
+        memo = {}
+        
+        def dp(mask,last_node_visited,k):
+            #visited exaclty k+1 highways, means we have seen k nodes
+            if self.countSetBits(mask) == k+1:
+                return 0
+            if (mask,last_node_visited) in memo:
+                return memo[(mask,last_node_visited)]
+            
+            ans = float('-inf')
+            for neigh,weight in graph[last_node_visited]:
+                #need to vist neigh from this node
+                if (mask & (1 << neigh)) == 0:
+                    new_mask = mask | (1 << neigh)
+                    ans = max(ans, weight + dp(new_mask,neigh,k))
+            
+            memo[(mask,last_node_visited)] = ans
+            return ans
+        
+        #for all all n nodes
+        ans = float('-inf')
+        for i in range(n):
+            ans = max(ans,dp(1 << i,i,k))
+        
+        if ans != float('-inf'):
+            return ans
+        return -1
+            
+    
+    def countSetBits(self,num):
+        count = 0
+        while num:
+            count += 1
+            num = num & (num - 1)
+        
+        return count
+    
+
+#bfs solution, this is just search, explore all states, it may or may not TLE
+class Solution:
+    def maximumCost(self, n: int, highways: List[List[int]], k: int) -> int:
+        '''
+        we can do bfs, just pass states and maximize
+        '''
+        if k + 1 > n:
+            return -1
+        graph = defaultdict(list)
+        for u,v,toll in highways:
+            graph[u].append((v,toll))
+            graph[v].append((u,toll))
+        
+        #for all all n nodes
+        ans = float('-inf')
+        for i in range(n):
+            ans = max(ans,self.bfs(n,graph,i,k))
+        
+        if ans != float('-inf'):
+            return ans
+        return -1
+            
+    def bfs(self, n, graph, starting_city,k):
+        ans = float('-inf')
+        starting_mask = 1 << starting_city
+        q = deque([(starting_city,starting_mask,0)])
+        
+        while q:
+            city,mask,cost = q.popleft()
+            #valid mask, we need the maximum
+            if self.countSetBits(mask) == k+1:
+                ans = max(ans,cost)
+                continue
+            
+            for neigh,weight in graph[city]:
+                #need to vist neigh from this node
+                if (mask & (1 << neigh)) == 0:
+                    new_mask = mask | (1 << neigh)
+                    q.append((neigh,new_mask,cost + weight))
+        
+        return ans
+
+    def countSetBits(self,num):
+        count = 0
+        while num:
+            count += 1
+            num = num & (num - 1)
+        
+        return count
