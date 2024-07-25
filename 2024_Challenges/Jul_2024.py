@@ -2595,3 +2595,52 @@ class Solution:
             return int("".join(map(lambda x : str(mapping[int(x)]),str(num))))
         
         return sorted(nums, key = lambda num : f(num,mapping))
+
+#####################################
+# 962. Maximum Width Ramp
+# 25JUL24
+#####################################
+#greedily process in order
+#if we start with number k, keeps this index minimzed, becaue any number >= k can still use as the leftmost
+class Solution:
+    def maxWidthRamp(self, nums: List[int]) -> int:
+        '''
+        for some index i, i want to know the furthest j, where i < j and nums[i] <= nums[j]
+        i can mapp a number to a list of indicies
+        tricky
+        '''
+        ans = 0
+        min_idx = float('inf')
+        mapp = defaultdict(list)
+        for i,num in enumerate(nums):
+            mapp[num].append(i)
+            
+        #no go in order
+        for num in sorted(nums):
+            #need index furthest away from the smallest index
+            ans = max(ans, mapp[num][-1] - min_idx)
+            #upate the smallest index to be used for the next larget element
+            min_idx = min(min_idx, mapp[num][0])
+
+        
+        return ans
+    
+class Solution:
+    def maxWidthRamp(self, nums: List[int]) -> int:
+        '''
+        we can also avoid using hashmapp
+        '''
+        ans = 0
+        min_idx = float('inf')
+        mapp = [(num,i) for i,num in enumerate(nums)]
+        mapp.sort()
+            
+        #no go in order
+        for num,i in mapp:
+            #need index furthest away from the smallest index
+            ans = max(ans, i - min_idx)
+            #upate the smallest index to be used for the next larget element
+            min_idx = min(min_idx, i)
+
+        
+        return ans
