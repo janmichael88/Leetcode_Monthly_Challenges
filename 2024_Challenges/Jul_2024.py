@@ -2644,3 +2644,234 @@ class Solution:
 
         
         return ans
+    
+######################################################################################
+# 1334. Find the City With the Smallest Number of Neighbors at a Threshold Distance
+# 26JUL24
+#####################################################################################
+class Solution:
+    def findTheCity(self, n: int, edges: List[List[int]], distanceThreshold: int) -> int:
+        '''
+        i can do djikstras for each city
+        then for each city count the neighbording cities that are reachale and not more then k
+        '''
+        graph = defaultdict(list)
+        for u,v,w in edges:
+            graph[u].append((v,w))
+            graph[v].append((u,w))
+            
+        ans_city = 0
+        min_cities = float('inf')
+        
+        for i in range(n):
+            cities = self.djikstras(graph,i,n,distanceThreshold)
+            if cities <= min_cities:
+                min_cities = cities
+                ans_city = i
+        
+        return ans_city
+        
+    
+    def djikstras(self,graph,start_node,n,k):
+        
+        dists = [float('inf')]*n
+        dists[start_node] = 0
+        visited = [False]*n
+        
+        pq = [(0,start_node)]
+        
+        while pq:
+            min_dist, node = heapq.heappop(pq)
+            if dists[node] < min_dist:
+                continue
+            visited[node] = True
+            for neigh,dist_to in graph[node]:
+                if visited[neigh] == True:
+                    continue
+                new_dist = dists[node] + dist_to
+                if new_dist < dists[neigh]:
+                    dists[neigh] = new_dist
+                    heapq.heappush(pq, (new_dist,neigh))
+        
+        #search through dists and check dist isnt more than k
+        cities = 0
+        for i in range(n):
+            if i != start_node and dists[i] != float('inf'):
+                if dists[i] <= k:
+                    cities += 1
+        return cities
+                    
+###########################################
+# 2976. Minimum Cost to Convert String I
+# 27JUL24
+###########################################
+class Solution:
+    def minimumCost(self, source: str, target: str, original: List[str], changed: List[str], cost: List[int]) -> int:
+        '''
+        source and target will always be the same length
+        original,chnaged,cost will aways eb the same length
+        the only steps im allwoed to make are from originla to changed
+        rememebr djisktrs is starting at some node u, the reverse may be not be the same
+
+		need to precompute because there are only 26 chars.
+		if we didn't we would be doiing djikstras for a really long time
+        '''
+        graph = defaultdict(list)
+        for u,v,w in zip(original,changed,cost):
+            graph[u].append((v,w))
+        
+        min_costs = []
+        for i in range(26):
+            start_letter = chr(ord('a') + i)
+            dists = self.djikstras(graph,start_letter)
+            min_costs.append(dists)
+        
+        min_cost = 0
+        for start,end in zip(source,target):
+            if start != end:
+                start_idx = ord(start) - ord('a')
+                end_idx = ord(end) - ord('a')
+                temp = min_costs[start_idx][end_idx]
+                if temp == float('inf'):
+                    return -1
+                min_cost  += temp
+        
+        return min_cost
+        
+    def djikstras(self,graph,start_letter):
+        
+        dists = [float('inf')]*26
+        dists[ord(start_letter) - ord('a')] = 0
+
+        
+        pq = [(0,start_letter)]
+        
+        while pq:
+            min_dist, node = heapq.heappop(pq)
+            node_idx = ord(node) - ord('a')
+            if dists[node_idx] < min_dist:
+                continue
+            for neigh,dist_to in graph[node]:
+                neigh_idx = ord(neigh) - ord('a')
+                new_dist = dists[node_idx] + dist_to
+                if new_dist < dists[neigh_idx]:
+                    dists[neigh_idx] = new_dist
+                    heapq.heappush(pq, (new_dist,neigh))
+        
+        return dists
+        
+##################################################
+# 2045. Second Minimum Time to Reach Destination
+# 28JUL24
+####################################################
+#close one
+class Solution:
+    def secondMinimum(self, n: int, edges: List[List[int]], time: int, change: int) -> int:
+        '''
+        bi-directional edge, each vertex is connected by at most one edge
+        i.e there could be vertex pairs that dont have an edge
+        need second minimum time to from vertex 1 to vertex n
+        each node has singal that can turn green to red, and change every chagne minutes
+        cannot wait on green signal, so if its green just go
+        but i can wait on red, 
+        need to keep track of the number of minutes that have passed, say i have at a node in k minutes
+        i need to check k % change, i can than compare the quotient and remainder if quotient is even its green, if quotient is odd, its red
+        and i have to wait remainder minutes, knowing this i can easily find the minimum, but what about the second minimum?
+        note: each vertext can be reached directly or indirectly from every othe vertex
+        thought 1; find min path, then drop edges, and then find min again, wont work, see example 2
+        just two bfs twice! rather keep doing bfs until w hit n-1 twice
+        the second time we hit n-1, that's our time
+        
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        count_end = 0
+        total_mins = 0
+        q = deque([(0,1)]) #store as (minutes, and node)
+        
+        while count_end < 2:
+            curr_mins,curr_node = q.popleft()
+            
+            if curr_node == n:
+                #second time we've seen the end
+                if count_end == 1:
+                    total_mins = curr_mins
+                    break
+                else:
+                    count_end += 1
+            for neigh in graph[curr_node]:
+                #if we need to wait
+                if (curr_mins // change) % 2 == 1:
+                    wait = change - (curr_mins % change)
+                else:
+                    wait = 0
+                new_mins = curr_mins + wait + time
+                    
+                q.append((new_mins,neigh))
+        
+        return total_mins
+        
+        
+class Solution:
+    def secondMinimum(self, n: int, edges: List[List[int]], time: int, change: int) -> int:
+        '''
+        we can use djikstras and keep count of the number of times we have visited a node
+        we also keep 2 distances array, one for the first minimum and the other for the second minimum
+        we also keep track of the numebr of times we have visited a node
+        if can updates dists1 we do so, otherwise we try updating dists2
+        if it pops out the first time, its the first minimm, if it pops out the second time, its the scond minimum
+            we need to be careful we dont visit any node more than twice
+        
+        green-red light contraint
+        its green if [0,2c]...[2c,3c], 
+        ist red if [c,3c}...[3c,4c]
+        
+        in code
+        if (timetaken/ change % 2) #redligh
+            neigh_time = change*(timeTaken/change + 1) + time
+        else
+            #green light
+            neigh_time - timetaken + time
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        dists1 = [float('inf')]*(n+1)
+        dists2 = [float('inf')]*(n+1)
+        counts = [0]*(n+1)
+        
+        pq = [(1,0)]
+        dists1[1] = 0 #no second minimum yet
+        while pq:
+            node,time_taken = heapq.heappop(pq)
+            counts[node] += 1
+            
+            if counts[node] == 2 and node == n:
+                return time_taken
+            
+            #waiting times increment 
+            #if red light 
+            if ((time_taken // change) % 2 == 1):
+                time_taken = change*(time_taken // change + 1) + time
+            else:
+                time_taken = time_taken + time
+            
+            for neigh in graph[node]:
+                if counts[neigh] == 2:
+                    continue
+                #djikstra update
+                #update dist1 if its more than the current time, and swap values with dist 2
+                if (dists1[neigh] > time_taken):
+                    dists2[neigh] = dists1[neigh]
+                    dists1[neigh] = time_taken
+                    heapq.heappush(pq, (neigh,time_taken))
+                elif (dists2[neigh] > time_taken and dists1[neigh] != time_taken):
+                    dists2[neigh] = time_taken
+                    heapq.heappush(pq, (neigh,time_taken))
+            
+        return 0
