@@ -3086,3 +3086,133 @@ class Solution:
         
         return dp(0,0)
             
+################################################
+# 1653. Minimum Deletions to Make String Balanced
+# 30JUL24
+################################################
+#three pass
+class Solution:
+    def minimumDeletions(self, s: str) -> int:
+        '''
+        need to delete characters to make s balance
+        s i balance is there is no pair of idicies (i,j), where i < j and s[i] == 'b' and s[j] == 'a'
+        basically all the a's have to come before all the bs
+        need to find the number of B's before an index 
+        and the number of As after an index, but does it need include the inde
+        if string is balanced
+            the prefx_bs array will have all zeros to the left
+            the suffx_as array will have all zeros to the right
+        
+        to balance at index i means to have no bs before it and no as after it
+        we need to take the minimum of the two pref + suff arrays
+        '''
+        N = len(s)
+        prefix_bs = [0]*N
+        prefix_bs[0] += s[0] == 'b'
+        for i in range(1,N):
+            prefix_bs[i] = prefix_bs[i-1] + (s[i] == 'b')
+        
+        suffix_as = [0]*N
+        suffix_as[-1] += s[-1] == 'a'
+        for i in range(N-2,-1,-1):
+            suffix_as[i] = suffix_as[i+1] + (s[i] == 'a')
+        
+        
+        ans = N
+        for i in range(N):
+            temp = prefix_bs[i] + suffix_as[i]
+            temp -= 1
+            ans = min(ans,temp)
+        
+        return ans
+    
+#two pass
+class Solution:
+    def minimumDeletions(self, s: str) -> int:
+        '''
+        two pass,
+        instead of using two passes to compute bs to the left and as to the right, we can do this in one pass
+        we need to count either bs to the left first or as to the right
+        then when we minimize on the second pass, we can compute the bs to th left on the fly
+        '''
+        N = len(s)
+        suffix_as = [0]*N
+        count_a = 0
+        for i in range(N-1,-1,-1):
+            suffix_as[i] = count_a
+            count_a += s[i] == 'a'
+        
+        #find in deletions, but also count bs on the fly
+        min_deletions = N
+        count_b = 0
+        for i in range(N):
+            min_deletions = min(min_deletions, count_b + suffix_as[i])
+            count_b += s[i] == 'b'
+        
+        return min_deletions
+    
+class Solution:
+    def minimumDeletions(self, s: str) -> int:
+        '''
+        two pass, with two variables
+        compute count as on first pass
+        sexond pass when going left to right, do the same thing with counting bs on the fly
+        but also decrement the as when we see it because we wanted as to the right of the current index
+        '''
+        N = len(s)
+        count_a = 0
+        for ch in s:
+            count_a += ch == 'a'
+            
+        min_deletions = N
+        count_b = 0
+        for ch in s:
+            count_a -= ch == 'a'
+            min_deletions = min(min_deletions, count_a + count_b)
+            count_b += ch == 'b'
+        
+        return min_deletions
+
+#dp variant
+class Solution:
+    def minimumDeletions(self, s: str) -> int:
+        '''
+        let dp(i) be the minimum deletions to make string balanced from s[:i]
+        either delete the a or delete the b
+        '''
+        N = len(s)
+        prefix_bs = [0]*N
+        count_b = 0
+        for i in range(N):
+            count_b += s[i] == 'b'
+            prefix_bs[i] = count_b
+        
+        memo = {}
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = min(1 + dp(i+1), prefix_bs[i])
+            memo[i] = ans
+            return ans
+            
+        return dp(0)
+            
+class Solution:
+    def minimumDeletions(self, s: str) -> int:
+        n = len(s)
+        dp = [0] * (n + 1)
+        b_count = 0
+
+        # dp[i]: The number of deletions required to
+        # balance the substring s[0, i)
+        for i in range(n):
+            if s[i] == "b":
+                dp[i + 1] = dp[i]
+                b_count += 1
+            else:
+                # Two cases: remove 'a' or keep 'a'
+                dp[i + 1] = min(dp[i] + 1, b_count)
+
+        return dp[n]
