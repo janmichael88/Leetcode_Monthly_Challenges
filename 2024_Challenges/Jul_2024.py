@@ -2875,3 +2875,214 @@ class Solution:
                     heapq.heappush(pq, (neigh,time_taken))
             
         return 0
+
+#almost
+#need to be careful when chosing the next node, its not always skpping the second visit
+class Solution:
+    def secondMinimum(self, n: int, edges: List[List[int]], time: int, change: int) -> int:
+        '''
+
+        
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        counts = [0]*(n+1)
+        q = deque([(0,1)]) #store as (minutes, and node)
+        
+        while q:
+            curr_mins,curr_node = q.popleft()
+            counts[curr_node] += 1
+            if counts[curr_node] == 2 and curr_node == n:
+                return curr_mins
+            for neigh in graph[curr_node]:
+                if counts[neigh] == 2:
+                    continue
+                #if we need to wait
+                if (curr_mins // change) % 2 == 1:
+                    wait = change - (curr_mins % change)
+                else:
+                    wait = 0
+                new_mins = curr_mins + wait + time
+                    
+                q.append((new_mins,neigh))
+        
+        return total_mins
+    
+class Solution:
+    def secondMinimum(self, n: int, edges: List[List[int]], time: int, change: int) -> int:
+        '''
+        for BFS, we need to be careful if we want the first pr se
+        if the freq of the visited node is 1 we use dist1
+        if freq of visited node is 2, we use dist2
+        
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        dist1 = [-1]*(n+1)
+        dist2 = [-1]*(n+1)
+        q = deque([(1,1)]) #entries are (node,count)
+        dist1[1] = 0
+        
+        while q:
+            node,count = q.popleft()
+            if count == 1:
+                curr_mins = dist1[node]
+            else:
+                if node == n:
+                    return dist2[node]
+                curr_mins = dist2[node]
+            
+            if ((curr_mins // change) % 2) == 1:
+                curr_mins = change*((curr_mins // change) + 1) + time
+            else:
+                curr_mins = curr_mins + time
+            
+            for neigh in graph[node]:
+                if dist1[neigh] == -1:
+                    dist1[neigh] = curr_mins
+                    q.append((neigh,1))
+                elif dist2[neigh] == -1 and dist1[neigh] != curr_mins:
+                    dist2[neigh] = curr_mins
+                    q.append((neigh,2))
+                    
+        
+        return 0
+        
+###########################################
+# 1395. Count Number of Teams
+# 29JUL24
+##########################################
+class Solution:
+    def numTeams(self, rating: List[int]) -> int:
+        '''
+        pick a center, then search left the number of increasing and decreasing,
+        same for the right,
+        answer is the product
+        '''
+        ans = 0
+        N = len(rating)
+        
+        for i in range(1,N-1):
+            left = i - 1
+            inc_smaller_than = 0
+            dec_greater_than = 0
+            while left >= 0:
+                if rating[left] < rating[i]:
+                    inc_smaller_than += 1
+                elif rating[left] > rating[i]:
+                    dec_greater_than += 1
+                
+                left -= 1
+            
+            right = i+1
+            inc_greater_than = 0
+            dec_smaller_than = 0
+            while right < N:
+                if rating[right] > rating[i]:
+                    inc_greater_than += 1
+                elif rating[right] < rating[i]:
+                    dec_smaller_than += 1
+            
+                right += 1
+            
+            ans += inc_smaller_than*inc_greater_than
+            ans += dec_greater_than*dec_smaller_than
+        
+        return ans
+                
+#dp, top down
+#similar to LIS invariant
+class Solution:
+    def numTeams(self, rating: List[int]) -> int:
+        '''
+        now try dp
+        dp states are index i, and k, where i represents the index of the starting soldier
+        and k being the number of spots left,
+        if im at (i,1), i need to look at all numbers at indices j, where j > i and nums[j] > nums[i]
+        when k == 2, we found a triplet
+        solve dp(i,k) for all i
+        '''
+        memo_inc = {}
+        memo_dec = {}
+        N = len(rating)
+        
+        def dp_inc(i,k,memo):
+            if k == 3:
+                return 1
+            if i >= N:
+                return 0
+            if (i,k) in memo:
+                return memo[(i,k)]
+            ways = 0
+            for j in range(i+1,N):
+                if rating[j] > rating[i]:
+                    ways += dp_inc(j,k+1,memo)
+            
+            memo[(i,k)] = ways
+            return ways
+        
+        def dp_dec(i,k,memo):
+            if i >= N:
+                return 0
+            if k == 3:
+                return 1
+            if (i,k) in memo:
+                return memo[(i,k)]
+            ways = 0
+            for j in range(i+1,N):
+                if rating[j] < rating[i]:
+                    ways += dp_dec(j,k+1,memo)
+            
+            memo[(i,k)] = ways
+            return ways
+        
+        ans = 0
+        for i in range(N):
+            ans += dp_inc(i,1,memo_inc)
+            ans += dp_dec(i,1,memo_dec)
+        
+        return ans
+        
+#can also so sorted list
+#note insert into sorted list is actuall sqrt(N)
+#and not logN        
+
+
+######################################
+# 1230. Toss Strange Coins (REVISTED)
+# 29JUL24
+######################################
+class Solution:
+    def probabilityOfHeads(self, prob: List[float], target: int) -> float:
+        '''
+        dp states are index i into probs and count of heads
+        want to solve for state (i = 0, and count = 0)
+        dp(i,count) gives the probability of gettin count heads with coins up to i
+        if we get TLE wih bottom up, make sure we prune the tree
+        '''
+        memo = {}
+        N = len(prob)
+        
+        def dp(i,count):
+            if count > target:
+                return 0
+            if i == N:
+                if count == target:
+                    return 1
+                return 0
+            if (i,count) in memo:
+                return memo[(i,count)]
+            #need prob getting heads. #but also 1 - prob of getting tails
+            #we add them
+            ans = prob[i]*dp(i+1,count+1) + (1 - prob[i])*(dp(i+1,count))
+            memo[(i,count)] = ans
+            return ans
+        
+        return dp(0,0)
+            
