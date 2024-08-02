@@ -3216,3 +3216,87 @@ class Solution:
                 dp[i + 1] = min(dp[i] + 1, b_count)
 
         return dp[n]
+
+#############################################
+# 1105. Filling Bookcase Shelves (REVISTED)
+# 31JUL24
+############################################
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        '''
+        dp states are index of book and curr shelf
+        we can pass in curr height to the function, but states are only based on position and shelf with
+        add to current shelf, or make new shelf andd add height
+        
+        notes on why we dont need to cache curr_height
+        because the books are processed in order, we keep pushing books left, it actually never changes
+        it just moves
+        '''
+        N = len(books)
+        memo = {}
+        
+        def dp(i,curr_height,curr_shelf):
+            if curr_shelf < 0:
+                return float('inf')
+            if i == N:
+                return curr_height
+            if (i,curr_shelf) in memo:
+                return memo[(i,curr_shelf)]
+            
+            width,height = books[i]
+            #keep book on same shelf
+            same_shelf = dp(i+1, max(curr_height,height), curr_shelf - width)
+            #new shelft
+            new_shelf = curr_height + dp(i+1,height,shelfWidth - width)
+            ans = min(same_shelf,new_shelf)
+            memo[(i,curr_shelf)] = ans
+            return ans
+        
+        return dp(0,0,shelfWidth)
+
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+        #another way
+        @cache
+        def place(book_pos, cur_width, max_height):
+            if book_pos == len(books):
+                return 0
+            width, height = books[book_pos]
+            ans = height + place(book_pos + 1, width, height)  # new shelf
+            if book_pos and cur_width + width <= shelfWidth:   # same shelf
+                height_increase = max(0, height - max_height)
+                ans = min(ans, height_increase + place(book_pos + 1, cur_width + width, max_height + height_increase))
+
+            return ans
+
+        return place(0, 0, 0)
+
+class Solution:
+    def minHeightShelves(self, books: List[List[int]], shelfWidth: int) -> int:
+
+        N = len(books)
+
+        memo = {}        
+        def dp(i):
+            if i >= N:
+                return 0
+            if i in memo:
+                return memo[i]
+            curr_shelf = 0
+            max_height = 0
+            ans = float('inf')
+            j = i
+            while j < N and curr_shelf + books[j][0] <= shelfWidth:
+                curr_shelf += books[j][0]
+                max_height = max(max_height, books[j][1] )
+                j += 1
+                #could also choose to make a new shelft here
+                new_shelf = max_height + dp(j)
+                #minimize answer
+                ans = min(ans, new_shelf)
+            
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+            
