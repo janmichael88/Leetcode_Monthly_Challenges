@@ -2700,6 +2700,66 @@ class Solution:
                 if dists[i] <= k:
                     cities += 1
         return cities
+    
+#flod warshall
+class Solution:
+    def findTheCity(
+        self, n: int, edges: List[List[int]], distanceThreshold: int
+    ) -> int:
+        # Large value to represent infinity
+        INF = int(1e9 + 7)
+        # Distance matrix to store shortest paths between all pairs of cities
+        distance_matrix = [[INF] * n for _ in range(n)]
+
+        # Initialize distance matrix
+        for i in range(n):
+            distance_matrix[i][i] = 0  # Distance to itself is zero
+
+        # Populate the distance matrix with initial edge weights
+        for start, end, weight in edges:
+            distance_matrix[start][end] = weight
+            distance_matrix[end][start] = weight  # For undirected graph
+
+        # Compute shortest paths using Floyd-Warshall algorithm
+        self.floyd(n, distance_matrix)
+
+        # Find the city with the fewest number of reachable cities within the distance threshold
+        return self.get_city_with_fewest_reachable(
+            n, distance_matrix, distanceThreshold
+        )
+
+    # Floyd-Warshall algorithm to compute shortest paths between all pairs of cities
+    def floyd(self, n: int, distance_matrix: List[List[int]]):
+        # Update distances for each intermediate city
+
+        for k in range(n):
+            for i in range(n):
+                for j in range(n):
+                    # Update shortest path from i to j through k
+                    distance_matrix[i][j] = min(
+                        distance_matrix[i][j],
+                        distance_matrix[i][k] + distance_matrix[k][j],
+                    )
+
+    # Determine the city with the fewest number of reachable cities within the distance threshold
+    def get_city_with_fewest_reachable(
+        self, n: int, distance_matrix: List[List[int]], distance_threshold: int
+    ) -> int:
+        city_with_fewest_reachable = -1
+        fewest_reachable_count = n
+
+        # Count number of cities reachable within the distance threshold for each city
+        for i in range(n):
+            reachable_count = sum(
+                1
+                for j in range(n)
+                if i != j and distance_matrix[i][j] <= distance_threshold
+            )
+            # Update the city with the fewest reachable cities
+            if reachable_count <= fewest_reachable_count:
+                fewest_reachable_count = reachable_count
+                city_with_fewest_reachable = i
+        return city_with_fewest_reachable
                     
 ###########################################
 # 2976. Minimum Cost to Convert String I
@@ -2760,6 +2820,46 @@ class Solution:
         
         return dists
         
+#floyd warshall
+class Solution:
+    def minimumCost(self, source: str, target: str, original: List[str], changed: List[str], cost: List[int]) -> int:
+        '''
+        floyd warshall - used to compute pair wise shortest distances for all (i,j) pairs
+        using each vertex as an intermediate
+        needs 2d dist array, inisally set at the min of all edes pairs
+        then minimuze all (i,j) pairs
+        '''
+        min_dists = [[float('inf')]*26 for _ in range(26)]
+        
+        for start,end,cost in zip(original,changed,cost):
+            start_char = ord(start) - ord('a')
+            end_char = ord(end) - ord('a')
+            min_dists[start_char][end_char] = min(min_dists[start_char][end_char], cost)
+        
+        
+        #minime via intermediates
+        for start_char in range(26):
+            for end_char in range(26):
+                for inter_char in range(26):
+                    min_dists[start_char][end_char] = min(min_dists[start_char][end_char], min_dists[start_char][inter_char]
+                                                         + min_dists[inter_char][end_char])
+        
+        # Calculate the total minimum cost to transform the source string to
+        # the target string
+        total_cost = 0
+        for src, tgt in zip(source, target):
+            if src == tgt:
+                continue
+            source_char = ord(src) - ord("a")
+            target_char = ord(tgt) - ord("a")
+
+            # If the transformation is not possible, return -1
+            if min_dists[source_char][target_char] == float("inf"):
+                return -1
+            total_cost += min_dists[source_char][target_char]
+
+        return total_cost
+
 ##################################################
 # 2045. Second Minimum Time to Reach Destination
 # 28JUL24
@@ -2880,10 +2980,6 @@ class Solution:
 #need to be careful when chosing the next node, its not always skpping the second visit
 class Solution:
     def secondMinimum(self, n: int, edges: List[List[int]], time: int, change: int) -> int:
-        '''
-
-        
-        '''
         graph = defaultdict(list)
         for u,v in edges:
             graph[u].append(v)
@@ -2951,7 +3047,6 @@ class Solution:
                     dist2[neigh] = curr_mins
                     q.append((neigh,2))
                     
-        
         return 0
         
 ###########################################
@@ -3052,7 +3147,100 @@ class Solution:
 #can also so sorted list
 #note insert into sorted list is actuall sqrt(N)
 #and not logN        
+from sortedcontainers import SortedList
+class Solution:
+    def numTeams(self, rating: List[int]) -> int:
+        '''
+        using two sortest lists
+        '''
+        N = len(rating)
+        smaller_left = [0]*N
+        bigger_left = [0]*N
+        smaller_right = [0]*N
+        bigger_right = [0]*N
+        sl = SortedList()
+        slr = SortedList()
+        
+        #insert just before and after the current index i
+        #we only need to add half the elements for any side
+        for i in range(1,N-1):
+            sl.add(rating[i-1])
+            slr.add(rating[N-i])
+            #print(sl,slr)
+            smaller_left[i] = sl.bisect_right(rating[i])
+            bigger_left[i] = len(sl) - smaller_left[i]
+            smaller_right[N-i-1] = slr.bisect_right(rating[N-i-1])
+            bigger_right[N-i-1] = len(slr) - smaller_right[N-i-1]
+        
+        count = 0
+        for i in range(1,N-1):
+            count += smaller_left[i]*bigger_right[i]
+            count += bigger_left[i]*smaller_right[i]
+        
+        return count
+    
+#binary indexed tree
+class Solution:
+    def numTeams(self, rating: List[int]) -> int:
+        '''
+        using BIT, learn us abstract api for now, then review math behind it
+        for example BIT[5] keeps track of number of soldiers with rating 5,
+        BIT[6] aggregates counts for ratings of 5 and 6
+        idea
+        start by populating right BIT with soldier ratings
+        as we process each soldier, remove rating from right BIT and consider them as middle
+        to count icnreasings equences we querrt the number of soldiers with lower ratings in the left BIT and number of 
+        soldiers with higher ratings in the right BIT
+        '''
+        # Find the maximum rating
+        max_rating = 0
+        for r in rating:
+            max_rating = max(max_rating, r)
 
+        # Initialize Binary Indexed Trees for left and right sides
+        left_BIT = [0] * (max_rating + 1)
+        right_BIT = [0] * (max_rating + 1)
+
+        # Populate the right BIT with all ratings initially
+        for r in rating:
+            self._update_BIT(right_BIT, r, 1)
+
+        teams = 0
+        for current_rating in rating:
+            # Remove current rating from right BIT
+            self._update_BIT(right_BIT, current_rating, -1)
+
+            # Count soldiers with smaller and larger ratings on both sides
+            smaller_ratings_left = self._get_prefix_sum(left_BIT, current_rating - 1)
+            smaller_ratings_right = self._get_prefix_sum(right_BIT, current_rating - 1)
+            
+            
+            #set intersection trick whole - excluding part
+            larger_ratings_left = self._get_prefix_sum(left_BIT, max_rating) - self._get_prefix_sum(left_BIT, current_rating)
+            larger_ratings_right = self._get_prefix_sum(right_BIT, max_rating) - self._get_prefix_sum(right_BIT, current_rating)
+
+            # Count increasing and decreasing sequences
+            teams += smaller_ratings_left * larger_ratings_right
+            teams += larger_ratings_left * smaller_ratings_right
+
+            # Add current rating to left BIT
+            self._update_BIT(left_BIT, current_rating, 1)
+
+        return teams
+
+    # Update the Binary Indexed Tree
+    def _update_BIT(self, BIT: List[int], index: int, value: int) -> None:
+        while index < len(BIT):
+            BIT[index] += value
+            index += index & (-index)  # Move to the next relevant index in BIT
+
+    # Get the sum of all elements up to the given index in the BIT
+    def _get_prefix_sum(self, BIT: List[int], index: int) -> int:
+        sum = 0
+        while index > 0:
+            sum += BIT[index]
+            index -= index & (-index)  # Move to the parent node in BIT
+        return sum
 
 ######################################
 # 1230. Toss Strange Coins (REVISTED)
