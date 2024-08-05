@@ -178,3 +178,65 @@ class Solution:
                 right = mid - 1
         
         return ans
+
+##########################################
+# 1508. Range Sum of Sorted Subarray Sums
+# 04AUG24
+##########################################
+class Solution:
+    def rangeSum(self, nums: List[int], n: int, left: int, right: int) -> int:
+        '''
+        say we have three numbers. a,b,c
+        a + b + c + (a + b) + (a + b + c) + (b + c)
+        sums are sorted increasingly
+        a + b + c + (a + b) + (b+c) + (a+b+c)
+        use pref sums, then find all (i,j) sums to get subarrays
+        
+        '''
+        pref_sum = [0]
+        for num in nums:
+            pref_sum.append(pref_sum[-1] + num)
+        
+        N = len(nums)
+        all_sums = []
+        for i in range(N):
+            for j in range(i,N):
+                sub_sum = pref_sum[j+1] - pref_sum[i]
+                all_sums.append(sub_sum)
+        
+        all_sums.sort()
+        ans = 0
+        mod = 10**9 + 7
+        for i in range(left,right+1):
+            ans += all_sums[i-1]
+            ans %= mod
+        
+        return ans
+    
+#dont need to use pref sum
+class Solution:
+    def rangeSum(self, nums: List[int], n: int, left: int, right: int) -> int:
+        '''
+        say we have three numbers. a,b,c
+        a + b + c + (a + b) + (a + b + c) + (b + c)
+        sums are sorted increasingly
+        a + b + c + (a + b) + (b+c) + (a+b+c)
+        use pref sums, then find all (i,j) sums to get subarrays
+        
+        '''
+        N = len(nums)
+        all_sums = []
+        for i in range(N):
+            sub_sum = 0
+            for j in range(i,N):
+                sub_sum += nums[j]
+                all_sums.append(sub_sum)
+        
+        all_sums.sort()
+        ans = 0
+        mod = 10**9 + 7
+        for i in range(left,right+1):
+            ans += all_sums[i-1]
+            ans %= mod
+        
+        return ans
