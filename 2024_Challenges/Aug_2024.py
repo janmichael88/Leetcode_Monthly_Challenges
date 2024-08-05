@@ -240,3 +240,23 @@ class Solution:
             ans %= mod
         
         return ans
+    
+
+###########################################
+# 2053. Kth Distinct String in an Array
+# 05AUG24
+###########################################
+class Solution:
+    def kthDistinct(self, arr: List[str], k: int) -> str:
+        '''
+        count them up, then going left to right, check if count(s) > 1
+        return the kth one
+        '''
+        counts = Counter(arr)
+        for s in arr:
+            if counts[s] == 1:
+                k -= 1
+            if k == 0:
+                return s
+        
+        return ""
