@@ -241,6 +241,38 @@ class Solution:
         
         return ans
     
+#min heap, in inceasing sum order
+class Solution:
+    def rangeSum(self, nums: List[int], n: int, left: int, right: int) -> int:
+        '''
+        we can use priority queue to go in order of increasing sums
+        insert all the length 1 subarray sums into a min heap (increaisng order) but pair with its index,
+        if index is greater >= left, this sum must be included in the answer, then we can add in the next sum to the current subaray sum
+        '''
+        min_heap = []
+        N = len(nums)
+        for i in range(N):
+            min_heap.append((nums[i],i))
+        
+        
+        heapq.heapify(min_heap)
+        mod = 10**9 + 7
+        ans = 0
+        for i in range(1,right+1):
+            top = heapq.heappop(min_heap)
+            if i >= left:
+                ans += (top[0] % mod) % mod
+            
+            #get the next sum
+            if top[1] < n - 1:
+                next_sum = top[0] + nums[top[1] + 1]
+                next_idx = top[1] + 1
+                heapq.heappush(min_heap, (next_sum, next_idx))
+        
+        return ans % mod
+    
+#binary search
+
 
 ###########################################
 # 2053. Kth Distinct String in an Array
@@ -260,3 +292,208 @@ class Solution:
                 return s
         
         return ""
+    
+#################################################
+# 3016. Minimum Number of Pushes to Type Word II
+# 06AUG24
+################################################
+#nice try, come back to this one
+class Solution:
+    def minimumPushes(self, word: str) -> int:
+        '''
+        if a char is un mapped to a number, mapp it
+        if its already been mapped, then access how many times that char has already been mapped 
+        ill need two mapps, one mapping char to num, and one mapping num to the its chars
+        but what number do i mapp it too? just the first unmapped number
+        just check if char has already been mapped or not, but remember there are only 8 numbers we can mapp too (2 through 9)
+        keep count of unmapped numbers
+        '''
+        positions = [0]*26
+        unmapped_numbers = 0
+        
+        ans = 0
+        for ch in word:
+            pos = ord(ch) - ord('a')
+            #already been mapped
+            if positions[pos] != 0:
+                ans += positions[pos]
+            #not mapped yet
+            else:
+                #havent mapped all 8 numbers yet, so number is available
+                if unmapped_numbers < 8:
+                    positions[pos] += 1
+                    unmapped_numbers += 1
+                else:
+                    new_counts = unmapped_numbers // 8
+                    positions[pos] = new_counts + 1
+
+                    ans += positions[pos]
+
+        return ans
+                
+class Solution:
+    def minimumPushes(self, word: str) -> int:
+        '''
+        sort, count, and go in groups of 8
+        '''
+        counts = Counter(word)
+        ans = 0
+        unmapped_numbers = 0
+        for k,v in sorted(counts.items(), key = lambda x: -x[1]):
+            ans += ((unmapped_numbers // 8) + 1)*v
+            unmapped_numbers += 1
+        
+        return ans
+    
+###############################################
+# 1812. Determine Color of a Chessboard Square
+# 07AUG24
+###############################################
+class Solution:
+    def squareIsWhite(self, coordinates: str) -> bool:
+        '''
+        even numbers going left to right start with white then alternate
+        odd numbers are the opposite, the order zigzags, i can go up fromm 1 to 8, and then alternate
+        convert cell to cooridnate
+            if row is odd, we are going left to right
+            if row is even we are going right to left
+        '''
+        row = ord(coordinates[1]) - ord('0')
+        col = ord(coordinates[0]) - ord('a') + 1
+        
+        if row % 2 == 1:
+            return 1- (col) % 2
+        return (col % 2)
+
+############################################
+# 273. Integer to English Words (REVISITED)
+# 07AUG24
+###########################################
+class Solution:
+    def numberToWords(self, num: int) -> str:
+        '''
+        need english numbers < 10, i.e Ten,Nine,Eight...
+        need enligh numbers < 20, like Nineteen,Eighteen, etc
+        then below hundred in multiples of 10, like Twenty,Thirty,Forty, etc
+        for numbers bigger, we process recursively by divided by 1000,100000,1000000, and a billion
+        
+        base case, for numbers < 10, return enligh of belowTen
+        between 10 and 19, return bewlow Twenty
+        for numbers beteween 20 and 99, return belowHundred
+        then reusviely call on num / 100, num / 1000, num / millions, num / billions
+        
+        ie.
+        Base Case: For numbers less than 10, the function directly maps to a word using belowTen. 
+        For numbers between 10 and 19, belowTwenty handles these unique cases. 
+        Ror numbers between 20 and 99, it combines words from belowHundred for tens and recursively processes the remainder for units.
+        
+        recursive case:
+        Numbers from 100 to 999:
+        Combine the recursive result for the hundreds place with "Hundred", and the recursive result for the remaining part.
+        Numbers from 1000 to 999,999:
+        Combine the recursive result for thousands with "Thousand", and the recursive result for the remaining part.
+        Numbers from 1,000,000 to 999,999,999:
+        Combine the recursive result for millions with "Million", and the recursive result for the remaining part.
+        Numbers 1,000,000,000 and above:
+        Combine the recursive result for billions with "Billion", and the recursive result for the remaining part.
+        '''
+        below_ten = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+        below_twenty = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+        below_hundred = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+        
+        def rec(num):
+            if num < 10:
+                return below_ten[num]
+            if num < 20:
+                return below_twenty[num - 10]
+            if num < 100:
+                return below_hundred[num // 10] + (" " + rec(num % 10) if num % 10 != 0 else "")
+            if num < 1000:
+                return rec(num // 100) + " Hundred" + (" " + rec(num % 100) if num % 100 != 0 else "")
+            if num < 1000000:
+                return rec(num // 1000) + " Thousand" + (" " + rec(num % 1000) if num % 1000 != 0 else "")
+            if num < 1000000000:
+                return rec(num // 1000000) + " Million" + (" " + rec(num % 1000000) if num % 1000000 != 0 else "")
+            return rec(num // 1000000000) + " Billion" + (" " + rec(num % 1000000000) if num % 1000000000 != 0 else "")
+        
+        if num == 0:
+            return "Zero"
+        
+        return rec(num)
+    
+#another way
+class Solution:
+    def numberToWords(self, num: int) -> str:
+        '''
+        using walrus operator
+        '''
+        digit_name = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+        teens_name = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+        tens_name = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+        
+        def rec(num):
+            out = ""
+            if billions := num // 1_000_000_000:
+                out += rec(billions) + " Billion "
+            if millions := (num // 1_000_000) % 1000:
+                out += rec(millions) + " Million "
+            if thousands := (num // 1000) % 1000:
+                out += rec(thousands) + " Thousand "
+            if hundreds := (num // 100) % 10:
+                out += digit_name[hundreds] + " Hundred "
+            if (tens := (num // 10) % 10) > 1:
+                out += tens_name[tens] + " "
+            if tens == 1:
+                out += teens_name[num % 10] + " "
+            elif num % 10 or not out:
+                out += digit_name[num % 10] + " "
+
+            return out[:-1]
+
+        return rec(num)
+
+########################################
+# 885. Spiral Matrix III (REVISTED)
+# 08AUG24
+#######################################
+class Solution:
+    def spiralMatrixIII(self, rows: int, cols: int, rStart: int, cStart: int) -> List[List[int]]:
+        '''
+        just keep walking in a spiral until we get all values
+        step increments are 1,1,2,2,3,3,4,4,5,5
+        its every two chage in directions step count goes up by 1
+        '''
+        ans = []
+        steps = 1
+        while len(ans) < rows*cols:
+            #walkig right
+            for _ in range(steps):
+                if 0 <= rStart < rows and 0 <= cStart < cols:
+                    ans.append([rStart,cStart])
+                cStart += 1
+            
+            #walking down
+            for _ in range(steps):
+                if 0 <= rStart < rows and 0 <= cStart < cols:
+                    ans.append([rStart,cStart])
+                rStart += 1
+            
+            steps += 1
+            
+            #walking left
+            for _ in range(steps):
+                if 0 <= rStart < rows and 0 <= cStart < cols:
+                    ans.append([rStart,cStart])
+                cStart -= 1
+                
+            #walking up
+            for _ in range(steps):
+                if 0 <= rStart < rows and 0 <= cStart < cols:
+                    ans.append([rStart,cStart])
+                rStart -= 1
+            
+            steps += 1
+        
+        return ans
+                    
+        
