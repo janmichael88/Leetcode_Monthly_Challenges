@@ -496,4 +496,57 @@ class Solution:
         
         return ans
                     
+####################################
+# 2326. Spiral Matrix IV
+# 08AUG24
+####################################
+# Definition for singly-linked list.
+# class ListNode:
+#     def __init__(self, val=0, next=None):
+#         self.val = val
+#         self.next = next
+class Solution:
+    def spiralMatrix(self, m: int, n: int, head: Optional[ListNode]) -> List[List[int]]:
+        '''
+        walk the matrix in spiral fasion,
         
+        '''
+        mat = [[-1]*n for _ in range(m)]
+        curr = head
+        start_row = 0
+        end_row = m-1
+        start_col = 0
+        end_col = n - 1
+        
+        while start_row <= end_row and  start_col <= end_col:
+            for c in range(start_col,end_col+1):
+                if curr:
+                    mat[start_row][c] = curr.val
+                    curr = curr.next
+            
+            start_row += 1
+            
+            for r in range(start_row,end_row+1):
+                if curr:
+                    mat[r][end_col] = curr.val
+                    curr = curr.next
+            
+            end_col -= 1
+            
+            if (start_row <= end_row):
+                for c in range(end_col, start_col-1, -1):
+                    if curr:
+                        mat[end_row][c] = curr.val
+                        curr = curr.next
+                
+                end_row -= 1
+            
+            if (start_col <= end_col):
+                for r in range(end_row, start_row-1, -1):
+                    if curr:
+                        mat[r][start_col] = curr.val
+                        curr = curr.next
+                start_col += 1
+                
+        
+        return mat
