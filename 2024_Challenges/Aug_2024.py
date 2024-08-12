@@ -451,6 +451,51 @@ class Solution:
             return out[:-1]
 
         return rec(num)
+    
+#no walrus
+class Solution:
+    def numberToWords(self, num: int) -> str:
+        '''
+        using walrus operator
+        for billions just check if we can divite by billions
+        for millions and thousands, check that we can divide by part and grab $ 1000
+        '''
+        digit_name = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+        teens_name = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"]
+        tens_name = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
+        
+        def rec(num):
+            out = ""
+            #check billions first
+            billions = num // 1_000_000_000
+            if billions > 0:
+                out += rec(billions) + " Billion "
+            #check milions
+            millions = (num // 1_000_000) % 1000
+            if millions:
+                out += rec(millions) + " Million "
+            #check thousands
+            thousands = (num // 1000) % 1000
+            if thousands:
+                out += rec(thousands) + " Thousand "
+            #check hundreds, but can all be preceded by a digit name
+            hundreds = (num // 100) % 10
+            if hundreds:
+                out += digit_name[hundreds] + " Hundred "
+            #if in 20 and 99
+            tens = (num // 10) % 10
+            if tens  > 1:
+                out += tens_name[tens] + " "
+            #if in between 10 and 19
+            if tens == 1:
+                out += teens_name[num % 10] + " "
+            #just the single number
+            elif num % 10 or not out:
+                out += digit_name[num % 10] + " "
+
+            return out[:-1]
+
+        return rec(num)
 
 ########################################
 # 885. Spiral Matrix III (REVISTED)
@@ -550,3 +595,204 @@ class Solution:
                 
         
         return mat
+    
+##############################
+# 840. Magic Squares In Grid
+# 08AUG24
+##############################
+class Solution:
+    def numMagicSquaresInside(self, grid: List[List[int]]) -> int:
+        '''
+        a magic square is a 3 x 3 grid filled with distinct numbers from 1 to 9, 
+        and all rows, cols, diag, and anti diags have the same sum
+        for 3 by 3 anti-diags are (0,2), (1,1), (2,0)
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        if rows < 3 or cols < 3:
+            return 0
+        
+        #try lookin at all squares, by fixing upper left corner
+        ans = 0
+        for i in range(rows-2):
+            for j in range(cols-2):
+                square = self.check_square(grid,i,j)
+                if not square:
+                    continue
+                if self.check_magic(square):
+                    ans += 1
+        
+        return ans
+                
+    
+    def check_square(self,grid,i,j):
+        seen = set()
+        square = []
+        for ii in range(3):
+            row = []
+            for jj in range(3):
+                if grid[i+ii][j+jj] > 9 or grid[i+ii][j+jj] in seen or grid[i+ii][j+jj] == 0:
+                    return []
+                seen.add(grid[i+ii][j+jj])
+                row.append(grid[i+ii][j+jj])
+
+            square.append(row)
+        
+        return square
+    
+    def check_magic(self,square):
+        row_sums = [0,0,0]
+        col_sums = [0,0,0]
+        diag_sum = 0
+        anti_diag_sum = 0
+        
+        for i in range(3):
+            for j in range(3):
+                row_sums[i] += square[i][j]
+                col_sums[j] += square[i][j]
+                if i == j:
+                    diag_sum += square[i][j]
+                if i + j == 2:
+                    anti_diag_sum += square[i][j]
+        check_sums = row_sums + col_sums + [diag_sum] + [anti_diag_sum]
+        return len(set(check_sums)) == 1
+                
+                
+###########################################
+# 959. Regions Cut By Slashes
+# 12JUL24
+###########################################
+#need to blow up the grid
+'''
+need to expand each (i,j) cell to a 3 x 3
+for back slack, we walk diagonllay down to the right in steps (1,1)
+for forward salsh, this is we walk diagonallly down to the left
+'''
+class Solution:
+    def regionsBySlashes(self, grid: List[str]) -> int:
+        '''
+        flood fill the empty spots, you can use numbers for
+        maintain largest number when doing flood fill
+        problem is that we need to be able to squeeze into tight spaces, this is from advent of code!
+        i can modify the grid, so that way the lines are longer, if we have a line at (i,j) and its /, make another line at (i+1,j-1)
+        if tis \\, then it should go to (i+1,j+1)
+        '''
+        new_grid = self.make_new_grid(grid)
+        n = len(new_grid)
+        regions = [[-1]*n for _ in range(n)]
+        curr_region = 0
+        
+        for i in range(n):
+            for j in range(n):
+                if new_grid[i][j] == ' ' and regions[i][j] == -1:
+                    self.dfs(new_grid,i,j,n,curr_region,regions)
+                    curr_region += 1
+
+        return curr_region
+        
+    
+    def dfs(self,grid,i,j,n,curr_region,regions):
+        regions[i][j] = curr_region
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for di,dj in dirrs:
+            ii = i + di
+            jj = j + dj
+            #bounds
+            if 0 <= ii < n and 0 <= jj < n and grid[ii][jj] == ' ' and regions[ii][jj] == -1:
+                self.dfs(grid,ii,jj,n,curr_region,regions)
+        
+    def make_new_grid(self,grid):
+        n = len(grid)
+        expanded_grid = [[" "] * (n * 3) for _ in range(n * 3)]
+
+        # Populate the expanded grid based on the original grid
+        for i in range(n):
+            for j in range(n):
+                base_row = i * 3
+                base_col = j * 3
+                # Check the character in the original grid
+                if grid[i][j] == "\\":
+                    # Mark diagonal for backslash
+                    expanded_grid[base_row][base_col] = "\\"
+                    expanded_grid[base_row + 1][base_col + 1] = "\\"
+                    expanded_grid[base_row + 2][base_col + 2] = "\\"
+                elif grid[i][j] == "/":
+                    # Mark diagonal for forward slash
+                    expanded_grid[base_row][base_col + 2] = "/"
+                    expanded_grid[base_row + 1][base_col + 1] = "/"
+                    expanded_grid[base_row + 2][base_col] = "/"
+        
+        return expanded_grid
+    
+#union find on triangles
+class Solution:
+    def regionsBySlashes(self, grid: List[str]) -> int:
+        '''
+        we can do union find on triangles
+        imagine each slash divide the cell into 4 quadrants, going clockwise, and (i,j) cells is divided into quads 0,1,2,3
+        forward slack joins regions 0,1 and joins regions 3 and 2
+        back slach joins regions 0 and 3, and regions 1 and 2, so for ids we have (rows*cols)*4
+        for joining
+            the top triagnle of a cell will alwauys connect to the bottom trianlge above it
+            a left triangle will connect right
+            a slash divide the cell digonally allowing us to combine the two adjacent triangles on each side of the digonals
+            
+        union rules
+        1. if there is a cell above the current cell, union bottom triganle with top
+        2. if there is a cell to the left, unino the right to the left
+            if not "/"
+                union top triangle with right triagnle
+            if not '\'
+                union top triagnle with left triangle and bottomm tirangle with right
+                
+        if empty space, connect all 4 triangles
+        '''
+        grid_size = len(grid)
+        total_triangles = grid_size * grid_size * 4
+        parent_array = [-1] * total_triangles
+
+        # Initially, each small triangle is a separate region
+        region_count = total_triangles
+
+        for row in range(grid_size):
+            for col in range(grid_size):
+                # Connect with the cell above
+                if row > 0:
+                    region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row - 1, col, 2),self._get_triangle_index(grid_size, row, col, 0))
+                # Connect with the cell to the left
+                if col > 0:
+                    region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row, col - 1, 1),self._get_triangle_index(grid_size, row, col, 3))
+                #if /, (0,3) and (2,1)
+                if grid[row][col] == "/":
+                    region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row, col, 0),self._get_triangle_index(grid_size, row, col, 3))
+                    region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row, col, 2),self._get_triangle_index(grid_size, row, col, 1))
+
+                # If \\, union (0,1) and (2,3)
+                if grid[row][col] == "\\":
+                    region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row, col, 0),self._get_triangle_index(grid_size, row, col, 1))
+                    region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row, col, 3),self._get_triangle_index(grid_size, row, col, 2))
+                else:
+                    #if space, union all 0 to 3
+                    if grid[row][col] == " ":
+                        for i in range(1,4):
+                            region_count -= self._union_triangles(parent_array,self._get_triangle_index(grid_size, row, col, 0),self._get_triangle_index(grid_size, row, col, i))
+
+        return region_count
+
+    def _get_triangle_index(self, grid_size, row, col, triangle_num):
+        return (grid_size * row + col) * 4 + triangle_num
+
+    def _union_triangles(self, parent_array, x, y):
+        parent_x = self._find_parent(parent_array, x)
+        parent_y = self._find_parent(parent_array, y)
+        if parent_x != parent_y:
+            parent_array[parent_x] = parent_y
+            return 1  # Regions were merged, so count decreases by 1
+        return 0  # Regions were already connected
+
+    def _find_parent(self, parent_array, x):
+        if parent_array[x] == -1:
+            return x
+        parent_array[x] = self._find_parent(parent_array, parent_array[x])
+        return parent_array[x]
