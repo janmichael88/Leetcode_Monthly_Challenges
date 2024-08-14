@@ -272,7 +272,66 @@ class Solution:
         return ans % mod
     
 #binary search
+class Solution:
+    def rangeSum(self, nums: List[int], n: int, left: int, right: int) -> int:
+        # we have a monotonic search space
+        #   - for a certain sum := target, there are either =k subarrays whose sum is leq target
+        #   - we want to find the minimum target s.t. left-1 subarrs sum to it and the same for right
+        #   - after finding this minimum target, we need the total sum of subarrs up to this target
+        #   - the difference of these 2 total sums is the intermediate sum
+        # now we need to calculate the number of subarrays whose sum is leq target in linear time
+        #   - we can use a sliding window to find the (left, right) pairs that sum to leq target
+        #   - once we have a left, right pair leq target, we know all subarrs within this pair also sum leq target
+        #   - this is the subarrays sliding window pattern: at each valid window,
+        #       - count += length because you can take subarrays 1st elem to this, 2nd etc
+        #       - window_contribition += nums[i] * length bc nums[i] will contribute to count subarrays
+        #       - window_sum += nums[i]
+        #   - at each invalid window:
+        #       - window_contribition -= window_sum because this whole window is invalid
+        #       - window_sum -= nums[i]
+        #   - total sum is sum of all window contributions
+        
+        def count_subarrays(target):
+            left = right = 0
+            total_sum = 0
+            window_sum = 0
+            window_contribution = 0
+            count = 0
+            while right < n:
+                if window_sum <= target:  # if statement not needed but following template
+                    window_sum += nums[right]
+                    window_contribution += nums[right] * (right - left + 1)
+                    right += 1
+                while window_sum > target:
+                    window_contribution -= window_sum
+                    window_sum -= nums[left]
+                    left += 1
+                count += right - left
+                total_sum += window_contribution
 
+            return count, total_sum
+
+        def first_k_sum(k,lo,hi):
+            left = lo
+            right = hi
+
+            # minimize target sum s.t. count of subarrays leq target sum is >=k
+            while left < right:
+                mid = (left + right) // 2
+                if count_subarrays(mid)[0] >= k:
+                    right = mid
+                else:
+                    left = mid + 1
+
+            count, total_sum = count_subarrays(left)
+            # subarrs(left) >= k but it may be greater if many subarrays have sum=k
+            # we need to shave off the extra subarrays and return only the first k
+            extra_subarray_count = count - k
+            return total_sum - left*extra_subarray_count
+
+        lo = min(nums)
+        hi = sum(nums)
+        return (first_k_sum(right,lo,hi) - first_k_sum(left-1,lo,hi)) % (10**9 + 7)
 
 ###########################################
 # 2053. Kth Distinct String in an Array
@@ -796,3 +855,336 @@ class Solution:
             return x
         parent_array[x] = self._find_parent(parent_array, parent_array[x])
         return parent_array[x]
+    
+#######################################################
+# 1568. Minimum Number of Days to Disconnect Island
+# 12AUG24
+#######################################################
+#close one, so fucking annoying
+class Solution:
+    def minDays(self, grid: List[List[int]]) -> int:
+        '''
+        if there is only one island, we need to disconnect it from all the water
+        but if all islands are disconnect, we'are done
+        if there exactly one island, othwerwise its disconnected, we need to make it disconnected
+        we wont need more than two days to disconnect the grid? wtf
+        
+        if disconnected, meaning there isn't exaclty one island return 0
+        return 1 if chaning a single land to water disconnectes the island
+        othewise return 2
+        '''
+        rows = len(grid)
+        cols = len(grid[0])
+        islands = self.count_islands(grid,rows,cols)
+        if islands != 1:
+            return 0
+        #try swapping 
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    islands = self.count_islands(grid,rows,cols)
+                    if islands != 1:
+                        return 1
+                    grid[i][j] = 0
+        
+        return 2
+    
+    #function for exactly one island
+    def dfs(self,i,j,grid,seen,rows,cols):
+        seen.add((i,j))
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for di,dj in dirrs:
+            ii = i + di
+            jj = j + dj
+            if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 1 and (ii,jj) not in seen:
+                self.dfs(ii,jj,grid,seen,rows,cols)
+    
+    def count_islands(self,grid,rows,cols):
+        seen = set()
+        islands = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1 and (i,j) not in seen:
+                    self.dfs(i,j,grid,seen,rows,cols)
+                    islands += len(seen) > 0
+        return islands
+    
+#actual solution
+class Solution:
+    def minDays(self, grid: List[List[int]]) -> int:
+        '''
+        if there is only one island, we need to disconnect it from all the water
+        but if all islands are disconnect, we'are done
+        if there exactly one island, othwerwise its disconnected, we need to make it disconnected
+        we wont need more than two days to disconnect the grid? wtf
+        
+        if disconnected, meaning there isn't exaclty one island return 0
+        return 1 if chaning a single land to water disconnectes the island
+        othewise return 2
+        '''
+        rows, cols = len(grid), len(grid[0])
+
+        def _count_islands():
+            visited = set()
+            count = 0
+            for i in range(rows):
+                for j in range(cols):
+                    if grid[i][j] == 1 and (i, j) not in visited:
+                        _explore_island(i, j, visited)
+                        count += 1
+            return count
+
+        def _explore_island(i, j, visited):
+            if (i < 0 or i >= rows or j < 0 or j >= cols or grid[i][j] == 0 or (i, j) in visited):
+                return
+            visited.add((i, j))
+            for di, dj in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
+                _explore_island(i + di, j + dj, visited)
+
+        # Check if already disconnected
+        if _count_islands() != 1:
+            return 0
+
+        # Check if can be disconnected in 1 day
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    grid[i][j] = 0
+                    if _count_islands() != 1:
+                        return 1
+                    grid[i][j] = 1
+
+        # If can't be disconnected in 0 or 1 day, return 2
+        return 2
+    
+#####################################
+# 40. Combination Sum II (REVISITED)
+# 13AUG24
+#####################################
+class Solution:
+    def combinationSum2(self, candidates: List[int], target: int) -> List[List[int]]:
+        '''
+        i need to sort them first
+        similart to combindation sum I
+        imagine examples like
+        [1,1,1,1,1,1]
+        2
+        
+        we need combinations to be unique, so sorting makes sure we dont pick the same partial combination
+        if i group all the same numbers together, i dont want to repeat freqeunces of that number k in a combiation
+        '''
+        candidates.sort()
+        results = []
+        
+        #print(candidates)
+        def recurse(i,target,path):
+            if target <= 0:
+                if target == 0 and path:
+                    results.append(path[:])
+                
+                return 
+            
+            for j in range(i,len(candidates)):
+                if j > i and candidates[j] == candidates[j-1]:
+                    #print('skip',i,j)
+                    continue
+                if candidates[j] > target:
+                    break
+                recurse(j+1, target - candidates[j], path + [candidates[j]])
+        
+        recurse(0,target,[])
+        return results
+    
+#bottom up variant
+class Solution:
+    def combinationSum2(self, candidates: List[int], target: int) -> List[List[int]]:
+        '''
+        filter out elements <= target
+        '''
+        candidates = [i for i in candidates if i <= target]
+
+        candidates.sort()
+
+        dp = [set() for _ in range(target+1)]
+        dp[0].add(())
+
+        for i, c in enumerate(candidates):
+            
+            #need to start backwrds from target
+            for j in range(target - c, -1, -1):
+                for tup in dp[j]:
+                    dp[j+c].add(tuple(list(tup) + [c]))
+        
+        print(dp)
+        return list(dp[target])
+
+##############################################
+# 351. Android Unlock Patterns (REVISITED)
+# 13AUG24
+##############################################
+class Solution:
+    
+    def numberOfPatterns(self, m: int, n: int) -> int:
+        '''
+        grid is
+        1 2 3
+        4 5 6
+        7 8 9
+        there only an obsacle between some digit (u,v) if we move through another dot, it must have been previously pressed
+        we can brute force all possible ways to make unlock pattern with key presses between m and n
+        
+        then we push push states using recursion
+        '''
+        obstacles = defaultdict()
+        #for a number on the pad, look for numbers that need to be pressed at least on1 before pressing the next one
+        dirrs = [[2,0,1,0],[-2,0,-1,0],[0,2,0,1],[0,-2,0,-1],[-2,-2,-1,-1],[2,2,1,1],[-2,2,-1,1],[2,-2,1,-1]] #(x,y,x,y)
+        for i in range(3):
+            for j in range(3):
+                for di,dj,dk,dl in dirrs:
+                    ii = i + di
+                    jj = j + dj
+                    if 0 <= ii <= 2 and 0 <= jj <= 2:
+                        u = i*3 + j
+                        v = ii*3 + jj
+                        skip = (i + dk)*3 + (j + dl)
+                        obstacles[(u+1,v+1)] = skip+1
+        ans = [0]
+        for i in range(1,10):
+            seen = set()
+            self.count_ways(i,obstacles,ans,1,seen,m,n)
+        
+        return ans[0]
+        
+    
+    def count_ways(self,num,graph,ans,count,seen,m,n):
+        if m <= count <= n:
+            ans[0] += 1
+        if count == n:
+            return
+        seen.add(num)
+        for neigh in range(1,10):
+            if neigh not in seen:
+                if (num,neigh) in graph and graph[(num,neigh)] not in seen:
+                    continue
+                self.count_ways(neigh,graph,ans,count+1,seen,m,n)
+                
+        seen.remove(num)
+        
+##########################################
+# 719. Find K-th Smallest Pair Distance
+# 14AUG24
+###########################################
+#almost had it!
+class Solution:
+    def smallestDistancePair(self, nums: List[int], k: int) -> int:
+        '''
+        need the kth smallest distance among all pairs, where (0 <= i < j < len(nums))
+        binary search on answer, so we need a linear time funcino that checks how many pairs (i,j) 
+        are <= x
+        if pair count > k, x was too big, other wise x is too small
+        if we sort sums, then the largest distance would be with pair (i,n-1)
+        say we are at some pair (i,j) with dist == Y, 
+        if Y <= X, then the number of pairs <= X is (j - i), so move left
+        if Y > X, we cant count this pair and the distance is too big, but moving the left pointer up 1 and right pointer down 1
+        would both decrease the distance
+        [1,2,3,4,5]
+        '''
+        nums.sort()
+        #neew count_pairs_leq == k, but we want the smallest k, so the left most one
+        left = nums[1] - nums[0]
+        right = nums[-1] - nums[0]
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            count = self.count_pairs_leq(nums,mid)
+            if count < k:
+                left = mid + 1
+            else:
+                right = mid
+        
+        return left
+    
+    #count pairs <= x
+    def count_pairs_leq(self, nums,x):
+        left = 0
+        right = len(nums) - 1
+        pairs = 0
+        while left < right:
+            dist = nums[right] - nums[left]
+            if dist <= x:
+                pairs += (right - left)
+                left += 1
+            else:
+                right -= 1
+        
+        return pairs
+    
+#yesssss
+class Solution:
+    def smallestDistancePair(self, nums: List[int], k: int) -> int:
+        '''
+        need the kth smallest distance among all pairs, where (0 <= i < j < len(nums))
+        binary search on answer, so we need a linear time funcino that checks how many pairs (i,j) 
+        are <= x
+        if pair count > k, x was too big, other wise x is too small
+        if we sort sums, then the largest distance would be with pair (i,n-1)
+        say we are at some pair (i,j) with dist == Y, 
+        if Y <= X, then the number of pairs <= X is (j - i), so move left
+        if Y > X, we cant count this pair and the distance is too big, but moving the left pointer up 1 and right pointer down 1
+        would both decrease the distance
+        [1,2,3,4,5]
+        
+        we need to use sliding window, anchor the right, and move left when too big
+        '''
+        nums.sort()
+        #neew count_pairs_leq == k, but we want the smallest k, so the left most one
+        left = 0
+        right = nums[-1] - nums[0]
+        ans = -1 #save ans and look for a better onw
+        
+        while left < right:
+            mid = left + (right - left) // 2
+            count = self.count_pairs_leq(nums,mid)
+            if count == k:
+                ans = mid
+            if count < k:
+                left = mid + 1
+            else:
+                right = mid
+        
+        return left
+    
+    #count pairs <= x
+    def count_pairs_leq(self, nums,x):
+        left = 0
+        pairs = 0
+        for right in range(len(nums)):
+            while nums[right] - nums[left] > x:
+                left += 1
+            #other wise count up all pairs anchored with right
+            pairs += (right - left)
+        
+        return pairs
+
+#brute force just for fun
+class Solution:
+    def smallestDistancePair(self, nums: List[int], k: int) -> int:
+        '''
+        for brute force, we can just do bucket sort,
+        put pair distance in buckets,
+        then find the kth smallest, after decremtning the counts in the buckets
+        '''
+        max_distance = max(nums)
+        distance_counts = [0]*(max_distance + 1)
+        N = len(nums)
+        for i in range(N):
+            for j in range(i+1,N):
+                dist = abs(nums[i] - nums[j])
+                distance_counts[dist] += 1
+        
+        for d in range(max_distance + 1):
+            k -= distance_counts[d]
+            if k <= 0:
+                return d
+        
+        return -1
