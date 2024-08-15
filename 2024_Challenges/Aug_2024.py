@@ -179,6 +179,129 @@ class Solution:
         
         return ans
 
+#brute force
+class Solution:
+    def longestRepeatingSubstring(self, s: str) -> int:
+        '''
+        brute force with set,
+        intution, start with the longest length substring, and keep looking for a repat
+        if it repeats we are done, starting from the largest one, and going down means we will always find the largest one possible
+        '''
+        seen = set()
+        max_length = len(s) - 1
+        
+        while max_length > 0:
+            seen.clear()
+            for start in range(len(s) - max_length + 1):
+                substring = s[start:start+max_length]
+                if substring in seen:
+                    return max_length
+                seen.add(substring)
+            
+            max_length -= 1
+        
+        return 0
+    
+class Solution:
+    def longestRepeatingSubstring(self, s: str) -> int:
+        '''
+        suffix array with sorting, when all sufixes are sorted, common prefixes will be adjacent to each other
+        then we can just scan the sorted suffixes
+        then its just finding the longest common prefix
+        verify this!
+        if two suffxies share a common prefix, this prefix must appear more than one time!
+        so the problem then becomes, given the suffixes, find the longest common prefix
+        '''
+        N = len(s)
+        suffixes = []
+        for i in range(N):
+            suffixes.append(s[i:])
+        
+        suffixes.sort()
+        #lcp
+        def commonPref(str1,str2):
+            M = len(str1)
+            N = len(str2)
+            for i in range(min(M,N)):
+                #it was match up until i, so prefix up to i, non-inclusive
+                if str1[i] != str2[i]:
+                    return str1[:i]
+
+            return str1[:min(M,N)]
+        
+        ans = 0
+        for i in range(len(suffixes)):
+            for j in range(i+1,len(suffixes)):
+                common = commonPref(suffixes[i],suffixes[j])
+                ans = max(ans,len(common))
+        
+        return ans
+
+#N*N*lnN
+class Solution:
+    def longestRepeatingSubstring(self, s: str) -> int:
+        '''
+        suffix array with sorting, when all sufixes are sorted, common prefixes will be adjacent to each other
+        then we can just scan the sorted suffixes
+        then its just finding the longest common prefix
+        verify this!
+        if two suffxies share a common prefix, this prefix must appear more than one time!
+        so the problem then becomes, given the suffixes, find the longest common prefix
+        '''
+        N = len(s)
+        suffixes = []
+        for i in range(N):
+            suffixes.append(s[i:])
+        
+        suffixes.sort()
+        max_length = 0
+        # Compare adjacent suffixes to find the longest common prefix
+        for i in range(1, len(suffixes)):
+            j = 0
+            # Compare characters one by one until
+            # they differ or end of one suffix is reached
+            while (j < min(len(suffixes[i]), len(suffixes[i - 1])) and suffixes[i][j] == suffixes[i - 1][j]):
+                j += 1
+            # Update max_length with the length of the common prefix
+            max_length = max(max_length, j)
+        return max_length
+    
+#binary search
+class Solution:
+    def longestRepeatingSubstring(self, s: str) -> int:
+        '''
+        we can also do binary search
+        our search space is the length of all possible subtrings
+        our function is to check a repeating substring of some length k
+        '''
+        left = 1
+        right = len(s) - 1
+        ans = 0
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.repeating(s,mid):
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return ans
+    
+    def repeating(self,s,k):
+        seen = set()
+        for i in range(len(s) - k + 1):
+            substring = s[i:i+k]
+            if substring in seen:
+                return True
+            seen.add(substring)
+        
+        return False
+    
+#dp
+
+
+
 ##########################################
 # 1508. Range Sum of Sorted Subarray Sums
 # 04AUG24
@@ -1188,3 +1311,20 @@ class Solution:
                 return d
         
         return -1
+    
+##############################################################
+# 1566. Detect Pattern of Length M Repeated K or More Times
+# 15AUG24
+##############################################################
+class Solution:
+    def containsPattern(self, arr: List[int], m: int, k: int) -> bool:
+        '''
+        pattern needs to repeat itselft
+        '''
+        N = len(arr)
+        for i in range(N-m+1):
+            pattern = arr[i:i+m]
+            if pattern*k == arr[i:i+m*k]:
+                return True
+        
+        return False
