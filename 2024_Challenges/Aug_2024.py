@@ -1328,3 +1328,141 @@ class Solution:
                 return True
         
         return False
+
+######################################################
+# 624. Maximum Distance in Arrays (REVISITED)
+# 16AUG24
+######################################################
+#dammit
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        we need to pick two integers from two different arrays
+        i can put everything in array, sort, then use two pointers, and keep walking until we get two differnt integers from
+        two different arrays
+        '''
+        nums = []
+        for i,arr in enumerate(arrays):
+            for num in arr:
+                nums.append((num,i))
+        
+        nums.sort()
+        left = 0
+        right = len(nums) - 1
+        while left < right and nums[left][1] == nums[right][1]:
+            #go in direction of maximum gap
+            if left + 1 < right and right - 1 > left:
+                if abs(nums[left+1][0] - nums[right][0]) > abs(nums[right-1][0] - nums[left][0]):
+                    left += 1
+                else:
+                    right -= 1
+            elif left + 1 < right:
+                left += 1
+            else:
+                right -= 1
+        
+        return abs(nums[left][0] - nums[right][0])
+    
+class Solution:
+    def maxDistance(self, arrays: List[List[int]]) -> int:
+        '''
+        they are sorted, so we just need to find the smallest min and the largest max, but both need to come 
+        from different arrays
+        '''
+        smallest_min = float('inf')
+        largest_max = float('-inf')
+        ans = 0
+        
+        for arr in arrays:
+            #update before picking the min and max!
+            #ie we didn't, the two integers might have been from the same array
+            ans = max(ans, largest_max - arr[0], arr[-1] - smallest_min)
+            smallest_min = min(smallest_min,arr[0])
+            largest_max = max(largest_max,arr[-1])
+            print(ans,smallest_min,largest_max)
+        
+        return ans
+    
+##########################################
+# 1937. Maximum Number of Points with Cost
+# 17AUG24
+##########################################
+#unoptimized DP, TLE
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        '''
+        i can only pick a cell in each row, so we can only go down
+        howevery we loost points if we pick a cell too far from the cell we are currently at
+        if we are at (i,j) gain points[i][j]
+        and we move to (i+1,j+1), we lose abs(j - (j+1))
+        if we pick (i+1, j+2) we lose (abs(j - (j+2)))
+        so we want to pick the largest in the row below, but not too far from the current (i,j)
+        dp would take N*N time
+        '''
+        rows = len(points)
+        cols = len(points[0])
+        
+        memo = {}
+        
+        def dp(i,j):
+            #base case
+            if i >= rows:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            ans = 0
+            for k in range(cols):
+                #get point at next
+                curr_points = points[i][k] - abs(j-k) + dp(i+1,k)
+                ans = max(ans,curr_points)
+            
+            memo[(i,j)] = ans
+            return ans
+        
+        ans = 0
+        for j in range(cols):
+            #add in first point value for first row, the call dp
+            ans = max(ans,points[0][j] + dp(1,j))
+        
+        return ans
+                
+#need linear time, input is too big for (two states)
+#need lefts array and rights array
+class Solution:
+    def maxPoints(self, points: List[List[int]]) -> int:
+        '''
+        the problem with the dp approach is that we tried all cells below row i
+        applied penalty, and took the max, recall there aren't many ways to optimize a top down
+        recursive dp solution, and most of the time these optimizations come from
+        tabulation
+        idea is to keep left max and right max
+        precompute these, and take the maximum of the two choices
+        if we compute left to right and right to left, the penality only goes up by 1
+        '''
+        rows = len(points)
+        cols = len(points[0])
+        
+        dp = [[0]*cols for _ in range(rows)]
+        #fill first row
+        for c in range(cols):
+            dp[0][c] = points[0][c]
+        
+        for r in range(1,rows):
+            left_max = [0]*cols
+            right_max = [0]*cols
+            
+            #find max going left and apply penality
+            left_max[0] = dp[r-1][0]
+            for c in range(1,cols):
+                left_max[c] = max(left_max[c-1] - 1, dp[r-1][c])
+            
+            right_max[-1] = dp[r-1][-1]
+            for c in range(cols-2,-1,-1):
+                right_max[c] = max(right_max[c+1] - 1, dp[r-1][c])
+            
+            #fill in current row ans
+            for col in range(cols):
+                dp[r][col] = max(left_max[col],right_max[col]) + points[r][col]
+        
+        return max(dp[-1])
