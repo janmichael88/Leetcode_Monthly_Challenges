@@ -1466,3 +1466,87 @@ class Solution:
                 dp[r][col] = max(left_max[col],right_max[col]) + points[r][col]
         
         return max(dp[-1])
+
+#####################################
+# 264. Ugly Number II (REVISTED)
+# 18AUG24
+####################################
+class Solution:
+    def nthUglyNumber(self, n: int) -> int:
+        '''
+        try merging three sorted lists
+        if we have the kth ugly, the next ugly will be min(L1*2,L2*2,L3*5)
+        generate the sequence
+        note 1, can be exrpessed as an ugly, because we can have 2**0 * 3**0 * 5**0
+        we need to keep pointers to the last three ugly numbers
+        '''
+        uglies = [1]
+        i2,i3,i5 = 0,0,0
+        while len(uglies) < n:
+            ugly2 = uglies[i2]*2
+            ugly3 = uglies[i3]*3
+            ugly5 = uglies[i5]*5
+            
+            #need to move all pointers!
+            next_ugly = min(ugly2,ugly3,ugly5)
+            #promote pointers
+            if next_ugly == ugly2:
+                i2 += 1
+            if next_ugly == ugly3:
+                i3 += 1
+            if next_ugly == ugly5:
+                i5 += 1
+            uglies.append(next_ugly)
+        
+        print(uglies)
+        return uglies[n-1]
+            
+#bottom up dp
+class Solution:
+    def nthUglyNumber(self, n: int) -> int:
+        '''
+        idea is to keep pointers for the last three ugly numbers
+        '''
+        uglies = [0]*(n+1)
+        uglies[1] = 1
+        first = 1
+        second = 1
+        third = 1
+        
+        for i in range(2,n+1):
+            next_ugly = min(uglies[first]*2,uglies[second]*3,uglies[third]*5)
+            uglies[i] = next_ugly
+            #move pointers
+            if next_ugly == uglies[first]*2:
+                first += 1
+            if next_ugly == uglies[second]*3:
+                second += 1
+            if next_ugly == uglies[third]*5:
+                third += 1
+        
+        return uglies[n]
+    
+#using sorted or minheap
+from sortedcontainers import SortedList
+class Solution:
+    def nthUglyNumber(self, n: int) -> int:
+        '''
+        brute force, 
+        just keep track of all possible uglies and always pick the minimum
+        used sortedList to speed up
+        '''
+        uglies = SortedList([])
+        seen = set()
+        uglies.add(1)
+        seen.add(1)
+        
+        for _ in range(n-1):
+            curr_ugly = uglies.pop(0)
+            seen.remove(curr_ugly)
+            for mult in [2,3,5]:
+                next_ugly = curr_ugly*mult
+                if next_ugly not in seen:
+                    uglies.add(next_ugly)
+                    seen.add(next_ugly)
+        
+        return uglies[0]
