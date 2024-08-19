@@ -1550,3 +1550,81 @@ class Solution:
                     seen.add(next_ugly)
         
         return uglies[0]
+    
+###########################################
+# 1014. Best Sightseeing Pair
+# 18AUG24
+###########################################
+class Solution:
+    def maxScoreSightseeingPair(self, values: List[int]) -> int:
+        '''
+        we want to maximize
+        values[i] + values[j] + i - j, for i < j
+        rewrite as (values[i] + i) + (values[j] - j)
+        for some value i, we need the max of values[j] - j to the left
+        '''
+        n = len(values)
+        max_js = [0]*n
+        for j in range(n-1,-1,-1):
+            if j == n - 1:
+                max_js[j] = values[j] - j
+            else:
+                max_js[j] = max(max_js[j+1],values[j] - j)
+        
+        #find max i
+        max_is = [0]*n
+        for i in range(n):
+            if i == 0:
+                max_is[i] = values[i] + i
+            else:
+                max_is[i] = max(max_is[i-1], values[i] + i)
+        
+        ans = 0
+        for i in range(n-1):
+            ans = max(ans, max_is[i] + max_js[i+1])
+            
+        return ans
+
+#we can reduce to two pass
+class Solution:
+    def maxScoreSightseeingPair(self, values: List[int]) -> int:
+        '''
+        we can reduce to two pass, 
+        on the second pass find the maximum of values[i] + i and compare with the largest values[j] - j
+        '''
+        n = len(values)
+        max_js = [0]*n
+        for j in range(n-1,-1,-1):
+            if j == n - 1:
+                max_js[j] = values[j] - j
+            else:
+                max_js[j] = max(max_js[j+1],values[j] - j)
+        
+        #find max i
+        ans = 0
+        max_is = 0
+        for i in range(n-1):
+            max_is = max(values[i] + i,max_is)
+            ans = max(ans, max_is + max_js[i+1])
+            
+        return ans
+
+#one pass
+#maximize max_is, and when we discover a new j, we save it
+class Solution:
+    def maxScoreSightseeingPair(self, values: List[int]) -> int:
+        '''
+        we actually don't need to maximize js if we go from left to right, 
+        as long as we maximize i, we can discover a new j, that it the right of the current i
+        so we only maximize max_is, and maximize ans for the current i
+        '''
+        n = len(values)
+        ans = 0
+        max_is = values[0] + 0  # values[i] + i, initialized at i = 0
+
+        for i in range(1, n):
+            curr_js = values[i] - i
+            ans = max(ans, max_is + curr_js)
+            max_is = max(max_is, values[i] + i)
+
+        return ans
