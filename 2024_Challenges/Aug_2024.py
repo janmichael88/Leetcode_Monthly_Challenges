@@ -1628,3 +1628,261 @@ class Solution:
             max_is = max(max_is, values[i] + i)
 
         return ans
+
+#######################################
+# 650. 2 Keys Keyboard (REVISTED)
+# 19AUG24
+#######################################
+#dp
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        dp states
+            (chars_on_screen, chars_in_buffer)
+        
+        when we have n chars_on_screen we are done
+        copy operation = put chars on screen into buffer and add 1
+        past operation, put chars in buffer on screen
+        min of copy and paste
+        copy needs to be followed by a paste
+        make sure to only do actions when we can
+        '''
+        memo = {}
+        
+        def dp(screen_chars,buffer_chars):
+            if screen_chars == n:
+                return 0
+            if screen_chars > n or buffer_chars > n:
+                return float('inf')
+            if (screen_chars,buffer_chars) in memo:
+                return memo[(screen_chars,buffer_chars)]
+            
+            #it doubles, and we have screen_chars in buffer
+            copy_paste = 2 + dp(screen_chars*2,screen_chars)
+            #paste operation, we just move screen to bufer
+            paste = 0
+            if buffer_chars > 0:
+                paste = 1 + dp(screen_chars + buffer_chars,buffer_chars)
+            if paste:
+                ans = min(copy_paste,paste)
+            else:
+                ans = copy_paste
+            memo[(screen_chars,buffer_chars)] = ans
+            return ans
+            
+        return dp(1,0)
+    
+#bottom up
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        bottom up
+        '''
+        dp = [[0]*(n+1) for _ in range(n+1)]
+        
+        for screen_chars in range(n-1,-1,-1):
+            #order doenst matter for buffer chars
+            for buffer_chars in range(screen_chars-1,-1,-1):
+                #copy paste
+                if screen_chars*2 > n:
+                    copy_paste = float('inf')
+                else:
+                    copy_paste = 2 + dp[screen_chars*2][screen_chars]
+                
+                paste = 0
+                if buffer_chars > 0:
+                    if screen_chars + buffer_chars > n:
+                        paste = 0
+                    else:
+                        paste = 1 + dp[screen_chars + buffer_chars][buffer_chars]
+                
+                if paste:
+                    ans = min(paste,copy_paste)
+                else:
+                    ans = copy_paste
+                
+                dp[screen_chars][buffer_chars] = ans
+        
+        return dp[1][0]
+
+#another dp solution
+
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        for this, the assumption is that we start with 1 char in screen on one alredy in buffer
+        '''
+        if n==1:
+            return 0
+        
+        memo = {}
+        def helper(el, cp):
+            if el>n or cp>n:
+                return float('inf')            
+            if el==n:
+                return 0
+            if (el,cp) in memo:
+                return memo[(el,cp)]
+            only_paste=1+helper(el+cp,cp)
+            copy_paste=2+helper(el*2,el)
+            ans = min(only_paste,copy_paste)
+            memo[(el,cp)] = ans
+            return ans
+            
+            
+        return 1+helper(1,1)
+
+#top down
+class Solution:
+    def minSteps(self, n: int) -> int:
+        '''
+        we can do 1 state dp
+        let dp(i) be the mininum number of moves to get i A's
+        now say have 6As
+        we could have gotten to here by
+        pasting 1A 5 times
+        pasting 2A 4 times
+        pasting 3A 1 times
+        it is more advantages to just paste whatver is in buffer
+        more so, if we have i As, the previous As on the screen must have been factor of i
+        one possible way to make i As is to the use the copy all operation for j A's when j is a factor of i
+        we can the paste the j A's (i-j) // j times
+        '''
+        memo = {}
+        
+        def dp(i):
+            if i == 1:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = float('inf')
+            for j in range(1,i):
+                if i % j == 0:
+                    ans = min(ans,dp(j) + i // j)
+            
+            memo[i] = ans
+            return ans
+        
+        
+        return dp(n)
+    
+#notice that for some count of i A's we must have come from a factor of i
+
+
+##################################################################
+# 2507. Smallest Value After Replacing With Sum of Prime Factors
+# 19AUG24
+###################################################################
+class Solution:
+    def smallestValue(self, n: int) -> int:
+        '''
+        simulate, good review on prime factorization
+        start from 2 and keep dividing as long as its a factor
+        
+        '''
+        ans = float('inf')
+        
+        while True:
+            sum_primes = self.sumprimefactors(n)
+            ans = min(ans,sum_primes)
+            if sum_primes == n:
+                break
+            n = sum_primes
+        return ans
+
+        return 0
+    def sumprimefactors(self,n):
+        ans = 0
+        d = 2
+        while n > 1:
+            while n % d == 0:
+                ans += d
+                n = n // d
+            
+            d += 1
+        
+        return ans
+    
+##############################################
+# 3189. Minimum Moves to Get a Peaceful Board
+# 20AUG24
+##############################################
+class Solution:
+    def minMoves(self, rooks: List[List[int]]) -> int:
+        '''
+        meed min moves to have board state where there is exactly one rook
+        '''
+        #sort rooks on rows, then assign
+        n = len(rooks)
+        rooks.sort()
+        moves = 0
+        
+        for i in range(n):
+            moves += abs(rooks[i][0] - i)
+        
+        #now sort on columns
+        rooks.sort(key = lambda x: x[1])
+        
+        for i in range(n):
+            moves += abs(rooks[i][1] - i)
+        
+        return moves
+        
+#counting sort
+class Solution:
+    def minMoves(self, rooks: List[List[int]]) -> int:
+        '''
+        instead of sorting by by rook position, we count up the rooks at each position
+        we can use counting sort
+        '''
+        n = len(rooks)
+        rows = Counter([r for r,c in rooks])
+        cols = Counter([c for r,c in rooks])
+        
+        moves = 0
+        
+        for i,r in enumerate(self.countingSort(rows,n)):
+            moves += abs(r - i)
+        
+        for i,c in enumerate(self.countingSort(cols,n)):
+            moves += abs(c - i)
+        
+        return moves
+    
+    def countingSort(self,counts,n):
+        order = []
+        for i in range(n):
+            if i in counts:
+                for _ in range(counts[i]):
+                    order.append(i)
+        
+        return order
+    
+class Solution:
+    def minMoves(self, rooks: List[List[int]]) -> int:
+        '''
+        we calculate the number of rooks at each row and col seperately
+        recall there can only be one rook in reach row and col
+        the excess needs to be moved
+        so the cost of moving the excess rooks is just count_rooks at this (row or col) - 1
+        we add this up for both row and cols
+        maintain difference and accumulate difference
+        '''
+        n = len(rooks)
+        moves = 0
+        rows = [0]*n
+        cols = [0]*n
+        
+        for r,c in rooks:
+            rows[r] += 1
+            cols[c] += 1
+            
+        moves
+        excess_rooks_rows = 0
+        excess_rooks_cols = 0
+        for i in range(n):
+            excess_rooks_rows += rows[i] - 1
+            excess_rooks_cols += cols[i] - 1
+            moves += abs(excess_rooks_rows) + abs(excess_rooks_cols)
+        
+        return moves
