@@ -2032,3 +2032,73 @@ class Solution:
             nums[i] = num // q
         
         return nums
+    
+###################################
+# 664. Strange Printer (REVISITED)
+# 22AUG24
+###################################
+class Solution:
+    def strangePrinter(self, s: str) -> int:
+        '''
+        the problem is that we can replace existing chars
+        in one press we can print as many chars as we want to
+        we can choose to place the next sequence at the end (in any length) or replace them at any position
+        and at any length
+        idea is to pring s in a few presses as possible, since we are allowed to 'delete' chars by overwriting
+        lets examine way to split a string
+        'cabad'
+        let dp(i,j) be the minimum number of presses to get s[i:j+1]
+        so we wan dp(0,len(s))
+        then we can check for all k from i to j and minimize
+            if s[i] == s[k], its part of the current press
+        '''
+        memo = {}
+        n = len(s) 
+        
+        def dp(i,j):
+            if i > j:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = 1 + dp(i+1,j) #advance and press
+            for k in range(i+1,j+1):
+                if s[i] == s[k]:
+                    left = dp(i,k-1)
+                    right = dp(k+1,j)
+                    combine = left + right
+                    ans = min(ans,combine)
+            
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,n-1)
+                    
+        
+#bottom up
+class Solution:
+    def strangePrinter(self, s: str) -> int:
+        '''
+        bottom up
+        '''
+        n = len(s)
+    
+        # Initialize the DP table
+        dp = [[0] * n for _ in range(n)]
+
+        # Fill the DP table
+        for length in range(1, n + 1):  # Length of the substring
+            for i in range(n - length + 1):
+                j = i + length - 1
+
+                # Base case for substrings of length 1
+                dp[i][j] = 1 if length == 1 else 1 + dp[i + 1][j]
+
+                # Check for all possible split points
+                for k in range(i + 1, j + 1):
+                    if s[i] == s[k]:
+                        left = dp[i][k - 1]
+                        right = dp[k + 1][j] if k + 1 <= j else 0
+                        dp[i][j] = min(dp[i][j], left + right)
+
+        # The answer for the whole string is stored in dp[0][n-1]
+        return dp[0][n-1]
