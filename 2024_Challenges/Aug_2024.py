@@ -1886,3 +1886,149 @@ class Solution:
             moves += abs(excess_rooks_rows) + abs(excess_rooks_cols)
         
         return moves
+    
+#######################################
+# 1140. Stone Game II (REVISITED)
+# 20AUG24
+#######################################
+class Solution:
+    def stoneGameII(self, piles: List[int]) -> int:
+        '''
+        alice starts first, M starts as 1
+        each player can take all the stones in the range(1,2M + 1)
+        then set M to be max(M,X)
+        states are (i,m)
+        return scores for both alice and bob, but swap after each call
+        i can also keep track of alice turn or bob turn
+        if its alices turn, we need to maximize, if its bob's turn we need to minimize
+        player_turn (0 for alice, 1 for bob)
+        '''
+        n = len(piles)
+        memo = {}
+        
+        
+        def dp(i,m,player_turn):
+            if i >= n:
+                return 0
+            if (i,m,player_turn) in memo:
+                return memo[(i,m,player_turn)]
+            #if its alice turn we are maximizing
+            if player_turn == 0:
+                max_score = float('-inf')
+                stone_sum = 0
+                for j in range(1,min(2*m,n-i)+1):
+                    stone_sum += piles[i+j-1]
+                    next_m = max(m,j)
+                    max_score = max(max_score, stone_sum + dp(i+j,next_m,1))
+                memo[(i,m,player_turn)] = max_score
+                return max_score
+            #on bob's turn we minimize, and we dont take any stones
+            elif player_turn == 1:
+                min_score = float('inf')
+                for j in range(1,min(2*m,n-i)+1):
+                    next_m = max(m,j)
+                    min_score = min(min_score, dp(i+j,next_m,0))
+                
+                memo[(i,m,player_turn)] = min_score
+                return min_score
+            
+        return dp(0,1,0)
+                
+#check this solution too
+#https://leetcode.com/problems/stone-game-ii/discuss/793881/python-DP-Thought-process-explained       
+
+
+#######################
+# 1686. Stone Game VI
+# 20AUG24
+########################
+class Solution:
+    def stoneGameVI(self, aliceValues: List[int], bobValues: List[int]) -> int:
+        '''
+        both alice and bob value stones differently
+        and they can take any stone in the array, not just ends or beginning
+        have alice choose the biggest stone, but also the biggest stone for bob
+        '''
+        new_stones = [[a + b, a,b] for (a,b) in zip(aliceValues,bobValues)]
+        new_stones.sort(key = lambda x: -x[0])
+        alice_score = 0
+        bob_score = 0
+        n = len(new_stones)
+        for i in range(n):
+            if i % 2 == 0:
+                alice_score += new_stones[i][1]
+            else:
+                bob_score += new_stones[i][2]
+        
+        if alice_score > bob_score:
+            return 1
+        elif alice_score < bob_score:
+            return -1
+        return 0
+
+#############################################
+# 1920. Build Array from Permutation
+# 22AUG24
+#############################################
+#fuck yeah
+class Solution:
+    def buildArray(self, nums: List[int]) -> List[int]:
+        '''
+        i can save space using bitwise operators
+        store the nums[i] and nums[nums[i]] as integer left part nums[i] and right part is nums[nums[i]]
+        store origina number in first ten bits, 
+        nums only go up to 1000
+        2**10 covers
+        increment each value by one first and shift to the left 20, then we have space for its pair
+        
+        '''
+        mask = (1 << 11) - 1
+        n = len(nums)
+        for i in range(n):
+            curr_num = nums[i] + 1
+            curr_num = curr_num << 20
+            nums[i] = curr_num
+        
+        #retravesre again and get pair
+        for i in range(n):
+            curr_num = nums[i]
+            #get actual num
+            actual_num = (curr_num >> 20) - 1
+            #find its pair
+            pair = nums[actual_num]
+            actual_pair = (pair >> 20 ) - 1
+            #put acutal pair in the first 10 spots of curr_num, but + 1
+            curr_num |= (actual_pair + 1)
+            nums[i] = curr_num
+        
+        for i in range(n):
+            curr_num = nums[i]
+            pair = (curr_num & mask) - 1
+            nums[i] = pair
+        
+        return nums
+    
+#need to right number as (a,b) -> a = b*q + r
+class Solution:
+    def buildArray(self, nums: List[int]) -> List[int]:
+        '''
+        intution is that we need to encode both the new value and the old value into the same value
+        if we left a = q*b + r, we put the old value into r and the new value into b
+        and since there are only number froms 0 to n-1, we use q as n
+        we can retreive the old value by taking % q and new value as // q
+        rather new num will be a multiple of q
+        and old num is % q
+        '''
+        q = len(nums)
+        
+        for i,num in enumerate(nums):
+            r = nums[i]
+            b = nums[nums[i]] % q
+            a = b*q + r
+            nums[i] = a
+        
+        for i,num in enumerate(nums):
+            #print(num % q,num//q)
+            nums[i] = num // q
+        
+        return nums
