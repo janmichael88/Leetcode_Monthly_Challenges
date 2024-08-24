@@ -2102,3 +2102,173 @@ class Solution:
 
         # The answer for the whole string is stored in dp[0][n-1]
         return dp[0][n-1]
+
+####################################################
+# 592. Fraction Addition and Subtraction (REVISITED)
+# 23AUG24
+####################################################
+#using regex
+import re
+class Solution:
+    def fractionAddition(self, expression: str) -> str:
+        '''
+        get fractions
+        then for each fraction split into numerators and denoms
+        lcm, of denoms, regardless of sign
+        then reduce, using gcd
+        '''
+        pattern = r'[+-]?\d+/\d+'
+        fractions = re.findall(pattern,expression)
+        nums = []
+        denoms = []
+        lcm = 1
+        for f in fractions:
+            num,denom = f.split("/")
+            nums.append(int(num))
+            denoms.append(int(denom))
+            lcm = (lcm*abs(int(denom))) / self.gcd(lcm,abs(int(denom)))
+        
+        ans_num = 0
+        for n,d in zip(nums,denoms):
+            ans_num += (lcm/d)*n
+        
+        sign = -1 if ans_num < 0 else 1
+        #print(ans_num,lcm)
+        #find gcd
+        GCD = self.gcd(ans_num,lcm)
+        final_num = int(abs(ans_num/GCD))
+        final_denom = int(abs(lcm/GCD))
+        
+        ans = str(final_num)+'/'+str(final_denom)
+        
+        if sign == -1:
+            ans = '-'+ans
+        return ans
+
+#process and summation on fly
+import re
+class Solution:
+    def fractionAddition(self, expression: str) -> str:
+        '''
+        we dont need to grab all the nums and denoms in a seperate pass
+        we can reduce and add
+        when addint tow fraction, use product of two denoms as common denom
+        '''
+        pattern = r'[+-]?\d+/\d+'
+        fractions = re.findall(pattern,expression)
+        nums = []
+        denoms = []
+        num = 0
+        denom = 1
+        for f in fractions:
+            f = f.split("/")
+            curr_num,curr_denom = int(f[0]),int(f[1])
+            #update num
+            common_denom = denom*curr_denom
+            num = (common_denom//denom)*num + (common_denom//curr_denom)*curr_num
+            denom = common_denom
+        
+        gcd = abs(self.gcd(num,denom))
+        #reduce
+        num = num // gcd
+        denom = denom // gcd
+        return f"{num}/{denom}"
+            
+
+    
+    def gcd(self,a,b):
+        if a == 0:
+            return b
+        return self.gcd(b % a,a)
+        
+######################################
+# 1837. Sum of Digits in Base K
+# 23AUG24
+######################################
+class Solution:
+    def sumBase(self, n: int, k: int) -> int:
+        
+        ans = 0
+        while n:
+            ans += n % k
+            n = n // k
+        
+        return ans
+    
+#################
+# 853. Car Fleet
+# 23AUG24
+##################
+#nice try :(
+class Solution:
+    def carFleet(self, target: int, position: List[int], speed: List[int]) -> int:
+        '''
+        they only count as a fleet if car catches up to another car at target mile
+        ideas, sorting, left/right max_array or min_array
+        if i car is at the end it has no car to catch up to
+        if we are at some car i its speed will be limited by i+1
+        sort and monostack, i dont think i need a stack, just keep track of cars in a fleet
+        and distance fleet is formed
+        and see if the current one can catch up
+        if it can catch up before target its part of the fleet
+        all position values are unique!
+        if i have two cars that can catch up, at what distance will the first car catch up?
+            i dont care about time, just the distance
+        say we have two cars with (speed,pos) at (2,1) and (1,5) -> remmber the second car hasn't started moving yet
+        lcm of (pos_left + speed_left) and (pos_right,speed_right)
+        lcm(a,b) = a*b / gcd(a,b)
+        6 9 12 15
+        8 10
+        '''
+        cars = [(p,s) for p,s in zip(position,speed)]
+        cars.sort()
+
+        fleets = []
+        count = 0
+        for p,s in cars:
+            #store as (pos,speed)
+            #and can catch up
+
+            if fleets and fleets[-1][1] > s:
+                pos_left,speed_left = fleets[-1]
+                dist_meet = ((pos_left + speed_left)*(p+s)) // self.gcd(pos_left + speed_left,p + s)
+                entry = (dist_meet,min(s,fleets[-1][1]))
+                #fleets.pop()
+                fleets.append(entry)
+            else:
+                fleets.append((p,s))
+        print(fleets)
+        for p,s in fleets:
+            if p <= target:
+                count += 1
+        return count
+    
+    def gcd(self,a,b):
+        if a == 0:
+            return b
+        return self.gcd(b % a,a)
+                
+                
+class Solution:
+    def carFleet(self, target: int, position: List[int], speed: List[int]) -> int:
+        '''
+        we can actually compute the time for cars
+        if a car can catch up (i.e get to it at faster car it becomes a fleet)
+        need to go in reverse and see if a previous car can catch up
+        could also do w/o stack and just record last time
+        '''
+        cars = [(p,s) for p,s in zip(position,speed)]
+        cars.sort(reverse = True)
+        stack = []
+        
+        for pos,velocity in cars:
+            #get dist from target
+            dist = target - pos
+            #find time
+            time = dist / velocity
+            if not stack:
+                stack.append(time)
+            elif time > stack[-1]:
+                stack.append(time)
+        
+        return len(stack)
