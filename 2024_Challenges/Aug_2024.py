@@ -2272,3 +2272,281 @@ class Solution:
                 stack.append(time)
         
         return len(stack)
+    
+####################################
+# 564. Find the Closest Palindrome
+# 24AUG24
+####################################
+class Solution:
+    def nearestPalindromic(self, n: str) -> str:
+        '''
+        need to intellgiently build the closes palindrome,
+        if there is a tie, return the closest one
+        examine numbers like 1234,9999,1000
+        for 1234, it would be 1221
+        for 9999, it would be 10001
+        for 1000, it would be [1001 or 999] but we want the smaller one
+        we can consider both left and right, and take the smaller
+        what avut 56789? -> 56765
+        5678 -> 5665
+        200 -> 202
+        299 -> 292
+        in the general case is just the left half reversed to the right side
+        12932 -> 12921
+        99800 -> 99899 or 99799
+        12120 -> 12121
+        10001 -> 9999
+        use this code to compare and see patterns
+        
+        '''
+        #ez way to to just check up and down
+        down = int(n) - 1
+        while str(down) != str(down)[::-1]:
+            down -= 1
+        
+        up = int(n) + 1
+        while str(up) != str(up)[::-1]:
+            up += 1
+        
+        print(down,up)
+        return ""
+        
+#almost, aye yai yai
+class Solution:
+    def nearestPalindromic(self, n: str) -> str:
+        '''
+        need to intellgiently build the closes palindrome,
+        if there is a tie, return the closest one
+        examine numbers like 1234,9999,1000
+        for 1234, it would be 1221
+        for 9999, it would be 10001
+        for 1000, it would be [1001 or 999] but we want the smaller one
+        we can consider both left and right, and take the smaller
+        what avut 56789? -> 56765
+        5678 -> 5665
+        200 -> 202
+        299 -> 292
+        in the general case is just the left half reversed to the right side
+        12932 -> 12921
+        99800 -> 99899 or 99799
+        12120 -> 12121
+        10001 -> 9999
+        use this code to compare and see patterns
+        can probably get smaller palindrome and larger palindrome, compare dist from n and return smaller
+        get the left most half, then add 1 it or subtract 1 from it or mirror it
+        but hwen also check 9999 and 10001
+        and is just the closes of these possibilites
+        '''
+        k = len(n)
+        #check 
+        if k % 2 == 0:
+            left = n[:k // 2]
+        else:
+            left = n[:(k//2) + 1]
+        
+        #gather possibilties
+        candidates = []
+        if len(left) % 2 == 1:
+            #dont add
+            no_add = int(left)
+            no_add = str(no_add) + str(no_add)[::-1][1:]
+            #first add1
+            add1 = int(left) + 1
+            add1 = str(add1) + str(add1)[::-1][1:]
+            #sub 1
+            sub1 = int(left) - 1
+            sub1 = str(sub1) + str(sub1)[::-1][1:]
+            candidates.extend([no_add,add1,sub1])
+
+        elif len(left) % 2 == 0:
+            #dont add
+            no_add = int(left)
+            no_add = str(no_add) + str(no_add)[::-1]
+            #first add1
+            add1 = int(left) + 1
+            add1 = str(add1) + str(add1)[::-1]
+            #sub 1
+            sub1 = int(left) - 1
+            sub1 = str(sub1) + str(sub1)[::-1]
+            candidates.extend([no_add,add1,sub1])
+        
+        #add in ones of the form 10000, and 99999
+        nines = str(10**(k-1) - 1)
+        tens = str(10**k + 1)
+        candidates.extend([nines,tens])
+        print(candidates)
+        ans = -1
+        min_dist = float('inf')
+        for c in candidates:
+            if c == n:
+                continue
+            curr_dist = abs(int(n) - int(c))
+            if curr_dist < min_dist:
+                min_dist = curr_dist
+                ans = int(c)
+            elif curr_dist == min_dist:
+                ans = min(ans, int(c))
+        
+        return str(ans)
+                
+        
+class Solution:
+    def nearestPalindromic(self, n: str) -> str:
+        len_n = len(n)
+        i = len_n // 2 - 1 if len_n % 2 == 0 else len_n // 2
+        first_half = int(n[: i + 1])
+        """
+        Generate possible palindromic candidates:
+        1. Create a palindrome by mirroring the first half.
+        2. Create a palindrome by mirroring the first half incremented by 1.
+        3. Create a palindrome by mirroring the first half decremented by 1.
+        4. Handle edge cases by considering palindromes of the form 999... 
+           and 100...001 (smallest and largest n-digit palindromes).
+        """
+        possibilities = []
+        possibilities.append(
+            self.half_to_palindrome(first_half, len_n % 2 == 0)
+        )
+        possibilities.append(
+            self.half_to_palindrome(first_half + 1, len_n % 2 == 0)
+        )
+        possibilities.append(
+            self.half_to_palindrome(first_half - 1, len_n % 2 == 0)
+        )
+        possibilities.append(10 ** (len_n - 1) - 1)
+        possibilities.append(10**len_n + 1)
+
+        diff = float("inf")
+        res = 0
+        nl = int(n)
+        for cand in possibilities:
+            if cand == nl:
+                continue
+            if abs(cand - nl) < diff:
+                diff = abs(cand - nl)
+                res = cand
+            elif abs(cand - nl) == diff:
+                res = min(res, cand)
+        return str(res)
+
+    def half_to_palindrome(self, left: int, even: bool) -> int:
+        res = left
+        if not even:
+            left = left // 10
+        while left > 0:
+            res = res * 10 + left % 10
+            left //= 10
+        return res
+
+##########################################
+# 919. Complete Binary Tree Inserter
+# 25AUG24
+##########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class CBTInserter:
+
+    def __init__(self, root: Optional[TreeNode]):
+        '''
+        if we were doing bfs, we just build level by level
+        when we insert, we pop from the queue, and if empty, prepare the next level
+        the issue is that we alwasy need to keep reference to the root
+        we intialize with an existing root
+        and we need to find the next available spot to insert
+        what if we make is to that way the parent is at the front of the q
+        ok so input will ALWAYS be complete if its complete, i can bfs level by level
+        need to maintain two deques, one to process the tree, and the other to make connections
+        '''
+        self.q = deque([])
+        self.root = root
+        self.q.append(root)
+        
+        #i had this part!
+        while self.q:
+            curr = self.q[0]
+            if not curr.left or not curr.right:
+                if curr.left:
+                    self.q.append(curr.left)
+                break
+            self.q.popleft()
+            if curr.left:
+                self.q.append(curr.left)
+            if curr.right:
+                self.q.append(curr.right)
+         
+    def insert(self, val: int) -> int:
+        curr = self.q[0]
+        newNode = TreeNode(val)
+        self.q.append(newNode)
+        if curr.left == None:
+            curr.left = newNode
+        else:
+            self.q.popleft()
+            curr.right = newNode
+        
+        return curr.val
+            
+    def get_root(self) -> Optional[TreeNode]:
+        return self.root
+
+# Your CBTInserter object will be instantiated and called as such:
+# obj = CBTInserter(root)
+# param_1 = obj.insert(val)
+# param_2 = obj.get_root()
+
+#another way
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class CBTInserter:
+    '''
+    idea is to maintain queue, where the first element in the queue is the node we wish to add to
+    if parent node is complete (i.e has both children) we pop it out
+    '''
+
+    def __init__(self, root: Optional[TreeNode]):
+        self.root = root
+        self.q = deque([root])
+        while True:
+            curr = self.q[0]
+            if curr:
+                if curr.left:
+                    self.q.append(curr.left)
+                    if curr.right:
+                        self.q.append(curr.right)
+                        #this node cannot by the one we wish to add too
+                        self.q.popleft()
+                    else:
+                        break
+                else:
+                    #if there isn't a left, it means this node (curr) is the one we want to add to
+                    break
+
+    def insert(self, val: int) -> int:
+        curr = self.q[0]
+        new_node = TreeNode(val)
+        if not curr.left:
+            curr.left = new_node
+            self.q.append(new_node)
+        else:
+            curr.right = new_node
+            self.q.append(new_node)
+            self.q.popleft()
+        
+        return curr.val
+
+    def get_root(self) -> Optional[TreeNode]:
+        return self.root
+
+
+# Your CBTInserter object will be instantiated and called as such:
+# obj = CBTInserter(root)
+# param_1 = obj.insert(val)
+# param_2 = obj.get_root()
