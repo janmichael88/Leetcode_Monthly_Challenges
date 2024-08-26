@@ -1906,7 +1906,6 @@ class Solution:
         n = len(piles)
         memo = {}
         
-        
         def dp(i,m,player_turn):
             if i >= n:
                 return 0
@@ -1936,7 +1935,35 @@ class Solution:
                 
 #check this solution too
 #https://leetcode.com/problems/stone-game-ii/discuss/793881/python-DP-Thought-process-explained       
+class Solution:
+    def stoneGameII(self, piles: List[int]) -> int:
+        suffix_sum = self._suffix_sum(piles)
+        '''
+        idea is to maximize the difference in piles
+        '''
+        @lru_cache(None)
+        def dfs(pile: int, M: int, turn: bool) -> Tuple[int, int]:
+            # turn: true - alex, false - lee
+            sum_alex, sum_lee = suffix_sum[pile], suffix_sum[pile]
 
+            for next_pile in range(pile + 1, min(pile + 2 * M + 1, len(piles) + 1)):
+                sum_alex_next, sum_lee_next = dfs(
+                    next_pile, max(M, next_pile - pile), not turn
+                )
+                range_sum = suffix_sum[pile] - suffix_sum[next_pile]
+
+                if turn:
+                    if sum_lee_next < sum_lee:
+                        sum_alex = sum_alex_next + range_sum
+                        sum_lee = sum_lee_next
+                else:
+                    if sum_alex_next < sum_alex:
+                        sum_alex = sum_alex_next
+                        sum_lee = sum_lee_next + range_sum
+
+            return sum_alex, sum_lee
+
+        return dfs(0, 1, True)[0]
 
 #######################
 # 1686. Stone Game VI
@@ -2550,3 +2577,87 @@ class CBTInserter:
 # obj = CBTInserter(root)
 # param_1 = obj.insert(val)
 # param_2 = obj.get_root()
+
+################################################
+# 590. N-ary Tree Postorder Traversal (REVISTED)
+# 26AUG24
+################################################
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val=None, children=None):
+        self.val = val
+        self.children = children
+"""
+
+class Solution:
+    def postorder(self, root: 'Node') -> List[int]:
+        '''
+        need to in flag variablt
+        first encounter of a node is that we need to do it children first
+        second encounter is when we process and get its value
+        '''
+        ans = []
+        
+        if not root:
+            return []
+        
+        stack = [(root,False)]
+        
+        while stack:
+            curr,visited = stack.pop()
+            #if we have seen it, add to ans
+            if visited:
+                ans.append(curr.val)
+            else:
+                stack.append((curr,True))
+                for child in reversed(curr.children):
+                    stack.append((child,False))
+        
+        return ans
+    
+########################################
+# 998. Maximum Binary Tree II
+# 26APR24
+#########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def insertIntoMaxTree(self, root: Optional[TreeNode], val: int) -> Optional[TreeNode]:
+        '''
+        similar to max binary tree i
+        if i had the inital a array, i could just append b to it and rebuild the array
+        '''
+        a = self.dfs(root)
+        #add b
+        a.append(val)
+        #build using max binary tree algo
+        return self.build(a,0,len(a))
+    
+    #get a array
+    def dfs(self,root):
+        if not root:
+            return []
+
+        return  self.dfs(root.left) + [root.val] + self.dfs(root.right)
+    
+    def get_max(self,a,left,right):
+        curr = left
+        for i in range(left,right):
+            if a[i] > a[curr]:
+                curr = i
+        
+        return curr
+    
+    def build(self,a,left,right):
+        if left >= right:
+            return None
+        max_idx = self.get_max(a,left,right)
+        node = TreeNode(a[max_idx])
+        node.left = self.build(a,left,max_idx)
+        node.right = self.build(a,max_idx+1,right)
+        return node
