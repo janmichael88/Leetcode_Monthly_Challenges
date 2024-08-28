@@ -2661,3 +2661,187 @@ class Solution:
         node.left = self.build(a,left,max_idx)
         node.right = self.build(a,max_idx+1,right)
         return node
+
+#################################################
+# 1514. Path with Maximum Probability (REVISTED)
+# 27AUG24
+#################################################
+#bfs, only add if it makes it bigger/smaller
+import math
+class Solution:
+    def maxProbability(self, n: int, edges: List[List[int]], succProb: List[float], start: int, end: int) -> float:
+        '''
+        largest path in undirected graph is NP hard
+        instead of multiplying to log probabilites, then do minimum after negating all costs
+        a*b*c*d, can be rewriten as log(a) + log(b) * log(c) * log(d)
+        can also do bfs and update when we ahve a new max
+        retaking an edge repeatedly will only make the probability smaller
+        '''
+        graph = defaultdict(list)
+        for i in range(len(edges)):
+            u = edges[i][0]
+            v = edges[i][1]
+            weight = math.log(succProb[i],2)
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        max_probs = [float('-inf')]*n
+        max_probs[start] = 0
+        q = deque([start])
+        
+        while q:
+            curr = q.popleft()
+            for neigh,neigh_prob in graph[curr]:
+                next_prob = max_probs[curr] + neigh_prob
+                if next_prob > max_probs[neigh]:
+                    max_probs[neigh] = next_prob
+                    q.append(neigh)
+        
+        if max_probs[end] == float('-inf'):
+            return 0
+        return 2**max_probs[end]
+    
+
+import math
+class Solution:
+    def maxProbability(self, n: int, edges: List[List[int]], succProb: List[float], start: int, end: int) -> float:
+        '''
+        for djikstrs version we need the least negative number
+        since they are all negative anyway, we use max_heap
+        now i wish there was a way to enforce the heap api in python to strictly max instead of negating
+        becasue we need to least negative number
+        '''
+        graph = defaultdict(list)
+        for i in range(len(edges)):
+            u = edges[i][0]
+            v = edges[i][1]
+            weight = math.log(succProb[i],2)
+            graph[u].append((v,weight))
+            graph[v].append((u,weight))
+        
+        
+        max_probs = [float('-inf')]*n #this is accumulated log probs
+        max_probs[start] = 0.0
+        max_heap = [(0.0, start)]
+        seen = set()
+        
+        while max_heap:
+            curr_log_prob,node = heapq.heappop(max_heap)
+            curr_log_prob *= -1
+            if max_probs[node] > curr_log_prob:
+                continue
+            seen.add(node)
+            for neigh,neigh_prob in graph[node]:
+                if neigh in seen:
+                    continue
+                next_prob = max_probs[node] + neigh_prob
+                if next_prob > max_probs[neigh]:
+                    max_probs[neigh] = next_prob
+                    heapq.heappush(max_heap, (-next_prob,neigh))
+        
+        if max_probs[end] == float('-inf'):
+            return 0
+        return 2**max_probs[end]
+
+################################################
+# 1976. Number of Ways to Arrive at Destination
+# 27AUG24
+################################################
+#TLE
+class Solution:
+    def countPaths(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        use any ssp algo to generate the dists array
+        find the min dist and use only edges
+        then us dp!
+        '''
+        graph = defaultdict(list)
+        for u,v,w in roads:
+            graph[u].append((v,w))
+            graph[v].append((u,w))
+        
+        dists = [float('inf')]*n
+        dists[0] = 0
+        
+        min_heap = [(0,0)]
+        seen = set()
+        
+        while min_heap:
+            min_dist_so_far,curr = heapq.heappop(min_heap)
+            if dists[curr] < min_dist_so_far:
+                continue
+            seen.add(curr)
+            for neigh,dist_to in graph[curr]:
+                if neigh in seen:
+                    continue
+                next_dist = dists[curr] + dist_to
+                if dists[neigh] > next_dist:
+                    dists[neigh] = next_dist
+                    heapq.heappush(min_heap, (next_dist,neigh))
+        
+        min_time = dists[n-1]
+        @cache
+        def dp(curr,total_time):
+            if total_time > min_time:
+                return 0
+            if curr == n -1:
+                if total_time == min_time:
+                    return 1
+                return 0
+            ways = 0
+            for neigh,dist in graph[curr]:
+                ways += dp(neigh,total_time + dist)
+
+            return ways
+        
+        return dp(0,0)
+                    
+###############################################
+# 1976. Number of Ways to Arrive at Destination
+# 27AUG24
+################################################
+class Solution:
+    def countPaths(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        need to count on the fly while we do djisktras
+        if we find a path from 0 to some node v, with time k and it == the min_time so far
+        we carry the number of ways from 0 to b
+        '''
+
+        graph = defaultdict(list)
+        for u,v,w in roads:
+            graph[u].append((v,w))
+            graph[v].append((u,w))
+        
+
+        dists = [float('inf')]*n
+        ways = [0]*n
+        mod = 10**9 + 7
+        ways[0] = 1
+        dists[0] = 0
+        
+        min_heap = [(0,0)]
+        seen = set()
+        
+        while min_heap:
+            min_dist_so_far,curr = heapq.heappop(min_heap)
+            if dists[curr] < min_dist_so_far:
+                continue
+            seen.add(curr)
+            for neigh,dist_to in graph[curr]:
+                if neigh in seen:
+                    continue
+                next_dist = dists[curr] + dist_to
+                if dists[neigh] > next_dist:
+                    dists[neigh] = next_dist
+                    #carry over the number of ways for this min_dist
+                    ways[neigh] = ways[curr]
+                    heapq.heappush(min_heap, (next_dist,neigh))
+                #we have found an additional way to reach neigh with the current min_time
+                #so we add it
+                elif next_dist == dists[neigh]:
+                    ways[neigh] += ways[curr]
+                    ways[neigh] %= mod
+                    
+        return ways[n-1] % mod
+        
