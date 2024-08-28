@@ -2966,3 +2966,69 @@ class Solution:
             if (0 <= ii < rows) and (0 <= jj < cols):
                 if (ii,jj) not in seen and g2[ii][jj] == 1:
                     self.capture(g2,ii,jj,rows,cols,seen,curr_island)
+
+########################################
+# 320. Generalized Abbreviation (REVISTED)
+# 28AUG24
+#########################################
+#finally!
+class Solution:
+    def generateAbbreviations(self, word: str) -> List[str]:
+        '''
+        keep index i,path, and count of the lenght we are currently abbreviating
+        '''
+        paths = []
+        N = len(word)
+        
+        def dfs(i,path,count):
+            #gotten to the end, append ans and count
+            if i == N:
+                if count:
+                    path.append(str(count))
+                paths.append("".join(path))
+                return
+            #abbeviate
+            if count:
+                dfs(i+1,path + [str(count)] + [word[i]],0)
+            else:
+                dfs(i+1,path + [word[i]],0)
+            
+            dfs(i+1,path,count+1)
+            
+        dfs(0,[],0)
+        return paths
+
+#iterative
+class Solution:
+    def generateAbbreviations(self, word: str) -> List[str]:
+        '''
+        we can do bottom up and treat each abbreviation as a bit mask
+        1 at this bit position means it was abbreviate, 0 means it was not abbreviated
+        let n be len(word), there are 2**n possible masks, and so 2**N abbreivations
+        including the null abbreviation
+        '''
+        n = len(word)
+        abbreviations = []
+        
+        for mask in range(1 << n):
+            curr_abbreviation = ""
+            count = 0
+            
+            for i in range(n):
+                #if 1 is set, abbreviate
+                if mask & (1 << i):
+                    count += 1
+                else:
+                    #abbreivate so far up to this i
+                    if count > 0:
+                        curr_abbreviation += str(count)
+                        count = 0
+                    curr_abbreviation += word[i]
+                
+            #if we still have count
+            if count > 0:
+                curr_abbreviation += str(count)
+
+            abbreviations.append(curr_abbreviation)
+        
+        return abbreviations
