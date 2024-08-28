@@ -2796,10 +2796,6 @@ class Solution:
         
         return dp(0,0)
                     
-###############################################
-# 1976. Number of Ways to Arrive at Destination
-# 27AUG24
-################################################
 class Solution:
     def countPaths(self, n: int, roads: List[List[int]]) -> int:
         '''
@@ -2807,13 +2803,11 @@ class Solution:
         if we find a path from 0 to some node v, with time k and it == the min_time so far
         we carry the number of ways from 0 to b
         '''
-
         graph = defaultdict(list)
         for u,v,w in roads:
             graph[u].append((v,w))
             graph[v].append((u,w))
         
-
         dists = [float('inf')]*n
         ways = [0]*n
         mod = 10**9 + 7
@@ -2845,3 +2839,130 @@ class Solution:
                     
         return ways[n-1] % mod
         
+#############################
+# 1905. Count Sub Islands
+# 28AUG24
+#############################
+class Solution:
+    def countSubIslands(self, grid1: List[List[int]], grid2: List[List[int]]) -> int:
+        '''
+        do union find in grid 1 to map (i,j) to its island
+        then for each island in grid2, check that all the cell in this island belong to an island in grid1
+        i dont have to do union find, i can just dfs on grid1 and paint the cells accordinlgy
+        '''
+        #color islands
+        seen = set()
+        color = 2
+        rows = len(grid1)
+        cols = len(grid2[0])
+        for i in range(rows):
+            for j in range(cols):
+                if grid1[i][j] == 1 and (i,j) not in seen:
+                    self.paint(grid1,i,j,rows,cols,seen,color)
+                    color += 1
+        
+        #now find islands in grid2 and check
+        count = 0
+        seen = set()
+        for i in range(rows):
+            for j in range(cols):
+                if grid2[i][j] == 1 and (i,j) not in seen:
+                    if self.same_color(grid1,grid2,i,j,rows,cols,seen,grid1[i][j]):
+                        count += 1
+        return count
+    
+    def paint(self,grid,i,j,rows,cols,seen,color):
+        #color it
+        grid[i][j] = color
+        seen.add((i,j))
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for d_i,d_j in dirrs:
+            ii,jj = i + d_i, j + d_j
+            if (0 <= ii < rows) and (0 <= jj < cols):
+                if (ii,jj) not in seen and grid[ii][jj] == 1:
+                    self.paint(grid,ii,jj,rows,cols,seen,color)
+    
+    def same_color(self,g1,g2,i,j,rows,cols,seen,color):
+        #g2 is the one we are in, compare color to g1
+        if g1[i][j] != color:
+            return False
+        if g1[i][j] == 0:
+            return False
+        seen.add((i,j))
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for d_i,d_j in dirrs:
+            ii,jj = i + d_i, j + d_j
+            if (0 <= ii < rows) and (0 <= jj < cols):
+                if (ii,jj) not in seen and g2[ii][jj] == 1:
+                    if not self.same_color(g1,g2,ii,jj,rows,cols,seen,color):
+                        return False
+        return True
+    
+#aye yai yai, ugly but is passes....not too happy about it
+class Solution:
+    def countSubIslands(self, grid1: List[List[int]], grid2: List[List[int]]) -> int:
+        '''
+        do union find in grid 1 to map (i,j) to its island
+        then for each island in grid2, check that all the cell in this island belong to an island in grid1
+        i dont have to do union find, i can just dfs on grid1 and paint the cells accordinlgy
+        
+        i need to make sure i get the whole island in the second pass
+        i can just use dfs to get the island and check they are all the same color!
+        '''
+        #color islands
+        seen = set()
+        color = 2
+        rows = len(grid1)
+        cols = len(grid2[0])
+        for i in range(rows):
+            for j in range(cols):
+                if grid1[i][j] == 1 and (i,j) not in seen:
+                    self.paint(grid1,i,j,rows,cols,seen,color)
+                    color += 1
+
+        #now find islands in grid2 and check
+        count = 0
+        seen = set()
+        curr_island = []
+        for i in range(rows):
+            for j in range(cols):
+                if grid2[i][j] == 1 and (i,j) not in seen:
+                    self.capture(grid2,i,j,rows,cols,seen,curr_island)
+                    #check them all that they are the same color
+                    ii,jj = curr_island[0]
+                    color = grid1[ii][jj]
+                    valid = True
+                    for ii,jj in curr_island:
+                        if grid1[ii][jj] == 0:
+                            valid = False
+                            break
+                    for ii,jj in curr_island[1:]:
+                        if grid1[ii][jj] != color or grid1[ii][jj] == 0:
+                            valid = False
+                            break
+                    if valid:
+                        print(curr_island)
+                        count += 1
+                    curr_island = []
+        return count
+    
+    def paint(self,grid,i,j,rows,cols,seen,color):
+        #color it
+        grid[i][j] = color
+        seen.add((i,j))
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for d_i,d_j in dirrs:
+            ii,jj = i + d_i, j + d_j
+            if (0 <= ii < rows) and (0 <= jj < cols):
+                if (ii,jj) not in seen and grid[ii][jj] == 1:
+                    self.paint(grid,ii,jj,rows,cols,seen,color)
+    
+    def capture(self,g2,i,j,rows,cols,seen,curr_island):
+        seen.add((i,j))
+        curr_island.append((i,j))
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for d_i,d_j in dirrs:
+            ii,jj = i + d_i, j + d_j
+            if (0 <= ii < rows) and (0 <= jj < cols):
+                if (ii,jj) not in seen and g2[ii][jj] == 1:
+                    self.capture(g2,ii,jj,rows,cols,seen,curr_island)
