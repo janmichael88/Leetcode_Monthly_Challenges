@@ -2681,7 +2681,7 @@ class Solution:
         for i in range(len(edges)):
             u = edges[i][0]
             v = edges[i][1]
-            weight = math.log(succProb[i],2)
+            weight = math.log(succProb[i],2) if succProb[i] != 0.0 else float('-inf')
             graph[u].append((v,weight))
             graph[v].append((u,weight))
         
@@ -3216,3 +3216,327 @@ class Solution:
             ans[count-1] += 1
         
         return ans
+
+#############################################
+# 2699. Modify Graph Edge Weights
+# 30AUG24
+############################################
+#almost
+class Solution:
+    def modifiedGraphEdges(self, n: int, edges: List[List[int]], source: int, destination: int, target: int) -> List[List[int]]:
+        '''
+        modify all edges with -1 wiehgt by assigning them another weight 
+        so that the shortest distance between source and dest == target
+            there can be multiple answers, return in any order the array of modified weights
+            graph is fully connected
+        
+        if there are no negtive weights, and the ssp from source to d is > target, we cant do it
+        do we have to modify a negative weight? or is it the case that it must be modified to get the target?
+        first check if its possible, iff ssp is < target we cant do it, 
+        now try do it
+        suppose we find an edge (u,v), such that dists[u] + dists[v] < target
+        make its weight target - dists[u] - dists[v]
+        '''
+        #check if we can even do it
+        graph = self.make_graph(edges)
+        dists = self.ssp_with_modification(n,graph,source)
+        if dists[destination] != target:
+            return []
+        print(dists[destination])
+        return edges
+    
+    def make_graph(self,edges):
+        graph = defaultdict(list)
+        for u,v,w in edges:
+            graph[u].append((v,w))
+            graph[v].append((u,v))
+        return graph
+    
+    def ssp_with_modification(self,n,graph,start):
+        #djikstrs and if negative dist, make it 1
+        dists = [float('inf')]*n
+        dists[start] = 0
+        seen = [False]*n
+        min_heap = [(0,start)]
+        while min_heap:
+            min_dist_so_far,curr = heapq.heappop(min_heap)
+            if dists[curr] < min_dist_so_far:
+                continue
+            seen[curr] = True
+            for neigh,dist_to in graph[curr]:
+                if seen[neigh] == True:
+                    continue
+                #update weight
+                if dist_to == -1:
+                    new_dist = 1 + dists[curr]
+                else:
+                    new_dist = dist_to + dists[curr]
+                
+                if new_dist < dists[neigh]:
+                    dists[neigh] = new_dist
+                    heapq.heappush(min_heap, (new_dist,neigh))
+        return dists
+            
+class Solution:
+    def modifiedGraphEdges(self, n: int, edges: List[List[int]], source: int, destination: int, target: int) -> List[List[int]]:
+        '''
+        idea is to try djikstras first, and see if we can make it
+        1. if ssp matches the target, the current postive weights already gives us the right length
+            so set all -1 edges to a larger number (1 + 2**9) so the edges dont get picked up during djikstrs
+        2. if shortest dist is < target, we cant do it anyway, just by adding -1 edges
+            i.e the graph doesnt support increasing an edge
+        3. if ssp is > target, we need to reduce the ssp length by modifying the -1 edges
+        start by setting a high weight on the -1 edge 
+        then adjust each -1 to a smaller value and rerun 
+        if it smaller than target, add the differene to the current weight, and make the othe edges really big
+        '''
+        inf = 1 + 2**9
+        #first build graph ignoring -1 weights
+        graph_ignore = defaultdict(list)
+        for u,v,w in edges:
+            if w != -1:
+                graph_ignore[u].append((v,w))
+                graph_ignore[v].append((u,w))
+        #try without -1
+        dists = self.ssp(n,graph_ignore,source)
+        curr_ssp = dists[destination]
+        #can't extend the ssp, because we cant modify positive weights
+        if curr_ssp < target:
+            return []
+        #if we are at ssp, just change 1
+        if curr_ssp == target:
+            #just make sure we dont take the -1 edges
+            for i in range(len(edges)):
+                if edges[i][2] == -1:
+                    edges[i][2] = inf
+            return edges
+        #now we try modifying edges to get down to target
+        #modify edge, and run ssp on the fly with the new grapch
+        for i in range(len(edges)):
+            u,v,w = edges[i]
+            if w == -1:
+                new_edge = [u,v,1]
+                edges[i] = new_edge
+                #add in the missing edge
+                graph_ignore[u].append((v,1))
+                graph_ignore[v].append((u,1))
+                #get ssp for this new graph
+                dists = self.ssp(n,graph_ignore,source)
+                curr_ssp = dists[destination]
+                if curr_ssp <= target:
+                    #correct the edge
+                    edges[i][2] += target - curr_ssp
+                    #update remaing -1 to bigger weights
+                    for j in range(i+1,len(edges)):
+                        if edges[j][2] == -1:
+                            edges[j][2] = inf
+                    return edges
+        
+        return []
+    
+    def ssp(self,n,graph,start):
+        #djikstrs and if negative dist, make it 1
+        dists = [float('inf')]*n
+        dists[start] = 0
+        seen = [False]*n
+        min_heap = [(0,start)]
+        while min_heap:
+            min_dist_so_far,curr = heapq.heappop(min_heap)
+            if dists[curr] < min_dist_so_far:
+                continue
+            seen[curr] = True
+            for neigh,dist_to in graph[curr]:
+                if seen[neigh] == True:
+                    continue
+                new_dist = dist_to + dists[curr]
+                if new_dist < dists[neigh]:
+                    dists[neigh] = new_dist
+                    heapq.heappush(min_heap, (new_dist,neigh))
+        return dists
+            
+#actual solution
+class Solution:
+    def modifiedGraphEdges(
+        self,
+        n: int,
+        edges: List[List[int]],
+        source: int,
+        destination: int,
+        target: int,
+    ) -> List[List[int]]:
+        INF = int(2e9)
+        graph = [[] for _ in range(n)]
+
+        # Build the graph with known weights
+        for u, v, w in edges:
+            if w != -1:
+                graph[u].append((v, w))
+                graph[v].append((u, w))
+
+        # Compute the initial shortest distance
+        current_shortest_distance = self._dijkstra(graph, source, destination)
+        if current_shortest_distance < target:
+            return []
+
+        if current_shortest_distance == target:
+            # Update edges with -1 weight to an impossible value
+            for edge in edges:
+                if edge[2] == -1:
+                    edge[2] = INF
+            return edges
+
+        # Adjust edges with unknown weights
+        for i, (u, v, w) in enumerate(edges):
+            if w != -1:
+                continue
+
+            # Set edge weight to 1 initially
+            edges[i][2] = 1
+            graph[u].append((v, 1))
+            graph[v].append((u, 1))
+
+            # Recompute shortest distance with updated edge weight
+            new_distance = self._dijkstra(graph, source, destination)
+
+            if new_distance <= target:
+                edges[i][2] += target - new_distance
+
+                # Update remaining edges with -1 weight to an impossible value
+                for j in range(i + 1, len(edges)):
+                    if edges[j][2] == -1:
+                        edges[j][2] = INF
+                return edges
+        return []
+
+    def _dijkstra(
+        self, graph: List[List[Tuple[int, int]]], src: int, destination: int
+    ) -> int:
+        min_distance = [math.inf] * len(graph)
+        min_distance[src] = 0
+        min_heap = [(0, src)]  # (distance, node)
+
+        while min_heap:
+            d, u = heapq.heappop(min_heap)
+            if d > min_distance[u]:
+                continue
+            for v, w in graph[u]:
+                if min_distance[u] + w < min_distance[v]:
+                    min_distance[v] = min_distance[u] + w
+                    heapq.heappush(min_heap, (min_distance[v], v))
+        return min_distance[destination]
+
+###################################
+# 666. Path Sum IV (REVISTED)
+# 31AUG24
+###################################
+class Solution:
+    def pathSum(self, nums: List[int]) -> int:
+        '''
+        the array is ascneind order, so its going to be increasing depth, increasing pos
+        the last numbers are the actual node values
+        11 -> (21,22)
+        21 -> (31,32)
+        22 -> (33,34) 
+        31 -> (41,42)
+        32 -> (43,44)
+        33 -> (45,46)
+        34 -> (47,48)
+        if i had the graph, i can just dfs from 11
+        '''
+        mapp = defaultdict(int)
+        n = len(nums)
+        for num in nums:
+            depth,pos,val = self.get(num)
+            mapp[(depth,pos)] = val
+        
+        return self.dfs(mapp,0,(1,1))
+
+    def dfs(self,graph,sum_so_far,node):
+
+        #get correct neighbors
+        level,pos = node
+        curr_sum = sum_so_far + graph[node]
+        neighs = [(level + 1,pos*2 - 1), (level + 1,pos*2)]
+        #leaf node, return sum path into left
+        if neighs[0] not in graph and neighs[1] not in graph:
+            return curr_sum
+        #accumlate left and right
+        left_sum = 0
+        right_sum = 0
+        if neighs[0] in graph:
+            left_sum += self.dfs(graph,curr_sum,neighs[0])
+        if neighs[1] in graph:
+            right_sum += self.dfs(graph,curr_sum,neighs[1])
+        
+        return left_sum + right_sum
+        
+    def get(self,val):
+        ans = []
+        while val:
+            ans.append(val % 10)
+            val = val // 10
+            
+        return ans[::-1]
+    
+class Node:
+    def __init__(self,val):
+        self.val = val
+        self.left = None
+        self.right = None
+        
+class Solution:
+    def pathSum(self, nums: List[int]) -> int:
+        '''
+        the array is ascneind order, so its going to be increasing depth, increasing pos
+        the last numbers are the actual node values
+        11 -> (21,22)
+        21 -> (31,32)
+        22 -> (33,34) 
+        31 -> (41,42)
+        32 -> (43,44)
+        33 -> (45,46)
+        34 -> (47,48)
+        if i had the graph, i can just dfs from 11
+        
+        another way to to build the tree
+        start with root, which is the first num in the array, then for each node after retriev its parent
+        say we are post (2,1), its parent will be (2-1, (1 + 1)//2) = (2,1)
+        if we are (2,2), its parent will be at (2, (2 + 1)//2) = (2,3)
+        '''
+        nodes = defaultdict()
+        n = len(nums)
+        depth,pos,val = self.get(nums[0])
+        root = Node(val)
+        nodes[(1,1)] = root
+        
+        for num in nums[1:]:
+            depth,pos,val = self.get(num)
+            node = Node(val)
+            #find parent
+            parent = (depth-1, (pos +1 ) //2)
+            parent_node = nodes[parent]
+            if pos % 2 == 1:
+                parent_node.left = node
+            else:
+                parent_node.right = node
+            
+            nodes[(depth,pos)] = node
+        
+        ans = [0]
+        self.dfs(nodes,root,0,ans)
+        return ans[0]
+        
+    def dfs(self,graph,node,sum_so_far,ans):
+        if not node:
+            return
+        sum_so_far += node.val
+        if not node.left and not node.right:
+            ans[0] += sum_so_far
+        self.dfs(graph,node.left,sum_so_far,ans)
+        self.dfs(graph,node.right,sum_so_far,ans)
+
+        
+    def get(self,val):
+        if val == 0:
+            return []
+        return self.get(val // 10) + [val % 10]
