@@ -71,3 +71,63 @@ class Solution:
                 right = mid
                 
         return ans - 1
+    
+##############################################
+# 1945. Sum of Digits of String After Convert
+# 03SEP24
+#############################################
+class Solution:
+    def getLucky(self, s: str, k: int) -> int:
+        '''
+        generate starting number and repeat k times
+        '''
+        starting_number = 0
+        for ch in s:
+            pos = (ord(ch) - ord('a')) + 1
+            if pos // 10 > 0:
+                starting_number *= 100
+            else:
+                starting_number *= 10
+            starting_number += pos
+        
+        #reapeat k times
+        while k > 0:
+            starting_number = self.sum_digits(starting_number)
+            k -= 1
+        
+        return starting_number
+    
+    def sum_digits(self,num):
+        ans = 0
+        while num:
+            ans += num % 10
+            num = num // 10
+        
+        return ans
+    
+class Solution:
+    def getLucky(self, s: str, k: int) -> int:
+        '''
+        instead of checking for multiple of 1 and 10, just grab the gitis
+        '''
+        starting_number = 0
+        for ch in s:
+            pos = (ord(ch) - ord('a')) + 1
+            while pos > 0:
+                starting_number = starting_number*10 + pos % 10
+                pos = pos // 10
+        
+        #reapeat k times
+        while k > 0:
+            starting_number = self.sum_digits(starting_number)
+            k -= 1
+        
+        return starting_number
+    
+    def sum_digits(self,num):
+        ans = 0
+        while num:
+            ans += num % 10
+            num = num // 10
+        
+        return ans
