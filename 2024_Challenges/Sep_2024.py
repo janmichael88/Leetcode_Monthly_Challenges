@@ -131,3 +131,58 @@ class Solution:
             num = num // 10
         
         return ans
+    
+########################################################
+# 1634. Add Two Polynomials Represented as Linked Lists
+# 03SEP24
+########################################################
+# Definition for polynomial singly-linked list.
+# class PolyNode:
+#     def __init__(self, x=0, y=0, next=None):
+#         self.coefficient = x
+#         self.power = y
+#         self.next = next
+
+class Solution:
+    def addPoly(self, poly1: 'PolyNode', poly2: 'PolyNode') -> 'PolyNode':
+        '''
+        fun linked list problem!
+        they are in sorted order, so if the powers match, add upp the coeffcients and make a new node
+        if the powers dont match, move the larger one and cappy the current node
+        '''
+        dummy = PolyNode(-1,-1)
+        curr = dummy
+        p1 = poly1
+        p2 = poly2
+        
+        while p1 != None and p2 != None:
+            #equal power, add coefficents
+            if p1.power == p2.power:
+                #drop zero coefs
+                if p1.coefficient + p2.coefficient == 0:
+                    p1 = p1.next
+                    p2 = p2.next
+                else:
+                    new_node = PolyNode(p1.coefficient + p2.coefficient, p1.power)
+                    curr.next = new_node
+                    curr = curr.next
+                    p1 = p1.next
+                    p2 = p2.next
+            elif p1.power > p2.power:
+                curr.next = p1
+                curr = curr.next
+                p1 = p1.next
+            elif p1.power < p2.power:
+                curr.next = p2
+                curr = curr.next
+                p2 = p2.next
+
+        
+        if p1 == None:
+            curr.next = p2
+        else:
+            curr.next = p1
+        
+        return dummy.next
+                
+        
