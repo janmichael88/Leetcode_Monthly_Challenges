@@ -185,4 +185,40 @@ class Solution:
         
         return dummy.next
                 
+# Definition for polynomial singly-linked list.
+# class PolyNode:
+#     def __init__(self, x=0, y=0, next=None):
+#         self.coefficient = x
+#         self.power = y
+#         self.next = next
+
+class Solution:
+    def addPoly(self, poly1: 'PolyNode', poly2: 'PolyNode') -> 'PolyNode':
+        '''
+        if i had a hashamp that stored the powers and sum of their coefficents
+        i could just go in order and build the polynomial
+        '''
+        mapp = defaultdict() #entry is (power,coefs)
+        dummy = PolyNode(-1,-1)
+        curr = dummy
+        self.get_vals(poly1,mapp)
+        self.get_vals(poly2,mapp)
+        
+        for key in sorted(mapp.keys(), reverse = True):
+            curr.next = PolyNode(mapp[key],key)
+            curr = curr.next
+        
+        return dummy.next
+    
+    def get_vals(self,poly,mapp):
+        curr = poly
+        #remember to omit coefficents with value 0
+        while curr:
+            curr_coef = mapp.get(curr.power,0) + curr.coefficient
+            mapp[curr.power] = curr_coef
+            if curr_coef == 0:
+                del mapp[curr.power]
+            curr = curr.next
+        
+    
         
