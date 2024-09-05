@@ -220,5 +220,178 @@ class Solution:
                 del mapp[curr.power]
             curr = curr.next
         
-    
+########################################
+# 874. Walking Robot Simulation
+# 04SEP24
+#########################################
+class Solution:
+    def robotSim(self, commands: List[int], obstacles: List[List[int]]) -> int:
+        '''
+        simulate and just store the max (x,y) we get after doing the commands
+        need to efficietnyl rotate curr_d
+        make sure to hash obstacles
+        '''
+        new_obstacles = set([(x,y) for x,y in obstacles])
+        #(curr_dir : [left,right])
+        rotations = {
+            (1,0) : [(0,1), (0,-1)],
+            (-1,0) : [(0,-1), (0,1)],
+            (0,1) : [(-1,0), (1,0)],
+            (0,-1) : [(1,0),(-1,0)]
+        }
         
+        ans = float('-inf')
+        curr_xy = [0,0]
+        curr_r = (0,1)
+        for c in commands:
+            #left rotation
+            if c == -2:
+                curr_r = rotations[curr_r][0]
+            elif c == -1:
+                curr_r = rotations[curr_r][1]
+            else:
+                dx,dy = curr_r
+                while (curr_xy[0] + dx, curr_xy[1] + dy) not in new_obstacles and c > 0:
+                    c -= 1
+                    curr_xy[0] += dx
+                    curr_xy[1] += dy
+                
+                ans = max(ans, curr_xy[0]**2 + curr_xy[1]**2)
+        
+        return ans
+
+#another way
+class Solution:
+    def robotSim(self, commands: List[int], obstacles: List[List[int]]) -> int:
+        '''
+        instead of hashing directions, just think of cycle array
+        north,east,south,west
+        if we turn right, we just move to east, so move + 1
+        if we turn left, we just look west, so + 1
+        right = (+ 1 % 4)
+        left = (+ 3 % 4)
+        
+        insteaf of hashing each (i,j) obstalcle, we can use our own hash function
+        use next largest prime after largerst (i,j) cell -> 60013
+        '''
+        hash_mult = 60013
+        new_obstacles = set([(x*hash_mult + y) for (x,y) in obstacles])
+        #N,E,S,W
+        dirrs = [(0,1),(1,0),(0,-1),(-1,0)]
+        ans = float('-inf')
+        curr_xy = [0,0]
+        dir_ptr = 0
+        for c in commands:
+            #left rotation, + 3
+            if c == -2:
+                dir_ptr = (dir_ptr + 3) % 4
+            elif c == -1:
+                dir_ptr = (dir_ptr + 1) % 4
+            else:
+                dx,dy = dirrs[dir_ptr]
+                for _ in range(c):
+                    if ((curr_xy[0] + dx)*hash_mult + (curr_xy[1] + dy)) in new_obstacles:
+                        break
+                    curr_xy[0] += dx
+                    curr_xy[1] += dy
+                
+                ans = max(ans, curr_xy[0]**2 + curr_xy[1]**2)
+        
+        return ans
+        
+#using complex numbers
+from itertools import starmap
+
+DIR = {
+    -2: 1j,  # cos(90) + sin(90)i, left rotation multiply by 1j
+    -1: -1j,  # cos(-90) + sin(-90)i right rotation multiply by -1j
+}
+class Solution:
+    def robotSim(self, C: list[int], O: list[list[int]]) -> int:
+        O = set(starmap(complex, O))
+        #could also do
+        seen = set()
+        for coord in map(lambda x : complex(*x),O):
+            seen.add(coord)
+        #map(lambda x : func(X)) is similar to starmap
+        cur_pos, cur_dir = 0 + 0j, 1j
+        output = 0
+
+        for c in C:
+            if c < 0:
+                cur_dir *= DIR[c]
+            else:
+                #walrus operator, instantiate and update
+                while c > 0 and (next_pos := cur_pos + cur_dir) not in O:
+                    cur_pos = next_pos
+                    c -= 1
+
+                output = max(output, self.distance(cur_pos))
+
+        return output
+
+    @staticmethod
+    def distance(p: complex) -> int:
+        x, y = int(p.real), int(p.imag)
+        return x ** 2 + y ** 2
+
+##############################################
+# 2028. Find Missing Observations
+# 05SEP24
+###############################################
+#dang it
+class Solution:
+    def missingRolls(self, rolls: List[int], mean: int, n: int) -> List[int]:
+        '''
+        calculate sum to get to then intelligently get n numbers that add to needed sum
+        so we have needed sum 7, with 6 numbers
+        i can do [1,1,1,1,1,2] do i priortize smaller or larger first
+        if i started with 6
+        [6,1,] cant do it
+        try using 6 and make it 
+        '''
+        curr_sum = sum(rolls)
+        target_sum = mean*(len(rolls) + n)
+        needed_sum = target_sum - curr_sum
+        #check if even possible
+        if needed_sum > 6*n:
+            return []
+        #build n numbers that get to needed_sum
+        print("need_sum :", needed_sum)
+        for dice in range(7,0,-1):
+            print(dice, divmod(needed_sum,dice))
+            num_dice,rem = divmod(needed_sum,dice)
+            #can do evenly
+            if num_dice == n and rem == 0:
+                return [dice]*n
+            #corner case
+            elif num_dice == n:
+                return [dice + 1] + [dice]*(n-1)
+            
+#trickyyyy
+class Solution:
+    def missingRolls(self, rolls: List[int], mean: int, n: int) -> List[int]:
+        '''
+        calculate sum to get to then intelligently get n numbers that add to needed sum
+        so we have needed sum 7, with 6 numbers
+        i can do [1,1,1,1,1,2] do i priortize smaller or larger first
+        if i started with 6
+        [6,1,] cant do it
+        try using 6 and make it 
+        
+        omg, just take the needed_sum // n, and distribute the remaidner to each of the mod elements
+        '''
+        curr_sum = sum(rolls)
+        target_sum = mean*(len(rolls) + n)
+        needed_sum = target_sum - curr_sum
+        #check if even possible
+        if needed_sum > 6*n or needed_sum < n:
+            return []
+        
+        starting_die,rem = divmod(needed_sum,n)
+        ans = [starting_die]*n
+        for i in range(rem):
+            ans[i] += 1
+        
+        return ans
+            
