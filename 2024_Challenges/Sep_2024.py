@@ -1055,12 +1055,25 @@ class Solution:
                     its 2*rest because we are doing the rest but pick max to space it out
         
         first case, they are all the same, then we can do all of them each weeek (i.e one milestone per week)
-        
+        We can complete all milestones for other projects,
+        plus same number of milestones for the largest project,
+        plus one more milestone for the largest project.
         '''
         sum_ = sum(milestones)
         max_ = max(milestones)
         rest = sum_ - max_
         return min(sum_, rest*2 + 1)
+    
+#rewritten for easier undertanding
+class Solution:
+    def numberOfWeeks(self, milestones: List[int]) -> int:
+
+        sum_ = sum(milestones)
+        max_ = max(milestones)
+        rest = sum_ - max_
+        if max_ > rest:
+            return rest*2 + 1
+        return sum_
     
 ###########################################
 # 2220. Minimum Bit Flips to Convert Number
@@ -1159,3 +1172,105 @@ class Solution:
             xor_mask = xor_mask & (xor_mask - 1)
         
         return ans
+
+
+#######################
+# 855. Exam Room
+# 12SEP24
+#######################
+from sortedcontainers import SortedList
+
+class ExamRoom:
+
+    def __init__(self, n: int):
+        '''
+        if we thinkg about it, its going to be left,rigth,middle,left middle, right middle
+        if we keep adding, but the thing is people can leave and open up a seat
+        when i add a person, i need to update the furhtest distnace
+        need to binary search on left and right sides
+        for any one seat, there is either a person to its left or to its right
+        say we have seats [0,1,2,3,4,5]
+                           X         X  
+        for each seat, i would need to store the closes person to its left, and the closes person to its right
+        well then i would have to check each seat every time wont work
+        what if before adding a person, compute the best seat
+        order will be 0,n-1, (n-1)/2, (n-1)/2/2, (n-1) - (n-1)/2
+        n = 10
+        [0,1,2,3,4,5,6,7,8,9]
+         X
+                            X
+                 X
+             X
+                     X
+        looks like brute force might work
+        '''
+        self.n = n
+        self.rooms = SortedList([])
+
+    def seat(self) -> int:
+        if not self.rooms:
+            self.rooms.add(0)
+            return 0
+        else:
+            #find the room going left to right, we check i and i+1, then insort
+            #need maximim dist
+            max_dist = self.rooms[0]
+            leftmost_seat = 0
+            for i in range(len(self.rooms)-1):
+                curr, nextt = self.rooms[i], self.rooms[i+1]
+                curr_dist = (nextt - curr) // 2
+                if curr_dist > max_dist:
+                    max_dist = curr_dist
+                    leftmost_seat = (curr + nextt) // 2
+            #check if we need to add at the end
+            if self.n - 1 - self.rooms[-1] > max_dist:
+                self.rooms.add(self.n - 1)
+                return self.n-1
+            self.rooms.add(leftmost_seat)
+            return leftmost_seat
+
+    def leave(self, p: int) -> None:
+        self.rooms.remove(p)
+
+
+# Your ExamRoom object will be instantiated and called as such:
+# obj = ExamRoom(n)
+# param_1 = obj.seat()
+# obj.leave(p)
+
+#using insort works though??
+import bisect
+class ExamRoom:
+
+    def __init__(self, n: int):
+        self.n, self.room = n, []
+
+
+    def seat(self) -> int:
+        if not self.room: 
+            ans = 0                           # sit at 0 if empty room 
+
+        else:
+            dist, prev, ans = self.room[0], self.room[0], 0 # set best between door and first student   
+
+            for curr in self.room[1:]:                      # check between all pairs of students  
+                d = (curr - prev)//2                        # to improve on current best
+
+                if dist < d: 
+                    dist, ans = d, (curr + prev)//2
+                prev = curr
+
+            if dist < self.n - prev-1: 
+                ans = self.n - 1     # finally, check whether last seat is best
+
+        bisect.insort(self.room, ans)                              # sit down in best seat
+
+        return ans
+
+    def leave(self, p: int) -> None:
+        self.room.remove(p)
+
+# Your ExamRoom object will be instantiated and called as such:
+# obj = ExamRoom(n)
+# param_1 = obj.seat()
+# obj.leave(p)
