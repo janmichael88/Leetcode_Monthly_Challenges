@@ -1274,3 +1274,102 @@ class ExamRoom:
 # obj = ExamRoom(n)
 # param_1 = obj.seat()
 # obj.leave(p)
+
+#######################################
+# 1310. XOR Queries of a Subarray
+# 13SEP24
+#######################################
+class Solution:
+    def xorQueries(self, arr: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        prefix xor is the same as prefix sum
+        say we have [a,b,c,d,e]
+        if we did
+        all_xor = a ^ b ^ c ^ d & e
+        
+        say we want (b ^ c ^ d) = (a ^ b ^ c ^ d) ^ a
+        '''
+        pref_xor = [0]
+        for num in arr:
+            pref_xor.append(pref_xor[-1] ^ num)
+        
+        ans = []
+        for i,j in queries:
+            val = pref_xor[j+1] ^ pref_xor[i]
+            ans.append(val)
+        
+        return ans
+    
+#we can overwrite the array with prefxor
+class Solution:
+    def xorQueries(self, arr: List[int], queries: List[List[int]]) -> List[int]:
+        '''
+        prefix xor is the same as prefix sum
+        say we have [a,b,c,d,e]
+        if we did
+        all_xor = a ^ b ^ c ^ d & e
+        
+        say we want (b ^ c ^ d) = (a ^ b ^ c ^ d) ^ a
+        '''
+        arr = [0] + arr
+        for i in range(1,len(arr)):
+            arr[i] ^= arr[i-1]
+        
+        ans = []
+        for i,j in queries:
+            val = arr[j+1] ^ arr[i]
+            ans.append(val)
+        
+        return ans
+
+#################################################
+# 2419. Longest Subarray With Maximum Bitwise AND
+# 14SEP24
+#################################################
+#ez, two pass
+#can we do one pass?
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        bitwise AND of two different numbers will always be strictly less than the max of those two numbers
+        say we have array, [3,4,5,6]
+        [3,4] < [4]
+        in order for the subarray to have max bitwise AND, it must include the maximum number
+        count the longest streak for the maximum element!
+        '''
+        max_num = max(nums)
+        longest_streak = 0
+        curr_streak = 0
+        
+        for num in nums:
+            if num == max_num:
+                curr_streak += 1
+            else:
+                longest_streak = max(longest_streak,curr_streak)
+                curr_streak = 0
+        
+        return max(curr_streak,longest_streak)
+
+#yessss
+class Solution:
+    def longestSubarray(self, nums: List[int]) -> int:
+        '''
+        we can find the max on the fly and update the streak
+        '''
+        max_num = 0
+        longest_streak = 0
+        curr_streak = 0
+        
+        for num in nums:
+            if num > max_num:
+                max_num = num
+                curr_streak = 1
+                longest_streak = 1
+            elif num == max_num:
+                curr_streak += 1
+            else:
+                curr_streak = 0
+            
+            longest_streak = max(longest_streak,curr_streak)
+        
+        return longest_streak
