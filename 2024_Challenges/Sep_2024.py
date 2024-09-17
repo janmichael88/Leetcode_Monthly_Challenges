@@ -1373,3 +1373,241 @@ class Solution:
             longest_streak = max(longest_streak,curr_streak)
         
         return longest_streak
+
+####################################################################
+# 1371. Find the Longest Substring Containing Vowels in Even Counts
+# 15SEP24
+####################################################################
+#brute force using pref_xor
+class Solution:
+    def findTheLongestSubstring(self, s: str) -> int:
+        '''
+        if i had pref_sum, i could check all (i,j) and find max meeting criteria
+        that would take too long though
+        i can use bit mask at each position, an even number of times could also be zero
+        the bit mask should be zero if it has each vowel an even number of times
+        after genering pref_xor find the longest subrray that is 0
+        this is just subarray sum == k problem
+        
+        do brute force first
+        '''
+        pref_xor = [0]
+        N = len(s)
+        for i in range(N):
+            char = s[i]
+            if char in 'aeiou':
+                pos = ord(char) - ord('a')
+                new_mask = pref_xor[-1] ^ (1 << pos)
+                pref_xor.append(new_mask)
+            else:
+                pref_xor.append(pref_xor[-1])
+        
+        ans = 0
+        for i in range(N):
+            #remember it can be a single element!
+            for j in range(i,N):
+                mask = pref_xor[j+1] ^ pref_xor[i]
+                if mask == 0:
+                    ans = max(j-i+1,ans)
+        
+        return ans
+                    
+#precompute pref_xor and check
+class Solution:
+    def findTheLongestSubstring(self, s: str) -> int:
+        '''
+        if i had pref_sum, i could check all (i,j) and find max meeting criteria
+        that would take too long though
+        i can use bit mask at each position, an even number of times could also be zero
+        the bit mask should be zero if it has each vowel an even number of times
+        after genering pref_xor find the longest subrray that is 0
+        this is just subarray sum == k problem
+        
+        do brute force first
+        '''
+        pref_xor = [0]
+        N = len(s)
+        for i in range(N):
+            char = s[i]
+            if char in 'aeiou':
+                pos = ord(char) - ord('a')
+                new_mask = pref_xor[-1] ^ (1 << pos)
+                pref_xor.append(new_mask)
+            else:
+                pref_xor.append(pref_xor[-1])
+        
+        ans = 0
+        mapp = {}
+        for i in range(len(pref_xor)):
+            curr_xor = pref_xor[i]
+            if curr_xor not in mapp:
+                mapp[curr_xor] = i
+            else:
+                ans = max(ans, i - mapp[curr_xor])
+        
+        return ans
+    
+#compute on fly
+class Solution:
+    def findTheLongestSubstring(self, s: str) -> int:
+        '''
+        for one pass just keep the current mask
+        subarray sum == k paradigm, seach for complement of if we've already seen this mask
+        '''
+        N = len(s)
+        curr_mask = 0
+        ans = 0
+        mapp = {0:-1}
+        for i in range(N):
+            char = s[i]
+            if char in 'aeiou':
+                pos = ord(char) - ord('a')
+                curr_mask = curr_mask ^ (1 << pos)
+            #dont care if its not a vowel
+            if curr_mask not in mapp:
+                mapp[curr_mask] = i
+            else:
+                ans = max(ans, i - mapp[curr_mask])
+        
+        return ans
+
+##########################################
+# 2162. Minimum Cost to Set Cooking Time
+# 16SEP24
+###########################################
+#ughhh, so annoying
+class Solution:
+    def minCostSetTime(self, startAt: int, moveCost: int, pushCost: int, targetSeconds: int) -> int:
+        '''
+        if we have to move from a digit, its cost moveCost
+        doesn't matter where to move from and to
+        how many ways are there to get targetSeconds? brute force??
+        ideally we would like to keep moves and pressing to a minimum
+        minutes and seconds can go up to 99, loop through numbers 0 to 9999, and get each cost
+        make sure to prepend 0s, the thing is i can press 954 which will be interpreted as 0954
+        or actually 0954, but it doesnt make sense to press 0954 if i can do 954 with one less press
+        '''
+        ans = float('inf')
+        for code in range(10000):
+            str_code = str(code)
+            #prepend zeros
+            str_code = '0'*(4-len(str_code))+str_code
+            mins = str_code[0:2]
+            seconds = str_code[2:4]
+            if int(mins)*60 + int(seconds) == targetSeconds:
+                print(str_code)
+                ans = min(ans,self.cost(startAt,moveCost,pushCost,mins,seconds))
+        
+        return ans
+    #get cost passing in string minutes and string seconds
+    def cost(self,start,moveCost,pushCost,str_mins,str_secs):
+        #remove leading zero now from str_mins
+        str_code = str_mins + str_secs
+        str_code = str_code.lstrip('0')
+        #calculate cost
+        curr_cost = 0
+        presses = [num for num in str_code]
+        if int(presses[0]) != start:
+            curr_cost += moveCost
+        for i in range(1,len(presses)):
+            if presses[i] != presses[i-1]:
+                curr_cost += moveCost
+        curr_cost += len(presses)*pushCost
+        return curr_cost
+    
+class Solution:
+    def minCostSetTime(self, startAt: int, moveCost: int, pushCost: int, targetSeconds: int) -> int:
+        '''
+        cleaner way using format
+        '''
+    
+        def get_cost(mm,ss):
+            time = f'{mm // 10}{mm % 10}{ss // 10}{ss % 10}'
+            time = time.lstrip('0')
+            time = [int(ch) for ch in time ]
+            cost = 0
+            current = startAt
+            for ch in time:
+                if ch != current:
+                    current = ch
+                    cost += moveCost
+                cost += pushCost
+            
+            return cost
+        
+        ans = float('inf')
+        for mm in range(100):
+            for ss in range(100):
+                if mm*60 + ss == targetSeconds:
+                    ans = min(ans,get_cost(mm,ss))
+        
+        return ans
+
+
+####################################
+# 1257. Smallest Common Region
+# 17SEP24
+####################################
+class Solution:
+    def findSmallestRegion(self, regions: List[List[str]], region1: str, region2: str) -> str:
+        '''
+        first entry in region is parent (i.e includes all other regions from 1 to n)
+        also if region x contains y, x > y
+        given two regions, find smallest region that contains both of them
+        this is just LCA on an N-ary tree
+        we can follow the leaves back up the tree
+        need reverse graph
+        then find paths, if its a tree, there will be a common ancestor in it, that's the LCA
+        '''
+        graph = defaultdict(list)
+        for r in regions:
+            parent,children = r[0], r[1:]
+            for ch in children:
+                graph[ch].append(parent)
+        
+        r1_path,r2_path = [],[]
+        self.dfs(graph,region1,r1_path)
+        self.dfs(graph,region2,r2_path)
+        r1_path,r2_path = r1_path[::-1],r2_path[::-1]
+        
+        #follow path until divergence
+        i,j = 0,0
+        lca = None
+        while i < len(r1_path) and j < len(r2_path) and r1_path[i] == r2_path[j]:
+            lca = r1_path[i]
+            i += 1
+            j += 1
+        return lca
+    
+    def dfs(self,graph,node,path):
+        if node not in graph:
+            path.append(node)
+            return
+        path.append(node)
+        for neigh in graph[node]:
+            self.dfs(graph,neigh,path)
+
+class Solution:
+    def findSmallestRegion(self, regions: List[List[str]], region1: str, region2: str) -> str:
+        '''
+        can also do iteratively, just follow parent pointers ups but we need child to parent pointer relationship
+        we follow up as far as we can, and keep track of visited parents
+        if we see a previsoly seen parent, thats our lca
+        if we can't find a parent, swap regions
+        '''
+        graph = {}
+        for r in regions:
+            parent,children = r[0], r[1:]
+            for ch in children:
+                graph[ch] = parent
+        
+        prev_parents = set()
+        curr_region = region1
+        while curr_region:
+            if curr_region in prev_parents:
+                return curr_region
+            prev_parents.add(curr_region)
+            if curr_region in graph:
+                curr_region = graph[curr_region]
+            else:
+                curr_region = region2
