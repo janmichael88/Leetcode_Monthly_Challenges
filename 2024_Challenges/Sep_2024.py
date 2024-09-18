@@ -1543,6 +1543,63 @@ class Solution:
         
         return ans
 
+#check up to maxmins and add in remaining seconds
+class Solution:
+    def minCostSetTime(self, startAt: int, moveCost: int, pushCost: int, targetSeconds: int) -> int:
+        '''
+        we actually don't need to check all minutes and seconds
+        max possible minutes is targetSeconds / 60
+        '''
+        def cost(mins,secs):
+            presses = str(mins*100 + secs)
+            curr = str(startAt)
+            cost = 0
+            for ch in presses:
+                if ch == curr:
+                    cost += pushCost
+                else:
+                    cost += (moveCost + pushCost)
+                    curr = ch
+            
+            return cost
+        
+        ans = float('inf')
+        max_mins = targetSeconds // 60
+        for mins in range(max_mins + 1):
+            secs = targetSeconds - mins*60
+            #out of  bounds
+            if secs > 99 or mins > 99:
+                continue
+            ans = min(ans, cost(mins,secs))
+        
+        return ans
+    
+class Solution:
+    def minCostSetTime(self, startAt: int, moveCost: int, pushCost: int, targetSeconds: int) -> int:
+        '''
+        turns out we really only have two choices
+        maxmins,secs
+        maxmins - 1, secs + 60
+        etierh press whats there if its a valid config between 0000 and 9999
+        or try one less minute but carry over seconds
+        '''
+        def cost(mins,secs):
+            if mins > 99 or secs > 99 or mins < 0 or secs < 0:
+                return float('inf')
+            presses = str(mins*100 + secs)
+            curr = str(startAt)
+            cost = 0
+            for ch in presses:
+                if ch == curr:
+                    cost += pushCost
+                else:
+                    cost += (moveCost + pushCost)
+                    curr = ch
+            
+            return cost
+        
+        mins,secs = divmod(targetSeconds,60)
+        return min(cost(mins,secs), cost(mins-1,secs + 60))
 
 ####################################
 # 1257. Smallest Common Region
