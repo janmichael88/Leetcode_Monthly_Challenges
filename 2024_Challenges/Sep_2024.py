@@ -1668,3 +1668,299 @@ class Solution:
                 curr_region = graph[curr_region]
             else:
                 curr_region = region2
+
+################################################
+# 2165. Smallest Value of the Rearranged Number
+# 18SEP24
+#################################################
+class Solution:
+    def smallestNumber(self, num: int) -> int:
+        '''
+        largest number will be 10**15
+        will have at most 16 digits
+        there will be 16! ways to make a new digit
+        thats too big to try all
+        need to start the number with the largest number that isn't zero
+        '''
+        if num == 0:
+            return 0
+        digits = []
+        is_neg = True if num < 0 else False
+        num = abs(num)
+        while num > 0:
+            digits.append(num % 10)
+            num = num // 10
+        
+        if is_neg:
+            digits.sort(reverse = True)
+        else:
+            digits.sort()
+        
+        #find largest non zero
+        i = 0
+        while i < len(digits) and digits[i] == 0:
+            i += 1
+        
+        digits[0],digits[i] = digits[i],digits[0]
+        ans = 0
+        for num in digits:
+            ans *= 10
+            ans += num
+        
+        return ans*(-1 if is_neg else 1)
+    
+##################################
+# 179. Largest Number (REVISTED)
+# 18SEP24
+##################################
+from functools import cmp_to_key
+class Solution:
+    def largestNumber(self, nums: List[int]) -> str:
+        '''
+        what if i sort lexographically?
+        convert each int to a string then sort?
+        say we have like [3,31], the answer should be 331
+        but if i sort just lexo i get [31,3], i need 3 to come first
+        91
+        98
+        98
+        9
+        9
+        need to compare the concatnettion of two numbers
+        say we are are comparing 3 and 30, do we cant 330 or 303?
+        we want 330
+        '''
+        def largest(a,b):
+            if a + b > b + a:
+                return -1
+            elif a + b < b + a:
+                return 1
+            else:
+                return 0
+            
+        nums = [str(n) for n in nums]
+        nums.sort(key = cmp_to_key(largest))
+        if nums[0] == '0':
+            return '0'
+        
+        return "".join(nums)
+    
+class Solution:
+    def largestNumber(self, nums: List[int]) -> str:
+        '''
+        good review on merge sort
+        '''
+        nums = self._merge_sort(nums, 0, len(nums) - 1)
+        nums = [str(n) for n in nums]
+        if nums[0] == '0':
+            return '0'
+        
+        return "".join(nums)
+    
+    def _merge_sort(self,arr,left,right):
+        if left >= right:
+            return [arr[left]]
+        
+        mid = left + (right - left) // 2
+        left_sorted = self._merge_sort(arr,left,mid)
+        right_sorted = self._merge_sort(arr,mid+1,right)
+        return self._merge(left_sorted,right_sorted)
+    
+    def _merge(self, left,right):
+        sorted_halves = []
+        i,j = 0,0
+        
+        while i < len(left) and j < len(right):
+            if self._compare(left[i],right[j]):
+                sorted_halves.append(left[i])
+                i += 1
+            else:
+                sorted_halves.append(right[j])
+                j += 1
+        
+        #add in the rest
+        sorted_halves.extend(left[i:])
+        sorted_halves.extend(right[j:])
+        return sorted_halves
+                
+    
+    def _compare(self, a,b):
+        return str(a)+str(b) > str(b)+str(a)
+            
+#######################################################
+# 241. Different Ways to Add Parentheses (REVISTED)
+# 19SEP24
+#######################################################
+#recursion, but pass strings
+class Solution:
+    def diffWaysToCompute(self, expression: str) -> List[int]:
+        '''
+        well it doesn't make sense to just do this (2), don't self paranthesize, its still the same number
+        this is matric chain multiplication [left,right], try everything in between left and right
+        at each operator we split into left and right parts and see if we can make a result by adding the 
+        results of the operations
+        if empty string, return []
+        if one, return numbers as list
+        if two, and the first digit is number return the number as list
+        its of the form dp(i,j) = some opertion on all k between (i,j)
+            rather dp(i,j) = {
+            for k in range(i,j):
+                left_side = dp(i,k-1)
+                right_side = dp(k+1,j)
+                
+            and then some operation on left and right
+            }
+        '''
+        
+        def rec(string):
+            if not string:
+                return []
+            if len(string) == 1:
+                return [int(string)]
+            
+            if len(string) == 2 and string[0].isdigit():
+                return [int(string)]
+            
+            ans = []
+            for i,ch in enumerate(string):
+                if ch.isdigit():
+                    continue
+                #split left and right
+                left = rec(string[:i])
+                right = rec(string[i+1:])
+                for l in left:
+                    for r in right:
+                        if ch == '+':
+                            ans.append(l + r)
+                        elif ch == '-':
+                            ans.append(l - r)
+                        elif ch == '*':
+                            ans.append(l*r)
+            
+            return ans
+        
+        return rec(expression)
+                            
+
+#dp
+class Solution:
+    def diffWaysToCompute(self, expression: str) -> List[int]:
+        '''
+        well it doesn't make sense to just do this (2), don't self paranthesize, its still the same number
+        this is matric chain multiplication [left,right], try everything in between left and right
+        at each operator we split into left and right parts and see if we can make a result by adding the 
+        results of the operations
+        if empty string, return []
+        if one, return numbers as list
+        if two, and the first digit is number return the number as list
+        its of the form dp(i,j) = some opertion on all k between (i,j)
+            rather dp(i,j) = {
+            for k in range(i,j):
+                left_side = dp(i,k-1)
+                right_side = dp(k+1,j)
+                
+            and then some operation on left and right
+            }
+        '''
+        memo = {}
+        
+        def dp(i,j):
+            if i >= j:
+                return [int(expression[i])]
+            
+            if j - i == 1 and expression[i].isdigit():
+                return [int(expression[i:j+1])]
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = []
+            
+            for k in range(i,j+1):
+                if expression[k].isdigit():
+                    continue
+                ch = expression[k]
+                #split left and right
+                left = dp(i,k-1)
+                right = dp(k+1,j)
+                for l in left:
+                    for r in right:
+                        if ch == '+':
+                            ans.append(l + r)
+                        elif ch == '-':
+                            ans.append(l - r)
+                        elif ch == '*':
+                            ans.append(l*r)
+            memo[(i,j)] = ans
+            return ans
+        
+        
+        return dp(0,len(expression) - 1)
+                            
+#############################################################
+# 1886. Determine Whether Matrix Can Be Obtained By Rotation
+# 19SEP24
+#############################################################
+class Solution:
+    def findRotation(self, mat: List[List[int]], target: List[List[int]]) -> bool:
+        '''
+        we just need to check 0,1,2,and 3 rotations of mat
+        how can we rotate a matrix 90?
+        for some (i,j) -> (j,N-1-i)
+        '''
+        for _ in range(4):
+            mat = self.rotate_90(mat)
+            if mat == target:
+                return True
+        
+        return False
+    
+    def rotate_90(self,mat):
+        n = len(mat)
+        rotated_mat = [[0]*n for _ in range(n)]
+        for i in range(n):
+            for j in range(n):
+                rotated_mat[j][n-1-i] = mat[i][j]
+        
+        return rotated_mat
+        
+#using list zip hack
+class Solution:
+    def findRotation(self, mat: List[List[int]], target: List[List[int]]) -> bool:
+        '''
+        another way of seeinf it is that the rows become the reverse of the columns
+        '''
+        for _ in range(4):
+            mat = self.rotate_90(mat)
+            if mat == target:
+                return True
+        
+        return False
+    
+    def rotate_90(self,mat):
+        return [list(reversed(col)) for col in zip(*mat)]
+        
+#its just cols but in reverse each time
+class Solution:
+    def findRotation(self, mat: List[List[int]], target: List[List[int]]) -> bool:
+        '''
+        another way of seeinf it is that the rows become the reverse of the columns
+        '''
+        for _ in range(4):
+            mat = self.rotate_90(mat)
+            if mat == target:
+                return True
+        
+        return False
+    
+    def rotate_90(self,mat):
+        n = len(mat)
+        rotated_mat = []
+        for r in range(n):
+            col = []
+            for c in range(n):
+                col.append(mat[c][r])
+            
+            rotated_mat.append(col[::-1])
+        
+        return rotated_mat
+        
