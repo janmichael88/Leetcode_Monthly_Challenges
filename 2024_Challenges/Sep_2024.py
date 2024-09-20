@@ -1964,3 +1964,42 @@ class Solution:
         
         return rotated_mat
         
+###########################################################
+# 2232. Minimize Result by Adding Parentheses to Expression
+# 19SEP24
+############################################################
+class Solution:
+    def minimizeResult(self, expression: str) -> str:
+        '''
+        we can only add a pair of parenthese, the opening must be on the left
+        and the closing must be on thr right
+        find the indices where i can place ( and find indices where i can place  )
+        '''
+        opening = []
+        closing = []
+        found_op = False
+        i = 0
+        n = len(expression)
+        while i < n:
+            if expression[i].isdigit():
+                if found_op:
+                    closing.append(i)
+                else:
+                    opening.append(i)
+                i += 1
+            elif expression[i] == '+':
+                found_op = True
+                i += 1
+        
+        ans = expression
+        min_val = eval(expression)
+        for o in opening:
+            for c in closing:
+                subset = expression[:o]+"*1*"+'('+expression[o:c+1]+')'+"*1*"+expression[c+1:]
+                subset = subset.lstrip('*')
+                subset = subset.rstrip('*')
+                if eval(subset) <= min_val:
+                    ans = expression[:o]+'('+expression[o:c+1]+')'+expression[c+1:]
+                    min_val = eval(subset)
+        
+        return ans
