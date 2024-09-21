@@ -2003,3 +2003,82 @@ class Solution:
                     min_val = eval(subset)
         
         return ans
+
+########################################
+# 214. Shortest Palindrome (REVISTED)
+# 20SEP24
+########################################
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        '''
+        i can easily make a palindrom by just adding the reverse of the string to the end
+        in this case i can add the reverse to ther front
+        cat -> taccat
+        the problem is that the string could 'almost' be a palindrome
+        notice that if we just do rev(s)+s, the answer should exist in the concatenation!
+        largest_palin = s[::-1]+s
+        print(largest_palin)
+        test = "aaacecaaa"
+        ind = largest_palin.find(test)
+        print(largest_palin[ind:ind+len(test)])
+        
+        we can solve, find smallest palindrom in rev(s)+s, expanding from centers would take O(n^2) time
+        need to reframe the problem is findin the longest palindromic substring starting from 0
+        once we have found the longest palindromi substring (lps), we take the remaning part, reverse and append it to the oriiginal string
+        solve brute force first
+        '''
+        #find longest lps, so start from end
+        n = len(s)
+        for i in range(n,-1,-1):
+            pref = s[:i]
+            if pref == pref[::-1]:
+                remaining_part = s[i:]
+                return remaining_part[::-1] + s
+        
+        return ""
+
+#since we are findng prefixes, we can using rolling hashes, rabin karp
+class Solution:
+    def shortestPalindrome(self, s: str) -> str:
+        '''
+        for rabin karp, we need to keep two hashes, 
+        one for prefix, and one for suffix
+        if they match, we know that this is the longest
+        keep prefix hashes and suffix hashes
+        can i get reverse pref from suffix hashes
+        so we have some pref (i,j)
+        its reverse is (j,i)
+        i need to reverse s first, then i can build it up
+        abcd
+        dcba
+        
+        we can update hash in revesre!
+        forward hash = (forwardHash * hashBase + (currentChar - 'a' + 1)) % modValue
+        reverse haseh = (reverseHash + (currentChar - 'a' + 1) * powerValue) % modValue
+        
+        '''
+        base = 29
+        mod = 10**9 + 7
+        pref_hashes = [0]
+        rev_hashes = [0]
+        power = 1
+        n = len(s)
+        
+        #first precopmute pref hashses and suffix hashes
+        for i in range(n):
+            #prefix_hash
+            forward_char = s[i]
+            forward_hash = (pref_hashes[-1]*base + (ord(forward_char) - ord('a') + 1)) % mod
+            pref_hashes.append(forward_hash)
+            #suffix hash
+            rev_char = s[i]
+            rev_hash = rev_hashes[-1] + ((ord(rev_char) - ord('a') + 1)*power) % mod
+            rev_hashes.append(rev_hash % mod)
+            power = (power*base) % mod
+
+            
+        for i in range(n,-1,-1):
+            if pref_hashes[i] == rev_hashes[i]:
+                return s[i:][::-1] + s
+        
+        return -1
