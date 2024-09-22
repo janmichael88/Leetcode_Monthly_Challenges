@@ -2082,3 +2082,55 @@ class Solution:
                 return s[i:][::-1] + s
         
         return -1
+    
+######################################################
+# 3043. Find the Length of the Longest Common Prefix
+# 21SEP24
+#######################################################
+class Solution:
+    def longestCommonPrefix(self, arr1: List[int], arr2: List[int]) -> int:
+        '''
+        finding all prefixes is allowable
+        '''
+        prefixes1 = set()
+        
+        for num in arr1:
+            for p in self.generate_prefixes(num):
+                prefixes1.add(p)
+        
+        ans = 0
+        for num in arr2:
+            for p in self.generate_prefixes(num):
+                if p in prefixes1:
+                    ans = max(ans, len(str(p)))
+        
+        return ans
+                    
+    def generate_prefixes(self,num):
+        if not num:
+            return []
+        
+        return self.generate_prefixes(num // 10) + [num]
+        
+###########################################
+# 386. Lexicographical Numbers (REVISTED)
+# 22SEP24
+##########################################
+class Solution:
+    def lexicalOrder(self, n: int) -> List[int]:
+        '''
+        dfs, start with zero
+        '''
+        ans = []
+        def dfs(i):
+            if i > n:
+                return
+            ans.append(i)
+            for j in range(10):
+                if i*10 + j <= n:
+                    dfs(i*10 + j)
+        
+        for i in range(1,10):
+            dfs(i)
+        
+        return ans
