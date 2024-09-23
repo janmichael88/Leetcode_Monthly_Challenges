@@ -2134,3 +2134,73 @@ class Solution:
             dfs(i)
         
         return ans
+
+##############################################
+# 440. K-th Smallest in Lexicographical Order
+# 23SEP24
+#############################################
+#efficient counting
+class Solution:
+    def findKthNumber(self, n: int, k: int) -> int:
+        '''
+        finally they set it up for us where we do the prereq proble before
+        binary search on tree
+        if n changes, does kth change?
+            yes, but after a certain number
+        for (n,k) -> (13,3)
+            we get 11
+        but for (130,3) we get 100
+        
+        the idea is to effectively traverse a 10-ary tree
+        1 can have children [10,11,12,13...19]
+        10 can have children [100,101...109]
+        this is prefix tree
+        intuition: we need to figure out how many numbers exists in the subtree rooted at some node
+        count the number of nodes in curr and curr + 1
+        the kth number is not in this subtree of the number (or number of steps) is <= k
+            move to its next subling and subtract the nuber of stpes from k
+        
+        if the number of steps is larger than k, then it must be in this subtree
+            move down, mulitpely by 10 (the next level)
+            decrease k by 1 ebcaue we've taken on step closer into the tree
+        
+        count how many numbers are between some pref and pref + 1
+        multiply by 10 to dive deeper into this root
+        increment steps by Math.min(n + 1, prefix2) - prefix1, 
+        we need to capp pref2 and n + 1 if pref2 is bigger than n
+
+        deep dive:
+            if steps <= k, we know we can move to curr + 1, and narrow down to k- steps
+                we skipped all the numbers in this node, so its k- steps
+            if steps > k, its beloww in the pre order travesal, so we cant jump to curr + 1
+            we need the enxt predix which is just pref*10, then we ise 1-step to go down
+
+        _count function
+        if pref2 <= n, it means that pref1 right most node exsists, so we can add the number of nodes from n1 to n2
+        if pref2 > n, it means n is on the path between n1 and n2, so add (n+1 - pref1)
+        If pref2 steps is at least n, then i just need the number of steps from pref2 to pref1. If pref2 steps is more than n then i need the full n+1 steps less than the steps in root pref1
+        '''
+        #start with first
+        curr = 1
+        k -= 1 #we already havey at least one umber
+        while k > 0:
+            print(curr)
+            steps = self._count(n,curr,curr + 1)
+            if steps <= k:
+                curr += 1
+                k -= steps
+            else:
+                curr *= 10
+                k -= 1
+        
+        return curr
+    
+    def _count(self, n, pref1, pref2):
+        steps = 0
+        while pref1 <= n:
+            steps += min(n+1,pref2) - pref1
+            #scale by 10
+            pref1 *= 10
+            pref2 *= 10
+        
+        return steps
