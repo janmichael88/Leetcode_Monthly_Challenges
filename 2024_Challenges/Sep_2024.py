@@ -2111,6 +2111,50 @@ class Solution:
             return []
         
         return self.generate_prefixes(num // 10) + [num]
+    
+#trie solution
+class TrieNode:
+    def __init__(self):
+        self.children = [None]*10
+        
+class Trie:
+    def __init__(self,):
+        self.root = TrieNode()
+    
+    def insert(self,num):
+        node = self.root
+        for d in str(num):
+            idx = int(d)
+            if not node.children[idx]:
+                node.children[idx] = TrieNode()
+            node = node.children[idx]
+        
+    def find_longest(self,num):
+        node = self.root
+        length = 0
+        
+        for d in str(num):
+            idx = int(d)
+            if not node.children[idx]:
+                break
+            else:
+                length += 1
+                node = node.children[idx]
+        
+        return length
+
+class Solution:
+    def longestCommonPrefix(self, arr1: List[int], arr2: List[int]) -> int:
+        #make trie
+        trie = Trie()
+        for num in arr1:
+            trie.insert(num)
+        
+        ans = 0
+        for num in arr2:
+            ans = max(ans, trie.find_longest(num))
+        
+        return ans
         
 ###########################################
 # 386. Lexicographical Numbers (REVISTED)
@@ -2204,3 +2248,87 @@ class Solution:
             pref2 *= 10
         
         return steps
+
+################################################
+# 2707. Extra Characters in a String (REVISTED)
+# 23SEP24
+################################################
+class Solution:
+    def minExtraChar(self, s: str, dictionary: List[str]) -> int:
+        '''
+        need to break s, so that substrings (the original string is also a substring) are in dictionary
+        let dp(i) be the min extra character if breaking s[0:i] optimally
+        '''
+        dictionary = set(dictionary)
+        memo = {}
+        n = len(s)
+        
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            curr_word = ""
+            #dont break here
+            ans = 1 + dp(i+1)
+            for j in range(i,n):
+                curr_word += s[j]
+                #if word is in there its a valid break
+                if curr_word in dictionary:
+                    #break_here = dp(j+1)
+                    ans = min(ans,dp(j+1))
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+                
+#trie solution
+class TrieNode:
+    def __init__(self,):
+        self.children = {}
+        self.is_word = False
+        
+class Trie:
+    def __init__(self,):
+        self.root = TrieNode()
+    
+    def insert(self,word):
+        node = self.root
+        for ch in word:
+            if ch not in node.children:
+                node.children[ch] = TrieNode()
+            node = node.children[ch]
+        
+        node.is_word = False
+
+class Solution:
+    def minExtraChar(self, s: str, dictionary: List[str]) -> int:
+        
+        trie = Trie()
+        for word in dictionary:
+            trie.insert(word)
+        root = trie.root
+        
+        memo = {}
+        n = len(s)
+        
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            #dont break here
+            ans = 1 + dp(i+1)
+            node = root
+            for j in range(i,n):
+                if s[j] not in node.children:
+                    break
+                node = node.children[s[j]]
+                #if word is in there its a valid break
+                if node.is_word:
+                    #break_here = dp(j+1)
+                    ans = min(ans,dp(j+1))
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
