@@ -2523,3 +2523,53 @@ class Solution:
 
         # Return the longest valid word found
         return longest_valid_word
+    
+###########################################
+# 2416. Sum of Prefix Scores of Strings
+# 27SEP24
+###########################################
+class TrieNode:
+    def __init__(self,):
+        self.children = defaultdict()
+        self.count = 0
+    
+class Trie:
+    def __init__(self,):
+        self.root = TrieNode()
+    
+    def add_word(self,word):
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                root.children[ch] = TrieNode()
+            root = root.children[ch]
+            root.count += 1
+    
+    def add_words(self,words):
+        for w in words:
+            self.add_word(w)
+            
+    def get_counts(self,word):
+        ans = 0
+        curr = self.root
+        for ch in word:
+            curr = curr.children[ch]
+            ans += curr.count
+        return ans
+            
+
+class Solution:
+    def sumPrefixScores(self, words: List[str]) -> List[int]:
+        '''
+        modified trie with counter at each node
+        then traverse each word and sum up its counts along the way
+        '''
+        trie = Trie()
+        trie.add_words(words)
+        ans = []
+        for w in words:
+            ans.append(trie.get_counts(w))
+        
+        return ans
+        
+        
