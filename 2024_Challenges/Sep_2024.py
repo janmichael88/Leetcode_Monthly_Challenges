@@ -2369,58 +2369,71 @@ class Solution:
 # 24SEP24
 #####################################################
 class TrieNode:
-    def __init__(self,):
-        self.children = {}
-        self.is_word = False
+    def __init__(self):
+        self.children = [None]*10
         
 class Trie:
     def __init__(self,):
         self.root = TrieNode()
     
-    def add_word(self,word):
-        root = self.root
-        for ch in word:
-            if ch not in root.children:
-                root.children[ch] = TrieNode()
-            root = root.children[ch]
+    def insert(self,num):
+        node = self.root
+        for d in str(num):
+            idx = int(d)
+            if not node.children[idx]:
+                node.children[idx] = TrieNode()
+            node = node.children[idx]
         
-        root.is_word = True
-    
-    def add_words(self,words):
-        for w in words:
-            self.add_word(w)
+    def find_longest(self,num):
+        node = self.root
+        length = 0
+        
+        for d in str(num):
+            idx = int(d)
+            if not node.children[idx]:
+                break
+            else:
+                length += 1
+                node = node.children[idx]
+        
+        return length
 
 class Solution:
-    def longestWord(self, words: List[str]) -> str:
-        '''
-        trie
-        if a word had all the prefixes, then there would only be one path
-        a word itself can also be a prefix
-        checking each prefix in each word would take too long, even after making three
-        i can make trie, and use dfs to find the longes path making sure that each node is a word
-        i need global answer
-        '''
+    def longestCommonPrefix(self, arr1: List[int], arr2: List[int]) -> int:
         #make trie
         trie = Trie()
-        trie.add_words(words)
-        root = trie.root
-        self.ans = ""
+        for num in arr1:
+            trie.insert(num)
         
-        #dfs for longest path, we dont want length, need the actual word
-        #must be in lexographical order
-        def dfs(node,path):
-            #leaf is has no children
-            if not node.children:
-                return path
-            ans = "" if not path else path
-            for neigh in range(26):
-                neigh_char = chr(ord('a') + neigh)
-                if neigh_char in node.children and node.children[neigh_char].is_word:
-                    child_ans = dfs(node.children[neigh_char],path + neigh_char)
-                    if len(child_ans) > len(ans):
-                        ans = child_ans
-            
-            return ans
+        ans = 0
+        for num in arr2:
+            ans = max(ans, trie.find_longest(num))
         
-        return dfs(root,"")
+        return ans
+    
+class Solution:
+    def longestCommonPrefix(self, arr1: List[int], arr2: List[int]) -> int:
+        '''
+        finding all prefixes is allowable
+        '''
+        prefixes1 = set()
+        
+        for num in arr1:
+            for p in self.generate_prefixes(num):
+                prefixes1.add(p)
+        
+        ans = 0
+        for num in arr2:
+            for p in self.generate_prefixes(num):
+                if p in prefixes1:
+                    ans = max(ans, len(str(p)))
+        
+        return ans
                     
+        
+    
+    def generate_prefixes(self,num):
+        if not num:
+            return []
+        
+        return self.generate_prefixes(num // 10) + [num]
