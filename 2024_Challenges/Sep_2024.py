@@ -2437,3 +2437,89 @@ class Solution:
             return []
         
         return self.generate_prefixes(num // 10) + [num]
+
+###########################################
+# 1858. Longest Word With All Prefixes
+# 27SEP24
+#############################################
+class TrieNode:
+    def __init__(self,):
+        self.children = {}
+        self.is_word = False
+        
+class Trie:
+    def __init__(self,):
+        self.root = TrieNode()
+    
+    def add_word(self,word):
+        root = self.root
+        for ch in word:
+            if ch not in root.children:
+                root.children[ch] = TrieNode()
+            root = root.children[ch]
+        
+        root.is_word = True
+    
+    def add_words(self,words):
+        for w in words:
+            self.add_word(w)
+
+class Solution:
+    def longestWord(self, words: List[str]) -> str:
+        '''
+        trie
+        if a word had all the prefixes, then there would only be one path
+        a word itself can also be a prefix
+        checking each prefix in each word would take too long, even after making three
+        i can make trie, and use dfs to find the longes path making sure that each node is a word
+        i need global answer
+        '''
+        #make trie
+        trie = Trie()
+        trie.add_words(words)
+        root = trie.root
+        self.ans = ""
+        
+        #dfs for longest path, we dont want length, need the actual word
+        #must be in lexographical order
+        def dfs(node,path):
+            #leaf is has no children
+            if not node.children:
+                return path
+            ans = "" if not path else path
+            for neigh in range(26):
+                neigh_char = chr(ord('a') + neigh)
+                if neigh_char in node.children and node.children[neigh_char].is_word:
+                    child_ans = dfs(node.children[neigh_char],path + neigh_char)
+                    if len(child_ans) > len(ans):
+                        ans = child_ans
+            
+            return ans
+        
+        return dfs(root,"")
+                    
+#hash set
+class Solution:
+    def longestWord(self, words: List[str]) -> str:
+        #sort lexogprhically
+        #then check each prefix in order!
+        # Sort the words lexicographically
+        words.sort()
+
+        # Set to store valid words
+        valid_words = set()
+        longest_valid_word = ""
+
+        # Iterate through each word
+        for current_word in words:
+            # Check if the word is of length 1 or if its prefix exists in the set
+            if len(current_word) == 1 or current_word[:-1] in valid_words:
+                # Add the current word to the set of valid words
+                valid_words.add(current_word)
+
+                # Update the longest valid word if necessary
+                if len(current_word) > len(longest_valid_word):
+                    longest_valid_word = current_word
+
+        # Return the longest valid word found
+        return longest_valid_word
