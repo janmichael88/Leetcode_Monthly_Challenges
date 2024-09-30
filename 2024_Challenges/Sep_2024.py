@@ -2755,3 +2755,84 @@ class AllOne:
 # obj.dec(key)
 # param_3 = obj.getMaxKey()
 # param_4 = obj.getMinKey()
+
+################################################
+# 1381. Design a Stack With Increment Operation
+# 30SEP24
+###############################################
+class CustomStack:
+    '''
+    brute force increment will TLE
+    mark where we need to increment that last k values
+    if we have to increment the last k values by val, then every val before k, so k-1,k-2, etc will be incremented
+    this is actually just lazy propogation,
+    '''
+
+    def __init__(self, maxSize: int):
+        #push in (val,increment)
+        self.stack = []
+        self.k = maxSize
+
+    def push(self, x: int) -> None:
+        if len(self.stack) < self.k:
+            self.stack.append([x,0])
+
+    def pop(self) -> int:
+        if not self.stack:
+            return -1
+        val,inc = self.stack.pop()
+        if self.stack:
+            self.stack[-1][1] += inc
+        return val + inc
+
+    def increment(self, k: int, val: int) -> None:
+        if not self.stack:
+            return
+        elif len(self.stack) < k:
+            self.stack[-1][1] += val
+        else:
+            self.stack[k-1][1] += val
+
+
+# Your CustomStack object will be instantiated and called as such:
+# obj = CustomStack(maxSize)
+# obj.push(x)
+# param_2 = obj.pop()
+# obj.increment(k,val)
+
+#using array
+class CustomStack:
+    def __init__(self, max_size: int):
+        # List to store stack elements
+        self._stack = [0] * max_size
+        # List to store increments for lazy propagation
+        self._inc = [0] * max_size
+        # Current top index of the stack
+        self._top = -1
+
+    def push(self, x: int) -> None:
+        if self._top < len(self._stack) - 1:
+            self._top += 1
+            self._stack[self._top] = x
+
+    def pop(self) -> int:
+        if self._top < 0:
+            return -1
+
+        # Calculate the actual value with increment
+        result = self._stack[self._top] + self._inc[self._top]
+
+        # Propagate the increment to the element below
+        if self._top > 0:
+            self._inc[self._top - 1] += self._inc[self._top]
+
+        # Reset the increment for this position
+        self._inc[self._top] = 0
+        self._top -= 1
+        return result
+
+    def increment(self, k: int, val: int) -> None:
+        if self._top >= 0:
+            # Apply increment to the topmost element of the range
+            index = min(self._top, k - 1)
+            self._inc[index] += val
