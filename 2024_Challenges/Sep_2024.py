@@ -2572,4 +2572,186 @@ class Solution:
         
         return ans
         
+######################################
+# 432. All O`one Data Structure
+# 29SEP24
+######################################
+#nice try
+class AllOne:
+
+    def __init__(self):
+        '''
+        we need tp maintin the smallest and minimum eleemnts
+        we would also need previous ones in case the current once no longer is max/min
+        i can use garbage heap, and keep pullin until valid
+        '''
+        self.counts = defaultdict()
+        self.min_heap = []
+        self.max_heap = []
         
+
+    def inc(self, key: str) -> None:
+        self.counts[key] = self.counts.get(key,0) + 1
+        heapq.heappush(self.min_heap, (self.counts[key],key))
+        heapq.heappush(self.max_heap, (-self.counts[key],key))
+
+    def dec(self, key: str) -> None:
+        #note, its guranteeds the key is in there before the decrement
+        self.counts[key] -= 1
+        if self.counts[key] == 0:
+            del self.counts[key]
+        else:
+            #push new status
+            heapq.heappush(self.min_heap, (self.counts[key],key))
+            heapq.heappush(self.max_heap, (-self.counts[key],key))
+            
+    def getMaxKey(self) -> str:
+        while self.max_heap and self.max_heap[0][1] not in self.counts and self.counts[self.max_heap[0][1]] < -self.max_heap[0][0]:
+            heapq.heappop(self.max_heap)
+        
+        return self.max_heap[0][1]
+
+    def getMinKey(self) -> str:
+        while self.min_heap and self.min_heap[0][1] not in self.counts and self.counts[self.min_heap[0][1]] > self.min_heap[0][0]:
+            heapq.heappop(self.min_heap)
+        print(self.min_heap)
+        return self.min_heap[0][1]
+
+
+
+# Your AllOne object will be instantiated and called as such:
+# obj = AllOne()
+# obj.inc(key)
+# obj.dec(key)
+# param_3 = obj.getMaxKey()
+# param_4 = obj.getMinKey()
+
+'''
+idea is to use double linked lost storing frequencies, as well as the strings whos freqs match
+we can use dummy head and rear
+when incremeting a key, we check for existence in hashmap
+if new, we look at the node after the dummy head
+if node does not have frequency 1, we make a new doe with freq 1
+otherwise we find its current frequency node and cehck the next node, which shoudl have high frequencdy
+if the next node is the tail or odes not contain the exepcted freq, we make a new one
+
+for decrement, we check if in hashmap
+is it is, we remove it from the node
+is the nodes frequency is >= one, we check the previous node
+if needed, we create a new node for the decreased frequency and add keey to the prev node
+'''
+
+class Node:
+    def __init__(self, freq):
+        self.freq = freq
+        self.prev = None
+        self.next = None
+        self.keys = set()
+
+
+class AllOne:
+    def __init__(self):
+        self.head = Node(0)  # Dummy head
+        self.tail = Node(0)  # Dummy tail
+        self.head.next = self.tail  # Link dummy head to dummy tail
+        self.tail.prev = self.head  # Link dummy tail to dummy head
+        self.map = {}  # Mapping from key to its node
+
+    def inc(self, key: str) -> None:
+        if key in self.map:
+            node = self.map[key]
+            freq = node.freq
+            node.keys.remove(key)  # Remove key from current node
+
+            nextNode = node.next
+            if nextNode == self.tail or nextNode.freq != freq + 1:
+                # Create a new node if next node does not exist or freq is not freq + 1
+                newNode = Node(freq + 1)
+                newNode.keys.add(key)
+                newNode.prev = node
+                newNode.next = nextNode
+                node.next = newNode
+                nextNode.prev = newNode
+                self.map[key] = newNode
+            else:
+                # Increment the existing next node
+                nextNode.keys.add(key)
+                self.map[key] = nextNode
+
+            # Remove the current node if it has no keys left
+            if not node.keys:
+                self.removeNode(node)
+        else:  # Key does not exist
+            firstNode = self.head.next
+            if firstNode == self.tail or firstNode.freq > 1:
+                # Create a new node
+                newNode = Node(1)
+                newNode.keys.add(key)
+                newNode.prev = self.head
+                newNode.next = firstNode
+                self.head.next = newNode
+                firstNode.prev = newNode
+                self.map[key] = newNode
+            else:
+                firstNode.keys.add(key)
+                self.map[key] = firstNode
+
+    def dec(self, key: str) -> None:
+        if key not in self.map:
+            return  # Key does not exist
+
+        node = self.map[key]
+        node.keys.remove(key)
+        freq = node.freq
+
+        if freq == 1:
+            # Remove the key from the map if freq is 1
+            del self.map[key]
+        else:
+            prevNode = node.prev
+            if prevNode == self.head or prevNode.freq != freq - 1:
+                # Create a new node if the previous node does not exist or freq is not freq - 1
+                newNode = Node(freq - 1)
+                newNode.keys.add(key)
+                newNode.prev = prevNode
+                newNode.next = node
+                prevNode.next = newNode
+                node.prev = newNode
+                self.map[key] = newNode
+            else:
+                # Decrement the existing previous node
+                prevNode.keys.add(key)
+                self.map[key] = prevNode
+
+        # Remove the node if it has no keys left
+        if not node.keys:
+            self.removeNode(node)
+
+    def getMaxKey(self) -> str:
+        if self.tail.prev == self.head:
+            return ""  # No keys exist
+        return next(
+            iter(self.tail.prev.keys)
+        )  # Return one of the keys from the tail's previous node
+
+    def getMinKey(self) -> str:
+        if self.head.next == self.tail:
+            return ""  # No keys exist
+        return next(
+            iter(self.head.next.keys)
+        )  # Return one of the keys from the head's next node
+
+    def removeNode(self, node):
+        prevNode = node.prev
+        nextNode = node.next
+
+        prevNode.next = nextNode  # Link previous node to next node
+        nextNode.prev = prevNode  # Link next node to previous node
+        
+
+# Your AllOne object will be instantiated and called as such:
+# obj = AllOne()
+# obj.inc(key)
+# obj.dec(key)
+# param_3 = obj.getMaxKey()
+# param_4 = obj.getMinKey()
