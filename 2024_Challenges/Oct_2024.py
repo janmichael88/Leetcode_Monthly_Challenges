@@ -89,3 +89,154 @@ class Solution:
             end -= 1
 
         return True
+
+########################################
+# 1590. Make Sum Divisible by P (REVISTED)
+# 04OCT24
+########################################
+class Solution:
+    def minSubarray(self, nums: List[int], p: int) -> int:
+        '''
+        we need to remove a subarray to make sum divivibsle by p
+        say we have subarray [a,b,c,d,e]
+        we want (a+b+c+d+e) % p == 0
+        
+        if (a+b+c+d+e) % p == k, where k != 0
+        then we need to find the smallest subarray == k where sum(subarray) % p == k
+        
+        more fomrally:
+        we need a subarray who's sum % p == sum(nums) % p
+        we can say: 
+        let k = sum(nums) % p
+        (prefSum_i - prefSum_j) % p = k
+        k is some multiple of pf
+        prefSum_i - prefSum_j = k + m*p
+        prefSum_i = prefSum_j + k + m*p
+        prefSum_i = (prefSum_j - k) % p
+        
+        to correct for negatvies we just add p and most it again
+        
+        '''
+        SUM = sum(nums)
+        if SUM % p == 0:
+            return 0
+        N = len(nums)
+        k = SUM % p
+        ans = N
+        
+        mapp = {}
+        mapp[0] = -1
+        curr_sum = 0
+        for i,num in enumerate(nums):
+            curr_sum = (curr_sum + num + p) % p
+            #find its complement
+            comp = (curr_sum - k + p) % p
+            if comp in mapp:
+                ans = min(ans, i - mapp[comp])
+            
+            mapp[curr_sum] = i
+        
+        return -1 if ans == N else ans
+        
+#################################################
+# 2491. Divide Players Into Teams of Equal Skill
+# 04OCT24
+#################################################
+#phew
+class Solution:
+    def dividePlayers(self, skill: List[int]) -> int:
+        '''
+        need to divide into len(skill) / 2 teams
+        such that the skill of total skill of each team is equal
+        '''
+        SUM = sum(skill)
+        N = len(skill)
+        teams = N // 2
+        
+        #check that we can't make teams of even skill
+        if SUM % teams != 0:
+            return -1
+        
+        skill_of_team = SUM // teams
+        counts = Counter(skill)
+        
+        chemistry = 0
+        for i in range(1,(skill_of_team // 2)+1):
+            #same i and skill - i
+            if i == skill_of_team - i and counts[i] != 0 and counts[skill_of_team - i] != 0:
+                if counts[i] % 2 != 0:
+                    return -1
+                chemistry += ((i)*(skill_of_team - i))*(counts[i] // 2)
+                counts[i] = 0
+                counts[skill_of_team - i] = 0
+            elif counts[i] == counts[skill_of_team - i] and counts[i] != 0 and counts[skill_of_team - i] != 0:
+                if counts[i] != counts[skill_of_team - i]:
+                    return -1
+                chemistry += (i*(skill_of_team - i))*counts[i]
+                counts[i] = 0
+                counts[skill_of_team - i] = 0
+        
+        #validate after getting answer
+        for k,v in counts.items():
+            if v != 0:
+                return -1
+        return chemistry
+    
+#sort solution, each pair should add up to the precompute score
+class Solution:
+    def dividePlayers(self, skill: List[int]) -> int:
+        '''
+        need to divide into len(skill) / 2 teams
+        such that the skill of total skill of each team is equal
+        '''
+        SUM = sum(skill)
+        N = len(skill)
+        teams = N // 2
+        
+        #check that we can't make teams of even skill
+        if SUM % teams != 0:
+            return -1
+        
+        skill_of_team = SUM // teams
+        skill.sort()
+        chemistry = 0
+        left = 0
+        right = N - 1
+        
+        while left < right:
+            if skill[left] + skill[right] != skill_of_team:
+                return -1
+            chemistry += skill[left]*skill[right]
+            left += 1
+            right -= 1
+        
+        return chemistry
+    
+class Solution:
+    def dividePlayers(self, skill: List[int]) -> int:
+        '''
+        we can use a count array,
+        then retraverse the skill array and find compelements and add accordingly
+        '''
+        SUM = sum(skill)
+        N = len(skill)
+        teams = N // 2
+        
+        #check that we can't make teams of even skill
+        if SUM % teams != 0:
+            return -1
+        
+        skill_of_team = SUM // teams
+        counts = [0]*1001
+        for s in skill:
+            counts[s] += 1
+        
+        chemistry = 0
+        for s in skill:
+            comp = skill_of_team - s
+            if counts[comp] == 0:
+                return -1 #cant do it
+            chemistry += s*comp
+            counts[comp] -= 1
+        
+        return chemistry // 2 #we are only counting pairs, but we double counted
