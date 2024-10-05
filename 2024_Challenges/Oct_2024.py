@@ -240,3 +240,39 @@ class Solution:
             counts[comp] -= 1
         
         return chemistry // 2 #we are only counting pairs, but we double counted
+    
+#############################################
+# 567. Permutation in String (REVISTED)
+# 05OCT24
+#############################################
+class Solution:
+    def checkInclusion(self, s1: str, s2: str) -> bool:
+        '''
+        hashamp validation
+        if we had a countmap of s1's chars, then there needs to be a subtring in s2, that contains all the chars of s1's count mapp
+        we can use sliding window
+        '''
+        counts_s1 = Counter(s1)
+        M = len(s1)
+        N = len(s2)
+        
+        if N < M:
+            return False
+        
+        count1 = Counter()
+        count2 = Counter()
+        
+        for i in range(M):
+            count1[s1[i]] += 1
+            count2[s2[i]] += 1
+        
+        for i in range(N - M):
+            #if they match, return
+            if count1 == count2:
+                return True
+            #add to new char to s2, which is ust i + M
+            count2[s2[i + M]] += 1
+            #remove the leftmost char, which is at i
+            count2[s2[i]] -= 1
+        
+        return count1 == count2
