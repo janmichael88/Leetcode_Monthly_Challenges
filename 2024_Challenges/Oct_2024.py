@@ -276,3 +276,99 @@ class Solution:
             count2[s2[i]] -= 1
         
         return count1 == count2
+    
+########################################
+# 3163. String Compression III
+# 05OCT24
+########################################
+class Solution:
+    def compressedString(self, word: str) -> str:
+        '''
+        we can only compress up to size 9
+        '''
+        comp = ""
+        curr_char = ""
+        curr_count = 0
+        
+        for ch in word:
+            if not curr_char:
+                curr_char = ch
+                curr_count += 1
+            elif ch == curr_char and curr_count < 9:
+                curr_count += 1
+            else:
+                comp += str(curr_count)+curr_char
+                curr_char = ch
+                curr_count = 1
+        if curr_count:
+            comp += str(curr_count)+curr_char 
+            
+        return comp
+    
+#another cool way, advance in steps of length
+class Solution:
+    def compressedString(self, word: str) -> str:
+        comp = ""
+        i = 0
+        while i < len(word):
+            current_char = word[i]
+            length = 0
+            while i + length < len(word) and word[i + length] == current_char and length < 9:
+                length += 1
+            comp += str(length) + current_char
+            i += length
+        return comp
+
+##########################################
+# 1813. Sentence Similarity III
+# 06OCT24
+##########################################
+class Solution:
+    def areSentencesSimilar(self, sentence1: str, sentence2: str) -> bool:
+        '''
+        the idea is that sentence1 must have a prefix and or suffix of sentence2 only!
+        we also need to check that sentence1 has a prefix and/or suffix of setence 1
+        we can use queue for both and check that they are non empty
+        
+        i.e one of the sentences must be empty after clearing the queue
+        '''
+        q1 = deque(sentence1.split(" "))
+        q2 = deque(sentence2.split(" "))
+        
+        while q1 and q2 and q1[0] == q2[0]:
+            q1.popleft()
+            q2.popleft()
+            
+        while q1 and q2 and q1[-1] == q2[-1]:
+            q1.pop()
+            q2.pop()
+            
+        return not q1 or not q2
+        
+class Solution:
+    def areSentencesSimilar(self, s1: str, s2: str) -> bool:
+        '''
+        this problem fucking sucks....
+        i need to pick the smaller of the two strings and compare to the larger one
+        assume s1 is the larger of the two strings
+        '''
+
+        s1_words = s1.split(" ")
+        s2_words = s2.split(" ")
+        start, ends1, ends2 = 0, len(s1_words) - 1, len(s2_words) - 1
+
+        # If words in s1 are more than s2, swap them and return the answer.
+        if len(s1_words) > len(s2_words):
+            return self.areSentencesSimilar(s2, s1)
+
+        # Find the maximum words matching from the beginning.
+        while start < len(s1_words) and s1_words[start] == s2_words[start]:
+            start += 1
+
+        # Find the maximum words matching in the end.
+        while ends1 >= 0 and s1_words[ends1] == s2_words[ends2]:
+            ends1 -= 1
+            ends2 -= 1
+
+        # if ends1 crosses, it means prefixes and suffix match so return true
+        return ends1 < start
