@@ -372,3 +372,117 @@ class Solution:
 
         # if ends1 crosses, it means prefixes and suffix match so return true
         return ends1 < start
+    
+########################################################
+# 2696. Minimum String Length After Removing Substrings
+# 07OCT24
+########################################################
+class Solution:
+    def minLength(self, s: str) -> int:
+        '''
+        stack problem,
+        whenever we have stack of length 2 or greater, remove AB
+        '''
+        stack = []
+        for ch in s:
+            stack.append(ch)
+            while len(stack) >= 2 and (stack[-2:] == ['A','B'] or stack[-2:] == ['C','D']):
+                stack.pop()
+                stack.pop()
+            
+        
+        return len(stack)
+    
+class Solution:
+    def minLength(self, s: str) -> int:
+        '''
+        we can use two pointers and temporary char array
+        we read each char s into write ptr
+        and if there's a match, we move write ptr back
+        '''
+        char_arr = list(s)
+        write = 0
+        
+        for read in range(len(char_arr)):
+            char_arr[write] = char_arr[read]
+            if write - 1 >= 0 and (char_arr[write - 1 : write + 1] == ['A', 'B'] or char_arr[write - 1 : write + 1] == ['C','D']):
+                write -= 1
+            else:
+                write += 1
+        return write
+    
+###########################################
+# 2559. Count Vowel Strings in Ranges
+# 07OCT24
+###########################################
+class Solution:
+    def vowelStrings(self, words: List[str], queries: List[List[int]]) -> List[int]:
+        '''
+        need a way to access count of vowels fast
+        prefix sum!
+        keep array that stores number of strings staring or ending with vowel
+        '''
+        pref_counts = [0]
+        vowels = 'aeiou'
+        
+        for w in words:
+            if w[0] in vowels and w[-1] in vowels:
+                pref_counts.append(pref_counts[-1] + 1)
+            else:
+                pref_counts.append(pref_counts[-1])
+        
+        ans = []
+        for l,r in queries:
+            ans.append(pref_counts[r+1] - pref_counts[l])
+        
+        return ans
+
+########################################################################
+# 1963. Minimum Number of Swaps to Make the String Balanced (REVISITED)
+# 08OCT24
+#########################################################################
+class Solution:
+    def minSwaps(self, s: str) -> int:
+        '''
+        keep track of opening and closing
+        try closing valid bracket pairs if we can,
+        antyhign left over needs to be swapped
+        
+        only works becaue the original can be balanced!
+        
+        '''
+        stack = []
+        for ch in s:
+            if ch == '[':
+                stack.append(ch)
+            else:
+                if stack:
+                    stack.pop()
+                else:
+                    stack.append(ch)
+        
+        return len(stack)//2
+        
+class Solution:
+    def minSwaps(self, s: str) -> int:
+        '''
+        keep track of balance
+        whenver we are unbalanced, we can swap
+        then the new balance becomes 1
+        '''
+        balance = 0
+        swaps = 0
+        
+        for ch in s:
+            if ch == '[':
+                balance += 1
+            else:
+                balance -= 1
+            
+            #rebalancing leaves it as 1
+            #because we made up the balance, but not we swapped, so its unbalanced by 1
+            if balance < 0:
+                swaps += 1
+                balance = 1
+        
+        return swaps
