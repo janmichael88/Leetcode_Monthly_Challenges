@@ -486,3 +486,158 @@ class Solution:
                 balance = 1
         
         return swaps
+    
+############################################################
+# 1541. Minimum Insertions to Balance a Parentheses String
+# 08OCT24
+############################################################
+#fuckkk
+class Solution:
+    def minInsertions(self, s: str) -> int:
+        '''
+        we can only clear if we have ['(' ,')'] in the stack
+        clear as much as we can and add after
+        ")"
+        '''
+        stack = []
+        for ch in s:
+            if ch == ')':
+                if len(stack) >= 2 and stack[-2] == '(' and stack[-1] == ')':
+                    stack.pop()
+                    stack.pop()
+                else:
+                    stack.append(ch)
+            else:
+                stack.append(ch)
+        
+        ans = 0
+        while stack:
+            if stack[-1] == '(':
+                ans += 2
+                stack.pop()
+            elif len(stack) >= 2:
+                if stack[-2] == ')' and stack[-1] == ')':
+                    ans += 1
+                    stack.pop()
+                    stack.pop()
+                elif stack[-2] == '(' and stack[-1] == ')':
+                    ans += 1
+                    stack.pop()
+                    stack.pop()
+                elif stack[-2] == '(' and stack[-1] == '(':
+                    ans += 1
+                    stack.pop()
+                    stack.pop()
+                elif stack[-2] == ')' and stack[-1] == ')':
+                    ans += 1
+                    stack.pop()
+                    stack.pop()
+            elif stack[-1] == ')':
+                ans += 2
+                stack.pop()
+
+        return ans
+    
+class Solution:
+    def minInsertions(self, s: str) -> int:
+        '''
+        maintain stack of open paranteh
+        if i and i+1 in bounds and )), advance it
+        if open just add to stack
+        
+        if it not we increment count
+        
+        whats left on the stack are the opening that need ))
+        '''
+        stack = []
+        i = 0
+        count = 0
+        
+        while i < len(s):
+            if s[i] == '(':
+                stack.append(s[i])
+            
+            else:
+                if i + 1 < len(s) and s[i+1] == ')':
+                    i += 1
+                else:
+                    count += 1
+                
+                if stack:
+                    stack.pop()
+                else:
+                    count += 1
+            
+            i += 1
+    
+        return count + len(stack)*2
+    
+##################################################
+# 2838. Maximum Coins Heroes Can Collect
+# 09OCT24
+##################################################
+class Solution:
+    def maximumCoins(self, heroes: List[int], monsters: List[int], coins: List[int]) -> List[int]:
+        '''
+        brute force would be to check each ith hero against its jth monster,  and if power of ith hero >= jth monster, aqcuqre jth coins
+        i can pair monsters with coins value, sort on increasing health
+        make pref_sum on this array, then binary search to find the upper bound of the hero to gets it total coins
+        '''
+        
+        pairs = [(m,c) for (m,c) in zip(monsters,coins)]
+        pairs.sort(key = lambda x : x[0])
+        sorted_monsters = [0] + [m for (m,_) in pairs]
+        pref_coins = [0]
+        for _,c in pairs:
+            pref_coins.append(pref_coins[-1] + c)
+        
+        ans = []
+        print(pref_coins)
+        for h in heroes:
+            idx = self.binary_search(sorted_monsters,h)
+            ans.append(pref_coins[idx])
+        
+        return ans
+            
+    def binary_search(self,arr,target):
+        left = 0
+        right = len(arr) - 1
+        ans = 0
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid] <= target:
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return ans
+        
+#two pointer soln
+class Solution:
+    def maximumCoins(self, heroes: List[int], monsters: List[int], coins: List[int]) -> List[int]:
+        '''
+        another way to sort heros and monsters 
+        keeping track of indicies, then if hero can beat this monster, advance and update coins
+        if hero cant move to next hero but keep pointer positions
+        '''
+        heroes_sorted = sorted([(i,h) for i,h in enumerate(heroes)], key = lambda x: x[1])
+        monsters_sorted = sorted([(i,m) for i,m in enumerate(monsters)], key = lambda x : x[1])
+        
+        ans = [0]*len(heroes)
+        curr_coins = 0
+        curr_monster = 0
+        
+        for i,h in heroes_sorted:
+            while curr_monster < len(monsters) and monsters_sorted[curr_monster][1] <= h:
+                #get actual monster index
+                idx = monsters_sorted[curr_monster][0]
+                curr_coins += coins[idx]
+                curr_monster += 1
+            
+            #update ans
+            ans[i] = curr_coins
+        
+        
+        return ans
+        
