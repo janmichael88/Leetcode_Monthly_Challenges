@@ -976,3 +976,43 @@ class Solution:
             for k in languages[i]:
                 freq[k] = 1 + freq.get(k, 0)
         return len(users) - max(freq.values(), default=0)
+    
+############################################
+# 2938. Separate Black and White Balls
+# 15OCT24
+#############################################
+class Solution:
+    def minimumSteps(self, s: str) -> int:
+        '''
+        need min steps to move ones to the right and moves zeros to the left
+        but we are only allow to swap some i and i + 1
+        the hint gave it away T.T
+        '''
+        ans = 0
+        count_zeros = 0
+        N = len(s)
+        for i in range(N-1,-1,-1):
+            if s[i] == '0':
+                count_zeros += 1
+            else:
+                ans += count_zeros
+        
+        return ans
+        
+class Solution:
+    def minimumSteps(self, s: str) -> int:
+        '''
+        if we have a one at some position i, we need to move to the left i spots
+        we can use an anchor pointer, starting at index 0
+        if a char is one, it needs to move i - anchort pointer times
+        '''
+        white = 0
+        swaps = 0
+        N = len(s)
+        for i,ch in enumerate(s):
+            #if its a white ball, move it to the left i - white_ptr swaps
+            if ch == '0':
+                swaps += i - white
+                white += 1
+        
+        return swaps
