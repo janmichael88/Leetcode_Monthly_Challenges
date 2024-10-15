@@ -871,3 +871,25 @@ class Solution:
             max_overlapping = max(max_overlapping,curr_overlapping)
         
         return max_overlapping
+    
+###########################################################
+# 2530. Maximal Score After Applying K Operations
+# 14OCT24
+###########################################################
+class Solution:
+    def maxKelements(self, nums: List[int], k: int) -> int:
+        '''
+        heap them all and pop,take,and push k times
+        '''
+        score = 0
+        max_heap = [-num for num in nums]
+        heapq.heapify(max_heap)
+        score = 0
+        
+        for _ in range(k):
+            temp = -heapq.heappop(max_heap)
+            score += temp
+            heapq.heappush(max_heap, -math.ceil(temp / 3))
+        
+        return score
+            
