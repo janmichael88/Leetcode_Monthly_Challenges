@@ -876,6 +876,7 @@ class Solution:
 # 2530. Maximal Score After Applying K Operations
 # 14OCT24
 ###########################################################
+import heapq
 class Solution:
     def maxKelements(self, nums: List[int], k: int) -> int:
         '''
@@ -893,3 +894,85 @@ class Solution:
         
         return score
             
+##########################################
+# 1733. Minimum Number of People to Teach
+# 14OCT24
+##########################################
+#close one
+class Solution:
+    def minimumTeachings(self, n: int, languages: List[List[int]], friendships: List[List[int]]) -> int:
+        '''
+        we would want to teach the one language the covers as many friendships as possible
+        we need to make sure that friendships can be satisfied
+        if it can't then teach the one language that minimuze the number of users i need to teach
+        '''
+        #mapp users to languages
+        langs_usrs = defaultdict(set)
+        for user,langs in enumerate(languages):
+            for l in langs:
+                langs_usrs[user + 1].add(l)
+        
+        #check each language and find smallest number we need to teach
+        ans = len(languages)
+        for l in range(1,n+1):
+            #count
+            curr_count = 0
+            for u,v in friendships:
+                #if there isn't a comman language, then teach it
+                u_langs = langs_usrs[u]
+                v_langs = langs_usrs[v]
+                common = u_langs  & v_langs
+                if len(common) == 0:
+                    curr_count += 1
+            
+            ans = min(ans,curr_count)
+        
+        return ans
+    
+class Solution:
+    def minimumTeachings(self, n: int, languages: List[List[int]], friendships: List[List[int]]) -> int:
+        '''
+        first find those who 'cant' communicate with each other
+        among these, find the most popular spoken language
+        then teach that language to the minosrity whoe cannot
+            i.e teach the language to the one who don't speak the most frequqent one
+        '''
+        langs = [set(l) for l in languages]
+        
+        cant_speak = set()
+        #find users who can't speak
+        for u,v in friendships:
+            #if there is a common lang, no need to do anything
+            if langs[u-1] & langs[v-1]:
+                continue
+            cant_speak.add(u-1)
+            cant_speak.add(v-1)
+        
+        if not cant_speak:
+            return 0
+        
+        lang_counts = Counter()
+        for user in cant_speak:
+            for l in langs[user]:
+                lang_counts[l] += 1
+        
+        
+        #teach the minorities any one language
+        return len(cant_speak) - max(lang_counts.values())
+    
+#another way
+class Solution:
+    def minimumTeachings(self, n: int, languages: List[List[int]], friendships: List[List[int]]) -> int:
+        languages = [set(x) for x in languages]
+        
+        users = set()
+        for u, v in friendships: 
+            if not languages[u-1] & languages[v-1]: 
+                users.add(u-1)
+                users.add(v-1)
+        
+        freq = {}
+        for i in users: 
+            for k in languages[i]:
+                freq[k] = 1 + freq.get(k, 0)
+        return len(users) - max(freq.values(), default=0)
