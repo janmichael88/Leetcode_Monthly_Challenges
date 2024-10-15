@@ -641,3 +641,233 @@ class Solution:
         
         return ans
         
+#############################################
+# 962. Maximum Width Ramp (REVISTED)
+# 10OCT24
+#############################################
+#almost optimal!
+class Solution:
+    def maxWidthRamp(self, nums: List[int]) -> int:
+        '''
+        cand just do monostack, because i would clear the stack and there might be a j that is <= after clearing
+        which would extend the ramp
+        what if we sorted, but paired its indicies with its num value
+        then we can use monostack on the indicies!
+        '''
+        pairs = [(i,num) for i,num in enumerate(nums)]
+        #sort on num value
+        pairs.sort(key = lambda x : x[1])
+        #monostack on increasing indicies
+        stack = []
+        
+        ans = 0
+        for i,num in pairs:
+            #monostack
+            while stack and stack[-1][0] > i:
+                ans = max(ans, stack[-1][0] - stack[0][0])
+                stack.pop()
+            
+            stack.append((i,num))
+        
+        if stack:
+            ans = max(ans, stack[-1][0] - stack[0][0])
+        return ans
+    
+#straight soring without stack, keep track of the min index encounterd so far
+#then update max and min
+class Solution:
+    def maxWidthRamp(self, nums: List[int]) -> int:
+        pairs = [(i,num) for i,num in enumerate(nums)]
+        #sort on num value
+        pairs.sort(key = lambda x : x[1])
+        n = len(pairs)
+        ans = 0
+        min_index = n
+        for i,num in pairs:
+            min_index = min(min_index,i)
+            ans = max(ans, i - min_index)
+        
+        return ans
+
+#####################################################
+# 1942. The Number of the Smallest Unoccupied Chair
+# 11OCT24
+####################################################
+class Solution:
+    def smallestChair(self, times: List[List[int]], targetFriend: int) -> int:
+        '''
+        keep heap of available chairs, 
+        then process the times in order of start
+        need to pull apart times [index,time,start,leave]
+        #there could be ties to arrive and leave, we need to make sure arrive happens before leave
+        '''
+        n = len(times)
+        available_chairs = list(range(len(times)))
+        heapq.heapify(available_chairs)
+        taken_chairs = [-1]*n
+        
+        #pull apart times
+        new_times = []
+        for i,(arrive,leave) in enumerate(times):
+            new_times.append((i,arrive,'arrive'))
+            new_times.append((i,leave,'leave'))
+        
+        new_times.sort(key = lambda x: (x[1],x[2] == 'arrive'))
+        
+        #firs time person arrives, his taken_chair will be -1
+        for person,time,_ in new_times:
+            #check if no assignment
+            if taken_chairs[person] == -1:
+                if person == targetFriend:
+                    return heapq.heappop(available_chairs)
+                else:
+                    taken_chairs[person] = heapq.heappop(available_chairs)
+            else:
+                #this must be a departure
+                chair = taken_chairs[person]
+                taken_chairs[person] = -1
+                heapq.heappush(available_chairs, chair)
+
+#brute force is actually kinda trickier
+class Solution:
+    def smallestChair(self, times: List[List[int]], targetFriend: int) -> int:
+        '''
+        just for fun, brute force 
+        sort on times, then assign a leaving time for each chair
+        then for each (arrival,start) find the left most available chair
+            i.e if chair is available
+        '''
+        target_time = times[targetFriend][0]
+        times.sort()
+        n = len(times)
+        chair_available = [0]*n
+        
+        for start,leave in times:
+            for i in range(n):
+                if chair_available[i] <= start:
+                    chair_available[i] = leave
+                    if start == target_time:
+                        return i
+                    break #found left most
+        
+        return -1
+                
+#########################################################
+# 2406. Divide Intervals Into Minimum Number of Groups
+# 12OCT24
+########################################################
+#bleagh
+class Solution:
+    def minGroups(self, intervals: List[List[int]]) -> int:
+        '''
+        sort on starts and tie break on the earliest ends
+        then we need to check i and i + 1 and try to capture as many groups as we can
+        '''
+        intervals.sort(key = lambda x : (x[0],x[1]))
+        groups = 0
+        i = 0
+        n = len(intervals)
+        
+        while i < n:
+            j = i + 1
+            while j < n and not (intervals[i][0] <= intervals[j][0] <= intervals[i][1] or \
+                                 intervals[i][0] <= intervals[j][1] <= intervals[i][1] or \
+                                 intervals[j][0] <= intervals[i][0] <= intervals[i][0] or  \
+                                 intervals[j][0] <= intervals[i][0] <= intervals[j][1]):
+                j += 1
+            
+            groups += 1
+            i = j
+        
+        return groups
+
+#check all intervals, and find one with largest counts
+#TLE
+class Solution:
+    def minGroups(self, intervals: List[List[int]]) -> int:
+        '''
+        if intervals overlap, they need to be in sepeate groups,
+        so the first algo i tried won't work for all cases, 
+            i.e i could keep expanding the j pointer, but then there'd be another one that overlapped
+        
+        for example [3,7], [5,6], [1,8] all overlap at 5,6
+            so these should be in sepearte groups
+        
+        so if we have k overlapping intervals,we need at least K groups
+        so if we find the intervals for which the sections are overlapping
+        
+        for example, we can add the intervals [10,12] and [2,3]  to some of the groups without conflict
+        '''
+        earliest = 1
+        latest = 1
+        for s,e in intervals:
+            latest = max(latest,e)
+        times = [0]*(latest+1)
+        for s,e in intervals:
+            for t in range(s,e+1):
+                times[t] += 1
+        
+        return max(times)
+
+#line sweep
+class Solution:
+    def minGroups(self, intervals: List[List[int]]) -> int:
+        '''
+        line, sweep, do -1 after (end + 1)
+        then roll up like prefix sum to accumlate changes for each time t
+        '''
+        earliest = float('inf')
+        latest = 0
+        for s,e in intervals:
+            earliest = min(earliest,s)
+            latest = max(latest,e)
+        
+        times = [0]*(latest + 2)
+        for s,e in intervals:
+            times[s] += 1
+            times[e+1] -= 1
+        
+        #roll them up
+        for t in range(earliest,latest + 2):
+            times[t] += times[t-1]
+        
+
+        return max(times)
+    
+#sorting and prefix sum
+class Solution:
+    def minGroups(self, intervals: List[List[int]]) -> int:
+        '''
+                if intervals overlap, they need to be in sepeate groups,
+        so the first algo i tried won't work for all cases, 
+            i.e i could keep expanding the j pointer, but then there'd be another one that overlapped
+        
+        for example [3,7], [5,6], [1,8] all overlap at 5,6
+            so these should be in sepearte groups
+        
+        so if we have k overlapping intervals,we need at least K groups
+        so if we find the intervals for which the sections are overlapping
+        
+        for example, we can add the intervals [10,12] and [2,3]  to some of the groups without conflict
+        split events into (start_event, count) and (end_event, -1)
+            like meeting rooms2
+        
+        then just get prefix sum to find the counts
+        (start,+1), (end + 1, -1)
+        menaing at this start, count goes up 1 for event, but after time end + 1, we are freed up
+        if we go in order can track the number of intersections at each time
+        '''
+        events = []
+        for s,e in intervals:
+            events.append((s,1))
+            events.append((e+1,-1))
+        
+        #sort on start, and then on events (-1, ending first)
+        events.sort(key = lambda x : (x[0],x[1]))
+        max_overlapping = 0
+        curr_overlapping = 0
+        for time,count in events:
+            curr_overlapping += count
+            max_overlapping = max(max_overlapping,curr_overlapping)
+        
+        return max_overlapping
