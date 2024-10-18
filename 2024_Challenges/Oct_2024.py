@@ -1016,3 +1016,227 @@ class Solution:
                 white += 1
         
         return swaps
+    
+####################################
+# 1405. Longest Happy String
+# 16OCT24
+####################################
+#i hate these rule based heap problems....
+class Solution:
+    def longestDiverseString(self, a: int, b: int, c: int) -> str:
+        '''
+        we can only use a,aa,b,bb,c,cc to make the string
+        it can ony contain at most: a count of a
+                            b count of b
+                            c count of c
+        build intelligently
+        use largest avilable letter, then break with another
+        you dont need to use all of them, just limited by i
+        '''
+        ans = ""
+        max_heap = [(-a,'a'),(-b,'b'),(-c,'c')]
+        heapq.heapify(max_heap)
+        
+        while max_heap:
+            first_count,first_letter = heapq.heappop(max_heap)
+            if not max_heap:
+                continue
+            elif max_heap:
+                second_count,second_letter = heapq.heappop(max_heap)
+            
+            #try adding first
+            first_addition = min(2,-first_count)
+            ans += first_addition*(first_letter)
+            print(first_count,first_addition)
+            first_count += first_addition
+            if first_count < 0:
+                heapq.heappush(max_heap, (first_count,first_letter))
+                
+            #do second
+            second_addition = min(2,-second_count)
+            ans += second_addition*(second_letter)
+            second_count += second_addition
+            if second_count < 0:
+                heapq.heappush(max_heap, (second_count,second_letter))
+        
+        return ans
+    
+#need to add in one at a time....
+class Solution:
+    def longestDiverseString(self, a: int, b: int, c: int) -> str:
+        '''
+        we can only use a,aa,b,bb,c,cc to make the string
+        it can ony contain at most: a count of a
+                            b count of b
+                            c count of c
+        build intelligently
+        use largest avilable letter, then break with another
+        you dont need to use all of them, just limited by i
+        for python its always more efficient to append to a list, then join at the end
+        instead of concatenating a string
+        '''
+        pq = []
+        if a > 0:
+            pq.append((-a,'a'))
+        if b > 0:
+            pq.append((-b,'b'))
+        if c > 0:
+            pq.append((-c,'c'))
+        
+        heapq.heapify(pq)
+        result = []
+        
+        while pq:
+            count,letter = heapq.heappop(pq)
+            #negate
+            count = -count
+            #check if same chars are are the ends
+            #we need to check last two first
+            if len(result) >= 2 and result[-1] == letter and result[-2] == letter:
+                if not pq:
+                    break
+                #addd
+                second_count,second_char = heapq.heappop(pq)
+                result.append(second_char)
+                if second_count + 1 < 0:
+                    heapq.heappush(pq, (second_count + 1, second_char))
+                #push back the original
+                heapq.heappush(pq, (-count,letter))
+            #add in one occurence of the largest:
+            else:
+                count -= 1
+                result.append(letter)
+                if count > 0:
+                    heapq.heappush(pq, (-count,letter))
+        
+        return "".join(result)
+        
+
+#############################
+# 1952. Three Divisors
+# 17OCT24
+#############################
+class Solution:
+    def isThree(self, n: int) -> bool:
+        '''
+        try all divisors from 1 to n
+        '''
+        divisors = 0
+        for i in range(1,n+1):
+            if n % i == 0:
+                divisors += 1
+        
+        return divisors == 3
+    
+class Solution:
+    def isThree(self, n: int) -> bool:
+        '''
+        a number can only have three divisors when it is a sqaure of a prime
+        1,sqrt(num),and sqrt(num)*sqrt(num)
+        generate all primes up sqrt(10**4)
+        '''
+        primes = [True]*(10**4 + 1)  
+        start = 2
+        
+        while start*start <= 10*4:
+            if primes[start] == True:
+                for i in range(start*start,10**4 + 1,start):
+                    primes[i] = False
+            
+            start += 1
+        
+        prime_nums = []
+        for i in range(2,102):
+            if primes[i]:
+                prime_nums.append(i)
+                
+        if int(math.sqrt(n))**2 == n and int(math.sqrt(n)) in prime_nums:
+            return True
+        
+        return False
+    
+#####################################
+# 670. Maximum Swap (REVISTED)
+# 17OCT24
+#####################################
+class Solution:
+    def maximumSwap(self, num: int) -> int:
+        '''
+        brute force and save largest ans
+        '''
+        ans = num
+        digits = []
+        while num:
+            digits.append(num % 10)
+            num //= 10
+        
+        digits.reverse()
+        N = len(digits)
+        for i in range(N):
+            for j in range(i+1,N):
+                digits[i],digits[j] = digits[j],digits[i]
+                ans = max(ans,self.get_num(digits))
+                digits[i],digits[j] = digits[j],digits[i]
+        
+        return ans
+                
+    def get_num(self,arr):
+        ans = 0
+        for d in arr:
+            ans = ans*10 + d
+        
+        return ans
+    
+#need max to left, then try swapping at each index it max
+class Solution:
+    def maximumSwap(self, num: int) -> int:
+        '''
+        brute force and save largest ans
+        '''
+        num = list(str(num))
+        N = len(num)
+        right_maxes = [[0,0] for _ in range(N)]
+        right_maxes[N-1] = [int(num[-1]),N-1]
+        
+        for i in range(N-2,-1,-1):
+            number = int(num[i+1])
+            #update
+            if number > right_maxes[i+1][0]:
+                right_maxes[i] = [number,i+1]
+            #carry left
+            else:
+                right_maxes[i] = right_maxes[i+1]
+        
+        
+        for i in range(N):
+            number = int(num[i])
+            #if we can find a larger number swap it
+            if number < right_maxes[i][0]:
+                #swap
+                num[i], num[right_maxes[i][1]] = num[right_maxes[i][1]],num[i]
+                return int("".join(num))
+            
+        
+        return int("".join(num))
+    
+
+###############################################################
+# 2275. Largest Combination With Bitwise AND Greater Than Zero
+# 18OCT24
+##############################################################
+class Solution:
+    def largestCombination(self, candidates: List[int]) -> int:
+        '''
+        check at each each bit position if all bits for each num are set
+        '''
+        ans = 0
+        for i in range(25):
+            subset_size = 0
+            mask = 1 << i
+            for num in candidates:
+                if num & mask:
+                    subset_size += 1
+            
+            ans = max(ans,subset_size)
+        
+        return ans
