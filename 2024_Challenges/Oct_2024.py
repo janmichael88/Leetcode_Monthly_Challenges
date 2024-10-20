@@ -1240,3 +1240,148 @@ class Solution:
             ans = max(ans,subset_size)
         
         return ans
+    
+############################################
+# 1545. Find Kth Bit in Nth Binary String
+# 19OCT24
+############################################
+#simulation works
+class Solution:
+    def findKthBit(self, n: int, k: int) -> str:
+        '''
+        we have the recurrence relation, but generating the actual string would take too long
+        0
+        0 + 1 + 1 = 011
+        011 + 1 + 001 = 0111001
+        simulate works i guess
+        '''
+        curr = [0]
+        while n:
+            next_ = curr + [1] + [1 - num for num in curr][::-1]
+            curr = next_[:]
+            n -= 1
+        
+        return str(curr[k-1])
+    
+#recursive approach
+class Solution:
+    def findKthBit(self, n: int, k: int) -> str:
+        '''
+        we have the recurrence relation, but generating the actual string would take too long
+        0
+        0 + 1 + 1 = 011
+        011 + 1 + 001 = 0111001
+        simulate works i guess
+        
+        string length doubles every time + 1
+        1, 2*2 - 1, 2*2*2 - 1
+        2^i - 1 for i >= 1
+        1,3,7,15
+        we just need to check if its on the left side or the right side
+        left side the digit will remain the same, right sight, it will swap
+        recursve approach, pass in length n and k
+        if n == 1, it can only be '0'
+        if k is in the firs half, we can call its on n-1, and k
+        if its exactly in the middle, we can return 1 -> defined bu recurrense
+        if its in the right half, then we know its going to be the kth om the end
+        which would be length of the next string - k, but then need to return the flipped bit in the next call
+        there are no repeated subproblems for this one
+        '''
+        def rec(n,k):
+            if n == 1:
+                return '0'
+            
+            #get the length of the current string
+            size = 1 << n
+            if k == size // 2:
+                return '1'
+            #if in the first half
+            if k < size // 2:
+                return rec(n-1,k)
+            else:
+                ans = rec(n-1,size-k)
+                return '0' if ans == '1' else '1'
+        
+        return rec(n,k)
+                
+#iterative solution
+class Solution:
+    def findKthBit(self, n: int, k: int) -> str:
+        '''
+        for the iterative appaorch we start from the longest string -> 2**n - 1
+        and we keep checking if k is in the first half or last half
+        we also need to keep track of the number of time we inert a bit
+        then we know we need to flip this bit depending on the parity of invert ont
+        '''
+        inverts = 0
+        size = (1 << n) - 1
+        
+        while k > 1:
+            #its is in the middel, return 1 but flip depending on parity
+            if k == (size // 2) + 1:
+                return '1' if inverts % 2 == 0 else '0'
+            
+            #if k is in right half, incement invert count
+            if k > size // 2:
+                inverts += 1
+                #but now look at k from the end
+                k = size - k + 1
+            
+            size = size  // 2
+        
+        return '0' if inverts % 2 == 0 else '1'
+
+    
+#########################################
+# 1106. Parsing A Boolean Expression
+# 20OCT24
+##########################################
+class Solution:
+    def parseBoolExpr(self, expression: str) -> bool:
+        '''
+        its a valid expression
+        indicators are ! -> negate
+        & -> and
+        | -> or
+        i dont think we will have stuff like this !(t,t,t)
+        use stack, and whenever we hit a closing, we need to evaluate whats one the stack
+        '''
+        stack = []
+        for ch in expression:
+            if ch == ',':
+                continue
+            if stack and ch == ')':
+                vals = []
+                while stack and stack[-1] != '(':
+                    vals.append(stack.pop())
+                
+                stack.pop()
+                operator = stack.pop()
+                #eval here and push back
+                eval_ans = self.evaluate(operator,vals)
+                #print(operator,vals,eval_ans)
+                stack.append(eval_ans)
+            else:
+                if ch == 'f':
+                    stack.append(False)
+                elif ch == 't':
+                    stack.append(True)
+                else:
+                    stack.append(ch)
+        
+        return stack[0]
+        
+    def evaluate(self,op,vals):
+        if op == '!':
+            return not vals[0]
+        elif op == '&':
+            first = vals[0]
+            for v in vals[1:]:
+                first = first and v
+            return first
+        else:
+            first = vals[0]
+            for v in vals[1:]:
+                first = first or v
+            
+            return first
