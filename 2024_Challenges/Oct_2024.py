@@ -1385,3 +1385,172 @@ class Solution:
                 first = first or v
             
             return first
+        
+########################################
+# 321. Create Maximum Number 
+# 20OCT24
+########################################
+#fuckin a nigga...
+#top 10 hard for sure
+class Solution:
+    def maxNumber(self, nums1: List[int], nums2: List[int], k: int) -> List[int]:
+        '''
+        need to create the largest number using k digits, with order of digits prserver
+        if k == len(nums1) + len(nums2), then we use two pointer and take the largest
+        can i us dp?, 
+        check this out: https://web.archive.org/web/20160120093629/http://algobox.org/create-maximum-number/
+        unfortunately its a domain specific problem ,but really just monostacK
+        examine smaller problem, find max array using some array of size k
+        this can be done usine a stack
+        tried concatenating both, and find max array, nope
+            a = nums1 + nums2
+            b = nums2 + nums1
+
+            first = self.max_array(a,k)
+            second = self.max_array(b,k)
+            return max(first,second)
+        
+        '''
+        #print(self.max_array(nums1,10))
+        ans = [0]*k
+        n = len(nums1)
+        m = len(nums2)
+        i = max(0,k - m)
+        while i <= k and i <= n:
+            left = self.max_array(nums1,i)
+            right = self.max_array(nums2,k-i)
+            #merge them
+            merged = self.merge(left,right,k)
+            ans = max(ans,merged)
+            i += 1
+        
+        return ans
+
+    def max_array(self,arr,k):
+        stack = []
+        for i,num in enumerate(arr):
+            #maintain monton stack, we still have numbers to choose from so that it can be k digits exactly!
+            while stack and stack[-1] < num and len(stack) + len(arr) - 1 - i >= k:
+                stack.pop()
+            
+            if len(stack) < k:
+                stack.append(num)
+        
+        return stack
+    
+    #find the grater array of the two subarrays
+    def greater(self,left,right,i,j): #means left is greater than right
+        #pick the greater one, keep advancing until equal
+        #we need to pick he larges value in each subaray
+        while i < len(left) and j < len(right) and left[i] == right[j]:
+            i += 1
+            j += 1
+        
+        return j < len(right) or (i < len(left) and left[i] > right[j])
+        
+    def merge(self,left,right,k):
+        ans = [0]*k
+        i,j,r = 0,0,0
+        while r < k:
+            if self.greater(left,right,i,j):
+                ans[r] = left[i]
+                i += 1
+            else:
+                ans[r] = right[j]
+                j += 1
+            
+            r += 1
+        return ans
+                     
+class Solution:
+    def maxNumber(self, nums1: List[int], nums2: List[int], k: int) -> List[int]:
+        n, m = len(nums1), len(nums2)
+        ans = [0] * k
+        for i in range(max(0, k - m), k + 1):
+            if i <= n:
+                candidate = self.merge(self.max_array(nums1, i), self.max_array(nums2, k - i), k)
+                ans = max(ans,candidate)
+        return ans
+
+    def merge(self, nums1, nums2, k):
+        ans = [0] * k
+        i = j = r = 0
+        while r < k:
+            if self.greater(nums1, i, nums2, j):
+                ans[r] = nums1[i]
+                i += 1
+            else:
+                ans[r] = nums2[j]
+                j += 1
+            r += 1
+        return ans
+
+    def greater(self, nums1, i, nums2, j):
+        while i < len(nums1) and j < len(nums2) and nums1[i] == nums2[j]:
+            i += 1
+            j += 1
+        return j == len(nums2) or (i < len(nums1) and nums1[i] > nums2[j])
+
+    #stack variant
+    def max_array(self,arr,k):
+        stack = []
+        for i,num in enumerate(arr):
+            #maintain monton stack, we still have numbers to choose from so that it can be k digits exactly!
+            while stack and stack[-1] < num and len(stack) + len(arr) - 1 - i >= k:
+                stack.pop()
+            
+            if len(stack) < k:
+                stack.append(num)
+        
+        return stack
+    
+#################################################################
+# 1593. Split a String Into the Max Number of Unique Substrings
+# 21OCT24
+################################################################
+class Solution:
+    def maxUniqueSplit(self, s: str) -> int:
+        '''
+        take or dont take this character as part of the substring
+        '''
+        ans = [0]
+        
+        def rec(i,path):
+            if i >= len(s):
+                ans[0] = max(ans[0],len(path))
+                return
+            
+            for j in range(i+1,len(s)+1):
+                curr_substring = s[i:j]
+                if curr_substring not in path:
+                    path.add(curr_substring)
+                    rec(j,path)
+                    path.remove(curr_substring)
+
+        rec(0,set())
+        return ans[0]
+    
+class Solution:
+    def maxUniqueSplit(self, s: str) -> int:
+        '''
+        insteaf of calculate the size of substring set, just use return a value
+        '''
+        ans = [0]
+        
+        def rec(i,path):
+            if i >= len(s):
+                return 0
+            
+            ans = 0
+            for j in range(i+1,len(s)+1):
+                curr_substring = s[i:j]
+                if curr_substring not in path:
+                    path.add(curr_substring)
+                    ans = max(ans, 1 + rec(j,path))
+                    path.remove(curr_substring)
+            
+            return ans
+
+        
+        
+        return rec(0,set())
