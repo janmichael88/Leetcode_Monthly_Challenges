@@ -1554,3 +1554,220 @@ class Solution:
         
         
         return rec(0,set())
+
+##########################################
+# 2583. Kth Largest Sum in a Binary Tree
+# 21OCT24
+###########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def kthLargestLevelSum(self, root: Optional[TreeNode], k: int) -> int:
+        '''
+        bfs with heap of sums, need to maintain max heap of size k
+        '''
+        sum_heaps = []
+        levels = 0
+        q = deque([root])
+        
+        while q:
+            N = len(q)
+            curr_sum = 0
+            for _ in range(N):
+                node = q.popleft()
+                curr_sum += node.val
+                if node.left:
+                    q.append(node.left)
+                if node.right:
+                    q.append(node.right)
+            
+            heapq.heappush(sum_heaps, curr_sum)
+            if len(sum_heaps) > k:
+                heapq.heappop(sum_heaps)
+            
+            levels += 1
+        
+        if levels < k:
+            return -1
+        return sum_heaps[0]
+    
+###########################################
+# 2641. Cousins in Binary Tree II
+# 23OCT24
+############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def replaceValueInTree(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        two nodes are cousins if they have the same depth with different parents
+        so its the sum of the nodes on the level, but not a sibling
+        if we had the level sum (total sum) for a row, then we would just subtract out the current node and its sibling 
+        to get the value to place in
+        if i did it this, then i would need to determine if a node and another node are siblings
+        '''
+        #first find level sums
+        level_sums = Counter()
+        self.dfs1(root,0,level_sums)
+        self.dfs2(root,0,0,level_sums)
+        return root
+
+    
+    def dfs1(self,root,depth,level_sums):
+        if not root:
+            return
+        level_sums[depth] += root.val
+        self.dfs1(root.left,depth+1,level_sums)
+        self.dfs1(root.right,depth+1,level_sums)
+    
+    #pass in sibsling sum and decreement
+    def dfs2(self,root,depth,sibling_sum,level_sums):
+        if not root:
+            return
+        if depth == 0 or depth == 1:
+            root.val = 0
+        else:
+            root.val = level_sums[depth] - root.val - sibling_sum
+        left_child = 0 if not root.left else root.left.val
+        right_child = 0 if not root.right else root.right.val
+        
+        #when going left, need right childs sibling sum
+        self.dfs2(root.left,depth+1,right_child,level_sums)
+        self.dfs2(root.right,depth+1,left_child,level_sums)
+            
+        
+##############################################
+# 1233. Remove Sub-Folders from the Filesystem
+# 25OCT24
+##############################################
+class Solution:
+    def removeSubfolders(self, folder: List[str]) -> List[str]:
+        '''
+        make into a trie, and prune all the the nodes that have children
+        sort first though
+        if node has > 1 children prune from here
+        insert into trie, and get paths that only have 1 children
+        '''
+        folder.sort()
+        mains = set()
+        for f in folder:
+            is_main = True
+            path = ""
+            for ch in f.split("/")[1:]:
+                path += "/"+ch   
+                if path in mains:
+                    is_main = False
+                    break
+            if is_main:
+                mains.add(f)
+        
+
+        return list(mains)
+    
+###########################################################
+# 2458. Height of Binary Tree After Subtree Removal Queries
+#
+#########################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def treeQueries(self, root: Optional[TreeNode], queries: List[int]) -> List[int]:
+        '''
+        brute force would be to for ech query delete the node, and calculate height
+        the nodes are unique, what if i stored the height of the tree at each node
+        pre-compute the anser for each node from 1 to n
+        queries will always be valid
+        queries are independent, so the tree return to intial state after each query
+        as i'm getting the heights of each subtree, compute the height if i were to delete this node from three
+        for any node, the height of height afte removing the subtree is simply the height of three before reaching that node
+        for each node, store the maximum heights on its left and right
+        utility height function, typical recursion but in this case return -1
+        i need to carry the maximum along the path! 
+        christ this is fucking hard
+        '''
+        heights = {}
+        self.compute_node_heights(root,heights)
+        result = {}
+        self.height_after_removal(root,0,0,result,heights)
+        return [result[q] for q in queries]
+        print(result)
+
+    def compute_node_heights(self, node, heights):
+        if not node:
+            return -1
+        if node.val in heights:
+            return heights[node.val]
+        
+        left = self.compute_node_heights(node.left,heights)
+        right = self.compute_node_heights(node.right,heights)
+        curr_height = max(left,right) + 1
+        heights[node.val] = curr_height
+        return curr_height
+    
+    #height after removal
+    def height_after_removal(self,node,depth,max_val,result,heights):
+        if not node:
+            return
+        #put value into results for this node
+        result[node.val] = max_val
+        left_sibling_height = self.compute_node_heights(node.left,heights)
+        right_sibling_height = self.compute_node_heights(node.right,heights)
+        #recurse left
+        self.height_after_removal(node.left,depth + 1, max(max_val, depth + 1 + right_sibling_height), result, heights)
+        #recurse right
+        self.height_after_removal(node.right,depth + 1, max(max_val, depth + 1 + left_sibling_height), result, heights)
+
+
+#two pass  
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def treeQueries(self, root: Optional[TreeNode], queries: List[int]) -> List[int]:
+        '''
+        the height of the tree after removing this node would just be the max height until we have gotten to that node
+        we can do preorder traversal fiding the max height at each point
+        then post order traversal
+        idea, the height after removing its subree is simply the height of three before coming to that node
+        but we must check going left to right and right to left
+        '''
+        curr_max_height = [0]
+        result = {}
+        self.left_right(root,0,result,curr_max_height)
+        #reset before checking right to left
+        curr_max_height[0] = 0
+        self.right_left(root,0,result,curr_max_height)
+        
+        return [result[q] for q in queries]
+    
+    def left_right(self,node, depth, result,curr_max_height):
+        if not node:
+            return
+        #update before we have gotten here
+        result[node.val] = curr_max_height[0]
+        curr_max_height[0] = max(curr_max_height[0],depth)
+        self.left_right(node.left,depth + 1, result, curr_max_height)
+        self.left_right(node.right, depth + 1, result, curr_max_height)
+        
+    def right_left(self,node, depth, result,curr_max_height):
+        if not node:
+            return
+        result[node.val] = max(result[node.val],curr_max_height[0])
+        curr_max_height[0] = max(curr_max_height[0],depth)
+        self.right_left(node.right,depth + 1, result, curr_max_height)
+        self.right_left(node.left, depth + 1, result, curr_max_height)
