@@ -1771,3 +1771,89 @@ class Solution:
         curr_max_height[0] = max(curr_max_height[0],depth)
         self.right_left(node.right,depth + 1, result, curr_max_height)
         self.right_left(node.left, depth + 1, result, curr_max_height)
+
+##########################################################
+# 1277. Count Square Submatrices with All Ones (REVISTED)
+# 29OCT24
+###########################################################
+class Solution:
+    def countSquares(self, matrix: List[List[int]]) -> int:
+        '''
+        if i start at (i,j), we can walk down diagonally to make a square with top left corner at (i,j)
+        we just need a way to count the number of 1s in this sqaure, prefix sum2d
+        then we need to find all squares where sum of ones == area of square
+        class NumMatrix {
+    private int[][] dp;
+
+    public NumMatrix(int[][] matrix) {
+        if (matrix.length == 0 || matrix[0].length == 0) return;
+        dp = new int[matrix.length + 1][matrix[0].length + 1];
+        for (int r = 0; r < matrix.length; r++) {
+            for (int c = 0; c < matrix[0].length; c++) {
+                dp[r + 1][c + 1] = dp[r + 1][c] + dp[r][c + 1] + matrix[r][c] - dp[r][c];
+            }
+        }
+    }
+
+    public int sumRegion(int row1, int col1, int row2, int col2) {
+        return dp[row2 + 1][col2 + 1] - dp[row1][col2 + 1] - dp[row2 + 1][col1] + dp[row1][col1];
+    }
+}
+        '''
+        rows, cols = len(matrix), len(matrix[0])
+        dp = [[0]*(cols+1) for _ in range(rows+1)]
+        
+        for r in range(rows):
+            for c in range(cols):
+                dp[r+1][c+1] = dp[r+1][c] + dp[r][c+1] + matrix[r][c] - dp[r][c]
+        
+        
+        ans = 0
+        for r in range(rows):
+            for c in range(cols):
+                rr,cc = r,c
+                square_size = 1
+                while rr < rows and cc < cols:
+                    #count up ones for this square
+                    ones = dp[rr + 1][cc + 1] - dp[r][cc + 1] - dp[rr + 1][c] + dp[r][c]
+                    if ones == square_size**2:
+                        ans += 1
+                    square_size += 1
+                    rr += 1
+                    cc += 1
+        return ans
+    
+class Solution:
+    def countSquares(self, matrix: List[List[int]]) -> int:
+        '''
+        let dp(i,j) be the number of sqaures we can make at (i,j)
+        transistion is 1 + min(dp(i-1,j), dp(i,j-1), dp(i-1,j-1))
+        we can only extend the square as (i,j) is the bottom right, if there are enough squares on diag left, above, and to the left
+        in fact, it is the minimu of these + 1
+
+        '''
+        rows,cols = len(matrix),len(matrix[0])
+        memo = {}
+        
+        def dp(i,j):
+            if i < 0 or j < 0:
+                return 0
+            if matrix[i][j] == 0:
+                return 0
+            
+            if (i,j) in memo:
+                return memo[(i,j)]
+            
+            ans = float('inf')
+            ans = min(ans, dp(i-1,j), dp(i,j-1),dp(i-1,j-1))
+            ans += 1
+            memo[(i,j)] = ans
+            return ans
+        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans += dp(i,j)
+        
+        return ans
+            
