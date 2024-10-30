@@ -1887,4 +1887,39 @@ class Solution:
             return -1
         return ans
         
+############################################
+# 2684. Maximum Number of Moves in a Grid
+# 29OCT24
+#############################################
+class Solution:
+    def maxMoves(self, grid: List[List[int]]) -> int:
+        '''
+        this is just dp, dp(i,j) maximum number of moves getting to (i,j)
+        '''
+        memo = {}
+        rows, cols = len(grid),len(grid[0])
         
+        def dp(i,j):
+            if j >= cols:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            #get max moves
+            ans = 0
+            if i - 1 >= 0 and j + 1 < cols and grid[i][j] < grid[i-1][j+1]:
+                ans = max(ans, 1 + dp(i-1,j+1))
+            
+            if j + 1 < cols and grid[i][j] < grid[i][j+1]:
+                ans = max(ans, 1 + dp(i,j+1))
+            
+            if i + 1 < rows and j + 1 < cols and grid[i][j] < grid[i+1][j+1]:
+                ans = max(ans, 1 + dp(i+1,j+1))
+                
+            memo[(i,j)] = ans
+            return ans
+        
+        ans = 0
+        for i in range(rows):
+            ans = max(ans,dp(i,0))
+        
+        return ans
