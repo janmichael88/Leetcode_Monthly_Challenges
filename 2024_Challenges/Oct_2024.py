@@ -1856,4 +1856,35 @@ class Solution:
                 ans += dp(i,j)
         
         return ans
+    
+#########################################
+# 2501. Longest Square Streak in an Array
+# 29OCT24
+#########################################      
+#cheese
+class Solution:
+    def longestSquareStreak(self, nums: List[int]) -> int:
+        '''
+        similar to LIS, but the next number needs be the square of the previous number
+        if its not, we go on to the next and check
+        problem is we need to keep track of the positino and the last number in the sequence, but that might be too many states
+        omg look at the constraints, largest number is 10**5, and smallest would be 2
+        '''
+        nums = set(nums)
+        ans = 0
+        
+        for start in nums:
+            curr_streak = 0
+            while start in nums:
+                curr_streak += 1
+                start = start*start
             
+            ans = max(ans,curr_streak)
+            if ans == 5:
+                break
+            
+        if ans == 1:
+            return -1
+        return ans
+        
+        
