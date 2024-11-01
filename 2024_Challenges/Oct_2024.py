@@ -1923,3 +1923,96 @@ class Solution:
             ans = max(ans,dp(i,0))
         
         return ans
+    
+###########################################
+# 2463. Minimum Total Distance Traveled
+# 31OCT24
+###########################################
+class Solution:
+    def minimumTotalDistance(self, robot: List[int], factory: List[List[int]]) -> int:
+        '''
+        when robot gets to a factory, it stops moving, 
+        initally all roobots are broken and keep moving in one direction (can choose any starting)
+        factory can only repair so many robots
+        sort then dp
+            sort robots and factories by their positions
+            find min total distance to repair the first i robots with the first j factories
+        variant of dp(i,j)
+        let dp(i,j) be the min total distance repairing robots[i:] and factories[j:]
+        we want dp(0,0)
+        extend out factory positions by factory[j][1]
+        then its knap sack
+        preprocess input then then dp
+        top down with mem is TLE hmmmmm
+        '''
+        robot.sort()
+        factory.sort(key = lambda x : x[0])
+        factory_added = []
+        for pos,count in factory:
+            for _ in range(count):
+                factory_added.append(pos)
+        
+        #now its just knap sack, fix this ith robot with the jth factory or dont
+        memo = [[-1]*(len(factory_added) + 1) for _ in range(len(robot) + 1)]
+        
+        def dp(i,j):
+            #if we repaird all robots, nothing to return
+            if i >= len(robot):
+                return 0
+            if j >= len(factory_added):
+                return float('inf')
+            if memo[i][j] != -1:
+                return memo[i][j]
+            #try fixing robot
+            repair = abs(robot[i] - factory_added[j]) + dp(i+1,j+1)
+            no_repair = dp(i,j+1)
+            ans = min(repair,no_repair)
+            memo[i][j] = ans
+            return ans
+        
+        return dp(0,0)
+    
+#another, treat like rod-cutting
+class Solution:
+    def minimumTotalDistance(self, robot: List[int], factory: List[List[int]]) -> int:
+        '''
+        we try to assign as many robots to some jth factory, and take the minimum
+        dp(i,j) is the minimum moves to to assign robot[i:] and factory[j:]
+        for an (i,j) assign a robot to it, up to the limit
+        and minimize on the next (k,j+1), where k is up to the limit of factory[j] 
+        and does not go out of bounce of robot array
+        '''
+        robot.sort()
+        factory.sort(key = lambda x : x[0])
+        memo = {}
+        
+        def dp(i,j):
+            #gone through all robots
+            if i >= len(robot):
+                return 0
+            #out of factories? large number
+            if j >= len(factory):
+                return float('inf')
+            if (i,j) in memo:
+                return memo[(i,j)]
+            fact_dist,fact_limit = factory[j]
+            #dont assign this ith robot, skip
+            ans = dp(i,j+1)
+            curr_dist = 0
+            k = i
+            #assign each robot to a factory and take minimum
+            while k < len(robot) and fact_limit > 0:
+                #accumulate distances for this j;th factory
+                curr_dist += abs(robot[k] - fact_dist)
+                #minimize on the next state dp(k+1,j+1)
+                ans = min(ans, curr_dist + dp(k+1,j+1))
+                k += 1
+                fact_limit -= 1
+            
+            memo[(i,j)] = ans
+            return ans
+        
+        
+        return dp(0,0)
+                
+            
