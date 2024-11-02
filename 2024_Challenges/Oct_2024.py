@@ -2015,4 +2015,78 @@ class Solution:
         
         return dp(0,0)
                 
-            
+#########################################
+# 2664. The Knight’s Tour
+# 31OCT24
+#########################################
+#almost
+class Solution:
+    def tourOfKnight(self, m: int, n: int, r: int, c: int) -> List[List[int]]:
+        '''
+        backtracking!
+        keep track of (i,j, and step number)
+        knight can move in L step
+        '''
+        matrix = [[0]*n for _ in range(m)]
+        visited = set()
+        moves = [
+            (2, 1),
+            (2, -1),
+            (-2, 1),
+            (-2, -1),
+            (1, 2),
+            (1, -2),
+            (-1, 2),
+            (-1, -2),
+        ]
+        
+        def rec(i,j,matrix,visited,step):
+            visited.add((i,j))
+            matrix[i][j] = step
+            for di,dj in moves:
+                ii = i + di
+                jj = j + dj
+                if 0 <= ii < m and 0 <= jj < n:
+                    if (ii,jj) not in visited:
+                        rec(ii,jj,matrix,visited,step+1)
+                        visited.remove((ii,jj))
+                        
+        
+        rec(r,c,matrix,visited,0)
+        return matrix
+    
+#idk why we have to make the first move as 0, then invoke on 1
+class Solution:
+    def tourOfKnight(self, m: int, n: int, r: int, c: int) -> List[List[int]]:
+        '''
+        we need to mark the first (i,j) cell as zero, and start on 1
+        do inside for loop
+        '''
+        matrix = [[-1]*n for _ in range(m)]
+        moves = [
+            (2, 1),
+            (2, -1),
+            (-2, 1),
+            (-2, -1),
+            (1, 2),
+            (1, -2),
+            (-1, 2),
+            (-1, -2),
+        ]
+        def rec(i,j,matrix,step):
+            if step == m*n:
+                return True
+            for di,dj in moves:
+                ii = i + di
+                jj = j + dj
+                if 0 <= ii < m and 0 <= jj < n:
+                    if matrix[ii][jj] == -1:
+                        matrix[ii][jj] = step
+                        if rec(ii,jj,matrix,step+1):
+                            return True
+                        matrix[ii][jj] = -1
+            return False
+        
+        matrix[r][c] = 0
+        rec(r,c,matrix,1)
+        return matrix
