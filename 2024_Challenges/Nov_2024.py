@@ -89,6 +89,72 @@ class Solution:
         
         return ans
 
+#ussing array instead of count object
+class Solution:
+    def sameEndSubstringCount(self, s: str, queries: List[List[int]]) -> List[int]:
+        '''
+        the counting idea comes from the combindation formula
+        if we have k occruences of some character i
+        we can place these any number of these occurence at some start and some end
+        so its just
+        k choose 2
+        k*(k-1)/2 + k
+        k*(k+1)/2
+        
+        insteaf of using counter objects we can just an array of size 26
+        '''
+        n = len(s)
+        pref_counts = [[0]*26 for _ in range(n+1)]
+        
+        for i in range(n):
+            pref_counts[i+1][ord(s[i]) - ord('a')] += 1
+        
+        for i in range(1,n+1):
+            for j,count in enumerate(pref_counts[i-1]):
+                pref_counts[i][j] += count
+        
+        ans = []
+        for l,r in queries:
+            temp = 0
+            for i in range(26):
+                count = pref_counts[r+1][i] - pref_counts[l][i]
+                temp += count*(count + 1) // 2
+            
+            ans.append(temp)
+        
+        return ans
+                
+#binary search???
+class Solution:
+    def sameEndSubstringCount(self, s: str, queries: List[List[int]]) -> List[int]:
+        '''
+        for each char in s, store its indices in a hashmap
+        then for each query, look for its left and right positions for each character
+        we want to find the first position of the character that is at or after the starting index
+        the first poistion of the character that is beyong the ending range
+        '''
+        mapp = defaultdict(list)
+        for i,s in enumerate(s):
+            mapp[s].append(i)
+        
+        
+        ans = []
+        for l,r in queries:
+            count = 0
+            #do this for each character
+            for indices in mapp.values():
+                #find leftmost and right most
+                #for left <=
+                left = bisect.bisect_left(indices,l)
+                #for right just greater than
+                right = bisect.bisect_right(indices,r)
+                num = right - left
+                count += (num)*(num + 1) // 2
+            
+            ans.append(count)
+        
+        return ans
+
 ##########################################
 # 1513. Number of Substrings With Only 1s
 # 04NOV24
@@ -133,3 +199,26 @@ class Solution:
             ans = (ans + curr_streak) % (10**9 + 7)
         
         return ans % (10**9 + 7)
+    
+#################################################################
+# 2914. Minimum Number of Changes to Make Binary String Beautiful
+# 05NOV24
+##################################################################
+class Solution:
+    def minChanges(self, s: str) -> int:
+        '''
+        the string is even length
+        why does it need to be even though?
+        whoops its not splitting, i can change any character in s to a 0 or a 1
+        its beautiful if we can partition it into on or more substrings such that
+        each had substring has even length and it only contains 1's or 0's
+        check each block of size 2
+        since each part consists of an even number of the same chars, we just check each block of size 2
+        '''
+        n = len(s)
+        ans = 0
+        for i in range(0,n,2):
+            if s[i] != s[i+1]:
+                ans += 1
+        
+        return ans
