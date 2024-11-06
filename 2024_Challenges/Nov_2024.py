@@ -207,6 +207,54 @@ class Solution:
 class Solution:
     def minChanges(self, s: str) -> int:
         '''
+        we can loop through each cahr in the string and keep track of the current sequence'ss length
+        if we reeach the end of a sequence and its length is even, we can move on to the next sequence,
+            basically count all streaks of zero's or ones
+        
+        if its an odd length, we will flip the last bit of that sequence to make it even
+        flipping the last bit will an additional bit to the next sequcne, so count here is 1 when flip
+        
+        prrof by contradiction
+        assume there exists a better solution that requires few flips by flipping some bit other than the lasst
+        call this S1, which is of size k and is odd
+        call another sequence S2
+        S1 = b1 b2 b3 ... bk
+        S2 is at b_{k+1}
+        case 1 
+            flip b_{k}
+            it then S1 = b1 .. b_{k-1}
+            and b_{k} becomes part of S2
+            cosst is 1 flip
+        
+        case 2
+            flip any number of bits where i < k
+            this cost more than one flip
+            but we already set S1 was optimal
+        
+        so assumption that there exists a better solution is false
+        '''
+        curr_char = s[0]
+        streak_count = 0
+        flips = 0
+        
+        for ch in s:
+            if ch == curr_char:
+                streak_count += 1
+                continue
+            
+            if streak_count % 2 == 0:
+                streak_count = 1
+            else:
+                streak_count = 0
+                flips += 1
+            
+            curr_char = ch
+        
+        return flips
+    
+class Solution:
+    def minChanges(self, s: str) -> int:
+        '''
         the string is even length
         why does it need to be even though?
         whoops its not splitting, i can change any character in s to a 0 or a 1
@@ -214,6 +262,12 @@ class Solution:
         each had substring has even length and it only contains 1's or 0's
         check each block of size 2
         since each part consists of an even number of the same chars, we just check each block of size 2
+
+        atomic unit of beautiful string is size 2
+        if size 2 isn't beautfil, we need to make change to eithe the left or right pair
+
+        even length means and possibilty of making it beautiful means that any substring that is beauitfil must be 00 or 11
+        so we just count disimlar pairs
         '''
         n = len(s)
         ans = 0
@@ -222,3 +276,51 @@ class Solution:
                 ans += 1
         
         return ans
+    
+#####################################################
+# 3011. Find if Array Can Be Sorted
+# 06NOV24
+#####################################################
+class Solution:
+    def canSortArray(self, nums: List[int]) -> bool:
+        '''
+        we are only allowed to swap two numbers if they have the same number of bits
+        N^2 is allowed given the inputs
+        for each number compute the number of set bits
+        split the array into segments where each segment has the same number of bits
+        largest element in prev segment should be smaller than current
+        '''
+        segments = []
+        #from left to right largest num in prev must be smaller than the smallest num in next
+        i = 0
+        n = len(nums)
+        
+        
+        while i < n:
+            curr_segment = []
+            while len(curr_segment) == 0 or (i < n and self.count_bits(curr_segment[-1]) == self.count_bits(nums[i])):
+                curr_segment.append(nums[i])
+                i += 1
+            
+            segments.append(curr_segment)
+        
+        m = len(segments)
+        i = 0
+        #print(segments)
+        while i + 1 < m:
+            prev = segments[i]
+            next_ = segments[i+1]
+            if max(prev) > min(next_):
+                return False
+            i += 1
+        
+        return True
+        
+        
+    def count_bits(self,num):
+        count = 0
+        while num:
+            count += 1
+            num = num & (num - 1)
+        
+        return count
