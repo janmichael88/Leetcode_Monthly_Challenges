@@ -316,6 +316,39 @@ class Solution:
         
         return True
         
+    def count_bits(self,num):
+        count = 0
+        while num:
+            count += 1
+            num = num & (num - 1)
+        
+        return count
+    
+
+#bubble sort!, dont forget this
+class Solution:
+    def canSortArray(self, nums: List[int]) -> bool:
+        '''
+        we can use bubble sort to try and sort
+        we want to bubble left, i.e smaller eleements to the left
+        if need to swap, but can't swap, return false
+        otherwise swap
+        '''
+        #in place
+        n = len(nums)
+        
+        for i in range(n):
+            for j in range(n-i-1):
+                if nums[j] <= nums[j+1]:
+                    continue
+                else:
+                    if self.count_bits(nums[j]) == self.count_bits(nums[j+1]):
+                        nums[j],nums[j+1] = nums[j+1],nums[j]
+                    else:
+                        return False
+                    
+        return True
+        
         
     def count_bits(self,num):
         count = 0
@@ -324,3 +357,34 @@ class Solution:
             num = num & (num - 1)
         
         return count
+    
+class Solution:
+    def canSortArray(self, nums: List[int]) -> bool:
+        '''
+        maintain min and max of sorted segments
+        if we encountered a new bit counts, check that max is smaller than min
+        '''
+        curr_bits = 0
+        curr_max = 0
+        prev_max = 0
+        
+        for num in nums:
+            #negment update set bit count and swap, prev with curr
+            if self.count_bits(num) != curr_bits:
+                curr_bits = self.count_bits(num)
+                prev_max = curr_max
+            #check for violation i.e canot be sorted
+            if prev_max > num:
+                return False
+            curr_max = max(curr_max,num)
+        
+        return True
+                    
+    def count_bits(self,num):
+        count = 0
+        while num:
+            count += 1
+            num = num & (num - 1)
+        
+        return count
+
