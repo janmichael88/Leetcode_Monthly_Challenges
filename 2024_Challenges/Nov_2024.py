@@ -388,3 +388,92 @@ class Solution:
         
         return count
 
+###########################################
+# 1191. K-Concatenation Maximum Sum
+# 07NOV24
+############################################
+class Solution:
+    def kConcatenationMaxSum(self, arr: List[int], k: int) -> int:
+        '''
+        it's too expensive to concat k times and do max sum subarray
+        for k == 1, i can just do kadanes
+        the answer is the max of:
+            1. answer for k == 1
+            2. sum of whole array multiplie by k
+            3. max suffix sum plus max pref_num + (k-2)*(whole array sum for k > 1)
+        '''
+        #kadane'ss
+        mod = 10**9 + 7
+        
+        if k > 1:
+            return ((k - 2) * max(sum(arr), 0) + self.kadane(arr * 2)) % mod 
+        
+        return self.kadane(arr)
+
+    
+    def kadane(self, arr):
+        N = len(arr)
+        dp = [0]*(N+1)
+        
+        for i in range(N):
+            dp[i+1] = max(arr[i],dp[i] + arr[i])
+
+        return max(dp)
+        
+############################################
+# 1829. Maximum XOR for Each Query
+# 08NOV24
+############################################
+class Solution:
+    def getMaximumXor(self, nums: List[int], maximumBit: int) -> List[int]:
+        '''
+        we need to find the k, that maximizes XOR, k is the answer to each query
+        i can use pref xor to precompute the pref xor for all prefixes
+        max xor is 2**maximumBit - 1
+        just xor each prefix with 2**maximumBit - 1
+        stupid ass problem
+        
+        examine some pref_xor and check this
+        for i in range(20):
+            print(pref_xor ^ 2**i)
+        
+        its an increasing function, maximized at the end,
+        so just xor with 2**maxBit - 1
+        '''
+        pref_xor = [0]
+        for num in nums:
+            pref_xor.append(pref_xor[-1] ^ num)
+        
+        ans = []
+        for pref in pref_xor[1:][::-1]:
+            ans.append(pref ^ (2**maximumBit) - 1)
+        
+        return ans
+        
+#without going in reverse
+class Solution:
+    def getMaximumXor(self, nums: List[int], maximumBit: int) -> List[int]:
+        '''
+        we need to find the k, that maximizes XOR, k is the answer to each query
+        i can use pref xor to precompute the pref xor for all prefixes
+        max xor is 2**maximumBit - 1
+        just xor each prefix with 2**maximumBit - 1
+        stupid ass problem
+        
+        examine some pref_xor and check this
+        for i in range(20):
+            print(pref_xor ^ 2**i)
+        
+        its an increasing function, maximized at the end,
+        so just xor with 2**maxBit - 1
+        '''
+        pref_xor = [0]
+        for num in nums:
+            pref_xor.append(pref_xor[-1] ^ num)
+        
+        ans = []
+        for i in range(len(pref_xor) - 1, 0,-1):
+            ans.append(pref_xor[i] ^ (2**maximumBit) - 1)
+        
+        return ans
+        
