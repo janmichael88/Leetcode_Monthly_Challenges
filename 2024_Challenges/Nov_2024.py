@@ -477,3 +477,79 @@ class Solution:
         
         return ans
         
+##########################################
+# 3133. Minimum Array End
+# 10NOV24
+###########################################
+#no idea on this problem, just go through the solution :(
+#note, this will TLE/fail in python
+class Solution:
+    def minEnd(self, n: int, x: int) -> int:
+        '''
+        the array must be increasing,
+        and number in the array must have the initial set bits in x
+        so we start with x as the first number and increment by 1
+        but we need to include the set bits, so we xor
+        '''
+        ans = x
+        while n > 1:
+            ans = (ans + 1) | x
+            n -= 1
+        
+        return ans
+    
+
+class Solution:
+    def minEnd(self, n: int, x: int) -> int:
+        '''
+        from the hints, we can get the binary forms for both x and n-1
+        the difference between the frist and last elements in their binary forms
+        x's set bits need to be presevered in all numbers in the array
+        n-1 gives us the flexibilty to fill in the gaps bettwen consecutive numbers
+        intuition:
+            merge the bit structures of x and n-1 in a way the allows us to build the smallest valid number
+        
+        example:
+            n = 3, x = 4
+            x -> (100)
+            n -> (010)
+            
+            at position 2, x = 1 so we need to maintin set bit
+            at position 1, x = 0, use bit from n-1
+            as pos 0, x and n-1 == 0, so keep bit unset
+        
+        after getting the binary forms of x and n-1, copy bit from binN into binX, then move both
+        '''
+        res = 0
+        #reduce n by 1
+        n -= 1
+        binX = [0]*64
+        binN = [0]*64
+        
+        #checking set bits for x and n
+        for i in range(64):
+            mask = 1 << i
+            binX[i] = 1 if (x & (mask) != 0) else 0
+            binN[i] = 1 if (n & (mask) != 0) else 0
+            
+        
+        #merge x with n-1
+        X_ptr = 0
+        N_ptr = 0
+        
+        while X_ptr < 63:
+            #traverse binX until we hit 0
+            while binX[X_ptr] != 0 and X_ptr < 63:
+                X_ptr += 1
+            
+            #copy from binN into X
+            binX[X_ptr] = binN[N_ptr]
+            X_ptr += 1
+            N_ptr += 1
+        
+        #compye ans
+        for i in range(64):
+            if binX[i]:
+                res += 1 << i
+        
+            
