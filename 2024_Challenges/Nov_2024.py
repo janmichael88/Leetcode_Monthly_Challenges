@@ -519,6 +519,7 @@ class Solution:
             as pos 0, x and n-1 == 0, so keep bit unset
         
         after getting the binary forms of x and n-1, copy bit from binN into binX, then move both
+        to make the number as small a possible, we fill from least significant bit the the most signicant bit
         '''
         res = 0
         #reduce n by 1
@@ -552,4 +553,114 @@ class Solution:
             if binX[i]:
                 res += 1 << i
         
+##################################################
+# 3097. Shortest Subarray With OR at Least K II
+# 10NOV24
+#################################################
+class Solution:
+    def minimumSubarrayLength(self, nums: List[int], k: int) -> int:
+        '''
+        is or increasing? only when the array is increasing, duh!
+        is it always increasing, yes because it includes bits
+        sliding window if we get more than k, untake it
+        OR only sets bits, and never unsets bits
+        so the number of different results for each nums[i] is at most the number of bits, 32
+        keep expanding until we get to an xor that is at least k (i.e >= k)
+        sliding window with set bit counts, we keep expanding until we get a subrray with OR >= k
+        for each num, there are only 32 bit positions, so check all 32
+        keep counter of bits in each of the positions
+        '''
+        ans = float('inf')
+        bit_counts = [0]*32
+        left = 0
+        right = 0
+        
+        while right < len(nums):
+            #for the current nunber increment bit count
+            curr_num = nums[right]
+            for i in range(32):
+                if curr_num & (1 << i):
+                    bit_counts[i] += 1
             
+            #minimze ans while we have at least k
+            while left <= right and self.set_bits_to_num(bit_counts) >= k:
+                ans = min(ans, right - left + 1)
+                #remove from window
+                leftmost_num = nums[left]
+                for i in range(32):
+                    if leftmost_num & (1 << i):
+                        bit_counts[i] -= 1
+                left += 1
+            
+            right += 1
+        
+        if ans == float('inf'):
+            return -1
+        return ans
+        
+    def set_bits_to_num(self,counts):
+        ans = 0
+        for i in range(32):
+            if counts[i]:
+                ans += 1 << i
+        
+        return ans
+    
+#binary search solution??
+class Solution:
+    def minimumSubarrayLength(self, nums: List[int], k: int) -> int:
+        '''
+        for the binary search solution we search for all possible lenghts
+        if we find that no subarrya of a certain length is at least k, then we can disregard anything shorter
+        if we find a valid length we save the best and look for a potentiall better way
+        
+        binary search on answer paradigm
+        we can use sliding window approach to find subarray with at least k
+        '''
+        left = 1
+        right = len(nums)
+        ans = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.at_least_k(nums,k,mid):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+    def at_least_k(self, nums, k, subarray_size):
+        
+        bit_counts = [0]*32
+        
+        for right in range(len(nums)):
+            #for the current nunber increment bit count
+            curr_num = nums[right]
+            for i in range(32):
+                if curr_num & (1 << i):
+                    bit_counts[i] += 1
+            
+            #remove left most if bigger than size
+            #we move one at time if we are bigger
+            if right >= subarray_size:
+                leftmost_num = nums[right - subarray_size]
+                for i in range(32):
+                    if leftmost_num & (1 << i):
+                        bit_counts[i] -= 1
+            
+            #if valid
+            if (right >= subarray_size - 1) and (self.set_bits_to_num(bit_counts) >= k):
+                return True
+        
+        return False
+        
+
+    def set_bits_to_num(self,counts):
+        ans = 0
+        for i in range(32):
+            if counts[i]:
+                ans += 1 << i
+        
+        return ans
+    
