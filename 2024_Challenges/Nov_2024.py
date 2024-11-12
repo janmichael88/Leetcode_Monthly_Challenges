@@ -664,3 +664,111 @@ class Solution:
         
         return ans
     
+#########################################
+# 2601. Prime Subtraction Operation
+# 11NOV24
+#########################################
+class Solution:
+    def primeSubOperation(self, nums: List[int]) -> bool:
+        '''
+        i can perform the following operation any number of times
+        pick and index i that i havent picked before and pick prim p < nums[i] then do nums[i] - p
+        return treu if we can make nums strictly increasing
+        for number i can only pick a prime < nums[i], is there a best prime to pick?
+        we can repeatedly substract p from nums[i]
+        the most optimal prime is to pick the one that makes nums[i] the smallest as possible and greater than nums[i-1]
+        generate primes
+        for the first element make as small as possible by picking the correct prime
+        i can use binary search
+        '''
+        #generate primes, onlyl up 10 1001
+        MAX = 1001
+        primes = [True]*(MAX + 1)
+        p = 2
+        while p*p <= MAX:
+            if primes[p] == True:
+                #mark every multiple
+                for i in range(p*p,MAX + 1, p):
+                    primes[i] = False
+            
+            p += 1
+        
+        primes = [i for i in range(2,MAX + 1) if primes[i] == True]
+        prev = -1
+        n = len(nums)
+        #compare prev with curr
+        
+        for i in range(n):
+            curr_num = nums[i]
+            if curr_num <= prev:
+                return False
+            #find best prime
+            best_prime = self.binary_search(primes,prev,curr_num)
+            if best_prime > 0:
+                curr_num -= best_prime
+            prev = curr_num
+        
+        return True
+            
+    
+    def binary_search(self,arr,prev,curr_num):
+        #target shuold be nums[i] - prev
+        #look for the prime that will make nums[i] - p as small as possible, but still greater than prev
+        left = 0
+        right = len(arr) - 1
+        ans = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid] < curr_num and (curr_num - arr[mid] > prev):
+                #try to make it smaller, by picking a larger prime
+                ans = arr[mid]
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return ans
+            
+
+#brute force, check each prime on each nums
+#O(len(nums))*(number or primes up to 1001)
+#save best prime and advance left
+class Solution:
+    def primeSubOperation(self, nums: List[int]) -> bool:
+        '''
+        lets try doing the brute force solution
+        for each nums[i] we need to find the prime that would make it as small as possible
+        what we want is the largest p, such that nums[i] - p > prev
+        '''
+        #generate primes, onlyl up 10 1001
+        MAX = 1001
+        primes = [True]*(MAX + 1)
+        p = 2
+        while p*p <= MAX:
+            if primes[p] == True:
+                #mark every multiple
+                for i in range(p*p,MAX + 1, p):
+                    primes[i] = False
+            
+            p += 1
+        
+        primes = [i for i in range(2,MAX + 1) if primes[i] == True]
+        prev = 0
+        
+        for num in nums:
+            if num <= prev:
+                return False
+            #check all primes
+            i = 0
+            best_prime = -1
+            #cool kind of invariant here
+            while i < len(primes) and primes[i] < num and (num - primes[i] > prev):
+                best_prime = primes[i]
+                i += 1
+            
+            if best_prime > 0:
+                num -= best_prime
+            prev = num
+        
+        return True
+            
