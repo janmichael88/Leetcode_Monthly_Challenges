@@ -772,3 +772,154 @@ class Solution:
         
         return True
             
+###########################################
+# 2070. Most Beautiful Item for Each Query
+# 12NOV24
+##########################################
+class Solution:
+    def maximumBeauty(self, items: List[List[int]], queries: List[int]) -> List[int]:
+        '''
+        items are given as [price,beauty]
+        for each query, determine the max beauty of an item whose price is <= to queries[j]
+        sort on increasing price, tie breaker we we want maximum beauty to the right
+        binary seach, but how do sort the items?
+        say we pick an index i during binary search, how do we know this is the maximum beauty for that price
+        if there are repeated prices, then for that price, keep the maximum beauty, we only care about the max beauty
+        preprocess input
+        
+        looking for the right most price doesn't always guarantee the maximum beauty!, there might have been a smaller price with maximum beauty!
+        storing only max beauty at each price is fine
+        during binary search just store the max beauty
+        after precomputing just pref max on the sorted_items array
+        
+        '''
+        price_to_beauty = {}
+        for p,b in items:
+            price_to_beauty[p] = max(b,price_to_beauty.get(p,0))
+        
+        sorted_items = [[p,b] for p,b in price_to_beauty.items()]
+        sorted_items.sort(key = lambda x : x[0])
+        #pref max
+        for i in range(1,len(sorted_items)):
+            sorted_items[i][1] = max(sorted_items[i][1],sorted_items[i-1][1])
+        ans = []
+        for q in queries:
+            beauty = self.bin_search(sorted_items,q)
+            ans.append(beauty)
+        
+        return ans
+    
+    def bin_search(self,arr,target):
+        left = 0
+        right = len(arr) - 1
+        ans = 0
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid][0] <= target:
+                ans = max(ans,arr[mid][1])
+                left = mid + 1
+            else:
+                right = mid - 1
+            
+        return ans
+    
+#instead of using mapp, just pref max beauty on the items array itselt
+class Solution:
+    def maximumBeauty(self, items: List[List[int]], queries: List[int]) -> List[int]:
+        '''
+        using pref_max
+        '''
+        items.sort()
+        for i in range(1,len(items)):
+            items[i][1] = max(items[i][1], items[i-1][1])
+        ans = []
+        for q in queries:
+            beauty = self.bin_search(items,q)
+            ans.append(beauty)
+        
+        return ans
+    
+    def bin_search(self,arr,target):
+        left = 0
+        right = len(arr) - 1
+        ans = 0
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid][0] <= target:
+                ans = max(ans,arr[mid][1])
+                left = mid + 1
+            else:
+                right = mid - 1
+            
+        return ans
+    
+#keeping index instead
+class Solution:
+    def maximumBeauty(self, items: List[List[int]], queries: List[int]) -> List[int]:
+        '''
+        using pref_max
+        '''
+        items.sort()
+        for i in range(1,len(items)):
+            items[i][1] = max(items[i][1], items[i-1][1])
+        ans = []
+        for q in queries:
+            beauty_idx = self.bin_search(items,q)
+            if beauty_idx != -1:
+                ans.append(items[beauty_idx][1])
+            else:
+                ans.append(0)
+        
+        return ans
+    
+    def bin_search(self,arr,target):
+        left = 0
+        right = len(arr) - 1
+        ans = -1
+        
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid][0] <= target:
+                #ans = max(ans,arr[mid][1])
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+            
+        return ans
+    
+#old school pointer approach
+class Solution:
+    def maximumBeauty(self, items: List[List[int]], queries: List[int]) -> List[int]:
+        '''
+        instead of binary searching for each query i can just use two pointers
+        sort items and queries
+        same thing as before, with pre max array
+        since queries are icnreasing, we can just advance one at time until we hit the price
+        we also need to maintin the original index of queires for the answer!
+        since we store the maximum beauty along the way, we no longer nee pref max
+        '''
+        queries = [[p,i] for i,p in enumerate(queries)]
+        queries.sort(key = lambda x : x[0])
+        items.sort()
+        #for i in range(1,len(items)):
+        #    items[i][1] = max(items[i][1], items[i-1][1])
+            
+        ans = [0]*len(queries)
+        
+        item_ptr = 0
+        q_ptr = 0
+        curr_max_beauty = 0
+        while q_ptr < len(queries):
+            while item_ptr < len(items) and items[item_ptr][0] <= queries[q_ptr][0]:
+                curr_max_beauty = max(curr_max_beauty,items[item_ptr][1])
+                item_ptr += 1
+            
+            ans[queries[q_ptr][1]] = curr_max_beauty
+            q_ptr += 1
+        
+        return ans
+                
+
