@@ -921,5 +921,586 @@ class Solution:
             q_ptr += 1
         
         return ans
-                
 
+#####################################################
+# 2824. Count Pairs Whose Sum is Less than Target
+# 13NOV24
+#####################################################
+#good precursor for 2563
+class Solution:
+    def countPairs(self, nums: List[int], target: int) -> int:
+        '''
+        brute force is trivial
+        sort the array, then fix nums[i]
+        and find the best j
+        if nums[i] + nums[j] > target, then every index after j wont work
+        '''
+        nums.sort()
+        pairs = 0
+        for i,num in enumerate(nums):
+            left = i + 1
+            right = len(nums) - 1
+            while left <= right:
+                mid = left + (right - left) // 2
+                if num + nums[mid] >= target:
+                    right = mid - 1
+                else:
+                    left = mid + 1
+            
+            pairs += left - i - 1
+        
+        return pairs
+
+
+##########################################
+# 2563. Count the Number of Fair Pairs
+# 13NOV24
+##########################################
+class Solution:
+    def countFairPairs(self, nums: List[int], lower: int, upper: int) -> int:
+        '''
+        we can sort the array first
+        then search for the upper and lower bound indices
+        the answer is just the number of indices between
+        the number of pairs for this element is just how - ligh
+        we need to look for the best number on the left of i, call it left_bound
+        and we need to look for the best number on the right of i, call it right_bound
+        the number of pairs we can form with i is just right_bound - left_bound
+        
+        intution,
+        count pairs that have sums less than lower, then count pairs that have sums less than upper = 1
+        its still lower bound, but we change the target by 1 
+        lower - nums[i] <= nums[j] <= upper - nums[i]
+        look for left and right bounds to the right of i, assuming we pick as as the first
+        '''
+        nums.sort()
+        pairs = 0
+        
+        for i, num in enumerate(nums):
+            left = bisect.bisect_left(nums, lower - nums[i], i + 1)
+            #this works too
+            #right = bisect.bisect_left(nums, upper - nums[i] + 1, i + 1)
+            right = bisect.bisect_right(nums, upper - nums[i], i + 1)
+            pairs += right - left
+        
+        return pairs
+    
+#summary
+#bisect_left(target) == bisect_right(target + 1)
+class Solution:
+    def countFairPairs(self, nums: List[int], lower: int, upper: int) -> int:
+        '''
+        instead or calling bisect utility, just make the lower bound function
+        we have lower <= nums[i] + nums[j] <= upper
+        if we fix i
+        lower - nums[i] <= nums[j]
+        need to find the smallest nums[j]
+        bisect_left
+        
+        upper - nums[i] >= nums[j]
+        need to find the largest nums[j]
+        bisect_right
+        '''
+        nums.sort()
+        pairs = 0
+        
+        for i, num in enumerate(nums):
+            left = self.bin_search(nums, i + 1, len(nums) - 1, lower - nums[i])
+            right = self.bin_search(nums, i + 1, len(nums) - 1, upper - nums[i] + 1)
+            #if we can find no such bounds, the pointers just return the number itself
+            #and doesn't increment the pair count
+            pairs += right - left
+        
+        return pairs
+    
+    def bin_search(self,arr,left,right,target):
+        ans = left
+        while left <= right:
+            mid = left + (right - left) // 2
+            #we are not looking for a value, we are looking for the insertion point
+            #there is a difference
+            if arr[mid] < target:
+                ans = mid + 1
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return ans
+    
+#two pointers
+class Solution:
+    def countFairPairs(self, nums: List[int], lower: int, upper: int) -> int:
+        '''
+        we can also use two pointers!
+        we can sort and count the number of valid windows!
+        but we count in directly
+        first count the number of valid windows less than lower
+        then count the number of valid windows less than upper + 1
+        
+        for the actual counting we can use two pointers since the the array is sorted
+        when we have a valid window increment by right - left
+        if its too big, decrease right
+        '''
+        nums.sort()
+        return self.count(nums,upper + 1) - self.count(nums,lower)
+    
+    def count(self,nums,target):
+        left = 0
+        right = len(nums) - 1
+        pairs = 0
+        
+        while left < right:
+            if nums[left] + nums[right] < target:
+                pairs += right - left
+                left += 1
+            else:
+                right -= 1
+        
+        return pairs
+    
+#################################################################
+# 2064. Minimized Maximum of Products Distributed to Any Store
+# 14NOV24
+###############################################################
+class Solution:
+    def minimizedMaximum(self, n: int, quantities: List[int]) -> int:
+        '''
+        we have n stores, and m = len(quantities), product types
+        q[i] = quantity if ith product
+        distribute to n stores, and can only have at most one type
+        a store can be given 0 products
+        let x be the max number of product i can give to any store, want x to be a small a possible
+        minimize the max number of products  that you are given to any store
+        binary search on answer paradigm!
+        search for the best k
+        if we can reach k, then we can do do k+1, k+2, etc,
+        we want the smallest k, that just works
+        so we try from 0 all the way to max(quantities) until we get the firsst one that works, that is minimum
+        because wecan just leave a store with the max, and the rest can be zero
+        if we can't then we cant do anything more than k
+        need linear time function to see if we can distribute k, such that any store will not be given more than k products
+        '''
+        def f(k,n,quantities):
+            ans = 0
+            for q in quantities:
+                ans += ceil(q/k)
+            
+            return ans <= n
+        
+        left, right = 1, max(quantities)
+        ans = 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if f(mid,n,quantities):
+                right = mid - 1
+            else:
+                ans = mid + 1
+                left = mid + 1
+        
+        return ans
+                
+class Solution:
+    def minimizedMaximum(self, n: int, quantities: List[int]) -> int:
+        '''
+        we have n stores, and m = len(quantities), product types
+        q[i] = quantity if ith product
+        distribute to n stores, and can only have at most one type
+        a store can be given 0 products
+        let x be the max number of product i can give to any store, want x to be a small a possible
+        minimize the max number of products  that you are given to any store
+        binary search on answer paradigm!
+        search for the best k
+        if we can reach k, then we can do do k+1, k+2, etc,
+        we want the smallest k, that just works
+        so we try from 0 all the way to max(quantities) until we get the firsst one that works, that is minimum
+        because wecan just leave a store with the max, and the rest can be zero
+        if we can't then we cant do anything more than k
+        need linear time function to see if we can distribute k, such that any store will not be given more than k products
+        
+        insteaf of using the celing trick, lets try writing a linear functino to see if we can distrbute products with quantites not more than k
+        we actually dont need to assign products to every store, we can leave stores as 0
+        so check if we can go through all quantities
+        '''
+        def f(k,n,quantities):
+            #we're not actually assigning k, its just that a store cannot have more than k
+            q_ptr = 0
+            curr_quant = quantities[q_ptr]
+            for store in range(n):
+                #use up k
+                if curr_quant <= k:
+                    q_ptr += 1
+                    if q_ptr == len(quantities):
+                        return True
+                    else:
+                        curr_quant = quantities[q_ptr]
+                else:
+                    #distribute maximum quantity to this ith store
+                    curr_quant -= k
+            
+            return False
+                    
+        
+        left, right = 1, max(quantities)
+        ans = 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if f(mid,n,quantities):
+                right = mid - 1
+            else:
+                ans = mid + 1
+                left = mid + 1
+        
+        return ans
+                
+'''
+notes on feasibilty function,
+we want to make sure that each store doesn't exceed a maximum of k, this is just
+       def condition(k):
+            return sum(ceil(q / k) for q in quantities) <= n
+        
+'''
+
+###############################################################
+# 1574. Shortest Subarray to be Removed to Make Array Sorted
+# 15NOV24
+################################################################
+#this week sucks....
+class Solution:
+    def findLengthOfShortestSubarray(self, arr: List[int]) -> int:
+        '''
+        the idea is to think of the array as two segments
+        a prefix that is increasing and a suffix that is increasing
+        the elements that need to be deleted are the middle elements
+        or rather, some partition of the pref and middle and/or some partition of the middle ans suffix
+        if the array is already increasing, there is nothing to remove
+        if the array is decreasing then remove everying but the the first or everything by the left, i.e len(arr) - 1
+        '''
+        #find bound for longest increasing from start
+        left = 0
+        while left + 1 < len(arr) and arr[left] <= arr[left+1]:
+            left += 1
+        
+        #increasing
+        if left == len(arr) - 1:
+            return 0
+        
+        first = arr[:left+1]
+        #find portion on right, but dont go past left
+        right = len(arr) - 1
+        while right > left and arr[right] >= arr[right - 1]:
+            right -= 1
+        
+        second = arr[right:]
+        
+        #build longest array
+        longest = max(len(first),len(second))
+        i,j = 0,0
+        #print(first)
+        #print(second)
+        while i < len(first) and j < len(second):
+            if first[i] <= second[j]:
+                temp = first[:i+1] + second[j:]
+                longest = max(longest,len(temp))
+                #print(temp)
+                i += 1
+            else:
+                j += 1
+        
+        return len(arr) - longest
+    
+#maths
+class Solution:
+    def findLengthOfShortestSubarray(self, arr: List[int]) -> int:
+        '''
+        the idea is to think of the array as two segments
+        a prefix that is increasing and a suffix that is increasing
+        the elements that need to be deleted are the middle elements
+        or rather, some partition of the pref and middle and/or some partition of the middle ans suffix
+        if the array is already increasing, there is nothing to remove
+        if the array is decreasing then remove everying but the the first or everything by the left, i.e len(arr) - 1
+        '''
+        #find bound for longest increasing from start
+        left = 0
+        while left + 1 < len(arr) and arr[left] <= arr[left+1]:
+            left += 1
+        
+        #increasing
+        if left == len(arr) - 1:
+            return 0
+        
+        first = arr[:left+1]
+        #find portion on right, but dont go past left
+        right = len(arr) - 1
+        while right > left and arr[right] >= arr[right - 1]:
+            right -= 1
+        
+        second = arr[right:]
+        
+        #build longest array
+        longest = max(len(first),len(second))
+        i,j = 0,0
+        #print(first)
+        #print(second)
+        while i < len(first) and j < len(second):
+            if first[i] <= second[j]:
+                #temp = first[:i+1] + second[j:]
+                #compute size
+                size = (i + 1) + (len(second) - j)
+                #print(temp,size)
+                longest = max(longest,size)
+                #print(temp)
+                i += 1
+            else:
+                j += 1
+        
+        return len(arr) - longest
+        
+############################################
+# 3254. Find the Power of K-Size Subarrays I
+# 16NOV24
+############################################
+#brute force works just fine
+class Solution:
+    def resultsArray(self, nums: List[int], k: int) -> List[int]:
+        '''
+        for each subarray of size k, we need its power 
+        power is the max of eleemnt if all of its eleemnts are consective and sorted in ascednig order
+        otherwise its -1
+        sliding window but keep track of prev min
+        if the subarray isn't increasing, the ans is -1
+        for each subarray we need to make sure nums[i] <= nums[i+1]
+        
+        '''
+        n = len(nums)
+        ans = []
+        for i in range(n-k+1):
+            subarray = nums[i:i+k]
+            #check increasing
+            if self.check_increasing(subarray):
+                ans.append(max(subarray))
+            else:
+                ans.append(-1)
+        
+        return ans
+    def check_increasing(self,arr):
+        for i in range(1,len(arr)):
+            if arr[i] - arr[i-1] != 1:
+                return False
+        return True
+    
+#clsoe one
+class Solution:
+    def resultsArray(self, nums: List[int], k: int) -> List[int]:
+        '''
+        for each subarray of size k, we need its power 
+        power is the max of eleemnt if all of its eleemnts are consective and sorted in ascednig order
+        otherwise its -1
+        sliding window but keep track of prev min
+        if the subarray isn't increasing, the ans is -1
+        for each subarray we need to make sure nums[i] <= nums[i+1]
+        we can use slidigin window/deque of size k
+        '''
+        n = len(nums)
+        ans = []
+        curr_window = deque([])
+        #make first k window
+        for i in range(k):
+            if not curr_window:
+                curr_window.append(nums[i])
+            elif curr_window and nums[i] - curr_window[-1] == 1:
+                curr_window.append(nums[i])
+            else:
+                continue
+        
+        if len(curr_window) != k:
+            ans.append(-1)
+        else:
+            ans.append(curr_window[-1])
+        
+        for i in range(k,n):
+            #remove leftmost
+            if curr_window:
+                curr_window.popleft()
+            if curr_window:
+                if nums[i] - curr_window[-1] == 1:
+                    curr_window.append(nums[i])
+                    ans.append(nums[i])
+                else:
+                    curr_window.append(nums[i])
+                    ans.append(-1)
+
+        return ans
+    
+#using q, its really tricky
+class Solution:
+    def resultsArray(self, nums: List[int], k: int) -> List[int]:
+        '''
+        use deque to store the indicies of the elements in valid sequence
+        maintwain windeo of size k, if its valid, largest will be at the end
+        if in valid, its just -1
+        need to keep queue of indices
+        '''
+        n = len(nums)
+        ans = []
+        q = deque([])
+        
+        for i in range(n):
+            #if the left index is out of bounds
+            if q and i - q[0] >= k:
+                q.popleft()
+            
+            #not consecutive
+            if q and nums[i] - nums[i-1] != 1:
+                q.clear()
+            
+            q.append(i)
+            #past the first subarray
+            if i >= k - 1:
+                if len(q) == k:
+                    #take the maximum
+                    ans.append(nums[q[-1]])
+                else:
+                    #not a valid subarray sorted and consecutive
+                    ans.append(-1)
+        
+        return ans
+            
+class Solution:
+    def resultsArray(self, nums: List[int], k: int) -> List[int]:
+        '''
+        we can use sliding window and expand on consecutive subarrays
+        '''
+        if k == 1:
+            return nums
+        
+        n = len(nums)
+        ans = []
+        consecutive_count = 1
+        
+        left = 0
+        for right in range(n):
+            if right > 0 and nums[right] - nums[right - 1] == 1:
+                consecutive_count += 1
+            
+            #if its too big
+            if right - left + 1 > k:
+                if nums[left + 1] - nums[left] == 1:
+                    #reduce the consecutive count
+                    consecutive_count -= 1
+                left += 1
+            
+            #valid window
+            if right - left + 1 == k:
+                if consecutive_count == k:
+                    ans.append(nums[right])
+                else:
+                    ans.append(-1)
+        
+        return ans
+        
+
+##############################################
+# 862. Shortest Subarray with Sum at Least K
+# 17NOV24
+###############################################
+#TLE, good start
+class Solution:
+    def shortestSubarray(self, nums: List[int], k: int) -> int:
+        '''
+        generate prefix sum array and binary search on the answer
+        brute force try all subarrays
+        '''
+        n = len(nums)
+        pref_sum = [0]*(n+1)
+        for i in range(n):
+            pref_sum[i+1] = nums[i] + pref_sum[i]
+        
+        ans = float('inf')
+        for left in range(n+1):
+            for right in range(left+1,n+1):
+                subarray_sum = pref_sum[right] - pref_sum[left]
+                if subarray_sum >= k:
+                    ans = min(ans,right - left)
+        
+        if ans == float('inf'):
+            return -1
+        return ans
+
+#this wont work because negative values make it an non increasing array  
+class Solution:
+    def shortestSubarray(self, nums: List[int], k: int) -> int:
+        '''
+        generate prefix sum array and binary search on the answer
+        brute force try all subarrays
+        left_sum + right_sum >= k
+        look for right_sum >= k - left_sum
+        
+        aw shoot, its no longer and incerasing array because of the the negative values, so we cant use binary search
+        
+        '''
+        n = len(nums)
+        pref_sum = [0]*(n+1)
+        for i in range(n):
+            pref_sum[i+1] = nums[i] + pref_sum[i]
+        
+        ans = float('inf')
+        for num in nums:
+            if num >= k:
+                ans = 1
+                break
+
+        for left in range(n+1):
+            left_sum = pref_sum[left]
+            #we need to look for right_sum >= k - left_sum
+            lo = left
+            hi = len(pref_sum) - 1
+            best_idx = -1
+            while lo <= hi:
+                mid = lo + (hi - lo) // 2
+                if pref_sum[mid] - pref_sum[left] < k:
+                    #we need a bigger right
+                    lo = mid + 1
+                else:
+                    best_idx = mid
+                    hi = mid - 1
+            if best_idx != -1:
+                ans = min(ans, best_idx - left)
+            
+        
+        if ans == float('inf'):
+            return -1
+        return ans
+    
+#heapq q for best previous pref_sums!
+class Solution:
+    def shortestSubarray(self, nums: List[int], k: int) -> int:
+        '''
+        the idea is store previouse pref_sums with their indices up to that point
+        then we can just retrieve from the heap
+        say we are at some index i, with pref_sum, ps, if prev_sum >= k, this is a valid subarray
+        then we need to look back and check if their are other previous pref_sums, that cant satisfy 
+        ps >= k
+        '''
+        n = len(nums)
+        ans = float('inf')
+        curr_sum = 0
+        
+        prev_pref_sums = []
+        
+        for i, num in enumerate(nums):
+            curr_sum += num
+            if curr_sum >= k:
+                ans = min(ans, i + 1)
+                
+            #check if there were other previous pref_sums that satisfy >= k
+            while prev_pref_sums and (curr_sum - prev_pref_sums[0][0] >= k):
+                prev_ps,best_idx = heapq.heappop(prev_pref_sums)
+                ans = min(ans, i - best_idx)
+            
+            #push
+            heapq.heappush(prev_pref_sums, (curr_sum,i))
+        
+        if ans == float('inf'):
+            return -1
+        
+        return ans
