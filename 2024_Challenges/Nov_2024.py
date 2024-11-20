@@ -1601,3 +1601,39 @@ class Solution:
                 ans.append(starting_sum)
             return ans[::-1]
             
+
+########################################################
+# 2461. Maximum Sum of Distinct Subarrays With Length K
+# 19NOV24
+########################################################
+class Solution:
+    def maximumSubarraySum(self, nums: List[int], k: int) -> int:
+        '''
+        sliding window with count map
+        if an array has distinct elements and size k, take the maximum sum
+        subarray will never be empty
+        the issue is with shrinking the window
+        we need to shrink the window if its bigger than k or if there is a repeated element
+        '''
+        counts = Counter()
+        ans = 0
+        curr_sum = 0
+        left = 0
+        N = len(nums)
+        
+        for right in range(N):
+            #if we are trying to add in nums[right] need to make sure we can
+            curr_num = nums[right]
+            while counts[curr_num] >= 1 or right - left + 1 > k:
+                counts[nums[left]] -= 1
+                curr_sum -= nums[left]
+                left += 1
+
+            curr_sum += curr_num
+            counts[curr_num] += 1
+            
+            if right - left + 1 == k:
+                ans = max(ans,curr_sum)
+
+                        
+        return ans
