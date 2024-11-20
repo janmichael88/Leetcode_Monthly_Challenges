@@ -1637,3 +1637,49 @@ class Solution:
 
                         
         return ans
+    
+#########################################################
+# 2107. Number of Unique Flavors After Sharing K Candies
+# 19NOV24
+#########################################################
+class Solution:
+    def shareCandies(self, candies: List[int], k: int) -> int:
+        ''' 
+        need subarray of size k, where len(set(subarray)) is maximum
+        sliding window, add in the first k, then pop and add back in
+        i can only add to the window if next one is consecutive
+        if when adding we break the consecutive variant, we must shrink the window again
+        
+        questions is asking count unique in candies - count unique in k length subarray
+        problem is computing difference in hashmap takes O(N)
+        we can track the difference as we add to the window and remove
+        
+        if im tracking the difference, remove from the counts hashmap
+        YESSSSS
+        '''
+
+        curr_window = Counter()
+        counts = Counter(candies)
+        left = 0
+        ans = 0
+        N = len(candies)
+        for right,c in enumerate(candies):
+            #window to big
+            if right - left + 1 > k:
+                curr_window[candies[left]] -= 1
+                counts[candies[left]] += 1
+                if curr_window[candies[left]] == 0:
+                    del curr_window[candies[left]]
+                left += 1
+            
+            curr_window[c] += 1
+            counts[c] -=1
+            if counts[c] == 0:
+                del counts[c]
+            
+            if right - left + 1 == k:
+                #ans = max(ans, len(set(candies)) - len(curr_window))
+                #this part, is right, but need faste way to compute
+                ans = max(ans, len(counts))
+        
+        return ans
