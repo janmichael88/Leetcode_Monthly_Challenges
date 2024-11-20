@@ -1504,3 +1504,100 @@ class Solution:
             return -1
         
         return ans
+    
+#######################################
+# 1652. Defuse the Bomb (REVISTED)
+# 19NOV24
+#######################################
+class Solution:
+    def decrypt(self, code: List[int], k: int) -> List[int]:
+        '''
+        if k == 0, its the zeros array
+        if k > 0 take sum of numberrs to the left
+            if just take some index (i + 1) % len(code)
+        if k < 0, sum of k numbers to the right
+            
+        '''
+        n = len(code)
+        
+        if k == 0:
+            return [0]*n
+        elif k > 0:
+            ans = []
+            for i in range(n):
+                sum_next = 0
+                start = i
+                copy_k = k
+                while copy_k > 0:
+                    start += 1
+                    copy_k -= 1
+                    if start >= n:
+                        start = 0
+                    sum_next += code[start]
+                
+                ans.append(sum_next)
+            
+            return ans
+        elif k < 0:
+            k = abs(k)
+            ans = []
+            for i in range(n):
+                sum_next = 0
+                start = i
+                copy_k = k
+                while copy_k > 0:
+                    start -= 1
+                    copy_k -= 1
+                    if start < 0:
+                        start = n - 1
+                    sum_next += code[start]
+                ans.append(sum_next)
+            
+            return ans
+        
+class Solution:
+    def decrypt(self, code: List[int], k: int) -> List[int]:
+        '''
+        we can also treat this like a sliding window
+        [a,b,c,d,e] and k = 3
+        [b + c + d, c + d + e, d + e + a, e + a + b, a + b + c]
+        is we precinoute the starting sum, the next sum is just the left most removed and the right most added
+        [5,7,1,4]
+        first sum is 7 + 1 + 4 = 12
+        second sum is just 1 + 4 + 5
+            which what just (7+1+4) - 7 + 5
+            
+        first calculate the starting sum, of the first k elements
+        as we shift the window to a each new index, we update sum by subtracting the element that's leaving the window and adding the new elment coming in
+        
+        for negative k, we just do it in reverse
+        '''
+        n = len(code)
+        if k == 0:
+            return [0]*n
+        elif k > 0:
+            starting_sum = 0
+            ans = []
+            for i in range(1,k+1):
+                starting_sum += code[(0 + i) % n]
+            ans.append(starting_sum)
+            for i in range(1,n):
+                starting_sum -= code[i % n]
+                starting_sum += code[(i + k) % n]
+                ans.append(starting_sum)
+            return ans
+            
+        else:
+            #now its in reverse
+            k = abs(k)
+            starting_sum = 0
+            ans = []
+            for i in range(1,k+1):
+                starting_sum += code[((n-1) - i) % n]
+            ans.append(starting_sum)
+            for i in range(n-2,-1,-1):
+                starting_sum -= code[i % n]
+                starting_sum += code[(i + k) % n]
+                ans.append(starting_sum)
+            return ans[::-1]
+            
