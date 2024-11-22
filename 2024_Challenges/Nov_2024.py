@@ -1683,3 +1683,138 @@ class Solution:
                 ans = max(ans, len(counts))
         
         return ans
+
+
+######################################################
+# 2516. Take K of Each Character From Left and Right
+# 21NOV24
+#####################################################
+#binaryy search for a valid array to remove
+class Solution:
+    def takeCharacters(self, s: str, k: int) -> int:
+        '''
+        first i can check of this is possible
+        this is an excotic one
+        if i take x chars from the left, what is the min number of chars i take from the right
+        
+        we can use binary search on the window size to remove
+        if we can revmove a subarry of some size, then we can also remove any subarray less than size
+        we want to maxmize the length of this subarray
+        ans is just max(len(subrray) for valid subarrays)
+        sliding window O(N) function, then maximize
+        '''
+        if k == 0:
+            return 0
+        if len(s) < 3*k:
+            return -1
+        
+        d = Counter(s)
+
+        if 'a' not in d or 'b' not in d or 'c' not in d:
+            return -1
+        
+        if d['a'] < k or d['b'] < k or d['c'] < k:
+            return -1
+        n = len(s)
+        
+        #find the largest subarray we can remove
+        left = 0
+        right = n - 1
+        ans = 0
+        
+        while left <= right:
+            mid = left + (right - left)// 2
+            if self.can_remove(s,k,mid):
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        if ans == -1:
+            return ans
+        return len(s) - ans
+            
+    
+    def can_remove(self, s, k,size):
+        #rerturne true if we can remove a subarray of size size, and still staisfy the counstraint
+        counts = Counter(s)
+        left = 0
+        for right,ch in enumerate(s):
+            #remove the leftmost
+            counts[ch] -= 1
+            if right - left + 1 > size:
+                counts[s[left]] += 1
+                left += 1
+            
+            #check
+            if right - left + 1 == size and counts['a'] >= k and counts['b'] >= k and counts['c'] >= k:
+                return True
+        
+        return False
+        
+#sliding window
+class Solution:
+    def takeCharacters(self, s: str, k: int) -> int:
+        '''
+        we can reframe the problem as
+        find the longest subarry in s, such that the counts of elements a,b,c are all at least k in the parts that are not part of the subaarray
+        if we take some lefts x from left and some elements left from y
+        the subarray between can be thouhgt of as s[x:len(s) - y]
+        '''
+        #first we check boundary conditions
+        if k == 0:
+            return 0
+        if len(s) < 3*k:
+            return -1
+        counts = Counter(s)
+        if any([char not in counts for char in ['a','b','c']]):
+            return -1
+        if any([counts[char] < k for char in ['a','b','c']]):
+            return -1
+        
+        left = 0
+        n = len(s)
+        longest = 0
+        
+        for right,char in enumerate(s):
+            #decrement count
+            counts[char] -= 1
+            
+            #put back in window if we have to
+            while counts['a'] < k or counts['b'] < k or counts['c'] < k:
+                counts[s[left]] += 1
+                left += 1
+            
+            longest = max(longest, right - left + 1)
+        
+        return len(s) - longest
+                
+#recursion
+class Solution:
+    def __init__(self):
+        self.min_minutes = float("inf")
+
+    def takeCharacters(self, s: str, k: int) -> int:
+        if k == 0:
+            return 0
+        count = [0, 0, 0]
+        self._solve(s, k, 0, len(s) - 1, count, 0)
+        return -1 if self.min_minutes == float("inf") else self.min_minutes
+
+    def _solve(self, s, k, left, right, count, minutes):
+        # Base case: check if we have k of each character
+        if count[0] >= k and count[1] >= k and count[2] >= k:
+            self.min_minutes = min(self.min_minutes, minutes)
+            return
+        # If we can't take more characters
+        if left > right:
+            return
+
+        # Take from left
+        left_count = count.copy()
+        left_count[ord(s[left]) - ord("a")] += 1
+        self._solve(s, k, left + 1, right, left_count, minutes + 1)
+
+        # Take from right
+        right_count = count.copy()
+        right_count[ord(s[right]) - ord("a")] += 1
+        self._solve(s, k, left, right - 1, right_count, minutes + 1)
