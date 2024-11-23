@@ -1818,3 +1818,123 @@ class Solution:
         right_count = count.copy()
         right_count[ord(s[right]) - ord("a")] += 1
         self._solve(s, k, left, right - 1, right_count, minutes + 1)
+
+###############################################
+# 2257. Count Unguarded Cells in the Grid
+# 22NOV24
+##############################################
+class Solution:
+    def countUnguarded(self, m: int, n: int, guards: List[List[int]], walls: List[List[int]]) -> int:
+        '''
+        cells need to be without a wall to be considered unguarded
+        gurads can see any cell in all 4 cardinal directions, vision can be blocked by another guard or wall
+        guards can see in all 4 directions
+        
+        brute force would be to just mark each cell from a guard in all directions
+        i can check each cell (i,j), its 10**5
+        if i'm at a cell (i,j) that is not a wall, check (i,j-1) and (i,j+1)
+        if any of those cells are guarded, then (i,j), must be guraded
+        nope that doenst work
+        
+        walk the guards on the array!
+        
+        they can't see through an existing gurd already
+        place the guards first, i need states for guard and guarded!
+        '''
+        matrix = [[0]*n for _ in range(m)]
+        self.unguarded = 0
+        self.guarded = 1
+        self.guard = 2
+        self.wall = 3
+        
+        #mark walls as -1
+        for wall in walls:
+            x,y = wall
+            matrix[x][y] = self.wall
+        
+        for x,y in guards:
+            matrix[x][y] = self.guard
+            
+        #for each gaurd walk them
+        for x,y in guards:
+            self.walk_guard(matrix, x,y,m,n)
+        
+        #count zeros
+        unguarded = 0
+        for i in range(m):
+            for j in range(n):
+                unguarded += matrix[i][j] == 0
+        
+        return unguarded
+    
+    def walk_guard(self,matrix,i,j,rows,cols):
+        #walk up
+        ii = i - 1
+        while ii >= 0 and matrix[ii][j] != self.wall and matrix[ii][j] != self.guard:
+            matrix[ii][j] = self.guarded
+            ii -= 1
+        #walk down
+        ii = i + 1
+        while ii < rows and matrix[ii][j] != self.wall and matrix[ii][j] != self.guard:
+            matrix[ii][j] = self.guarded
+            ii += 1
+        
+        #walk left
+        jj = j - 1
+        while jj >= 0 and matrix[i][jj] != self.wall and matrix[i][jj] != self.guard:
+            matrix[i][jj] = 1
+            jj -= 1
+            
+        #walk right
+        jj = j + 1
+        while jj < cols and matrix[i][jj] != self.wall and matrix[i][jj] != self.guard:
+            matrix[i][jj] = 1
+            jj += 1
+
+######################################################
+# 1072. Flip Columns For Maximum Number of Equal Rows
+# 23NOV24
+######################################################
+class Solution:
+    def maxEqualRowsAfterFlips(self, matrix: List[List[int]]) -> int:
+        '''
+        we need the maximum number of rows that have the same values ater some number of flips
+        we need rows to be either all zeros or all ones
+        we can only flip along columns
+        
+        [0,1]
+        [1,0]
+        
+        can either flip for first or second column
+        
+        [0,1]
+        [1,1]
+        
+        [0,0,0]
+        [0,0,1]
+        [1,1,0]
+        
+        if any two columns are inverses of each other, we can flip either one of them to make them equal
+        hint says count rows that have inversed bit sets
+
+        intution,
+        the rwos that can be made uniform (all values in row are same) after flipping will be the combined total of rows
+        that are identical and inversed
+        '''
+        rows, cols = len(matrix),len(matrix[0])
+        #first count up rows
+        counts = Counter()
+        for r in matrix:
+            counts[tuple(r)] += 1
+        
+        ans = 0
+        for r in matrix:
+            inversed_row = []
+            for b in r:
+                inversed_row.append(1-b)
+            
+            count_same = counts[tuple(r)]
+            count_inverse = counts[tuple(inversed_row)]
+            ans = max(ans, count_same + count_inverse)
+        
+        return ans
