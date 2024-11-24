@@ -1891,6 +1891,9 @@ class Solution:
             matrix[i][jj] = 1
             jj += 1
 
+#we can optimize bu looking only in the lines of sight of a guard
+
+
 ######################################################
 # 1072. Flip Columns For Maximum Number of Equal Rows
 # 23NOV24
@@ -1938,3 +1941,60 @@ class Solution:
             ans = max(ans, count_same + count_inverse)
         
         return ans
+    
+##############################################
+# 1861. Rotating the Box
+# 24NOV24
+##############################################
+class Solution:
+    def rotateTheBox(self, box: List[List[str]]) -> List[List[str]]:
+        '''
+        advent of code like question!
+        we can just simulate pushing to the the right, once we are donce with that we can just tranpose the box
+        first we can rotate, then just drop
+        (i,j) -> (m - 1 - j,i)
+        implementing drop is tricky
+        how to i know when to finish dropping
+        
+        it might be easier to just push to the right bases on rows then rotate
+        ["#",".","#"]
+        
+        drop to pattern, look for a stone, drop to drop to and replace with empty space!
+        
+        FOR DROP!
+        idea is to swap to the spot and move up
+        if ROCK, the inc up
+        '''
+        m,n = len(box),len(box[0])
+        rotated = [[""]*m for _ in range(n)]
+        for i in range(n):
+            for j in range(m):
+                rotated[i][j] = box[m - 1 - j][i]
+        
+        rows,cols = len(rotated),len(rotated[0])
+        #implement drop
+        for col in range(cols):
+            drop_to = n - 1
+            curr_row = rows - 1
+            while curr_row >= 0:
+                #if its a stone, drop and replcae with empty spaces
+                if rotated[curr_row][col] == "#":
+                    rotated[curr_row][col] = "."
+                    rotated[drop_to][col] = "#"
+                    drop_to -= 1
+                #otherwise new dropping spot
+                if rotated[curr_row][col] == "*":
+                    drop_to = curr_row - 1
+                
+                curr_row -= 1
+
+        return rotated
+                
+                
+            
+                    
+                    
+                
+            
+
+            
