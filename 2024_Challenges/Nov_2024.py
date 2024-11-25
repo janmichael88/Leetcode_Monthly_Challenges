@@ -1892,7 +1892,77 @@ class Solution:
             jj += 1
 
 #we can optimize bu looking only in the lines of sight of a guard
-
+class Solution:
+    def countUnguarded(self, m: int, n: int, guards: List[List[int]], walls: List[List[int]]) -> int:
+        '''
+        insteaf of walking the guards, we mark their lines of sight
+        walking leading to revisting guarded cells
+        example if a guard can see (2,3), we mark as guarded, 
+        if another guard sees (2,3), we dont mark it again since its already seen
+        
+        then we just walk the directions,
+        check rows, and then go left and right
+            update accordingly
+            
+        check cols, then go up and down
+            update accoridingly
+            
+        a cell cannot be considered guarded if there is an exsiting guard, fucking stupid lol
+        '''
+        matrix = [[0]*n for _ in range(m)]
+        self.unguarded = 0
+        self.guarded = 1
+        self.guard = 2
+        self.wall = 3
+        
+        #mark walls as -1
+        for wall in walls:
+            x,y = wall
+            matrix[x][y] = self.wall
+        
+        for x,y in guards:
+            matrix[x][y] = self.guard
+            
+        #row passes
+        for row in range(m):
+            active_line = matrix[row][0] == self.guard
+            #left to right
+            for col in range(1,n):
+                active_line = self.update_cell_visibility(row,col,matrix,active_line)
+            #right to left
+            active_line = matrix[row][n-1] == self.guard
+            for col in range(n-2,-1,-1):
+                active_line = self.update_cell_visibility(row,col,matrix,active_line)
+        
+        #col passes
+        for col in range(n):
+            active_line = matrix[0][col] == self.guard
+            for row in range(1,m):
+                active_line = self.update_cell_visibility(row,col,matrix,active_line)
+            active_line = matrix[m - 1][col] == self.guard
+            for row in range(m-2,-1,-1):
+                active_line = self.update_cell_visibility(row,col,matrix,active_line)
+        
+        ans = 0
+        for row in range(m):
+            for col in range(n):
+                if matrix[row][col] == self.unguarded:
+                    ans += 1
+        
+        return ans
+                
+            
+    
+    def update_cell_visibility(self,row,col,matrix,active_line):
+        #activate guardline for current direction
+        if matrix[row][col] == self.guard:
+            return True
+        if matrix[row][col] == self.wall:
+            return False
+        if active_line:
+            matrix[row][col] = self.guarded
+        return active_line
+        
 
 ######################################################
 # 1072. Flip Columns For Maximum Number of Equal Rows
@@ -1990,11 +2060,116 @@ class Solution:
 
         return rotated
                 
+###########################################
+# 1975. Maximum Matrix Sum
+# 24NOV24
+###########################################
+class Solution:
+    def maxMatrixSum(self, matrix: List[List[int]]) -> int:
+        '''
+        we can use any number of operations
+        an operation consists of multiplying adjacent eleemnts by -1, notice that prev negatives will increase
+        we can only do a cell (i,j) and its neighboring cell (i,j+1), (i,j-1), (i-1,j), (i,j+1)
+        use operation so that each row only has one negative number
+        if you only have one negative element, you cannot convert to positive
+        
+        if we can make a row that has only one negative in it, we can line all the negatives up, and use operations on just a single column
+        we need to transform some matrix to it canonical form, that bull shit again
+        because we do ops in pairs, we can get negatives together
+        [1,-1,1,-1,-1,1,1]
+        
+        if there's an even count of negativ numbers, we can flip them all to positive
+        if the count is odd, one number has to stay negative
+        
+        the fact that we can use on adjacent means we can flip all numbers if even
+        '''
+
+        count_negatives = 0
+        for r in matrix:
+            for num in r:
+                if num < 0:
+                    count_negatives += 1
+        
+        if count_negatives % 2 == 0:
+            ans = 0
+            for r in matrix:
+                for num in r:
+                    ans += abs(num)
+            return ans
+        
+        else:
+            smallest_positive = float('inf')
+            ans = 0
+            for r in matrix:
+                for num in r:
+                    ans += abs(num)
+                    smallest_positive = min(smallest_positive, abs(num))
+            return ans - 2*smallest_positive
+        
+#reduce to one pass, count on the fly
+class Solution:
+    def maxMatrixSum(self, matrix: List[List[int]]) -> int:
+        '''
+        sum on fly and minimize on fly
+        '''
+
+        count_negatives = 0
+        smallest_positive = float('inf')
+        total_positive_sum = 0
+        for r in matrix:
+            for num in r:
+                if num < 0:
+                    count_negatives += 1
+                smallest_positive = min(smallest_positive, abs(num))
+                total_positive_sum += abs(num)
                 
+        
+        if count_negatives % 2 == 1:
+            total_positive_sum -= 2*smallest_positive
+        
+        return total_positive_sum
+
+###################################################
+# 2371. Minimize Maximum Value in a Grid
+# 24NOV24
+###################################################
+#close one       
+class Solution:
+    def minScore(self, grid: List[List[int]]) -> List[List[int]]:
+        '''
+        realtive order of every two elements in the same row and col should stay the same
+        say for a row we have
+        [4,5,6,7] -> [1,2,3,4]
+        the maximum number in the matrix should be a smalle as possible
+        replace in order from smallest to largest
+        bet before putting check relative ordering, since we are going in increasing order, we know this current (i,j) is the smallest so far
+        othweise we would have picked a larger number
+        '''
+        rows, cols = len(grid), len(grid[0])
+        ans = [[0]*cols for _ in range(rows)]
+        
+        cells = []
+        for i in range(rows):
+            for j in range(cols):
+                cells.append((grid[i][j],i,j))
+        #sort increasingly
+        cells.sort(key = lambda x : x[0])
+        smallest = 0
+        
+        for num,i,j in cells:
+            up = grid[i-1][j] if i - 1 >= 0 else float('inf')
+            down = grid[i+1][j] if i + 1 < rows else float('inf')
+            left = grid[i][j-1] if j - 1 >= cols else float('inf')
+            right = grid[i][j+1] if j + 1 < cols else float('inf')
+            if up <= num <= down or left <= num <= right:
+                ans[i][j] = smallest
+            else:
+                smallest += 1
+                ans[i][j] = smallest
+        
+        return ans
             
-                    
-                    
-                
+            
             
 
             
