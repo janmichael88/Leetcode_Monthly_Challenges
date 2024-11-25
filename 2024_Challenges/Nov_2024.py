@@ -2128,6 +2128,38 @@ class Solution:
             total_positive_sum -= 2*smallest_positive
         
         return total_positive_sum
+    
+################################################################
+# 1784. Check if Binary String Has at Most One Segment of Ones
+# 24NOV24
+################################################################
+#kinda tricky
+class Solution:
+    def checkOnesSegment(self, s: str) -> bool:
+        '''
+        there can only be one at most one continguous segment
+        count the streaks
+        '''
+        count_streaks = 0
+        on_streak = False
+        
+        for ch in s:
+            if ch == '1' and on_streak:
+                continue
+            elif ch == '1' and not on_streak:
+                on_streak = True
+            elif ch == '0' and on_streak:
+                count_streaks += 1
+                on_streak = False
+            else:
+                on_streak = False
+        
+        if on_streak:
+            count_streaks += 1
+    
+        return count_streaks <= 1
+        
+
 
 ###################################################
 # 2371. Minimize Maximum Value in a Grid
@@ -2169,7 +2201,68 @@ class Solution:
         
         return ans
             
+###################################
+# 773. Sliding Puzzle
+# 25NOV24
+###################################
+#BFS works just fine
+#YEAHHH
+class Solution:
+    def slidingPuzzle(self, board: List[List[int]]) -> int:
+        '''
+        use bfs an exapnd the states at each step
+        the board is small so there won't be any steps
+        dont precompute the graph, build states on the fly
+        hash previously visited states as ((row1),(row2))
+        
+        so annoying
+        '''
+        first_zero = self.find_zero(board)
+        seen = set()
+        q = deque([])
+        q.append([0,first_zero[0],first_zero[1],board]) #store as [moves,zero_i,zero_j,board]
+        final_state = [[1,2,3],[4,5,0]]
+        
+        while q:
+            moves,zero_i,zero_j,curr_board = q.popleft()
+            if curr_board == final_state:
+                return moves
+            seen.add(self.get_state_sig(curr_board))
+            #neigh search
+            for neigh in self.get_neighs(zero_i,zero_j,curr_board):
+                ii,jj,neigh_board = neigh
+                #get sig
+                board_sig = self.get_state_sig(neigh_board)
+                if board_sig not in seen:
+                    q.append([moves + 1, ii, jj, neigh_board])
+        
+        return -1
             
-            
-
-            
+    #for each state pass in location of zero, instead of searching
+    def get_neighs(self,zero_i, zero_j, matrix):
+        rows,cols = 2,3
+        for di,dj in [[1,0],[-1,0],[0,-1],[0,1]]:
+            neigh_x = zero_i + di
+            neigh_y = zero_j + dj
+            if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                #swap
+                matrix[zero_i][zero_j],matrix[neigh_x][neigh_y] = matrix[neigh_x][neigh_y],matrix[zero_i][zero_j]
+                yield [neigh_x,neigh_y, [row[:] for row in matrix]]
+                #swap back
+                matrix[zero_i][zero_j],matrix[neigh_x][neigh_y] = matrix[neigh_x][neigh_y],matrix[zero_i][zero_j]
+                
+    #find first zero
+    def find_zero(self,matrix):
+        rows,cols = 2,3
+        for i in range(rows):
+            for j in range(cols):
+                if matrix[i][j] == 0:
+                    return (i,j)
+                
+    def get_state_sig(self,matrix):
+        sig = ""
+        for r in matrix:
+            for num in r:
+                sig += str(num)
+        
+        return sig
