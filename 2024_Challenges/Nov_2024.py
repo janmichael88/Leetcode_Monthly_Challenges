@@ -2266,3 +2266,32 @@ class Solution:
                 sig += str(num)
         
         return sig
+    
+#################################
+# 2924. Find Champion II
+# 26NOV24
+#################################
+class Solution:
+    def findChampion(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        edges is respresentation of DAG
+        u to v means u is stronger than b, i.e the path is decreasing
+        team u will be champion if no tebam v is stronger than u
+        nodes that have indegree >= 1 cannot be a champsionship team
+        is there is a champion, there will only be "ONE" node with indegree 0
+        
+        '''
+        indegree = {node : 0 for node in range(n)}
+        for u,v in edges:
+            indegree[v] += 1
+        
+        ans = -1
+        
+        for node,count in indegree.items():
+            if count == 0:
+                if ans == -1:
+                    ans = node
+                else:
+                    return -1
+        
+        return ans
