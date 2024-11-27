@@ -2200,6 +2200,45 @@ class Solution:
                 ans[i][j] = smallest
         
         return ans
+    
+class Solution:
+    def minScore(self, grid: List[List[int]]) -> List[List[int]]:
+        '''
+        to make the matrix as smallest as possible, we should start with the smallest number 1
+        and we traverse the grid in order of smallest numbers first
+        (grid[i][j], i,i)
+        initially store smalles values in rows and cols as 1
+        the smallest number in row,col can be determined by the largest value (up to now)
+        
+        we can prove by contradiction
+        base case, single element is 1
+        for the next k eleements, the first k elements are alrady increasing
+        to find the next k+1, look for max in rows and cols, the add 1
+        
+        if we assume there was another v for k + 1 that wasn't max of rows and cols + 1, the previous asigned values up to k
+        must have been smaller than v
+        
+        proof by contraction weak assumption
+        '''
+        rows, cols = len(grid), len(grid[0])
+        row_maxs = [1]*rows
+        col_maxs = [1]*cols
+        
+        cells = []
+        for i in range(rows):
+            for j in range(cols):
+                cells.append((grid[i][j],i,j))
+        #sort increasingly
+        cells.sort(key = lambda x : x[0])
+        
+        for num,i,j in cells:
+            new_val = max(row_maxs[i],col_maxs[j])
+            grid[i][j] = new_val
+            row_maxs[i] = new_val + 1
+            col_maxs[j] = new_val + 1
+        
+        return grid
+            
             
 ###################################
 # 773. Sliding Puzzle
@@ -2295,3 +2334,111 @@ class Solution:
                     return -1
         
         return ans
+    
+#we can also just use array
+class Solution:
+    def findChampion(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        we can use an array
+        
+        '''
+        indegree = [0]*n
+        
+        for u,v in edges:
+            indegree[v] += 1
+        
+        champion = -1
+        count = 0
+        
+        for i in range(n):
+            if indegree[i] == 0:
+                champion = 0
+                count += 1
+        
+        return champion if count == 1 else -1
+
+##########################################################
+# 3243. Shortest Distance After Road Addition Queries I
+# 27NOV24
+#######################################################
+class Solution:
+    def shortestDistanceAfterQueries(self, n: int, queries: List[List[int]]) -> List[int]:
+        '''
+        initially the dist marix for all (i,j) is just abs(j-i)
+        queries add a road from (u to v)
+        for each query find the shortest distance from 0 to n-1 ater adding in the i+1 roads
+        bfs after each addition?
+        '''
+        #create initial graph
+        graph = defaultdict(list)
+        for i in range(n-1):
+            graph[i].append(i+1)
+            
+        ans = []
+        for u,v in queries:
+            graph[u].append(v)
+            min_dist = self.dijkstras(graph,n)
+            ans.append(min_dist)
+        
+        return ans
+    
+    #good review on djikstras
+    def dijkstras(self,graph,n):
+        
+        dists = [float('inf')]*n
+        dists[0] = 0
+        seen = set()
+        
+        pq = [(0,0)]
+        
+        while pq:
+            min_dist, curr_node = heapq.heappop(pq)
+            if dists[curr_node] < min_dist:
+                continue
+            seen.add(curr_node)
+            for neigh in graph[curr_node]:
+                if neigh in seen:
+                    continue
+                neigh_dist = dists[curr_node] + 1
+                if dists[neigh] > neigh_dist:
+                    dists[neigh] = neigh_dist
+                    heapq.heappush(pq, (neigh_dist, neigh))
+        
+        return dists[n-1]
+        
+#dp SSP
+class Solution:
+    def shortestDistanceAfterQueries(self, n: int, queries: List[List[int]]) -> List[int]:
+        '''
+        like with any SSP we can solve using dp
+        '''
+        #create initial graph
+        graph = defaultdict(list)
+        for i in range(n-1):
+            graph[i].append(i+1)
+            
+        ans = []
+        memo = {}
+        for u,v in queries:
+            graph[u].append(v)
+            min_dist = self.dp(0,graph,memo,n)
+            ans.append(min_dist)
+            memo = {}
+        
+        return ans
+    
+    #we can also use dp
+    def dp(self,node ,graph, memo,n):
+        if node == n-1:
+            return 0
+        if node in memo:
+            return memo[node]
+        ans = float('inf')
+        
+        for neigh in graph[node]:
+            ans = min(ans, 1 + self.dp(neigh,graph,memo,n))
+        
+        memo[node] = ans
+        return ans
+        
+    
