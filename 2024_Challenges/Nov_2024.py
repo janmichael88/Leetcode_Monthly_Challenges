@@ -2441,4 +2441,76 @@ class Solution:
         memo[node] = ans
         return ans
         
+#################################################
+# 2290. Minimum Obstacle Removal to Reach Corner
+# 28NOV24
+#################################################
+#cant use dp
+class Solution:
+    def minimumObstacles(self, grid: List[List[int]]) -> int:
+        '''
+        rows*cols < 10**5, so i can use dp of the form (i,j)
+        if i'm at (i,j) i can move, to some neigh cell
+        if neigh cell is empty, move to it with no removals, otherwise move to it and reove
+        '''
+        memo = {}
+        seen = set()
+        
+        rows,cols = len(grid), len(grid[0])
+        seen.add((0,0))
+        def dp(i,j):
+            if (i,j) in memo:
+                return memo[(i,j)]
+            if (i,j) == (rows - 1, cols - 1):
+                return 0           
+            ans = float('inf')
+            for di,dj in [[1,0],[-1,0],[0,1],[0,-1]]:
+                neigh_i = i + di
+                neigh_j = j + dj
+                if 0 <= neigh_i < rows and 0 <= neigh_j < cols:
+                    if (neigh_i,neigh_j) not in seen:
+                        seen.add((neigh_i,neigh_j))
+                        #if empty, just move to it
+                        if grid[neigh_i][neigh_j] == 0:
+                            ans = min(ans, dp(neigh_i,neigh_j))
+                        else:
+                            ans = min(ans, 1 + dp(neigh_i,neigh_j))
+                        seen.remove((neigh_i,neigh_j))
+                        
+            
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,0)
     
+#djikstra
+class Solution:
+    def minimumObstacles(self, grid: List[List[int]]) -> int:
+        '''
+        need to use dijkstras
+        '''
+        rows,cols = len(grid), len(grid[0])
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dists[0][0] = grid[0][0]
+        seen = set()
+        
+        min_heap = [(grid[0][0], 0 ,0)]
+        
+        while min_heap:
+            min_dist, i,j = heapq.heappop(min_heap)
+            if dists[i][j] < min_dist:
+                continue
+            seen.add((i,j))
+            
+            for di,dj in [[1,0],[-1,0],[0,1],[0,-1]]:
+                neigh_i = i + di
+                neigh_j = j + dj
+                if 0 <= neigh_i < rows and 0 <= neigh_j < cols:
+                    if (neigh_i,neigh_j) in seen:
+                        continue
+                    neigh_dist = min_dist + grid[neigh_i][neigh_j]
+                    if neigh_dist < dists[neigh_i][neigh_j]:
+                        dists[neigh_i][neigh_j] = neigh_dist
+                        heapq.heappush(min_heap, (neigh_dist, neigh_i, neigh_j))
+        
+        return dists[rows -1][cols - 1]
