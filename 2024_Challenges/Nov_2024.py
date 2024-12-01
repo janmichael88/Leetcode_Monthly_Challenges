@@ -2514,3 +2514,113 @@ class Solution:
                         heapq.heappush(min_heap, (neigh_dist, neigh_i, neigh_j))
         
         return dists[rows -1][cols - 1]
+
+################################################
+# 2577. Minimum Time to Visit a Cell In a Grid
+# 29NOV24
+################################################
+class Solution:
+    def minimumTime(self, grid: List[List[int]]) -> int:
+        '''
+        i can only visit a cell (i,j) if i visit it at >= grid[i][j]
+        we can only visit a cell up down left right
+        
+        return minimum time required to rech -1
+        if i'm at cell (i,j) with time t, i can only visit neigh cells is a neigh cell (ii,jj)
+        has grid[ii][jj] >= t
+        consider case where we have to go back and forth between two cells of matrix to unlock other cells
+        each step takes 1 unit time
+        we can walk back and forth repeatedly between a current cell and neigh cell
+        '''
+        #edge case if we can't make the first move
+        if grid[0][1] > 1 and grid[1][0] > 1:
+            return -1
+        
+        rows, cols = len(grid), len(grid[0])
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dists[0][0] = 0 
+        
+        min_heap = [(0,0,0)] #mintime (i,j)
+        seen = set()
+        
+        while min_heap:
+            min_time, i,j = heapq.heappop(min_heap)
+            if min_time < dists[i][j]:
+                continue
+            seen.add((i,j))
+            
+            for di,dj in [[1,0],[-1,0],[0,1],[0,-1]]:
+                neigh_i = di + i
+                neigh_j = dj + j
+                if 0 <= neigh_i < rows and 0 <= neigh_j < cols:
+                    if (neigh_i,neigh_j) in seen:
+                        continue
+                    #if they neighboring cell is 1 away, we can walk to it or get waiting time to get to cell
+                    neigh_time = min_time + 1
+                    if min_time + 1 < grid[neigh_i][neigh_j]:
+                        neigh_time =  grid[neigh_i][neigh_j] + ((grid[neigh_i][neigh_j] - min_time) % 2 == 0)
+                    if dists[neigh_i][neigh_j] > neigh_time:
+                        dists[neigh_i][neigh_j] = neigh_time
+                        heapq.heappush(min_heap, (neigh_time, neigh_i, neigh_j))
+
+
+        if dists[rows - 1][cols - 1] == float('inf'):
+            return -1
+        return dists[rows - 1][cols - 1]
+                        
+#anoher way
+class Solution:
+    def minimumTime(self, grid: List[List[int]]) -> int:
+        '''
+        i can only visit a cell (i,j) if i visit it at >= grid[i][j]
+        we can only visit a cell up down left right
+        
+        return minimum time required to rech -1
+        if i'm at cell (i,j) with time t, i can only visit neigh cells is a neigh cell (ii,jj)
+        has grid[ii][jj] >= t
+        consider case where we have to go back and forth between two cells of matrix to unlock other cells
+        each step takes 1 unit time
+        we can walk back and forth repeatedly between a current cell and neigh cell
+        '''
+        #edge case if we can't make the first move
+        if grid[0][1] > 1 and grid[1][0] > 1:
+            return -1
+        
+        rows, cols = len(grid), len(grid[0])
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dists[0][0] = 0 
+        
+        min_heap = [(0,0,0)] #mintime (i,j)
+        seen = set()
+        
+        while min_heap:
+            min_time, i,j = heapq.heappop(min_heap)
+            if min_time < dists[i][j]:
+                continue
+            seen.add((i,j))
+            
+            for di,dj in [[1,0],[-1,0],[0,1],[0,-1]]:
+                neigh_i = di + i
+                neigh_j = dj + j
+                if 0 <= neigh_i < rows and 0 <= neigh_j < cols:
+                    if (neigh_i,neigh_j) in seen:
+                        continue
+                    #if they neighboring cell is 1 away, we can walk to it or get waiting time to get to cell
+                    #if we can immediately visit neighor cell
+                    if grid[neigh_i][neigh_j] <= min_time + 1:
+                        dists[neigh_i][neigh_j] = min_time + 1
+                        heapq.heappush(min_heap, (min_time + 1, neigh_i, neigh_j))
+                    else:
+                        neigh_time = min_time + 1
+                        if min_time + 1 < grid[neigh_i][neigh_j]:
+                            neigh_time =  grid[neigh_i][neigh_j] + ((grid[neigh_i][neigh_j] - min_time) % 2 == 0)
+                        if dists[neigh_i][neigh_j] > neigh_time:
+                            dists[neigh_i][neigh_j] = neigh_time
+                            heapq.heappush(min_heap, (neigh_time, neigh_i, neigh_j))
+
+
+        if dists[rows - 1][cols - 1] == float('inf'):
+            return -1
+        return dists[rows - 1][cols - 1]
+                        
+                
