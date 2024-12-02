@@ -2306,6 +2306,65 @@ class Solution:
         
         return sig
     
+#dfs, convert 2d to 1d and make transistion matrix
+class Solution:
+    def slidingPuzzle(self, board: List[List[int]]) -> int:
+        '''
+        dfs solution, decompose 2d to 1d, then find the indices to where we can look up to switch to
+        for example if we have the array [[1,2,3],[4,0,5]]
+        [1,2,3,4,0,5]
+        then we can mapp the locatino of the indices to the swap spots
+        0 : [1, 3],
+        1 : [0, 2, 4],
+        2 : [1, 5],
+        3: [0, 4],
+        4: [3, 5, 1],
+        5: [4, 2],
+        '''
+        # Direction map for zero's possible moves in a flattened 1D array (2x3 board)
+    directions = [
+        [1, 3],
+        [0, 2, 4],
+        [1, 5],
+        [0, 4],
+        [3, 5, 1],
+        [4, 2],
+    ]
+
+    def slidingPuzzle(self, board: List[List[int]]) -> int:
+        # Helper method to swap characters at indices i and j in the string
+        def _swap(s, i, j):
+            s = list(s)
+            s[i], s[j] = s[j], s[i]
+            return "".join(s)
+
+        # Convert the 2D board into a string representation to use as state
+        start_state = "".join(str(num) for row in board for num in row)
+
+        # Dictionary to store the minimum moves for each visited state
+        visited = {}
+
+        def _dfs(state, zero_pos, moves):
+            # Skip if this state has been visited with fewer or equal moves
+            if state in visited and visited[state] <= moves:
+                return
+            visited[state] = moves
+
+            # Try moving zero to each possible adjacent position
+            for next_pos in self.directions[zero_pos]:
+                new_state = _swap(
+                    state, zero_pos, next_pos
+                )  # Swap to generate new state
+                _dfs(
+                    new_state, next_pos, moves + 1
+                )  # Recursive DFS with updated state and move count
+
+        # Start DFS traversal from initial board state
+        _dfs(start_state, start_state.index("0"), 0)
+
+        # Return the minimum moves required to reach the target state, or -1 if unreachable
+        return visited.get("123450", -1)
+    
 #################################
 # 2924. Find Champion II
 # 26NOV24
@@ -2623,4 +2682,197 @@ class Solution:
             return -1
         return dists[rows - 1][cols - 1]
                         
+###############################################
+# 2204. Distance to a Cycle in Undirected Graph
+# 30DEC24
+###############################################
+class Solution:
+    def distanceToCycle(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        we have n nodes with bi-directional edge list
+        distance between two nodes (u,v) is the minimum number of edges that are need to go from (u to v)
+        return ans array where ans[i] is the min distance between the i'th node and the any node in the cycle
+        
+        first find cycle and detect nodes in the cycle
+        multipoint bfs (i.e queue up each node in the cycle)
+        using dfs for contains cycle is is easy, its finding node in the cycle
+        if we dfs and keep track of the order of visited nodes
+        
+        i can use kahns's algo, first start with nodes with 0 indegree
+        keep going until we can continue, any nodes left must be part of cycle
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            
+        cycle_nodes = self.find_cycle_node(graph, n)
+        #mult point bfs
+        dists = [float('inf')]*n
+        q = deque([])
+        seen = set()
+        for c in cycle_nodes:
+            dists[c] = 0
+            q.append((0,c))
+        
+        while q:
+            min_dist, curr_node = q.popleft()
+            if dists[curr_node] < min_dist:
+                continue
+            seen.add(curr_node)
+            for neigh in graph[curr_node]:
+                if neigh in seen:
+                    continue
+                
+                neigh_dist = dists[curr_node] + 1
+                if dists[neigh] > min_dist:
+                    dists[neigh] = neigh_dist
+                    q.append((neigh_dist, neigh))
+                    
+        return dists
+                    
+    
+    def find_cycle_node(self,graph,n):
+        indegree = [0]*n
+        
+        for node,child in graph.items():
+            for c in child:
+                indegree[c] += 1
+        
+        q = deque([])
+        for node,count in enumerate(indegree):
+            if count == 1:
+                q.append(node)
+        
+        while q:
+            curr = q.popleft()
+            for neigh in graph[curr]:
+                indegree[neigh] -= 1
+                if indegree[neigh] == 1:
+                    q.append(neigh)
+        
+        #nodes with two edges are part of cycle
+        cycle_nodes = []
+        for i,count in enumerate(indegree):
+            if count == 2:
+                cycle_nodes.append(i)
+        
+        return cycle_nodes
+        
+class Solution:
+    def distanceToCycle(self, n: int, edges: List[List[int]]) -> List[int]:
+        '''
+        we can use dfs to find the nodes in the cycle
+        once we find the nodes in the cycle. we treat all nodes in this cycle as the root,
+        then we can just dfs for each node, and store the minimum distances from the root
+        
+        the key for using dfs to find the cycles is to keep a seen set (for backtracking)
+        and another array to follow node to parents back up
+        very similar to the contains cycles, exceapt the once we find the cycle follow parents back up
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        visited = [False]*n
+        in_cycle = [False]*n
+        parent = [False]*n
+        
+        self.contains_cycle(0,parent,graph,visited, in_cycle)
+        #clear visited
+        visited = [False]*n
+        dists = [0]*n
+        
+        for i in range(n):
+            if in_cycle[i]:
+                self.calc_distances(i,0, graph,dists,visited,in_cycle)
+                break
+        
+        return dists
+    
+    
+    def contains_cycle(self, curr, parent, graph, visited, in_cycle):
+        #mark
+        visited[curr] = True
+        for neigh in graph[curr]:
+            #i could come back to curr from another 
+            if not visited[neigh]:
+                parent[neigh] = curr
+                if self.contains_cycle(neigh,parent, graph, visited, in_cycle):
+                    return True
+            #i still dont get why this is the trigger for sart of cycle
+            elif parent[curr] != neigh:
+                in_cycle[neigh] = True
+                temp = curr
+                while temp != neigh:
+                    in_cycle[temp] = True
+                    temp = parent[temp]
+        
+        return True
+    
+    def calc_distances(self, curr_node, curr_dist, graph, dists, visited, in_cycle):
+        visited[curr_node] = True
+        dists[curr_node] = curr_dist
+        for neigh in graph[curr_node]:
+            if visited[neigh]:
+                continue
+            neigh_dist = 0 if in_cycle[neigh] else curr_dist + 1
+            self.calc_distances(neigh, neigh_dist,graph, dists, visited, in_cycle)
+        
+##############################################
+# 2097. Valid Arrangement of Pairs (REVISTED)
+# 02DEC24
+#############################################
+class Solution:
+    def validArrangement(self, pairs: List[List[int]]) -> List[List[int]]:
+        '''
+        graph problem
+        we need to find an eulerian path of this graph
+        i need to mapp end of i interval to start of another interval and start of interval to another end
+        i cant look through every other jth pair if im on the ith pair, too long
+        start or end nodes will have indegree zero
+        
+        eulerian path touches each edge once
+        
+        for eulerian paths, keep track of indegree and outdegree, and look for diffence between them
+        in an undirected graph, all nodes hav even degree or exatcly two have oad degree
+        in directed graph,
+            each nodes out == in
+            or exactly one node has one more out going edge
+                i.e out = in + 1, which is out starting point
+            
+            if there is more than one such node, we can use any to find eulerian path
+            tracking difference just means starting node's degree diff == 1
+        
+        post order dfs first, neighs before node (or children before node)
+        intuition on why postorder
+            if we are at u, with unvisited nodes (v), we need to visit them first because we need to eventually come back to u
+            in the eulerian path, but not all edges might come back to u
+            
+        iterative version is kwown as Hierholzer
+        '''
+        graph = defaultdict(list)
+        degree = Counter()
+        #degree diff
+        for u,v in pairs:
+            graph[u].append(v)
+            degree[u] += 1
+            degree[v] -= 1
+            
+        for start in graph:
+            if degree[start] == 1:
+                break
+        
+        self.ans = []
+        
+        def dfs(node):
+            neighs = graph[node]
+            while neighs:
+                neigh = neighs.pop()
+                dfs(neigh)
+                self.ans.append([node,neigh])
+            
+        dfs(start)
+        return self.ans[::-1]
                 
