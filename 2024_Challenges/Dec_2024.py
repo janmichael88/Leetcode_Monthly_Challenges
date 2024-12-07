@@ -151,3 +151,42 @@ class Solution:
         
             
         return True
+    
+############################################################
+# 2554. Maximum Number of Integers to Choose From a Range I
+# 06DEC24
+###########################################################
+class Solution:
+    def maxCount(self, banned: List[int], n: int, maxSum: int) -> int:
+        '''
+        can only pick numbers from [1,n] but they cannot be banned
+        can only use once, and their sum shouldn't exceed maxSum
+        n is small
+        there can be multiple
+        sort banned incrreasing, then talk the smallest
+
+        you need to use set, since they might not be unique!
+        '''
+        banned = set(banned)
+        count = 0
+        curr_sum = 0
+        b_idx = 0
+        
+        for num in range(1,n+1):
+            #is banned
+            if num in banned:
+                continue
+            if curr_sum + num > maxSum:
+                return count
+            #otherwise we an just take it
+            curr_sum += num
+            count += 1
+
+        return count
+        
+#binary search variant is just that instead of hashing to look for a banned number
+#you is binary search in sorted(banned) to find it
+
+
+
+        
