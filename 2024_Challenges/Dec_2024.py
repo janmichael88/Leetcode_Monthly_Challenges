@@ -187,6 +187,136 @@ class Solution:
 #binary search variant is just that instead of hashing to look for a banned number
 #you is binary search in sorted(banned) to find it
 
-
-
+##########################################
+# 1760. Minimum Limit of Balls in a Bag
+# 07DEC24
+##########################################
+class Solution:
+    def minimumSize(self, nums: List[int], maxOperations: int) -> int:
+        '''
+        i need to perform maxoperations
+        an operation is the result if splitting a bag into two marbles
+        penalty is the maximum of balls in bag
+        minimize this penalty
+        if we have some number k, we can make this is small as possible by doing
+        say we have a number 7, if we split to [1,6], the penalty is just 6
+        but if we split to [4,3], the penalty is 4, if we want to minimize penalty for one bag, we should just [k//2,k//2-1]
+        we can further reduce 4 -> [2,2] and 3 -> [1,2]
         
+        if we have a bag with k balls, and maxoperations
+        we can make, 2**k bags if k is large enough, provided we use it on that kth bag, 
+        intuition:
+            say we a limit k_balls
+            can we determine if its possible to split the balss so that no bag contains more than k_balls
+        
+        given nums[i] balls, how man ops would it take to make it so that in any of the bags, there at most k_balls
+        we need to find the number of splits to ensure no bag exceeds this k_balls
+        trick -> ceil(a/b) == (a + b - 1) // b
+        we cant have partial balls, so we round up, if we round down, we lose a ball
+        '''
+        left = 1
+        right = max(nums)
+        ans = -1
+        
+        while left <= right:
+            mid = left + ((right - left) // 2)
+            if self.at_most(nums,mid,maxOperations):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+    
+    def at_most(self, nums, k_balls, maxOperations):
+        total_operations = 0
+        for num in nums:
+            #if bigger than k_balls, we need to split into bags so that its <= k_balls
+            if num > k_balls:
+                needed_ops = (num - 1) // k_balls
+                total_operations += needed_ops
+                
+        return total_operations <= maxOperations
+            
+############################################
+# 2054. Two Best Non-Overlapping Events
+# 08DEC24
+#############################################
+class Solution:
+    def maxTwoEvents(self, events: List[List[int]]) -> int:
+        '''
+        choose at most two events that are non-overlapping and maximize their sum
+        start,end times are inclusive, if event ends at time t, must choose another event starting at t + 1
+        if i sorted the events, i can pick an event, then binary search  for the next event that ends after i[1] 
+        but then i would need to find the event that has the max value, max to the right
+        need to binary search for the start time just greater than the current end
+        '''
+        n = len(events)
+        events.sort(key = lambda x : x[0])
+        right_maxs = [0]*n
+        right_maxs[n-1] = events[n-1][2] #get value
+        for i in range(n-2,-1,-1):
+            right_maxs[i] = max(right_maxs[i+1],events[i][2] )
+        
+        ans = 0
+        for i in range(n):
+            curr_start,curr_end,curr_value = events[i]
+            ans = max(ans,curr_value) #i dont have to take two events
+            #binary seach for curr_end + 1
+            left = i + 1
+            right = n - 1
+            best_idx = -1
+            while left <= right:
+                mid = left + (right - left) // 2
+                if events[mid][0] <= curr_end:
+                    left = mid + 1
+                else:
+                    best_idx = mid
+                    right = mid - 1
+            if best_idx != -1:
+                ans = max(ans,curr_value, curr_value + right_maxs[best_idx])
+        
+        return ans
+                
+#can also do dp, 0/1 knapsack, but for the 1 case, binary search for it
+class Solution:
+    def maxTwoEvents(self, events: List[List[int]]) -> int:
+        '''
+        we can also do dp,
+        keep track of number of events taken and and index
+        dp(event,index)
+        if events == 2 or index >= len(events) base cae
+        '''
+        n = len(events)
+        events.sort(key = lambda x : x[0])
+        memo = {}
+        
+        def dp(i,count):
+            if i >= len(events) or count == 2:
+                return 0
+            if (i,count) in memo:
+                return memo[(i, count)]
+            left = i + 1
+            right = n - 1
+            best_idx = -1
+            while left <= right:
+                mid = left + (right - left) // 2
+                if events[mid][0] <= events[i][1]:
+                    left = mid + 1
+                else:
+                    best_idx = mid
+                    right = mid - 1
+            
+            if best_idx != -1:
+                take = events[i][2] + dp(best_idx,count+1)
+            else:
+                #take at least one event
+                take = events[i][2]
+            no_take = dp(i+1,count)
+                
+            ans = max(take,no_take)
+            memo[(i,count)] = ans
+            return ans
+        
+        return dp(0,0)
+                
