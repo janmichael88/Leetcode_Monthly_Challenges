@@ -320,3 +320,134 @@ class Solution:
         
         return dp(0,0)
                 
+#########################
+# 3152. Special Array II
+# 10DEC24
+#########################
+class Solution:
+    def isArraySpecial(self, nums: List[int], queries: List[List[int]]) -> List[bool]:
+        '''
+        speical array -> every pair of its adjacent elements contains two number with different parity
+        for each query q, we need to see if the subarray is speical or not
+        split array into some non intersected continupus speical subarrays
+        for each query check that the frist and last elements are in same subarray
+        '''
+        intervals = []
+        curr_interval = [0]
+        n = len(nums)
+        for i in range(1,n):
+            if (nums[i-1] % 2) != (nums[i] % 2):
+                curr_interval.append(i)
+            else:
+                intervals.append(curr_interval)
+                curr_interval = [i]
+        
+        if curr_interval:
+            intervals.append(curr_interval)
+        
+        #hash each index to a group
+        group = 0
+        mapp = {}
+        for sub in intervals:
+            for i in sub:
+                mapp[i] = group
+            
+            group += 1
+        
+        
+        ans = []
+        for l,r in queries:
+            ans.append(mapp[l] == mapp[r])
+        
+        return ans
+    
+#############################################################
+# 2981. Find Longest Special Substring That Occurs Thrice I
+# 12DEC24
+###############################################################
+class Solution:
+    def maximumLength(self, s: str) -> int:
+        '''
+        sliding window
+        valid criteria is iff winow only has 1 elements and occurs at least three times
+        oh whoops we need the the acutal substring
+        brute force should work
+        '''
+        counts = Counter()
+        ans = -1
+        n = len(s)
+        for i in range(n):
+            for j in range(i+1,n+1):
+                substring = s[i:j]
+                if len(set(substring)) == 1:
+                    counts[substring] += 1
+                    if counts[substring] >= 3:
+                        ans = max(ans,j-i)
+        
+        return ans
+    
+class Solution:
+    def maximumLength(self, s: str) -> int:
+        '''
+        sliding window
+        valid criteria is iff winow only has 1 elements and occurs at least three times
+        oh whoops we need the the acutal substring
+        brute force should work
+        
+        we can optimize in the inner loop using hashmaep
+        just jeep track the the last character added if its not break out of the loop
+        hashing strings takes too long, so instead of the key being the string
+        intuition:
+            since all special substrings consist of equal chars, the key signature will be (char, count_chars)
+            
+        #make sure to do part 2
+        
+            
+        '''
+        counts = Counter()
+        ans = -1
+        n = len(s)
+        for i in range(n):
+            last_char = ""
+            curr_length = 0
+            for j in range(i,n):
+                if s[j] == last_char or last_char == "":
+                    last_char = s[j]
+                    curr_length += 1
+                    counts[(last_char,curr_length)] += 1
+                    if counts[(last_char,curr_length)] >= 3:
+                        ans = max(ans,j-i+1)
+                else:
+                    break
+                
+                    
+        
+        return ans
+
+############################################################
+# 2779. Maximum Beauty of an Array After Applying Operation
+# 12DEC24
+#############################################################
+class Solution:
+    def maximumBeauty(self, nums: List[int], k: int) -> int:
+        '''
+        in one operation, we can pick an index i
+        replace nums[i] with in integer in range [nums[i] -k, nums[i] + 1]
+        beauty is longet subsequence conssiting of equal elements
+        we can use any number of operations
+        [a,b,c,d]
+        if we sort the array, then we can just compare the left and right bounds of the subarray
+        if nums[rigt] - nums[left] > 2*k, it cannot be a valid array
+        '''
+        nums.sort()
+        n = len(nums)
+        left = 0
+        ans = 0
+        for right,num in enumerate(nums):
+            while nums[right] - nums[left] > 2*k:
+                left += 1
+            
+            ans = max(ans, right - left + 1)
+        
+        return ans
+        
