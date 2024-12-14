@@ -450,4 +450,67 @@ class Solution:
             ans = max(ans, right - left + 1)
         
         return ans
+
+#########################################################
+# 2593. Find Score of an Array After Marking All Elements
+# 13DEC24
+#########################################################
+class Solution:
+    def findScore(self, nums: List[int]) -> int:
+        '''
+        map nums to list of indices,
+        then use heap or sort to go in order
+        use the mapp to retrieve indices
+        '''
+        n = len(nums)
+        marked = [False]*n
+        min_heap = [(num,i) for i,num in enumerate(nums)]
+        heapq.heapify(min_heap)
         
+        score = 0
+        while min_heap:
+            curr_num,curr_idx = heapq.heappop(min_heap)
+            if not marked[curr_idx]:
+                score += curr_num
+                #its adjacents
+                if curr_idx - 1 >= 0 and not marked[curr_idx - 1]:
+                    marked[curr_idx - 1] = True
+                if curr_idx + 1 < n and not marked[curr_idx + 1]:
+                    marked[curr_idx + 1] = True
+        
+        return score
+                    
+#######################################
+# 2762. Continuous Subarrays
+# 14DEC24
+#######################################
+class Solution:
+    def continuousSubarrays(self, nums: List[int]) -> int:
+        '''
+        a continuous subarray is some subarray[i:j]
+        where abs(nums[i] - nums[i_2]) <= 2 for all pairs in the subarray
+        if we have a continuous subarray of size k, then it will contribute k*(k+1) subarrays
+        we only need to know if the max of subarray - min of a subarray > 2
+        we can track the maximmum and minmum for a current window
+        if the current window is not continueuous, keep shrinking until it becomes
+        if we have a valid window, then any subarray ending with right is valid so its right - left + 1
+        we can either say ending at right or starting with left
+        '''
+        left = 0
+        counts = Counter()
+        ans = 0
+        
+        for right,num in enumerate(nums):
+            counts[num] += 1
+            #this part can be optimized many differwant ways
+            while left < right and max(counts) - min(counts) > 2:
+                counts[nums[left]] -= 1
+                if counts[nums[left]] == 0:
+                    del counts[nums[left]]
+                left += 1
+            
+            #count valid continuous subarrays
+            ans += right - left + 1
+        
+        return ans
+            
