@@ -513,4 +513,36 @@ class Solution:
             ans += right - left + 1
         
         return ans
-            
+
+########################################
+# 1891. Cutting Ribbons
+# 15DEC24
+########################################
+class Solution:
+    def maxLength(self, ribbons: List[int], k: int) -> int:
+        '''
+        binary search on k
+        try cutting each ribbon with some value of k
+        try see if we can cut ribbons to size at least x, and see if we have at least k ribbons
+        '''
+        left = 1
+        right = max(ribbons)
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.f(ribbons,mid,k):
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        if ans != -1:
+            return ans
+        return 0
+    
+    def f(self,ribbons,candidate,k):
+        count = 0
+        for r in ribbons:
+            count += r//candidate
+        
+        return count >= k
