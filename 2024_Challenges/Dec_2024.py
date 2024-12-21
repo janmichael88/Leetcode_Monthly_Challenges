@@ -360,6 +360,89 @@ class Solution:
             ans.append(mapp[l] == mapp[r])
         
         return ans
+#binary search
+class Solution:
+    def isArraySpecial(self, nums: List[int], queries: List[List[int]]) -> List[bool]:
+        '''
+        if we peform an initial traversal of nums, we can identify the violating indices
+        i.e if nums[i] % 2 == num[i-1] % 2, then at index i causea a violation
+        so then any array [i.e index from left to right] containg any of these indices is not special
+        now we have reduced the problem to finding if any violating index is in [start,end]
+        we can solve this using binary search
+        '''
+        ans = [False] * len(queries)
+        violating_indices = []
+
+        for i in range(1, len(nums)):
+            # same parity, found violating index
+            if nums[i] % 2 == nums[i - 1] % 2:
+                violating_indices.append(i)
+
+        for i in range(len(queries)):
+            query = queries[i]
+            start = query[0]
+            end = query[1]
+
+            found_violating_index = self.binarySearch(
+                start + 1, end, violating_indices
+            )
+
+            if found_violating_index:
+                ans[i] = False
+            else:
+                ans[i] = True
+
+        return ans
+
+    def binarySearch(
+        self, start: int, end: int, violating_indices: List[int]
+    ) -> bool:
+        left = 0
+        right = len(violating_indices) - 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            violating_index = violating_indices[mid]
+
+            if violating_index < start:
+                # check right half
+                left = mid + 1
+            elif violating_index > end:
+                # check left half
+                right = mid - 1
+            else:
+                # violatingIndex falls in between start and end
+                return True
+
+        return False
+    
+#line sweep
+class Solution:
+    def isArraySpecial(self, nums: List[int], queries: List[List[int]]) -> List[bool]:
+        '''
+        line sweep variant
+        count violations and accumlate
+        count the total number of violative indices up to the violating index,
+        then we need to check if the count of violating indices from left to right is 0
+        '''
+        ans = [False] * len(queries)
+        prefix = [0] * len(nums)
+        prefix[0] = 0
+
+        for i in range(1, len(nums)):
+            if nums[i] % 2 == nums[i - 1] % 2:
+                # new violative index found
+                prefix[i] = prefix[i - 1] + 1
+            else:
+                prefix[i] = prefix[i - 1]
+
+        for i in range(len(queries)):
+            query = queries[i]
+            start = query[0]
+            end = query[1]
+
+            ans[i] = prefix[end] - prefix[start] == 0
+
+        return ans
     
 #############################################################
 # 2981. Find Longest Special Substring That Occurs Thrice I
@@ -451,6 +534,36 @@ class Solution:
         
         return ans
 
+#binary search variant
+#look for the upper bound from index i after sorting
+#its just num + 2*k
+class Solution:
+    def maximumBeauty(self, nums: list[int], k: int) -> int:
+        nums.sort()
+        max_beauty = 0
+
+        for i, num in enumerate(nums):
+            # Find the farthest index where the value is within the range [num, num + 2 * k]
+            upper_bound = self._find_upper_bound(nums, num + 2 * k)
+            # Update the maximum beauty based on the current range
+            max_beauty = max(max_beauty, upper_bound - i + 1)
+
+        return max_beauty
+
+    def _find_upper_bound(self, arr: list[int], val: int) -> int:
+        low, high, result = 0, len(arr) - 1, 0
+
+        # Perform binary search to find the upper bound
+        while low <= high:
+            mid = low + (high - low) // 2
+            if arr[mid] <= val:
+                result = mid  # Update the result and move to the right half
+                low = mid + 1
+            else:
+                high = mid - 1  # Move to the left half
+
+        return result
+
 #########################################################
 # 2593. Find Score of an Array After Marking All Elements
 # 13DEC24
@@ -514,6 +627,9 @@ class Solution:
         
         return ans
 
+#optimzing max and min using heaps
+
+
 ########################################
 # 1891. Cutting Ribbons
 # 15DEC24
@@ -546,3 +662,89 @@ class Solution:
             count += r//candidate
         
         return count >= k
+    
+############################################
+# 769. Max Chunks To Make Sorted (REVISTED)
+# 19DEC24
+#############################################
+class Solution:
+    def maxChunksToSorted(self, arr: List[int]) -> int:
+        '''
+        partition arr into subarrays,
+        sort each partition, and concat, the result should be the sorted array
+        return the largest number of chunks we can make to sort the array
+        
+        notice that n is very small
+        compare agaonst sorted arr
+        and keep chunking them
+        '''
+        sorted_arr = sorted(arr)
+        left = 0
+        n = len(arr)
+        chunks = 0
+        for right in range(n):
+            curr_chunk = arr[left:right+1]
+            if sorted(curr_chunk) == sorted_arr[left : right + 1]:
+                chunks += 1
+                left = right + 1
+        
+        return chunks
+    
+###########################################
+# 2415. Reverse Odd Levels of Binary Tree
+# 20DEC24
+##########################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def reverseOddLevels(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        just store them i deque, then just reverse
+        '''
+        curr = root
+        q = deque([curr])
+        level = 0
+        
+        while q:
+            N = len(q)
+            if level % 2 == 1:
+                for i in range(N//2):
+                    temp = q[N - i - 1].val
+                    q[N - i - 1].val = q[i].val
+                    q[i].val = temp
+            for _ in range(N):
+                curr = q.popleft()
+                if curr.left:
+                    q.append(curr.left)
+                if curr.right:
+                    q.append(curr.right)
+            level += 1
+        
+        return root
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def reverseOddLevels(self, root) -> TreeNode:
+        self.__traverse_DFS(root.left, root.right, 0)
+        return root
+
+    def __traverse_DFS(self, left_child, right_child, level):
+        if left_child is None or right_child is None:
+            return
+        # If the current level is odd, swap the values of the children.
+        if level % 2 == 0:
+            temp = left_child.val
+            left_child.val = right_child.val
+            right_child.val = temp
+
+        self.__traverse_DFS(left_child.left, right_child.right, level + 1)
+        self.__traverse_DFS(left_child.right, right_child.left, level + 1)
