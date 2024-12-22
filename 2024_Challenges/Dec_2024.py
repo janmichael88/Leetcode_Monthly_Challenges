@@ -748,3 +748,87 @@ class Solution:
 
         self.__traverse_DFS(left_child.left, right_child.right, level + 1)
         self.__traverse_DFS(left_child.right, right_child.left, level + 1)
+
+#################################################
+# 2872. Maximum Number of K-Divisible Components
+# 21DEC24
+#################################################
+class Solution:
+    def maxKDivisibleComponents(self, n: int, edges: List[List[int]], values: List[int], k: int) -> int:
+        '''
+        we have a tree (undirected, but its a root)
+        we want to maximize the number of compoenents (after splitting) such that each subtree sum is divible by k
+        build the graph and dfs from the root, if we have a we subtree with sum divisible by k, we split
+        we have n nodes
+        and we wiill always have n-1 edges
+        root is always zero
+        
+        hint says start at the leaf nodes and work up, we can roll up sums to the parent
+        '''
+        if n < 2:
+            return 1
+        graph = defaultdict(list)
+        indegree = [0]*n
+        for a,b in edges:
+            graph[a].append(b)
+            indegree[b] += 1
+            graph[b].append(a)
+            indegree[a] += 1
+            
+        #starting from leaf nodes, if this node is divisble by k, its a split
+        #if it not, carry up to parent
+        
+        q = deque([])
+        for i,d in enumerate(indegree):
+            if d == 1:
+                q.append(i)
+        
+        components = 0
+        while q:
+            curr = q.popleft()
+            indegree[curr] -= 1
+            if values[curr] % k == 0:
+                components += 1
+
+            #roll sums up to parent
+            for parent in graph[curr]:
+                values[parent] += values[curr]
+                indegree[parent] -= 1
+                if indegree[parent] == 1:
+                    q.append(parent)
+        
+
+        return components
+    
+class Solution:
+    def maxKDivisibleComponents(self, n: int, edges: List[List[int]], values: List[int], k: int) -> int:
+        '''
+        we can also use dp/dfs
+        if a node's sum is divisble by k, we can split it
+        '''
+        if n < 2:
+            return 1
+        graph = defaultdict(list)
+        indegree = [0]*n
+        for a,b in edges:
+            graph[a].append(b)
+            indegree[b] += 1
+            graph[b].append(a)
+            indegree[a] += 1
+            
+        comps = [0]
+        
+        self.dp(0,-1,graph,values,comps,k)
+        return comps[0]
+        
+    
+    def dp(self,node,parent,graph,values,comps,k):
+        subtree_sum = values[node]
+        for child in graph[node]:
+            if child != parent:
+                subtree_sum += self.dp(child,node,graph,values,comps,k)
+        
+        if subtree_sum % k == 0:
+            comps[0] += 1
+        
+        return subtree_sum
