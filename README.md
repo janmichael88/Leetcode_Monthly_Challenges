@@ -70,13 +70,13 @@
   </tr>
     <tr>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2024-11.gif" width="100"></td>
+    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2024-12.gif" width="100"></td>
   </tr>
 </table>
 
-* Also have solutions for premium content in the scripts as well as annotated notes!
 
 In Progress:
-* Dec 2024
+* Jan 2025
 
 ### Completed:
 Column 1 | Column 2 | Column 3
@@ -99,4 +99,4 @@ Dec 2023 | Jan 2024 | Feb 2024
 Mar 2024 | Apr 2024 | May 2024
 Jun 2024 | Jul 2024 | Aug 2024
 Sep 2024 | Oct 2024 | Nov 2024
-         |          |
+Dec 2024 |          |

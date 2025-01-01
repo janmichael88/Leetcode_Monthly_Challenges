@@ -832,3 +832,218 @@ class Solution:
             comps[0] += 1
         
         return subtree_sum
+    
+###################################################################
+# 2471. Minimum Number of Operations to Sort a Binary Tree by Level
+# 23DEC24
+###################################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def minimumOperations(self, root: Optional[TreeNode]) -> int:
+        '''
+        bfs by level,
+        problem is how to determine swaps to sort a level
+        you just need to maek it strictly increasing
+        all the values are unique
+        [2,1,4,3]
+        this is just two swaps
+        [1,2,3,4]
+        but if we just counted misplaced we'd get 4
+        count nuber of elements smaller that are to the right
+        cycle sort!
+        '''
+        ans = 0
+        q = deque([root])
+        
+        while q:
+            ans += self.count_swaps(q)
+            N = len(q)
+            
+            for _ in range(N):
+                curr = q.popleft()
+                if curr.left:
+                    q.append(curr.left)
+                
+                if curr.right:
+                    q.append(curr.right)
+        return ans
+    
+    def count_swaps(self,arr):
+        swaps = 0
+        arr = [t.val for t in arr]
+        sorted_arr = sorted(arr)
+        
+        mapp = {val : i for (i,val) in enumerate(arr)}
+        for i in range(len(arr)):
+            if arr[i] != sorted_arr[i]:
+                swaps += 1
+                
+                #get what is suppoed to be there
+                temp = mapp[sorted_arr[i]]
+                mapp[arr[i]] = temp
+                arr[temp] = arr[i]
+            
+        return swaps
+
+
+###################################################
+# 689. Maximum Sum of 3 Non-Overlapping Subarrays
+# 29DEC24
+###################################################
+class Solution:
+    def maxSumOfThreeSubarrays(self, nums: List[int], k: int) -> List[int]:
+        '''
+        need to find three nonoverlapping subarrays of length k with max sum
+        and return starting indices of each position
+        if there are ties, return leftmost indices (lexogrphically)
+        first off, if 3*k > n, cant do
+
+        dp on the prefix sum array
+        after getting the sums of all length three, we can sort and find them
+        i dont think i can greedily do it
+        fuck you need to use dp to find the optimum and then find the path!
+
+        first dp states are (i,rem)
+        max sum possible starting at index i with rem subarrays remaining
+        '''
+        n = len(nums)
+        if 3*k > n:
+            return [] #no indices
+        
+        #precompute k length sums for each index
+        sums = [sum(nums[:k])]
+        for i in range(k,len(nums)):
+            sums.append(sums[-1] - nums[i-k] + nums[i])
+        memo = {}
+        self.dp(sums,0,k,3,memo) #essentially precompute to get all (i,rem) values
+        path = []
+        self.get_path(sums,0,k,3,memo,path)
+        return path
+
+    def dp(self,nums,i,k,remaining,memo):
+        if remaining == 0:
+            return 0
+        if i >= len(nums):
+            #in the case the we go out of bounds but have no more remaning, or have remaining
+            return float("-inf") if remaining > 0 else 0
+        if (i,remaining) in memo:
+            return memo[(i,remaining)]
+        
+        take = nums[i] + self.dp(nums,i+k,k,remaining - 1, memo)
+        no_take = self.dp(nums,i+1,k,remaining,memo)
+        ans = max(take,no_take)
+        memo[(i,remaining)] = ans
+        return ans
+    
+    def get_path(self,nums,i,k,remaining,memo,path):
+        if i >= len(nums) or remaining == 0:
+            return
+        #solve for the current optimum, just rereive from memo at this point
+        take = nums[i] + self.dp(nums,i+k,k,remaining - 1,memo)
+        no_take = self.dp(nums,i+1,k,remaining, memo)
+        if take >= no_take:
+            path.append(i)
+            self.get_path(nums,i+k,k,remaining - 1, memo,path)
+        else:
+            self.get_path(nums,i+1,k,remaining,memo,path)
+
+#need to learn path retreival now
+#bottom up solution
+class Solution:
+    def maxSumOfThreeSubarrays(self, nums: List[int], k: int) -> List[int]:
+        '''
+        build up answer incrementally from 1 to 3
+        if we know the best possible ans for two subarrays, we can find the thirs
+        need largest sum of three subarrays that are non-overlapping
+        '''
+        n = len(nums)
+        pref_sum = [0]*(n+1)
+        #pref_sum = [0] + list(accumulate(nums))
+        for i in range(1,n+1):
+            pref_sum[i] = pref_sum[i-1] + nums[i-1]
+        
+        #read as best sum/index up to index i using t subarrays
+        best_sum = [[0]*(n+1) for _ in range(4)]
+        best_idx = [[0]*(n+1) for _ in range(4)]
+
+        for t in [1,2,3]:
+            for i in range(k*t,n+1):
+                #curr sum as well as best sum before that
+                curr_sum = pref_sum[i] - pref_sum[i-k]
+                curr_sum += best_sum[t-1][i-k]
+
+                #if new sum is more optimal, we update
+                if curr_sum > best_sum[t][i-1]:
+                    best_sum[t][i] = curr_sum
+                    best_idx[t][i] = i - k
+                #otherwise just dp carry
+                else:
+                    best_sum[t][i] = best_sum[t][i-1]
+                    best_idx[t][i] = best_idx[t][i-1]
+        
+        ans = []
+        end = n
+        for t in [3,2,1]:
+            ans.append(best_idx[t][end])
+            end = best_idx[t][end]
+        
+        return ans[::-1]
+
+#linear time three pointer
+class Solution:
+    def maxSumOfThreeSubarrays(self, nums: List[int], k: int) -> List[int]:
+        n = len(nums)
+        max_sum = 0
+
+        # Create prefix sum array using accumulate
+        prefix_sum = [0] + list(accumulate(nums))
+
+        # Initialize arrays for best indices
+        left_max_idx = [0] * n
+        right_max_idx = [0] * n
+        result = [0] * 3
+
+        # Calculate best left subarray positions
+        curr_max_sum = prefix_sum[k] - prefix_sum[0]
+        for i in range(k, n):
+            curr_sum = prefix_sum[i + 1] - prefix_sum[i + 1 - k]
+            if curr_sum > curr_max_sum:
+                left_max_idx[i] = i + 1 - k
+                curr_max_sum = curr_sum
+            else:
+                left_max_idx[i] = left_max_idx[i - 1]
+
+        # Calculate best right subarray positions
+        right_max_idx[n - k] = n - k
+        curr_max_sum = prefix_sum[n] - prefix_sum[n - k]
+        for i in range(n - k - 1, -1, -1):
+            curr_sum = prefix_sum[i + k] - prefix_sum[i]
+            if curr_sum >= curr_max_sum:
+                right_max_idx[i] = i
+                curr_max_sum = curr_sum
+            else:
+                right_max_idx[i] = right_max_idx[i + 1]
+
+        # Find optimal middle position
+        for i in range(k, n - 2 * k + 1):
+            left_idx = left_max_idx[i - 1]
+            right_idx = right_max_idx[i + k]
+            total_sum = (
+                prefix_sum[i + k]
+                - prefix_sum[i]
+                + prefix_sum[left_idx + k]
+                - prefix_sum[left_idx]
+                + prefix_sum[right_idx + k]
+                - prefix_sum[right_idx]
+            )
+
+            if total_sum > max_sum:
+                max_sum = total_sum
+                result = [left_idx, i, right_idx]
+
+        return result
