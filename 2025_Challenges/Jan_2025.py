@@ -342,5 +342,183 @@ class Solution:
 
         return ans
 
+###############################################
+# 1408. String Matching in an Array (REVISTED)
+# 08JAN25
+##############################################
+#using rabin karp
+class Solution:
+    def stringMatching(self, words: List[str]) -> List[str]:
+        '''
+        kmp or rabin karp
+        good review on rabin karp
+        then we need to run rabin karp for each word on any of the words
+        '''
+        ans = []
+        for i in range(len(words)):
+            for j in range(len(words)):
+                if i == j:
+                    continue
+                if self.rabin_karp(words[i],words[j]):
+                    ans.append(words[i])
+                    break
+        return ans
+
+    def rabin_karp(self, s, t):
+        p = 31
+        m = int(1e9 + 9)
+        S = len(s)
+        T = len(t)
+        
+        # Compute powers of p modulo m
+        p_pow = [1] * max(S, T)
+        for i in range(1, len(p_pow)):
+            p_pow[i] = (p_pow[i - 1] * p) % m
+
+        # Compute hash values for all prefixes of t
+        h = [0] * (T + 1)
+        for i in range(T):
+            h[i + 1] = (h[i] + (ord(t[i]) - ord('a') + 1) * p_pow[i]) % m
+
+        # Compute the hash of the pattern s
+        h_s = 0
+        for i in range(S):
+            h_s = (h_s + (ord(s[i]) - ord('a') + 1) * p_pow[i]) % m
+
+        # Find occurrences of s in t
+        occurrences = []
+        for i in range(T - S + 1):
+            cur_h = (h[i + S] + m - h[i]) % m
+            if cur_h == h_s * p_pow[i] % m:
+                return True
+        return False
+
+#using KMP, just review it
+class Solution:
+    def stringMatching(self, words: List[str]) -> List[str]:
+        '''
+        the idea with string matching brute force is that we can have partial matches of s in t, but not all the way
+        do we need to just re start or can we use some kind of past information to match the string
+        remember past prefixes
+        lps array, longest prefix also a suffix
+        remember prev prefix already a match, then shift
+        proper prefix, any prefix not the string itself
+        '''
+        ans = []
+        for i in range(len(words)):
+            for j in range(len(words)):
+                if i == j:
+                    continue
+                if self.kmp(words[i],words[j]):
+                    ans.append(words[i])
+                    break
+        
+        return ans
+    
+    def kmp(self, sub, main):
+        #make lps array
+        #lps reads as prefix of string that's also a suffix, but the longest
+        lps = [0]*len(sub)
+        i = 1
+        length = 0
+
+        while i < len(sub):
+            if sub[i] == sub[length]:
+                length += 1
+                lps[i] = length
+                i += 1
+            else:
+                if length > 0:
+                    length = lps[length - 1] #go back the length of the previous longest prefix also a suffix
+                else:
+                    i += 1
+        
+        main_idx = 0
+        sub_idx = 0
+
+        while main_idx < len(main):
+            if main[main_idx] == sub[sub_idx]:
+                main_idx += 1
+                sub_idx += 1
+                if sub_idx == len(sub):
+                    return True
+            else:
+                if sub_idx > 0:
+                    #use lps to skip
+                    sub_idx = lps[sub_idx - 1]
+                else:
+                    main_idx += 1
+        
+        return False
+
+########################################
+# 3042. Count Prefix and Suffix Pairs I
+# 09JAN25
+########################################
+#brute force
+class Solution:
+    def countPrefixSuffixPairs(self, words: List[str]) -> int:
+        '''
+        is this not just the lps array
+        brute force works just fine,
+        make sure to go back and look at KMP 
+        '''
+        pairs = 0
+        n = len(words)
+        for i in range(n):
+            for j in range(i+1,n):
+                curr = words[i]
+                comp = words[j]
+                if curr == comp[:len(curr)] and curr == comp[-len(curr):]:
+                    pairs += 1
+        
+        return pairs
+
+#trie review
+class Node:
+    def __init__(self,):
+        self.children = defaultdict()
+
+class Trie:
+    def __init__(self,):
+        self.root = Node()
+    
+    def insert(self,word):
+        curr = self.root
+        for ch in word:
+            if ch not in curr.children:
+                curr.children[ch] = Node()
+            curr = curr.children[ch]
+    
+    def starts_with(self,pref):
+        curr = self.root
+        for ch in pref:
+            if ch not in curr.children:
+                return False
+            curr = curr.children[ch]
+        
+        return True
 
 
+class Solution:
+    def countPrefixSuffixPairs(self, words: List[str]) -> int:
+        '''
+        other way is to make trie
+        make two tries, pref trie, and suff trie
+        '''
+        n = len(words)
+        ans = 0
+        for i in range(n):
+            pref_trie = Trie()
+            suff_trie = Trie()
+            #insert both
+            pref_trie.insert(words[i])
+            suff_trie.insert(words[i][::-1])
+            for j in range(i):
+                if len(words[j]) > len(words[i]):
+                    continue
+                
+                if pref_trie.starts_with(words[j]) and suff_trie.starts_with(words[j][::-1]):
+                    ans += 1
+        
+        return ans
