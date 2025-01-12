@@ -522,3 +522,63 @@ class Solution:
                     ans += 1
         
         return ans
+
+####################################
+# 916. Word Subsets (REVISTED)
+# 10JAN25
+#####################################
+class Solution:
+    def wordSubsets(self, words1: List[str], words2: List[str]) -> List[str]:
+        '''
+        just check counts
+        but first count all of word2
+        its just the max array of all words in words
+        '''
+        max_all_words_2 = Counter()
+        for w in words2:
+            count_w = Counter(w)
+            for k,v in count_w.items():
+                max_all_words_2[k] = max(max_all_words_2[k],v)
+        
+        ans = []
+
+        for w in words1:
+            count_w = Counter(w)
+            if not (max_all_words_2 - count_w):
+                ans.append(w)
+        
+        return ans
+
+#######################################
+# 1400. Construct K Palindrome Strings
+# 12JAN25
+#######################################
+class Solution:
+    def canConstruct(self, s: str, k: int) -> bool:
+        '''
+        to make a palindrome:
+            odd length, fix center with any letter, then i can use smae letters left and right
+                i.e the counts of letters used on left == right
+            even, length
+                no center, counts used left == counts used right
+
+        if every char in string can be palindrome, we can make at least len(s) palindromes
+        can't be bigger than k
+
+        even freq chars don't need a center, we can distribute them across all palindromes
+        the minimum number of palindroms we can make == the number of odd-frequency characets, 
+        each odd-ref requires its own palindrome
+        
+        '''
+        if len(s) < k:
+            return False
+        #count chars
+        char_counts = Counter(s)
+        #check off count chars
+        odd_counts = 0
+        for char,count in char_counts.items():
+            if count % 2 == 1:
+                odd_counts += 1
+        
+        #we are always left with pairs that can't be matched!
+        return odd_counts <= k
