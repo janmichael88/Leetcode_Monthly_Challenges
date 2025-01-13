@@ -582,3 +582,122 @@ class Solution:
         
         #we are always left with pairs that can't be matched!
         return odd_counts <= k
+    
+#####################################################
+# 2116. Check if a Parentheses String Can Be Valid
+# 12JAN25
+######################################################
+class Solution:
+    def canBeValid(self, s: str, locked: str) -> bool:
+        '''
+        we can only change s at indices is locked[i] == '0'
+        we are free to pick open or close
+        first try to balance using stack trick, but make sure to pair indices too
+        anything left over on the stack, see if we can balanc it
+        '''
+        unbalanced = []
+        for i,ch in enumerate(s):
+            if ch == ')':
+                if unbalanced and unbalanced[-1][1] == '(':
+                    unbalanced.pop()
+                else:
+                    unbalanced.append((i,ch))
+            else:
+                unbalanced.append((i,ch))
+        
+        if not unbalanced:
+            return True
+
+        if len(unbalanced) % 2:
+            return False
+        #try to balance
+        #balance in pairs
+        for i in range(0,len(unbalanced),2):
+            curr_idx,curr_ch = unbalanced[i]
+            next_idx,next_ch = unbalanced[i+1]
+            if curr_ch == ')':
+                if next_ch == ')':
+                    if locked[curr_idx] == '1':
+                        return False
+                if next_ch == '(':
+                    if locked[curr_idx] == '1' and locked[next_idx] == '1':
+                        return False
+            elif curr_ch == '(':
+                if next_ch == '(':
+                    if locked[next_idx] == '1':
+                        return False
+        return True
+    
+class Solution:
+    def canBeValid(self, s: str, locked: str) -> bool:
+        '''
+        idea is to keep track of opeb brackets and unlocked indices
+        if we have any unmatched opening, we can close them with unlocked indices
+        as we track, we keep track of any closed paranthesses and match them with any open ones
+
+        if at any oint the number of closing exceeds opening, and there are no unlocked indices
+        we cant balance them, retrun galse
+        '''
+        if len(s) % 2 == 1:
+            return False
+        
+        open_brackets = []
+        unlocked_brackets = []
+
+        for i,ch in enumerate(s):
+            #add index to unlocked
+            if locked[i] == '0':
+                unlocked_brackets.append(i)
+            elif ch == '(':
+                open_brackets.append(i)
+            #if closing, match it with opend
+            elif ch == ')':
+                if open_brackets:
+                    open_brackets.pop()
+                elif unlocked_brackets:
+                    unlocked_brackets.pop()
+                else:
+                    return False
+        
+        #no just clear them
+        #but for any inlocked index, it must precede the open brackets index
+        while open_brackets and unlocked_brackets and unlocked_brackets[-1] > open_brackets[-1]:
+            open_brackets.pop()
+            unlocked_brackets.pop()
+        
+        return not open_brackets
+    
+class Solution:
+    def canBeValid(self, s: str, locked: str) -> bool:
+        '''
+        we can do two pass in constant space
+        we count the violations
+        if closed and locked, decreemnt
+        if < 0 return false
+        otherwise increment
+
+        you can do this in the general case,
+        must check balance left to right and right to left
+        '''
+        balance = 0
+        n = len(s)
+        for i,ch in enumerate(s):
+            if locked[i] == '1' and ch == ')':
+                balance -= 1
+                if balance < 0:
+                    return False
+            else:
+                balance += 1
+        
+        balance = 0
+        for i in range(n-1,-1,-1):
+            if locked[i] == '1' and s[i] == '(':
+                balance -= 1
+                if balance < 0:
+                    return False
+            else:
+                balance += 1
+
+        return n % 2 == 0
+        
+
