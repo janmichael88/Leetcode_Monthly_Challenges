@@ -699,5 +699,51 @@ class Solution:
                 balance += 1
 
         return n % 2 == 0
-        
+    
+##################################################
+# 3223. Minimum Length of String After Operations
+# 14JAN24
+##################################################
+class Solution:
+    def minimumLength(self, s: str) -> int:
+        '''
+        to keep deleting we would want to pick the index i such that counts of s[i] to left and to right of i are as large as possible
+        heap of counts
+        we need at least three occurences of a character
+        '''
+        counts = Counter(s)
+        max_heap = [(-count,ch) for ch,count in counts.items()]
+        heapq.heapify(max_heap)
+        ans = len(s)
 
+        while max_heap and abs(max_heap[0][0]) >= 3:
+            curr_count, curr_char = heapq.heappop(max_heap)
+            curr_count += 2
+            ans -= 2
+            heapq.heappush(max_heap, (curr_count,curr_char))
+        
+        return ans
+        
+#ezzzz
+class Solution:
+    def minimumLength(self, s: str) -> int:
+        '''
+        we actually dont need a heap
+        count up the chars
+        if chars have even parity use use all but one
+        intution, if a char appears and off number of times, we can keep one instance of if and remove thest
+
+        '''
+        counts = Counter(s)
+        removals = 0
+
+        for k,v in counts.items():
+            if v >= 3:
+                #if its even we need to leave 2
+                if v % 2 == 0:
+                    removals += v - 2
+                else:
+                    removals += v - 1
+                    
+        
+        return len(s) - removals
