@@ -747,3 +747,182 @@ class Solution:
                     
         
         return len(s) - removals
+
+###################################################
+# 2657. Find the Prefix Common Array of Two Arrays
+# 14JAN25
+###################################################
+from collections import Counter
+class Solution:
+    def findThePrefixCommonArray(self, A: List[int], B: List[int]) -> List[int]:
+        '''
+        arrays are permutations of each other and of equal length
+        common prefix array is the array C, where C[i] == count of numbers present at or before the index\
+        count object at and increment,
+        then check counts
+        '''
+        curr_count = Counter()
+        ans = []
+        n = len(A)
+
+        for i in range(n):
+            curr_count[A[i]] += 1
+            curr_count[B[i]] += 1
+            #count the number of frequencies that == 2
+            temp = Counter(curr_count.values())
+            ans.append(temp[2])
+        
+        return ans
+
+class Solution:
+    def findThePrefixCommonArray(self, A: List[int], B: List[int]) -> List[int]:
+        '''
+        the frequencies of each number can be at most 2
+        we can use a a single hashset to keep track of the common numbers at each index i
+        the ans is just (i+1)*2 - len(hashset)
+        if the elements in the two sets are always different, there will be 2*(i+1) elements in the set and 0 common elements
+        if there are K elements in common, then there are 2*(i+1) - K elements (the commone ones)
+        at each index i, we increment by 2*(i+1) elements
+        tricky math
+        '''
+        common_array = []
+        intersection = set()
+        for i in range(len(A)):
+            intersection.add(A[i])
+            intersection.add(B[i])
+            common_array.append((i+1)*2 - len(intersection))
+        
+        return common_array
+    
+class Solution:
+    def findThePrefixCommonArray(self, A: List[int], B: List[int]) -> List[int]:
+        '''
+        we compute common on the fly
+
+        '''
+        ans = []
+        counts = Counter()
+        common = 0
+
+        for i in range(len(A)):
+            counts[A[i]] += 1
+            if counts[A[i]] == 2:
+                common += 1
+            counts[B[i]] += 1
+            if counts[B[i]] == 2:
+                common += 1
+            
+            ans.append(common)
+        
+        return ans
+    
+#######################
+# 2429. Minimize XOR
+# 15JAN25
+########################
+#almost the right idea
+#but we want to clear from the least signicant virst
+class Solution:
+    def minimizeXor(self, num1: int, num2: int) -> int:
+        '''
+        need x to have the same number of bits as num 2
+        and x XOR 1 to be as small as possible
+        we can count the bits in num2, and move them all to lower registers
+        for some number x, if the set bits align with num1, they go to zero
+        greddily make the number
+        '''
+        set_bits = self.count_bits(num2)
+        #for each set bit in num1 (from the left) pair it with a bit
+        #we need to clear out the most significan bits
+        #any left over bits should be set to 1
+        curr_set_bits = self.count_bits(num1)
+        bits = self.get_bits(num1)
+        i = len(bits) - 1
+        #if we don't have enough bits
+        while curr_set_bits < set_bits:
+            if i < 0:
+                bits = [0] + bits
+                i = 0
+            if bits[i] == 0:
+                bits[i] = 1
+                curr_set_bits += 1
+            
+            i -= 1
+        
+        #clear out from most sig
+        while curr_set_bits > set_bits:
+            if i < 0:
+                bits = [0] + bits
+                i = 0
+            if bits[i] == 1:
+                bits[i] = 0
+                curr_set_bits -= 1
+            i -= 1
+        
+        ans = 0
+        for num in bits:
+            ans = (ans << 1) | num
+        return ans
+
+    def count_bits(self,num):
+        set_bits = 0
+        while num:
+            set_bits += 1
+            num = num & (num - 1)
+        
+        return set_bits
+    
+    def get_bits(self,num):
+        bits = []
+        while num:
+            bits.append(num & 1)
+            num = num >> 1
+        
+        return bits[::-1]
+    
+#we can use bitwise opertors
+class Solution:
+    def minimizeXor(self, num1: int, num2: int) -> int:
+        '''
+        insted of using an array, we can use bitwise operators
+        and change at the bit registers
+        cant just clear out the most significant bits in num1
+        because want to minimue the number x XOR num1
+        '''
+        ans = num1
+        target_set_bits = self.count_set_bits(num2)
+        curr_set_bits = self.count_set_bits(num1)
+
+        i = 0
+
+        while curr_set_bits < target_set_bits:
+            if not self.is_set(ans,i):
+                ans = self.set_bit(ans,i)
+                curr_set_bits += 1
+            i += 1
+        
+        while curr_set_bits > target_set_bits:
+            if self.is_set(ans,i):
+                ans = self.unset_bit(ans,i)
+                curr_set_bits -= 1
+            
+            i += 1
+        
+        return ans
+
+    def is_set(self, num, bit):
+        return (num & (1 << bit)) != 0
+    
+    def set_bit(self,num,bit):
+        return num | (1 << bit)
+    
+    #for unsetting invert the mask using ~(1 << i)
+    def unset_bit(self,num,bit):
+        return num & ~(1 << bit)
+    
+    def count_set_bits(self,num):
+        bits = 0
+        while num:
+            bits += 1
+            num = num & (num - 1)
+        return bits
