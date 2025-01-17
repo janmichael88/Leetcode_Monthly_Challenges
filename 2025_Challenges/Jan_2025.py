@@ -926,3 +926,50 @@ class Solution:
             bits += 1
             num = num & (num - 1)
         return bits
+    
+#######################################
+# 2425. Bitwise XOR of All Pairings
+# 16JAN25
+########################################
+class Solution:
+    def xorAllNums(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        count up the number of times each number appears in the pairing
+        then only grab the odds and xor them
+        if some number x apperas in nums1, it will appear len(nums2) times
+        if some number y appears in num2, it will appear len(nums1) times
+        then just cancel out even parities
+        '''
+        counts = Counter()
+        for num in nums1:
+            counts[num] += len(nums2)
+        
+        for num in nums2:
+            counts[num] += len(nums1)
+        
+        xor = 0
+        for k,v in counts.items():
+            if v % 2 == 1:
+                xor ^= k
+        
+        return xor
+    
+class Solution:
+    def xorAllNums(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        bit maniuplations
+        if len(nums2) is even, each element in nums1 will cancel out
+        if len(nums2) is odd, each element will have one value (i.e a^ a^a) is just a
+        store the registers in xor1 and xor2
+        '''
+        xor1, xor2 = 0,0
+
+        if len(nums2) % 2 == 1:
+            for num in nums1:
+                xor1 = xor1 ^ num
+        
+        if len(nums1) % 2 == 1:
+            for num in nums2:
+                xor2 = xor2 ^ num
+        
+        return xor1 ^ xor2
