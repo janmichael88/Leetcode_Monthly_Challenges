@@ -973,3 +973,159 @@ class Solution:
                 xor2 = xor2 ^ num
         
         return xor1 ^ xor2
+    
+###################################
+# 2683. Neighboring Bitwise XOR
+# 17JAN25
+###################################
+class Solution:
+    def doesValidArrayExist(self, derived: List[int]) -> bool:
+        '''
+        we have an array dervied, that came from another array, orignla
+        where dervied[i] = original[i] ^ original[i+1]
+        if i == n - 1:
+            dervied[i] = originla[i] ^ original[0]
+        
+        this means circular array
+        if derived[i] = 1, then orig[i],orig[i+1] = [0,1] or [1,0]
+        if dervied[i] = 0, then orig[i],orig[i+1] = [1,1] or [0,0]
+        build the array on the fly and check for violation?
+        say we have 
+        orig = [a,b,c,d]
+        derived = [a^b,b^c,c^d,d^a]
+        if derived did indeed come from original,
+        then we could xor all of them and get zero
+        if it didnt, then dervied could not have possibly come from original
+        '''
+        check = 0
+        for num in derived:
+            check = check ^ num
+        
+        return check == 0
+    
+
+class Solution:
+    def doesValidArrayExist(self, derived: List[int]) -> bool:
+        '''
+        in addition to XOR beeing commutative and associate there is another property
+        if we have
+        a ^ b = c
+        a ^ b ^ b = c ^ b
+        a ^ 0 = c ^ b
+        a = c ^ b
+        so we have 
+        derived[i] = original[i] ^ original[i+1]
+        we can find the original
+        original[i] = dervied[i] ^ originl[i+1]
+        or
+        original[i+1] = derived[i] ^ original[i]
+        we can actuall build the arrays, if we start with original[0] = 0 or 1
+        one we have the oringall array, we need to check the cirular property in the original array
+        '''
+        #start with zero
+        zero_first = [0]
+        for num in derived:
+            zero_first.append(zero_first[-1] ^ num)
+        
+        #start with one
+        one_first = [1]
+        for num in derived:
+            one_first.append(one_first[-1] ^ num)
+        
+        return (zero_first[-1] == zero_first[0]) or (one_first[-1] == one_first[0])
+    
+################################################################
+# 1368. Minimum Cost to Make at Least One Valid Path in a Grid
+# 18JAN25
+##################################################################
+#good reivew on djisktras
+class Solution:
+    def minCost(self, grid: List[List[int]]) -> int:
+        '''
+        if i'm at cell (i,j) 
+        i can do in the current direction with no cost or i can change it with cost + 1
+            we can do this for all directions
+        states are (i,j,direction)
+        make graph where where (i,j) is connected to all other cells adjacnetl, who's weight is 1
+        else 0 other wise, then do dp in graph
+        it only works on DAGs, here we can have a back edge
+        
+        '''
+        rows,cols = len(grid),len(grid[0])
+        graph = defaultdict(list)
+        dirrs = {1 : [0,1], 2: [0,-1], 3: [1,0], 4:[-1,0]}
+        for i in range(rows):
+            for j in range(cols):
+                for d in dirrs:
+                    if d == grid[i][j]:
+                        di,dj = dirrs[d]
+                        if (0 <= i + di < rows) and (0 <= j + dj < cols):
+                            graph[(i,j)].append((0,i + di, j + dj))
+                    else:
+                        di,dj = dirrs[d]
+                        if (0 <= i + di < rows) and (0 <= j + dj < cols):
+                            graph[(i,j)].append((1,i + di, j + dj))
+        #now do djikstras on graph
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dists[0][0] = 0
+        pq = [(0,0,0)]
+        visited = set()
+
+        while pq:
+            min_dist,i,j = heapq.heappop(pq)
+            if dists[i][j] < min_dist:
+                continue
+            if (i,j) in visited:
+                continue
+            visited.add((i,j))
+
+            for cost,di,dj in graph[(i,j)]:
+                if (di,dj) in visited:
+                    continue
+                new_dist = dists[i][j] + cost
+                if new_dist < dists[di][dj]:
+                    dists[di][dj] = new_dist
+                    heapq.heappush(pq, (new_dist, di,dj))
+        
+        return dists[rows-1][cols-1]
+
+#0,1 bfs, 0 weight to front, 1 to the end
+class Solution:
+    def minCost(self, grid: List[List[int]]) -> int:
+        '''
+        0-1 bfs    
+        '''
+        rows,cols = len(grid),len(grid[0])
+        graph = defaultdict(list)
+        dirrs = {1 : [0,1], 2: [0,-1], 3: [1,0], 4:[-1,0]}
+        for i in range(rows):
+            for j in range(cols):
+                for d in dirrs:
+                    if d == grid[i][j]:
+                        di,dj = dirrs[d]
+                        if (0 <= i + di < rows) and (0 <= j + dj < cols):
+                            graph[(i,j)].append((0,i + di, j + dj))
+                    else:
+                        di,dj = dirrs[d]
+                        if (0 <= i + di < rows) and (0 <= j + dj < cols):
+                            graph[(i,j)].append((1,i + di, j + dj))
+        #now do djikstras on graph
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        dists[0][0] = 0
+        q = deque([])
+        q.append((0,0))
+
+        while q:
+            i,j = q.popleft()
+            for cost,ii,jj in graph[(i,j)]:
+                new_dist = dists[i][j] + cost
+                if dists[ii][jj] > new_dist:
+                    dists[ii][jj] = new_dist
+                    if cost == 1:
+                        q.append((ii,jj))
+                    else:
+                        q.appendleft((ii,jj))
+
+        return dists[rows-1][cols-1]
+
+#i wonder why top down dp don't work
