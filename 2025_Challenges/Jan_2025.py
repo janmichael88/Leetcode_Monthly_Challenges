@@ -1129,3 +1129,52 @@ class Solution:
         return dists[rows-1][cols-1]
 
 #i wonder why top down dp don't work
+
+########################################
+# 407. Trapping Rain Water II (REVISTED)
+# 20JAN25
+########################################
+class Solution:
+    def trapRainWater(self, heightMap: List[List[int]]) -> int:
+        '''
+        min heap and fill the smallest ones first
+        if i'm at some cell (i,j), look at its neighbors
+        the amount of water that can be filled is just the differnce of the largest of its neighbors and the heigh of (i,j)
+        we start from the outer walls then work in
+            we need to fill from the boundaries
+            for a cell to trap water, it must not exceed the smallest height of its neigbors
+            when we add water to this cell, we add it back to the boundary
+            boundary will be the min heap, this prevents water from splling over the boundary
+        
+        now if the cell's height is >= to the boundary height, no water can be trapped above it
+        but it can still be use to trap water to its neighbords
+
+        '''
+        m, n = len(heightMap), len(heightMap[0])
+        heap = []
+        visited = [[0]*n for _ in range(m)]
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+
+        # Push all the block on the border into heap
+        for i in range(m):
+            for j in range(n):
+                if i == 0 or j == 0 or i == m-1 or j == n-1:
+                    heapq.heappush(heap, (heightMap[i][j], i, j))
+                    visited[i][j] = 1
+        
+        result = 0
+        while heap:
+            #get smalest from heap
+            height, i, j = heapq.heappop(heap)    
+            for di, dj in dirrs:
+                x = i + di
+                y = j + dj
+                #neighbores and in bounds check
+                if 0 <= x < m and 0 <= y < n and not visited[x][y]:
+                    #we can store water with differeunt, up to though
+                    result += max(0, height-heightMap[x][y])
+                    next_height = max(heightMap[x][y],height)
+                    heapq.heappush(heap, (next_height, x, y))
+                    #mark
+                    visited[x][y] = 1
+        return result
