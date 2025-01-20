@@ -1178,3 +1178,37 @@ class Solution:
                     #mark
                     visited[x][y] = 1
         return result
+    
+##############################################
+# 2661. First Completely Painted Row or Column
+# 20JAN25
+###############################################
+class Solution:
+    def firstCompleteIndex(self, arr: List[int], mat: List[List[int]]) -> int:
+        '''
+        simulate an mark each index i in arr to the (i,j) where mat[i][j] = i
+        after we paint we need to check all rows and columns for any t hat are complete filled
+        return the index
+
+        then validate row counts filled and col counts filled
+        when i fill a cell (i,j)
+        but then checking takes additional time
+        '''
+        #rrevese mapp of mat
+        rows,cols = len(mat),len(mat[0])
+        mapp = {}
+        for i in range(rows):
+            for j in range(cols):
+                mapp[mat[i][j]] = (i,j)
+        
+        row_counts = [0]*rows
+        col_counts = [0]*cols
+        for idx,i in enumerate(arr):
+            curr_row,curr_col = mapp[i]
+            row_counts[curr_row] += 1
+            col_counts[curr_col] += 1
+            #after incrementing check
+            if row_counts[curr_row] == cols or col_counts[curr_col] == rows:
+                return idx
+        
+        return -1
