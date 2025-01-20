@@ -1212,3 +1212,43 @@ class Solution:
                 return idx
         
         return -1
+
+#########################################
+# 1730. Shortest Path to Get Food
+# 20JAN25
+##########################################
+class Solution:
+    def getFood(self, grid: List[List[str]]) -> int:
+        '''
+        multipoint bfs from all food cells to where i'm standing
+        '''
+        rows,cols = len(grid),len(grid[0])
+        dists = [[float('inf')]*cols for _ in range(rows)]
+        q = deque([])
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == '*':
+                    dists[i][j] = 0
+                    q.append((0,i,j))
+            
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        while q:
+            curr_dist,i,j = q.popleft()
+            for di,dj in dirrs:
+                ii = i + di
+                jj = j + dj
+                if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] in ('O','#'):
+                    neigh_dist = curr_dist + 1
+                    #can be improved
+                    if dists[ii][jj] > neigh_dist:
+                        dists[ii][jj] = neigh_dist
+                        q.append((neigh_dist, ii,jj))
+        ans = float('inf')
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == '#':
+                    ans = min(ans,dists[i][j])
+        if ans == float('inf'):
+            return -1
+        return ans
+        
