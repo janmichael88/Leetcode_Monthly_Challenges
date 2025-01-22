@@ -1251,4 +1251,159 @@ class Solution:
         if ans == float('inf'):
             return -1
         return ans
+    
+##########################
+# 2017. Grid Game
+# 21JAN25
+##########################
+#not quite
+class Solution:
+    def gridGame(self, grid: List[List[int]]) -> int:
+        '''
+        minimizing the opposing robot score is the same as maximizing its current score
+        robots can only move right and down
+        the first robot makes all its moves first
+        the second robot then goes
+        we could do bfs, but we'd need to record the optimal path for robot 1
+        then replace those values with zero and do bfs on the second robot
+        '''
+        #first path for robot 1
+        path = self.dijkstra(grid)
+        #now drop in zeros
+        for i,j in path:
+            grid[i][j] = 0
+        for r in grid:
+            print(r)
+    
+    def dijkstra(self,grid):
+        '''
+        record with path and get maximum score
+        '''
+        dirrs = [(1,0),(0,1)]
+        rows,cols = len(grid),len(grid[0])
+        dists = [[float('-inf')]*cols for _ in range(rows)]
+        dists[0][0] = - grid[0][0]
+        visited = set()
+        prev = {}
+        max_heap = [(-grid[0][0], 0,0)]
         
+        while max_heap:
+            max_weight, i,j = heapq.heappop(max_heap)
+            if dists[i][j] > max_weight:
+                continue
+            visited.add((i,j))
+            for di,dj in dirrs:
+                ii = i + di
+                jj = j + dj
+                if (ii,jj) in visited:
+                    continue
+                if 0 <= ii < rows and 0 <= jj < cols:
+                    neigh_weight = -max_weight + grid[ii][jj]
+                    if neigh_weight > dists[ii][jj]:
+                        dists[ii][jj] = -neigh_weight
+                        prev[(ii,jj)] = (i,j)
+                        heapq.heappush(max_heap, (-neigh_weight, ii,jj))
+                    elif neigh_weight == dists[ii][jj]:
+                        prev[(ii,jj)] = (i,j)
+        print('Dists are: ')
+        for r in dists:
+            print(r)
+        #get path
+        path = []
+        curr = (rows - 1, cols - 1)
+        while curr != (0,0):
+            path.append(curr)
+            curr = prev[curr]
+        path.append(curr)
+        return path[::-1]
+
+#minimizing  the number of points collected by second robot on robot's first path is different than finding the maximum path
+#for robot 1
+
+#not quite, you need to max and min at the same time
+class Solution:
+    def gridGame(self, grid: List[List[int]]) -> int:
+        '''
+        using hints, alludes to pref_sum
+        there are n choice for when the first robot moves to second row
+        the robot can only move down and to the right
+        the aren'y playing move against move, first robot makes all moves in the beginning
+        one robot moves down one time, he can no longer move up
+        find where robot moves down one time optmially
+        then replace zeros, then do robot two
+        '''
+        rows,cols = len(grid),len(grid[0])
+        pref_grid = [[0]*(cols + 1) for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                pref_grid[i][j+1] = pref_grid[i][j] + grid[i][j]
+        
+        #find down index
+        down_idx = -1
+        first_score = float('-inf')
+        for i in range(1,cols+1):
+            left_total = pref_grid[0][i]
+            right_total = pref_grid[1][-1] - pref_grid[1][i-1]
+            #print(left_total, right_total)
+            if left_total + right_total > first_score:
+                first_score = left_total + right_total
+                down_idx = i-1
+        
+        #replace with zeros in original grid up to the down index
+        curr_row = 0
+        for col in range(down_idx+1):
+            grid[curr_row][col] = 0
+        curr_row += 1
+        for col in range(down_idx, cols):
+            grid[curr_row][col] = 0
+        
+        #now do robot 2
+        pref_grid = [[0]*(cols + 1) for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                pref_grid[i][j+1] = pref_grid[i][j] + grid[i][j]
+        
+        ans = 0
+        for i in range(1,cols+1):
+            left_total = pref_grid[0][i]
+            right_total = pref_grid[1][-1] - pref_grid[1][i-1]
+            ans = max(ans, left_total + right_total)
+        
+        return ans
+
+#max-mini or mini-maxi paradigm
+class Solution:
+    def gridGame(self, grid: List[List[int]]) -> int:
+        '''
+        at each turn calculate what robot 2 ccould have gotten
+        assumuing that once robot 1 makes its turn, the cells have been zero'd
+
+        inuition:
+            a robot has n possible turning conditions
+            after robot1 moves, its top row becomes zero up to the index, and the bottom row from that turn index to the end becomes zero
+        
+        if after some turn i, robot 2 must  make his move
+        from robot 2's choise we want to maximize his score
+        robot 2 can take the remaining in the first row to the right
+        or robot2 can take the reaming in the second row to the left
+        robot 2's choices = max(op1,op2)
+        at the same time, robot1 needs to minimize thise
+
+        the goal is to reduce the highest points the second robot can collect
+        '''
+        rows,cols = len(grid),len(grid[0])
+        pref_grid = [[0]*(cols + 1) for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                pref_grid[i][j+1] = pref_grid[i][j] + grid[i][j]
+        
+        ans = float('inf')
+        for i in range(1,cols+1):
+            right_total = pref_grid[0][-1] - pref_grid[0][i]
+            left_total = pref_grid[1][i-1]
+            ans = min(ans, max(right_total,left_total))
+        
+        return ans
+
+
+
