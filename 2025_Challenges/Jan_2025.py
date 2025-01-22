@@ -1406,4 +1406,84 @@ class Solution:
         return ans
 
 
+###########################################
+# 1765. Map of Highest Peak
+# 22JAN25
+###########################################
+class Solution:
+    def highestPeak(self, isWater: List[List[int]]) -> List[List[int]]:
+        '''
+        binary matrix (i,j)
+        0 is land, 1 is water
+        heights must be non-negative, if water, leave at zero
+        any two adjacent cells must have abs height diff at most 1 (up,dowm,left,right)
+        find assignemnt of heights so that the matrix is maximized
+        bfs from all water cells, and find the min distance from each water cell to its nerest water cell
+        reframe the problem as finding the min dist for each water cell (1) to its near land cell (0)
+        this allows heights to increae smoothly form water cells 0/1 matrix
+        '''
+        rows = len(isWater)
+        cols = len(isWater[0])
+        zeros_dist = [[0]*cols for _ in range(rows)]
+        dirrs = [(1,0),(-1,0),(0,-1),(0,1)]
+        
+        q = deque([])
+        seen = [[False]*cols for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                if isWater[i][j] == 1:
+                    q.append((i,j,0))
+                    seen[i][j] = True
+                    
+        while q:
+            x,y,dist = q.popleft()
+            for dx,dy in dirrs:
+                neigh_x = x + dx
+                neigh_y = y + dy
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols and not seen[neigh_x][neigh_y]:
+                    seen[neigh_x][neigh_y] = True
+                    zeros_dist[neigh_x][neigh_y] = dist + 1
+                    q.append((neigh_x,neigh_y,dist+1))
+        
+        
+        return zeros_dist
+    
+#dp solution is more insightful
+class Solution:
+    def highestPeak(self, isWater: List[List[int]]) -> List[List[int]]:
+        '''
+        for the dp solution
+        we find the min dist going down and to the right first
+        then we find the min dist going up and to the left next
+        alternate trick is just to hash the array, and check for neighbors in the hashmapp, just to easily check boundary conditions
 
+        '''
+        rows = len(isWater)
+        cols = len(isWater[0])
+        heights = [[float('inf')]*cols for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                if isWater[i][j] == 1:
+                    heights[i][j] = 0
+        
+        #down and to the right
+        for i in range(rows):
+            for j in range(cols):
+                dirrs = [[-1,0],[0,-1]]
+                min_dist = heights[i][j]
+                for di,dj in dirrs:
+                    if 0 <= i + di < rows and 0 <= j + dj < cols:
+                        min_dist = min(min_dist,heights[i+di][j+dj] + 1)
+                heights[i][j] = min(heights[i][j],min_dist)
+        
+        #up and to the left
+        for i in range(rows - 1,-1,-1):
+            for j in range(cols -1,-1,-1):
+                dirrs = [[1,0],[0,1]]
+                min_dist = heights[i][j]
+                for di,dj in dirrs:
+                    if 0 <= i + di < rows and 0 <= j + dj < cols:
+                        min_dist = min(min_dist,heights[i+di][j+dj] + 1)
+                heights[i][j] = min(heights[i][j],min_dist)
+        
+        return heights
