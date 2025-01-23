@@ -1487,3 +1487,64 @@ class Solution:
                 heights[i][j] = min(heights[i][j],min_dist)
         
         return heights
+    
+#########################################
+# 1267. Count Servers that Communicate
+# 23JAN25
+#########################################
+class Solution:
+    def countServers(self, grid: List[List[int]]) -> int:
+        '''
+        servers can communicate if the are on the same row or column
+        just keep hahset of of servers
+        '''
+        rows,cols = len(grid), len(grid[0])
+        servers = set()
+        
+        #go down rows
+        for i in range(rows):
+            along_row = []
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    along_row.append((i,j))
+            if len(along_row) > 1:
+                for k in along_row:
+                    servers.add(k)
+        
+        #go down cols
+        for j in range(cols):
+            along_col = []
+            for i in range(rows):
+                if grid[i][j] == 1:
+                    along_col.append((i,j))
+            
+            if len(along_col) > 1:
+                for k in along_col:
+                    servers.add(k)
+        
+        return len(servers)
+
+#counting
+class Solution:
+    def countServers(self, grid: List[List[int]]) -> int:
+        '''
+        another way would be to just store row_counts and col_counts
+        then check if a server at some (i,j) has row count and col count > 1, it can communicate
+        '''
+        rows,cols = len(grid),len(grid[0])
+        row_counts = [0]*rows
+        col_counts = [0]*cols
+
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    row_counts[i] += 1
+                    col_counts[j] += 1
+        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    if row_counts[i] > 1 or col_counts[j] > 1:
+                        ans += 1
+        return ans
