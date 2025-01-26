@@ -1548,3 +1548,244 @@ class Solution:
                     if row_counts[i] > 1 or col_counts[j] > 1:
                         ans += 1
         return ans
+
+############################################
+# 802. Find Eventual Safe States (REVISTED)
+# 24JAN25
+############################################
+class Solution:
+    def eventualSafeNodes(self, graph: List[List[int]]) -> List[int]:
+        '''
+        need to find all safe nodes
+        a node is safe if every possible path starting from that node leads to a terminal node
+        any node with outgoing edges are is a sage node
+        brute force would be to first find all terminal nodes
+        then for every node that isn't terminal check if every path to see if it leads to a terminal node
+        terminal nodes are safe
+        can't do dfs on each node
+        if we know we have to end at terminal nodes, then let's start from them, reverse the edges and start from terminal nodes
+        any node in a cycle cannot be be safe, and node visited during traversal while kahn is safe
+        '''
+        n = len(graph)
+        degree = [0]*n
+        #reverse graph
+        reverse_graph = defaultdict(list)
+        for i,neighs in enumerate(graph):
+            for neigh in neighs:
+                reverse_graph[neigh].append(i)
+                degree[i] += 1
+   
+        q = deque([])
+        #start with leaves
+        for i in range(n):
+            if degree[i] == 0:
+                q.append(i)
+  
+        safe = [False]*n
+        while q:
+            curr = q.popleft()
+            safe[curr] = True
+            for neigh in reverse_graph[curr]:
+                degree[neigh] -= 1
+                if degree[neigh] == 0:
+                    q.append(neigh)
+        
+        return [i for i in range(n) if safe[i]]
+
+#TLE checking from each node, for all nodes
+class Solution:
+    def eventualSafeNodes(self, graph: List[List[int]]) -> List[int]:
+        '''
+        we can also use dfs to find cycles
+        '''
+        n = len(graph)
+        ans = []
+        seen = set()
+        for i in range(n):
+            if not self.has_cycle(i,seen,graph):
+                ans.append(i)
+        return ans
+        
+    def has_cycle(self,node,seen,graph):
+        if node in seen:
+            return True
+        seen.add(node)
+        for neigh in graph[node]:
+            if self.has_cycle(neigh,seen,graph):
+                return True
+        seen.remove(node)
+            
+        return False
+
+####################################################################
+# 2948. Make Lexicographically Smallest Array by Swapping Elements
+# 25JAN25
+####################################################################
+class DSU:
+    def __init__(self, n):
+        self.n = n
+        self.size = [1]*n
+        self.parent = [i for i in range(n)]
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+
+        if x_par == y_par:
+            return
+        elif self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = self.parent[y_par]
+
+class Solution:
+    def lexicographicallySmallestArray(self, nums: List[int], limit: int) -> List[int]:
+        '''
+        we can only swap indices (i,j) is abs(nums[i] - nums[j]) <= limit
+        if we have a valid (i,j) then to make it currentl smaller put the smaller of the two to the left and bigger to the right
+        union find on groups after sorting array
+        if numbers are connected by limit, we are free to swap all of them.
+        imagine [4,3,2,1], limit = 1, we can get [1,2,3,4]
+        [3,4,1,2]
+        [2,4,1,3]
+        [1,4,2,3]
+        [1,3,2,4]
+        [1,2,3,4]
+        for any group of numbers in a connected componented, we can sort them lexographically
+        since we sorted, we have access to the current minimum value in the group
+        i need the orignial array
+        need to maintain the oringal sorted array
+        '''
+        #maintain indices
+        nums_sorted = sorted([(num,i) for i,num in enumerate(nums)])
+        n = len(nums)
+        dsu = DSU(n)
+        for i in range(n-1):
+            if nums_sorted[i+1][0] - nums_sorted[i][0] <= limit:
+                dsu.union(nums_sorted[i+1][1],nums_sorted[i][1])
+        
+        groups = defaultdict(list)
+        for i in range(n):
+            groups[dsu.find(i)].append(nums[i])
+        
+        #sort within groups
+        for k,v in groups.items():
+            v_sorted = sorted(v)
+            groups[k] = v_sorted
+        
+        ans = []
+        for i in range(n):
+            ans.append(groups[dsu.find(i)].pop(0))
+        
+        return ans
+    
+#using union  find with no so, do union find on numbers instead! not indices
+class DSU:
+    def __init__(self, nums):
+        self.n = len(nums)
+        self.size = defaultdict(int)
+        self.parent = defaultdict(int)
+        for e in nums:
+            self.parent[e] = e
+            self.size[e] = 1
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+
+        if x_par == y_par:
+            return
+        elif self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = self.parent[y_par]
+
+class Solution:
+    def lexicographicallySmallestArray(self, nums: List[int], limit: int) -> List[int]:
+        '''
+        dont maintain indices while sorting
+        do union find on values of nums instead of their indices
+        '''
+        #maintain indices
+        nums_sorted = sorted(nums)
+        n = len(nums)
+        dsu = DSU(nums)
+        for i in range(n-1):
+            if nums_sorted[i+1] - nums_sorted[i] <= limit:
+                dsu.union(nums_sorted[i+1],nums_sorted[i])
+        
+        groups = defaultdict(deque)
+        for e in nums_sorted:
+            groups[dsu.find(e)].append(e)
+        
+        ans = []
+        for e in nums:
+            ans.append(groups[dsu.find(e)].popleft())
+        
+        return ans
+
+#sort and hashmap
+class Solution:
+    def lexicographicallySmallestArray(self, nums: List[int], limit: int) -> List[int]:
+        '''
+        there is a no union find solution
+        key, swapping indices within a limit is transisivve
+        i.e if swap(a,b) and swap(b,c) we can swap(a,c)
+        find numbers that are all swappable and put into groups
+        then order the groups increasingly
+        rearrragnment of any permutation can be dont
+        sort numbers and add to groups
+        we keep adding to the same group if within the limit
+        otherwise we make a new group
+        need to mainting smallest numbers, so use deque
+        '''
+        nums_sorted = sorted(nums)
+
+        curr_group = 0
+        num_to_group = {}
+        num_to_group[nums_sorted[0]] = curr_group
+
+        group_to_list = {}
+        group_to_list[curr_group] = deque([nums_sorted[0]])
+
+        #need to init with first number
+        for i in range(1, len(nums)):
+            if abs(nums_sorted[i] - nums_sorted[i - 1]) > limit:
+                # new group
+                curr_group += 1
+
+            # assign current element to group
+            num_to_group[nums_sorted[i]] = curr_group
+
+            # add element to sorted group deque
+            if curr_group not in group_to_list:
+                group_to_list[curr_group] = deque()
+            group_to_list[curr_group].append(nums_sorted[i])
+
+        # iterate through input and overwrite each element with the next element in its corresponding group
+        for i in range(len(nums)):
+            num = nums[i]
+            group = num_to_group[num]
+            nums[i] = group_to_list[group].popleft()
+
+        return nums
