@@ -1789,3 +1789,115 @@ class Solution:
             nums[i] = group_to_list[group].popleft()
 
         return nums
+
+###########################################
+# 1462. Course Schedule IV
+# 27JAN25
+###########################################
+#bfs
+class Solution:
+    def checkIfPrerequisite(self, numCourses: int, prerequisites: List[List[int]], queries: List[List[int]]) -> List[bool]:
+        '''
+        we need to check if some course u is a preq of another course v
+        if courses are in a cycle, each is a prequiste of the aother
+        bfs from each course and keep track in array
+        reachable[i][j], where j is reachable from i
+        us array to check the queires given
+        note in queries, classes will not point to themselves
+        '''
+        graph = defaultdict(list)
+        for u,v in prerequisites:
+            graph[u].append(v)
+        
+        can_reach = [[False]*numCourses for _ in range(numCourses)]
+        for i in range(numCourses):
+            self.bfs(graph,i,can_reach)
+        
+        ans = []
+
+        for u,v in queries:
+            ans.append(can_reach[u][v])
+        
+        return ans
+    
+    def bfs(self,graph,start,can_reach):
+        seen = set()
+        q = deque([])
+        q.append(start)
+
+        while q:
+            curr = q.popleft()
+            if curr != start:
+                can_reach[start][curr] = True
+            if curr in seen:
+                continue
+            seen.add(curr)
+            for neigh in graph[curr]:
+                if neigh not in seen:
+                    q.append(neigh)
+
+#dfs
+class Solution:
+    def checkIfPrerequisite(self, numCourses: int, prerequisites: List[List[int]], queries: List[List[int]]) -> List[bool]:
+        '''
+        we need to check if some course u is a preq of another course v
+        if courses are in a cycle, each is a prequiste of the aother
+        bfs from each course and keep track in array
+        reachable[i][j], where j is reachable from i
+        us array to check the queires given
+        note in queries, classes will not point to themselves
+        '''
+        graph = defaultdict(list)
+        for u,v in prerequisites:
+            graph[u].append(v)
+        
+        can_reach = [[False]*numCourses for _ in range(numCourses)]
+        for i in range(numCourses):
+            seen = set()
+            self.dfs(graph,i,i,can_reach,seen)
+        
+        ans = []
+
+        for u,v in queries:
+            ans.append(can_reach[u][v])
+        
+        return ans
+    
+    def dfs(self,graph,start,curr,can_reach,seen):
+        if start != curr:
+            can_reach[start][curr] = True
+        seen.add(curr)
+
+        for neigh in graph[curr]:
+            if neigh not in seen:
+                self.dfs(graph,start,neigh,can_reach,seen)
+
+#floyd warshall
+class Solution:
+    def checkIfPrerequisite(
+        self,
+        numCourses: int,
+        prerequisites: List[List[int]],
+        queries: List[List[int]],
+    ) -> List[bool]:
+        isPrerequisite = [[False] * numCourses for _ in range(numCourses)]
+
+        for edge in prerequisites:
+            isPrerequisite[edge[0]][edge[1]] = True
+
+        for intermediate in range(numCourses):
+            for src in range(numCourses):
+                for target in range(numCourses):
+                    # If there is a path src -> intermediate and intermediate -> target, then src -> target exists as well
+                    isPrerequisite[src][target] = isPrerequisite[src][
+                        target
+                    ] or (
+                        isPrerequisite[src][intermediate]
+                        and isPrerequisite[intermediate][target]
+                    )
+
+        answer = []
+        for query in queries:
+            answer.append(isPrerequisite[query[0]][query[1]])
+
+        return answer
