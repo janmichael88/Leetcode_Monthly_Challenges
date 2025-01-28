@@ -1901,3 +1901,177 @@ class Solution:
             answer.append(isPrerequisite[query[0]][query[1]])
 
         return answer
+    
+#############################################
+# 2658. Maximum Number of Fish in a Grid
+# 28JAN25
+##############################################
+class Solution:
+    def findMaxFish(self, grid: List[List[int]]) -> int:
+        '''
+        land cell is grid[i][j] = 0
+        water cell is grid[i][j] > 0
+        fisher can start at and water cell (i,j) and do opertions any number of times
+            * catch all fick at cell (r,c)
+            * move to any adjcant water cell
+
+        dfs/bfs/union find on connected componsnets and take the max
+        '''
+        rows,cols = len(grid),len(grid[0])
+        seen = set()
+        ans = 0
+
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] > 0 and (i,j) not in seen:
+                    score = [0]
+                    self.dfs((i,j),grid,seen,score)
+                    ans = max(ans,score[0])
+        return ans
+    
+    def dfs(self,curr,grid,seen,score):
+        seen.add(curr)
+        i,j = curr
+        score[0] += grid[i][j]
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        rows,cols = len(grid),len(grid[0])
+
+        for di,dj in dirrs:
+            ii = i + di
+            jj = j + dj
+            if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] > 0 and (ii,jj) not in seen:
+                self.dfs((ii,jj),grid,seen,score)
+
+#bfs
+class Solution:
+    def findMaxFish(self, grid: List[List[int]]) -> int:
+        '''
+        land cell is grid[i][j] = 0
+        water cell is grid[i][j] > 0
+        fisher can start at and water cell (i,j) and do opertions any number of times
+            * catch all fick at cell (r,c)
+            * move to any adjcant water cell
+
+        dfs/bfs/union find on connected componsnets and take the max
+        '''
+        rows,cols = len(grid),len(grid[0])
+        seen = set()
+        ans = 0
+
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] > 0 and (i,j) not in seen:
+                    s = self.bfs((i,j),grid,seen)
+                    ans = max(ans,s)
+        return ans
+    
+    def bfs(self,curr,grid,seen):
+        score = 0
+        q = deque([])
+        seen.add(curr)
+        q.append(curr)
+        
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        rows,cols = len(grid),len(grid[0])
+        while q:
+            i,j = q.popleft()
+            score += grid[i][j]
+            seen.add((i,j))
+
+            for di,dj in dirrs:
+                ii = i + di
+                jj = j + dj
+                if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] > 0 and (ii,jj) not in seen:
+                    q.append((ii,jj))
+                    seen.add((ii,jj))
+        return score
+
+######################################################
+# 2127. Maximum Employees to Be Invited to a Meeting
+# 28JAN25
+######################################################
+class Solution:
+    def maximumInvitations(self, favorite: List[int]) -> int:
+        '''
+        also important to note there is only one favorite, not multiple favorites
+            how would it work if there are multiple favorites??
+            interesting that the table is round
+        a person will only attend if they can sit next to their favorite person at the table
+        hint says to make graph where there is a directed edges from fav[i] to i
+        then there will be a combindatino of cycles and acyclic edges
+        we can choose employees by :
+        1. selecting a cycle of the raph
+            the employees that do not lie in the cycle can cnever se seated (unless cycle is of length 2)
+        1. combining acylic chains
+            at most two chains can be combined by a cycle of lenght 2, where each chain ends on one of the emlpyees in the cycle
+        idea is that cycles can be seated together, and we can add to the cycles with chains
+        and chains can link other cycles
+        need to find the longest possible extended paths for each endpoint of a 2-cycle and combine
+        thrree steps
+        1. cycle detection
+        2. finding longest path
+            single cycle > 2, find largest
+            multiple 2 cycles, we can link them
+            max possible length for any group is the sum of the longest paths from both endpoints + 1
+        3. final comparison
+            we take the larger of the two, max length form extended paths or size of the largest cycle
+        '''
+        num_people = len(favorite)
+        reversed_graph = [[] for _ in range(num_people)]
+
+        # Build the reversed graph where each node points to its admirers
+        for person in range(num_people):
+            reversed_graph[favorite[person]].append(person)
+
+        longest_cycle = 0
+        two_cycle_invitations = 0
+        visited = [False] * num_people
+
+        # Find all cycles in the graph
+        for person in range(num_people):
+            if not visited[person]:
+
+                # Track visited persons and their distances
+                visited_persons = {}
+                current_person = person
+                distance = 0
+                while True:
+                    if visited[current_person]:
+                        break
+                    visited[current_person] = True
+                    visited_persons[current_person] = distance
+                    distance += 1
+                    next_person = favorite[current_person]
+
+                    # Cycle detected
+                    if next_person in visited_persons:
+                        cycle_length = distance - visited_persons[next_person]
+                        longest_cycle = max(longest_cycle, cycle_length)
+
+                        # Handle cycles of length 2
+                        if cycle_length == 2:
+                            visited_nodes = {current_person, next_person}
+                            two_cycle_invitations += (2 + self.bfs(next_person, visited_nodes, reversed_graph) 
+                            + self.bfs(current_person,visited_nodes,reversed_graph))
+                        break
+                    current_person = next_person
+
+        return max(longest_cycle, two_cycle_invitations)
+    
+    # Calculate the maximum distance from a given start node
+    def bfs(self, start_node: int, visited_nodes: set, reversed_graph: List[List[int]]) -> int:
+        # Queue to store nodes and their distances
+        q = deque([])
+        q.append((start_node,0))
+        max_distance = 0
+        while q:
+            current_node, current_distance = q.popleft()
+            for neighbor in reversed_graph[current_node]:
+                if neighbor in visited_nodes:
+                    continue  # Skip already visited nodes
+                visited_nodes.add(neighbor)
+                q.append((neighbor, current_distance + 1))
+                max_distance = max(max_distance, current_distance + 1)
+        return max_distance
+
+                    
