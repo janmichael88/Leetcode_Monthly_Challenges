@@ -1986,6 +1986,66 @@ class Solution:
                     seen.add((ii,jj))
         return score
 
+#union find
+class DSU:
+    def __init__(self,n,grid):
+        self.parent = [i for i in range(n)]
+        self.size = [1]*n
+        self.num_fish = [0]*n
+        rows, cols = len(grid),len(grid[0])
+        for i in range(rows):
+            for j in range(cols):
+                self.num_fish[i*cols + j] = grid[i][j]
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+
+        if x_par == y_par:
+            return
+        if self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+            self.num_fish[x_par] += self.num_fish[y_par]
+
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = y_par
+            self.num_fish[y_par] += self.num_fish[x_par]
+    
+    def get_max(self,):
+        return max(self.num_fish)
+
+class Solution:
+    def findMaxFish(self, grid: List[List[int]]) -> int:
+        '''
+        we can do union find,
+        but first we need to represent and index for (i,j)
+        (i,,j) - > i*cols + j
+        '''
+        rows, cols = len(grid),len(grid[0])
+        dsu = DSU(rows*cols,grid)
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] > 0:
+                    for di,dj in dirrs:
+                        ii = i + di
+                        jj = j + dj
+                        if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] > 0:
+                            #neigh_idx = ii*cols + jj
+                            dsu.union(i*cols + j, ii*cols + jj ) 
+        
+        return dsu.get_max()
+
 ######################################################
 # 2127. Maximum Employees to Be Invited to a Meeting
 # 28JAN25
