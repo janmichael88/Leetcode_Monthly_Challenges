@@ -2134,4 +2134,119 @@ class Solution:
                 max_distance = max(max_distance, current_distance + 1)
         return max_distance
 
-                    
+#######################################
+# 684. Redundant Connection
+# 29JAN25
+#######################################
+class Solution:
+    def findRedundantConnection(self, edges: List[List[int]]) -> List[int]:
+        '''
+        drop and edge one at a time from the end if the input, and then dfs to see if we can touch the whole tree
+        that's n^3, wont work
+        if a node is a leaf, its edge cannot be removed, otherwise we wouldn't have a tree
+        find the cycle nodes, then check the edges that are in the cycle, if they're in the cycle they can be removed
+        this is just kahsn starting from the leaf node
+        '''
+        n = len(edges)
+        graph = defaultdict(list)
+        indegree = [0]*(n+1)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            indegree[v] += 1
+            indegree[u] += 1
+        
+        incycle = [True]*(n+1)
+        q = deque([])
+        for i in range(1,n+1):
+            if indegree[i] == 1:
+                q.append(i)
+        
+        while q:
+            curr = q.popleft()
+            incycle[curr] = False
+            for neigh in graph[curr]:
+                indegree[neigh] -= 1
+                if indegree[neigh] == 1:
+                    q.append(neigh)
+        
+        for u,v in edges[::-1]:
+            if incycle[u] and incycle[v]:
+                return [u,v]
+        return [-1]
+        
+class Solution:
+    def findRedundantConnection(self, edges: List[List[int]]) -> List[int]:
+        '''
+        intuition:
+        we can discard en edge if it connected two noes that were already part of the same connected componenet
+            dfs/union find
+        before adding the edge to the graph, we see if we can first reach u to v
+        if we can that edge is a redundcant connection
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            visited = set()
+            if self.dfs(u,v,visited,graph):
+                return [u,v]
+            
+            graph[u].append(v)
+            graph[v].append(u)
+
+        return -1
+    
+    def dfs(self,curr,target,visited,graph):
+        visited.add(curr)
+        if curr == target:
+            return True
+        
+        for neigh in graph[curr]:
+            if neigh not in visited:
+                if self.dfs(neigh,target,visited,graph):
+                    return True
+        return False
+    
+#using dfs to track cycle nodes
+class Solution:
+    def findRedundantConnection(self, edges: List[List[int]]) -> List[int]:
+        '''
+        we can also use dfs to find the cycle nodes
+        once we find a node in the cycle, we can just follow the parent pointers back up
+        if we encounter a node that has already been visited and the node we are coming from is different
+        from its parent, we can conclude the node is in the cycle
+        '''
+        graph = defaultdict(list)
+        n = len(edges)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        visited = set()
+        parent = defaultdict(lambda : -1)
+        cycle_start = [-1]
+        self.dfs(1,visited,graph,parent,cycle_start)
+
+        #start from cycle start, since its in the cycle and follow parent
+        curr = cycle_start[0]
+        cycle_nodes = defaultdict(lambda : -1)
+        while True:
+            cycle_nodes[curr] = 1
+            curr = parent[curr]
+            if curr == cycle_start[0]:
+                break
+        
+        for u,v in edges[::-1]:
+            if cycle_nodes[u] == 1 and cycle_nodes[v] == 1:
+                return [u,v]
+        return []
+
+    def dfs(self,curr,visited,graph,parent,cycle_start):
+        visited.add(curr)
+        for neigh in graph[curr]:
+            if neigh not in visited:
+                parent[neigh] = curr
+                self.dfs(neigh,visited,graph,parent,cycle_start)
+            #if neode is is visited, check if differnt from parent, if differ from parent we can start the cycle here
+            elif neigh in visited and neigh != parent[curr] and cycle_start[0] == -1:
+                cycle_start[0] = neigh
+                parent[neigh] = curr
