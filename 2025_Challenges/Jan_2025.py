@@ -2417,10 +2417,88 @@ class Solution:
                 max_num_nodes = max(max_num_nodes, self.count_groups(graph,neigh,distances,visited))
         return max_num_nodes
 
+#######################################
+# 2852. Sum of Remoteness of All Cells
+# 31JAN25
+########################################
+class DSU:
+    def __init__(self,grid):
+        self.grid = grid
+        self.rows, self.cols = len(grid),len(grid[0])
+        self.sizes = [[-1]*self.cols for _ in range(self.rows)]
+        self.parents = [[-1]*self.cols for _ in range(self.rows)]
+        for i in range(self.rows):
+            for j in range(self.cols):
+                self.parents[i][j] = (i,j)
+                self.sizes[i][j] = 1
+    
+    def find(self,x):
+        i,j = x
+        if self.parents[i][j] != (i,j):
+            self.parents[i][j] = self.find(self.parents[i][j])
+        
+        return self.parents[i][j]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
 
+        if x_par == y_par:
+            return
+        elif self.sizes[x_par[0]][x_par[1]] >= self.sizes[y_par[0]][y_par[1]]:
+            self.sizes[x_par[0]][x_par[1]] += self.sizes[y_par[0]][y_par[1]]
+            self.parents[y_par[0]][y_par[1]] = self.parents[x_par[0]][x_par[1]]
+        else:
+            self.sizes[y_par[0]][y_par[1]] += self.sizes[x_par[0]][x_par[1]]
+            self.parents[x_par[0]][x_par[1]] = self.parents[y_par[0]][y_par[1]]
 
-
-
-
+class Solution:
+    def sumRemoteness(self, grid: List[List[int]]) -> int:
+        '''
+        we are given 2d array, negative numbers are blocked, else it just a number
+        we can move from non-blocked cell to another non-blocked cell so long as they share an edge
+        remoteness R[i][j] is 
+            if (i,j) is non-blocked, R[i][j] = sum of values in grid[x][y] such that there is no path from the nonblockc ells (x,y) to (i,j)
+        
+        for each cell (i,j) find all cells that are not reachable, or rather for each cell (i,j)
+        find reachable and do subset removal
+        thats gonna TLE (n*n)*(n*n)
+        find connected components, 
+        all nodes in the some connected components have same remotness value, and its just the sum of all ther nodes in the other connected
+        unione find or dfs to finding connected comps
+        as we union the cells, keep track of their componets sums
+        '''
+        dsu = DSU(grid)
+        rows,cols = len(grid),len(grid[0])
+        dirrs = [[1,0],[0,1],[-1,0],[0,-1]]
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] != -1:
+                    for di,dj in dirrs:
+                        ii = i + di
+                        jj = j + dj
+                        if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] != -1:
+                            dsu.union((i,j),(ii,jj))
+        group_sums = Counter()
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] != -1:
+                    parent = dsu.find((i,j))
+                    group_sums[parent] += grid[i][j]
+        
+        total_sum = sum(group_sums.values())
+        remoteness = [[0]*cols for _ in range(rows)]
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] != -1:
+                    parent = dsu.find((i,j))
+                    remoteness[i][j] = total_sum - group_sums[parent]
+        
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                ans += remoteness[i][j]
+        
+        return ans
 
 
