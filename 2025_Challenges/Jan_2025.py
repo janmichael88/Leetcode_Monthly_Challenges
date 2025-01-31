@@ -2250,3 +2250,177 @@ class Solution:
             elif neigh in visited and neigh != parent[curr] and cycle_start[0] == -1:
                 cycle_start[0] = neigh
                 parent[neigh] = curr
+
+########################################################
+# 2493. Divide Nodes Into the Maximum Number of Groups
+# 30JAN25
+#######################################################
+#dammit
+class Solution:
+    def magnificentSets(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        need to divide nodes into m groups such that
+        * each node in graph belongs to one group
+        * for every edge connection [u,v] if u belongs to group with index and b belongs to group with index y, then |y-x| = 1
+        basically the groups need to be in ascending order
+        hints, if graph is bipartite, we can't do it
+        then we solve the porblme for each connected component indepdnetly
+        for a connected component, the maximum number of groups is just the depth in a bfs tree after rooting at node v
+        bipartitie solutino, just color the nodes a different color
+        
+        the maximum number of groups in a componenets is determined by the longest shortest path between any pair of nodes in that componenet
+        this is similar to finding the heigh of the componenet if it were structures like at tree
+        with differnt nodes as potential roots
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        #check biparite condition, good review
+        seen = {}
+        for i in range(n):
+            if i not in seen:
+                if not self.dfs(graph,i,0,seen):
+                    return -1
+
+        #graph is not bipartite, first get conected compoennts
+        seen = set()
+        comps = []
+
+        for i in range(1,n):
+            if i not in seen:
+                curr_comp = []
+                self.dfs2(i,graph,curr_comp,seen)
+                comps.append(curr_comp)
+        
+        #now solve the problem indivudally for each comp
+        groups = 0
+        for c in comps:
+            temp = self.bfs(c,graph)
+            groups += temp
+        
+        return groups
+    #utility to check if bipartite
+    def dfs(self,graph,curr,color,seen):
+        if curr in seen:
+            if seen[curr] != color:
+                return False
+            return True
+        seen[curr] = color
+        for neigh in graph[curr]:
+            if not self.dfs(graph,neigh,1-color,seen):
+                return False
+        return True
+    
+    def dfs2(self,curr,graph,curr_comp,seen):
+        seen.add(curr)
+        curr_comp.append(curr)
+        for neigh in graph[curr]:
+            if neigh not in seen:
+                self.dfs2(neigh,graph,curr_comp,seen)
+
+    #find longest shortest path
+    def bfs(self,comp,graph):
+        ans = 0
+        for c in comp:
+            dists = defaultdict(lambda : float('inf'))
+            dists[c] = 0
+            seen = set()
+            q = deque([])
+            q.append(c)
+            while q:
+                curr = q.popleft()
+                if curr in seen:
+                    continue
+                seen.add(curr)
+                for neigh in graph[curr]:
+                    if neigh not in seen:
+                        neigh_dist = dists[curr] + 1
+                        if dists[neigh] > neigh_dist:
+                            dists[neigh] = neigh_dist
+                            q.append(neigh)
+            
+            ans = max(ans, max(dists.values()))
+        
+        return ans + 1
+    
+class Solution:
+    def magnificentSets(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        first check bipartite criteria
+        then for each node, get the longest shortest path if using each node as starting
+
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        #check biparite condition, good review
+        seen = {}
+        for i in range(n):
+            if i not in seen:
+                if not self.dfs(graph,i,0,seen):
+                    return -1
+            
+        #for each node, get the longest shortest path
+        distances = []
+        for i in range(1,n+1):
+            distances.append(self.longest_shortest(graph,i,n+1))
+        
+        #calculate max number of groups for all components
+        max_groups = 0
+        visited = [False]*(n+1)
+        for node in range(1,n+1):
+            if visited[node]:
+                continue
+            curr_groups = self.count_groups(graph,node,distances,visited)
+            max_groups += curr_groups
+        
+        return max_groups
+
+    #utility to check if bipartite
+    def dfs(self,graph,curr,color,seen):
+        if curr in seen:
+            if seen[curr] != color:
+                return False
+            return True
+        seen[curr] = color
+        for neigh in graph[curr]:
+            if not self.dfs(graph,neigh,1-color,seen):
+                return False
+        return True
+    
+    def longest_shortest(self, graph,start,n):
+        q = deque([start])
+        visited = [False]*n
+        visited[start] = True
+        dist = 0
+
+        while q:
+            N = len(q)
+            for _ in range(N):
+                curr = q.popleft()
+                for neigh in graph[curr]:
+                    if not visited[neigh]:
+                        q.append(neigh)
+                        visited[neigh] = True
+            dist += 1
+        
+        return dist
+    #recursion/dp here
+    def count_groups(self,graph,curr,distances,visited):
+        #start with distance as max nodes
+        max_num_nodes = distances[curr - 1]
+        visited[curr] = True
+        for neigh in graph[curr]:
+            if not visited[neigh]:
+                max_num_nodes = max(max_num_nodes, self.count_groups(graph,neigh,distances,visited))
+        return max_num_nodes
+
+
+
+
+
+
+
+
