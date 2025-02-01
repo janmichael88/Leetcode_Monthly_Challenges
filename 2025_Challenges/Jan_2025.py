@@ -2501,4 +2501,78 @@ class Solution:
         
         return ans
 
+#################################
+# 827. Making A Large Island
+# 31JAN25
+##################################
+class DSU:
+    def __init__(self, n):
+        self.n = n
+        self.size = [1]*n
+        self.parent = [i for i in range(n)]
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
 
+        if x_par == y_par:
+            return
+        elif self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = self.parent[y_par]
+
+class Solution:
+    def largestIsland(self, grid: List[List[int]]) -> int:
+        '''
+        union find on cells, initiall they are disconnected, so build the DSU first
+        then retravrese and check that if we were to join (i,j), we connect the others as well
+        to do this we would need another stucture to record sizes to groups
+        '''
+        rows,cols = len(grid),len(grid[0])
+        dsu = DSU(rows*cols)
+        dirrs = [[1,0],[-1,0],[0,1],[0,-1]]
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    for di,dj in dirrs:
+                        ii = i + di
+                        jj = j + dj
+                        if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 1:
+                            dsu.union(i*cols + j,ii*cols + jj )
+        
+        group_size = Counter()
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    parent = dsu.find(i*cols + j)
+                    group_size[parent] += 1
+        if not group_size:
+            return 1
+        ans = max(group_size.values())
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 0:
+                    combined_groups = set()
+                    for di,dj in dirrs:
+                        ii = i + di
+                        jj = j + dj
+                        if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 1:
+                            parent = dsu.find(ii*cols + jj)
+                            combined_groups.add(parent)
+                    added_size = 1
+                    for c in combined_groups:
+                        added_size += group_size[c]
+                    ans = max(ans, added_size)
+        return ans
+                        
