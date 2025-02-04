@@ -130,3 +130,164 @@ class Solution:
             else:
                 right = mid - 1
         return ans
+    
+######################################################################
+# 3105. Longest Strictly Increasing or Strictly Decreasing Subarray
+# 03JAN25
+#######################################################################
+class Solution:
+    def longestMonotonicSubarray(self, nums: List[int]) -> int:
+        '''
+        count streaks for both inc and dec, then max
+        can either do it seperately or do both on the fly
+        need to maintain of strek was broken or not
+        '''
+        #do separetley
+        lis = 1
+        lis_streak = 1
+        n = len(nums)
+        for i in range(1,n):
+            if nums[i] > nums[i-1]:
+                lis_streak += 1
+            else:
+                lis_streak = 1
+            lis = max(lis,lis_streak)
+        
+        dis = 1
+        dis_streak = 1
+        n = len(nums)
+        for i in range(1,n):
+            if nums[i] < nums[i-1]:
+                dis_streak += 1
+            else:
+                dis_streak = 1
+            dis = max(dis,dis_streak)
+        
+        return max(lis,dis)
+        
+class Solution:
+    def longestMonotonicSubarray(self, nums: List[int]) -> int:
+        '''
+        count streaks for both inc and dec, then max
+        can either do it seperately or do both on the fly
+        need to maintain of strek was broken or not
+        '''
+        ans = 1
+        lis_streak = 1
+        dis_streak = 1
+        n = len(nums)
+
+        for i in range(1,n):
+            if nums[i] > nums[i-1]:
+                lis_streak += 1
+                dis_streak = 1
+            elif nums[i] < nums[i-1]:
+                dis_streak += 1
+                lis_streak = 1
+            else:
+                dis_streak = 1
+                lis_streak = 1
+            
+            ans = max(ans,lis_streak,dis_streak)
+        
+        return ans
+        
+#########################################
+# 1316. Distinct Echo Substrings
+# 03FEB25
+#########################################
+#brute force
+#check each substring, and compare left half to right half and check if echo
+class Solution:
+    def distinctEchoSubstrings(self, text: str) -> int:
+        '''
+        for each substring, just check if left half == right half
+        if it is, the substring is an echo
+        '''
+        n = len(text)
+        ans = set()
+
+        for i in range(n):
+            for j in range(i+1,n+1):
+                substring = text[i:j]
+                l = len(substring)
+                if substring[:l//2] == substring[l//2:]:
+                    ans.add(substring)
+        
+        return len(ans)
+    
+class Solution:
+    def distinctEchoSubstrings(self, text: str) -> int:
+        '''
+        Precompute prefix hash for text
+        Use prefix hash comparison to detect echo substrings
+        '''
+        n = len(text)
+        ans = set()
+        p = 31  # Alphabet size prime
+        m = 10**9 + 7  
+
+        # Precompute powers of p
+        p_pow = [1] * (n + 1)
+        for i in range(1, n + 1):
+            p_pow[i] = (p_pow[i - 1] * p) % m
+
+        # Compute prefix hashes
+        pref_hash = [0] * (n + 1)
+        for i in range(n):
+            idx = ord(text[i]) - ord('a') + 1  # Convert char to int
+            pref_hash[i + 1] = (pref_hash[i] * p + idx) % m
+
+        # Check all possible echo substrings
+        for length in range(1, n // 2 + 1):  # Iterate over possible lengths
+            for i in range(n - 2 * length + 1):  # Ensure enough room for both halves
+                j = i + length
+                hash1 = self.get_hash(i, j, pref_hash, p_pow, m)
+                hash2 = self.get_hash(j, j + length, pref_hash, p_pow, m)
+
+                if hash1 == hash2:
+                    ans.add(text[i:j + length])  # Store the unique substring
+
+        return len(ans)  # Count distinct echo substrings
+
+    def get_hash(self, i, j, pref_hash, p_pow, m):
+        hash_value = (pref_hash[j] - pref_hash[i] * p_pow[j - i]) % m
+        return hash_value if hash_value >= 0 else hash_value + m
+
+##########################################
+# 2100. Find Good Days to Rob the Bank
+# 04FEB25
+##########################################
+class Solution:
+    def goodDaysToRobBank(self, security: List[int], time: int) -> List[int]:
+        '''
+        day i is a good day to rob iff
+        security[i - time] >= security[i - time + 1] >= ... >= security[i] <= ... <= security[i + time - 1] <= security[i + time]
+        return array of all days (0 indexed that are good days to rob the bank)
+        basically i is in a valley, brute force would be to check all i and its left and right
+        need to store number of days that are increasing up to i and days that decreasing
+        shuld be decreasing from left to right
+        and increasing from right to left
+        '''
+        n = len(security)
+        inc_days = [0]*(n)
+        dec_days = [0]*(n)
+
+        for i in range(1,n):
+            if security[i] <= security[i-1]:
+                dec_days[i] = dec_days[i-1] + 1
+        
+        for i in range(n-2,-1,-1):
+            if security[i] <= security[i+1]:
+                inc_days[i] = inc_days[i+1] + 1
+
+        ans = []
+        for i in range(time,n-time):
+            print(i)
+            if inc_days[i] >= time and dec_days[i] >= time:
+                ans.append(i)
+        
+        return ans
+        
+
+
