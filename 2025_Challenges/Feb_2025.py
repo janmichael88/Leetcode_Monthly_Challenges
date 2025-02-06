@@ -268,6 +268,14 @@ class Solution:
         need to store number of days that are increasing up to i and days that decreasing
         shuld be decreasing from left to right
         and increasing from right to left
+        count decreasing days up to i from left to right, since that's the first part
+        then count increasing days from right to left, the second part
+        the the array is decreasing from security[i - time + 1] to security[i]
+        then there must be at least time days that are decreasing!
+        samv
+        left array and right array paradigm
+        pref or suff too
+
         '''
         n = len(security)
         inc_days = [0]*(n)
@@ -289,5 +297,124 @@ class Solution:
         
         return ans
         
+##################################################
+# 2531. Make Number of Distinct Characters Equal
+# 05FEB25
+#################################################
+#nice try
+class Solution:
+    def isItPossible(self, word1: str, word2: str) -> bool:
+        '''
+        hashmap of counts for both words
+        check if equal length
+        then try swapping and see if it could equalize them
+        need to swap at their positions, not just any position
+        '''
+        counts1 = Counter(word1)
+        counts2 = Counter(word2)
 
+        if len(counts1) == len(counts2):
+            return True
+        
+        for ch in word1:
+            counts1[ch] -= 1
+            if counts1[ch] == 0:
+                del counts1[ch]
+            counts2[ch] += 1
+            #check
+            if len(counts1) == len(counts2):
+                return True
+            #swap back
+            counts2[ch] -= 1
+            if counts2[ch] == 0:
+                del counts2[ch]
+            counts1[ch] += 1
+        
+        #try the other way
+        for ch in word2:
+            counts2[ch] -= 1
+            if counts2[ch] == 0:
+                del counts2[ch]
+            counts1[ch] += 1
+            if len(counts1) == len(counts2):
+                return True
+            #swap back
+            counts1[ch] -= 1
+            if counts1[ch] == 0:
+                del counts1[ch]
+            counts2[ch] += 1
+        
+        return len(counts1) == len(counts2)
+
+class Solution:
+    def isItPossible(self, word1: str, word2: str) -> bool:
+        '''
+        hashmap of counts for both words
+        check if equal length
+        then try swapping and see if it could equalize them
+        need to swap at their positions, not just any position
+        with a swap we can at most gain 1
+        '''
+        counts1 = Counter(word1)
+        counts2 = Counter(word2)
+
+        unique1 = len(counts1)
+        unique2 = len(counts2)
+
+        for ch1,count1 in counts1.items():
+            for ch2,count2 in counts2.items():
+                unique1 = len(counts1)
+                unique2 = len(counts2)
+                if count1 == 1 and ch1 != ch2:
+                    unique1 -= 1
+                if count2 == 1 and ch1 != ch2:
+                    unique2 -= 1
+                if ch1 not in counts2:
+                    unique2 += 1
+                if ch2 not in counts1:
+                    unique1 += 1
+                
+                if unique1 == unique2:
+                    return True
+        
+        return False
+
+#mutate on fly
+class Solution:
+    def isItPossible(self, word1: str, word2: str) -> bool:
+        '''
+        hashmap of counts for both words
+        check if equal length
+        then try swapping and see if it could equalize them
+        need to swap at their positions, not just any position
+        with a swap we can at most gain 1
+        '''
+        counts1 = Counter(word1)
+        counts2 = Counter(word2)
+
+        for i in range(26):
+            for j in range(26):
+                ch1 = chr(ord('a') + i)
+                ch2 = chr(ord('a') + j)
+                #they both need to be in for me to swap
+                if ch1 not in counts1 or ch2 not in counts2:
+                    continue
+                #insert
+                self.insert_remove(counts1,ch2,ch1)
+                self.insert_remove(counts2,ch1,ch2)
+
+                if len(counts1) == len(counts2):
+                    return True
+                #swap back
+                self.insert_remove(counts1,ch1,ch2)
+                self.insert_remove(counts2,ch2,ch1)
+        
+        return False
+
+    def insert_remove(self,mapp,toInsert,toRemove):
+        mapp[toInsert] += 1
+        mapp[toRemove] -= 1
+
+        if mapp[toRemove] == 0:
+            del mapp[toRemove]
 
