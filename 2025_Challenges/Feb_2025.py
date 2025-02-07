@@ -418,3 +418,167 @@ class Solution:
         if mapp[toRemove] == 0:
             del mapp[toRemove]
 
+#########################################
+# 1726. Tuple with Same Product
+# 06FEB25
+#########################################
+class Solution:
+    def tupleSameProduct(self, nums: List[int]) -> int:
+        '''
+        we can fix (a,b)
+        and look for another (c,d)
+        tuples must be distinct
+        i can use a hashmap and mapp tuple pairs (a,b) to some product
+        all elements are distinct
+        double count then divide by two
+        its just going to be (num_digits!) / num_digits
+        count permuataions formed
+        there are 8 ways to permute (a,b,c,d), such that a*b = c*d
+        its that (a,b) and (c,d) must stay next to each other
+        we can swap a*b and c*d, and we can swap their order
+        2*2*2 = 8
+        count the total number of pairs and multiply by 8
+        fun counting problem!
+        '''
+        mapp = Counter()
+        n = len(nums)
+        for i in range(n):
+            for j in range(i+1,n):
+                a,b = nums[i],nums[j]
+                mapp[a*b] += 1
+        
+        ans = 0
+        for k,v in mapp.items():
+            #count must be greater than 1 to have a possible pairing
+            if v > 1:
+                pairs = (v*(v-1)) // 2 #this is unique pairs
+                ans += 8*pairs
+        
+        return ans
+    
+##########################################################
+# 3160. Find the Number of Distinct Colors Among the Balls
+# 06FEB25
+###########################################################
+class Solution:
+    def queryResults(self, limit: int, queries: List[List[int]]) -> List[int]:
+        '''
+        hashmap of balls to colors, initally balls arent colored so theres nothing in hashmap
+        color balls and add size of mapp to ans
+        '''
+        ans = []
+        mapp = {}
+        count_colors = Counter()
+        for i,color in queries:
+            if i not in mapp:
+                mapp[i] = color
+                count_colors[color] += 1
+            else:
+                #we made this ball a different color
+                prev_color = mapp[i]
+                count_colors[prev_color] -= 1
+                if count_colors[prev_color] == 0:
+                    del count_colors[prev_color]
+                mapp[i] = color
+                count_colors[color] += 1
+            
+            ans.append(len(count_colors))
+        
+        return ans
+
+###############################################
+# 3153. Sum of Digit Differences of All Pairs
+# 07FEB25
+################################################
+class Solution:
+    def sumDigitDifferences(self, nums: List[int]) -> int:
+        '''
+        all integers in nums have same number of digits
+        digit difference is the count of diff digits between two pairs of numbers that are in different at the same position
+        '''
+        n = len(nums)
+        k = len(str(nums[0]))
+        counts = [Counter() for _ in range(k)]
+        for num in nums:
+            for i,digit in enumerate(str(num)):
+                counts[i][digit] += 1
+        
+        ans = 0
+        for c in counts:
+            for k,v in c.items():
+                #count how many diigit different pairs it can make
+                #its just (n-v)*v
+                #if i have k occreunces of digit at this position, it will make pairs that are different with n-k
+                #divide by two for double counting
+                ans += v*(n-v) 
+        #this would have counted all pairs, but doubled
+        return ans //2
+
+##########################################
+# 3332. Maximum Points Tourist Can Earn
+# 07FEB25
+##########################################
+#caching TLE'S with actual hasmap
+class Solution:
+    def maxScore(self, n: int, k: int, stayScore: List[List[int]], travelScore: List[List[int]]) -> int:
+        '''
+        this is dp
+        each city is connected to every other city
+        on the ith day, the tourist can
+            stay += stayScore[i][curr]
+            move from curr to dest
+            and gain travel_score[i][curr][dest]
+        
+        notice how on the digaonlgs, its zero
+        '''
+        memo = {}
+
+        def dp(curr_day,curr_city):
+            if curr_day >= k:
+                return 0
+            if (curr_day,curr_city) in memo:
+                return memo[(curr_day,curr_city)]
+            #chose to stay
+            ans = stayScore[curr_day][curr_city] + dp(curr_day + 1, curr_city)
+            #try traveling
+            for neigh_city in range(n):
+                travel = travelScore[curr_city][neigh_city] + dp(curr_day + 1, neigh_city)
+                ans = max(ans,travel)
+            memo[(curr_day,curr_city)] = ans
+            return ans
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans, dp(0,i))
+        
+        return ans
+
+class Solution:
+    def maxScore(self, n: int, k: int, stayScore: List[List[int]], travelScore: List[List[int]]) -> int:
+        '''
+        this is dp
+        each city is connected to every other city
+        on the ith day, the tourist can
+            stay += stayScore[i][curr]
+            move from curr to dest
+            and gain travel_score[i][curr][dest]
+        
+        notice how on the digaonlgs, its zero
+        '''
+        @cache
+        def dp(curr_day,curr_city):
+            if curr_day >= k:
+                return 0
+            #chose to stay
+            ans = stayScore[curr_day][curr_city] + dp(curr_day + 1, curr_city)
+            #try traveling
+            for neigh_city in range(n):
+                travel = travelScore[curr_city][neigh_city] + dp(curr_day + 1, neigh_city)
+                ans = max(ans,travel)
+            return ans
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans, dp(0,i))
+        
+        return ans
