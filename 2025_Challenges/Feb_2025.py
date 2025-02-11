@@ -582,3 +582,161 @@ class Solution:
             ans = max(ans, dp(0,i))
         
         return ans
+
+##########################################
+# 2349. Design a Number Container System
+# 08MAY25
+###########################################
+from sortedcontainers import SortedList
+class NumberContainers:
+
+    def __init__(self):
+        '''
+        two hash maps
+        first one mapps index to number 
+        second ones mapps number to heap of indices for retrieval
+        also need to keep track of index
+        the problem is when we change and index already there, we need to remove it from theheap
+        need to use sorted container or sorted set for this
+        '''
+        self.index_to_num = {}
+        self.num_to_idxs = defaultdict(SortedList)
+
+    def change(self, index: int, number: int) -> None:
+        if index not in self.index_to_num:
+            self.index_to_num[index] = number
+            self.num_to_idxs[number].add(index)
+        else:
+            #delete from the other mapp
+            prev = self.index_to_num[index]
+            #for this prev number remove the current index
+            self.num_to_idxs[prev].remove(index)
+            self.index_to_num[index] = number
+            self.num_to_idxs[number].add(index)
+
+    def find(self, number: int) -> int:
+        if len(self.num_to_idxs[number]) == 0:
+            return -1
+        return self.num_to_idxs[number][0]
+        
+# Your NumberContainers object will be instantiated and called as such:
+# obj = NumberContainers()
+# obj.change(index,number)
+# param_2 = obj.find(number)
+
+#heap, and update lazily (i.e only when we need to) also called garbage heap too
+#deferred handling of index validity during the find operation
+#rather than cleaning up after a change
+
+class NumberContainers:
+    def __init__(self):
+        # Map to store number -> min heap of indices
+        self.number_to_indices = defaultdict(list)
+        # Map to store index -> number
+        self.index_to_numbers = {}
+
+    def change(self, index: int, number: int) -> None:
+        # Update index to number mapping
+        self.index_to_numbers[index] = number
+
+        # Add index to the min heap for this number
+        heapq.heappush(self.number_to_indices[number], index)
+
+    def find(self, number: int) -> int:
+        # If number doesn't exist in our map
+        if not self.number_to_indices[number]:
+            return -1
+
+        # Keep checking top element until we find valid index
+        while self.number_to_indices[number]:
+            index = self.number_to_indices[number][0]
+
+            # If index still maps to our target number, return it
+            if self.index_to_numbers.get(index) == number:
+                return index
+
+            # Otherwise remove this stale index
+            heapq.heappop(self.number_to_indices[number])
+        return -1
+
+
+# Your NumberContainers object will be instantiated and called as such:
+# obj = NumberContainers()
+# obj.change(index,number)
+# param_2 = obj.find(number)
+
+########################################
+# 2364. Count Number of Bad Pairs
+# 09FEB24
+########################################
+class Solution:
+    def countBadPairs(self, nums: List[int]) -> int:
+        '''
+        hashmap problem
+        we need j - i != nums[j] - nums[i]
+        this is the same as
+        nums[j] - j != nums[i] - [i]
+        count the good pairs 
+        i.e where nums[j] - j == nums[i] - [i]
+        then substract from the totla number of pairs
+        '''
+        counts = Counter()
+        n = len(nums)
+        good_pairs = 0
+        for i,num in enumerate(nums):
+            temp = counts[num - i]
+            good_pairs += temp
+            counts[num - i] += 1
+        
+        total_pairs = (n*(n-1)) // 2
+        return total_pairs - good_pairs
+        
+##########################################################
+# 1375. Number of Times Binary String Is Prefix-Aligned
+# 10FEB25
+##########################################################
+class Solution:
+    def numTimesAllBlue(self, flips: List[int]) -> int:
+        '''
+        yikes there can be 5*10**4 bits
+        we can check them all
+
+        pre work
+        curr = 0
+        for f in flips:
+            curr = curr | (1 << (f-1))
+            print(bin(curr))
+
+        omg i dont need to do that, just check if we're covered up to the ith flip
+        if we are at  flip[i] we need to make sure we are covered from 1 to i
+        line sweep?
+        note flipes is a permutation of 1 to n [1,n]
+        now how to check we cover from 1 to flips[i]
+        keep track of the right most bulb
+        and if the right most builb == i + 1, we are covered from 1 to rightmost
+        '''
+        right_most = 0
+        count = 0
+        for i,num in enumerate(flips):
+            right_most = max(right_most, num)
+            if right_most == i + 1:
+                count += 1
+        
+        return count
+    
+class Solution:
+    def numTimesAllBlue(self, flips: List[int]) -> int:
+        '''
+        another way to check if we are covered from 1 to i
+        is check the sums from 1 to i,
+        keep track of sum and check if current num == i*(i+1) // 2 
+        '''
+        count = 0
+        curr_sum = 0
+        for i, num in enumerate(flips):
+            curr_sum += num
+            i += 1
+            if curr_sum == (i*(i+1)) // 2:
+                count += 1
+        
+        return count
