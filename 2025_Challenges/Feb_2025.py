@@ -740,3 +740,148 @@ class Solution:
                 count += 1
         
         return count
+    
+###############################################
+# 1910. Remove All Occurrences of a Substring
+# 11FEB25
+###############################################
+class Solution:
+    def removeOccurrences(self, s: str, part: str) -> str:
+        '''
+        what matters is if i have the final part[:len(part)-1] chars in the stack
+        that means i can clear it
+        but part can be very long, and checking very time would increaces TC
+        i say just use two pointers
+        stupid ass problem
+        '''
+        stack = []
+        part = list(part)
+        for ch in s:
+            stack.append(ch)
+            if len(stack)>= len(part) and stack[-len(part):] == part:
+                del stack[-len(part):]
+
+        return "".join(stack)
+
+class Solution:
+    def removeOccurrences(self, s: str, part: str) -> str:
+        '''
+        what matters is if i have the final part[:len(part)-1] chars in the stack
+        that means i can clear it
+        but part can be very long, and checking very time would increaces TC
+        i say just use two pointers
+        stupid ass problem
+        '''
+        stack = []
+        part = list(part)
+        for ch in s:
+            stack.append(ch)
+            if len(stack)>= len(part) and stack[-len(part):] == part:
+                #using pop
+                for _ in range(len(part)):
+                    stack.pop()
+
+
+        return "".join(stack)
+        
+#KMP???
+
+##################################################
+# 2342. Max Sum of a Pair With Equal Sum of Digits
+# 12FEB24
+##################################################
+class Solution:
+    def maximumSum(self, nums: List[int]) -> int:
+        '''
+        we can choose two indices (i,j), where i != j
+        and sum_digits(nums[i]) == sum(digits[j])
+        for these we need the maximum_sum
+        i.e for all max_sum(nums[i] + nums[j] for all (i,j) where sum_digits(nums[i]) == sum(digits[j]) )
+
+        i can map sum digits for each num in nums, mapp to list of nums
+        we only want the largest two, so take the largest
+        how many sum digits are possible
+        10**5
+        9**5, not that many at all
+        '''
+        mapp = defaultdict(list)
+        for num in nums:
+            curr_sum = self.sum_digits(num)
+            heapq.heappush(mapp[curr_sum],num)
+            if len(mapp[curr_sum]) > 2:
+                heapq.heappop(mapp[curr_sum])
+        
+        ans = -1
+        for v in mapp.values():
+            if len(v) == 2:
+                ans = max(ans,sum(v))
+        return ans
+    
+    def sum_digits(self,num):
+        sum_ = 0
+        while num:
+            sum_ += num % 10
+            num = num // 10
+        
+        return sum_
+
+class Solution:
+    def maximumSum(self, nums: List[int]) -> int:
+        '''
+        we can choose two indices (i,j), where i != j
+        and sum_digits(nums[i]) == sum(digits[j])
+        for these we need the maximum_sum
+        i.e for all max_sum(nums[i] + nums[j] for all (i,j) where sum_digits(nums[i]) == sum(digits[j]) )
+
+        i can map sum digits for each num in nums, mapp to list of nums
+        we only want the largest two, so take the largest
+        how many sum digits are possible
+        10**5
+        999999999, which is sum 81
+        '''
+        mapp = defaultdict(list)
+        for num in nums:
+            curr_sum = self.sum_digits(num)
+            heapq.heappush(mapp[curr_sum],num)
+            if len(mapp[curr_sum]) > 2:
+                heapq.heappop(mapp[curr_sum])
+        
+        ans = -1
+        for v in mapp.values():
+            if len(v) == 2:
+                ans = max(ans,sum(v))
+        return ans
+    
+    def sum_digits(self,num):
+        sum_ = 0
+        while num:
+            sum_ += num % 10
+            num = num // 10
+        
+        return sum_
+
+#on the fly, no precompute
+class Solution:
+    def maximumSum(self, nums: List[int]) -> int:
+        '''
+        insteaf of using heap, just store the max
+        '''
+        mapp = defaultdict(lambda : 0)
+        ans = -1
+        for num in nums:
+            curr_sum = self.sum_digits(num)
+            if curr_sum > 0:
+                if curr_sum in mapp:
+                    ans = max(ans, mapp[curr_sum] + num)
+            mapp[curr_sum] = max(mapp[curr_sum],num)
+        
+        return ans
+                
+    
+    def sum_digits(self,num):
+        sum_ = 0
+        while num:
+            sum_ += num % 10
+            num = num // 10
+        
+        return sum_
