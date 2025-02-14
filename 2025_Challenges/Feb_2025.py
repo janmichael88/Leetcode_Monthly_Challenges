@@ -885,3 +885,92 @@ class Solution:
             num = num // 10
         
         return sum_
+
+##########################################################
+# 3066. Minimum Operations to Exceed Threshold Value II
+# 13FEB25
+###########################################################
+class Solution:
+    def minOperations(self, nums: List[int], k: int) -> int:
+        '''
+        heap, 
+        invariant conditions it that the min value in heap is smaller than k and that there are at least two in nums
+        '''
+        heapq.heapify(nums)
+        steps = 0
+
+        while len(nums) >= 2 and nums[0] < k:
+            first = heapq.heappop(nums)
+            second = heapq.heappop(nums)
+            next_ = min(first,second)*2 + max(first,second)
+            heapq.heappush(nums,next_)
+            steps += 1
+        
+        return steps
+    
+###########################################
+# 1352. Product of the Last K Numbers
+# 14FEB25
+###########################################
+class ProductOfNumbers:
+    '''
+    does prefix product work here still
+    say we have [a,b,c,d]
+    [a, a*b, a*b*c, a*b*c*d]
+    if we wanted c*d
+    a*b*c*d / a*b = c*d
+    it will only ever be the last k numbers, a suffix essentially
+    if a zero is added, then any product after will be zero, so just clear the array
+    '''
+
+    def __init__(self):
+        self.pref_prod = [1]
+
+    def add(self, num: int) -> None:
+        if num == 0:
+            self.pref_prod = [0]*len(self.pref_prod)
+            self.pref_prod.append(1)
+        else:
+            self.pref_prod.append(self.pref_prod[-1]*num)
+
+    def getProduct(self, k: int) -> int:
+        if self.pref_prod[-(k+1)] == 0:
+            return 0
+        return self.pref_prod[-1] // self.pref_prod[-(k+1)]
+        
+
+# Your ProductOfNumbers object will be instantiated and called as such:
+# obj = ProductOfNumbers()
+# obj.add(num)
+# param_2 = obj.getProduct(k)
+
+class ProductOfNumbers:
+
+    def __init__(self):
+        '''
+        another way instead of erraing the pref product array is to keep a size variable
+        when we hit a zero, we reset size to 0, the last k eleements' products will be zero anyway
+        '''
+        self.pref_prod = [1]
+        self.size = 0
+
+    def add(self, num: int) -> None:
+        #if zero, reset
+        if num == 0:
+            self.pref_prod = [1]
+            self.size = 0
+        else:
+            self.pref_prod.append(self.pref_prod[self.size]*num)
+            self.size += 1
+        
+    def getProduct(self, k: int) -> int:
+        #check if k from the end i larger
+        if k > self.size:
+            return 0
+        return self.pref_prod[-1] // self.pref_prod[self.size - k]
+
+
+# Your ProductOfNumbers object will be instantiated and called as such:
+# obj = ProductOfNumbers()
+# obj.add(num)
+# param_2 = obj.getProduct(k)
