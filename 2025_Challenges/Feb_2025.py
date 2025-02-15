@@ -974,3 +974,52 @@ class ProductOfNumbers:
 # obj = ProductOfNumbers()
 # obj.add(num)
 # param_2 = obj.getProduct(k)
+
+###############################################
+# 2698. Find the Punishment Number of an Integer
+# 15FEB25
+################################################
+class Solution:
+    def punishmentNumber(self, n: int) -> int:
+        '''
+        punishment number is defined as the sum of the squals of all integers i such that:
+        * 1 <= i <= n
+        * the decimal representatino of i*i can be partitioned into contiguous substrings
+            such that the sum of the integer values of these substrings equals i
+        
+        looks like we can generate all paritions of a number and check the sum using backtracking
+        if split at i, i need to take that numbers left part and add it
+        if i don't just adance it
+        states are index and curr_sum
+        '''
+        ans = 0
+        for i in range(1,n+1):
+            curr = i*i
+            #check parititions of curr recursively
+            memo = {}
+            if self.rec(str(curr),0,0,i,memo):
+                ans += curr
+        return ans
+    
+    def rec(self,num,idx,curr_sum,target,memo):
+        if idx >= len(num):
+            return curr_sum == target
+        
+        if curr_sum > target:
+            return False
+        
+        if (idx,curr_sum) in memo:
+            return memo[(idx,curr_sum)]
+        
+        ans = False
+        #try all paritions
+        for next_idx in range(idx,len(num) + 1):
+            #split
+            split_num = int(num[idx:next_idx+1])
+            split = self.rec(num,next_idx + 1, curr_sum + split_num,target,memo)
+            ans = ans or split
+        
+        memo[(idx,curr_sum)] = ans
+        return ans
+
+        
