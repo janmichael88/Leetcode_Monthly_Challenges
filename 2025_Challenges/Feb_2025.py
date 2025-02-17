@@ -1022,4 +1022,198 @@ class Solution:
         memo[(idx,curr_sum)] = ans
         return ans
 
-        
+##################################################################
+# 1718. Construct the Lexicographically Largest Valid Sequence
+# 16FEB25
+###################################################################
+#TLE, right idea, but need to add terminating
+class Solution:
+    def constructDistancedSequence(self, n: int) -> List[int]:
+        '''
+        1 occrus once in the sequence,
+        every integer between 2 and n occurs twice int he sequence
+        for every integer between 2 and n, the dist between the two occurences of i ix exactly i
+        rather, if k is in between 2 and n, the distance between the two occurences of k is k
+        if n, ans will be of size 2*n + 1
+        try placing each number from 1 to n in the array if we can't backtrack
+        assumes we have ans = [0]*(2*n + 1)
+        if i'm at some index i, and placing some number num, that isn't a 1
+        then i need to place num at ans[i] and at ans[i + num - 1]
+        what i don't worry about placing a one, i can just place it in the last spot,
+        then i can just worry about placing the numbers [2,n]
+        need to try all permuations of 2 to n
+        '''
+        ans = [0]*(2*n - 1)
+        final_ans = [-1]*(2*n-1)
+        used_nums = set()
+        self.backtrack(ans,0,n,used_nums,final_ans)
+        #find the zero
+        for i in range(len(final_ans)):
+            if final_ans[i] == 0:
+                final_ans[i] = 1
+                break
+        return final_ans
+
+    def backtrack(self,arr,curr_idx,n,used_nums,final_ans):
+        if curr_idx >= len(arr):
+            if len(used_nums) == n - 1:
+                final_ans[:] = max(final_ans,arr[:])
+
+            return
+        #want largest
+        for num in range(n,1,-1):
+            #place it
+            if num not in used_nums and curr_idx + num < len(arr) and arr[curr_idx] == 0 and arr[curr_idx + num] == 0:
+                arr[curr_idx] = num
+                arr[curr_idx + num] = num
+                used_nums.add(num)
+                #recurse
+                self.backtrack(arr,curr_idx+1,n,used_nums,final_ans)
+                arr[curr_idx] = 0
+                arr[curr_idx + num] = 0
+                used_nums.remove(num)
+            else:
+                self.backtrack(arr,curr_idx + 1,n,used_nums,final_ans)
+            
+class Solution:
+    def constructDistancedSequence(self, n: int) -> List[int]:
+        '''
+        1 occrus once in the sequence,
+        every integer between 2 and n occurs twice int he sequence
+        for every integer between 2 and n, the dist between the two occurences of i ix exactly i
+        rather, if k is in between 2 and n, the distance between the two occurences of k is k
+        if n, ans will be of size 2*n + 1
+        try placing each number from 1 to n in the array if we can't backtrack
+        assumes we have ans = [0]*(2*n + 1)
+        if i'm at some index i, and placing some number num, that isn't a 1
+        then i need to place num at ans[i] and at ans[i + num - 1]
+        what i don't worry about placing a one, i can just place it in the last spot,
+        then i can just worry about placing the numbers [2,n]
+        need to try all permuations of 2 to n
+        '''
+        ans = [-1]*(2*n - 1)
+        used_nums = set()
+        self.backtrack(ans,0,n,used_nums)
+        return ans
+
+
+    def backtrack(self,arr,curr_idx,n,used_nums):
+        #if we get to the end of the array
+        if curr_idx == len(arr):
+            return True
+        #if alread filled, advance
+        if arr[curr_idx] != -1:
+            return self.backtrack(arr,curr_idx + 1, n,used_nums)
+        for num in range(n,0,-1):
+            #not used
+            if num not in used_nums:
+                #if its 1, just place
+                if num == 1:
+                    arr[curr_idx] = 1
+                    used_nums.add(1)
+                    if self.backtrack(arr,curr_idx+1,n,used_nums):
+                        return True
+                    arr[curr_idx] = -1
+                    used_nums.remove(1)
+                elif curr_idx + num < len(arr) and arr[curr_idx + num] == -1:
+                    arr[curr_idx] = num
+                    arr[curr_idx + num] = num
+                    used_nums.add(num)
+                    if self.backtrack(arr,curr_idx+1,n,used_nums):
+                        return True
+                    arr[curr_idx + num] = -1
+                    arr[curr_idx] = -1
+                    used_nums.remove(num)
+
+        return False
+
+########################################
+# 1756. Design Most Recently Used Queue
+# 16FEB25
+########################################
+class MRUQueue:
+
+    def __init__(self, n: int):
+        self.arr = [i for i in range(1,n+1)]
+
+    def fetch(self, k: int) -> int:
+        ans = self.arr.pop(k-1)
+        self.arr.append(ans)
+        return ans
+
+# Your MRUQueue object will be instantiated and called as such:
+# obj = MRUQueue(n)
+# param_1 = obj.fetch(k)
+
+##################################
+# 1079. Letter Tile Possibilities
+# 17FEB25
+##################################
+class Solution:
+    def numTilePossibilities(self, tiles: str) -> int:
+        '''
+        should be unique possible sequences
+        use backtracking and dump into a set, choose to add this character or don't
+        '''
+        possible = set()
+        n = len(tiles)
+        used = [False]*n
+        self.rec(0,tiles,used,[],possible)
+        return len(possible)
+    
+    def rec(self,i,tiles,used,path,possible):
+        if path:
+            possible.add("".join(path))
+        for j in range(len(tiles)):
+            if not used[j]:
+                used[j] = True
+                path = path + [tiles[j]]
+                self.rec(i+1,tiles,used,path,possible)
+                path.pop()
+                used[j] = False
+
+#note, is using string concat, and with string, we don't need to pop?
+class Solution:
+    def numTilePossibilities(self, tiles: str) -> int:
+        '''
+        should be unique possible sequences
+        use backtracking and dump into a set, choose to add this character or don't
+        '''
+        possible = set()
+        n = len(tiles)
+        used = [False]*n
+        self.rec(0,tiles,used,"",possible)
+        return len(possible)
+    
+    def rec(self,i,tiles,used,path,possible):
+        if path:
+            possible.add("".join(path))
+        for j in range(len(tiles)):
+            if not used[j]:
+                used[j] = True
+                self.rec(i+1,tiles,used,path + tiles[j],possible)
+                used[j] = False
+    
+#backtracking on counts
+class Solution:
+    def numTilePossibilities(self, tiles: str) -> int:
+        '''
+        we can do backtracking on counts
+        count of the chars in tiles
+        then try adding a letter if we can, then answer is just the sum of the leaves
+        '''
+        counts = Counter(tiles)
+        return self.rec(counts)
+
+    def rec(self,counts):
+        count = 0
+        for i in range(26):
+            letter = chr(ord('A') + i)
+            if counts[letter] > 0:
+                counts[letter] -= 1
+                #addind a valid letter means this is a valid sequence
+                count += 1
+                #roll up the counts
+                count += self.rec(counts)
+                counts[letter] += 1
+        return count
