@@ -1217,3 +1217,204 @@ class Solution:
                 count += self.rec(counts)
                 counts[letter] += 1
         return count
+    
+##################################################
+# 2375. Construct Smallest Number From DI String
+# 18FEB25
+##################################################
+class Solution:
+    def smallestNumber(self, pattern: str) -> str:
+        '''
+        the constraints are small, so we can try all of them
+        welp i pruned LMAOOO
+        '''
+        used = set()
+        self.ans = "9"*(len(pattern) + 1)
+        self.found = False
+        self.backtrack("",used,pattern)
+        return self.ans
+        
+    def backtrack(self,path,used,pattern):
+        if self.found:
+            return
+        if len(path) == len(pattern) + 1:
+            if self.check(path,pattern):
+                self.ans = min(self.ans,path)
+                self.found = True
+            return
+        for i in range(1,len(pattern) + 2):
+            if i not in used:
+                used.add(i)
+                self.backtrack(path + str(i),used,pattern)
+                used.remove(i)
+    
+    def check(self,candidate,pattern):
+        for i in range(len(pattern)):
+            if pattern[i] == 'I' and candidate[i+1] < candidate[i]:
+                return False
+            elif pattern[i] == 'D' and candidate[i+1] > candidate[i]:
+                return False
+        return True
+    
+#optimized backtracking
+class Solution:
+    def smallestNumber(self, pattern: str) -> str:
+        return str(self.find_smallest_number(pattern, 0, set(), 0))
+
+    # Recursively find the smallest number that satisfies the pattern
+    def find_smallest_number(
+        self,
+        pattern: str,
+        current_position: int,
+        used_nums: int,
+        current_num: int,
+    ) -> int:
+        # Base case: return the current number when the whole pattern is processed
+        if current_position > len(pattern):
+            return current_num
+
+        result = float("inf")
+        last_digit = current_num % 10
+
+        #thie part is important, otherwise we need to code for the decrement part sepeartely
+        should_increment = (
+            current_position == 0 or pattern[current_position - 1] == "I"
+        )
+
+        # Try all possible digits (1 to 9) that are not yet used and follow the pattern
+        for current_digit in range(1, 10):
+            if current_digit not in used_nums and (current_digit > last_digit) == should_increment:
+                used_nums.add(current_digit)
+                result = min(
+                    result,
+                    self.find_smallest_number(
+                        pattern,
+                        current_position + 1,
+                        used_nums,
+                        current_num * 10 + current_digit,
+                    ),
+                )
+                used_nums.remove(current_digit)
+
+        return result
+    
+#another way but coding out rules explicitly for I and D
+class Solution:
+    def smallestNumber(self, pattern: str) -> str:
+        return str(self.find_smallest_number(pattern, 0, set(), 0))
+
+    def find_smallest_number(
+        self,
+        pattern: str,
+        current_position: int,
+        used_nums: int,
+        current_num: int,
+    ) -> int:
+        # Base case: return the current number when the whole pattern is processed
+        if current_position > len(pattern):
+            return current_num
+
+        result = float("inf")
+        last_digit = current_num % 10
+
+        for current_digit in range(1, 10):
+            if current_digit not in used_nums:
+                if (current_digit > last_digit and pattern[current_position - 1] == 'I') or \
+                (current_digit < last_digit and pattern[current_position-1] == 'D') or \
+                (current_position == 0):
+                    used_nums.add(current_digit)
+                    result = min(
+                        result,
+                        self.find_smallest_number(
+                            pattern,
+                            current_position + 1,
+                            used_nums,
+                            current_num * 10 + current_digit,
+                        ),
+                    )
+                    used_nums.remove(current_digit)
+
+        return result
+    
+#instead of backtracking, just pass in the mask
+#this only works because the mask states are small
+class Solution:
+    def smallestNumber(self, pattern: str) -> str:
+        return str(self.find_smallest_number(pattern, 0, 0, 0))
+
+    def find_smallest_number(
+        self,
+        pattern: str,
+        current_position: int,
+        used_nums: int,
+        current_num: int,
+    ) -> int:
+        # Base case: return the current number when the whole pattern is processed
+        if current_position > len(pattern):
+            return current_num
+
+        result = float("inf")
+        last_digit = current_num % 10
+
+        for current_digit in range(1, 10):
+            if used_nums & (1 << current_digit) == 0:
+                if (current_digit > last_digit and pattern[current_position - 1] == 'I') or \
+                (current_digit < last_digit and pattern[current_position-1] == 'D') or \
+                (current_position == 0):
+                    result = min(
+                        result,
+                        self.find_smallest_number(
+                            pattern,
+                            current_position + 1,
+                            used_nums | (1 << current_digit),
+                            current_num * 10 + current_digit,
+                        ),
+                    )
+        return result
+    
+class Solution:
+    def smallestNumber(self, pattern: str) -> str:
+        '''
+        if we have III, then its just 1234
+        the problem is when we hit a D, we dont know how many D's happen after it
+        instead of placing a number at the position, we delay it and go to the next
+        we keep going until we hit an I or the end of the pattern
+        keep track of the current number of positinos we assign to a digit
+        if its I we call rec(i+1,count + 1)
+        if its D, we call rec(u_1,count)
+        '''
+        ans = []
+        self.rec(0,0,pattern,ans)
+        return "".join(ans[::-1])
+    
+    def rec(self,i : int, curr_count : int, pattern : str, ans : List[int]):
+        if i != len(pattern):
+            if pattern[i] == 'I':
+                self.rec(i+1,curr_count+1,pattern,ans)
+            else:
+                curr_count = self.rec(i+1,curr_count,pattern,ans)
+
+        ans.append(str(curr_count + 1))
+        return curr_count + 1
+    
+#now we can do stack implementation
+#bascially after D, we need to reverse 
+class Solution:
+    def smallestNumber(self, pattern: str) -> str:
+        '''
+        stack implementation
+        starting at 1, add to stack 
+        if we hit the end of the pattern or another 'I' pop the number from the stack and add to ans
+        '''
+        stack = []
+        ans = []
+        curr_count = 0
+
+        for i in range(len(pattern) + 1):
+            stack.append(curr_count + 1)
+            if i == len(pattern) or pattern[i] == 'I':
+                while stack:
+                    ans.append(str(stack.pop()))
+            curr_count += 1
+        
+        return "".join(ans)
