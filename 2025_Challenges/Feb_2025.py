@@ -1418,3 +1418,317 @@ class Solution:
             curr_count += 1
         
         return "".join(ans)
+
+#########################################################################
+# 1415. The k-th Lexicographical String of All Happy Strings of Length n
+# 19FEB25
+##########################################################################
+#ezzzz
+class Solution:
+    def getHappyString(self, n: int, k: int) -> str:
+        '''
+        will brute force work
+        if there are 10 spots, and each spot can take, a letter abc
+        then there are less than 3**10
+        i can generate all in order and return the kth one
+        '''
+        possible = []
+        self.rec(n,"",possible)
+        if k - 1 >= len(possible):
+            return ""
+        
+        return possible[k-1]
+    def rec(self,n,path,possible):
+        if n == 0:
+            possible.append(path)
+            return
+        for letter in 'abc':
+            if not path or (path and path[-1] != letter):
+                self.rec(n-1,path+letter,possible)
+
+#rudimentary pruning
+class Solution:
+    def getHappyString(self, n: int, k: int) -> str:
+        '''
+        will brute force work
+        if there are 10 spots, and each spot can take, a letter abc
+        then there are less than 3**10
+        i can generate all in order and return the kth one
+        '''
+        possible = []
+        self.rec(n,"",possible,k)
+        if k - 1 >= len(possible):
+            return ""
+        
+        return possible[k-1]
+    def rec(self,n,path,possible,k):
+        if n == 0:
+            possible.append(path)
+            return
+        if len(possible) == k:
+            return
+        for letter in 'abc':
+            if not path or (path and path[-1] != letter):
+                self.rec(n-1,path+letter,possible,k)
+
+#######################################
+# 1980. Find Unique Binary String
+# 20FEB25
+########################################
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        uh wtf, just check all strings from 1 to 2**n
+        and make sure they're atleast of length n
+        '''
+        nums = set(nums)
+        n = len(nums)
+        for i in range(2**len(nums)):
+            cand = self.get_bin(i,n)
+            if cand not in nums:
+                return cand
+        
+        return ""
+    
+    def get_bin(self,num,n):
+        ans = []
+        while num:
+            ans.append(str(num & 1))
+            num = num >> 1
+        return '0'*(n-len(ans))+"".join(ans)
+
+#recursion
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        nums = set(nums)
+        n = len(nums)
+        for cand in self.generate("",n):
+            if cand not in nums:
+                return cand
+    
+    def generate(self,path,n):
+        if len(path) == n:
+            yield path
+        else:
+            for num in ['0','1']:
+                yield from self.generate(path+num,n)
+
+#returning from
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        nums = set(nums)
+        n = len(nums)
+        return self.generate("",n,nums)
+
+    def generate(self,path,n,nums):
+        if len(path) == n:
+            if path not in nums:
+                return path
+            return None
+        ans = None
+        for num in ['0','1']:
+            ans = self.generate(path+num,n,nums)
+            if ans:
+                return ans
+        return ans
+
+class Solution:
+    def findDifferentBinaryString(self, nums: List[str]) -> str:
+        '''
+        evidently this is just cantor's digonal argument, in fact the example is Cantor's!
+        we need need to generate a binary string from nums
+        we flip each digit in nums
+        '''
+        ans = []
+        n = len(nums)
+        for i in range(n):
+            digit = int(nums[i][i])
+            ans.append(str(1 - digit))
+        
+        return "".join(ans)
+
+####################################################
+# 1261. Find Elements in a Contaminated Binary Tree
+# 21FEB25
+###################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class FindElements:
+
+    def __init__(self, root: Optional[TreeNode]):
+        '''
+        we can modify the tree in the constructor, as we decend the tree keep track of values in hashset
+        '''
+        self.values = set()
+        def dfs(node,new_val):
+            if not node:
+                return
+            self.values.add(new_val)
+            node.val = new_val
+            if node.left:
+                dfs(node.left, new_val*2 + 1)
+            if node.right:
+                dfs(node.right, new_val*2 + 2)
+        dfs(root,0)
+
+    def find(self, target: int) -> bool:
+        return target in self.values
+        
+
+
+# Your FindElements object will be instantiated and called as such:
+# obj = FindElements(root)
+# param_1 = obj.find(target)
+
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class FindElements:
+
+    def __init__(self, root: Optional[TreeNode]):
+        '''
+        we can also do BFS
+        '''
+        self.values = set()
+        self.bfs(root)
+
+    def find(self, target: int) -> bool:
+        return target in self.values
+
+    def bfs(self,root):
+        q = deque([(root,0)])
+        while q:
+            node,curr_val = q.popleft()
+            self.values.add(curr_val)
+            if node.left:
+                q.append((node.left,curr_val*2 + 1))
+            if node.right:
+                q.append((node.right,curr_val*2 + 2))
+
+
+# Your FindElements object will be instantiated and called as such:
+# obj = FindElements(root)
+# param_1 = obj.find(target)
+
+###############################################
+# 1028. Recover a Tree From Preorder Traversal
+# 22FEB25
+##############################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def recoverFromPreorder(self, traversal: str) -> Optional[TreeNode]:
+        '''
+        after each number we have D dashes where D is the depth of the node,
+        if a node is at depth D, then its left child will be D + 1
+        if a node has a child
+        example:  "1-2--3--4-5--6--7"
+        we can read as
+        depth 0: [1]
+        depth 1: [2.5]
+        depth 2: [3,4,6,7]
+         "1-2--3---4-5--6---7"
+        depth 0: [1]
+        depth 1: [2,5]
+        depth 2: [3,6]
+        depth 3: [4,7]
+        '''
+        #parse string and get levels
+        parsed = []
+        i = 0
+        curr_num = 0
+        curr_depth = 0
+        while i < len(traversal):
+            while i < len(traversal) and traversal[i].isdigit():
+                curr_num = curr_num*10 + int(traversal[i])
+                i += 1
+            parsed.append((curr_num,curr_depth))
+            curr_num = 0
+            curr_depth = 0
+            while i < len(traversal) and traversal[i] == '-':
+                curr_depth += 1
+                i += 1
+        
+        stack = []
+        i = 0
+        while i < len(parsed):
+            curr_num,depth = parsed[i]
+            #make node
+            node = TreeNode(curr_num)
+            while len(stack) > depth:
+                stack.pop()
+            if stack:
+                if not stack[-1].left:
+                    stack[-1].left = node
+                else:
+                    stack[-1].right = node
+            stack.append(node)
+            i += 1
+        
+        return stack[0]
+    
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def recoverFromPreorder(self, traversal: str) -> Optional[TreeNode]:
+        '''
+        after each number we have D dashes where D is the depth of the node,
+        if a node is at depth D, then its left child will be D + 1
+        if a node has a child
+        example:  "1-2--3--4-5--6--7"
+        we can read as
+        depth 0: [1]
+        depth 1: [2.5]
+        depth 2: [3,4,6,7]
+         "1-2--3---4-5--6---7"
+        depth 0: [1]
+        depth 1: [2,5]
+        depth 2: [3,6]
+        depth 3: [4,7]
+        '''
+        #parse string and get levels
+        parsed = []
+        i = 0
+        curr_num = 0
+        curr_depth = 0
+        while i < len(traversal):
+            while i < len(traversal) and traversal[i].isdigit():
+                curr_num = curr_num*10 + int(traversal[i])
+                i += 1
+            parsed.append((curr_num,curr_depth))
+            curr_num = 0
+            curr_depth = 0
+            while i < len(traversal) and traversal[i] == '-':
+                curr_depth += 1
+                i += 1
+        idx = [0]
+        return self.build(parsed,idx,0)
+    
+    def build(self, arr, idx,depth):
+        if idx[0] >= len(arr):
+            return None
+        val,curr_depth = arr[idx[0]]
+        if curr_depth != depth:
+            return None
+        node = TreeNode(val)
+        idx[0] += 1
+        node.left = self.build(arr,idx,depth+1)
+        node.right = self.build(arr,idx,depth+1)
+        return node
+
+
