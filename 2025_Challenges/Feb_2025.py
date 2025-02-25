@@ -1731,4 +1731,214 @@ class Solution:
         node.right = self.build(arr,idx,depth+1)
         return node
 
+###################################################################
+# 889. Construct Binary Tree from Preorder and Postorder Traversal
+# 24FEB25
+####################################################################
+class Solution:
+    def constructFromPrePost(
+        self, preorder: List[int], postorder: List[int]
+    ) -> Optional[TreeNode]:
+        num_of_nodes = len(preorder)
+
+        # Create the index list for `postorder`
+        index_in_post_order = [0] * (num_of_nodes + 1)
+        for index in range(num_of_nodes):
+            # Store the index of the current element
+            index_in_post_order[postorder[index]] = index
+
+        return self._construct_tree(0, num_of_nodes - 1, 0, preorder, index_in_post_order)
+
+    # Helper function to construct the tree recursively
+    def _construct_tree(
+        self,
+        pre_start: int,
+        pre_end: int,
+        post_start: int,
+        preorder: List[int],
+        index_in_post_order: List[int],
+    ) -> Optional[TreeNode]:
+        # Base case: If there are no nodes to process, return None
+        if pre_start > pre_end:
+            return None
+
+        # Base case: If only one node is left, return that node
+        if pre_start == pre_end:
+            return TreeNode(preorder[pre_start])
+
+        # The left child root in preorder traversal (next element after root)
+        left_root = preorder[pre_start + 1]
+
+        # Calculate the number of nodes in the left subtree by searching in postorder
+        num_of_nodes_in_left = index_in_post_order[left_root] - post_start + 1
+
+        root = TreeNode(preorder[pre_start])
+
+        # Recursively construct the left subtree
+        root.left = self._construct_tree(
+            pre_start + 1,
+            pre_start + num_of_nodes_in_left,
+            post_start,
+            preorder,
+            index_in_post_order,
+        )
+
+        # Recursively construct the right subtree
+        root.right = self._construct_tree(
+            pre_start + num_of_nodes_in_left + 1,
+            pre_end,
+            post_start + num_of_nodes_in_left,
+            preorder,
+            index_in_post_order,
+        )
+
+        return root
+    
+#########################################
+# 2467. Most Profitable Path in a Tree
+# 24FEB25
+##########################################
+class Solution:
+    def mostProfitablePath(self, edges: List[List[int]], bob: int, amount: List[int]) -> int:
+        '''
+        i don't see how bob's path is fixed
+            because its a tree! my fucking god, there can only be one path from bob to zero
+            if we have the path, then we have the times
+        the problem is tha they move at the same time....
+        i can use bfs to find the nodes bob would touch, at each time point, then check if alice reaches that node at that same time point
+        use this to check if they reach the node at the same time
+        as we dfs for alice, we need to check bob times to see if:
+            they arrived at the same time
+            of if the gate has already been opened up
+        '''
+        graph = defaultdict(list)
+        #need to know what nodes are leaves
+        indegree = Counter()
+        for u,v in edges:
+            indegree[u] += 1
+            indegree[v] += 1
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        leaves = set()
+        for node in indegree:
+            if node != 0 and indegree[node] == 1:
+                leaves.add(node)
+        
+        bob_path = [bob]
+        bob_ans = []
+        bob_seen = set()
+        bob_seen.add(bob)
+        self.bob_moves(graph,bob,bob_path,bob_seen,bob_ans)
+        #need to mapp nodes to times, then bfs
+        times = {}
+        for i,node in enumerate(bob_ans):
+            times[node] = i
+
+        #bfs for alice to find nodes
+        max_income = float('-inf')
+        seen = set()
+        q = deque([(0,0,0)]) #entries are (alice_node,curr_time,curr_income)
+        
+        #need to make sure we maximize only on leaves
+        while q:
+            alice,curr_time,curr_income = q.popleft()
+            seen.add(alice)
+            if (alice not in times or curr_time < times[alice]):
+                curr_income += amount[alice]
+            #same time
+            elif curr_time == times[alice]:
+                curr_income += amount[alice] // 2
+            #leaf update
+            if alice in leaves:
+                max_income = max(max_income,curr_income)
+            for neigh in graph[alice]:
+                if neigh not in seen:
+                    q.append((neigh,curr_time + 1, curr_income))
+        
+        return max_income
+
+    #find path for bob
+    def bob_moves(self,graph,bob,path,seen,bob_ans):
+        if bob == 0:
+            bob_ans[:] = path[:]
+            return
+        for neigh in graph[bob]:
+            if neigh not in seen:
+                path.append(neigh)
+                seen.add(neigh)
+                self.bob_moves(graph,neigh,path,seen,bob_ans)
+                path.pop()
+                seen.remove(neigh)
+
+#instead of bfs for alice, we can do dfs
+class Solution:
+    def mostProfitablePath(self, edges: List[List[int]], bob: int, amount: List[int]) -> int:
+        '''
+        i don't see how bob's path is fixed
+            because its a tree! my fucking god, there can only be one path from bob to zero
+            if we have the path, then we have the times
+        the problem is tha they move at the same time....
+        i can use bfs to find the nodes bob would touch, at each time point, then check if alice reaches that node at that same time point
+        use this to check if they reach the node at the same time
+        as we dfs for alice, we need to check bob times to see if:
+            they arrived at the same time
+            of if the gate has already been opened up
+        '''
+        graph = defaultdict(list)
+        #need to know what nodes are leaves
+        indegree = Counter()
+        for u,v in edges:
+            indegree[u] += 1
+            indegree[v] += 1
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        leaves = set()
+        for node in indegree:
+            if node != 0 and indegree[node] == 1:
+                leaves.add(node)
+        
+        bob_path = [bob]
+        bob_ans = []
+        bob_seen = set()
+        bob_seen.add(bob)
+        self.bob_moves(graph,bob,bob_path,bob_seen,bob_ans)
+        #need to mapp nodes to times, then bfs
+        times = {}
+        for i,node in enumerate(bob_ans):
+            times[node] = i
+
+        #we can wrap this is a dfs function
+        max_income = [float('-inf')]
+        seen = set()
+        self.alice_path(0,0,0,max_income,seen,leaves,times,amount,graph)
+        return max_income[0]
+    
+    def alice_path(self,alice,curr_time,curr_income,max_income,seen,leaves,times,amount,graph):
+        seen.add(alice)
+        if (alice not in times or curr_time < times[alice]):
+            curr_income += amount[alice]
+        #same time
+        elif curr_time == times[alice]:
+            curr_income += amount[alice] // 2
+        #leaf update
+        if alice in leaves:
+            max_income[0] = max(max_income[0],curr_income)
+        for neigh in graph[alice]:
+            if neigh not in seen:
+                self.alice_path(neigh,curr_time + 1, curr_income,max_income,seen,leaves,times,amount,graph)
+
+    #find path for bob
+    def bob_moves(self,graph,bob,path,seen,bob_ans):
+        if bob == 0:
+            bob_ans[:] = path[:]
+            return
+        for neigh in graph[bob]:
+            if neigh not in seen:
+                path.append(neigh)
+                seen.add(neigh)
+                self.bob_moves(graph,neigh,path,seen,bob_ans)
+                path.pop()
+                seen.remove(neigh)
 
