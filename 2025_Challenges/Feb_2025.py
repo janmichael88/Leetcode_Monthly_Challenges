@@ -1942,3 +1942,69 @@ class Solution:
                 path.pop()
                 seen.remove(neigh)
 
+###########################################
+# 1524. Number of Sub-arrays With Odd Sum
+# 25FEB25
+###########################################
+class Solution:
+    def numOfSubarrays(self, arr: List[int]) -> int:
+        '''
+        i can use pref_sum and check all sums for each (i,j) array
+        if we have a pref_sum that is odd, we contribute odd_count subarrays
+
+        '''
+        mod = 10**9 + 7
+        ans = 0
+        pref_sum = 0
+        even_count = 1
+        odd_count = 0
+
+        for num in arr:
+            pref_sum += num
+            #if its even, add the odd count and increment even
+            if pref_sum % 2 == 0:
+                ans += odd_count
+                even_count += 1
+            else:
+                ans += even_count
+                odd_count += 1
+
+            ans %= mod
+        
+        return ans
+    
+class Solution:
+    def numOfSubarrays(self, arr: List[int]) -> int:
+        '''
+        if we knew the count of subarrays who's sum is odd ending at i, then we just add them all up
+        let dp(i) be the number of subarrays who's sum is odd and ends at index i
+        if a current subarry ending at i has odd sum, them odding another odd would make it even,
+            but adding an even number, would make it even
+        if a current subarray ending at i had even num, then adding an odd number would make it odd
+            but adding an even number would keep it even
+        
+        so we only need to keep track of how many subaraayrs up to a given index i have odd and even sums
+        '''
+        mod = 10**9 + 7
+        n = len(arr)
+
+        ending_odd = [0]*n
+        ending_even = [0]*n
+
+        #init, the last element parities
+        if arr[-1] % 2 == 1:
+            ending_odd[-1] = 1
+        else:
+            ending_even[-1] == 1
+
+        for i in range(n-2,-1,-1):
+            #if its odd
+            if arr[i] % 2 == 1:
+                #then we can at more odd counts from even
+                ending_odd[i] = (1 + ending_even[i+1]) % mod
+                ending_even[i] = (ending_odd[i+1]) % mod
+            else:
+                ending_even[i] = (1 + ending_even[i+1] % mod)
+                ending_odd[i] = (ending_odd[i+1]) % mod
+        
+        return sum(ending_odd) % mod
