@@ -2008,3 +2008,340 @@ class Solution:
                 ending_odd[i] = (ending_odd[i+1]) % mod
         
         return sum(ending_odd) % mod
+
+#############################################
+# 1749. Maximum Absolute Sum of Any Subarray
+# 26FEB25
+#############################################
+class Solution:
+    def maxAbsoluteSum(self, nums: List[int]) -> int:
+        '''
+        if all were positive, it would just be the same of the whole array
+        compare with maximum sum subarray with minimum sum subarray
+        '''
+        if len(nums) == 1:
+            return abs(nums[0])
+        #find max
+        current_subarray = max_subarray = nums[0]
+
+        for num in nums[1:]:
+            current_subarray = max(num, current_subarray + num)
+            max_subarray = max(max_subarray, current_subarray)
+        
+        #find min
+        current_subarray  = nums[0]
+        min_subarray = float('inf')
+
+        for num in nums[1:]:
+            current_subarray = min(num, current_subarray + num)
+            min_subarray = min(min_subarray, current_subarray)
+        
+        return max(abs(max_subarray),abs(min_subarray))
+
+class Solution:
+    def maxAbsoluteSum(self, nums: List[int]) -> int:
+        '''
+        if all were positive, it would just be the same of the whole array
+        compare with maximum sum subarray with minimum sum subarray
+        '''
+        max_sub = self.kadane_max(nums)
+        min_sub = self.kadane_min(nums)
+        return max(max_sub,min_sub)
+    
+    def kadane_max(self,nums):
+        n = len(nums)
+        dp = [float('-inf')]*n
+        dp[0] = nums[0]
+        for i in range(1,n):
+            dp[i] = max(dp[i-1] + nums[i],nums[i])
+        
+        return abs(max(dp))
+    
+    def kadane_min(self,nums):
+        n = len(nums)
+        dp = [float('inf')]*n
+        dp[0] = nums[0]
+        for i in range(1,n):
+            dp[i] = min(dp[i-1] + nums[i],nums[i])
+        
+        return abs(min(dp))
+
+############################################
+# 873. Length of Longest Fibonacci Subsequence
+# 27FEB25
+#############################################
+#TLE with memo
+class Solution:
+    def lenLongestFibSubseq(self, arr: List[int]) -> int:
+        '''
+        similar to LIS, but need to followe the fibonacci sequence
+        or convultion filter maybe? bleaghhh
+        need to keep track of index, and last two numbers in the sequence
+        if we have the last two numbers, we can generate the next
+        '''
+        n = len(arr)
+        memo = {}
+
+        def dp(i,first,second):
+            if i >= n:
+                return 0
+            if (i,first,second) in memo:
+                return memo[(i,first,second)]
+            
+            ans = 2
+            for j in range(i+1,n):
+                if arr[j] == first + second:
+                    ans = max(ans, 1 + dp(j,second,arr[j]))
+            
+            memo[(i,first,second)] = ans
+            return ans
+
+        ans = 0
+        for i in range(n):
+            for j in range(i+1,n):
+                ans = max(ans,dp(j,arr[i],arr[j]))
+        
+        if ans == 2:
+            return 0
+        return ans
+    
+#still TLE with cache
+class Solution:
+    def lenLongestFibSubseq(self, arr: List[int]) -> int:
+        '''
+        similar to LIS, but need to followe the fibonacci sequence
+        or convultion filter maybe? bleaghhh
+        need to keep track of index, and last two numbers in the sequence
+        if we have the last two numbers, we can generate the next
+        '''
+        n = len(arr)
+        @lru_cache
+        def dp(i,first,second):
+            if i >= n:
+                return 0
+            
+            ans = 2
+            for j in range(i+1,n):
+                if arr[j] == first + second:
+                    ans = max(ans, 1 + dp(j,second,arr[j]))
+            
+            return ans
+
+        ans = 0
+        for i in range(n):
+            for j in range(i+1,n):
+                ans = max(ans,dp(j,arr[i],arr[j]))
+        
+        if ans == 2:
+            return 0
+        return ans
+    
+#binary search but MLE
+class Solution:
+    def lenLongestFibSubseq(self, arr: List[int]) -> int:
+        '''
+        similar to LIS, but need to followe the fibonacci sequence
+        or convultion filter maybe? bleaghhh
+        need to keep track of index, and last two numbers in the sequence
+        if we have the last two numbers, we can generate the next
+
+        if they're stricclyt increasing we can use binary search
+        '''
+        n = len(arr)
+
+        @cache
+        def dp(i,first,second):
+            if i >= n:
+                return 0
+            ans = 2
+            #binary search
+            j = bisect.bisect_left(arr,first+second)
+            if j < len(arr) and arr[j] == first + second:
+                ans = max(ans, 1 + dp(j,second,arr[j]))
+
+            return ans
+
+        ans = 0
+        for i in range(n):
+            for j in range(i+1,n):
+                ans = max(ans,dp(j,arr[i],arr[j]))
+        
+        if ans == 2:
+            return 0
+        return ans
+    
+class Solution:
+    def lenLongestFibSubseq(self, arr: List[int]) -> int:
+        '''
+        similar to LIS, but need to followe the fibonacci sequence
+        or convultion filter maybe? bleaghhh
+        need to keep track of index, and last two numbers in the sequence
+        if we have the last two numbers, we can generate the next
+
+        if they're stricclyt increasing we can use binary search
+        we don't need to fix i and j starts
+        if we start with arr[i], then we can just check if arr[i] + some_next_num where this i in ther range(arr[i])
+
+        there's too much overhead with hashmap as memo
+        need to use arrays
+         '''
+        d = {val: i for i, val in enumerate(arr)}
+        n = len(arr)
+        memo = [[-1]*n for _ in range(n)]
+        def dp(i, j):
+            if memo[i][j] != -1:
+                return memo[i][j]
+            s = arr[i] + arr[j]
+            if s in d:
+                memo[i][j] = 1 + dp(j, d[s])
+            else:
+                memo[i][j] = 0
+            return memo[i][j]
+        
+        ans = 0
+        for i in range(len(arr) - 2):
+            for j in range(i + 1, len(arr) - 1):
+                ans = max(ans, dp(i,j))
+        return ans + 2 if ans else 0
+
+class Solution:
+    def lenLongestFibSubseq(self, arr: List[int]) -> int:
+        '''
+        need to use arrays as memo
+        '''
+        d = {val: i for i, val in enumerate(arr)}
+        n = len(arr)
+        memo = [[-1]*n for _ in range(n)]
+        def dp(i, j):
+            if memo[i][j] != -1:
+                return memo[i][j]
+            s = arr[i] + arr[j]
+            if s in d:
+                memo[i][j] = 1 + dp(j, d[s])
+            else:
+                memo[i][j] = 0
+            return memo[i][j]
+        
+        ans = 0
+        for i in range(len(arr) - 2):
+            for j in range(i + 1, len(arr) - 1):
+                local_ans = dp(i,j)
+                if local_ans:
+                    ans = max(ans,local_ans + 2)
+        if ans:
+            return ans
+        return 0
+
+#brute force actually works just find
+class Solution:
+    def lenLongestFibSubseq(self, arr: List[int]) -> int:
+        '''
+        we can just intelligent build a fib sequence,
+        fix first and second numbers and keep advancing
+        use hashset for 
+        '''
+        arr_set = set(arr)
+        ans = 0
+        n = len(arr)
+
+        for i in range(n):
+            for j in range(i+1,n):
+                second = arr[j]
+                third = arr[i] + arr[j]
+                curr_length = 2
+                while third in arr_set:
+                    second,third = third, second + third
+                    curr_length += 1
+                    ans = max(ans,curr_length)
+        
+        return ans
+    
+#we can use dp
+class Solution:
+    def lenLongestFibSubseq(self, arr: list[int]) -> int:
+        n = len(arr)
+        max_len = 0
+        # dp[prev][curr] stores length of Fibonacci sequence ending at indexes prev,curr
+        dp = [[0] * n for _ in range(n)]
+
+        # Map each value to its index for O(1) lookup
+        val_to_idx = {num: idx for idx, num in enumerate(arr)}
+
+        # Fill dp array
+        for curr in range(n):
+            for prev in range(curr):
+                # Find if there exists a previous number to form Fibonacci sequence
+                diff = arr[curr] - arr[prev]
+                prev_idx = val_to_idx.get(diff, -1)
+
+                # Update dp if valid Fibonacci sequence possible
+                # diff < arr[prev] ensures strictly increasing sequence
+                dp[prev][curr] = (
+                    dp[prev_idx][prev] + 1
+                    if diff < arr[prev] and prev_idx >= 0
+                    else 2
+                )
+                max_len = max(max_len, dp[prev][curr])
+
+        # Return 0 if no sequence of length > 2 found
+        return max_len if max_len > 2 else 0
+
+
+###########################################
+# 1092. Shortest Common Supersequence 
+# 28FEB25
+############################################
+#bleaghhh
+class Solution:
+    def shortestCommonSupersequence(self, str1: str, str2: str) -> str:
+        '''
+        if we were to concat str1+str2 and str2+str1
+        then we just need to find the shortest sequence in each of them that has both
+        'abac' and 'cab'
+        try 'abaccab', we have to use the whole thing
+        try 'cababac'
+        then we can try looking for subsequence starting at i
+        and try generating a sequence while we have chars to take
+        '''
+        concat1 = str1+str2
+        concat2 = str2+str1
+        ans_size = float('inf')
+        ans = ""
+
+        for i in range(len(concat1)):
+            cand = self.make(i,concat1,str1,str2)
+            if cand and len(cand) < ans_size:
+                ans = "".join(cand)
+                ans_size = len(cand)
+        
+        #try other one
+        for i in range(len(concat2)):
+            cand = self.make(i,concat2,str1,str2)
+            if cand and len(cand) < ans_size:
+                ans = "".join(cand)
+                ans_size = len(cand)
+
+        return ans
+    
+    def make(self,start,larger,str1,str2):
+        candidate = []
+        i,j = 0,0
+        while start < len(larger) and (i < len(str1) or j < len(str2)):
+            #if both match
+            if (i < len(str1) and j < len(str2)) and larger[start] == str1[i] and larger[start] == str2[j]:
+                candidate.append(larger[start])
+                i += 1
+                j += 1
+            #do we match on str1 first or str2
+            elif i < len(str1) and larger[start] == str1[i]:
+                candidate.append(larger[start])
+                i += 1
+            elif j < len(str2) and larger[start] == str2[j]:
+                candidate.append(larger[start])
+                j += 1
+            else:
+                start += 1
+        
+        if i == len(str1) and j == len(str2):
+            return candidate
+        return ""
