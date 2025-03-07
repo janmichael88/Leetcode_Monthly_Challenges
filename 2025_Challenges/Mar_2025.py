@@ -310,3 +310,147 @@ class Solution:
             n = n // 3
         
         return True
+    
+###########################################
+# 2579. Count Total Number of Colored Cells
+# 05MAR24
+###########################################
+class Solution:
+    def coloredCells(self, n: int) -> int:
+        '''
+        we keep adding 4 cells every time
+        1,5,13
+        each time we add, we need to add 4 more cells
+
+        '''
+        ans = 1
+        curr_cells = 4
+        for i in range(n-1):
+            ans += curr_cells
+            curr_cells += 4
+        
+        return ans
+    
+class Solution:
+    def coloredCells(self, n: int) -> int:
+        '''
+        we keep adding 4 cells every time
+        1,5,13
+        each time we add, we need to add 4 more cells
+        the pattern is 1 + (4*1) + (4*2) + ... + 4*(n-1)
+        inside sum is sum series for n-1
+        1 + 4*(n*(n-1)//2)
+         1 + 2*(n*(n-1))
+        '''
+        return 1 + 2*(n*(n-1))
+    
+#########################################
+# 2965. Find Missing and Repeated Values
+# 06MAR25
+########################################
+class Solution:
+    def findMissingAndRepeatedValues(self, grid: List[List[int]]) -> List[int]:
+        '''
+        a appears twice and b is missing
+        return [a,b]
+        values are in teh range [1,n**2]
+        and i can use hashmap as temp space
+        or i can use the grid and mark
+
+        '''
+        repeated = -1
+        n = len(grid)
+        for i in range(n):
+            for j in range(n):
+                num = grid[i][j]
+                abs_num = abs(num) - 1
+                #find index
+                ii,jj = divmod(abs_num,n)
+                if grid[ii][jj] < 0:
+                    repeated = abs(num)
+                grid[ii][jj] *= -1
+        
+        #second traverse
+        missing = -1
+        for i in range(n):
+            for j in range(n):
+                num = i*n + j + 1
+                if grid[i][j] > 0 and num != repeated:
+                    missing = num
+        
+        return [repeated,missing]
+
+#single pass using xor!
+class Solution:
+    def findMissingAndRepeatedValues(self, grid: List[List[int]]) -> List[int]:
+        '''
+        a appears twice and b is missing
+        return [a,b]
+        values are in teh range [1,n**2]
+        and i can use hashmap as temp space
+        or i can use the grid and mark
+        a^b^c^c
+        we want
+        xor1 = a^b^c^d
+        xor2 = a^b^c
+        missing = xor1^xor2
+
+        '''
+        repeated = -1
+        xor1 = 0
+        xor2 = 0
+        n = len(grid)
+        for i in range(n):
+            for j in range(n):
+                num = grid[i][j]
+                abs_num = abs(num) - 1
+                #find index
+                ii,jj = divmod(abs_num,n)
+                #if its already negative, this is the repeated one
+                if grid[ii][jj] < 0:
+                    repeated = abs(num)
+                else:
+                    #othweise add to mask of seen
+                    xor2 = xor2^(abs_num + 1)
+                #mark
+                grid[ii][jj] *= -1
+                #mask to get all of them
+                xor1 = xor1^(i*n + j + 1)
+        
+        
+        return [repeated,xor1^xor2] #undo the seen mask, and retreive the missing
+
+#mathssss
+class Solution:
+    def findMissingAndRepeatedValues(self, grid: List[List[int]]) -> List[int]:
+        '''
+        sum of numbers from 1 to n**2 is just n^2*(n^2 + 1) / 2
+        sum of squares is just n^2(n^2 + 1)*(2n^2 + 1) // 6
+        or just \sum_{i=1}^{n} i**2
+        now if we compute the sum of the numbers in grid
+        sum_numbers = perfect_sum  + x - y
+        so the difference between the actual sum and perfect sum is
+        sum_diff = x - y
+        sqr_diff = x**2 - y**2
+        x**2 - y**2 = (x+y)*(x-y)
+        we eventually end up with two euqations
+        x-y == sum_diff
+        x+y = sqrdiff/sumdiff
+        we can solve for x and y
+        '''
+        n = len(grid)
+        actual_sum = 0
+        actual_square_sum = 0
+        for i in range(n):
+            for j in range(n):
+                actual_sum += grid[i][j]
+                actual_square_sum += grid[i][j]**2
+            
+        expected_sum = ((n*n)*(n*n + 1))//2
+        expected_square_sum = ((n*n)*(n*n + 1)*(2*n*n + 1)) // 6
+        sum_diff = actual_sum - expected_sum
+        sqr_diff = actual_square_sum - expected_square_sum
+        repeat = (sqr_diff // sum_diff + sum_diff) // 2
+        missing = (sqr_diff // sum_diff - sum_diff) // 2
+
+        return [repeat, missing]
