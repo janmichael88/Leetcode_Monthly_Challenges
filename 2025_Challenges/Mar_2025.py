@@ -454,3 +454,122 @@ class Solution:
         missing = (sqr_diff // sum_diff - sum_diff) // 2
 
         return [repeat, missing]
+    
+########################################
+# 2523. Closest Prime Numbers in Range
+# 08MAR24
+########################################
+class Solution:
+    def closestPrimes(self, left: int, right: int) -> List[int]:
+        '''
+        compute prime numbers between left and right using seive
+        then check all pairs and minimize
+        no need to check all pairs, primes would be increasing, just check every consecutive pair
+        '''
+        primes = self.seive(left,right)
+        ans = [-1,-1]
+        diff = float('inf')
+        for i in range(1,len(primes)):
+            if primes[i] - primes[i-1] < diff:
+                diff = primes[i] - primes[i-1]
+                ans = [primes[i-1],primes[i]]
+        
+        return ans
+    
+    def seive(self,left,right):
+        n = right
+        is_prime = [True]*(n+1)
+        is_prime[1] = False
+        p = 2
+        while p*p <= n:
+            if is_prime[p] == True:
+                #every multiple is not
+                for i in range(p*p,n+1,p):
+                    is_prime[i] = False
+            
+            p += 1
+        
+        primes = []
+        for i in range(left,right+1):
+            if is_prime[i]:
+                primes.append(i)
+        
+        return primes
+    
+class Solution:
+    def closestPrimes(self, left: int, right: int) -> List[int]:
+        '''
+        we can also avoid using the seive
+        if a number is prime, find its next prime and check
+        need to take advantage of twin primes property, primes that differ by 2
+        if we have the range [l,r] and r-l >= 1452, there is always at least one twin prime pair
+        this is valid for the given range of the problem 1 <= l,r <= 10**6)
+            this must be t he answer 
+            since no pairs of primes can be smaller than a twin prime
+        
+        code to check max twin prime dist under range limits
+        limit = 1000000
+        primes = self.seive(1,limit)
+        twin_primes = []
+        for i in range(2,limit-1):
+            if primes[i] and primes[i+2]:
+                twin_primes.append(i)
+        
+        max_dist = 0
+        temp = [-1,-1]
+        for i in range(1,len(twin_primes)):
+            dist = twin_primes[i] - twin_primes[i-1]
+            if dist > max_dist:
+                max_dist = dist
+                temp = [twin_primes[i],twin_primes[i-1]]
+        print(max_dist,temp)
+    def seive(self,left,right):
+        n = right
+        is_prime = [True]*(n+1)
+        is_prime[1] = False
+        p = 2
+        while p*p <= n:
+            if is_prime[p] == True:
+                #every multiple is not
+                for i in range(p*p,n+1,p):
+                    is_prime[i] = False
+            
+            p += 1
+        return is_prime
+        algo is just try all primes, in the range, and check for its immediate next prime
+        '''
+        prev_prime = -1
+        closestA = -1
+        closestB = -1
+        min_difference = float("inf")
+
+        # Iterate over the range of numbers and find primes
+        for candidate in range(left, right + 1):
+            if self.isPrime(candidate):
+                if prev_prime != -1:
+                    difference = candidate - prev_prime
+                    if difference < min_difference:
+                        min_difference = difference
+                        closestA = prev_prime
+                        closestB = candidate
+                    #early termination
+                    if difference == 1 or difference == 2:
+                        return [prev_prime, candidate]
+                prev_prime = candidate
+
+        return [closestA, closestB] if closestA != -1 else [-1, -1]
+    def isPrime(self, num):
+        if num < 2:
+            return False
+        if num == 2 or num == 3:
+            return True
+        if num % 2 == 0:
+            return False
+        divisor = 3
+        while divisor * divisor <= num:
+            if num % divisor == 0:
+                return False
+            divisor += 2
+        return True
+
+    
