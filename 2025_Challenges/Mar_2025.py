@@ -572,4 +572,53 @@ class Solution:
             divisor += 2
         return True
 
-    
+############################################################
+# 2379. Minimum Recolors to Get K Consecutive Black Blocks
+# 08MAR25
+#############################################################
+class Solution:
+    def minimumRecolors(self, blocks: str, k: int) -> int:
+        '''
+        keep window counter of rocks
+        when we have a valid size k, we need to conver the count W to B
+        minimize this
+        '''
+        window = Counter()
+        ans = float('inf')
+        left = 0
+        n = len(blocks)
+        for right in range(n):
+            color = blocks[right]
+            if right - left + 1 > k:
+                window[blocks[left]] -= 1
+                left += 1
+            
+            window[color] += 1
+            if right - left + 1 == k:
+                ans = min(ans,window['W'])
+        
+        return ans
+
+#q of size k
+class Solution:
+    def minimumRecolors(self, blocks: str, k: int) -> int:
+        '''
+        can also use deque of size k
+        '''
+        q = deque([])
+        whites = 0
+        for i in range(k):
+            color = blocks[i]
+            whites += color == 'W'
+            q.append(color)
+        
+        ans = whites
+        for i in range(k,len(blocks)):
+            color = q.popleft()
+            whites -= color == 'W'
+            color = blocks[i]
+            whites += color == 'W'
+            q.append(color)
+            ans = min(ans,whites)
+        
+        return ans
