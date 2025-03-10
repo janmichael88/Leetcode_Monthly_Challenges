@@ -622,3 +622,57 @@ class Solution:
             ans = min(ans,whites)
         
         return ans
+    
+###############################
+# 3208. Alternating Groups II
+# 09MAR25
+###############################
+#finally!
+class Solution:
+    def numberOfAlternatingGroups(self, colors: List[int], k: int) -> int:
+        '''
+        we are given a cirular array
+        0 is red, 1 is blue
+        keep deque of size k
+        keep track of prev color and curr color
+
+        '''
+        n = len(colors)
+        groups = 0
+        q = deque([])
+        for i in range(n+k-1):
+            curr_color = colors[i%n]
+            #we can add in the current color
+            if q and q[-1] != curr_color:
+                q.append(curr_color)
+            else:
+                q = deque([curr_color])
+            
+            if len(q) == k:
+                groups += 1
+                q.popleft()
+        return groups
+
+class Solution:
+    def numberOfAlternatingGroups(self, colors: List[int], k: int) -> int:
+        '''
+        instead of using q, we can use two pointers
+        we don't need to extend out the colors array, just keep moving up to n + k
+        '''        
+        n = len(colors)
+        groups = 0
+        left = 0
+        right = 1
+        while right < n + k - 1:
+            #if same, move left to right and right + 1
+            if colors[right % n] == colors[(right - 1) % n]:
+                left = right
+                right += 1
+                continue
+            right += 1
+            #its the number of elements, not the bounds
+            if right - left == k:
+                groups += 1
+                left += 1
+
+        return groups 
