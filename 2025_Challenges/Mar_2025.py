@@ -676,3 +676,326 @@ class Solution:
                 left += 1
 
         return groups 
+
+########################################################################
+# 3306. Count of Substrings Containing Every Vowel and K Consonants II
+# 10MAR25
+########################################################################
+class Solution:
+    def countOfSubstrings(self, word: str, k: int) -> int:
+        '''
+        need to keep track of vowel counts, use as seperate hashmap
+        and cononat counts, we don't care what the cosonants are, just that they are consonants
+        the problem is that if we shrink the window, we lose vowels
+        shrinking solves the too many consonants problem
+        '''
+        vowels = 'aeiou'
+        window_vowels = Counter()
+        consonant_counts = 0
+        ans = 0
+        left = 0
+        n = len(word)
+        for right,ch in enumerate(word):
+            if ch in vowels:
+                window_vowels[ch] += 1
+            else:
+                consonant_counts += 1
+            #valid
+            if len(window_vowels) == len(vowels) and consonant_counts == k:
+                ans += 1
+            while left < right and consonant_counts > k and len(window_vowels) == 5:
+                ch = word[left]
+                if ch in vowels:
+                    window_vowels[ch] -= 1
+                    if window_vowels[ch] == 0:
+                        del window_vowels[ch]
+                else:
+                    consonant_counts -= 1
+                left += 1
+        
+        return ans
+
+class Solution:
+    def countOfSubstrings(self, word: str, k: int) -> int:
+        '''
+        need to keep track of vowel counts, use as seperate hashmap
+        and cononat counts, we don't care what the cosonants are, just that they are consonants
+        the problem is that if we shrink the window, we lose vowels
+        shrinking solves the too many consonants problem
+        there is a special case, so we have the requiste number of vowels and k consoants
+        expanding to another vowel is still valid
+        record the next vowel for each index going fromg right to left
+        '''
+        vowels = 'aeiou'
+        window_vowels = Counter()
+        consonant_counts = 0
+        ans = 0
+        left = 0
+        n = len(word)
+        next_consonant = [0]*n
+        consonant_index = n
+        for i in range(n-1,-1,-1):
+            next_consonant[i] = consonant_index
+            if word[i] not in vowels:
+                consonant_index = i
+
+        for right,ch in enumerate(word):
+            if ch in vowels:
+                window_vowels[ch] += 1
+            else:
+                consonant_counts += 1
+            #shrink if we have too many consonants
+            while left < right and consonant_counts > k:
+                ch = word[left]
+                if ch in vowels:
+                    window_vowels[ch] -= 1
+                    if window_vowels[ch] == 0:
+                        del window_vowels[ch]
+                else:
+                    consonant_counts -= 1
+                left += 1
+            #while we have valid criteria,then every substring between the current right and the next consoant is also valid
+            #this is a shrink, but still valid criteria for substring count
+            while left < right and consonant_counts == k and len(window_vowels) == 5:
+                ans += next_consonant[right] - right
+                ch = word[left]
+                if ch in vowels:
+                    window_vowels[ch] -= 1
+                    if window_vowels[ch] == 0:
+                        del window_vowels[ch]
+                else:
+                    consonant_counts -= 1
+                #we can find more valid substrings by shrinking our window until we no longer have a valid ssubstring
+                #this is a new substring starting at index left, as long as we mainting 5 vowels, we can shrink
+                #the new shrunken substring still has next_consonant[right] - right substrings
+                left += 1
+        
+        return ans
+
+class Solution:
+    def countOfSubstrings(self, word: str, k: int) -> int:
+        '''
+        if we instead using sliding window to find 'at least k consonants'
+        then exaclty k would be
+            at_least(k) - at_least(k+1)
+        paradigm, sliding window reduction
+            inclusion/exlcusion satsisfiability
+            say we need k of something, try looking for k + 1
+            then ans is just some_function(k) - some_function(k+1)
+        
+        intution, instead of asking for exactly k, try at least k
+        then find at least k+1,
+        take difference
+        '''
+        return self.at_least_k(word,k) - self.at_least_k(word, k + 1)
+    
+    def at_least_k(self,word,k):
+        vowels = 'aeiou'
+        window_vowels = Counter()
+        consonant_counts = 0
+        ans = 0
+        left = 0
+        n = len(word)
+        for right,ch in enumerate(word):
+            if ch in vowels:
+                window_vowels[ch] += 1
+            else:
+                consonant_counts += 1
+            #need substrings with at least k cosonants
+            #if we have a valid window ending at right, then any subtrings ending in len(word) - word would also have at least k
+            #so we shrink and count, like in previous set up
+            while len(window_vowels) == 5 and consonant_counts >= k:
+                ans += len(word) - right
+                ch = word[left]
+                if ch in vowels:
+                    window_vowels[ch] -= 1
+                    if window_vowels[ch] == 0:
+                        del window_vowels[ch]
+                else:
+                    consonant_counts -= 1
+                left += 1
+            
+        return ans
+
+#############################################################
+# 1358. Number of Substrings Containing All Three Characters
+# 11MAR25
+#############################################################
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        '''
+        assume we have a valid window with pointers [left,right]
+        expanding right would just mean we have more valid substrings
+        really we have len(s) - right substrings
+        '''
+        n = len(s)
+        window = Counter()
+        left = 0
+        ans = 0
+        for right in range(n):
+            window[s[right]] += 1
+            while left < right and len(window) == 3:
+                ans += n - right
+                window[s[left]] -= 1
+                if window[s[left]] == 0:
+                    del window[s[left]]
+                left += 1
+        
+        return ans
+    
+##############################
+# 749. Contain Virus
+# 12MAR25
+##############################
+#dammit
+#close one
+class Solution:
+    def containVirus(self, isInfected: List[List[int]]) -> int:
+        '''
+        each wall is one unit lone
+        can be install between any two 4 direciontal adjacent cells
+        first identify the regions
+        hint looks ghastly LMAOOO
+            not horribly hard, just a bitch 
+        steps:
+        1. find all viral regions (ans the possible next cells to infect)
+        2. disinfect the largest reason (i.e find the area)
+        3. then spread
+        4. keep going until we can no longer spread
+
+        need utility to find peremited given connected componenets
+        for each (i,j) in the comp, check if there is an exposing side that is not inefected nor a boundary
+        seal off the regions with the largest perimeters first
+
+        hardest part is calculating the permiter
+        '''
+        rows, cols = len(isInfected),len(isInfected[0])
+        seen = set()
+        comps = self.find_comps(isInfected,seen)
+        walls = 0
+        while comps:
+            largest_size,largest_comp = heapq.heappop(comps)
+            #compute walls needed
+            walls_used = self.get_perimeter(largest_comp,isInfected,rows,cols)
+            walls += walls_used
+            #infect the remaining
+            next_day = []
+            for _,comp in comps:
+                next_comp = self.infect(comp,isInfected,rows,cols)
+                perim = self.get_perimeter(next_comp,isInfected,rows,cols)
+                entry = [-perim,next_comp]
+                heapq.heappush(next_day,entry)
+            comps = next_day
+        
+        return walls
+
+    def infect(self,comp,grid,rows,cols):
+        dirrs = [[1,0],[-1,0],[0,-1],[0,1]]
+        next_comp = set()
+        for i,j in comp:
+            for di, dj in dirrs:
+                ii = i + di
+                jj = j + dj    
+                if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 0 and (ii,jj) not in comp:
+                    next_comp.add((ii,jj))
+                    grid[ii][jj] = 1
+        return next_comp | comp
+    def get_perimeter(self,comp,grid,rows,cols):
+        #sides = set()
+        dirrs = [[1,0],[-1,0],[0,-1],[0,1]]
+        sides = set()
+        for i,j in comp:
+            for di, dj in dirrs:
+                ii = i + di
+                jj = j + dj
+                if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 0 and (ii,jj) not in comp:
+                    sides.add((ii,jj,i,j))
+        return len(sides) 
+
+    
+    def dfs(self,i,j,grid,seen,curr_comp):
+        rows,cols = len(grid),len(grid[0])
+        dirrs = dirrs = [[1,0],[-1,0],[0,-1],[0,1]]
+        curr_comp.add((i,j))
+        seen.add((i,j))
+        for di, dj in dirrs:
+            ii = i + di
+            jj = j + dj
+            if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 1 and (ii,jj) not in seen:
+                self.dfs(ii,jj,grid,seen,curr_comp)
+    
+    def find_comps(self,grid,seen):
+        rows,cols = len(grid),len(grid[0])
+        comps = []
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1 and (i,j) not in seen:
+                    curr_comp = set()
+                    self.dfs(i,j,grid,seen,curr_comp)
+                    perim = self.get_perimeter(curr_comp,grid,rows,cols)
+                    entry = [-perim,curr_comp]
+                    heapq.heappush(comps,entry)
+        return comps
+        
+################################################################
+# 2529. Maximum Count of Positive Integer and Negative Integer
+# 12MAR25
+##################################################################
+class Solution:
+    def maximumCount(self, nums: List[int]) -> int:
+        '''
+        counts
+        '''
+        negatives = 0
+        positives = 0
+        for num in nums:
+            negatives += num < 0
+            positives += num > 0
+        
+        return max(negatives,positives)
+    
+#binary search
+#jesus....
+class Solution:
+    def maximumCount(self, nums: List[int]) -> int:
+        '''
+        binary search to find the index of the largest negative
+        is this index is k
+        find smallest positive
+        two binary searches
+        '''
+        largest_negative = self.largest(nums)
+        smallest_positive = self.smallest(nums)
+        #using indices find counts of negatives and positives
+        #print(largest_negative,smallest_positive)
+        count_negatives = largest_negative + 1 if largest_negative != -1 else 0
+        count_positives = len(nums) - smallest_positive if smallest_positive != -1 else 0
+        return max(count_negatives,count_positives)
+    
+    def largest(self,nums):
+        largest_negative = -1
+        left = 0
+        right = len(nums) - 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] >= 0:
+                right = mid - 1
+            else:
+                largest_negative = mid
+                left = mid + 1
+        return largest_negative
+    
+    def smallest(self,nums):
+        smallest_positive = -1
+        left = 0
+        right = len(nums) - 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] <= 0:
+                left = mid + 1
+            else:
+                right = mid - 1
+                smallest_positive = mid
+        return smallest_positive
+
+            
