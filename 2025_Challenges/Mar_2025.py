@@ -998,4 +998,133 @@ class Solution:
                 smallest_positive = mid
         return smallest_positive
 
+##############################################
+# 3356. Zero Array Transformation II
+# 13MAR25
+##############################################
+#TLE with linear seach
+class Solution:
+    def minZeroArray(self, nums: List[int], queries: List[List[int]]) -> int:
+        '''
+        need to make nusm array the 0 array, 
+        we need to find the minimum value of k (the value to decrement by) on each index (given in the queries array)
+        that will make it the 0 array
+        i'm thinking binary search for the correct k
+        so we have queries [[0,2,1],[0,2,1],[1,1,3]]
+        we can make possible decreemnt counts
+        [0,0,0]
+        [1,1,1]
+        [2,2,2]
+        [2,5,2]
+        we can us 2 on nums to reduce to zero, and its minimum
+        opps, we don't use all the queries, only the first k queries
+        binary search on k
+        '''
+        N = len(queries)
+        for i in range(N+1):
+            ints = self.get_intervals(queries,nums,i)
+            if self.can_do(nums,ints):
+                return i
+        
+        return -1
+    
+    def can_do(self,nums,ints):
+        for i in range(len(nums)):
+            if nums[i] > ints[i]:
+                return False
+        return True
+    
+    def get_intervals(self,queries,nums,k):
+        possible_decrements = [0]*(len(nums)+1)
+        for l,r,v in queries[:k]:
+            possible_decrements[l] += v
+            possible_decrements[r+1] -= v
+        #roll up
+        for i in range(1,len(possible_decrements)):
+            possible_decrements[i] += possible_decrements[i-1]
+        
+        return possible_decrements[:-1]
+        
+#now binary search
+#jesus, stupid fucking problem....
+class Solution:
+    def minZeroArray(self, nums: List[int], queries: List[List[int]]) -> int:
+        '''
+        need to make nusm array the 0 array, 
+        we need to find the minimum value of k (the value to decrement by) on each index (given in the queries array)
+        that will make it the 0 array
+        i'm thinking binary search for the correct k
+        so we have queries [[0,2,1],[0,2,1],[1,1,3]]
+        we can make possible decreemnt counts
+        [0,0,0]
+        [1,1,1]
+        [2,2,2]
+        [2,5,2]
+        we can us 2 on nums to reduce to zero, and its minimum
+        opps, we don't use all the queries, only the first k queries
+        binary search on k
+        '''
+        left = 0
+        right = len(queries)
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            ints = self.get_intervals(queries,nums,mid)
+            if self.can_do(nums,ints):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+    
+    def can_do(self,nums,ints):
+        for i in range(len(nums)):
+            if nums[i] > ints[i]:
+                return False
+        return True
+    
+    def get_intervals(self,queries,nums,k):
+        possible_decrements = [0]*(len(nums)+1)
+        for l,r,v in queries[:k]:
+            possible_decrements[l] += v
+            possible_decrements[r+1] -= v
+        #roll up
+        for i in range(1,len(possible_decrements)):
+            possible_decrements[i] += possible_decrements[i-1]
+        
+        return possible_decrements[:-1]
+        
+class Solution:
+    def minZeroArray(self, nums: List[int], queries: List[List[int]]) -> int:
+        '''
+        we can use sleep one, and check each value in nums against the queries
+        instead of processing all the k queries up front, 
+        maintain an active set of queries and update nums only when necessary
+        the idea is that if we are at index i in nums it can be:
+            * i < left, save query since we haven't applied it yet
+            * left <= i <= right, apply it on nums
+            * right < i, ignore this query
+        '''
+        n = len(nums)
+        #we are keeping the possible decrements at this index
+        #that are available to use
+        available_decrements = 0
+        k = 0 #used queries
+        possible_decrements = [0]*(n+1)
+
+        for i in range(n):
+            #keep using queries to bring down nums[i]
+            while available_decrements + possible_decrements[i] < nums[i]:
+                k += 1
+                if k > len(queries):
+                    return -1
+                l,r,val = queries[k-1]
+                if r >= i:
+                    possible_decrements[max(l,i)] += val
+                    possible_decrements[r + 1] -= val
             
+            #available decrements to be used up the the current index i
+            available_decrements += possible_decrements[i]
+
+        return k
