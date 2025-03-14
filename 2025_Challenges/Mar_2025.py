@@ -1128,3 +1128,39 @@ class Solution:
             available_decrements += possible_decrements[i]
 
         return k
+    
+################################################
+# 2226. Maximum Candies Allocated to K Children
+# 14MAR25
+###############################################
+class Solution:
+    def maximumCandies(self, candies: List[int], k: int) -> int:
+        '''
+        another binary search on answer one
+        say we have piles [5,8,6]
+        if we make it so that way each pile has 1 candy, we can do
+        try to see if we can make k piles with num_per_pile candies each
+        then binary serach on answer
+        '''
+        sum_ = sum(candies)
+        left = 1
+        right = max(candies)
+        ans = 0
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.can_make(candies,mid,k):
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+            
+        return ans
+    
+    def can_make(self,candies,num_per_pile,k):
+        piles = 0
+        for c in candies:
+            piles += c // num_per_pile
+        
+        return piles >= k
+
+    
