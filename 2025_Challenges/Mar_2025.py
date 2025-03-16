@@ -1163,4 +1163,43 @@ class Solution:
         
         return piles >= k
 
+########################################
+# 2560. House Robber IV
+# 16MAR25
+########################################
+class Solution:
+    def minCapability(self, nums: List[int], k: int) -> int:
+        '''
+        cannot steal from adjacent houses
+        capability is the maximum amount of money steals
+        needs to rob at least k houses
+        need minimmum capability
+
+        capbility will change depending on the number of houses we rob, and what houses we rob
+        minimuze/maximize at least k is binary search paradigm
+        '''
+        left = min(nums)
+        right = max(nums)
+        ans = left
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.check(nums,mid,k):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
     
+    #if i can rob at least k houses with this value, i can certainly do it with a greater guess value
+    def check(self,nums,guess,k):
+        houses = 0
+        robbed = False
+        for n in nums:
+            if n <= guess and not robbed:
+                houses += 1
+                robbed = True
+            elif robbed:
+                robbed = False
+        
+        return houses >= k
