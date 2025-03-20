@@ -903,14 +903,14 @@ class Solution:
     def get_perimeter(self,comp,grid,rows,cols):
         #sides = set()
         dirrs = [[1,0],[-1,0],[0,-1],[0,1]]
-        sides = set()
+        perim = 0
         for i,j in comp:
             for di, dj in dirrs:
                 ii = i + di
                 jj = j + dj
                 if 0 <= ii < rows and 0 <= jj < cols and grid[ii][jj] == 0 and (ii,jj) not in comp:
-                    sides.add((ii,jj,i,j))
-        return len(sides) 
+                    perim += 1
+        return perim
 
     
     def dfs(self,i,j,grid,seen,curr_comp):
@@ -937,6 +937,61 @@ class Solution:
                     heapq.heappush(comps,entry)
         return comps
         
+
+class Solution(object):
+    def containVirus(self, grid):
+        R, C = len(grid), len(grid[0])
+        def neighbors(r, c):
+            for nr, nc in ((r-1, c), (r+1, c), (r, c-1), (r, c+1)):
+                if 0 <= nr < R and 0 <= nc < C:
+                    yield nr, nc
+
+        def dfs(r, c):
+            if (r, c) not in seen:
+                seen.add((r, c))
+                regions[-1].add((r, c))
+                for nr, nc in neighbors(r, c):
+                    if grid[nr][nc] == 1:
+                        dfs(nr, nc)
+                    elif grid[nr][nc] == 0:
+                        frontiers[-1].add((nr, nc))
+                        perimeters[-1] += 1
+
+        ans = 0
+        while True:
+            #Find all regions, with associated frontiers and perimeters.
+            seen = set()
+            regions = []
+            frontiers = []
+            perimeters = []
+            for r, row in enumerate(grid):
+                for c, val in enumerate(row):
+                    if val == 1 and (r, c) not in seen:
+                        regions.append(set())
+                        frontiers.append(set())
+                        perimeters.append(0)
+                        dfs(r, c)
+
+            #If there are no regions left, break.
+            if not regions: break
+
+            #Add the perimeter of the region which will infect the most squares.
+            triage_index = frontiers.index(max(frontiers, key = len))
+            ans += perimeters[triage_index]
+
+            #Triage the most infectious region, and spread the rest of the regions.
+            for i, reg in enumerate(regions):
+                if i == triage_index:
+                    for r, c in reg:
+                        grid[r][c] = -1
+                else:
+                    for r, c in reg:
+                        for nr, nc in neighbors(r, c):
+                            if grid[nr][nc] == 0:
+                                grid[nr][nc] = 1
+
+        return ans
+
 ################################################################
 # 2529. Maximum Count of Positive Integer and Negative Integer
 # 12MAR25
@@ -1203,3 +1258,270 @@ class Solution:
                 robbed = False
         
         return houses >= k
+    
+#############################################
+# 2594. Minimum Time to Repair Cars (REVISTED)
+# 16MAR24
+############################################
+class Solution:
+    def repairCars(self, ranks: List[int], cars: int) -> int:
+        '''
+        a mechanic can repiars n cairs in r*n^2 mins
+        for each mechanic, calcualte how many cars they can repair in n minutes
+        all mechanics can work simultaneously
+
+        for exmaple
+        rank = 2
+        2 cars can be done in 2*2*2 mins
+        time = r*n**2
+        for this amounf of time find cars fixed by mech
+        time / r = n**2
+        (time /r)**.5 = n
+        can't do partial cars
+        n = int(time / r)**.5
+        if we can do call cars in this number of minutes, we can certainly fix it in any minutes >= the current min
+        binary search 
+        '''
+        left = 1
+        right = sum(ranks)*cars*cars
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.func(ranks,cars,mid):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+        #for m in range(1,20):
+        #    print(m,self.func(ranks,cars,m))
+    
+    #func to check all cars repaired given minutes
+    def func(self, ranks, cars,mins):
+        cars_repaired = 0
+        for r in ranks:
+            cars_repaired += int((mins / r)**.5)
+        
+        return cars_repaired >= cars
+            
+############################################
+# 2206. Divide Array Into Equal Pairs
+# 17MAR25
+#############################################
+#two pass
+class Solution:
+    def divideArray(self, nums: List[int]) -> bool:
+        '''
+        count and check all freqs are even
+        '''
+        mapp = Counter(nums)
+        for num,count in mapp.items():
+            if count % 2:
+                return False
+        return True
+
+#boolean array, just tracking parity of numbers
+class Solution:
+    def divideArray(self, nums: List[int]) -> bool:
+        '''
+        parity array
+        '''
+        unpaired = [0]*(max(nums) + 1)
+        for num in nums:
+            unpaired[num] = 1 - unpaired[num]
+        
+        return sum(unpaired) == 0
+
+#one pass???
+class Solution:
+    def divideArray(self, nums: List[int]) -> bool:
+        '''
+        sinlge pass hashset
+        if its not in there, add it in, otherwise remove
+        set shouold be empty
+        '''
+        unpaired = set()
+        for num in nums:
+            if num not in unpaired:
+                unpaired.add(num)
+            else:
+                unpaired.remove(num)
+        
+        return not unpaired
+    
+#########################################
+# 1172. Dinner Plate Stacks
+# 17MAR25
+##########################################
+#dammit
+from sortedcontainers import SortedList
+class DinnerPlates:
+    '''
+    keep track of the left most available stack for push
+    keep track of right most nonempty stack for pop
+    keep way to pop at index of stack
+    problem is that was have infinite stacks 
+    we can try doing popAtStack(index) where index is beyond the last
+    index is bound to a maximum of 10**5
+    can i do sorted list with two entries
+    first if size of stack and next entry is size of stack
+    '''
+
+    def __init__(self, capacity: int):
+        self.max_size = 10**5
+        self.capacity = capacity
+        self.stacks = SortedList([])
+        for _ in range(self.max_size + 1):
+            self.stacks.append([0,[]])
+    def push(self, val: int) -> None:
+        return
+
+    def pop(self) -> int:
+        return
+
+    def popAtStack(self, index: int) -> int:
+        if len(self.stacks[index][0sl ]) == 0:
+            return -1
+        else:
+            return self.stacks[index].pop()
+
+
+# Your DinnerPlates object will be instantiated and called as such:
+# obj = DinnerPlates(capacity)
+# obj.push(val)
+# param_2 = obj.pop()
+# param_3 = obj.popAtStack(index)
+
+
+############################################
+# 2401. Longest Nice Subarray (REVISTED)
+# 18MAR25
+############################################
+#sliding window on mask, don't forget bitwise!
+class Solution:
+    def longestNiceSubarray(self, nums: List[int]) -> int:
+        '''
+        say we have subarray [a,b,c] and it is nice
+        this means
+        (a & b) + (b & c) + (a % c) = 0
+        if we have indices (i,j) we treat indices (j,i) as equivalent
+        keep current mask of bit positions
+        then we just check if mask & current number to add is zero or not
+
+        '''
+        ans = 1
+        left = 0
+        set_bits = nums[left]
+        for right in range(1,len(nums)):
+            #if addinf nums[right] doesn;t make it nice, we need to  shrink
+            while left < right and set_bits & nums[right] != 0:
+                #remove bits
+                set_bits = set_bits ^ nums[left]
+                left += 1
+            
+            #otherwise we are free to include and extend
+            set_bits = set_bits | nums[right]
+            ans = max(ans, right - left  + 1)
+        
+        return ans
+    
+#brute force works
+#nice property contrains the size of the subarray
+class Solution:
+    def longestNiceSubarray(self, nums: List[int]) -> int:
+        '''
+        we can brute force by checking in the each subarray
+        the nice constraint of the subarray is limited by the largest numbers
+        so its n*lgN
+        '''
+        ans = 1
+        n = len(nums)
+        for i in range(n):
+            size = 1
+            mask = nums[i]
+            for j in range(i+1,n):
+                if mask & nums[j]:
+                    break
+                #include
+                mask = mask | nums[j]
+                size += 1
+                ans = max(ans,size)
+        
+        return ans
+    
+########################################################################
+# 3191. Minimum Operations to Make Binary Array Elements Equal to One I
+# 19MAR25
+########################################################################
+#flip all length three subarrays
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        we can only flip 3 consecutive elements
+        we can do this any number of times, possibly  zero
+        return min number of operations to get the ones array
+        we have to flip if we're at a zero
+        try flipping when ever we have a zero and count flips
+        if all ones return flips
+        '''
+        flips = 0
+        n = len(nums)
+        for i in range(n-3+1):
+            if nums[i] == 0:
+                flips += 1
+                for j in range(i,i+3):
+                    nums[j] = 1 - nums[j]
+        
+        if sum(nums) == n:
+            return flips
+        
+        return -1
+    
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        no inner loops        
+        '''
+        flips = 0
+        n = len(nums)
+        for i in range(n-3+1):
+            if nums[i] == 0:
+                flips += 1
+                nums[i] = 1 - nums[i]
+                nums[i+1] = 1 - nums[i+1]
+                nums[i+2] = 1 - nums[i+2]
+        
+        if sum(nums) == n:
+            return flips
+        
+        return -1
+            
+#single pass q, this was cool!
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        sliding window one pass
+        if an index has been flipped an odd number of times, its value is opposite
+        if an index has been flipped an even number of times, it remains the same
+        if the last two positions are zero, we can't flip them
+        if we flip an index i, it affect the next i+1 and i+2 indices
+        instead of modifying the array we keep track of indices and check how it affects later indices
+        '''
+        flipped_indices = deque([])
+        flips = 0
+        n = len(nums)
+        for i in range(n):
+            #clear stale indices
+            while flipped_indices and i - flipped_indices[0] > 2:
+                flipped_indices.popleft()
+            
+            #if itz zero
+            if (nums[i] + len(flipped_indices)) % 2 == 0:
+                #check we can flip the whole triple
+                if i + 2 >= n:
+                    return -1
+                flips += 1
+                flipped_indices.append(i)
+        
+        return flips
