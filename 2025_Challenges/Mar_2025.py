@@ -1525,3 +1525,263 @@ class Solution:
                 flipped_indices.append(i)
         
         return flips
+    
+########################################
+# 3108. Minimum Cost Walk in Weighted Graph
+# 20MAR25
+########################################
+from functools import reduce
+class DSU:
+    def __init__(self,n):
+        self.n = n
+        self.parent = [i for i in range(n)]
+        self.size = [1]*n
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+
+        if x_par == y_par:
+            return
+        elif self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = self.parent[y_par]
+
+
+class Solution:
+    def minimumCost(self, n: int, edges: List[List[int]], query: List[List[int]]) -> List[int]:
+        '''
+        properties of and
+        X & X = X, going back along a previous edge does nothing to undo it
+        but taking it again might clear another future edge
+        union find on the nodes
+        if u and v aren't connected return -1, otherwise can use all edges from the connected components
+        
+        '''
+        dsu = DSU(n)
+        #i dont actually need the graph, just a nodes edge adjacent weights
+        node_edges = defaultdict(list)
+        for u,v,w in edges:
+            node_edges[u].append(w)
+            node_edges[v].append(w)
+            dsu.union(u,v)
+        
+        groups = defaultdict(list)
+        for i in range(n):
+            groups[dsu.find(i)].append(i)
+        
+        group_ands = {}
+        for g,nodes in groups.items():
+            edges = []
+            for n in nodes:
+                for edge in node_edges[n]:
+                    edges.append(edge)
+            if len(edges) > 1:
+                edges = reduce(lambda x , y : x & y, edges)
+            else:
+                edges = - 1
+            group_ands[g] = edges
+        
+        ans = []
+        for u,v in query:
+            if dsu.find(u) == dsu.find(v):
+                ans.append(group_ands[dsu.find(u)])
+            else:
+                ans.append(-1)
+        return ans
+    
+#another way is to get connected components using dfs or bfs
+            
+#################################################
+# 1839. Longest Substring Of All Vowels in Order
+# 20MAR25
+#################################################
+class Solution:
+    def longestBeautifulSubstring(self, word: str) -> int:
+        '''
+        store indices of a,e,i,o,u
+        '''
+        window = {'a': deque([]),
+                  'e': deque([]),
+                  'i': deque([]),
+                  'o': deque([]),
+                  'u': deque([]),}
+        ans = 0
+        left = 0
+        for right,ch in enumerate(word):
+            #add to window
+            window[ch].append(right)
+            #while in violation shrink
+            while left < right and self.in_violation(window):
+                ch = word[left]
+                window[ch].popleft()
+                left += 1
+            if self.is_valid(window):
+                ans = max(ans, right - left + 1)
+            
+        return ans
+        
+    def in_violation(self,window):
+        if (any([len(q) > 0 for _,q in window.items() ])):
+            if window['a'] and window['e'] and window['a'][-1] > window['e'][-1]:
+                return True
+            if window['e'] and window['i'] and window['e'][-1] > window['i'][-1]:
+                return True
+            if window['i'] and window['o'] and window['i'][-1] > window['o'][-1]:
+                return True
+            if window['o'] and window['u'] and window['o'][-1] > window['u'][-1]:
+                return True
+        return False
+    
+    def is_valid(self,window):
+        return all([len(q) > 0 for _,q in window.items() ])
+    
+#just need to check if in order, since a,e,i,o,u are already in order
+class Solution:
+    def longestBeautifulSubstring(self, word: str) -> int:
+        '''
+        just check in order
+        '''
+        uniques = set()
+        left = 0
+        ans = 0
+        for right,ch in enumerate(word):
+            #not increasing
+            if right > 0 and ch < word[right-1]:
+                uniques = set()
+                left = right
+            uniques.add(ch)
+            if len(uniques)== 5:
+                ans = max(ans,right - left + 1)
+        
+        return ans
+
+    
+#########################################################
+# 2115. Find All Possible Recipes from Given Supplies
+# 21MAR25
+########################################################
+#hashamp alone won't work, idk why though
+class Solution:
+    def findAllRecipes(self, recipes: List[str], ingredients: List[List[str]], supplies: List[str]) -> List[str]:
+        '''
+        this is just a hashmap problem
+        for each recipe, check if we have it ingredients as a supplies
+        oh we have an infinite supply of supplies but only fixex number of recipes
+        evidently you cant just hasmap all of them :(
+        can treat as graph problem
+        '''
+        ans = []
+        supplies = set(supplies)
+        made_rec = []
+        for rec,ing in zip(recipes,ingredients):
+            if all([i in supplies for i in ing]):
+                supplies.add(rec)
+                made_rec.append(rec)
+        
+
+        for rec,ing in zip(recipes,ingredients):
+            if all([i in supplies for i in ing]):
+                ans.append(rec)
+        
+        made_rec = set(made_rec)
+        ans = set(ans)
+        for rec in recipes:
+            if rec in made_rec and rec not in ans:
+                ans.append(rec)
+        return list(ans)
+    
+#just keep making
+class Solution:
+    def findAllRecipes(self, recipes: List[str], ingredients: List[List[str]], supplies: List[str]) -> List[str]:
+        '''
+        basically check if we can keep making more recipes
+        '''
+        supplies = set(supplies)
+        mapp = defaultdict(set)
+        for rec,ing in zip(recipes,ingredients):
+            for i in ing:
+                mapp[rec].add(i)
+        
+        can_make = []
+        already_made = set()
+        while True:
+            made_new = False
+            for rec,ings in mapp.items():
+                if rec in already_made:
+                    continue
+                if all([i in supplies for i in ings]):
+                    can_make.append(rec)
+                    supplies.add(rec)
+                    already_made.add(rec)
+                    made_new = True
+            
+            if not made_new:
+                break
+        
+        return can_make
+    
+#actual solution is graph based
+
+###############################################
+# 2685. Count the Number of Complete Components
+# 22MAR25
+###############################################
+class Solution:
+    def countCompleteComponents(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        one we get the components, count them up
+        a connected comp is complete if and only iff the number of edges == m*(m-1)/2
+        where me is the number of nodes in the componenets,
+        kinda different, we normally just think about nodes in a graph/comp, we don't usually think about the edges!
+        meh works, but i dont like it
+        '''
+        graph = defaultdict(list)
+        hash_edges = set()
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+            hash_edges.add((u,v))
+            hash_edges.add((v,u))
+        
+        comps = []
+        seen = set()
+        for i in range(n):
+            if i not in seen:
+                #dfs
+                curr_comp = []
+                self.dfs(i,graph,seen,curr_comp)
+                comps.append(curr_comp)
+        #validate each comp
+        count = 0
+        for comp in comps:
+            nodes = len(comp)
+            edges_have = 0
+            for i in range(nodes):
+                for j in range(i+1,nodes):
+                    u,v = (comp[i],comp[j])
+                    if (u,v) in hash_edges or (v,u) in hash_edges:
+                        edges_have += 1
+            if edges_have == (nodes*(nodes - 1)) // 2:
+                count += 1
+        
+        return count
+    
+    def dfs(self,node,graph,seen,curr_comp):
+        seen.add(node)
+        curr_comp.append(node)
+        for neigh in graph[node]:
+            if neigh not in seen:
+                self.dfs(neigh,graph,seen,curr_comp)
+
