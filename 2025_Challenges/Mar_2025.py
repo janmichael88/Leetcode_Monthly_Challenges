@@ -1601,7 +1601,130 @@ class Solution:
                 ans.append(-1)
         return ans
     
-#another way is to get connected components using dfs or bfs
+#optomize union find, group them fiurst, then AND them with -1
+from functools import reduce
+class DSU:
+    def __init__(self,n):
+        self.n = n
+        self.parent = [i for i in range(n)]
+        self.size = [1]*n
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+
+        if x_par == y_par:
+            return
+        elif self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = self.parent[y_par]
+
+
+class Solution:
+    def minimumCost(self, n: int, edges: List[List[int]], query: List[List[int]]) -> List[int]:
+        '''
+        properties of and
+        X & X = X, going back along a previous edge does nothing to undo it
+        but taking it again might clear another future edge
+        union find on the nodes
+        if u and v aren't connected return -1, otherwise can use all edges from the connected components
+        identity = -1 & a = 8
+        '''
+        dsu = DSU(n)
+        for u,v,w in edges:
+            dsu.union(u,v)
+        
+        comp_cost = [-1]*n
+        for u,v,w in edges:
+            root = dsu.find(u)
+            #and each edge weight o its group
+            comp_cost[root] &= w
+        
+        ans = []
+        for u,v in query:
+            if dsu.find(u) == dsu.find(v):
+                ans.append(comp_cost[dsu.find(u)])
+            else:
+                ans.append(-1)
+        return ans
+            
+
+#can replace dsu wihth either dfs/bfs
+class Solution:
+    def minimumCost(self, n, edges, queries):
+        # Create the adjacency list of the graph
+        adj_list = [[] for _ in range(n)]
+        for edge in edges:
+            adj_list[edge[0]].append((edge[1], edge[2]))
+            adj_list[edge[1]].append((edge[0], edge[2]))
+
+        visited = [False] * n
+
+        # Array to store the component ID of each node
+        components = [0] * n
+        component_cost = []
+
+        component_id = 0
+
+        # Perform DFS for each unvisited node to identify components and calculate their costs
+        for node in range(n):
+            if not visited[node]:
+                # Get the component cost and mark all nodes in the component
+                component_cost.append(
+                    self._get_component_cost(
+                        node, adj_list, visited, components, component_id
+                    )
+                )
+                component_id += 1
+
+        result = []
+        for query in queries:
+            start, end = query
+
+            if components[start] == components[end]:
+                # If they are in the same component, return the precomputed cost for the component
+                result.append(component_cost[components[start]])
+            else:
+                # If they are in different components, return -1
+                result.append(-1)
+
+        return result
+
+    # Helper function to calculate the cost of a component using BFS
+    def _get_component_cost(
+        self, node, adj_list, visited, components, component_id
+    ):
+
+        # Initialize the cost to the number that has only 1s in its binary representation
+        current_cost = -1
+
+        # Mark the node as part of the current component
+        components[node] = component_id
+        visited[node] = True
+
+        # Explore all neighbors of the current node
+        for neighbor, weight in adj_list[node]:
+            # Update the component cost by performing a bitwise AND of the edge weights
+            current_cost &= weight
+            if not visited[neighbor]:
+                # Recursively calculate the cost of the rest of the component
+                # and accumulate it into currentCost
+                current_cost &= self._get_component_cost(
+                    neighbor, adj_list, visited, components, component_id
+                )
+
+        return current_cost
             
 #################################################
 # 1839. Longest Substring Of All Vowels in Order
@@ -1732,7 +1855,127 @@ class Solution:
         
         return can_make
     
-#actual solution is graph based
+#can use queue, kinda like BFS for attemping to make new recipes
+class Solution:
+    def findAllRecipes(
+        self,
+        recipes: list[str],
+        ingredients: list[list[str]],
+        supplies: list[str],
+    ) -> list[str]:
+        # Track available ingredients and recipes
+        available = set(supplies)
+
+        # Queue to process recipe indices
+        recipe_queue = deque(range(len(recipes)))
+        created_recipes = []
+        last_size = -1  # Tracks last known available count
+
+        # Continue while we keep finding new recipes
+        while len(available) > last_size:
+            last_size = len(available)
+            queue_size = len(recipe_queue)
+
+            # Process all recipes in current queue
+            while queue_size > 0:
+                queue_size -= 1
+                recipe_idx = recipe_queue.popleft()
+                if all(
+                    ingredient in available
+                    for ingredient in ingredients[recipe_idx]
+                ):
+                    # Recipe can be created - add to available items
+                    available.add(recipes[recipe_idx])
+                    created_recipes.append(recipes[recipe_idx])
+                else:
+                    recipe_queue.append(recipe_idx)
+
+        return created_recipes
+    
+#dfs
+class Solution:
+    def findAllRecipes(self, recipes: List[str], ingredients: List[List[str]], supplies: List[str]) -> List[str]:
+        '''
+        using dfs like cycle detection
+        '''
+        can_make = dict.fromkeys(supplies, True)
+        mapp = defaultdict(set)
+        for rec,ing in zip(recipes,ingredients):
+            for i in ing:
+                mapp[rec].add(i)
+
+        def _check_recipe(recipe: str, visited: set) -> bool:
+            if can_make.get(recipe, False):
+                return True
+
+            # Not a valid recipe or cycle detected
+            if recipe not in mapp or recipe in visited:
+                return False
+
+            visited.add(recipe)
+
+            possible = []
+            for ingredient in mapp[recipe]:
+                #for each of the dependencies, there shouldn't be a cycle
+                possible.append(_check_recipe(ingredient, visited))
+            can_make[recipe] = all(possible)
+
+            return can_make[recipe]
+        
+        ans = []
+        for recipe in recipes:
+            if _check_recipe(recipe, set()):
+                ans.append(recipe)
+        
+        return ans
+            
+#kahns top sort
+class Solution:
+    def findAllRecipes(self, recipes: List[str], ingredients: List[List[str]], supplies: List[str]) -> List[str]:
+        '''
+        to do top sort, we can't just do the usual thing and mapp recipes to ingredients
+        we only draw an edge if we DO NOT have an indredient
+            i.e when ingredient is not in supplies
+        this ensures that the in-degree of a recipe reflects onl the number of unavialble
+        when we do the sort, this ingredient could become available
+        intuition
+        1. if a recipe has indegree 0, all of it depdnecies (i.e ingredients) have been fulfilled, so we can make it
+        2. when we complete a new recipe, we satisfuy its dependencies on others
+        3. when indegree is zero, we are free to make it
+
+        '''
+        available_supplies = set(supplies)
+        mapp = defaultdict(set)
+        indegree = Counter()
+        for rec,ings in zip(recipes,ingredients):
+            for i in ings:
+                mapp[rec].add(i)
+                indegree[rec] = 0
+        #make graph of what we dont have
+        graph = defaultdict(list)
+        for rec,ings in mapp.items():
+            for i in ings:
+                if i not in available_supplies:
+                    #meaning we have dependencies on this guy
+                    graph[i].append(rec)
+                    indegree[rec] += 1
+        
+        q = deque([])
+        ans = []
+        #starting with rec that don't have any dependencies
+        for rec,ind in indegree.items():
+            if ind == 0:
+                q.append(rec)
+        
+        while q:
+            curr_rec = q.popleft()
+            ans.append(curr_rec)
+            for neigh in graph[curr_rec]:
+                indegree[neigh] -= 1
+                if indegree[neigh] == 0:
+                    q.append(neigh)
+        
+        return ans
 
 ###############################################
 # 2685. Count the Number of Complete Components
@@ -1785,3 +2028,179 @@ class Solution:
             if neigh not in seen:
                 self.dfs(neigh,graph,seen,curr_comp)
 
+##########################################################
+# 1976. Number of Ways to Arrive at Destination (REVISTED)
+# 23MAR25
+###########################################################
+class Solution:
+    def countPaths(self, n: int, roads: List[List[int]]) -> int:
+        '''
+        dijkstra's when we have a new min cost, we carry over ways from 
+        if we have equal path, we need to add up ways
+        number of ways with dijkstra paradism
+        in langs like C++ and Java, int max won't work
+        there are 200 nodes, and each edge can be as high as 10**9
+        the shortest path could be 199*10^9 which exceedns INT MAX
+        should use LONG MAX
+        python doesn't matter
+        '''
+        #first make graph
+        graph = defaultdict(list)
+        for u,v,w in roads:
+            graph[u].append((v,w))
+            graph[v].append((u,w))
+        
+        dists = [float('inf')]*n
+        ways = [0]*n
+        mod = 10**9 + 7
+        ways[0] = 1
+        dists[0] = 0
+
+        min_heap = [(0,0)]
+        seen = set()
+
+        while min_heap:
+            min_dist,curr_node = heapq.heappop(min_heap)
+            #can't minimize
+            if dists[curr_node] < min_dist:
+                continue
+            seen.add(curr_node)
+            for neigh,weight in graph[curr_node]:
+                if neigh in seen:
+                    continue
+                neigh_dist = dists[curr_node] + weight
+                if neigh_dist < dists[neigh]:
+                    dists[neigh] = neigh_dist
+                    ways[neigh] = ways[curr_node]
+                    heapq.heappush(min_heap,(neigh_dist,neigh))
+                elif neigh_dist == dists[neigh]:
+                    ways[neigh] += (ways[curr_node] % mod) % mod
+        return ways[n-1] % mod
+    
+##############################################
+# 3169. Count Days Without Meetings
+# 24MAR25
+##############################################
+class Solution:
+    def countDays(self, days: int, meetings: List[List[int]]) -> int:
+        '''
+        need to merge meetings first!
+        sort and count the days in between intervals where there is no overlap
+        meetings bounded by days
+        '''
+        meetings.sort()
+        merged = [meetings[0]]
+        for start,end in meetings[1:]:
+            #if in between
+            if merged[-1][0] <= start <=  merged[-1][1]:
+                merged[-1][1] = max(end,merged[-1][1])
+            else:
+                merged.append([start,end])
+
+        ans = 0
+        for i in range(1,len(merged)):
+            start_one,end_one = merged[i-1]
+            start_two,end_two = merged[i]
+            if start_two > end_one:
+                ans += start_two - end_one - 1
+        print(merged)
+        #include ending days
+        ans += (days - merged[-1][1])
+        ans += (merged[0][0] - 1)
+        return ans
+
+class Solution:
+    def countDays(self, days: int, meetings: List[List[int]]) -> int:
+        '''
+        another way is to use line sleep, but since days can be big, 10**9
+        we need to use hashmpa instead
+        we can use a difference map,
+            line sweep with an array, we need to roll up
+        '''
+        difference_map = defaultdict(int)
+        smallest_day = float('inf')
+        largest_day = 0
+        for start,end in meetings:
+            smallest_day = min(smallest_day,start)
+            largest_day = max(largest_day,end)
+            #appyl to difference map
+            difference_map[start] += 1
+            difference_map[end + 1] -= 1
+        
+        #any day before the smallest day is free
+        free_days = smallest_day - 1
+        free_days += (days - largest_day)
+
+        pref_sum = 0
+        prev_day = smallest_day
+        #need to check the differnce beteen day and prev_day
+        #in the line sweep array, zeros mean there was a gap
+        for day in sorted(difference_map):
+            if pref_sum == 0:
+                free_days += day - prev_day
+            pref_sum += difference_map[day]
+            prev_day = day
+        
+        return free_days
+    
+class Solution:
+    def countDays(self, days: int, meetings: List[List[int]]) -> int:
+        '''
+        sinlge pass
+        '''
+        free_days = 0
+        latest_end = 0
+
+        # Sort meetings based on starting times
+        meetings.sort()
+
+        for start, end in meetings:
+            # Add current range of days without a meeting
+            if start > latest_end + 1:
+                free_days += start - latest_end - 1
+
+            # Update latest meeting end
+            latest_end = max(latest_end, end)
+
+        # Add all days after the last day of meetings
+        free_days += days - latest_end
+
+        return free_days
+    
+#################################################
+# 3394. Check if Grid can be Cut into Sections
+# 26MAR25
+###############################################
+class Solution:
+    def checkValidCuts(self, n: int, rectangles: List[List[int]]) -> bool:
+        '''
+        coords of rectagnles are (start_x,start_y,end_x,end_y)
+        rectangles do not overlap
+        need to check if we can make two horiz cuts or two vert cuts 
+        such that:
+            each section has at least one rectagnle
+            every rectable belongs to only one section
+        
+        for the one dimensional problem, we can use line sleep, and check gaps, there should be at least two gaps
+        '''
+        xs = []
+        ys = []
+        for start_x,start_y,end_x,end_y in rectangles:
+            x = [start_x,end_x]
+            xs.append(x)
+            y = [start_y,end_y]
+            ys.append(y)
+        #sort them on start
+        xs.sort()
+        ys.sort()
+
+        return self.check_gaps(xs) >= 2 or self.check_gaps(ys) >= 2
+    def check_gaps(self,arr):
+        gaps = 0
+        prev_end = arr[0][1]
+        for start,end in arr[1:]:
+            if start >= prev_end:
+                gaps += 1
+            prev_end = max(prev_end,end)
+        
+        return gaps
