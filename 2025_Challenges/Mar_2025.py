@@ -2204,3 +2204,209 @@ class Solution:
             prev_end = max(prev_end,end)
         
         return gaps
+
+####################################################
+# 2033. Minimum Operations to Make a Uni-Value Grid
+# 27MAR25
+####################################################
+class Solution:
+    def minOperations(self, grid: List[List[int]], x: int) -> int:
+        '''
+        we can only add/subtract x, but we can do it any number of times on any element
+        m*n is  <= 10**5
+        we cant brind them to same number if they have different their remainders are different when divided by x
+        need to bring to the middle number, median
+
+        if all numbers must have the same remainder when divided by x
+        say a target is v, we need (v - a) % x == 0 and (v - b) % x == 0
+        (v - a) % x = (v - b) % x
+        this is just congruene form
+        a conguent to b % x
+        a % x = b % x
+        and v congruent to b % x
+        so v % x = b % x!
+
+        now why is it the median?
+        say we have [a,b,c] and v is some number
+        we cant to miinize (v - a)^2 + (v - b)^2 + (v - c)^2
+        derive wrt to v
+        (a**2 - 2av + v^2) +  (b**2 - 2bv + v^2) +  (c**2 - 2cv + v^2)
+        (-2a + 2v) + (-2b + 2v) + (-2c + 2v) = 0
+        solve v
+        6v = -2(a+b+c)
+        v = -(a+b+c) // 2, this is just the aveage
+        '''
+        arr = []
+        for row in grid:
+            for num in row:
+                arr.append(num)
+        
+        if not self.can_do(arr,x):
+            return -1
+        arr.sort()
+        target = arr[len(arr)//2]
+        ops = 0
+
+        for num in arr:
+            ops += abs(target - num) // x
+        
+        return ops
+    
+    def can_do(self,arr,x):
+        remainder = arr[0] % x
+        for num in arr[1:]:
+            if num % x != remainder:
+                return False
+        return True
+
+###############################################
+# 2780. Minimum Index of a Valid Split
+# 27MAR25
+###############################################
+#ezzzz
+class Solution:
+    def minimumIndex(self, nums: List[int]) -> int:
+        '''
+        a value of nums x, is dominant if more than half of the elemnts of arr have value of x
+        first find the dominant element
+        i can keep track of the number of dominant elements at each index, and return the minimum i
+        '''
+        #find dom element
+        n = len(nums)
+        counts = Counter(nums)
+        dominant = -1
+        count_dominant = -1
+        for k,v in counts.items():
+            if v > n//2:
+                dominant = k
+                count_dominant = v
+            
+        curr_count_dom = 0
+        for i in range(n-1):
+            num = nums[i]
+            curr_count_dom += num == dominant
+            left_size = i + 1
+            right_size = n - i - 1
+            if curr_count_dom > left_size//2 and count_dominant - curr_count_dom > right_size//2:
+                return i
+        
+        return -1
+    
+class Solution:
+    def minimumIndex(self, nums: List[int]) -> int:
+        '''
+        we actuall don't need to keep track of the dominant element,
+        just counts for the left and the right parts
+        '''
+        left_counts = Counter()
+        right_counts = Counter()
+        n = len(nums)
+
+        for num in nums:
+            #inially left is empty, and right has all
+            right_counts[num] += 1
+        
+        for i in range(n-1):
+            num = nums[i]
+            left_counts[num] += 1
+            right_counts[num] -= 1
+            left_size = i + 1
+            right_size = n - i - 1
+            if left_counts[num] > left_size//2 and right_counts[num] > right_size//2:
+                return i
+        return -1
+
+###########################################
+# 2737. Find the Closest Marked Node
+# 27MAR25
+###########################################
+class Solution:
+    def minimumDistance(self, n: int, edges: List[List[int]], s: int, marked: List[int]) -> int:
+        '''
+        djikstras from s
+        then check all distances from s to marked and take the minimum
+        '''
+        #make graph
+        graph = defaultdict(list)
+        for u,v,w in edges:
+            graph[u].append((v,w))
+
+
+        dists = [float('inf')]*n
+        visited = [False]*n
+        dists[s] = 0
+
+        min_heap = [(0,s)]
+        while min_heap:
+            min_dist,curr_node = heapq.heappop(min_heap)
+            if visited[curr_node]:
+                continue
+            visited[curr_node] = True
+            for neigh,weight in graph[curr_node]:
+                neigh_dist = min_dist + weight
+                if dists[neigh] < neigh_dist or visited[neigh]:
+                    continue
+                else:
+                    dists[neigh] = neigh_dist
+                    heapq.heappush(min_heap, (neigh_dist,neigh))
+
+        ans = float('inf')
+        for m in marked:
+            if dists[m] != float('inf'):
+                ans = min(ans,dists[m])
+        print(dists)
+        return ans if ans != float('inf') else -1
+
+#we can just return if we find a marked node!
+class Solution:
+    def minimumDistance(self, n: int, edges: List[List[int]], s: int, marked: List[int]) -> int:
+        '''
+        djikstras from s
+        then check all distances from s to marked and take the minimum
+        '''
+        #make graph
+        graph = defaultdict(list)
+        for u,v,w in edges:
+            graph[u].append((v,w))
+        
+        marked = set(marked)
+        dists = [float('inf')]*n
+        visited = [False]*n
+        dists[s] = 0
+
+        min_heap = [(0,s)]
+        while min_heap:
+            min_dist,curr_node = heapq.heappop(min_heap)
+            if curr_node in marked:
+                return dists[curr_node]
+            if visited[curr_node]:
+                continue
+            visited[curr_node] = True
+            for neigh,weight in graph[curr_node]:
+                neigh_dist = min_dist + weight
+                if dists[neigh] < neigh_dist or visited[neigh]:
+                    continue
+                else:
+                    dists[neigh] = neigh_dist
+                    heapq.heappush(min_heap, (neigh_dist,neigh))
+        
+        return -1
+    
+#bellman ford
+class Solution:
+    def minimumDistance(self, n: int, edges: List[List[int]], s: int, marked: List[int]) -> int:
+        '''
+        bellman ford,
+        basically relax all edges if we can n - 1 times
+        intuition
+            if there is a shortest path, then it can contain at most n-1 edges
+        '''
+        dists = [float('inf')]*n
+        dists[s] = 0
+        for _ in range(n-1):
+            for u,v,w in edges:
+                if dists[u] != float('inf') and dists[u] + w < dists[v]:
+                    dists[v] = dists[u] + w
+        
+        min_dist = min([dists[node] for node in marked],default=float('inf'))
+        return -1 if min_dist == float("inf") else min_dist
