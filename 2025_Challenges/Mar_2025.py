@@ -2316,6 +2316,45 @@ class Solution:
                 return i
         return -1
 
+class Solution:
+    def minimumIndex(self, nums: List[int]) -> int:
+        '''
+        we actuall don't need to keep track of the dominant element,
+        just counts for the left and the right parts
+
+        another optimization would be to use Boyer-moore to find the majority element
+        the idea is that if the elements appears len(nums)/2 times, then it must appear after cancelling out the other elements!
+
+        '''
+        #find dom
+        n = len(nums)
+        dominant,count_dominant = self.boyer_moore(nums)
+
+        curr_count_dom = 0
+        for i in range(n-1):
+            num = nums[i]
+            curr_count_dom += num == dominant
+            left_size = i + 1
+            right_size = n - i - 1
+            if curr_count_dom > left_size//2 and count_dominant - curr_count_dom > right_size//2:
+                return i
+        
+        return -1
+    
+    def boyer_moore(self,arr):
+        dom = arr[0]
+        count = 0
+        dom_count = 0
+        for num in arr:
+            if num == dom:
+                count += 1
+            else:
+                count -= 1
+            if count == 0:
+                dom = num
+                dom_count = 1
+        return [dom,dom_count]
+    
 ###########################################
 # 2737. Find the Closest Marked Node
 # 27MAR25
@@ -2410,3 +2449,323 @@ class Solution:
         
         min_dist = min([dists[node] for node in marked],default=float('inf'))
         return -1 if min_dist == float("inf") else min_dist
+
+###################################################
+# 2503. Maximum Number of Points From Grid Queries
+# 28MAR25
+###################################################
+#almost
+class Solution:
+    def maxPoints(self, grid: List[List[int]], queries: List[int]) -> List[int]:
+        '''
+        notice that for a query, its just the number of cells i can visit
+        for each query we can revist the same cell multiple times
+        brute force would be to bfs/dfs for each query and count the number of cells i can visit
+            i.e all (i,j) in visited whre grid[i][j] < current query that i'm on
+            this would obviously take too long, m*n*k
+        
+        sort queries, and bfs from upper left
+        as we bfs, keep track of number of cells that are < the current query
+        in the queue,keep track of the (i,j) as well at the current query
+        '''
+        n = len(queries)
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        queries_sorted = [(q,i) for (i,q) in enumerate(queries)]
+        queries_sorted.sort(key = lambda x: x[0])
+        ans = [0]*n
+        seen = set()
+        q = deque([(0,0,0)]) #entry is (i,j,kth query)
+        while q:
+            i,j,k = q.popleft()
+            #if we added here we can conttinue to explore neighbors
+            if grid[i][j] < queries_sorted[k][0]:
+                ans[k] += 1
+                seen.add((i,j)) #mark cell as seen
+                for di,dj in dirrs:
+                    ii = i + di
+                    jj = j + dj
+                    if 0 <= ii < rows and 0 <= jj < cols and (ii,jj) not in seen:
+                        if grid[ii][jj] <= queries_sorted[k][0]:
+                            q.append((ii,jj,k))
+            #if wecan't add, move on to the next index
+            else:
+                if k + 1 < n:
+                    q.append((i,j,k+1))
+        
+        return ans
+
+#yesss
+from queue import PriorityQueue
+import heapq
+class Solution:
+    def maxPoints(self, grid: List[List[int]], queries: List[int]) -> List[int]:
+        '''
+        notice that for a query, its just the number of cells i can visit
+        for each query we can revist the same cell multiple times
+        brute force would be to bfs/dfs for each query and count the number of cells i can visit
+            i.e all (i,j) in visited whre grid[i][j] < current query that i'm on
+            this would obviously take too long, m*n*k
+        
+        sort queries, and bfs from upper left
+        as we bfs, keep track of number of cells that are < the current query
+        in the queue,keep track of the (i,j) as well at the current query
+
+        we need to use heap, to keep track of the minimum value in our expansion
+        as long as the min value is smaller than the current query, we can keep expanding
+
+        new thing, there is a 
+        from queue import PriorityQueue
+
+        '''
+        n = len(queries)
+        rows = len(grid)
+        cols = len(grid[0])
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+        queries_sorted = [(q,i) for (i,q) in enumerate(queries)]
+        queries_sorted.sort(key = lambda x: x[0])
+        ans = [0]*n
+        visited = [[False]*cols for _ in range(rows)]
+        visited[0][0] = True
+        min_heap = [(grid[0][0],0,0)]
+        #min_heap = PriorityQueue()
+        #min_heap.put((grid[0][0],0,0))
+        curr_points = 0
+
+        for query_bound,idx in queries_sorted:
+            #only expand when we query bound is higher
+            while min_heap and min_heap[0][0] < query_bound:
+                curr_val, i,j = heapq.heappop(min_heap)
+                #curr_val, i,j = min_heap.get()
+                curr_points += 1
+                #neigh expansion
+                for di,dj in dirrs:
+                    ii = i + di
+                    jj = j + dj
+                    if 0 <= ii < rows and 0 <= jj < cols and not visited[ii][jj]:
+                        heapq.heappush(min_heap, (grid[ii][jj],ii,jj))
+                        #min_heap.put((grid[ii][jj],i,j))
+                        #mark
+                        visited[ii][jj] = True
+            #place ans
+            ans[idx] = curr_points
+        
+        return ans
+                
+#############################################
+# 2818. Apply Operations to Maximize Score
+# 30MAR25
+##############################################
+#still TLEs...
+class Solution:
+    def maximumScore(self, nums: List[int], k: int) -> int:
+        '''
+        we can only use a subarray from i:j only one time
+        but subarrays can overlap, i.e we can do [1:4] and [2:5]
+        prime score is number of prime factors
+        for each number in the array, i can calculate its prime score in logarithmic time, once we have the prime scores
+        we need to keep track of the prime score of each number
+        the issue is that there are n*n subarrays, but for each subarray we want the num with largest prime factor
+            tiebreaker would be the leftmost index
+        problem is that we can't do in O(k) time either, because thats lower bounded by n*n
+        prime factors could have been any hueristic, just a wrench lol
+        intuitions:
+            for each index i, we need to know the number or ranges where s[i] is the maximum
+            if we could repeatedly us a subarray, then we would just pick the max prime score num every time
+            a number has the largest pimre score until another on shows up, with a greater prime score to the left or the right
+
+        we then need to use fast exponentiation since the numbers could be large
+        '''
+        #prime score
+        n = len(nums)
+        s = [0]*n
+        for i,num in enumerate(nums):
+            s[i] = self.prime_factors(num)
+
+        #for each index in nums, determine how many subarrays nums[i], or s[i] is the maximum, monstock for left and right
+        #left[i]: neareast index to the left where prime score is >= s[i]
+        #right[i]: nearest index to the right where prime score > s[i]
+        left = [-1]*n
+        right = [n]*n
+        #monostack for decreasing prime score, it contains the indices,and for each index at the top, we can check is primescore
+        stack = []
+        for i in range(n):
+            #need s[i] to be largest, i.e stack is no longer decreasing
+            while stack and s[stack[-1]] < s[i]:
+                idx = stack.pop()
+                right[idx] = i
+            #if stack is not empty, set prev largest prime score elemnt to current index
+            if stack:
+                left[i] = stack[-1]
+            stack.append(i)
+        
+        #count number of subarrays where nums[i] has largest s[i]
+        count_subarrays = [0]*n
+        for i in range(n):
+            count_subarrays[i] = (i - left[i])*(right[i] - i)
+        
+        #sort elemments in desceding order, we want to use the largest nums to get the largest score, along with index
+        sorted_elements = [(num,i) for i,num in enumerate(nums)]
+        sorted_elements.sort(key = lambda x: -x[0])
+        score = 1
+        mod = 10**9 + 7
+        for num,index in sorted_elements:
+            operations = min(k,count_subarrays[index])
+            #get this num's prime score
+            curr_ps = s[index]
+            print(num,operations)
+            #multiply, need to use fast exponentaion here
+            #recursive seems to TLE here :(
+            temp = self._power(num,operations,mod)
+            score *= temp
+            score %= mod
+            k -= operations
+            if k == 0:
+                return score
+        return score
+
+    def prime_factors(self,num):
+        factors = set()
+        curr_prime = 2
+        #keep dividing it
+        
+        while curr_prime <= num:
+            if num % curr_prime == 0:
+                factors.add(curr_prime)
+                num = num // curr_prime
+            else:
+                curr_prime += 1
+        
+        return len(factors)
+
+    def fast_power(self,x,power,mod):
+        if power == 0:
+            return 1
+        half_power = self.fast_power(x,power//2,mod) % mod
+        if power % 2 == 0:
+            return (half_power*half_power) % mod
+        return (x*half_power*half_power) % mod
+    
+
+    def _power(self,base, exponent,mod):
+        res = 1
+
+        # Calculate the exponentiation using binary exponentiation
+        while exponent > 0:
+            # If the exponent is odd, multiply the result by the base
+            if exponent % 2 == 1:
+                res = (res * base) % mod
+
+            # Square the base and halve the exponent
+            base = (base * base) % mod
+            exponent //= 2
+        
+        return res
+
+#just brute foce all factors
+class Solution:
+    def maximumScore(self, nums: List[int], k: int) -> int:
+        '''
+        we can only use a subarray from i:j only one time
+        but subarrays can overlap, i.e we can do [1:4] and [2:5]
+        prime score is number of prime factors
+        for each number in the array, i can calculate its prime score in logarithmic time, once we have the prime scores
+        we need to keep track of the prime score of each number
+        the issue is that there are n*n subarrays, but for each subarray we want the num with largest prime factor
+            tiebreaker would be the leftmost index
+        problem is that we can't do in O(k) time either, because thats lower bounded by n*n
+        prime factors could have been any hueristic, just a wrench lol
+        intuitions:
+            for each index i, we need to know the number or ranges where s[i] is the maximum
+            if we could repeatedly us a subarray, then we would just pick the max prime score num every time
+            a number has the largest pimre score until another on shows up, with a greater prime score to the left or the right
+
+        we then need to use fast exponentiation since the numbers could be large
+        '''
+        #prime score
+        n = len(nums)
+        s = [0]*n
+        for i,num in enumerate(nums):
+            s[i] = self.prime_factors(num)
+
+        #for each index in nums, determine how many subarrays nums[i], or s[i] is the maximum, monstock for left and right
+        #left[i]: neareast index to the left where prime score is >= s[i]
+        #right[i]: nearest index to the right where prime score > s[i]
+        left = [-1]*n
+        right = [n]*n
+        #monostack for decreasing prime score, it contains the indices,and for each index at the top, we can check is primescore
+        stack = []
+        for i in range(n):
+            #need s[i] to be largest, i.e stack is no longer decreasing
+            while stack and s[stack[-1]] < s[i]:
+                idx = stack.pop()
+                right[idx] = i
+            #if stack is not empty, set prev largest prime score elemnt to current index
+            if stack:
+                left[i] = stack[-1]
+            stack.append(i)
+        
+        #count number of subarrays where nums[i] has largest s[i]
+        count_subarrays = [0]*n
+        for i in range(n):
+            count_subarrays[i] = (i - left[i])*(right[i] - i)
+        
+        #sort elemments in desceding order, we want to use the largest nums to get the largest score, along with index
+        sorted_elements = [(num,i) for i,num in enumerate(nums)]
+        sorted_elements.sort(key = lambda x: -x[0])
+        score = 1
+        mod = 10**9 + 7
+        for num,index in sorted_elements:
+            operations = min(k,count_subarrays[index])
+            #get this num's prime score
+            curr_ps = s[index]
+            print(num,operations)
+            #multiply, need to use fast exponentaion here
+            #recursive seems to TLE here :(
+            temp = self.fast_power(num,operations,mod)
+            score *= temp
+            score %= mod
+            k -= operations
+            if k == 0:
+                return score
+        return score
+
+    def prime_factors(self,num):
+        #this part needs to be speed up
+        factors = 0
+        # Check for prime factors from 2 to sqrt(n)
+        for factor in range(2, int(math.sqrt(num)) + 1):
+            if num % factor == 0:
+                factors += 1
+                # Remove all occurrences of the prime factor from num
+                while num % factor == 0:
+                    num //= factor
+        if num >= 2:
+            factors += 1
+
+        return factors
+
+    def fast_power(self,x,power,mod):
+        if power == 0:
+            return 1
+        half_power = self.fast_power(x,power//2,mod) % mod
+        if power % 2 == 0:
+            return (half_power*half_power) % mod
+        return (x*half_power*half_power) % mod
+    
+
+    def _power(self,base, exponent,mod):
+        res = 1
+
+        # Calculate the exponentiation using binary exponentiation
+        while exponent > 0:
+            # If the exponent is odd, multiply the result by the base
+            if exponent % 2 == 1:
+                res = (res * base) % mod
+
+            # Square the base and halve the exponent
+            base = (base * base) % mod
+            exponent //= 2
+        
+        return res
