@@ -2769,3 +2769,50 @@ class Solution:
             exponent //= 2
         
         return res
+
+################################
+# 763. Partition Labels
+# 30MAR25
+################################
+class Solution:
+    def partitionLabels(self, s: str) -> List[int]:
+        '''
+        need right most index for each char
+        but just because i move to the rightmost end doesn't mean i can make a new patitions
+        '''
+        n = len(s)
+        rightmost = {s[i]:i for i in range(n)}
+        partitions = []
+        partition_end = 0
+        partition_start = 0
+
+        for i,ch in enumerate(s):
+            partition_end = max(partition_end,rightmost[ch])
+            #if we have reached the end, we can stop here
+            if i == partition_end:
+                partitions.append(i - partition_start + 1)
+                partition_start = i + 1
+        
+        return partitions
+
+class Solution:
+    def partitionLabels(self, s: str) -> List[int]:
+        '''
+        we can brute force, by just checking counts
+        '''
+        n = len(s)
+        counts = Counter(s)
+        in_partition = set()
+        partition_size = 0
+        ans = []
+        for right,ch in enumerate(s):
+            in_partition.add(ch)
+            counts[ch] -= 1
+            partition_size += 1
+            #all letters in partition must have zero to be a valid partition
+            if all([counts[ch] == 0 for ch in in_partition]):
+                ans.append(partition_size)
+                partition_size = 0
+                in_partition = set()
+        
+        return ans
