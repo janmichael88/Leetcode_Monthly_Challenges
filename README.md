@@ -31,7 +31,7 @@
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-6.png" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-7.png" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-8.png" width="100"></td>
-    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-9.png" width="100"></td>
+    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/2022-09.gif" width="100"></td>
   </tr>
   <tr>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/dcc-2022-10.png" width="100"></td>
