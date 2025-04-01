@@ -2552,7 +2552,101 @@ class Solution:
             ans[idx] = curr_points
         
         return ans
-                
+
+          from queue import PriorityQueue
+
+
+class Solution:
+
+    DIRECTIONS = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+
+    def maxPoints(self, grid, queries):
+        '''
+        intution
+            every cell ing rid has a minimum value treshold that must be met in order to reach it an obtain points
+            if we can determine the smallest query to reach it, then we binary for each query for that number of points
+        
+        djikstras
+            weighted graph (i,j) to reach neighs its going to be grid[i][j] + (neigh for all neighs) to reach that neigh
+            we need the minimum effort to reach the cell,
+            we need the largest minimum for each cell to be reacheds, so update the dists to max
+
+        after getting the thresholds for max points
+        we use each query[i] as the threshold, and look for the largest number of cells we can visit
+            binary seach for the maximum, or largest left index
+        '''
+        query_count = len(queries)
+        result = [0] * query_count
+        row_count = len(grid)
+        col_count = len(grid[0])
+        total_cells = row_count * col_count
+
+        threshold_for_max_points = [0] * (total_cells + 1)
+        min_value_to_reach = [
+            [float("inf")] * col_count for _ in range(row_count)
+        ]
+
+        min_value_to_reach[0][0] = grid[0][0]
+
+        # Min-heap for processing cells in increasing order of their maximum
+        # encountered value.
+        min_heap = PriorityQueue()
+        min_heap.put((grid[0][0], 0, 0))
+        visited_cells = 0
+
+        # Dijkstra's algorithm to compute minValueToReach for each cell
+        while not min_heap.empty():
+            current = min_heap.get()
+
+            # Store the value required to reach `visitedCells` points.
+            threshold_for_max_points[visited_cells + 1] = current[0]
+            visited_cells += 1
+
+            # Explore all possible directions.
+            for direction in self.DIRECTIONS:
+                new_row, new_col = (
+                    current[1] + direction[0],
+                    current[2] + direction[1],
+                )
+
+                # Check if the new position is within bounds and not visited
+                # before.
+                if (
+                    0 <= new_row < row_count
+                    and 0 <= new_col < col_count
+                    and min_value_to_reach[new_row][new_col] == float("inf")
+                ):
+                    # The max value encountered on the path to this cell.
+                    min_value_to_reach[new_row][new_col] = max(
+                        current[0], grid[new_row][new_col]
+                    )
+
+                    # Add the cell to the heap for further exploration.
+                    min_heap.put(
+                        (min_value_to_reach[new_row][new_col], new_row, new_col)
+                    )
+
+        # Use binary search to determine the maximum number of points that can
+        # be collected for each query.
+        for i in range(query_count):
+            threshold = queries[i]
+            left, right = 0, total_cells
+
+            # Find the rightmost number of points we can collect before
+            # exceeding the query threshold.
+            while left < right:
+                mid = left + (right - left + 1) // 2
+
+                if threshold_for_max_points[mid] < threshold:
+                    left = mid
+                else:
+                    right = mid - 1
+
+            # Return `left`.
+            result[i] = left
+
+        return result      
+
 #############################################
 # 2818. Apply Operations to Maximize Score
 # 30MAR25
@@ -2814,5 +2908,164 @@ class Solution:
                 ans.append(partition_size)
                 partition_size = 0
                 in_partition = set()
+        
+        return ans
+
+###############################################
+# 1055. Shortest Way to Form String (REVISTED)
+# 30MAR25
+################################################
+class Solution:
+    def shortestWay(self, source: str, target: str) -> int:
+        '''
+        first we need to check if its possible
+        '''
+        #check that we can't do it
+        if not self.is_possible(source,target):
+            return -1
+        
+        counts = Counter(target)
+        
+        #need to keep looping over source
+        #after every loop, increment count by 1
+        ans = 0
+        i,j = 0,0
+        while len(counts) > 0:
+            while i < len(source) and j < len(target):
+                if source[i] == target[j]:
+                    counts[target[j]] -= 1
+                    if counts[target[j]] == 0:
+                        del counts[target[j]]
+                    i += 1
+                    j += 1
+                else:
+                    i += 1
+            #used cycle
+            ans += 1
+            i = 0
+        
+        return ans
+                     
+    def is_possible(self,source,target):
+        source = set(source)
+        target = set(target)
+        for ch in target:
+            if ch not in source:
+                return False
+        return True
+    
+#without using count map, we just keep looping over source string
+class Solution:
+    def shortestWay(self, source: str, target: str) -> int:
+        '''
+        keep looping over source
+        '''
+        source_set = set(source)
+        for ch in target:
+            if ch not in source_set:
+                return -1
+            
+        m = len(source)
+        i = 0
+        count = 1
+
+        for ch in target:
+            #this is for the first occurence, we know have to use at least once
+            if i == 0:
+                count += 1
+            #keep looking for match
+            while source[i] != ch:
+                i = (i + 1) % m
+                if i == 0:
+                    count += 1
+            
+            i = (i+1) % m
+        
+        return count
+    
+#binary search for th next indices
+class Solution:
+    def shortestWay(self, source: str, target: str) -> int:
+        '''
+        for each char store list of indices, then we can binary search for the next best answer
+        '''
+        char_to_idxs = defaultdict(list)
+        for i,ch in enumerate(source):
+            char_to_idxs[ch].append(i)
+        
+        i = 0
+        count = 0
+
+        for ch in target:
+            if ch not in char_to_idxs:
+                return -1
+            
+            if i == 0:
+                count += 1
+            
+            #look for the next source pointer ahead of the current
+            idx = bisect.bisect_left(char_to_idxs[ch],i)
+            if idx == len(char_to_idxs[ch]):
+                count += 1
+                i = char_to_idxs[ch][0] + 1
+            else:
+                i = char_to_idxs[ch][idx] + 1
+        
+        return count
+#############################################
+# 2551. Put Marbles in Bags (REVISTED)
+# 31MAR25
+##############################################
+class Solution:
+    def putMarbles(self, weights: List[int], k: int) -> int:
+        '''
+        we need to optimally partition the weights array into k partitions
+        then for each partition we needs the sums of the starts and ends 
+        we want to find the min and the max, and return the difference
+        two problems, and get difference
+        we just need the largest and smallest k-1 pairs
+        '''
+        pairs = []
+        n = len(weights)
+        for i in range(1,n):
+            pairs.append(weights[i-1] + weights[i])
+        pairs.sort()
+        print(pairs)
+        smallest = pairs[:(k-1)]
+        largest = pairs[(len(pairs) - k + 1):]
+        return sum(largest) - sum(smallest)
+    
+class Solution:
+    def putMarbles(self, weights: List[int], k: int) -> int:
+        '''
+        we need to optimally partition the weights array into k partitions
+        then for each partition we needs the sums of the starts and ends 
+        we want to find the min and the max, and return the difference
+        two problems, and get difference
+        we just need the largest and smallest k-1 pairs
+
+        imagine splitting the arrays weights into some abritary k parts
+        we wouldhave splitting k-1 splitting points, and each pair (about the splitting point) would contribute a pair
+        we need to find the sum of the maximum k-1 pairs and the sum of the smallest k-1 pairs
+        if i have [a,b,c,d,e]
+        [a+b, b+c, c+d, d+e] for the pairs array, sorted
+        we can choose the min and max k - 1 frome this
+        when we substract, the ends get removed, and we're just left with the difference between the min and max!
+        better written as
+        max_score = weigts[0] + weights[n-1] + sum(largest k-1 splits)
+        min_score = weigts[0] + weights[n-1] + sum(smallest k-1 splits)
+        subtract
+        sum(largest k-1 splits) - sum(smallest k-1 splits)
+        '''
+        pairs = []
+        n = len(weights)
+        for i in range(1,n):
+            pairs.append(weights[i-1] + weights[i])
+        pairs.sort()
+
+        #insteaf of grabbing the k-1 pairs, we use the pairs array
+        ans = 0
+        for i in range(k-1):
+            ans += pairs[n-2-i] - pairs[i]
         
         return ans
