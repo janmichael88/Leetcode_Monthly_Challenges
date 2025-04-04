@@ -92,3 +92,134 @@ class Solution:
             middle = max(middle,nums[i])
         
         return ans
+
+###############################################
+# 2874. Maximum Value of an Ordered Triplet II
+# 03APR25
+###############################################
+#dp
+class Solution:
+    def maximumTripletValue(self, nums: List[int]) -> int:
+        '''
+        need to keep max to the left
+        and max to the right
+        '''
+        n = len(nums)
+        left = [0]*n
+        right = [0]*n
+        for i in range(1,n):
+            left[i] = max(nums[i-1],left[i-1])
+            right[n-i-1] = max(right[n-i],nums[n-i])
+        
+        ans = 0
+        for i in range(1,n-1):
+            ans = max(ans, (left[i] - nums[i])*right[i])
+        
+        return ans
+
+#constant dp
+class Solution:
+    def maximumTripletValue(self, nums: List[int]) -> int:
+        ans = 0
+        left = 0
+        middle = 0
+        n = len(nums)
+        for i in range(n):
+            ans = max(ans,left*nums[i])
+            left = max(left,middle - nums[i])
+            middle = max(middle,nums[i])
+        
+        return ans
+    
+#############################################
+# 2012. Sum of Beauty in the Array
+# 03APR25
+#############################################
+#brute force TLE
+class Solution:
+    def sumOfBeauties(self, nums: List[int]) -> int:
+        '''
+        when checking for the 2 condition at index i, nums[i] needs to be bigger then all nums[:i-1]
+        but less than all nums[i+1:]
+        '''
+        #brute force
+        beauty = 0
+        n = len(nums)
+        for i in range(1,n-1):
+            left = max(nums[:i])
+            right = min(nums[i+1:])
+            if left < nums[i] < right:
+                beauty += 2
+            elif nums[i-1] < nums[i] < nums[i+1]:
+                beauty += 1
+            #print(left,nums[i],right)
+        
+        return beauty
+    
+#three pass dp
+class Solution:
+    def sumOfBeauties(self, nums: List[int]) -> int:
+        '''
+        when checking for the 2 condition at index i, nums[i] needs to be bigger then all nums[:i-1]
+        but less than all nums[i+1:]
+
+        need to precmopute left maxes and right mins
+        '''
+        #brute force
+        beauty = 0
+        n = len(nums)
+        left_max = [0]*n
+        left_max[0] = nums[0]
+        for i in range(1,n):
+            left_max[i] = max(nums[i],left_max[i-1])
+        
+        right_min = [0]*n
+        right_min[-1] = nums[-1]
+        for i in range(n-2,-1,-1):
+            right_min[i] = min(right_min[i+1],nums[i])
+        
+        for i in range(1,n-1):
+            left = left_max[i-1]
+            right = right_min[i+1]
+            if left < nums[i] < right:
+                beauty += 2
+            elif nums[i-1] < nums[i] < nums[i+1]:
+                beauty += 1
+            #print(left,nums[i],right)
+        
+        return beauty
+    
+#two pass
+class Solution:
+    def sumOfBeauties(self, nums: List[int]) -> int:
+        '''
+        when checking for the 2 condition at index i, nums[i] needs to be bigger then all nums[:i-1]
+        but less than all nums[i+1:]
+
+        need to precmopute left maxes and right mins
+        '''
+        #brute force
+        beauty = 0
+        n = len(nums)
+        left_max = [0]*n
+        left_max[0] = nums[0]
+        right_min = [0]*n
+        right_min[-1] = nums[-1]
+        for i in range(1,n):
+            #need to exclude index at left_max[i] and right_min[i]
+            #needs to be to the left and right of i, not including i
+            left_max[i] = max(nums[i-1],left_max[i-1])
+            right_min[n-i-1] = min(right_min[n-i],nums[n-i])
+        
+        for i in range(1,n-1):
+            left = left_max[i]
+            right = right_min[i]
+            if left < nums[i] < right:
+                beauty += 2
+            elif nums[i-1] < nums[i] < nums[i+1]:
+                beauty += 1
+            #print(left,nums[i],right)
+        
+        return beauty
+
+
