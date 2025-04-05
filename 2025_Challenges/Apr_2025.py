@@ -222,4 +222,84 @@ class Solution:
         
         return beauty
 
+#################################################
+# 1123. Lowest Common Ancestor of Deepest Leaves
+# 04APR25
+#################################################
+#meh works but i don't like it
+#Definition for a binary tree node.
+class TreeNode:
+     def __init__(self, val=0, left=None, right=None):
+         self.val = val
+         self.left = left
+         self.right = right
+class Solution:
+    def lcaDeepestLeaves(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        find deepest leaves, then just use lca, two passes, no we can't just do this because we could have
+        mutiple nodes that aare the deepest like
+        lca could also be itself
+                1
+            2       3
+          4    5  6   7
+        
+        first find the deepest leaves
+        '''
+        depths = defaultdict(set)
+        self.dfs(root,0,depths)
+        max_depth = max(depths.keys())
+        deepest_leaves = depths[max_depth]
+        return self.lca(root,deepest_leaves)
+    
+    def dfs(self,node,depth,depths):
+        if not node:
+            return
+        if not node.left and not node.right:
+            depths[depth].add(node.val)
+        self.dfs(node.left,depth+1,depths)
+        self.dfs(node.right,depth+1,depths)
+    
+    def lca(self,node,deepest_leaves):
+        if not node:
+            return None
+        if not node.left and not node.right:
+            if node.val in deepest_leaves:
+                return node
+        left = self.lca(node.left,deepest_leaves)
+        right = self.lca(node.right,deepest_leaves)
+        if left != None and right != None:
+            return node
+        if left == None and right == None:
+            return None
+        return left if left else right
 
+#dp,
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def lcaDeepestLeaves(self, root: Optional[TreeNode]) -> Optional[TreeNode]:
+        '''
+        we can use recurion and return two args
+            depth, and this nodes lca
+            if the left subtree has a deeper depth, return its depth, and the deepest node in the left subtree
+        recall max depth of a tree
+        '''
+        def rec(node):
+            if not node:
+                return [0,None]
+            
+            deepest_depth_left, left_lca = rec(node.left)
+            deepest_depth_right, right_lca = rec(node.right)
+            #if left subtree has a deeper leave, return it and the lca on on the left
+            if deepest_depth_left > deepest_depth_right:
+                return [deepest_depth_left + 1, left_lca]
+            elif deepest_depth_left < deepest_depth_right:
+                return [deepest_depth_right + 1, right_lca]
+            #equal, return node
+            return [deepest_depth_left + 1,node]
+
+        return rec(root)[1]
