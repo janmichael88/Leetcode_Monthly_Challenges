@@ -303,3 +303,172 @@ class Solution:
             return [deepest_depth_left + 1,node]
 
         return rec(root)[1]
+    
+############################################
+# 368. Largest Divisible Subset (REVISTED)
+# 06APR25
+############################################
+class Solution:
+    def largestDivisibleSubset(self, nums: List[int]) -> List[int]:
+        '''
+        iterative
+        corollary 1:
+            in an array [E,F,G] and [E < F < G]
+            for any value that can be divided by the largest number in a divisible subset, we can add that number to the subset
+        corollary 2:
+            for any value that can divide the smallest elmeent in the subset, we can form another divisible subset
+            we only need to check the the largest or the smallest when of the current subset whent rying to extend it out
+        '''
+        n = len(nums)
+        if n == 0:
+            return []
+        
+        EDS = [[] for _ in range(n)] #largest subset adding at nums[i]
+        nums.sort()
+        for i in range(n):
+            max_subset = []
+            for k in range(i):
+                if (nums[i] % nums[k] == 0):
+                    if len(EDS[k]) > len(max_subset):
+                        max_subset = EDS[k][:]
+            EDS[i].extend(max_subset)
+            EDS[i].append(nums[i])
+        
+        return max(EDS,key = len)
+    
+######################################################
+# 2052. Minimum Cost to Separate Sentence Into Rows
+# 06APR25
+#####################################################
+class Solution:
+    def minimumCost(self, sentence: str, k: int) -> int:
+        '''
+        split or dont split,
+        if we split here we need to add a cost
+        the issue is that the last row does not contribute the cost, so we can substract the cost out
+        need to use dp(i,j)
+        we actually donn't need the words, just their lenghts
+        oh woops, we can only split such that the number of characters is at mopst k row is at most k
+        and we need to split
+        base case is when we are within k for the last row, return 0
+        note, the index i may be different, unlike other base cases where we are outside the bounds
+        in this case, the base case could be one of many different i positions, so long as we are within k
+        wierd base case tidbit here....
+        '''
+        words = sentence.split(" ")
+        words = [len(w) for w in words]
+        memo = {}
+        n = len(words)
+        m = len(sentence)
+        def dp(i):
+            #if we are in the last row return nothing
+            if sum(words[i:]) + (n - i - 1) <= k:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            ans = float('inf')
+            curr_chars = words[i]
+            curr_words = 1
+            ii = i #need to move to the next i, but need other i for caching
+            #jeeze this problem sucks...
+            while i < n and curr_chars + (curr_words - 1) <= k:
+                cost = (k - (curr_chars + (curr_words - 1)))**2
+                ans = min(ans, cost + dp(ii+1))
+                ii += 1
+                curr_chars += words[ii]
+                curr_words += 1
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+
+#############################################
+# 416. Partition Equal Subset Sum (REVISTED)
+# 07APR25
+#############################################
+#top down
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        '''
+        if i find the sum of the array, the two paritions must be equal
+        i can try building a subset until the subset becomes SUM // 2
+        if it any point the subset grows beyond that i need to abandon
+        it would help to sort the array first
+        '''
+        N = len(nums)
+        SUM = sum(nums)
+        
+        #cannot be partitioned evenly
+        if SUM % 2 == 1:
+            return False
+        
+        #sort
+        nums = sorted(nums)
+        
+        memo = {}
+        
+        def rec(i,curr_sum):
+            #got to end
+            if i == N:
+                if curr_sum == SUM // 2:
+                    return True
+                else:
+                    return False
+            
+            if curr_sum > SUM // 2:
+                return False
+            
+            #got here
+            if curr_sum == SUM // 2:
+                return True
+            
+            if (i,curr_sum) in memo:
+                return memo[(i,curr_sum)]
+            take = rec(i+1,curr_sum+nums[i])
+            no_take = rec(i+1,curr_sum)
+            res = take or no_take
+            memo[(i,curr_sum)] = res
+            return res
+        
+        return rec(0,0)
+            
+#bottom up
+class Solution:
+    def canPartition(self, nums: List[int]) -> bool:
+        '''
+        if i find the sum of the array, the two paritions must be equal
+        i can try building a subset until the subset becomes SUM // 2
+        if it any point the subset grows beyond that i need to abandon
+        it would help to sort the array first
+        '''
+        N = len(nums)
+        SUM = sum(nums)
+        
+        #cannot be partitioned evenly
+        if SUM % 2 == 1:
+            return False
+        
+        #sort
+        nums = sorted(nums)
+        
+        dp = [[False]*((SUM // 2) + 1) for i in range(N+1)]
+
+        #base case fill
+        for curr_sum in range((SUM // 2) + 1):
+            if curr_sum == (SUM // 2):
+                dp[N][curr_sum] = True
+
+        for i in range(N-1,-1,-1):
+            for curr_sum in range((SUM // 2) -1,-1,-1):
+                if curr_sum + nums[i] > SUM // 2:
+                    continue
+                take = dp[i+1][curr_sum+nums[i]]
+                no_take = dp[i+1][curr_sum]
+                res = take or no_take
+                dp[i][curr_sum] = res
+        
+        return dp[0][0]
+        
+            
+        
