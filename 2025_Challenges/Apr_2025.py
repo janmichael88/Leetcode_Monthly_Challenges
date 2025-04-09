@@ -383,6 +383,34 @@ class Solution:
         
         return dp(0)
 
+#instead of getting word lengths, just act on the string
+#adding cache decorator with memo doesn't change anything
+class Solution:
+    def minimumCost(self, sentence: str, k: int) -> int:
+        '''
+        just iterate on the string
+        '''
+        n = len(sentence)
+        memo = {}
+        @lru_cache(None)
+        def dp(i):
+            if n - i <= k:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = float('inf')
+            #advance
+            if sentence[i] == ' ':
+                i += 1
+            start = i
+            while i < n and i - start <= k:
+                if sentence[i] == ' ':
+                    ans = min(ans, (k-(i-start))**2 + dp(i+1))
+                i += 1
+            memo[i] = ans
+            return ans
+        return dp(0)
+
 #############################################
 # 416. Partition Equal Subset Sum (REVISTED)
 # 07APR25
@@ -470,5 +498,92 @@ class Solution:
         
         return dp[0][0]
         
-            
+#####################################################################
+# 1981. Minimize the Difference Between Target and Chosen Elements
+# 07APR25
+#####################################################################
+#kida like advent of code!
+class Solution:
+    def minimizeTheDifference(self, mat: List[List[int]], target: int) -> int:
+        '''
+        want to minimize abs((sum of elemnts for all nums chose) - target)
+        we want to minize the dist from the chosen nums
+        evaluating all would result in 70**70, this is too big
+        biggest sum would be 70*70, smallest sum would be 1
+        '''
+        sums = set([0])
+        for row in mat:
+            next_sums = set()
+            for num in row:
+                for curr_sum in sums:
+                    next_sums.add(curr_sum + num)
+            sums = next_sums
         
+        ans = float('inf')
+        for num in sums:
+            ans = min(ans, abs(num - target))
+        
+        return ans
+    
+#dp
+class Solution:
+    def minimizeTheDifference(self, mat: List[List[int]], target: int) -> int:
+        '''
+        you can also use dp, but for each row remove duplicates and sort
+        dp states (index i as row, and curr_sum)
+        '''
+        new_mat = [sorted(list(set(row))) for row in mat]
+        n = len(mat)
+        memo = {}
+        
+        @lru_cache(None)
+        def dp(i,curr_sum):
+            if i >= n:
+                return abs(curr_sum - target) 
+            if (i,curr_sum) in memo:
+                return memo[(i,curr_sum)]
+            
+            ans = float('inf')
+            for num in mat[i]:
+                ans = min(ans, dp(i+1,num + curr_sum))
+
+            
+            memo[(i,curr_sum)] = ans
+            return ans
+
+        return dp(0,0)
+    
+    
+########################################################################
+# 3396. Minimum Number of Operations to Make Elements in Array Distinct
+# 08APR25
+########################################################################
+class Solution:
+    def minimumOperations(self, nums: List[int]) -> int:
+        '''
+        brute force it
+        '''
+        count = 0
+        while len(nums) > 0:
+            if len(nums) == len(set(nums)):
+                return count
+            nums = nums[3:]
+            count += 1
+        return count
+    
+#linear time
+class Solution:
+    def minimumOperations(self, nums: List[int]) -> int:
+        '''
+        reduce problem to finding suffix where all elements are distinct
+        and since we remove three at a time, we need to do 
+        i // 3 + 1 ops
+        '''
+        seen = set()
+        n = len(nums)
+        for i in range(n-1,-1,-1):
+            if nums[i] in seen:
+                return i//3 + 1
+            seen.add(nums[i])
+        
+        return 0
