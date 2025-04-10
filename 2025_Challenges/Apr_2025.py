@@ -633,3 +633,142 @@ class Solution:
                 seen.add(num)
         
         return len(seen)
+    
+########################################################
+# 317. Shortest Distance from All Buildings (REVISTED)
+# 09APR25
+#######################################################
+from collections import deque
+
+class Solution:
+    def shortestDistance(self, grid: List[List[int]]) -> int:
+        # Function for BFS
+        def bfs(grid, row, col, totalHouses):
+            # Next four directions.
+            dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+            
+            rows = len(grid)
+            cols = len(grid[0])
+            distanceSum = 0
+            housesReached = 0
+            
+            # Queue to do a bfs, starting from (row,col) cell
+            q = deque([(row, col)])
+            
+            # Keep track of visited cells
+            vis = [[False] * cols for _ in range(rows)]
+            vis[row][col] = True
+            
+            steps = 0
+            
+            while q and housesReached != totalHouses:
+                for _ in range(len(q)):
+                    curr = q.popleft()
+                    r, c = curr
+                    
+                    # If this cell is a house, then add the distance from the source to this cell
+                    # and we go past from this cell.
+                    if grid[r][c] == 1:
+                        distanceSum += steps
+                        housesReached += 1
+                        continue
+                    
+                    # This cell was an empty cell, hence traverse the next cells which is not a blockage.
+                    for dr, dc in dirs:
+                        nextRow = r + dr
+                        nextCol = c + dc
+                        
+                        if 0 <= nextRow < rows and 0 <= nextCol < cols:
+                            if not vis[nextRow][nextCol] and grid[nextRow][nextCol] != 2:
+                                vis[nextRow][nextCol] = True
+                                q.append((nextRow, nextCol))
+                
+                # After traversing one level cells, increment the steps by 1 to reach the next level.
+                steps += 1
+            
+            # If we did not reach all houses, then any cell visited also cannot reach all houses.
+            # Set all cells visited to 2 so we do not check them again and return INF.
+            if housesReached != totalHouses:
+                for r in range(rows):
+                    for c in range(cols):
+                        if grid[r][c] == 0 and vis[r][c]:
+                            grid[r][c] = 2
+                return float('inf')
+            
+            # If we have reached all houses then return the total distance calculated.
+            return distanceSum
+        
+        # Main function to find the shortest distance
+        minDistance = float('inf')
+        rows = len(grid)
+        cols = len(grid[0])
+        totalHouses = sum(1 for r in range(rows) for c in range(cols) if grid[r][c] == 1)
+        
+        # Find the min distance sum for each empty cell.
+        for r in range(rows):
+            for c in range(cols):
+                if grid[r][c] == 0:
+                    minDistance = min(minDistance, bfs(grid, r, c, totalHouses))
+        
+        # If it is impossible to reach all houses from any empty cell, then return -1.
+        if minDistance == float('inf'):
+            return -1
+        return minDistance
+
+from typing import List   
+class Solution:
+    def shortestDistance(self, grid: List[List[int]]) -> int:
+        '''
+        we can bfs fomr houses to empty lands
+        if we can reach a house from an empty land, then we can do the other way
+        this is better if there are fewer houses than empty lands
+        during bfs, we need to store 2 values for each (i,j) of empty cells
+            the totaldist sum from all house to this empty land
+            number of houses that can reach this emtpy land
+        '''
+        rows, cols = len(grid), len(grid[0])
+        minDistance = float('inf')
+        totalHouses = 0
+
+        # distances[row][col] = [total_distance, houses_reached]
+        distances = [[[0, 0] for _ in range(cols)] for _ in range(rows)]
+
+        # Count houses and run BFS from each one
+        for row in range(rows):
+            for col in range(cols):
+                if grid[row][col] == 1:
+                    totalHouses += 1
+                    self.bfs(grid, distances, row, col)
+
+        # Look for the minimum distance among valid empty lands
+        for row in range(rows):
+            for col in range(cols):
+                if distances[row][col][1] == totalHouses:
+                    minDistance = min(minDistance, distances[row][col][0])
+
+        return -1 if minDistance == float('inf') else minDistance
+    def bfs(self, grid: List[List[int]], distances: List[List[List[int]]], row: int, col: int) -> None:
+        dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        rows, cols = len(grid), len(grid[0])
+
+        q = deque([(row, col)])
+        vis = [[False] * cols for _ in range(rows)]
+        vis[row][col] = True
+
+        steps = 0
+
+        while q:
+            for _ in range(len(q)):
+                r, c = q.popleft()
+
+                if grid[r][c] == 0:
+                    distances[r][c][0] += steps
+                    distances[r][c][1] += 1
+
+                for dr, dc in dirs:
+                    nr, nc = r + dr, c + dc
+                    if 0 <= nr < rows and 0 <= nc < cols:
+                        if not vis[nr][nc] and grid[nr][nc] == 0:
+                            vis[nr][nc] = True
+                            q.append((nr, nc))
+            steps += 1
