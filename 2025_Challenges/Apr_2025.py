@@ -587,3 +587,49 @@ class Solution:
             seen.add(nums[i])
         
         return 0
+    
+#############################################################
+# 3375. Minimum Operations to Make Array Values Equal to K
+# 09APR25
+############################################################
+class Solution:
+    def minOperations(self, nums: List[int], k: int) -> int:
+        '''
+        the description of valid is confusing
+            an integer h is valid os all the values in nums that are > h are identical
+        
+        operations are:
+            * select integerh, that is valid for nums
+            * for each index i, where nums[i] > h, set nums[i] t0 k
+        
+        return min number of operations to make every element in nums equal to k
+        we need to get to an array like [k,k,k...,k,k]
+        try using all possible h from 0 to the second highest h
+        we need to pick and h, then set all those greater than h, to h
+        so the largest get reduced to h
+        if k is bigger than the minimum we can never do it
+        we can only choose a valid h if all the numers that are greater than h are identical
+        '''
+        if min(nums) < k:
+            return -1
+        #no need for duplicates
+        nums = set(nums)
+        nums.add(k)
+        return len(nums) - 1
+    
+class Solution:
+    def minOperations(self, nums: List[int], k: int) -> int:
+        '''
+        if the max element in nums is x, and the second largest is y
+        then we can choose, h such that y <= h < x, and repalce all occruences of x in the array with h
+        if there is a number smaller than k, we can't do it
+        otherwise count the number of different integers greater than k
+        '''
+        seen = set()
+        for num in nums:
+            if num < k:
+                return -1
+            elif num > k:
+                seen.add(num)
+        
+        return len(seen)
