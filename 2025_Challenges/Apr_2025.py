@@ -772,3 +772,119 @@ class Solution:
                             vis[nr][nc] = True
                             q.append((nr, nc))
             steps += 1
+
+##############################################
+# 2999. Count the Number of Powerful Integers
+# 10APR25
+#############################################
+#TLE, phew
+class Solution:
+    def numberOfPowerfulInt(self, start: int, finish: int, limit: int, s: str) -> int:
+        '''
+        start with the suffix s, then try prepending it with a digit
+        note that limit cannot be smaller than any digit in s; removed edge case
+        because it can be leading zeros fuck
+        but it must be unique
+        '''
+        powerful = set()
+        def rec(s,start,finish):
+            if len(s) > len(str(finish)):
+                return
+            if int(s) > finish:
+                return
+            if start <= int(s) <= finish:
+                powerful.add(int(s))
+            
+            for prepend in range(limit+1):
+                rec(str(prepend)+s,start,finish)
+
+        
+        rec(s,start,finish)
+        return len(powerful)
+            
+#almost there
+class Solution:
+    def numberOfPowerfulInt(self, start: int, finish: int, limit: int, s: str) -> int:
+        '''
+        start with the suffix s, then try prepending it with a digit
+        note that limit cannot be smaller than any digit in s; removed edge case
+        because it can be leading zeros fuck
+        but it must be unique
+        us digit dp to count integers in range 1 to x
+        so it would be dp(finish) - dp(start-1)
+        i can still use strings on s, just change the bounds
+        two subproblems
+            1. use dp to find the number of powerful intergers in the range(1,x)
+            its the fucking zeros that are messing shit up
+        '''
+        @lru_cache(None)
+        def dp(s,x):
+            if len(s) > len(str(x)):
+                return 0
+            if int(s) > x:
+                return 0
+            if int(s) <= x:
+                if s.startswith("0"):
+                    count = 0
+                    for prepend in range(1,limit+1):
+                        next_s = str(prepend)+s
+                        count += dp(next_s,x)
+
+                    return count
+
+                else:
+                    count = 1
+                    #issue is with zeros, although the next s can start with zero, we can still prepend to it
+                    for prepend in range(limit+1):
+                        next_s = str(prepend)+s
+                        count += dp(next_s,x)
+
+                    return count
+                
+        return dp(s,finish) - dp(s,start-1)
+
+
+######################################
+# 2843. Count Symmetric Integers
+# 11APR25
+######################################
+class Solution:
+    def countSymmetricIntegers(self, low: int, high: int) -> int:
+        '''
+        check all from low to high
+        then get left and right digit sum parts
+        '''
+        count = 0
+        for num in range(low,high+1):
+            count += self.check_sum(num)
+        
+        return count
+    
+    def check_sum(self,num):
+        digits = []
+        while num:
+            digits.append(num % 10)
+            num = num // 10
+        
+        if len(digits) % 2 == 1:
+            return False
+        return sum(digits[:len(digits)//2]) == sum(digits[len(digits)//2:])
+    
+class Solution:
+    def countSymmetricIntegers(self, low: int, high: int) -> int:
+        '''
+        if a number is a multiple of 11 and in between [1,100)
+        it is symmetric
+        if its four digit number, just part the thoussands, hundres, tens and ones part and check
+        '''
+        count = 0
+        for num in range(low,high+1):
+            if num < 100 and num % 11 == 0:
+                count += 1
+            if 1000 <= num < 10000:
+                left_sum = (num // 1000) + (num % 1000) // 100
+                right_sum = (num % 100) // 10 + (num % 10)
+                if left_sum == right_sum:
+                    count += 1
+        
+        return count
