@@ -888,3 +888,127 @@ class Solution:
                     count += 1
         
         return count
+
+###########################################
+# 3272. Find the Count of Good Integers
+# 12APR25
+###########################################
+class Solution:
+    def countGoodIntegers(self, n: int, k: int) -> int:
+        '''
+        k-palindromic means the number x is a palindrome and is divible by k
+        its good if it can be arranged to k-palindromic
+            any integer cannot have leading zeros before or after
+            can't arrange 1010 to 101 or 0110
+        
+        we can count number of integers that can be palindromic
+        for example if n is odd, take n = 3 for example
+        the middle can be anything YXY, but can permute this anyway because we allowed to rerrange
+        could be YXY, XYY, XYY, for any collection of (Y,X,Y) the are n! perms of it
+        and for each we can choose digits 0 to 9, except the first digits cannot be zero
+        we can also count the number of digits that are divivible by k up to a limit
+        can we actually enumerate all integers? up to 10**5
+        almost,
+        note counting rule for unique permutations:
+            count = factorial(n) / (product(freq(char)) for char in char_counts)!
+        '''
+        #odd length
+        if n % 2 == 1:
+            possible = set()
+            ans = 0
+            for center in range(10):
+                if n-2 <= 0:
+                    cand = str(center)
+                    if int(cand) != 0 and int(cand) % k == 0:
+                        possible.add(int(cand))
+                else:
+                    for left in range(int(10**(n//2))):
+                        cand = str(left)+str(center)+str(left)[::-1]
+                        if len(cand) == n and int(cand) % k == 0 and cand == str(int(cand)):
+                            #sort for uniqueness
+                            cand = "".join(sorted(cand))
+                            possible.add(cand)
+            for num in possible:
+                ans += self.count_perms(str(num))
+            return ans
+    
+    #for each sorted can in possible we need to find its contributions
+    #this is with leading zeros
+    def count_perms(self, num):
+        counts = Counter(num)
+        n = factorial(len(num))
+        denom = 1
+        for count in counts.values():
+            denom *= factorial(count)
+        #if there are zeros, remove the counts with leading or ending
+        ans = n // denom
+        if '0' in counts:
+            leading_zero_count = counts['0']
+            temp = len(num) - leading_zero_count
+            ans -= factorial(temp)
+        return ans
+
+#it works!
+class Solution:
+    def countGoodIntegers(self, n: int, k: int) -> int:
+        '''
+        k-palindromic means the number x is a palindrome and is divible by k
+        its good if it can be arranged to k-palindromic
+            any integer cannot have leading zeros before or after
+            can't arrange 1010 to 101 or 0110
+        
+        we can count number of integers that can be palindromic
+        for example if n is odd, take n = 3 for example
+        the middle can be anything YXY, but can permute this anyway because we allowed to rerrange
+        could be YXY, XYY, XYY, for any collection of (Y,X,Y) the are n! perms of it
+        and for each we can choose digits 0 to 9, except the first digits cannot be zero
+        we can also count the number of digits that are divivible by k up to a limit
+        can we actually enumerate all integers? up to 10**5
+        almost,
+        note counting rule for unique permutations:
+            count = factorial(n) / (product(freq(char)) for char in char_counts)!
+        '''
+        #odd length
+        if n % 2 == 1:
+            possible = set()
+            ans = 0
+            for center in range(10):
+                if n-2 <= 0:
+                    cand = str(center)
+                    if int(cand) != 0 and int(cand) % k == 0:
+                        possible.add(int(cand))
+                else:
+                    for left in range(int(10**(n//2))):
+                        cand = str(left)+str(center)+str(left)[::-1]
+                        if len(cand) == n and int(cand) % k == 0 and cand == str(int(cand)):
+                            #sort for uniqueness
+                            cand = "".join(sorted(cand))
+                            possible.add(cand)
+            return self.count_perms(possible)
+        #case for length 2
+        else:
+            possible = set()
+            for left in range(int(10**(n//2))):
+                cand = str(left)+str(left)[::-1]
+                if len(cand) == n and int(cand) % k == 0 and cand == str(int(cand)):
+                    #sort for uniqueness
+                    cand = "".join(sorted(cand))
+                    possible.add(cand)
+            return self.count_perms(possible)
+    #for each sorted can in possible we need to find its contributions
+    #this is with leading zeros
+    #this part taken out of solution, but pretty much got the idea for the first part!
+    def count_perms(self, possible):
+        ans = 0
+        for num in possible:
+            num = str(num)
+            n = len(num)
+            counts = Counter(num)
+            #cannot place zero in the first n - count('0') spots
+            total = (n - counts['0'])*factorial(n-1)
+            #for uniquness
+            for x in counts.values():
+                total = total // factorial(x)
+            ans += total
+        
+        return ans
