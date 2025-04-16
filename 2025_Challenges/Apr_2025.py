@@ -1334,3 +1334,41 @@ class Solution:
         return triplets
     
 #segment tree
+
+###########################################
+# 2537. Count the Number of Good Subarrays
+# 16APR25
+###########################################
+#sliding window, counting ending
+class Solution:
+    def countGood(self, nums: List[int], k: int) -> int:
+        '''
+        need at least length 2 subarray to have a pair
+        if we have a good subarray, we could keep adding to it so that way it continues to have pairs
+        if we have m counts of some number, then we can make m*(m-1)/2 pairs
+            but this would require checking over the count map, and numbers could get very big
+            so we overcount and then remove counts
+        if we are at index i, and have met the conition, then there are n-i good subarrays
+            adding any more just increases the counts and we are alreadt at least k pairs
+        '''
+        left = 0
+        counts = Counter()
+        good_subs = 0
+        curr_pairs = 0
+        n = len(nums)
+
+        for right in range(n):
+            #add in
+            num = nums[right]
+            #for every new num, we add in the prev count of pairs
+            curr_pairs += counts[num]
+            counts[num] += 1
+            while left < right and curr_pairs >= k:
+                good_subs += n - right
+                num = nums[left]
+                #when we remove from subarray, we need to decrement and remove pair count
+                counts[num] -= 1
+                curr_pairs -= counts[num]
+                left += 1
+            
+        return good_subs
