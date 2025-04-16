@@ -1012,3 +1012,325 @@ class Solution:
             ans += total
         
         return ans
+    
+########################################
+# 1922. Count Good Numbers
+# 13APR25
+#########################################
+class Solution:
+    def countGoodNumbers(self, n: int) -> int:
+        '''
+        if we are even indices, we can only use even digits
+        if we are odd indices, we can only use odd digits
+        n is 10**15, so we need something in logrithmic time
+        if n == 1, its 5
+        if n == 2, is 5*4
+        if n == 3,its 5*4*5
+        answer alternates 5,4,5
+        count number of 4 and 5's used the use fast exponentaion
+        '''
+        count_5s = n // 2
+        count_4s = n // 2
+        if n % 2 == 1:
+            count_5s += 1
+        
+        mod = 10**9 + 7
+        
+        #return (5**count_5s)*(4**count_4s) % mod
+        return self.fast_pow(5,count_5s, mod)*self.fast_pow(4,count_4s, mod) % mod
+    
+    def fast_pow(self,base,power,mod):
+        if power == 0:
+            return 1
+        half_pow = self.fast_pow(base,power//2,mod)
+        if power % 2 == 0:
+            return (half_pow % mod)*(half_pow % mod) % mod
+        return base*(half_pow % mod)*(half_pow % mod) % mod
+    
+##########################################
+# 1534. Count Good Triplets(REVISITED)
+# 14APR25
+###########################################
+class Solution:
+    def countGoodTriplets(self, arr: List[int], a: int, b: int, c: int) -> int:
+        '''
+        what if i sort and fix the center?
+        '''
+        ans = 0
+        N = len(arr)
+        for i in range(N):
+            for j in range(i+1,N):
+                for k in range(j+1,N):
+                    x,y,z = arr[i],arr[j],arr[k]
+                    if abs(x - y) <= a and abs(y-z) <= b and abs(x-z) <= c:
+                        ans += 1
+        return ans
+    
+#O(N*N)
+class Solution:
+    def countGoodTriplets(self, arr: List[int], a: int, b: int, c: int) -> int:
+        '''
+        we can do it in O(N*N) time
+        first find pairs (j,k) that satisfy abs(arr[j] - arr[k]) <= b
+        then count the pairs with i using pref sum, since numbers are only up to 1000
+        if we have this pair, then our possible i's could be in the range
+            abs(arr[j] - a) to arr[j] + a
+            abs(arr[k] - c) to arr[k] + c
+            we can count these pairs using prefsum
+        
+        updating on the fly
+        after we find each (j,k) pair
+        need to maintain the condition that the indices ofr the numbers stored so far in the counts satisfy i < j,
+        we just need to increment from arr[j] to 1000, 
+            becasue for each pair, another i becomes available
+        '''
+        ans = 0
+        n = len(arr)
+        counts = [0]*1001
+        #all (j,k) pairs
+        for j in range(n):
+            for k in range(j+1,n):
+                if abs(arr[j] - arr[k]) <= b:
+                    #find lower bounds for i
+                    lower_ij, higher_ij = arr[j] - a, arr[j] + a
+                    lower_ik, higher_ik = arr[k] - c, arr[k] + c
+                    i_lower = max(0, lower_ij, lower_ik)
+                    i_higher = min(1000, higher_ij, higher_ik)
+                    if i_lower <= i_higher:
+                        ans += counts[i_higher] if i_lower == 0 else counts[i_higher] - counts[i_lower]
+            #incrent for each pair
+            for k in range(arr[j],1001):
+                counts[k] += 1
+        
+        return ans
+
+#####################################
+# 1995. Count Special Quadruplets
+# 14APR25
+#####################################
+#brute force
+class Solution:
+    def countQuadruplets(self, nums: List[int]) -> int:
+        count = 0
+        N = len(nums)
+        for i in range(N):
+            for j in range(i+1,N):
+                for k in range(j+1,N):
+                    for l in range(k+1,N):
+                        if nums[i] + nums[j] + nums[k] == nums[l]:
+                            count += 1
+        return count
+
+#gahh
+class Solution:
+    def countQuadruplets(self, nums: List[int]) -> int:
+        '''
+        we can rewrite as 
+        nums[a] + nums[b] == nums[d] - nums[c], or any other substtion with (a,b,c)
+        ans a < b < c < d
+        so we can sort
+        '''
+        nums.sort()
+        n = len(nums)
+        counts = Counter(nums)
+        ab_pairs = defaultdict(list)
+        for i in range(n):
+            for j in range(i+1,n):
+                ab_pairs[nums[i] + nums[j]].append((i,j))
+        
+        ans = 0
+        for i in range(n-1,-1,-1):
+            for j in range(i-1,-1,-1):
+                curr_sum = nums[i] - nums[j]
+                if curr_sum in ab_pairs:
+                    for a,b in ab_pairs[curr_sum]:
+                        if a < b < j < i:
+                            #need to make sure counts are allowed
+                            cand = (nums[a],nums[b],nums[j],nums[i])
+                            cand_count = Counter(cand)
+                            if all([counts[k] >= v for k,v in cand_count.items()]):
+                                ans += 1
+        return ans
+
+#########################################
+# 2179. Count Good Triplets in an Array
+# 15APR25
+########################################
+#almost
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        inital thoughts, check for valid triplets in nums1 against them in nums2
+            but there could be too many to check
+        hints are actually good on this problem
+        for each value y in nums1 find the number of values of x that appear before y in both arrays
+        same thing for fiding values greater than y
+        then for every value of y, count the number of good triplets that can be performed if y is the middle
+        you we can just check a pair in nums1, then check again in nums2
+        [2,0,1,3] unless is position in the array
+        (2,0,1) -> (0,1,2)
+        '''
+        #try brute force checking
+        mapp1 = {num : i for (i,num) in enumerate(nums1)}
+        mapp2 = {num : i for (i,num) in enumerate(nums2)}
+        pairs = 0
+        n = len(nums1)
+
+        for num in range(n):
+            #check nums1, smaller
+            i = mapp1[num]
+            smaller_than_nums1 = set()
+            for j in range(i):
+                if mapp2[nums1[j]] < num:
+                    smaller_than_nums1.add(nums1[j])
+            #check larger
+            larger_than_nums1 = set()
+            i = mapp2[num]
+            for j in range(i+1,n):
+                if mapp2[nums1[j]] > num:
+                    larger_than_nums1.add(nums1[j])
+            #check all against num2
+            pairs += len(smaller_than_nums1)*len(larger_than_nums1)
+
+        
+        return pairs
+    
+from sortedcontainers import SortedList 
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we need to count the number of elements smaller than than some number y on both nums1 and nums2
+        same for the number of elements after
+        answer is the product of thise counts for each num
+        #check out this solution
+        https://leetcode.com/problems/count-good-triplets-in-an-array/submissions/1608122566/?envType=daily-question&envId=2025-04-15
+        '''
+        #while traversing nums1 with a num num, we need to know its poistion in b
+        n = len(nums1)
+        position_nums1_to_nums2 = [0]*n
+        for i,num in enumerate(nums2):
+            position_nums1_to_nums2[num] = i
+        
+        #for each number in nums1, find number of elements to the left in both nums1 and nums2
+        pos_in_nums2 = SortedList([position_nums1_to_nums2[nums1[0]]]) #sorted indices for nums2, that have seens elements from nums1
+        left = [0]
+        for i in range(1,n):
+            num = nums1[i]
+            pos_in_nums2.add(position_nums1_to_nums2[num]) #these give me the indices sorted in nums2
+            #now to find the elements smaller in nums1 and nums2, binary search on pos_in_nums2
+            left.append(pos_in_nums2.bisect_left(position_nums1_to_nums2[num]))
+        
+        #now do same, but going right to left
+        pos_in_nums2 = SortedList([position_nums1_to_nums2[nums1[-1]]])
+        right = [0]
+        for i in range(n-2,-1,-1):
+            num = nums1[i]
+            pos_in_nums2.add(position_nums1_to_nums2[num])
+            idx = pos_in_nums2.bisect_left(position_nums1_to_nums2[num])
+            right.append(len(pos_in_nums2) - (idx+1))
+        
+        #count them up
+        triplets = 0
+        for i in range(n):
+            triplets += left[i]*right[n-i-1]
+        
+        return triplets
+
+#same thing as above, but brute force
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        brute force version
+        '''
+        #while traversing nums1 with a num num, we need to know its poistion in b
+        n = len(nums1)
+        position_nums1_to_nums2 = [0]*n
+        for i,num in enumerate(nums2):
+            position_nums1_to_nums2[num] = i
+        
+        #for each number in nums1, find number of elements to the left in both nums1 and nums2
+        left = [0]
+        seen_from_nums1 = [position_nums1_to_nums2[nums1[0]]]
+        for i in range(1,n):
+            num = nums1[i]
+            seen_from_nums1.append(position_nums1_to_nums2[num])
+            count_smaller = 0
+            for seen in seen_from_nums1:
+                if seen < position_nums1_to_nums2[num]:
+                    count_smaller += 1
+            left.append(count_smaller)
+        
+        right = [0]
+        seen_from_nums1 = [position_nums1_to_nums2[nums1[-1]]]
+        for i in range(n-2,-1,-1):
+            num = nums1[i]
+            seen_from_nums1.append(position_nums1_to_nums2[num])
+            count_larger = 0
+            for seen in seen_from_nums1:
+                if seen > position_nums1_to_nums2[num]:
+                    count_larger += 1
+            right.append(count_larger)
+
+        #count them up
+        triplets = 0
+        for i in range(n):
+            triplets += left[i]*right[n-i-1]
+        
+        return triplets
+
+from sortedcontainers import SortedList
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        '''
+        mapp = {num : i for i,num in enumerate(nums1)}
+        triplets = 0
+        n = len(nums1)
+        sl = SortedList([])
+        for num in nums2:
+            #idex stores the current index of the element we are currenlty on in nums2 that's in nums1
+            idx = mapp[num]
+            #find number of element smaller than our current idx, that we've seen from nums1
+            #what we have processed so far
+            left = sl.bisect_left(idx)
+            #(n-1-idx) are what we haven't processed
+            #len(sl) - left are the ones we've seen so far
+            right = (n - 1 - idx) - (len(sl) - left)
+            triplets += left*right
+            sl.add(idx) #add indices
+        
+        return triplets
+    
+#two pass
+from sortedcontainers import SortedList
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        '''
+        mapp = {num : i for i,num in enumerate(nums1)}
+        triplets = 0
+        n = len(nums1)
+        sl = SortedList([])
+        count_left = []
+        for num in nums2:
+            idx = mapp[num]
+            left = sl.bisect_left(idx)
+            count_left.append(left)
+            sl.add(idx)
+        
+        sl = SortedList([])
+        count_right = []
+        for num in nums2[::-1]:
+            idx = mapp[num]
+            right = sl.bisect_left(idx)
+            count_right.append(len(sl) - (right ))
+            sl.add(idx)
+        
+        #count them up
+        triplets = 0
+        for i in range(n):
+            triplets += count_left[i]*count_right[n-i-1]
+        
+        return triplets
+    
+#segment tree
