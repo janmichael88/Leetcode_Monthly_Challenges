@@ -1334,6 +1334,85 @@ class Solution:
         return triplets
     
 #segment tree
+class SegmentTree:
+    def __init__(self, arr):
+        #make three
+        self.n = len(arr)
+        self.tree = [0] * (4 * self.n)
+        self.build(arr, 0, 0, self.n - 1)
+
+    def build(self, arr, node, start, end):
+        if start == end:
+            self.tree[node] = arr[start]
+        else:
+            mid = (start + end) // 2
+            self.build(arr, 2 * node + 1, start, mid)
+            self.build(arr, 2 * node + 2, mid + 1, end)
+            self.tree[node] = self.tree[2 * node + 1] + self.tree[2 * node + 2]
+
+    def update(self, idx, val, node=0, start=None, end=None):
+        if start is None:
+            start = 0
+            end = self.n - 1
+        if start == end:
+            self.tree[node] = val
+        else:
+            mid = (start + end) // 2
+            if idx <= mid:
+                self.update(idx, val, 2 * node + 1, start, mid)
+            else:
+                self.update(idx, val, 2 * node + 2, mid + 1, end)
+            self.tree[node] = self.tree[2 * node + 1] + self.tree[2 * node + 2]
+
+    def query(self, l, r, node=0, start=None, end=None):
+        if start is None:
+            start = 0
+            end = self.n - 1
+        if l > end or r < start:
+            return 0
+        if l <= start and end <= r:
+            return self.tree[node]
+        mid = (start + end) // 2
+        leftSum = self.query(l, r, 2 * node + 1, start, mid)
+        rightSum = self.query(l, r, 2 * node + 2, mid + 1, end)
+        return leftSum + rightSum
+
+
+class Solution:
+    def goodTriplets(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        trick is that this is a frequency count based segment tree
+        '''
+        n = len(nums1)
+        mapp = {num: i for i, num in enumerate(nums1)}
+
+        seg_left = SegmentTree([0] * n)
+        count_left = []
+        for num in nums2:
+            idx = mapp[num]
+            #queries how many times we've seen an index from nums1 in nums2
+            left = seg_left.query(0, idx - 1)
+            count_left.append(left)
+            #give is the count at this idx
+            curr_val = seg_left.query(idx, idx)
+            #increment the count for this index by 1
+            seg_left.update(idx, curr_val + 1)
+
+        seg_right = SegmentTree([0] * n)
+        count_right = []
+        for num in reversed(nums2):
+            idx = mapp[num]
+            right = seg_right.query(idx + 1, n - 1)
+            count_right.append(right)
+            curr_val = seg_right.query(idx, idx)
+            seg_right.update(idx, curr_val + 1)
+        
+        triplets = 0
+        for i in range(n):
+            triplets += count_left[i] * count_right[n - i - 1]
+        
+        return triplets
+
 
 ###########################################
 # 2537. Count the Number of Good Subarrays
@@ -1372,3 +1451,50 @@ class Solution:
                 left += 1
             
         return good_subs
+
+#######################################################
+# 2176. Count Equal and Divisible Pairs in an Array
+# 17APR25
+########################################################
+class Solution:
+    def countPairs(self, nums: List[int], k: int) -> int:
+        '''
+        brute force
+        '''
+        pairs = 0
+        n = len(nums)
+        for i in range(n):
+            for j in range(i+1,n):
+                if nums[i] == nums[j] and i*j % k == 0:
+                    pairs += 1
+        
+        return pairs
+    
+##########################################
+# 2145. Count the Hidden Sequences
+# 21APR25
+##########################################
+class Solution:
+    def numberOfArrays(self, differences: List[int], lower: int, upper: int) -> int:
+        '''
+        say we have the hidden array [a,b,c,d]
+        and diffs [x,y,z], then have
+        b - a = x
+        c - b = y
+        d - c = z
+        make a sequence, then see how many values we can fit in this sequence that are in between upper and lower
+        if we fix the starting as zero, then we can shift all the values in the array by k
+        but the shift (k + num) is limited to upper and lower
+        for each num in the new array lower <= (num + k) <= upper
+        if it's in between upper and lower, we are free to use (upper - lower) + 1 elements
+        i.e the shift is limited by the range of any hidden array
+
+        '''
+        start = 0
+        seq = [start]
+        for d in differences:
+            seq.append(seq[-1] + d)
+        
+        bounds = max(seq) - min(seq)
+        #can't have negative count
+        return max(0,(upper - lower + 1) - bounds)
