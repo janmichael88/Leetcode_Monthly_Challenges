@@ -1488,6 +1488,8 @@ class Solution:
         for each num in the new array lower <= (num + k) <= upper
         if it's in between upper and lower, we are free to use (upper - lower) + 1 elements
         i.e the shift is limited by the range of any hidden array
+        another way to think about it is that you are given a time series, and you want to fit the whole
+        time series in between lower and upper we can do (upper - max_vlaue) + (min_val - lower)
 
         '''
         start = 0
@@ -1498,3 +1500,233 @@ class Solution:
         bounds = max(seq) - min(seq)
         #can't have negative count
         return max(0,(upper - lower + 1) - bounds)
+    
+class Solution:
+    def numberOfArrays(self, differences: List[int], lower: int, upper: int) -> int:
+        '''
+        one pass,
+        just maintain min and max
+        '''
+        curr = 0
+        min_ = 0
+        max_ = 0
+
+        for d in differences:
+            curr += d
+            min_ = min(min_, curr)
+            max_ = max(max_, curr)
+        
+        return max(0, (upper - lower + 1) - (max_ - min_))
+    
+#############################################################
+# 2311. Longest Binary Subsequence Less Than or Equal to K
+# 21APR25
+#############################################################
+#dp, with states (i,path) MLE
+class Solution:
+    def longestSubsequence(self, s: str, k: int) -> int:
+        '''
+        let dp(i) be the length of the longest subsequence <= k
+        i need to keep string paths 2 though
+        '''
+        n = len(s)
+        memo = {}
+        def dp(i,path):
+            if i >= n:
+                if path and int(path,2) <= k:
+                    return len(path)
+                
+                return 0
+            if path and int(path,2) > k:
+                return 0
+            if (i,path) in memo:
+                return memo[(i,path)]
+            #take
+            take = dp(i+1,path+s[i])
+            no_take = dp(i+1,path)
+            ans = max(take,no_take)
+            memo[(i,path)] = ans
+            return ans
+
+        return dp(0,"")
+
+#converting to strings to int, still MLE
+class Solution:
+    def longestSubsequence(self, s: str, k: int) -> int:
+        '''
+        let dp(i) be the length of the longest subsequence <= k
+        i need to keep string paths 2 though
+        '''
+        n = len(s)
+
+        @lru_cache(None)
+        def dp(i, val):
+            if val > k:
+                return float('-inf')  # invalid
+            if i == n:
+                return 0
+
+            # Option 1: skip s[i]
+            not_take = dp(i + 1, val)
+
+            # Option 2: take s[i]
+            take = float('-inf')
+            new_val = (val << 1) | int(s[i])
+            if new_val <= k:
+                take = 1 + dp(i + 1, new_val)
+
+            return max(take, not_take)
+
+        return dp(0, 0)
+
+############################################
+# 2338. Count the Number of Ideal Arrays
+# 21APR25
+############################################
+#TLE
+class Solution:
+    def idealArrays(self, n: int, maxValue: int) -> int:
+        '''
+        an array is ideal of every num in arr is in between 1 and maxValue
+        and arr[i] % arr[i-1] == 0 for all i
+        say we are building an array, and up to this point we [...,k] and we are ideal so far
+        we can add to this another number j, such that j % k == 0
+        states are index i, and currvalue
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        def dp(i,curr_num):
+            if i >= n:
+                return 1
+            if (i,curr_num) in memo:
+                return memo[(i,curr_num)]
+            ways = 0
+            for next_num in range(curr_num,maxValue+1):
+                if next_num % curr_num == 0:
+                    ways += dp(i+1,next_num)
+                    ways %= mod
+            memo[(i,curr_num)] = ways % mod
+            return ways % mod
+        
+        ans = 0
+        for i in range(1,maxValue+1):
+            ans += dp(1,i)
+            ans %= mod
+        return ans % mod
+    
+#bottle neck is cacluting ways in dp
+#use combinatorics
+import math
+class Solution:
+    def idealArrays(self, n: int, maxValue: int) -> int:
+        '''
+        need to some linearish algo to complete
+        first notice that [1,1,1..1] to [maxValue,maxValue,...] are always ideal, so we have at least maxValue arrays
+        make more ideal arrays for each of these starting ones
+        record all starting values 1 to maxvalue as 1
+        in counts array, num, mean [num,num..num] array 
+        if we start with 2, and n= 5, then we could have [1,x,x,x,x], and we are free to place 2 in any of the n-1 spots
+            this contributes comb(n-1,2)
+        so we try this for all k, ie. all k comb(n-1,k)
+        it could be at position 1: [1,2,2,2,2], 2: [1,1,2,2,2], 3: [1,1,1,2,2], 4: [1,1,1,1,2] but no more. We cannot have [1,1,1,1,1].
+        code, k means number of transitions (from if the whole array only has 1 and 2, k = 1 transition)
+        If the array is like this: [1,2,4,4,4]: k = 2 there are two transitions
+            k is the transistion point where we get new values
+        we are choosing k transition point from (n-1) possibilities, therefore (n-1)Ck ways
+        progressively increment the number of elements to put into the array and keep counting the number of ways
+        count map is for counting how many ways the last biggest number in the array can be reached. 
+            For example, numbers like 32 can be 2*16 and  4*8
+
+        '''
+        ways = maxValue #initalize to maxValue,
+        mod = 10**9 + 7
+        #i.e for each value v to maxValue we can have the array [v,v,v...v] as a possile ideal array
+        counts = {num : 1 for num in range(1,maxValue + 1)}
+        #number of changes in the array
+        for k in range(1,n):
+            temp = Counter()
+            for last_int in counts.keys():
+                for mult in range(2,maxValue // last_int + 1):
+                    new_last_int = last_int*mult
+                    ways += math.comb(n-1,k)*counts[last_int]
+                    ways %= mod
+                    temp[new_last_int] += counts[last_int]
+
+            counts = temp #dp swap
+
+        return ways % mod
+    
+#combinatorics paradigm known as 'stars and bars'
+#https://en.wikipedia.org/wiki/Stars_and_bars_(combinatorics)
+class Solution:
+    def idealArrays(self, n: int, maxValue: int) -> int:
+        '''
+        crux of the problem is getting number of ways we can generate an ideal string
+        if all the elements in the array are increasing and num[i+1] % [i] == 0
+        Computes the number of ways to distribute (n-1) gaps into (k-1) spaces. In other words:
+
+        From an array of length k, if you fix the values, 
+        you can place them in any of the n positions, choosing k positions out of n, preserving order.
+
+        This is equivalent to C(n-1, k-1) — standard "stars and bars" combinatorics.
+        say we have the array [1,1] this contributes 1 way, and is given by comb(2-1,2-1), same for all [1,2],[1,3]
+        so we really just need to keep length and the last number
+        '''
+        mod = 10**9+7
+        @cache
+        def getcomb(k):
+            # put n identical balls into k boxes, ensuring each box have >=1 balls
+            return comb(n-1, k-1)
+        @cache
+        def dfs(v, l):
+            # opt 1: followed by no new value, composing array ended with v
+            res = comb(n-1, l-1) if l else 0
+            if l==n:
+                return res
+            
+            # opt 2: followed by multiplier of v
+            for nv in range(2*v, maxValue+1, v):
+                res += dfs(nv, l+1)
+                res %= mod
+            return res % mod
+        
+        ways = 0
+        for i in range(1,maxValue + 1):
+            ways += dfs(i,1)
+            ways %= mod
+        
+        return ways % mod
+        
+
+#BFS, TLE
+import math
+class Solution:
+    def idealArrays(self, n: int, maxValue: int) -> int:
+        '''
+        BFS TLE, we can represent a valid sequence of elements [last_num,lengt]
+        [1,3] is [3,2], [1,2,4,8] is [8,4]
+        inital states are [i,1] for i in range(maxValue+1)
+        then we use combinatorics
+        need comb(n-1,k-1), computes number of valid arrays from k numbers (stars and bars)
+        question is number of ways to put n unique balls in k unique bines
+        number of k length tuples among n items
+        '''
+        mod = 10**9 + 7
+        q = deque([])
+        for i in range(1,maxValue + 1):
+            q.append([i,1])
+        
+        count = 0
+        while q:
+            last_num,curr_length = q.popleft()
+            count += math.comb(n-1,curr_length-1) #stars and bars, but why
+            #this contributes a partial count since curr_length could be < n, but we need to get them all
+            count %= mod
+            next_num = 2*last_num
+            if curr_length == n or next_num > maxValue:
+                continue #this can no longer contribute a count
+            while next_num <= maxValue:
+                q.append([next_num,curr_length + 1])
+                next_num += last_num
+        
+        return count % mod
