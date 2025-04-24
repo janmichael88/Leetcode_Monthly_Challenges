@@ -1578,6 +1578,49 @@ class Solution:
             return max(take, not_take)
 
         return dp(0, 0)
+    
+class Solution:
+    def longestSubsequence(self, s: str, k: int) -> int:
+        '''
+        let dp(i) be the length of the longest subsequence <= k
+        i need to keep string paths 2 though
+        we are essentially building up the smallest int(subseqs) <= k
+        then we need to minimize each dp(i), such that adding another bit make it smaller than k
+        then we are left with subseeqneces with values <= k, that are of length i
+        '''
+        dp = [0]
+        n = len(s)
+        for i in range(n):
+            v = int(s[i])
+            if dp[-1]*2 + v <= k:
+                dp.append(dp[-1]*2 + v)
+            #minimize and see if adding this to any previous subsequencce, but maintain length i
+            for j in range(len(dp) - 1, 0,-1):
+                dp[j] = min(dp[j], dp[j-1]*2 + v)
+        
+        return len(dp) - 1
+
+
+#greedily take zeros
+class Solution:
+    def longestSubsequence(self, s: str, k: int) -> int:
+        '''
+        greedily take all zeros, then try to take the right most ones
+        '''
+        curr_num = 0
+        length = 0
+        for ch in s[::-1]:
+            #zero adds to length, but doen'st increase num
+            if ch == '0':
+                length += 1
+            #otherwise its a 1, so we need to check if we can take it, so we shift by the length (2**power)
+            #and if its <= k, we can add it
+            elif curr_num + (1 << length) <= k:
+                curr_num = curr_num + (1 << length)
+                length += 1
+        
+        return length
+
 
 ############################################
 # 2338. Count the Number of Ideal Arrays
@@ -1730,3 +1773,129 @@ class Solution:
                 next_num += last_num
         
         return count % mod
+
+class Solution:
+    def idealArrays(self, n: int, maxValue: int) -> int:
+        '''
+        dp states are (value,length), where value is the length of the last number added to the array
+        and length is the number, the number of ways to generate this is comb(n-1,length-1), stars and bars
+            ways to permute array but presevering order
+        we can also precompute the binomial coeffcient table:
+            C(n, k) = C(n-1, k) + C(n-1, k-1)
+        '''
+        # Comb table creation using dynamic programming to calculate combinations
+        comb_table = [[0] * 16 for _ in range(n)]
+        mod = 10**9 + 7  # Module for the problem, to prevent integer overflow
+        for i in range(n):
+            for j in range(min(16, i + 1)):
+                # Base case: There is one way to choose 0 items
+                if j == 0:
+                    comb_table[i][j] = 1
+                else:
+                    # Use the recurrence relation C(n, k) = C(n-1, k) + C(n-1, k-1)
+                    comb_table[i][j] = (comb_table[i - 1][j] + comb_table[i - 1][j - 1]) % mod
+        
+        #dp with caching
+        @lru_cache(maxsize=None)
+        def dp(value, length):
+            """ 
+            Performs a depth-first search starting with a given value
+            and length of the sequence, and returns the number of ideal arrays.
+            """
+            # Initialize result with the combination C(n-1, length-1)
+            result = comb_table[-1][length - 1]
+            # If we haven't reached the desired length, continue building the sequence
+            if length < n:
+                multiple = 2
+                # Iterate through the possible multiples of 'value' within the maxValue
+                while multiple * value <= maxValue:
+                    # Recursively call dfs and update the result
+                    result = (result + dp(multiple * value, length + 1)) % mod
+                    multiple += 1
+            return result
+        
+        ways = 0
+        for i in range(1,maxValue+1):
+            ways += dp(i,1) % mod
+        
+        return ways % mod
+
+############################################
+# 2799. Count Complete Subarrays in an Array
+# 24MAY25
+############################################
+#brute force
+class Solution:
+    def countCompleteSubarrays(self, nums: List[int]) -> int:
+        '''
+        we need count of distint elements == number of distinct elemetns in the whole array
+        if we have a subarry array that already meets the criteria, we could add to it, if there are other eleements 
+        so we can't shrink when we meet the criteria
+        but if we go over the criterie, adding will not help
+        so we need to shrink when we go over
+        '''
+        distinct = len(set(nums))
+        ans = 0
+        n = len(nums)
+        for i in range(n):
+            window = set()
+            for j in range(i,n):
+                window.add(nums[j])
+                if len(window) == distinct:
+                    ans += 1
+        
+        return ans
+    
+#indireclty counting when we have len(window) == distinct
+class Solution:
+    def countCompleteSubarrays(self, nums: List[int]) -> int:
+        '''
+        we need count of distint elements == number of distinct elemetns in the whole array
+        if we have a subarry array that already meets the criteria, we could add to it, if there are other eleements 
+        so we can't shrink when we meet the criteria
+        but if we go over the criterie, adding will not help
+        so we need to shrink when we go over
+        indirectly counting, if we have a valid window, len(window) == distinct, we can shrink
+        and it means any subarray before i and ending at j, has distint values
+        '''
+        distinct = len(set(nums))
+        window = Counter()
+        ans = 0
+        left = 0
+        n = len(nums)
+        for right in range(n):
+            num = nums[right]
+            window[num] += 1
+            while len(window) == distinct:
+                num = nums[left]
+                window[num] -= 1
+                if window[num] == 0:
+                    del window[num]
+                left += 1
+            ans += left
+        
+        return ans
+
+class Solution:
+    def countCompleteSubarrays(self, nums: List[int]) -> int:
+        '''
+        we can't have mnore than disctinct elements
+        so once a window == distinct, anything ending must be good
+        '''
+        distinct = len(set(nums))
+        window = Counter()
+        ans = 0
+        left = 0
+        n = len(nums)
+        for right in range(n):
+            num = nums[right]
+            window[num] += 1
+            while len(window) == distinct:
+                ans += n - right
+                num = nums[left]
+                window[num] -= 1
+                if window[num] == 0:
+                    del window[num]
+                left += 1
+        
+        return ans
