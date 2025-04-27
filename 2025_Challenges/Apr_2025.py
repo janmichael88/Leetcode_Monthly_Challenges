@@ -1899,3 +1899,294 @@ class Solution:
                 left += 1
         
         return ans
+    
+#######################################
+# 1138. Alphabet Board Path
+# 25APR25
+########################################
+class Solution:
+    def alphabetBoardPath(self, target: str) -> str:
+        '''
+        make a hashmap for each letter in the board, then get the moves to that positions
+        shit the problem is getting to z, we can't walk outside the board
+        i can use dfs/bfs to find the next letter so that way i dont walk off the board
+        '''
+        board = ["abcde", "fghij", "klmno", "pqrst", "uvwxy", "z****"] #padd z with special chars
+        mapp = {}
+        for i,row in enumerate(board):
+            for j,ch in enumerate(row):
+                mapp[ch] = (i,j)
+        
+        curr = [0,0]
+        ans = ""
+        for letter in target:
+            i,j,path = self.find_neigh(board,curr,letter)
+            ans += path
+            ans += '!'
+            curr = [i,j]
+        
+        return ans
+    
+    def find_neigh(self,board,start,next_char):
+        rows,cols = len(board),len(board[0])
+        dirrs = [(1,0,'D'),(-1,0,'U'),(0,1,'R'),(0,-1,'L')]
+        i,j = start
+        seen = set()
+        q = deque([(i,j,"")])
+        while q:
+            i,j,path = q.popleft()
+            if board[i][j] == next_char:
+                return [i,j,path]
+            seen.add((i,j))
+            for di,dj,letter in dirrs:
+                ii = i + di
+                jj = j + dj
+                if 0 <= ii < rows and 0 <= jj < cols and board[ii][jj] != '*' and (ii,jj) not in seen:
+                    q.append((ii,jj,path+letter))
+            
+class Solution:
+    def alphabetBoardPath(self, target: str) -> str:
+        '''
+        same as first approach, but check L U before R D
+        since R,D might leave outside the board
+        '''
+        board = ["abcde", "fghij", "klmno", "pqrst", "uvwxy", "z"]
+        mapp = {}
+        for i,row in enumerate(board):
+            for j,ch in enumerate(row):
+                mapp[ch] = (i,j)
+        
+        x0, y0 = 0, 0
+        res = []
+        for c in target:
+            x, y = mapp[c]
+            if y < y0: res.append('L' * (y0 - y))
+            if x < x0: res.append('U' * (x0 - x))
+            if x > x0: res.append('D' * (x - x0))
+            if y > y0: res.append('R' * (y - y0))
+            res.append('!')
+            x0, y0 = x, y
+        return "".join(res)
+    
+############################################
+# 2845. Count of Interesting Subarrays (brute force)
+# 25APR25
+#############################################
+class Solution:
+    def countInterestingSubarrays(self, nums: List[int], modulo: int, k: int) -> int:
+        '''
+        a subarry is interesting if all nums in subarray % modulo == k
+        then length % modulo = k
+        [a,b,c,d] is interseting if 
+            all(a % modulo == k)
+        convert each num to num % modulo
+        brute force problem is to decode the array into a pref sum array, where counts[i] is the number of indices
+        where nums[i] % modulo = k
+        i.e turn nums into pref_sum, where the pref_sum is nums[i] % modulo = k
+        then we just need to check all subarrays where (counts[i] - counts[j]) % modulo == k
+        '''
+        #convert each num to % modulo
+        n = len(nums)
+        counts = [0]
+        for num in nums:
+            temp = (num % modulo) == k
+            counts.append(counts[-1] + temp)
+        
+        interesting = 0
+        for i in range(n+1):
+            for j in range(0,i):
+                if (counts[i] - counts[j]) % modulo == k:
+                    interesting += 1
+        return interesting
+
+#using hashmap for complement search
+class Solution:
+    def countInterestingSubarrays(self, nums: List[int], modulo: int, k: int) -> int:
+        '''
+        a subarry is interesting if all nums in subarray % modulo == k
+        then length % modulo = k
+        [a,b,c,d] is interseting if 
+            all(a % modulo == k)
+        convert each num to num % modulo
+        brute force problem is to decode the array into a pref sum array, where counts[i] is the number of indices
+        where nums[i] % modulo = k
+        i.e turn nums into pref_sum, where the pref_sum is nums[i] % modulo = k
+        then we just need to check all subarrays where (counts[i] - counts[j]) % modulo == k
+        '''
+        #convert each num to % modulo
+        n = len(nums)
+        counts = [0]
+        for num in nums:
+            temp = (num % modulo) == k
+            counts.append(counts[-1] + temp)
+        
+        interesting = 0
+        mapp = Counter()
+
+        for count in counts:
+            interesting += mapp[(count + modulo - k) % modulo]
+            mapp[count % modulo] += 1
+
+        return interesting
+
+###############################################################
+# 2137. Pour Water Between Buckets to Make Water Levels Equal
+# 25APR25
+################################################################
+class Solution:
+    def equalizeWater(self, buckets: List[int], loss: int) -> float:
+        '''
+        we need to equalize the buckets, but every time we pour, we lose ((loss)/100)*poured
+        if we didn't lose any water, we could just bring them all the the average
+        binary serach on answer
+        try to pour for a certain amount, with each pour, make sure we have water
+        '''
+        left = 0
+        right = max(buckets)
+        delta = 1e-5
+        ans = 0
+
+        while right - left >= delta:
+            mid = left + (right - left)/2
+            if self.f(buckets,mid,loss):
+                ans = mid
+                left = mid
+            else:
+                right = mid
+
+        return ans
+    
+    def f(self,buckets,target,loss):
+        excess = 0
+        for b in buckets:
+            if b >= target:
+                #this bucket is more than target, so we have extra water
+                excess += (b-target)*(1 - loss/100)
+            else:
+                #need to use excess water to fill
+                excess -= target - b
+        return excess >= 0
+    
+#####################################################
+# 2444. Count Subarrays With Fixed Bounds (REVISTED)
+# 26APR25
+#####################################################
+#not quite
+class Solution:
+    def countSubarrays(self, nums: List[int], minK: int, maxK: int) -> int:
+        '''
+        we need the min of subarray and max of subarray == k
+        what if all the numbers in a subarray are in between minK and maxK?
+            then i can only count subarrays that include minK and maK
+            if we count m counts of minK and n counts of maxK in a subarray
+        
+        divide subarrays so that each subarray is in between minK and maxK
+        inclusion exclusioon
+            if a subarray is of length k, then there are k*(k+1) // 2 subarrays
+            of these, how many subarrays don't have min and max as minK and maxK?
+            use counts, say we have this subarray and at i is minK and at j is maxK
+            we can fix these (i,j), and extend the bounds to the left and right, the answer is the product
+            but then we would have to this for each subarray
+        '''
+        subs = []
+        curr_sub = []
+        for num in nums:
+            if minK <= num <= maxK:
+                curr_sub.append(num)
+            else:
+                subs.append(curr_sub)
+                curr_sub = []
+        if curr_sub:
+            subs.append(curr_sub)
+        
+        #solve for each subarray
+        ways = 0
+        for sub in subs:
+            ways += self.solve(sub,minK,maxK)
+        
+        return ways
+    
+    def solve(self,arr,minK,maxK):
+        #need to store the leftmost and rightmost min
+        #also need to store the leftmost and rightmost max
+        #store the indices for min and max
+        n = len(arr)
+        min_idxs = []
+        max_idxs = []
+        for i,num in enumerate(arr):
+            if num == minK:
+                min_idxs.append(i)
+            if num == maxK:
+                max_idxs.append(i)
+        if minK == maxK:
+            k = len(min_idxs)
+            return k*(k+1) //2
+        count = 0
+        for i in min_idxs:
+            for j in max_idxs:
+                left = min(i,j)
+                right = max(i,j)
+                count += (left+1)*(n - right)
+        return count
+        
+#n*n
+class Solution:
+    def countSubarrays(self, nums: List[int], minK: int, maxK: int) -> int:
+        '''
+        for N sqaured, keep track if we;ve seen minK and maxK
+        if we are outsdide, we can't include this array
+        fix i
+        '''
+        N = len(nums)
+        count = 0
+        for i in range(N):
+            min_found = max_found = False
+            for j in range(i, N):
+                if nums[j] < minK or nums[j] > maxK:
+                    break
+                if nums[j] == minK:
+                    min_found = True
+                if nums[j] == maxK:
+                    max_found = True
+                if min_found and max_found:
+                    count += 1
+        return count
+    
+class Solution:
+    def countSubarrays(self, nums: List[int], minK: int, maxK: int) -> int:
+        N = len(nums)
+        count = 0
+        min_pos = max_pos = last_oob = -1
+        for i in range(N):
+            if nums[i] == minK: # find left/right bound
+                min_pos = i
+            if nums[i] == maxK: # find left/right bound
+                max_pos = i
+            if minK > nums[i] or nums[i] > maxK: # find last out of bounds num pos
+                last_oob = i
+                min_pos = max_pos = -1 # reset bounds
+            if min_pos != -1 and max_pos != -1: # if in bounds -> count between leftmost bound and last_oob
+                count += min(min_pos, max_pos) - last_oob
+        return count
+    
+class Solution:
+    def countSubarrays(self, nums: List[int], minK: int, maxK: int) -> int:
+        '''
+        record last out of bound index
+        '''
+        N = len(nums)
+        count = 0
+        min_pos = max_pos = last_oob = -1
+        for i,num in enumerate(nums):
+            if num == minK:
+                min_pos = i
+            if num == maxK:
+                max_pos = i
+            #out of range
+            if num > maxK or num < minK:
+                last_oob = i
+                min_pos = max_pos = last_oob = -1 #reset
+            if min_pos != -1 and max_pos != -1: # if in bounds -> count between leftmost 
+                count += max(0, min(min_pos,max_pos)) - last_oob
+        
+        return count
