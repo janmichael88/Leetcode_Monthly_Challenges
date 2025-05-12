@@ -2190,3 +2190,124 @@ class Solution:
                 count += max(0, min(min_pos,max_pos)) - last_oob
         
         return count
+    
+#########################################################
+# 3392. Count Subarrays of Length Three With a Condition
+# 27APR25
+#########################################################
+#ez sunday, phew
+class Solution:
+    def countSubarrays(self, nums: List[int]) -> int:
+        '''
+        just check every three
+        better to use multiplication instead of divsion, so you don't get floating numbers
+        '''
+        count = 0
+        n = len(nums)
+
+        for i in range(0,n-2):
+            if (nums[i] + nums[i+2])*2 == nums[i+1]:
+                count += 1
+        
+        return count
+    
+##############################################
+# 2302. Count Subarrays With Score Less Than K
+# 28APR25
+##############################################
+#ezzzz
+class Solution:
+    def countSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        see how score grows:
+        [a,b,c,d]
+        1 -> a
+        2 -> 2a + 2b
+        3 -> 3a + 3b + 3c
+                test = [1,2,3,4,5]
+        size = 0
+        curr_sum = 0
+        for num in test:
+            curr_sum += num
+            curr_score = curr_sum*(size+1)
+            print(curr_score)
+            size += 1
+        
+        return 0
+        
+        if curr_score is x, then adding some number y increases by y*(l+1)
+        now what  happens when we shrink?
+
+        addinf only increases the score, so once we are at score k, we don't need to keep adding
+        keep track of sum and length in window, when we shrink we incrment  count
+
+        fucking ez bro
+        '''
+        curr_sum = 0
+        count = 0
+        left = 0
+        for right,num in enumerate(nums):
+            curr_sum += num
+            #curr_score = curr_sum*(right - left + 1)
+            #shrink while we are too big
+            while left <= right and curr_sum*(right - left + 1) >= k:
+                curr_sum -= nums[left]
+                left += 1
+            #we have a valid window, so anything ending at right from left is valie
+            count += right - left + 1
+
+        return count
+
+#############################################################################
+# 2962. Count Subarrays Where Max Element Appears at Least K Times (REVISTED)
+# 29APR25
+#############################################################################
+#variant 1, adding n - right for valid windows
+class Solution:
+    def countSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        just keep track of max(nums)
+        '''
+        count = 0
+        window_count = 0
+        left = 0
+        n = len(nums)
+        max_num = max(nums)
+
+        for right in range(n):
+            #only add if num is max nums
+            num = nums[right]
+            window_count += num == max_num
+            while left <= right and window_count >= k:
+                count += n - right
+                num = nums[left]
+                window_count -= nums[left] == max_num
+                left += 1
+        
+        return count
+    
+#variant 2, addin in left, 
+class Solution:
+    def countSubarrays(self, nums: List[int], k: int) -> int:
+        '''
+        maintain window with count
+        when counts == k, we know this subarray from left to right is good
+        so we shrink until we are no longer good, then this mean that the number of good windows is the number of times we moved left
+        '''
+        count = 0
+        window_count = 0
+        left = 0
+        n = len(nums)
+        max_num = max(nums)
+
+        for right in range(n):
+            #only add if num is max nums
+            num = nums[right]
+            window_count += num == max_num
+            while window_count == k:
+                num = nums[left]
+                window_count -= nums[left] == max_num
+                left += 1
+            count += left
+        
+        return count
