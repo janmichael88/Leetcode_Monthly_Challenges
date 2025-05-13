@@ -192,3 +192,96 @@ class Solution:
             return res % 1000000007
 
         return 0 if total % 2 else dfs(0, len(num) - len(num) // 2, len(num) // 2, total // 2)
+    
+############################################################
+# 3335. Total Characters in String After Transformations I
+# 13MAYY25
+#############################################################
+#ez
+class Solution:
+    def lengthAfterTransformations(self, s: str, t: int) -> int:
+        '''
+        we can't simulate, that would take to long,
+        so calculate final transformation
+        the presence of z, wil increase the string by size by 1
+        for each char, count how many times that would move to z given t transformations
+        if we have a z, it goes to ab, but ab, got also go to z again, and it can keep going if t is large enough
+        we can do this independently
+        z -> ab 
+        a -> z after 26 transformations
+        b -> z after 25 transformations
+        but if there's enough t to get to z for every char wed get even more
+        since there are only 26 letters, we can check!
+        '''
+        counts = [0]*26
+        for ch in s:
+            idx = ord(ch) - ord('a')
+            counts[idx] += 1
+        mod = 10**9 + 7
+        #do this t times
+        for _ in range(t):
+            next_counts = [0]*26
+            #if there's a z, we need increment a and b
+            next_counts[0] += counts[-1] % mod
+            next_counts[1] = (counts[0] + counts[-1]) % mod
+            #promote everything else
+            for i in range(2,26):
+                next_counts[i] = counts[i-1]
+            #swap
+            counts = next_counts[:]
+        
+        return sum(counts) % mod
+
+
+#count map gets TLE
+class Solution:
+    def lengthAfterTransformations(self, s: str, t: int) -> int:
+        '''
+        using count map
+        '''
+        counts = Counter(s)
+        for _ in range(t):
+            next_counts = Counter()
+            #first add up z
+            z_counts = counts['z']
+            next_counts['a'] += z_counts
+            next_counts['b'] = z_counts + counts['a']
+            #promote the rest
+            for i in range(2,26):
+                curr_letter = chr(ord('a') + i)
+                prev_letter = chr(ord('a') + i - 1)
+                next_counts[curr_letter] = counts[prev_letter]
+            
+            counts = next_counts
+        
+        ans = 0
+        mod = 10**9 + 7
+        for k,v in counts.items():
+            ans += v % mod
+        
+        return ans % mod
+
+class Solution(object):
+    def lengthAfterTransformations(self, s, t):
+        mod = 10**9 + 7
+        nums = [0]*26
+        for ch in s:
+            nums[ord(ch) - 97] += 1
+
+        for _ in range(t):
+            cur = [0]*26
+            z = nums[25]
+            if z:
+                # 'z' → 'a' and 'b'
+                cur[0] = (cur[0] + z) % mod
+                cur[1] = (cur[1] + z) % mod
+            for j in range(25):
+                v = nums[j]
+                if v:
+                    cur[j+1] = (cur[j+1] + v) % mod
+            nums = cur
+
+        res = 0
+        for v in nums:
+            res = (res + v) % mod
+        return res
