@@ -285,3 +285,239 @@ class Solution(object):
         for v in nums:
             res = (res + v) % mod
         return res
+    
+#############################################################
+# 3337. Total Characters in String After Transformations II 
+# 14MAY25
+############################################################
+#numpy doesn't do modulo operations
+import numpy as np
+class Solution:
+    def lengthAfterTransformations(self, s: str, t: int, nums: List[int]) -> int:
+        '''
+        for transfomrations, each char in s at i, for s[i] is replaced with the next nums[s[i] -'a'] in front of it
+        with wrap around
+        return length after t transformations
+        model problem as matrix mulitplcation,
+        use fast exponention to do it
+        we are multiplying two matrices, (1 by 26)*(26 by 26) and do this t times
+        then sum the final vector
+        the hard part is determining the transformation matrix, we then exponentiate that t times and multiply it by the initial vector from s
+        transformation matrix M[i][j] = 1
+        means the ith char can generate to one j
+        note numpy mat mult doesn't use module 10**0 + 7
+        '''
+       # initial freq vector
+        u = [0] * 26
+        for ch in s:
+            u[ord(ch) - ord('a')] += 1
+        
+        # transformation matrix, the ith character and make an addditinoal j character with shifts away with wrap around
+        M = [[0] * 26 for _ in range(26)]
+        for i, shift in enumerate(nums):
+            for j in range(i + 1, i + shift + 1):
+                M[i][j % 26] = 1
+        
+        # cast as array
+        M = np.array(M, dtype=np.int64)
+        u = np.array(u, dtype=np.int64)
+
+        # exponentiate
+        M_to_t = np.linalg.matrix_power(M, t)
+
+        # sum the vector
+        final = u @ M_to_t
+
+        return int(np.sum(final)) % (10**9 + 7)
+    
+import numpy as np
+class Solution:
+    def lengthAfterTransformations(self, s: str, t: int, nums: List[int]) -> int:
+        '''
+        for transfomrations, each char in s at i, for s[i] is replaced with the next nums[s[i] -'a'] in front of it
+        with wrap around
+        return length after t transformations
+        model problem as matrix mulitplcation,
+        use fast exponention to do it
+        we are multiplying two matrices, (1 by 26)*(26 by 26) and do this t times
+        then sum the final vector
+        the hard part is determining the transformation matrix, we then exponentiate that t times and multiply it by the initial vector from s
+        transformation matrix M[i][j] = 1
+        means the ith char can generate to one j
+        note numpy mat mult doesn't use module 10**0 + 7
+        '''
+        MOD = 10**9 + 7
+        # initial counts
+        u = [0] * 26
+        for ch in s:
+            u[ord(ch) - ord('a')] += 1
+
+        # transformation matrix (something about i to something about j) in one step
+        # remember this
+        M = [[0] * 26 for _ in range(26)]
+        for i, shift in enumerate(nums):
+            for j in range(i + 1, i + shift + 1):
+                M[i][j % 26] = 1
+
+        # matrix multiplication
+        def mat_mult(mat1, mat2, mod):
+            res = [[0] * len(mat2[0]) for _ in range(len(mat1))]
+            for i in range(len(mat1)):
+                for j in range(len(mat2[0])):
+                    for k in range(len(mat2)):
+                        res[i][j] += mat1[i][k] * mat2[k][j]
+                    res[i][j] %= mod
+            return res
+
+
+        def mat_pow(mat, exp):
+            result = [[int(i == j) for j in range(26)] for i in range(26)]  # identity matrix
+            while exp > 0:
+                if exp % 2 == 1:
+                    result = mat_mult(result, mat,MOD)
+                mat = mat_mult(mat, mat, MOD)
+                exp //= 2
+            return result
+
+        M_to_t = mat_pow(M, t)
+
+        # Multiply vector u with matrix M_to_t
+        final = mat_mult([u],M_to_t,MOD)
+
+        return sum(final[0]) % MOD
+
+##############################################
+# 2999. Count the Number of Powerful Integers
+# 14MAY25
+##############################################
+#digit dp 
+#states are (pos,and limit at pos)
+class Solution:
+    def numberOfPowerfulInt(self, start: int, finish: int, limit: int, s: str) -> int:
+        '''
+        its limit at each position, we are bounded by it or not going from left to right
+        recall each digit in a powerful integer cannot exceed leimit
+        '''
+        @cache
+        def dfs(pos: int, lim: int,t):
+            if len(t) < n:
+                return 0
+            if len(t) - pos == n:
+                if lim:
+                    #suffix ending
+                    return int(s <= t[pos:])
+                else:
+                    return 1
+            up = 9
+            #if we have a limit at this position, we can go up to t hat
+            if lim:
+                up = min(int(t[pos]),limit)
+            #if we don't we could go up to 9 or the limit
+            else:
+                up = min(9,limit)
+            #up = min(int(t[pos]) if lim else 9, limit)
+            ans = 0 #add up ways
+            for i in range(up + 1):
+                #move up position, and check limit
+                next_limit = lim and i == int(t[pos])
+                ans += dfs(pos + 1, next_limit,t)
+            return ans
+
+        n = len(s)
+        return dfs(0,True,str(finish)) - dfs(0,True,str(start - 1))
+    
+######################################################
+# 2900. Longest Unequal Adjacent Groups Subsequence I
+# 15MAY25
+######################################################
+class Solution:
+    def getLongestSubsequence(self, words: List[str], groups: List[int]) -> List[str]:
+        '''
+        we need to return the subsequence, not just its length!
+        '''
+        ans = [0]
+        for i in range(1,len(groups)):
+            if groups[i] != groups[ans[-1]]:
+                ans.append(i)
+        return [words[i] for i in ans]
+
+#one pass
+class Solution:
+    def getLongestSubsequence(self, words: List[str], groups: List[int]) -> List[str]:
+        '''
+        we need to return the subsequence, not just its length!
+        '''
+        ans = [words[0]]
+        for i in range(1,len(groups)):
+            if groups[i] != groups[i-1]:
+                ans.append(words[i])
+        return ans
+    
+class Solution:
+    def getLongestSubsequence(self, words: List[str], groups: List[int]) -> List[str]:
+        '''
+        dp solution
+        examine from each index i and groups, but keep track of indices
+        '''
+        best_idxs = []
+        n = len(groups)
+        for i in range(n):
+            curr_idxs = [i]
+            for j in range(i+1,n):
+                if groups[j] != groups[curr_idxs[-1]]:
+                    curr_idxs.append(j)
+            if len(curr_idxs) > len(best_idxs):
+                best_idxs = curr_idxs
+            
+            print(best_idxs)
+        
+        return [words[i] for i in best_idxs]
+    
+#dp, but returning path, 
+class Solution:
+    def getLongestSubsequence(self, words: List[str], groups: List[int]) -> List[str]:
+        '''
+        dp with path tracking, 
+        whenver we make an update to a new optimuma, we need record the previous state where we were at optimum
+        to the next state that is the new optimum, in this the states are idxs
+        we are adding so it needs to be ending
+        this is the main point of the problem
+        
+        n = len(words)
+        dp = [1]*n
+        for i in range(n):
+            for j in range(i-1,-1,-1):
+                if groups[i] != groups[j]:
+                    dp[i] = max(dp[i],dp[j] + 1) 
+        
+        print(dp)
+        now how can we track paths though?
+        '''
+        n = len(words)
+        dp = [1]*n
+        prev = [-1]*n
+        longest = 1
+        end_idx = 0
+        for i in range(n):
+            #store best optimum so far before the dp update!
+            curr_best = dp[i]
+            prev_best = prev[i]
+            for j in range(i-1,-1,-1):
+                if groups[i] != groups[j] and dp[j] + 1 > curr_best:
+                    curr_best = dp[j] + 1
+                    prev_best = j
+                dp[i] = curr_best
+                prev[i] = prev_best
+                if dp[i] > longest:
+                    longest = dp[i]
+                    end_idx = i
+            
+        #follow pointers back
+        print(prev)
+        ans = []
+        curr = end_idx
+        while curr != -1:
+            ans.append(words[curr])
+            curr = prev[curr]
+        
+        return ans[::-1]
