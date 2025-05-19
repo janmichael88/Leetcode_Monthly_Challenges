@@ -613,3 +613,100 @@ class Solution:
             return "isosceles"
         else:
             return "scalene"
+        
+###################################################
+# 1931. Painting a Grid With Three Different Colors
+# 19MAY25
+####################################################
+#top down
+#states are (col,and prev bit mask)
+class Solution:
+    def colorTheGrid(self, m: int, n: int) -> int:
+        '''
+        we have m rows by n cols
+        there will be at most 5 rows and 1000 columns
+        if we encode each column using a mask and if there are 3 colors
+            1,2,3 -> {01,10,11}
+        we can space of these using two bit positions, 
+        there can be at most 10 bit positions, 2**10 = 1024, so we at least 1024*1000
+        for example, if there are 5 rows, we can color column using this bitmask
+        (11 01 11 01 11), which is 887
+        curr = colors for the current jth column
+        prev = colors for the previous columns
+        when we reach the end of the column, we start a new one, prev = curr, and curr = 0
+        for each position, we try each color, provided its not the same as the one on the left and up
+            we are doing down to right, so we only need to check left and up
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        def dp(i,j,curr,prev):
+            #reached end of row, color next col, so increase j by 1, start from top
+            #swap prev with curr and new bit mask here
+            if i == m:
+                return dp(0,j+1,0,curr)
+            #reached end, so we have a valid coloring
+            if j == n:
+                return 1 #reached the last column
+            if i == 0 and (j,prev) in memo: #coloring the first row, we don't need to check up and left
+            #just check curr col and previous for answer, idk why though
+                return memo[(j,prev)]
+            ways = 0
+            #if its first cell assumes previous cell is white (we can take any color for the next)
+            # up =(cur >>  ((i - 1) * 2))  -> get the last cell color. if you are are 4th cell . 
+            # means cur store color of last three cell which is of 6 bit. you shift it by 4 bit to get the color of only
+            #last cell. AND  it with 3(11)  to clear other bits(in case any).
+            # Same logic applied to find left cell color. We shift prev pattern to get the color of left cell in prev pattern.
+            if i == 0:
+                up = 0
+            else:
+                up = (curr >> ((i - 1) * 2)) & 3
+            left = (prev >> (i*2)) & 3
+            for k in range(1,3+1): #try all three colors
+                #try differnt color, make sure its not left and up
+                if k != left and k != up:
+                    #add up ways, push to next row, but stay in col jj
+                    #color this position, we can't use | since each cell takes of two bit position
+                    #so we choose the color k shifted i*2
+                    ways = (ways + dp(i + 1, j, curr + (k << (i * 2)), prev)) % mod
+            
+            memo[(j,prev)] = ways
+            return ways
+        
+        return dp(0,0,0,0)
+
+#using arrays instead of bitmasks
+class Solution:
+    def colorTheGrid(self, m: int, n: int) -> int:
+        '''
+        try using array, instead of mask
+        this is really just push dp
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        def dp(i,j,curr_col,prev_col):
+            #last row, move on
+            if i == m:
+                return dp(0,j+1,[0]*m,curr_col)
+            #valid column, only gotten here if we've gone through the whole grid
+            if j == n:
+                return 1
+            #state compression, memo check
+            #idk why it works though
+            if i == 0 and (j,tuple(prev_col)) in memo:
+                return memo[(j,tuple(prev_col))]
+            
+            ways = 0
+            up = curr_col[i - 1] if i > 0 else 0
+            left = prev_col[i]
+            for other_color in range(1,3+1):
+                #need to be able to look up and left
+                if other_color != up and other_color != left:
+                    next_col = curr_col[:]
+                    next_col[i] = other_color
+                    ways += dp(i+1,j,next_col,prev_col)
+                    ways %= mod
+            ways %= mod
+            memo[(j,tuple(prev_col))] = ways
+            return ways
+        
+        return dp(0,0,[0]*m,[0]*m)
