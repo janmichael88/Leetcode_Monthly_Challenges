@@ -506,11 +506,11 @@ class Solution:
                 if groups[i] != groups[j] and dp[j] + 1 > curr_best:
                     curr_best = dp[j] + 1
                     prev_best = j
-                dp[i] = curr_best
-                prev[i] = prev_best
-                if dp[i] > longest:
-                    longest = dp[i]
-                    end_idx = i
+            dp[i] = curr_best
+            prev[i] = prev_best
+            if dp[i] > longest:
+                longest = dp[i]
+                end_idx = i
             
         #follow pointers back
         print(prev)
@@ -521,3 +521,95 @@ class Solution:
             curr = prev[curr]
         
         return ans[::-1]
+
+#######################################################
+# 2901. Longest Unequal Adjacent Groups Subsequence II
+# 16MAY25
+#######################################################
+#series questiosn this week!
+class Solution:
+    def getWordsInLongestSubsequence(self, words: List[str], groups: List[int]) -> List[str]:
+        '''
+        hamming distance between two strings, if two strings are equal in length, its the number of unequal spots
+        needs longest subsequence such that
+            adjacent strings are unequal and adjacent words are equal in length
+            and hamming distance between them is == 1
+        
+        same as the previous one, but add in contraint of hamming distance
+        '''
+        n = len(words)
+        dp = [1]*n
+        prev = [-1]*n
+        longest = 1
+        end_idx = 0
+        for i in range(n):
+            #store best optimum so far before the dp update!
+            curr_best = dp[i]
+            prev_best = prev[i]
+            for j in range(i-1,-1,-1):
+                w1 = words[i]
+                w2 = words[j]
+                if groups[i] != groups[j] and len(w1) == len(w2) and self.hamming(w1,w2) == 1 and dp[j] + 1 > curr_best:
+                    curr_best = dp[j] + 1
+                    prev_best = j
+            dp[i] = curr_best
+            prev[i] = prev_best
+            if dp[i] > longest:
+                longest = dp[i]
+                end_idx = i
+        #follow pointers back
+        print(prev)
+        ans = []
+        curr = end_idx
+        while curr != -1:
+            ans.append(words[curr])
+            curr = prev[curr]
+        
+        return ans[::-1]
+    
+    def hamming(self,w1,w2):
+        h = 0
+        for x,y in zip(w1,w2):
+            h += x != y
+        return h
+        
+###################################
+# 3024. Type of Triangle
+# 19MAY25
+###################################
+class Solution:
+    def triangleType(self, nums: List[int]) -> str:
+        '''
+        count and check
+        you first need to check if it can make a valid triangle
+        '''
+        #check valid triangle first
+        if not self.is_valid_triangle(nums):
+            return "none"
+        counts = Counter(nums)
+        for k,v in counts.items():
+            if v == 3:
+                return "equilateral"
+            elif v == 2:
+                return "isosceles"
+        return "scalene"
+    
+    def is_valid_triangle(self,nums) -> bool:
+        a,b,c = nums
+        return a + b > c and a + c > b and b + c > a
+
+class Solution:
+    def triangleType(self, nums: List[int]) -> str:
+        '''
+        if we sort, we can just check the two smallest sides to the larger side, 
+            if its <= the third, a trianlge can't be made
+        '''
+        nums.sort()
+        if nums[0] + nums[1] <= nums[2]:
+            return "none"
+        elif nums[0] == nums[2]:
+            return "equilateral"
+        elif nums[0] == nums[1] or nums[1] == nums[2]:
+            return "isosceles"
+        else:
+            return "scalene"
