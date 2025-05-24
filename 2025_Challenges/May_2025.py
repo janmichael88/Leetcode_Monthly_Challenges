@@ -710,3 +710,99 @@ class Solution:
             return ways
         
         return dp(0,0,[0]*m,[0]*m)
+    
+############################################# 
+# 3362. Zero Array Transformation III
+# 24MAY25
+#############################################
+class Solution:
+    def maxRemoval(self, nums: List[int], queries: List[List[int]]) -> int:
+        '''
+        we can only decrement a value in nums by at most 1 for a given query
+        we can choose any element in the range for a given query
+            so if a number is already zero, don't touch it, which is the same as decremeting by 0
+        
+        sort the queries and greedily apply them
+        says greedily choose for furthest ending point, but i thought it would be queries that have the largest range
+        if we can use i queries, then we can remove len(queries)- i
+
+        binary search on the sorted queries, nah nice try though
+        '''
+        queries.sort(key = lambda x: x[0])
+        left = 0
+        right = len(queries) - 1
+        ans = -1
+
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.can_do(nums,queries,mid):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        if ans == -1:
+            return ans
+        
+        return len(queries) - ans - 1
+    
+    def can_do(self,nums,queries,k):
+        n = len(nums)
+        indices_touched = [0]*(n+1)
+        for l,r in queries[:k+1]:
+            indices_touched[l] += 1
+            indices_touched[r+1] -= 1
+        for i in range(1,n+1):
+            indices_touched[i] += indices_touched[i-1]
+        
+        #try bringin down indices
+        for i in range(n):
+            if nums[i] == 0:
+                continue
+            if nums[i] > indices_touched[i]:
+                return False
+        
+        return True
+    
+#two heaps
+class Solution:
+    def maxRemoval(self, nums: List[int], queries: List[List[int]]) -> int:
+        '''
+        hint says to sort the queries and greedily pick
+        essentially we need to cover each index i with at least nums[i] of the given intervals
+        if we are at some index i, we want the largest ending, so that way we can cover more indices
+            greedily picking the one with the furthest end minimizes the total picks
+        
+        two heaps,
+            one is like a garbage heap
+        '''
+        n = len(nums)
+        q = len(queries)
+        starts = [[] for _ in range(n)] #for each start,their ends
+        for l,r in queries:
+            starts[l].append(r)
+        
+        available = [] #max heap of ends
+        active = [] #min heap of ends
+        chosen = 0
+
+        for i in range(n):
+            #for an index i, load up all possible ends, remember for an index, pick the furthest one
+            for end in starts[i]:
+                heapq.heappush(available, - end)
+            #pop from min-heap any intervals whose end < i (since we can't cover them)
+            while active and active[0] < i:
+                heapq.heappop(active)
+            #compute how many more intervals we need
+            #this is how many times nums[i] can be brought to zero
+            need = nums[i] - len(active)
+            for _ in range(need):
+                while available and -available[0] < i:
+                    heapq.heappop(available)
+                #can't do
+                if not available:
+                    return -1
+                r = -heapq.heappop(available)
+                heapq.heappush(active,r)
+                chosen += 1
+        
+        return q - chosen
