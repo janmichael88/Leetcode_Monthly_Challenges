@@ -806,3 +806,232 @@ class Solution:
                 chosen += 1
         
         return q - chosen
+    
+class Solution:
+    def maxRemoval(self, nums: List[int], queries: List[List[int]]) -> int:
+        queries.sort(key=lambda x: x[0])
+        heap = []
+        deltaArray = [0] * (len(nums) + 1)
+        operations = 0
+        j = 0
+        for i, num in enumerate(nums):
+            operations += deltaArray[i]
+            while j < len(queries) and queries[j][0] == i:
+                heappush(heap, -queries[j][1])
+                j += 1
+            while operations < num and heap and -heap[0] >= i:
+                operations += 1
+                deltaArray[-heappop(heap) + 1] -= 1
+            if operations < num:
+                return -1
+        return len(heap)
+    
+#########################################################################
+# 2131. Longest Palindrome by Concatenating Two Letter Words (REVISTED)
+# 25MAY25
+#########################################################################
+class Solution:
+    def longestPalindrome(self, words: List[str]) -> int:
+        '''
+        words are only two chars long
+        we can pair x and x' if x == reversed(x')
+        the extra additions are min(count(x),count(x'))
+        now for x's thare are the same,
+            like aa,bb,cc...
+            if there are an even number, we can take all of them
+            if there are an odd number, we can take all but one
+            we can still do take only one char of ther repeated
+        '''
+        counts = Counter(words)
+        ans = 0
+        center = False
+        for w in counts:
+            #same
+            if w[0] == w[1]:
+                if counts[w] % 2 == 0:
+                    ans += 2*counts[w]
+                else:
+                    ans += 2*(counts[w] - 1) #need to include one less
+                    center = True
+            elif w[0] != w[1]:
+                ans += 2*min(counts[w],counts[w[::-1]])
+        if center:
+            ans += 2 #put back in
+        return ans
+
+################################################
+# 3068. Find the Maximum Sum of Node Values
+# 25MAY25
+#################################################
+#close one.....
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        anytime we take some edge (u,v), we need to update nums[u] nums[u] = nums[u] % k
+        and nums[v] = nums[v] % k
+        we want to this any number of times that gives us the max sum
+        does repeating an edge make a difference?
+        we are always doing nums[i] = nums[i] XOR k
+        for an edge, we either do it or we dont
+            try it and take max
+        '''
+        memo = {}
+        n = len(nums)
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        def dp(i,prev):
+            if i in memo:
+                return memo[i]
+            ans = 0
+            for neigh in graph[i]:
+                if neigh != prev:
+                #take edge or not
+                    take = (nums[i] ^ k) + (nums[neigh] ^ k)
+                    no_take = nums[i] + nums[neigh]
+                    temp = max(take,no_take)
+                    ans = max(ans,temp + dp(neigh,i))
+            memo[i] = ans  
+            return ans
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans,dp(i,-1))
+        
+        return ans
+
+
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        its a tree, its completely connected, undirected, ans has no cycles
+        so every node is reachable from another node
+            i.e for all nodes u, every other node v is reachable via some path l
+        recall properties fro XOR
+        aXORb = bXORa
+        aXORa = 0
+        0XORb = b
+        so we can have; aXORbXORb = aXOR0 =a
+        going back to the path with l, if we apply the operations on each node in L
+        intermediate nodes will remain unchanged, but the ending nodes in path (u,v) end up getting udated
+        we can update their values in nums as if they were already connected
+        for an pair of nodes (u,v) along some path l
+            if an operation has been done an even number of times, nums[u] and nums[v] end up getting updated
+        so states are (node,parity) #pairty of ops (i.e) number of times a node has been updated
+            we only apply the ops, if done and even number of times
+            otherwise state is invalid
+        
+        essentially for any pair of nodes (u,v), nums[u] ans nums[v] get updated to nums[u] ^ k
+        if we have hit this node an even number of times
+        if we don't, it never gets updated
+        '''
+        memo = {}
+        def dp(i,parity):
+            if i == len(nums):
+                if parity % 2 == 0:
+                    return 0
+                return float('-inf')
+            if (i,parity) in memo:
+                return memo[(i,parity)]
+            
+            no_take = nums[i] + dp(i+1,parity)
+            take = (nums[i] ^ k) + dp(i+1,parity ^ 1)
+            ans = max(no_take,take)
+            memo[(i,parity)] = ans
+            return ans
+        
+        return dp(0,0)
+    
+#bottom up
+class Solution:
+    def maximumValueSum(self, nums: List[int], k: int, edges: List[List[int]]) -> int:
+        '''
+        bottom up
+        '''
+        n = len(nums)
+        dp = [[0]*2 for _ in range(n+1)]
+        dp[n][0] = 0
+        dp[n][1] = float('-inf')
+
+        for i in range(n-1,-1,-1):
+            for parity in range(2):
+                no_take = nums[i] + dp[i+1][parity]
+                take = (nums[i] ^ k) + dp[i+1][parity ^ 1]
+                ans = max(no_take,take)
+                dp[i][parity] = ans
+        
+        return dp[0][0]
+    
+###############################################
+# 1857. Largest Color Value in a Directed Graph
+# 26MAY25
+###############################################
+class Solution:
+    def largestPathValue(self, colors: str, edges: List[List[int]]) -> int:
+        '''
+        could there be a cycle and a valid path?
+        of is it the case if there's a cycle immediately return -1
+        need path with largest color value
+            color value is number of nodes in path that have most frequent color
+        top sort and dp
+        dp[u][c] = max count of vertices with color c of any path starting from u
+        for top sort, start at the leaves
+        '''
+        graph = defaultdict(list)
+        n = len(colors)
+        degree = [0]*n
+        for u,v in edges:
+            graph[u].append(v) #its directed no back edge
+            degree[v] += 1
+        
+        q = deque([])
+        for i in range(n):
+            if degree[i] == 0:
+                q.append(i)
+    
+        dp = [[0]*26 for _ in range(n)]
+        #to check for cycle, make sure we visit all nodes
+        nodes_seen = 0
+        ans = 0
+        #top sort
+        while q:
+            curr = q.popleft()
+            nodes_seen += 1 #mark seen
+            color_idx = ord(colors[curr]) - ord('a')
+            #add in color count
+            dp[curr][color_idx] += 1
+            ans = max(ans, dp[curr][color_idx]) #maximize, arriving at this node with this color
+            for neigh in graph[curr]:
+                #update for all previous colors
+                for i in range(26):
+                    #for each neighbor, update the max
+                    dp[neigh][i] = max(dp[neigh][i],dp[curr][i])
+                #top sort addition
+                degree[neigh] -= 1
+                if degree[neigh] == 0:
+                    q.append(neigh)
+        if nodes_seen < n:
+            return -1
+        return ans
+
+#######################################################
+# 2894. Divisible and Non-divisible Sums Difference
+# 27MAY24
+#########################################################
+class Solution:
+    def differenceOfSums(self, n: int, m: int) -> int:
+        '''
+        for numbers divible by m
+        we have num1 = m + 2m + 3m .... 
+        we need to find the number of nums from 1 to n
+            k = n//m
+        so num1 is (k*(k+1)//2) *m, i.e sum of all nums from 1 to n divisble by m
+        to find ones not divisible by m, its just:
+        n*(n+1)//2 - (k*(k+1)//2) *m
+        the ans is just nums2 subtracted again
+        n*(n+1)//2 - (k*(k+1)//2) *m - (k*(k+1)//2) *m
+        n*(n+1)//2 - (k*k(+1))*m
+        '''
+        k = n//m
+        return (n*(n+1)) // 2 - (k*(k+1))*m
