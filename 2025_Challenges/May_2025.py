@@ -1015,6 +1015,54 @@ class Solution:
             return -1
         return ans
 
+#dfs
+#top sort actually makes more sense than dfs
+class Solution:
+    def largestPathValue(self, colors: str, edges: List[List[int]]) -> int:
+        '''
+        we can use cycle detection algorithm
+            two seens, one for the current node, and whether or not we've seen this node before
+            if we've seen this node, before (while on the current node) we have a cyycle
+        
+        dfs(curr) gives max frequency if we started at node curr
+        '''
+        graph = defaultdict(list)
+        n = len(colors)
+        for u,v in edges:
+            graph[u].append(v) #its directed no back edge
+
+        
+        dp = [[0]*26 for _ in range(n)]
+        in_stack = set()
+        visited = set()
+
+        def dfs(curr):
+            if curr in in_stack:
+                return float('inf')
+            color_idx = ord(colors[curr]) - ord('a')
+            #stores the max
+            if curr in visited:
+                return dp[curr][color_idx]
+            in_stack.add(curr)
+            visited.add(curr)
+            for neigh in graph[curr]:
+                if dfs(neigh) == float('inf'):
+                    return float('inf') 
+                #update for all previous colors
+                for i in range(26):
+                    #for each neighbor, update the max
+                    dp[curr][i] = max(dp[curr][i],dp[neigh][i])
+            dp[curr][color_idx] += 1
+            in_stack.remove(curr)
+            return dp[curr][color_idx]
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans,dfs(i))
+        if ans == float('inf'):
+            return -1
+        return ans
+
 #######################################################
 # 2894. Divisible and Non-divisible Sums Difference
 # 27MAY24
@@ -1035,3 +1083,114 @@ class Solution:
         '''
         k = n//m
         return (n*(n+1)) // 2 - (k*(k+1))*m
+    
+######################################################################
+# 3372. Maximize the Number of Target Nodes After Connecting Trees I
+# 28MAY25
+#######################################################################
+class Solution:
+    def maxTargetNodes(self, edges1: List[List[int]], edges2: List[List[int]], k: int) -> List[int]:
+        '''
+        we are given two undirected trees
+        node u is target to node v is number of edges from u to v is <= k
+        need ans array where ans[i] is maximum possible number of nodes target to node i of the first tree
+            if we have to connect one node from tree1 to another nodes in tree2
+        
+        for each node i in tree1, we can choose to connect to any node in tree2
+        if for some node u in tree1 we have x nodes <= k
+        then we can add to this more nodes, if connecting to some other node v with y nodes
+        try all connections, this would be n**3
+        '''
+        tree1 = defaultdict(list)
+        tree2 = defaultdict(list)
+        n,m = len(edges1),len(edges2)
+
+        for u,v in edges1:
+            tree1[u].append(v)
+            tree1[v].append(u)
+        
+        for u,v in edges2:
+            tree2[u].append(v)
+            tree2[v].append(u)
+        
+        dists1 = []
+        for i in range(n+1):
+            d = self.get_dists(tree1,i,n+1)
+            #find how many nodes <= k
+            count = 0
+            for num in d:
+                count += num <= k
+            dists1.append(count)
+        
+        #second tree, find nodes <= k-1, the extra edges, then pair u with the largest j
+        dists2 = []
+        for i in range(m+1):
+            d = self.get_dists(tree2,i,m+1)
+            #find how many nodes <= k
+            count = 0
+            for num in d:
+                count += num <= k - 1
+            dists2.append(count)
+        
+        ans = []
+        for i in range(n+1):
+            ans.append(dists1[i] + max(dists2))
+        return ans
+            
+    def get_dists(self,tree,node,size):
+        dists = [0]*size
+        seen = set()
+        q = deque([(node,0)]) #entry is (node,dist)
+        while q:
+            curr,d = q.popleft()
+            dists[curr] = d
+            seen.add(curr)
+            for neigh in tree[curr]:
+                if neigh not in seen:
+                    q.append((neigh,d+1))
+        return dists
+
+
+#dfs
+class Solution:
+    def maxTargetNodes(self, edges1: List[List[int]], edges2: List[List[int]], k: int) -> List[int]:
+        '''
+        we can also use dfs instead of bfs to find path lengths, just make sure to pass curr and parent
+            to prevent going along a back edge
+        '''
+        n,m = len(edges1),len(edges2)
+        tree1 = self.build_adj(edges1)
+        tree2 = self.build_adj(edges2)
+        count1 = []
+        count2 = []
+        for i in range(n+1):
+            count = self.dfs(tree1,i,-1,0,k)
+            count1.append(count)
+        
+        for i in range(m+1):
+            count = self.dfs(tree1,i,-1,0,k-1)
+            count2.append(count)
+        max_count = max(count2)
+        return [c + max_count for c in count1]
+    
+    def build_adj(self,edges):
+        tree = defaultdict(list)
+        for u,v in edges:
+            tree[u].append(v)
+            tree[v].append(u)
+        
+        return tree
+    
+    #dfs to find nodes from starting point node with limit k
+    def dfs(self,tree,curr,parent,path,k):
+        if path > k:
+            return 0
+        count = 1
+        for neigh in tree[curr]:
+            if neigh != parent:
+                count += self.dfs(tree,neigh,curr,path+1,k)
+        return count
+
+
+
+
