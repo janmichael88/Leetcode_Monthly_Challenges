@@ -1191,6 +1191,128 @@ class Solution:
                 count += self.dfs(tree,neigh,curr,path+1,k)
         return count
 
+######################################################################
+# 3373. Maximize the Number of Target Nodes After Connecting Trees II
+# 29MAY25
+#######################################################################
+#TLE
+class Solution:
+    def maxTargetNodes(self, edges1: List[List[int]], edges2: List[List[int]]) -> List[int]:
+        '''
+        probably should have bold faced even
+        same as part1, but the count of edges must be EVEN
+            a node is target to itself, i.e path length == 0, which is even
+        if we hav a tree, how many paths can there be from a node u to v
+        hints gave it away...
+        compute even array, where even[u] is the number of nodes at even distance in odd tree
+        then odd array for the next
+        '''
+        n,m = len(edges1),len(edges2)
+        tree1 = self.build_adj(edges1)
+        tree2 = self.build_adj(edges2)
+        evens = []
+        #get evens for tree1
+        for i in range(n+1):
+            dists = self.get_dists(tree1,i,n + 1)
+            e = 0
+            for num in dists:
+                e += num % 2 == 0
+            evens.append(e)
+        
+        #get odds for tree2
+        odds = []
+        for i in range(m+1):
+            dists = self.get_dists(tree2,i,m+1)
+            o = 0
+            for num in dists:
+                o += num % 2 == 1
+            odds.append(o)
+        max_odd = max(odds)
+        ans = []
+        for count in evens:
+            ans.append(count + max_odd)
+        return ans
+        
+    
+    def get_dists(self,tree,node,size):
+        dists = [0]*size
+        seen = set()
+        q = deque([(node,0)]) #entry is (node,dist)
+        while q:
+            curr,d = q.popleft()
+            dists[curr] = d
+            seen.add(curr)
+            for neigh in tree[curr]:
+                if neigh not in seen:
+                    q.append((neigh,d+1))
+        return dists
 
+    
+    def build_adj(self,edges):
+        tree = defaultdict(list)
+        for u,v in edges:
+            tree[u].append(v)
+            tree[v].append(u)
+        
+        return tree
+    
+#dammit
+class Solution:
+    def maxTargetNodes(self, edges1: List[List[int]], edges2: List[List[int]]) -> List[int]:
+        '''
+        im a dumb dumb
+        we can just bfs/dfs from any node in tree and mark them as even from the source
+        we can do this for both trees,
+        it doesn't matter where we start for the first tree
+        if we start at node 0, and we have k nodes that even
+        then all k nodes that are even, are also even back to node 0
+        if a node is even, then it has k evens from it
+        if a node is odd, then it has k - evens from it
+        for each node in tree1, check if it is even, then we can just use sum evens
+            otherwise we have to do n-evens for node 1
+        
+        inclusion/exclusion counting....
+        ughhh
+        '''
+        n,m = len(edges1),len(edges2)
+        tree1 = self.build_adj(edges1)
+        tree2 = self.build_adj(edges2)
+        evens1 = self.find_evens(tree1,n+1)
+        evens2 = self.find_evens(tree2,m+1)
+        sum_evens1 = sum(evens1)
+        sum_evens2 = sum(evens2)
+        #get max from other tree, which is just the sum of evens2 or the odds
+        max_ = max(sum_evens2, (m+1) - sum_evens2)
+        ans = []
+        for e in evens1:
+            if e: #if this is even
+                ans.append(sum_evens1 + max_)
+            else:
+                #we can connect a node in the frist tree to either an even or odd node in the second tree
+                #we can always connect to an even target node, since a node is target to itself
+                #if we are at an odd node, we use an edge to connect to any or or even node
+                    #it doesn't matter, an odd or even will be available, so long as there is count
+                        #and count would never be less than 1
+                ans.append((n+1 - sum_evens1) + max_)
+        return ans
 
+    def find_evens(self,tree,size):
+        is_even = [False]*size
+        q = deque([(0,-1,True)]) #(curr_node,parent,even)
+        while q:
+            curr,parent,parity = q.popleft()
+            is_even[curr] = parity
+            
+            for neigh in tree[curr]:
+                if neigh != parent:
+                    q.append((neigh,curr,not parity))
+        
+        return is_even
 
+    def build_adj(self,edges):
+        tree = defaultdict(list)
+        for u,v in edges:
+            tree[u].append(v)
+            tree[v].append(u)
+        
+        return tree
