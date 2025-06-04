@@ -1273,6 +1273,7 @@ class Solution:
         
         inclusion/exclusion counting....
         ughhh
+        intuition is actually pretty tricky
         '''
         n,m = len(edges1),len(edges2)
         tree1 = self.build_adj(edges1)
@@ -1280,6 +1281,7 @@ class Solution:
         evens1 = self.find_evens(tree1,n+1)
         evens2 = self.find_evens(tree2,m+1)
         sum_evens1 = sum(evens1)
+        #sum_odds2 = n + 1 - sum_evens1
         sum_evens2 = sum(evens2)
         #get max from other tree, which is just the sum of evens2 or the odds
         max_ = max(sum_evens2, (m+1) - sum_evens2)
@@ -1294,6 +1296,7 @@ class Solution:
                     #it doesn't matter, an odd or even will be available, so long as there is count
                         #and count would never be less than 1
                 ans.append((n+1 - sum_evens1) + max_)
+                #sum_odds2 = n + 1 - sum_evens1
         return ans
 
     def find_evens(self,tree,size):
@@ -1316,3 +1319,101 @@ class Solution:
             tree[v].append(u)
         
         return tree
+    
+##############################################
+# 2359. Find Closest Node to Given Two Nodes
+# 30MAY25
+###############################################
+class Solution:
+    def closestMeetingNode(self, edges: List[int], node1: int, node2: int) -> int:
+        '''
+        its directed graph
+        we need to pick a node, such that the maximum distance between node1 to that  node and node2 to that is minimzed
+        bfs on node1 and node2, to find distances
+        bfs already gives the minimum distance, so just take max if both nodes are reachable
+        '''
+        n = len(edges)
+        d1 = self.bfs(edges,node1)
+        d2 = self.bfs(edges,node2)
+        min_dist = float('inf')
+        min_idx = -1
+        for i in range(n):
+            if d1[i] != float('inf') and d2[i] != float('inf'):
+                temp = max(d1[i],d2[i]) #local max of two dists
+                #but then minimize
+                #stupid as question
+                if temp < min_dist:
+                    min_dist = temp
+                    min_idx = i
+        
+        return min_idx
+        
+    def bfs(self,edges,start):
+        n = len(edges)
+        dists = [float('inf')]*n
+        dists[start] = 0
+        seen = set()
+        q = deque([(start,0)])
+
+        while q:
+            curr,d = q.popleft()
+            dists[curr] = d
+            seen.add(curr)
+            #find neigh, there's only one
+            neigh = edges[curr]
+            if neigh != -1 and neigh not in seen:
+                q.append((neigh,d+1))
+        
+        return dists
+    
+###########################################
+# 3532. Path Existence Queries in a Graph I
+# 30MAY25
+############################################
+class DSU:
+    def __init__(self,n):
+        self.size = [1]*n
+        self.parent = [i for i in range(n)]
+
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+
+        if x_par == y_par:
+            return
+        elif self.size[x_par] >= self.size[y_par]:
+            self.size[x_par] += self.size[y_par]
+            self.size[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.size[y_par] += self.size[x_par]
+            self.size[x_par] = 0
+            self.parent[x_par] = self.parent[y_par]
+
+class Solution:
+    def pathExistenceQueries(self, n: int, nums: List[int], maxDiff: int, queries: List[List[int]]) -> List[bool]:
+        '''
+        we sort of need to build the graph from queries
+        an edge exists if abs(nums[i] - nums[j]) <= max_diff
+        use up edges, then check reachability?
+        union find on the edges, if a query meets the edge requiremnt, add them
+        then check q[i][0] to q[i][1] in dsu
+        '''
+        #make graph first
+        dsu = DSU(n)
+        for i in range(1,n):
+            if abs(nums[i-1] - nums[i]) <= maxDiff:
+                dsu.union(i,i-1)
+        ans = []
+        for u,v in queries:
+            has_path = dsu.find(u) == dsu.find(v)
+            ans.append(has_path)
+        return ans
+        
+            
