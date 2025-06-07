@@ -249,3 +249,166 @@ class Solution:
             ans += dfs(b)
         
         return ans
+    
+#################################################################
+# 3403. Find the Lexicographically Largest String From the Box I
+# 04JUN25
+#################################################################
+#TLE
+class Solution:
+    def answerString(self, word: str, numFriends: int) -> str:
+        '''
+        the say rounds to make you think you need to try all possible splits
+        but really we  just want the largest string of all splits
+        let n = len(word)
+        there will be numFriends splits
+        so the size of the string would be n - numFriends + 1
+        so this for every index i
+        
+        '''
+        if numFriends == 1:
+            return word
+        ans = ""
+        n = len(word)
+        k = n - numFriends + 1
+        for i in range(n):
+            sub = ""
+            j = i
+            while j < n and len(sub) < k:
+                sub += word[j]
+                j += 1
+                ans = max(ans,sub)
+        return ans
+
+#jessus  
+class Solution:
+    def answerString(self, word: str, numFriends: int) -> str:
+        '''
+        the say rounds to make you think you need to try all possible splits
+        but really we  just want the largest string of all splits
+        let n = len(word)
+        there will be numFriends splits
+        so the size of the string would be n - numFriends + 1
+        so this for every index i
+        damn the later problems (like 3000+ are trickier)
+        '''
+        if numFriends == 1:
+            return word
+        ans = ""
+        n = len(word)
+        k = n - numFriends + 1
+        for i in range(n):
+            #we are starting at every i, and the substring can be <= k
+            #so just take the minimum
+            sub = word[i:min(i + k,n)]
+            ans = max(sub,ans)
+        return ans
+    
+######################################################
+# 3474. Lexicographically Smallest Generated String
+# 05JUN25
+######################################################
+#close... T.T
+class Solution:
+    def generateString(self, str1: str, str2: str) -> str:
+        '''
+        if str1[i] is T, we need to use a substring from str2 here
+        so whenver this is T, we need to fix this part, otherwise we are free to use any letter to make it smaller
+        the first example makes sense
+        the second one
+
+        '''
+        n = len(str1)
+        m = len(str2)
+        k = n + m - 1
+        word = [""]*k
+        #fix the first part
+        for i in range(n):
+            if str1[i] == 'T':
+                #make == to st2
+                for j in range(m):
+                    word[i+j] = str2[j]
+        #for an empty spots, fill with 'a'
+        for i in range(k):
+            if word[i] == '':
+                word[i] = 'a'
+        #then check at the true positions, it matches str2, if it doesn't return an empty string ""
+        for i in range(n):
+            if str1[i] == 'T':
+                #validate
+                substring = word[i:i+m]
+                if "".join(substring) != str2:
+                    return ""
+        return "".join(word)
+    
+####################################################################
+# 2434. Using a Robot to Print the Lexicographically Smallest String
+# 06JUN25
+####################################################################
+#fucking hell man...
+class Solution:
+    def robotWithString(self, s: str) -> str:
+        '''
+        operatios are:
+            remove first character from s and append to t (first s -> end to t)
+            remove last character from t, and write on paper (end from t -> first to p)
+        return smalles string that can be written
+        this is weird because we can have an empty t too, we aren't just shuffling
+            need to get the smallest possible char to the last place in t,
+            then we can write to p
+        
+        how do i know when to write to p from t, i need to know before hand if there was something smaller
+        work backwards from s?
+        '''
+        ans = []
+        n = len(s)
+        used = [False]*n
+        counts = Counter(s)
+        for i in range(26):
+            ch = chr(ord('a') + i)
+            not_curr_chars = []
+            #need the last occurence of the current char
+            for j in range(n):
+                #no more of current char
+                if counts[ch] == 0:
+                    break
+                #is current char
+                elif not used[j] and s[j] == ch:
+                    ans.append(ch)
+                    counts[ch] -= 1
+                    used[j] = True
+                #not current char
+                elif not used[j] and s[j] != ch:
+                    not_curr_chars.append(s[j])
+                    used[j] = True
+            #write in reverse
+            if not_curr_chars:
+                for ch in not_curr_chars[::-1]:
+                    ans.append(ch)
+            print(ans)
+        return "".join(ans)
+
+class Solution:
+    def robotWithString(self, s: str) -> str:
+        '''
+        im stupid, its just a stack, 
+        we iterate s, and push to stack t
+        we keep doing this until we find the smallest character remaining in s
+        starting from a
+        '''
+        counts = Counter(s)
+        t  = []
+        p = []
+        min_ch = 'a'
+
+        for ch in s:
+            #puch to t and decrement count
+            t.append(ch)
+            counts[ch] -= 1
+            #maintain the current min char remaing in s
+            while min_ch < 'z' and counts[min_ch] == 0:
+                min_ch = chr(ord(min_ch) + 1)
+            while t and t[-1] <= min_ch:
+                p.append(t.pop())
+        
+        return "".join(p)
