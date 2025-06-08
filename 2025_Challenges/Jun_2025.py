@@ -412,3 +412,92 @@ class Solution:
                 p.append(t.pop())
         
         return "".join(p)
+
+#############################################################
+# 3170. Lexicographically Minimum String After Removing Stars
+# 07JUN25
+#############################################################
+class Solution:
+    def clearStars(self, s: str) -> str:
+        '''
+        iterate s, whenever we see a *, we need to delete it the smallest non star to its left
+        do we delete one for multiple of the smallest
+        its if there are ties for the smallest non * to the left
+        aaba*
+        1. a
+        2. aa
+        3. aab
+        4. aaba
+        5. aab
+        but could we have made aba, no, since aab < aba
+        the answer for cases like aaaaa*
+        if just aaaa (star + 1 removes a)
+        the problem is figuring out which smallest non * to remove 
+        for each star * delete 1
+            it doesnt mean delete multiple smallest non * for a singel *, just that there could be multiple *
+            you need to delete the smallest non *, but priotrize deleting the right most ones
+            store entries in heap as (char,index), use negative index
+            then rebuild after
+        '''
+        n = len(s)
+        min_heap = []
+        for i,ch in enumerate(s):
+            idx = -(i + 1)
+            if ch == '*':
+                heapq.heappop(min_heap)
+            else:
+                heapq.heappush(min_heap, (ch,idx))
+        
+        #sort and rebuild
+        temp = []
+        for ch,idx in min_heap:
+            temp.append((ch,-idx))
+        
+        temp.sort(key = lambda x: x[1])
+        ans = []
+        for ch,idx in temp:
+            ans.append(ch)
+        return "".join(ans) 
+
+class Solution:
+    def clearStars(self, s: str) -> str:
+        '''
+        dont need to sort after, just replace index with ""
+        '''
+        n = len(s)
+        ans = list(s)
+        min_heap = []
+        for i,ch in enumerate(s):
+            if ch == '*' and min_heap:
+                del_char, del_idx = heapq.heappop(min_heap)
+                ans[-del_idx] = ""
+                ans[i] = ""
+            else:
+                heapq.heappush(min_heap, (ch,-i))
+        
+        return "".join(ans) 
+
+#instead of using min_heap look through all chars in order
+#and keep hashmap to char
+class Solution:
+    def clearStars(self, s: str) -> str:
+        '''
+        dont need to sort after, just replace index with ""
+        '''
+        n = len(s)
+        ans = list(s)
+        mapp = defaultdict(list)
+        for i,ch in enumerate(s):
+            if ch == "*":
+                for j in range(26):
+                    check_ch = chr(ord('a') + j)
+                    if len(mapp[check_ch]) > 0:
+                        del_idx = mapp[check_ch].pop()
+                        ans[del_idx] = ""
+                        ans[i] = ""
+                        break
+            else:
+                mapp[ch].append(i)
+
+        return "".join(ans) 
+
