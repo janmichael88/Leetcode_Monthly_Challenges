@@ -72,6 +72,39 @@ class Solution:
 #combinatorics
 class Solution:
     def distributeCandies(self, n: int, limit: int) -> int:
+        '''
+        we can treat this as bars and starts first
+        its just nCk
+        where n is the number of candies and k is the number of dividers
+        i.e n balls into k bins
+        its just n+k-1 choose (k-1)
+        here k == 2
+        answer is:
+            total_number_unrestricted - at_least_one_more_than_limit + at_least_two_more_than_limit - all_three_more_than_limit
+
+        we need to add bacck in count for at_least_two 
+        for no limit
+            its the sam s placing two dividers among n cadies
+            so its 2 choose(n+2)
+
+        Total number of unrestricted distributions
+        * distributing n candies among 3 children is equivalent to placing two dividers among n candies to split them into three groups.
+        * 2 choose (n+2)
+
+        At least one child receives more than limit candies: (add back in)
+        * We give limit + 1 candies to one child first, reducing the problem to distributing n−(limit+1) candies 
+        * among 3 children (with possible zeroes). There are 3 choices for which child gets the extra candies,
+        3* 2 choose (n - limit + 1) + 2
+
+        At least two children receive more than limit candies:
+        * We give limit + 1 candies to any two children, reducing the problem to distributing 
+        * n−2×(limit+1) candies among 3 children. There are 3 ways to choose the two children:
+        3* 2 choose (n - 2*(limit + 1)) + 2
+
+        All three children receive more than limit candies:
+        We give limit + 1 candies to each child, so we're left with n−3×(limit+1) candies to distribute among 3 children.
+        3 * 2 choose(n-3*(limit+1)) + 2
+        '''
         return (
             self.cal(n + 2)
             - 3 * self.cal(n - limit + 1)
@@ -501,3 +534,137 @@ class Solution:
 
         return "".join(ans) 
 
+########################################################
+# 440. K-th Smallest in Lexicographical Order (REVISTED)
+# 09JUN25
+#########################################################
+class Solution:
+    def findKthNumber(self, n: int, k: int) -> int:
+        '''
+        need to traverse n-ary tree (10-ary tree) and keep count of the numbers seen at each node
+        problem is that we can choose the endpoint n
+        if the number of elements at some node exceeds n, we can't descend into that node
+        for the count
+        1
+        ├── 10
+        │   ├── 100
+        │   ├── ...
+        ├── 11
+        ...
+        curr is start of current prefix and next_ is sibling in level
+        '''
+        #print(self._count(11,1))
+        curr = 1
+        k -= 1
+        while k > 0:
+            #count number of nodes at this node for numbers between curr and n
+            steps = self._count(n,curr)
+            #if we have enough steps in this node, we go on to the next number in sequence
+            #stay on this level, and use up steps on this level from k
+            if steps <= k:
+                curr += 1
+                #used up step
+                k -= steps
+            else:
+                #go down a level, curr*10 is the next node in order, i.e we are past this current level
+                curr *= 10
+                k -= 1
+        
+        return curr
+    
+    #count number of nums in pre-order at some noe
+    #i.e, given some number curr in 10-ary tree, count numbers less then <= n
+    def _count(self,n,curr):
+        #counting in between curr and next_ up to n
+        next_ = curr + 1
+        count = 0
+        while curr <= n:
+            count += min(n + 1, next_) - curr
+            curr *= 10
+            next_ *= 10
+        return count
+
+###############################
+# 2376. Count Special Integers
+# 09JUN25
+################################
+#digit dp
+class Solution:
+    def countSpecialNumbers(self, n: int) -> int:
+        '''
+        this is digit dp, but we dont need to create a range and do inclusion exclusion
+        https://leetcode.com/problems/count-special-integers/solutions/2422121/python-digit-dp/
+        use n as string for its digits
+        then we can use position i and check if we are tight to this bound at the position i in number n
+        basic structure
+        dp(pos, tight, leading_zero, other_states)
+        pos = current digit position (from left to right)
+
+        tight = whether the current number is tight to the upper bound (i.e., we haven’t exceeded N's prefix)
+
+        leading_zero = whether we are still placing leading zeros
+
+        other_states = problem-specific info (e.g., previous digit, sum of digits, etc.)
+
+        Transition
+        At each position, try all digits from 0 to 9 unless tight restricts you (you must stay ≤ N[pos]).
+
+        for d in range(start, upper_bound + 1):
+            if d >= prev_digit:
+                dp(pos + 1, d, new_tight)
+
+                new_tight becomes tight and (d == N[pos])
+
+        for problem: "Count numbers from 1 to N where the digits are non-decreasing."
+        from functools import lru_cache
+
+        def count_non_decreasing(N: int) -> int:
+            digits = list(map(int, str(N)))
+
+            @lru_cache(None)
+            def dp(pos: int, prev: int, tight: bool) -> int:
+                if pos == len(digits):
+                    return 1  # valid number
+
+                limit = digits[pos] if tight else 9
+                total = 0
+                for d in range(prev, limit + 1):
+                    total += dp(pos + 1, d, tight and (d == limit))
+                return total
+
+            return dp(0, 0, True)
+        '''
+        
+        digits = [int(x) for x in str(n)] #use for digits
+        memo = {}
+
+        def dp(pos,tight,leading_zeros,mask):
+            #valid number
+            if pos == len(digits):
+                return 1
+            
+            key = (pos,tight,leading_zeros,mask)
+            if key in memo:
+                return memo[(key)]
+            
+            if tight == 0:
+                limit = digits[pos] #can only use up to this digit
+            else:
+                limit = 9 #no restriction
+
+            count = 0
+            for next_digit in range(limit+1):
+                next_tight = tight or next_digit < limit
+                next_leading = leading_zeros or (next_digit > 0)
+                #leading zeros
+                if next_leading:
+                    #next digit is avaialble
+                    if not mask & (1 << next_digit):
+                        count += dp(pos + 1, next_tight, next_leading, mask | (1 << next_digit))
+                else:
+                    #skip
+                    count += dp(pos + 1, next_tight, next_leading, mask)
+            memo[key] = count
+            return count
+        
+        return dp(0,0,0,0) - 1
