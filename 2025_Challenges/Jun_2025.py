@@ -668,3 +668,121 @@ class Solution:
             return count
         
         return dp(0,0,0,0) - 1
+
+##############################################################
+# 3442. Maximum Difference Between Even and Odd Frequency I
+# 10JUN25
+###############################################################
+class Solution:
+    def maxDifference(self, s: str) -> int:
+        '''
+        count of counts,
+        find a1 and a2
+        oh whoops need maximum difference, 
+        '''
+        counts = Counter(s)
+        a1 = 0
+        a2 = float('inf')
+        for k,v in counts.items():
+            if v % 2 == 1:
+                a1 = max(a1,v)
+            else:
+                a2 = min(a2,v)
+        return a1 - a2
+    
+################################################################
+# 3445. Maximum Difference Between Even and Odd Frequency II
+# 11JUN25
+###############################################################
+#copy paste T.T
+class Solution:
+    def maxDifference(self, s: str, k: int) -> int:
+        '''
+        char a must have odd frequency
+        char b must have even frequency
+        need to track pairs for '01234'
+            we need to fix an a and b, and try them all
+            when a appears odd times, we need its max occruence, and we need b's min occurence when even
+            same in reverse
+        https://leetcode.com/problems/maximum-difference-between-even-and-odd-frequency-ii/?envType=daily-question&envId=2025-06-11
+        need to keep track of:
+        1. occruence of a given pair of characters
+        2. track occurence and difference
+        3. retreive proper pairty pair to calculate max difference
+
+        imagine instead of 4 characters, we only have 0 and 1
+        we need to find the max difference when 0 has odd freq and 1 has even freq
+        or when 1 has odd free and 0 has even freq
+        
+        we don't care about what the numbers are exactly, its just their parities
+
+        for fixed a and b, find the maximum difference
+        let frequence of char in sum substring[i...j] be count(char)
+        so we have:
+            freq[a] in s[i...j] = count(a, j) - count(a, i-1)
+            freq[b] in s[i...j] = count(b, j) - count(b, i-1)
+
+        we want to maximize freq[a] - freq[b]
+            (count(a, j) - count(a, i-1)) - (count(b, j) - count(b, i-1))
+        so we have
+            (count(a, j) - count(b, j)) - (count(a, i-1) - count(b, i-1))
+        
+        so to maximize the total difference ending at k we need to find a starting point j-1, that minimizes the term (count(a, i-1) - count(b, i-1))
+            store minimum on the left!
+        
+        parity difference
+            odd - even = odd
+            even - odd = odd
+            odd - odd = even
+            even - even = even
+
+        So, for freq[a] to be odd, the parities of count(a, j) and count(a, i-1) must be different. 
+        For freq[b] to be even, the parities of count(b, j) and count(b, i-1) must be the same.
+
+
+        '''
+        ans = float('-inf')
+        for a in "01234": 
+            for b in "01234": 
+                if a != b: 
+                    seen = defaultdict(lambda : inf)
+                    #this is pref_sum of counts for an a and b
+                    pa = [0]
+                    pb = [0]
+                    left = 0 
+                    for right, ch in enumerate(s):
+                        #keep track of pref_counts for the current a and b 
+                        if ch == a: 
+                            pa.append(pa[-1] + 1)
+                            pb.append(pb[-1])
+                        elif ch == b: 
+                            pb.append(pb[-1] + 1)
+                            pa.append(pa[-1])
+                        else:
+                            pa.append(pa[-1])
+                            pb.append(pb[-1])
+            
+                        #sliding window loop invariant, while we have enough k, shrink
+                        #check current pairty for start of string for a and b are different
+                        #for count(a) to be oadd the aprities of count(a, at right) and count(a, left) must be differrent
+                        #what would be the case if pa[left] == pa[right] and pb[left] == pb[right]?
+                            #it means there's no count in between! so we need to move our left point
+                            #there needs to be at least non zero occurence of a and b for this pref/substring
+                        while right - left + 1 >= k and pa[left] != pa[-1] and pb[left] != pb[-1]:
+                            #store minimum difference for the parity status on the left 
+                            key = (pa[left] % 2, pb[left] % 2) 
+                            diff = pa[left] - pb[left]
+                            seen[key] = min(seen[key], diff)
+                            left += 1
+                        #complement look up, kinda like subarray sum == k
+                        #don't store minimum, need to look for the opposite status of the current parity pair that's on the left
+                        #check, loook for complement parity previously seen to satisfy constraint, i.e
+                        #so we have parity (1,1) for right, if we look for (0,1) on the left, this would give us (1,0)
+                        #if we have parity (0,1), we look for (1,1) on the left, this would give us (1,0)
+                        #if we have parity (1,0), we look for (0,0) on the left, this would gives is (1,0) again
+                        #if we have parity (0,0), we look for (1,0) on the left, this gives us (1,0)
+                        key = (1 - pa[-1] % 2, pb[-1] % 2) 
+                        if key in seen:
+                            diff = pa[-1] - pb[-1]
+                            ans = max(ans, diff - seen[key])
+        return ans 
