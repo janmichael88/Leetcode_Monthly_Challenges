@@ -786,3 +786,67 @@ class Solution:
                             diff = pa[-1] - pb[-1]
                             ans = max(ans, diff - seen[key])
         return ans 
+    
+################################################
+# 2566. Maximum Difference by Remapping a Digit
+# 14JUN25
+################################################
+class Solution:
+    def minMaxDifference(self, num: int) -> int:
+        '''
+        there must be a greedy solution
+        we need to find the maximum digit bob can make by remapping a single digit
+        and we need to find the minimum
+        '''
+        digits = str(num)
+        n = len(digits)
+        #find the first non nine digit
+        first_non_nine = digits[0]
+        for i in range(n):
+            if digits[i] != '9':
+                first_non_nine = digits[i]
+                break
+        
+        first_non_zero = digits[0]
+        for i in range(n):
+            if digits[i] != '0':
+                first_non_zero = digits[i]
+                break
+        
+        max_number = 0
+        for d in digits:
+            max_number *= 10
+            if d == first_non_nine:
+                max_number += 9
+            else:
+                max_number += int(d)
+        
+        min_number = 0
+        for d in digits:
+            min_number *= 10
+            if d == first_non_zero:
+                min_number += 0
+            else:
+                min_number += int(d)
+        
+        return max_number - min_number
+    
+class Solution:
+    def minMaxDifference(self, num: int) -> int:
+        '''
+        find the most siginicatn digit from the left that is 9 and change all its occruences to 9, this will make it maximum
+        to make it mimum, take the frist non zero digit from the left and make all its occurences 0
+        since the first digit isnt'a zero, use that occurences
+        '''
+        max_ = str(num)
+        min_ = str(num)
+        pos = 0
+
+        while pos < len(max_) and max_[pos] == '9':
+            pos += 1
+        
+        if pos < len(max_):
+            max_ = max_.replace(max_[pos],'9')
+        
+        min_ = min_.replace(min_[0],'0')
+        return int(max_) - int(min_)
