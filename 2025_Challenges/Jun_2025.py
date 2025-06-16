@@ -850,3 +850,61 @@ class Solution:
         
         min_ = min_.replace(min_[0],'0')
         return int(max_) - int(min_)
+    
+###########################################################
+# 1432. Max Difference You Can Get From Changing an Integer
+# 16JUN25
+###########################################################
+class Solution:
+    def maxDiff(self, num: int) -> int:
+        '''
+        we can pick a digit from num and change all its occurrences to another chosen digit
+        do this to make the max number and min number, and return max diff difference
+        there can be no leading zero's,
+        sine there are only two digits, try all of them and take max
+        '''
+        num = str(num)
+        max_num = int(num)
+        min_num = int(num)
+        for i in range(10):
+            for j in range(10):
+                changed = self.change(num,str(i),str(j))
+                max_num = max(max_num,changed)
+                min_num = min(min_num,changed)
+        
+        return max_num - min_num
+    def change(slef,num,x, y):
+        new_num = num.replace(x,y)
+        if new_num.startswith('0'):
+            return int(num)
+        return int(new_num)
+
+#same as previous problem, but careful with leading zeros, we need to make sure we have found at least one number
+class Solution:
+    def maxDiff(self, num: int) -> int:
+        '''
+        max num is easy, just make the most signigicant digit that isn't a 9 and make all its occruences 9
+        for min number, we need to make we don't replace a number with a leading zero
+        replace most signiciant bit digit with 1
+        or find high-order digit that != the highest digit and replace with zero
+        '''
+
+        max_num = str(num)
+        min_num = str(num)
+
+        for i,ch in enumerate(max_num):
+            if ch != '9':
+                max_num = max_num.replace(ch,'9')
+                break
+        
+        for i, digit in enumerate(min_num):
+            if i == 0:
+                if digit != "1":
+                    min_num = min_num.replace(digit, "1")
+                    break
+            else:
+                if digit != "0" and digit != min_num[0]:
+                    min_num = min_num.replace(digit, "0")
+                    break
+
+        return int(max_num) - int(min_num)
