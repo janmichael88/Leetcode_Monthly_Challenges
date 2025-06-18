@@ -908,3 +908,99 @@ class Solution:
                     break
 
         return int(max_num) - int(min_num)
+
+########################################################
+# 2016. Maximum Difference Between Increasing Elements
+# 16JUN25
+#######################################################
+class Solution:
+    def maximumDifference(self, nums: List[int]) -> int:
+        '''
+        for some num[i], we need to find the largest num[j] that is on its right
+        similar to finding ramp
+        keep track of min while traversing, and if its smaller than nums[i] we can do it
+        '''
+        ans = float('-inf')
+        curr_min = float('inf')
+        for num in nums:
+            if num > curr_min:
+                ans = max(ans, num - curr_min)
+            curr_min = min(curr_min,num)
+        
+        if ans == float('-inf'):
+            return -1
+        
+        return ans
+    
+######################################################################
+# 3405. Count the Number of Arrays with K Matching Adjacent Elements
+# 17JUN25
+#######################################################################
+import math
+class Solution:
+    def countGoodArrays(self, n: int, m: int, k: int) -> int:
+        '''
+        this is a combinatorics problem, need number of arrays of size n,
+        where each element is in between [1,m], and there k elements that are next wo each other and are equal
+        need to be exactly k indices, where each index i, and arr[i-1] == arr[i]
+            numbers dont need to be the same, just the indices, if we want the k - 1 indices to be the same
+            we could just slide k numbers across the arrayy, and this can be done n - k times
+            if we were to split up k, then we would neet at least 2 spots where i and i+1
+        
+        we need k indicies, and there are exactly k-1 adjacent indices to place the same number
+        the first index, index 0, we no adjacent (i.e no 0 - 1), so it can be of any m numbers
+        for the middle part, we have (n-1) potential spotrs to place k adjcanet indices
+            this is comb(n-1,k)
+        for the remaining (n - 1 - k) spots, we are free to chose any (m-1) numbers
+            this is (m-1)**(n-k-1)
+        
+        its really just three parts
+        [ways to pick first number] * [ways to place (n-1) numbers in k indices] * [ways to place (m-1) numbers in (n-1-k) spots]
+        first part is m*(n-1)choose(x)*(the other parts that don't need to have arr[i-1] != arr[i])
+        ans is just m*comb(n-1,k)*(m-1)**(n-k-1)
+        '''
+        mod = 10**9 + 7
+        return m*math.comb(n-1,k)*self.fast_pow(m-1,n-k-1) % mod
+    
+    def fast_pow(self,base,power):
+        if power == 0:
+            return 1
+        half_power = self.fast_pow(base,power//2)
+        if power % 2 == 0:
+            return half_power*half_power
+        return base*half_power*half_power
+
+import math
+class Solution:
+    def countGoodArrays(self, n: int, m: int, k: int) -> int:
+        '''
+        pre-computing inverfactorial using modular multiplactive inverse
+        '''
+        self.MOD = 10**9 + 7
+        self.MX = 10**5
+
+        self.fact = [0] * self.MX
+        self.inv_fact = [0] * self.MX
+        
+        def qpow(x, n):
+            res = 1
+            while n:
+                if n & 1:
+                    res = res * x % self.MOD
+                x = x * x % self.MOD
+                n >>= 1
+            return res
+        
+        self.fact[0] = 1
+        for i in range(1, self.MX):
+            self.fact[i] = self.fact[i - 1] * i % self.MOD
+        self.inv_fact[self.MX - 1] = qpow(self.fact[self.MX - 1], self.MOD - 2)
+        for i in range(self.MX - 1, 0, -1):
+            self.inv_fact[i - 1] = self.inv_fact[i] * i % self.MOD
+
+        def comb(n, m):
+            return self.fact[n] * self.inv_fact[m] % self.MOD * self.inv_fact[n - m] % self.MOD
+
+
+
+        return comb(n - 1, k) * m % self.MOD * qpow(m - 1, n - k - 1) % self.MOD
