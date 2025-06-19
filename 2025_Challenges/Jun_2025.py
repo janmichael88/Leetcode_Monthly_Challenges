@@ -1004,3 +1004,36 @@ class Solution:
 
 
         return comb(n - 1, k) * m % self.MOD * qpow(m - 1, n - k - 1) % self.MOD
+
+#########################################################
+# 3567. Minimum Absolute Difference in Sliding Submatrix
+# 19JUN25
+########################################################
+class Solution:
+    def minAbsDiff(self, grid: List[List[int]], k: int) -> List[List[int]]:
+        '''
+        this is enumerration
+        for each (i,j) look at its k x k submatrix, and recorde the minimum absolute value between any two distance values
+        issue is getting data in right format
+        '''
+        m,n = len(grid),len(grid[0])
+        ans = [[float('-inf')]*(n - k + 1) for _ in range(m - k + 1)]
+        for i in range(m-k+1):
+            for j in range(n-k+1):
+                #look at the submatrix
+                #need two closet values, if theres only one, its zero
+                #otherwise sort and scan adjacent elements abs diff
+                values = set()
+                for ii in range(i,i+k,1):
+                    for jj in range(j,j+k,1):
+                        values.add(grid[ii][jj])
+                values = list(values)
+                values.sort()
+                if len(values) == 1:
+                    ans[i][j] = 0
+                else:
+                    temp = float('inf')
+                    for idx in range(1,len(values)):
+                        temp = min(temp, values[idx] - values[idx-1])
+                    ans[i][j] = temp
+        return ans
