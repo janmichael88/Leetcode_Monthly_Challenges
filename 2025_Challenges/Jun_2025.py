@@ -1037,3 +1037,84 @@ class Solution:
                         temp = min(temp, values[idx] - values[idx-1])
                     ans[i][j] = temp
         return ans
+    
+##########################################################
+# 2294. Partition Array Such That Maximum Difference Is K
+# 19JUN25
+###########################################################
+class Solution:
+    def partitionArray(self, nums: List[int], k: int) -> int:
+        '''
+        we need to partition nums into subsequences, such that the difference between the max and min values in each subsequence is at most k
+        return min number of subsequences
+        what if we first sort
+        [1, 2, 3, 5, 6], k = 2
+        sort and check current min and max, if we go past 2, increment into a new subsequnece
+        '''
+        nums.sort()
+        n = len(nums)
+        ans = 1
+        curr_min = nums[0]
+        for i in range(1,n):
+            if nums[i] - curr_min > k:
+                ans += 1
+                curr_min = nums[i]
+        return ans
+    
+#####################################################
+# 3443. Maximum Manhattan Distance After K Changes
+# 20JUN25
+###################################################
+class Solution:
+    def maxDistance(self, s: str, k: int) -> int:
+        '''
+        we can only change at most k characters, 
+            could be none at all
+        check all directions if they live in NE,NE,SE,SW
+        if a direction in s i in the checking quadrant, it contributes to the overall manahat distance
+        otherwise if have k to negate it, we do
+        if we don't we decreement
+        '''
+        max_dist = 0
+        #check quads
+        for quad in ['NE','NW','SE','SW']:
+            curr_dist = 0
+            curr_k = k
+            for d in s:
+                if d in quad:
+                    curr_dist += 1
+                else:
+                    if curr_k > 0:
+                        curr_dist += 1
+                        curr_k -= 1
+                    else:
+                        curr_dist  -= 1
+                max_dist = max(max_dist,curr_dist)
+        
+        return max_dist
+    
+class Solution:
+    def maxDistance(self, s: str, k: int) -> int:
+        '''
+        overll manhat distance from origin would be
+        abs(count(N) - count(S)) + abs(count(E) - count(W))
+        keep track of the counts of N,S,E,W
+        then we need to figure out how to use k at each step
+        for a direction, N <-> S or E <-> W, modify the smaller of them wiith k, this would extend in that direction
+        then try doing it with E W
+        '''
+        max_dist = 0
+        counts = Counter()
+        for d in s:
+            counts[d] += 1
+            #these count the modifications, applied to each direcition
+            #these add to the distance
+            n_to_s_mods = min(counts['N'],counts['S'],k)
+            e_to_w_mods = min(counts['E'],counts['W'], k - n_to_s_mods)
+            #get new manhate dist
+            new_n_to_s = abs(counts['N'] - counts['S']) + 2*n_to_s_mods
+            new_e_to_w = abs(counts['E'] - counts['E']) + 2*e_to_w_mods
+            max_dist = max(max_dist, new_n_to_s + new_e_to_w)
+        
+        return max_dist
+        
