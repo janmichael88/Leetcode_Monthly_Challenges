@@ -1118,3 +1118,36 @@ class Solution:
         
         return max_dist
         
+###################################################
+# 3085. Minimum Deletions to Make String K-Special
+# 22JUN25
+###################################################
+class Solution:
+    def minimumDeletions(self, word: str, k: int) -> int:
+        '''
+        for all (i,j) indices in the string, such that (i,j)
+        we need |freq(word[i]) - freq(word[j])| <= k 
+        return minimum number of characters i need to delete to make k-special
+        k can b <= 0
+        start with the smallest character, then go through the counts and delete if we have to
+        basically we need to make all abs_diff(pairwise counts) in word <= k 
+        '''
+        #check all a-z pairs
+        counts = Counter(word)
+        #fix character for all  charaterrs in counts,
+        #and assume this to be the smallest, normalize to the minimum
+        ans = float('inf')
+        for char in counts:
+            min_count = counts[char]
+            deletions = 0
+            for other_char in counts:
+                if counts[other_char] < min_count:
+                    #the current min_count is the smallest
+                    deletions += counts[other_char]
+                #reduce so that abs(counts[other_count] - min_count) <= k
+                elif counts[other_char] - min_count > k:
+                    deletions += counts[other_char] - min_count - k
+            #assuming the current char wast the min to be reduced too
+            ans = min(deletions,ans)
+        
+        return ans
