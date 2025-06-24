@@ -1151,3 +1151,134 @@ class Solution:
             ans = min(deletions,ans)
         
         return ans
+    
+###############################################
+# 2138. Divide a String Into Groups of Size k
+# 22JUN25
+###############################################
+class Solution:
+    def divideString(self, s: str, k: int, fill: str) -> List[str]:
+        '''
+        just fill the ending with x
+        '''
+        n = len(s)
+        ans = []
+        for i in range(0,n,k):
+            ans.append(s[i:i+k])
+        
+        ans[-1] += fill*(k - len(ans[-1]))
+        
+        return ans
+    
+########################################
+# 2081. Sum of k-Mirror Numbers
+# 23JUN25
+#########################################
+#generating palindromes in base 10 will TLE
+class Solution:
+    def kMirror(self, k: int, n: int) -> int:
+        '''
+        checkin base k is easy,just do modk and //k
+        n is in between 1 and 30, so at must there can be 30 k-mirror numbers
+        so generate them in order, first start with numbers [1,9]
+        start with 1, we can do 11,
+        crux of the problem is making palindromes in order
+        we could introduce 12, becase on the next level we could get 121, but there are more base-10 palindromes < 121
+        this is probably the harder of the two problems
+        1,111,121,131....191
+        2,212,222,232...292
+        mirror half digits
+        if we are given a d digit number, we can make a 2d digit number by doing num + num[::-1]
+        we can get a 2d-1 digit number by doing num + num[-2::-1]
+        '''
+        #print(self.base_k(151,3))
+        nums = []
+        q = deque(list('0123456789'))
+        #for each number mirror, then try playing digits 0 to 9, and half mirrow
+        while q:
+            N = len(q)
+            is_broken = False
+            for _ in range(N):
+                curr = q.popleft()
+                if curr == '0':
+                    continue
+                int_num = int(curr)
+                if self.check(int_num,10) and self.check(int_num,k):
+                    nums.append(int_num)
+                    if len(nums) >= n:
+                        is_broken = True
+                        break
+                #even palidrome
+                even_pal = curr + curr[::-1]
+                #print(even_pal)
+                q.append(even_pal)
+                #then fix digit and mirror half
+                for d in '0123456789':
+                    temp = curr + d
+                    next_mirror = temp + temp[-2::-1]
+                    q.append(next_mirror)
+            if is_broken:
+                break
+        return sum(nums)
+
+    def check(self,n,k):
+        ans = []
+        while n:
+            ans.append(n % k)
+            n //= k
+        
+        return ans == ans[::-1]
+    
+class Solution:
+    def kMirror(self, k: int, n: int) -> int:
+        '''
+        checkin base k is easy,just do modk and //k
+        n is in between 1 and 30, so at must there can be 30 k-mirror numbers
+        so generate them in order, first start with numbers [1,9]
+        start with 1, we can do 11,
+        crux of the problem is making palindromes in order
+        we could introduce 12, becase on the next level we could get 121, but there are more base-10 palindromes < 121
+        this is probably the harder of the two problems
+        1,111,121,131....191
+        2,212,222,232...292
+        mirror half digits
+        if we are given a d digit number, we can make a 2d digit number by doing num + num[::-1]
+        we can get a 2d-1 digit number by doing num + num[-2::-1]
+        How can be sure that there will b n k-palindrome numbers in the range of base 10 numbers from [1 to 10**62]?
+        '''
+        def gen():
+            '''
+            generate for value with different length
+            when i == 0: num：[1, 10)
+            size of num: 1, 2 -> 1 or 11
+            when i == 1: [10, 100)
+            size of num: 3, 4 -> 10 or 101
+            when i == 2: [100, 1000)
+            size of num: 5, 6 -> 10001 or 100001
+            
+            the num will be increasing
+            '''
+            for i in range(30):
+                for num in range(10**i, 10**(i+1)):
+                    s = str(num) + str(num)[::-1][1:]
+                    yield int(s)
+                for num in range(10**i, 10**(i+1)):
+                    s = str(num) + str(num)[::-1]
+                    yield int(s)
+        
+        ans = 0
+        for num in gen():
+            if self.check(num,k):
+                ans += num
+                n -= 1
+            if n == 0:
+                break
+        return ans
+
+    def check(self,n,k):
+        ans = []
+        while n:
+            ans.append(n % k)
+            n //= k
+        
+        return ans == ans[::-1]
