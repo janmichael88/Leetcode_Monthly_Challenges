@@ -1282,3 +1282,34 @@ class Solution:
             n //= k
         
         return ans == ans[::-1]
+    
+################################################
+# 2200. Find All K-Distant Indices in an Array
+# 23JUN25
+#################################################
+class Solution:
+    def findKDistantIndices(self, nums: List[int], key: int, k: int) -> List[int]:
+        '''
+        we need to examine only the indices in nums, where a number is k
+        for each index i where nums[i] == key,
+            grab all the ones k away from it, sort
+            i can grab the intervals
+        '''
+        intervals = []
+        n = len(nums)
+        for i,num in enumerate(nums):
+            if num == key:
+                left = max(0,i-k)
+                right = min(n-1,i+k)
+                if not intervals:
+                    intervals.append([left,right])
+                elif intervals[-1][0] <= left <= intervals[-1][1]:
+                    intervals[-1][1] = max(intervals[-1][1],right)
+                else:
+                    intervals.append([left,right])
+        ans = []
+        for l,r in intervals:
+            for k in range(l,r+1):
+                ans.append(k)
+        
+        return ans
