@@ -1256,16 +1256,29 @@ class Solution:
             when i == 2: [100, 1000)
             size of num: 5, 6 -> 10001 or 100001
             
-            the num will be increasing
+            we hae full coverage at 6, resulting in 1999998 numbers
+            the last being: 999999999999
+            but really this will take at most
+                6*(10**6 - 10**5) time, which is allowable (10**6 upper bound by LC)
+            
             '''
-            for i in range(30):
+            #we have full coverage at 6
+            for i in range(6):
+                #odd
                 for num in range(10**i, 10**(i+1)):
                     s = str(num) + str(num)[::-1][1:]
                     yield int(s)
+                #even
                 for num in range(10**i, 10**(i+1)):
                     s = str(num) + str(num)[::-1]
                     yield int(s)
-        
+        '''
+        temp = []
+        for num in gen():
+            temp.append(num)
+        print(len(temp))
+        print(temp[-1])
+        '''
         ans = 0
         for num in gen():
             if self.check(num,k):
@@ -1313,3 +1326,90 @@ class Solution:
                 ans.append(k)
         
         return ans
+    
+#########################################
+# 683. K Empty Slots
+# 24JUN25
+#########################################
+from sortedcontainers import SortedList
+class Solution:
+    def kEmptySlots(self, bulbs: List[int], k: int) -> int:
+        '''
+        brute force would be simulate the days, and searach in the binary array where  there are k bulbs turned off
+        need an effcient way to check if there are k bublbs off between two bulbs that are on
+        maintaine sortedlist and add in, meaning we've turned on the bulb
+        then look to its neighbord left and right and check that there are  bulbs in between them
+        '''
+        on = SortedList([])
+        for i,b in enumerate(bulbs):
+            on.add(b)
+            #find position in range
+            pos = on.bisect_left(b)
+            #pos = on.index(b)
+            #either works
+            if pos - 1 >= 0 and on[pos] - on[pos-1] == k+1:
+                print(on[pos],on[pos-1])
+                return i+1
+            if pos + 1 < len(on) and on[pos+1] - on[pos] == k + 1:
+                return i+1
+
+        return -1
+    
+################################################
+# 2040. Kth Smallest Product of Two Sorted Arrays
+# 25JUN25
+#################################################
+#clever counting, and binary search
+class Solution:
+    def kthSmallestProduct(self, nums1: List[int], nums2: List[int], k: int) -> int:
+        '''
+        if all the numbers are positive, then we could use the merge two sorted arrays approacch
+        pick the smaller of two, and we can advance it by len(nums1) or len(nums2)
+        now if we have negative number, and we keep multiplying it by largest numbers (that are still postive)
+        this makes it increasing
+        four cases
+        nums1 | nums2
+         pos  | pos
+         pos  | neg
+         neg  | pos
+         neg  | neg
+        
+        binary search on the answer between -10**5 and 10**5
+        we need to count the number of elements <= some number, call it mid
+        if count < k, need to move up
+        if count > k, move number down
+        so how can we count number of products (given nums[1] and nums[2]) that are less than a number mid
+        fix number of num1s, call it n1
+        if n1 >= 0, then the array of product with nums2 is increasing, so we can use binary search
+        if n1 < 0, the array is decreasing, so we want from the end
+        if n1 == 0, then all values in nums2*n1 are == 0,
+            update only if mid >= 0
+
+        clever counting
+        '''
+        left = -10**10
+        right = 10**10
+        while left <= right:
+            mid = left + (right - left)//2
+            #count
+            count = self.count(nums1,nums2,mid)
+            if count < k:
+                left = mid + 1
+            else:
+                right = mid - 1
+        return left
+    
+    #count number of products less than some mid
+    def count(self,nums1,nums2,mid):
+        total = 0
+        for n1 in nums1:
+            if n1 > 0: 
+                #bisect or bisect_right works here
+                #doing ceuling on both works
+                total += bisect.bisect_right(nums2, ceil(mid//n1))
+            if n1 < 0: 
+                total += len(nums2) - bisect.bisect_left(nums2, ceil(mid/n1))
+            if n1 == 0 and mid >= 0: 
+                total += len(nums2)
+
+        return total
