@@ -1413,3 +1413,110 @@ class Solution:
                 total += len(nums2)
 
         return total
+
+#breaking up the two binary search variants, but it gets TLE
+class Solution:
+    def kthSmallestProduct(self, nums1, nums2, k):
+        lo, hi = -10**10, 10**10
+        while lo < hi:
+            mid = lo + (hi - lo) // 2
+            if self.check(nums1, nums2, mid) >= k:
+                hi = mid
+            else:
+                lo = mid + 1
+        return lo
+
+    def check(self, nums1, nums2, target):
+        res = 0
+        for num in nums1:
+            if num < 0:
+                # Products are descending, count how many num * nums2 <= target
+                res += self.find1(nums2, num, target)
+            elif num > 0:
+                # Products are ascending
+                res += self.find2(nums2, num, target)
+            else:
+                res += len(nums2) if target >= 0 else 0
+        return res
+
+    #find leftmost index, where n1*nums2[mid] <= target
+    def find1(self, nums2, n1, target):
+        lo, hi = 0, len(nums2) - 1
+        ans = len(nums2)  # Default to len(nums2) if no valid index found
+
+        while lo <= hi:
+            mid = lo + (hi - lo) // 2
+            if n1 * nums2[mid] <= target:
+                ans = mid
+                hi = mid - 1
+            else:
+                lo = mid + 1
+
+        return len(nums2) - ans
+
+    #find rightmost index where n1*nums2[mid] <= target
+    def find2(self, nums2, n1, target):
+        lo, hi = 0, len(nums2) - 1
+        ans = -1  # Default to -1 if no valid index found
+
+        while lo <= hi:
+            mid = lo + (hi - lo) // 2
+            if n1 * nums2[mid] <= target:
+                ans = mid
+                lo = mid + 1
+            else:
+                hi = mid - 1
+
+        return ans + 1  # Total count is index + 1
+
+#################################################
+# 2014. Longest Subsequence Repeated k Times
+# 27JUN25
+#################################################
+class Solution:
+    def longestSubsequenceRepeatedK(self, s: str, k: int) -> str:
+        '''
+        there's a limit on the longest longest subsequence cannot exceed len(s)//k times
+        it must be repeated k times
+        try all candidates in reverse lexogrphical order, and check that they are present in s k times
+        we need to use backtracking and generate the candidates in order
+        we can only use the characters in the string
+        find characters that could be in the potential answer
+            a char >= k can be use in the answer up to count(ch) // k times
+        n could be 2000
+        in which case k could be as large 2000//8 = 250
+        so we can try all
+        start from each base character and move up
+        '''
+        counts = Counter(s)
+        n = len(s)
+        largest_size = n // k
+        possible_chars = []
+        for ch,c in sorted(counts.items(), key = lambda x: x[0], reverse = True):
+            if c >= k:
+                possible_chars.append(ch)
+        if not possible_chars:
+            return ""
+        #print(possible_chars)
+        #print(self.is_sub_seq(s,'ttlttl'))
+        #enumerate with q, starting from all single chars
+        ans = ""
+        q = deque(possible_chars) #build them one letter at a time
+        while q:
+            curr = q.popleft()
+            if len(curr) > len(ans):
+                ans = curr
+            for next_ch in possible_chars:
+                next_pattern = curr + next_ch
+                if self.is_sub_seq(s,next_pattern*k):
+                    q.append(next_pattern)
+        return ans
+    def is_sub_seq(self, s,t):
+        #check t is sub seq of s
+        i = 0
+        for ch in s:
+            if ch == t[i]:
+                i += 1
+            if i == len(t):
+                return True
+        return False
