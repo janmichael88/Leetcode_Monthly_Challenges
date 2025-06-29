@@ -1520,3 +1520,69 @@ class Solution:
             if i == len(t):
                 return True
         return False
+    
+################################################################################
+# 1498. Number of Subsequences That Satisfy the Given Sum Condition (REVISTED)
+# 29JUN25
+###############################################################################
+class Solution:
+    def numSubseq(self, nums: List[int], target: int) -> int:
+        '''
+        sort the array and fix for each index i,
+        we need to find the right most index j, such that nums[i] + nums[j] <= target
+        oh sum of min and max <= target
+        the size would be (j - i + 1) then count number of subsequences
+        the answer is 2**k - 1 subsequences
+        '''
+        N = len(nums)
+        mod = 10**9 + 7
+        nums.sort()
+        
+        count = 0
+        for left,num in enumerate(nums):
+            #binary serach, look for the rightmost number that is <= target, but make sure the index is >= left
+            right = self.binary_search(nums,num,target)
+            if right >= left:
+                #find size of array
+                k = right - left
+                count += 2**k
+                count %= mod
+        return count % mod
+
+    def binary_search(self,nums,num,target):
+        ans = -1
+        left = 0
+        right = len(nums) - 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if num + nums[mid] <= target:
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        return ans
+
+
+#linear time solution, after sorting of course
+class Solution:
+    def numSubseq(self, nums: List[int], target: int) -> int:
+        '''
+        we can just sort and user two pointers
+        if nums[left] + nums[right] <= target, we can use the whole thing
+        use the smaller sum
+        '''
+        nums.sort()
+        mod = 10**9 + 7
+        count = 0
+        left = 0
+        right = len(nums) - 1
+        while left <= right:
+            if nums[left] + nums[right] <= target:
+                k = right - left
+                count += 2**k
+                count %= mod
+                left += 1
+            else:
+                right -= 1
+        
+        return count
