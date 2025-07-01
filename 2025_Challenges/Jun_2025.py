@@ -1586,3 +1586,146 @@ class Solution:
                 right -= 1
         
         return count
+    
+###########################################################################
+# 426. Convert Binary Search Tree to Sorted Doubly Linked List (REVISTED)
+# 30JUN25
+###########################################################################
+# Definition for a Node.
+class Node:
+    def __init__(self, val, left=None, right=None):
+        self.val = val
+        self.left = left
+        self.right = right
+
+
+class Solution:
+    def treeToDoublyList(self, root: 'Node') -> 'Node':
+        '''
+        Convert BST to circular doubly linked list using extra space.
+        In-order traversal: left, node, right.
+        '''
+        if not root:
+            return None
+
+        inorder_nodes = self.in_order(root)
+
+        dummy = Node(0)
+        prev = dummy
+
+        for node in inorder_nodes:
+            prev.right = node
+            node.left = prev
+            prev = node
+
+        # Complete the circular link
+        head = dummy.right
+        head.left = prev
+        prev.right = head
+
+        return head
+
+    def in_order(self, node):
+        if not node:
+            return []
+        
+        return self.in_order(node.left) + [node] + self.in_order(node.right)
+
+###################################################
+# 594. Longest Harmonious Subsequence
+# 30JUN25
+###################################################
+class Solution:
+    def findLHS(self, nums: List[int]) -> int:
+        '''
+        a harmonious subsequence is where a subsequences max and in value is exactly 1
+        we can sort and use two pointers
+        fix i, and look for the right most index where the value is num[i] + 1
+
+        '''
+        nums.sort()
+        ans = 0
+        n = len(nums)
+        for left in range(n):
+            right = self.binary_search(nums,nums[left] + 1)
+            if right >= left and nums[left] != nums[right]:
+                ans = max(ans,right - left + 1)
+        
+        return ans
+    
+    def binary_search(self,nums,target):
+        #need rightmost index of target
+        left = 0
+        right = len(nums) - 1
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if nums[mid] <= target:
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        return ans
+
+#two pointer after sorting
+class Solution:
+    def findLHS(self, nums: List[int]) -> int:
+        '''
+        a harmonious subsequence is where a subsequences max and in value is exactly 1
+        we can sort and use two pointers
+        fix i, and look for the right most index where the value is num[i] + 1
+
+        '''
+        nums.sort()
+        ans = 0
+        n = len(nums)
+        left = 0
+        for right, num in enumerate(nums):
+            while nums[right] - nums[left] > 1:
+                left += 1
+            
+            if nums[right] - nums[left] == 1:
+                ans = max(ans, right - left + 1)
+            
+            right += 1
+        
+        return ans
+    
+#constant time with hashmap
+class Solution:
+    def findLHS(self, nums: List[int]) -> int:
+        '''
+        we can use count map
+        then check for num and num + 1
+        '''
+        counts = Counter(nums)
+        ans = 0
+        for k,v in counts.items():
+            if k + 1 in counts:
+                ans = max(ans, counts[k] + counts[k+1])
+        
+        return ans
+    
+##############################################################
+# 1764. Form Array by Concatenating Subarrays of Another Array
+# 30JUN25
+##############################################################
+class Solution:
+    def canChoose(self, groups: List[List[int]], nums: List[int]) -> bool:
+        '''
+        need to find all groups in nums, and it must be in order
+        the groups must also be disjoint
+        need to match in order, match the leftmost part of nums with the i'th subarray
+        '''
+        n = len(nums)
+        nums_ptr = 0
+
+        for i,g in enumerate(groups):
+            k = len(g)
+            while nums_ptr < n and nums[nums_ptr:nums_ptr+k] != g:
+                nums_ptr += 1
+            if nums_ptr == n:
+                return False
+            if nums[nums_ptr:nums_ptr+k] == g:
+                nums_ptr = nums_ptr + k
+        return True

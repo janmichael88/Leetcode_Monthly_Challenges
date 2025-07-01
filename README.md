@@ -75,11 +75,15 @@
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202502.gif" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202503.gif" width="100"></td>
   </tr>
+    <tr>
+    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202504.gif" width="100"></td>
+    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202506.gif" width="100"></td>
+  </tr>
 </table>
 
 
 In Progress:
-* Apr 2025
+* Jul 2025
 
 ### Completed:
 Column 1 | Column 2 | Column 3
@@ -103,4 +107,4 @@ Mar 2024 | Apr 2024 | May 2024
 Jun 2024 | Jul 2024 | Aug 2024
 Sep 2024 | Oct 2024 | Nov 2024
 Dec 2024 | Jan 2025 | Feb 2025
-Mar 2025 |          |
+Mar 2025 | Apr 2025 | Jun 2025
