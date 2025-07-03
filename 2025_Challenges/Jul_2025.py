@@ -1,0 +1,282 @@
+###########################################
+# 3330. Find the Original Typed String I
+# 01JUL25
+###########################################
+#using stack
+class Solution:
+    def possibleStringCount(self, word: str) -> int:
+        '''
+        if the display is aaaa
+        the original could have been a,aa,aaa,or aaaa
+        the key may have been held, more than once
+        abbcccc
+        (1-1) + (2-1) + (4-1)
+        0 + 1 + 4
+
+        count consecutive chars, call it size k, increment by k-1
+        '''
+        ans = 1
+        stack = []
+        for ch in word:
+            if stack and stack[-1] != ch:
+                k = len(stack)
+                ans += (k-1)
+                stack = []
+            stack.append(ch)
+        if stack:
+            ans += len(stack) - 1
+        return ans
+
+#constant, just use pointers
+class Solution:
+    def possibleStringCount(self, word: str) -> int:
+        '''
+        if the display is aaaa
+        the original could have been a,aa,aaa,or aaaa
+        the key may have been held, more than once
+        abbcccc
+        (1-1) + (2-1) + (4-1)
+        0 + 1 + 4
+
+        count consecutive chars, call it size k, increment by k-1
+        '''
+        ans = 1
+        i = 0
+        while i < len(word):
+            j = i+1
+            while j < len(word) and word[i] == word[j]:
+                j += 1
+            
+            ans += (j-i - 1)
+            i = j
+        
+        return ans
+            
+##########################################
+# 3333. Find the Original Typed String II
+# 02JUL25
+#########################################
+#MLE
+class Solution:
+    def possibleStringCount(self, word: str, k: int) -> int:
+        '''
+        need number of possble strings of at least size k, any string with length >= k
+        notice we don't have the "once" criteria as in the first problem
+        dp starting from the beginnning, we can take the first character
+            if we have taken this character is the next i+1 matches it, we can choose to take it or not
+        
+        then we'd need to keep track of index i and length
+        which is O(n*k), not gonna work, anythin n*k is not going to work
+        i can break up the string into consectuive groups by chars
+        aabbccdd -> [2,2,2,2],
+        then i need to build an arrayy such that for each num i need to use range(1,num+1) and have such that the sum is >= k
+        you can just enumerate them, use bfs
+        '''
+        arr = []
+        #make consectuive lengths array
+        curr_length = 0
+        prev = -1
+        for ch in word:
+            if prev == -1:
+                prev = ch
+                curr_length = 1
+            elif ch == prev:
+                curr_length += 1
+            else:
+                arr.append(curr_length)
+                prev = ch
+                curr_length = 1
+        arr.append(curr_length)
+
+        curr = list(range(1,arr[0]+1))
+        for next_char_count in arr[1:]:
+            #print(curr,next_char_count)
+            next_level = []
+            for curr_count in curr:
+                for i in range(1,next_char_count+1):
+                    next_level.append(curr_count+i)
+            curr = next_level
+        ans = 0
+        for c in curr:
+            if c >= k:
+                ans += 1
+        return ans
+    
+#MLE
+class Solution:
+    def possibleStringCount(self, word: str, k: int) -> int:
+        '''
+        need number of possble strings of at least size k, any string with length >= k
+        notice we don't have the "once" criteria as in the first problem
+        dp starting from the beginnning, we can take the first character
+            if we have taken this character is the next i+1 matches it, we can choose to take it or not
+        
+        then we'd need to keep track of index i and length
+        which is O(n*k), not gonna work, anythin n*k is not going to work
+        i can break up the string into consectuive groups by chars
+        aabbccdd -> [2,2,2,2],
+        then i need to build an arrayy such that for each num i need to use range(1,num+1) and have such that the sum is >= k
+
+        counting, inclusion/exclusion
+        count the total number of straings we can have, which is just the prodcut of all the run lenghts
+        then we substract the count of run lenghts that are 1 to k-1
+        crux of the problem:
+            so how can we caluclate the number of possible works for each length from 1 to k-1
+
+        '''
+        #just a cool way to deal with mod
+        mod_mul = lambda a,b : (a*b) % 10**9 + 7
+        mod_add = lambda a,b : (a+b) % 10**9 + 7
+        mod_sub = lambda a,b : (a-b) % 10**9 + 7
+
+        arr = []
+        #make consectuive lengths array
+        curr_length = 0
+        prev = -1
+        for ch in word:
+            if prev == -1:
+                prev = ch
+                curr_length = 1
+            elif ch == prev:
+                curr_length += 1
+            else:
+                arr.append(curr_length)
+                prev = ch
+                curr_length = 1
+        arr.append(curr_length)
+        mod = 10**9 + 7
+        #first compute total possible of any length k
+        total = 1
+        for l in arr:
+            total *= l % mod
+        total %= mod
+
+        pref_sum = [0]
+        for num in arr:
+            pref_sum.append(pref_sum[-1] + num)
+        
+        memo = {}
+        #calculate number of ways to make string <= j, using the first i run lenthgs
+        #we would need dp(0,k-1) then substract that from total
+        #can't do it top down, need to do it bottom up
+        n = len(arr)
+        memo = {}
+
+        #start at i = 0, and with k-1
+        def dp(i, remaining):
+            mod = 10**9 + 7
+            if remaining < 0:
+                return 0
+            if i >= n:
+                if remaining == 0:
+                    return 1
+                return 0
+            if (i,remaining) in memo:
+                return memo[(i,remaining)]
+            count = 0
+            max_take = min(arr[i],remaining)
+            for take in range(1,max_take + 1):
+                count += dp(i+1,remaining-take) % mod
+            memo[(i,remaining)] = count
+            return count
+        
+        exclude = 0
+        for i in range(1,k):
+            exclude += dp(0,i) % mod
+        return (total - exclude) % mod
+
+#need to use prefsums, but carry each pref sum to next state
+class Solution:
+    def possibleStringCount(self, word: str, k: int) -> int:
+        '''
+        need number of possble strings of at least size k, any string with length >= k
+        notice we don't have the "once" criteria as in the first problem
+        dp starting from the beginnning, we can take the first character
+            if we have taken this character is the next i+1 matches it, we can choose to take it or not
+        
+        then we'd need to keep track of index i and length
+        which is O(n*k), not gonna work, anythin n*k is not going to work
+        i can break up the string into consectuive groups by chars
+        aabbccdd -> [2,2,2,2],
+        then i need to build an arrayy such that for each num i need to use range(1,num+1) and have such that the sum is >= k
+
+        counting, inclusion/exclusion
+        count the total number of straings we can have, which is just the prodcut of all the run lenghts
+        then we substract the count of run lenghts that are 1 to k-1
+        crux of the problem:
+            so how can we caluclate the number of possible works for each length from 1 to k-1
+
+        '''
+        #just a cool way to deal with mod
+        mod_mul = lambda a,b : (a*b) % 10**9 + 7
+        mod_add = lambda a,b : (a+b) % 10**9 + 7
+        mod_sub = lambda a,b : (a-b) % 10**9 + 7
+
+        arr = []
+        #make consectuive lengths array
+        curr_length = 0
+        prev = -1
+        for ch in word:
+            if prev == -1:
+                prev = ch
+                curr_length = 1
+            elif ch == prev:
+                curr_length += 1
+            else:
+                arr.append(curr_length)
+                prev = ch
+                curr_length = 1
+        arr.append(curr_length)
+        mod = 10**9 + 7
+        #first compute total possible of any length k
+        total = 1
+        n = len(arr)
+        for l in arr:
+            total *= l % mod
+        total %= mod
+
+        # dp[i][j]: number of ways to use first i groups to make length j
+        dp = [[0] * (k) for _ in range(n + 1)]
+        dp[0][0] = 1  # Base: 0 groups to make length 0
+
+        for i in range(1, n + 1):
+            prefix = [0] * (k + 1)
+            for j in range(k):
+                prefix[j + 1] = (prefix[j] + dp[i - 1][j]) % mod
+
+            for j in range(i, k):
+                min_take = 1
+                max_take = min(arr[i - 1], j - (i - 1))
+                if max_take < min_take:
+                    continue
+                dp[i][j] = (prefix[j - min_take + 1] - prefix[j - max_take]) % mod
+
+        exclude = sum(dp[n][length] for length in range(1, k)) % mod
+
+        return (total - exclude + mod) % mod
+
+#this on actually passes though... fuck
+mod_mul = lambda a, b: (a * b) % 1_000_000_007
+mod_add = lambda a, b: (a + b) % 1_000_000_007
+mod_sub = lambda a, b: (a - b) % 1_000_000_007
+
+class Solution:
+    def possibleStringCount(self, word: str, k: int) -> int: 
+        segs = [1]
+        for i in range(1, len(word)):
+            if word[i] != word[i-1]:
+                segs.append(1)
+            else:
+                segs[-1] += 1
+        total = reduce(mod_mul, segs)
+        if k <= len(segs):
+            return total
+        
+        dp = [1] + ([0] * (k-1))
+        for i in range(1, len(segs)+1):
+            prefix = list(accumulate(dp, mod_add, initial=0))
+            dp = [0] * k
+            for j in range(i, k):
+                dp[j] = mod_sub(prefix[j], prefix[j - min(segs[i-1], j-i+1)])
+        less_than_k = reduce(mod_add, dp)
+        return mod_sub(total, less_than_k)
