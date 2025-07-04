@@ -280,3 +280,56 @@ class Solution:
                 dp[j] = mod_sub(prefix[j], prefix[j - min(segs[i-1], j-i+1)])
         less_than_k = reduce(mod_add, dp)
         return mod_sub(total, less_than_k)
+    
+#################################################
+# 3304. Find the K-th Character in String Game I
+# 03JUL25
+################################################
+class Solution:
+    def kthCharacter(self, k: int) -> str:
+        '''
+        constrains are small enough to simulate
+        '''
+        word = ['a']
+        for _ in range(k):
+            next_chars = []
+            for ch in word:
+                delta = ord(ch) - ord('a')
+                delta += 1 % 26
+                temp = chr(ord('a') + delta)
+                next_chars.append(temp)
+            
+            word.extend(next_chars)
+            if len(word) >= k:
+                return word[k-1]
+        return word[k-1]
+    
+#log(k) time??? >.>
+class Solution:
+    def kthCharacter(self, k: int) -> str:
+        '''
+        logK solution
+        observe that the string doubles every time, and k is <= 500
+        even at 2**26, this is still way less than the limit of 500, so we don't need to worrk
+        next notice, that the new half appended to the string, is just the old half, but every char is +1
+        after k operations, the length is now 2**k
+        to get the character at index i, depends on a previous character before it
+            its the result of adding 1 to a character in the previous string
+        since we double the length every time, that previous character has index i-p
+            where p is the previous length of worst and the largest power of 2 <= i
+        we have getchar(i) = getchar(i-p) + 1
+            where p islargest power of <= i
+        recally base case is getChar(0) == 'a'
+        so we must continously divide i by the largest power of 2 <= i, and keep track of how man divisions
+        '''
+        index = k-1
+        increments = 0
+        while index > 0:
+            p = 1
+            while p*2 <= index:
+                p = p*2
+            increments += 1
+            index -= p
+
+        return chr(ord('a') + (increments % 26))  
+        
