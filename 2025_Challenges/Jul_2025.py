@@ -333,3 +333,72 @@ class Solution:
 
         return chr(ord('a') + (increments % 26))  
         
+class Solution:
+    def kthCharacter(self, k: int) -> str:
+        '''
+        there's a pattern
+        0 a 1
+        1 ab 2
+        2 abbc 4
+        3 abbcbccd 8
+        4 abbcbccdbccddeed 16
+
+        now in the final string after 4 iterations notice, or when length is 2**4
+        1 a
+        2 b
+        3 b
+        4 c
+        5 b
+        6 c
+        7 c
+        8 d
+        9 b
+        10 c
+        11 c
+        12 d
+        13 c
+        14 d
+        15 d
+        16 e
+        if you track the numer of times a character shifted from a
+            its the number of 1's in k-1
+        in the binary representation of (k-1) tells us how many times a position has been carried forward and promoted by 1
+            for that kth character
+        '''
+        return chr(ord('a') + (k - 1).bit_count())
+    
+
+##########################################
+# 1865. Finding Pairs With a Certain Sum
+# 06JUL25
+##########################################
+class FindSumPairs:
+
+    def __init__(self, nums1: List[int], nums2: List[int]):
+        '''
+        nums1 is small, and is never mutated
+        iterate nums1 each time in count method
+
+        '''
+        self.nums1 = nums1
+        self.nums2 = nums2
+        self.counts2 = Counter(nums2)
+
+    def add(self, index: int, val: int) -> None:
+        prev = self.nums2[index]
+        self.counts2[prev] -= 1
+        if self.counts2[prev] == 0:
+            del self.counts2[prev]
+        self.nums2[index] += val
+        self.counts2[prev + val] += 1
+
+    def count(self, tot: int) -> int:
+        ans = 0
+        for num in self.nums1:
+            ans += self.counts2[tot - num]
+        return ans 
+
+# Your FindSumPairs object will be instantiated and called as such:
+# obj = FindSumPairs(nums1, nums2)
+# obj.add(index,val)
+# param_2 = obj.count(tot)
