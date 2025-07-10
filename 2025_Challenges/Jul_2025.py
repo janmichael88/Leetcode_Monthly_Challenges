@@ -402,3 +402,152 @@ class FindSumPairs:
 # obj = FindSumPairs(nums1, nums2)
 # obj.add(index,val)
 # param_2 = obj.count(tot)
+
+######################################################
+# 1353. Maximum Number of Events That Can Be Attended
+# 07JUL25
+######################################################
+class Solution:
+    def maxEvents(self, events: List[List[int]]) -> int:
+        '''
+        we only need tp be able to attend, we don't need to stay for the whole thing
+        sort on stats and tie break by end time
+        hints are mis leading, it even suggest min heap as a ds but not even saying we need to use minheap
+        the idea is to iterate on days, rather than events, look at the constrains, its feabile to to in 10^5 times some constant
+        we can only take one evevnt on any given day d,
+            so we should take the one with the earlier end time
+        
+        use min_heap of endtimes
+        '''
+        events.sort()
+        max_day = max([e for _,e in events])
+        min_heap_end_times = []
+        n = len(events)
+        ans = 0
+        j = 0
+
+        for d in range(1,max_day + 1):
+            #adding in candadate events that can be taken
+            while j < n and events[j][0] <= d:
+                end_time = events[j][1]
+                heapq.heappush(min_heap_end_times, end_time)
+                j += 1
+            #clear events who's end is bigger than the current d
+            while min_heap_end_times and min_heap_end_times[0] < d:
+                heapq.heappop(min_heap_end_times)
+            #we can take ane ven on this day, and use the even wih the earliest end time
+            if min_heap_end_times:
+                heapq.heappop(min_heap_end_times)
+                ans += 1
+        
+        return ans
+
+######################################################
+# 3439. Reschedule Meetings for Maximum Free Time I
+# 09JUL25
+######################################################
+#dammit, come back to this,
+#i dont think the logic is quite right
+class Solution:
+    def maxFreeTime(self, eventTime: int, k: int, startTime: List[int], endTime: List[int]) -> int:
+        '''
+        slide k blocks to make them that maximizes ungrouped area
+        sliding window of k+1 and store max gaps in window
+        problem is now how to to calucate gaps when expanding right and remove when shrinking left
+        inital start time is is zero
+        for right expansion
+            gaps are between curr start and previous end
+        for left contraction
+            when we advance by 1, check next start and current end
+        time intervals are increasing
+        don't forget we have eventTime variable, marking the end
+        '''
+        ans = 0
+        left = 0
+        n = len(startTime)
+        prev_end = 0
+        curr_gap = 0
+        for right in range(n+1):
+            if right == n:
+                gap_to_add = eventTime - prev_end
+                curr_gap += gap_to_add
+                prev_end = eventTime
+            else:
+                #expand right and
+                gap_to_add = startTime[right] - prev_end
+                curr_gap += gap_to_add
+                prev_end = endTime[right]
+            #if its too big
+            if right - left + 1 > k and left + 1 < right:
+                gap_to_remove = startTime[left + 1] - endTime[left]
+                curr_gap -= gap_to_remove
+                left += 1
+            ans = max(ans,curr_gap)
+            print(curr_gap)
+        return ans
+
+#finally
+class Solution:
+    def maxFreeTime(self, eventTime: int, k: int, startTime: List[int], endTime: List[int]) -> int:
+        '''
+        slide k blocks to make them that maximizes ungrouped area
+        sliding window of k+1 and store max gaps in window
+        problem is now how to to calucate gaps when expanding right and remove when shrinking left
+        inital start time is is zero
+        for right expansion
+            gaps are between curr start and previous end
+        for left contraction
+            when we advance by 1, check next start and current end
+        time intervals are increasing
+        don't forget we have eventTime variable, marking the end
+        merge k+1 gaps
+        '''
+        n = len(startTime)
+        ans = 0
+        curr_gap = 0
+        left = 0
+        prev_end = 0
+        gaps = [] #need to store gaps
+
+        for right in range(n + 1):
+            if right == n:
+                gap = eventTime - prev_end
+            else:
+                gap = startTime[right] - prev_end
+
+            curr_gap += gap
+            gaps.append(gap)
+            prev_end = eventTime if right == n else endTime[right]
+
+            # Maintain window size of at most k+1 elements, if we have k meeetings, then we have k+1 gaps
+            if right - left + 1 > k + 1:
+                #need to remove the leftmost gap contribution! 
+                curr_gap -= gaps[left]
+                left += 1
+
+            ans = max(ans, curr_gap)
+
+        return ans
+
+#prefix sum
+class Solution:
+    def maxFreeTime(self, eventTime: int, k: int, startTime: List[int], endTime: List[int]) -> int:
+        '''
+        prefix sum,
+        '''
+        pref_sum = [0]
+        n = len(startTime)
+        prev_end = 0
+        for i in range(n):
+            gap = startTime[i] - prev_end
+            pref_sum.append(pref_sum[-1] + gap)
+            prev_end = endTime[i]
+        
+        #last gap time
+        pref_sum.append(pref_sum[-1] + (eventTime - prev_end))
+        ans = 0
+        for right in range(1,len(pref_sum)):
+            if right - (k+1) >= 0:
+                ans = max(ans,pref_sum[right] - pref_sum[right - (k+1)])
+            
+        return ans
