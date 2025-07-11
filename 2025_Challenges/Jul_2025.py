@@ -551,3 +551,119 @@ class Solution:
                 ans = max(ans,pref_sum[right] - pref_sum[right - (k+1)])
             
         return ans
+    
+#####################################################
+# 3440. Reschedule Meetings for Maximum Free Time II
+# 11JUL25
+#####################################################
+class Solution:
+    def maxFreeTime(self, eventTime: int, startTime: List[int], endTime: List[int]) -> int:
+        '''
+        we can reschedule at most 1 meeting, still need to remain non overlapping
+        relative order of meetings can change
+        we can only move one meeting, if we have too
+            but we should move a meeting such that we have the largest gap
+        startTime and endTime are already sorted 
+        when we move an event to another sport, the gaps to the left of the event and to the right become joined
+        try to fill each gap
+        if we use an event to do so, see what happens to the change in the current gap (look left and right)
+        but we need to be able place it some where, so we need to effeciently check where we can place this block
+        we can use mapp or (pref max and suff max)
+        hashmap approach need to validate index with biscet
+        constant time with prefmax or suff max
+            pref max to store largest block beforoe index i
+            suff max to starge larvest black after index i
+        then check
+        '''
+        n = len(startTime)
+        pref_max = [0]*(n+1)
+        ans = 0
+        prev_end = 0
+        for i in range(n):
+            gap = startTime[i] - prev_end
+            ans = max(ans,gap)
+            prev_end = endTime[i]
+            pref_max[i+1] = max(pref_max[i],gap)
+        
+        suff_max = [0]*(n+1)
+        prev_start = eventTime
+        for i in range(n-1,-1,-1):
+            gap = prev_start - endTime[i]
+            suff_max[i] = max(suff_max[i+1],gap)
+            prev_start = startTime[i]
+        
+        for i in range(n):
+            #remove the event and find gap
+            left = 0 if i == 0 else endTime[i-1]
+            right = eventTime if i == n-1 else startTime[i+1]
+            gap_removal = right - left
+            event_duration = endTime[i] - startTime[i]
+            #if we can fix this event somehwere
+            if (pref_max[i] >= event_duration) or (suff_max[i+1] >= event_duration):
+                ans = max(ans,gap_removal)
+            #we cant fit it anywhwere, we just slide it
+            else:
+                ans = max(ans, gap_removal - event_duration)
+        
+        return ans
+
+#hashmap and effcient search through hashmap
+from collections import Counter
+import bisect
+
+class Solution:
+    def calculateGaps(self, eventTime: int, start: list[int], end: list[int]) -> list[int]:
+        gaps = []
+        prev = 0
+        for i in range(len(start)):
+            diff = start[i] - prev
+            gaps.append(diff)
+            prev = end[i]
+        if prev != eventTime:
+            gaps.append(eventTime - prev)
+        return gaps
+
+    def maxFreeTime(self, eventTime: int, start: list[int], end: list[int]) -> int:
+        n = len(start)
+        gaps = self.calculateGaps(eventTime, start, end)
+
+        # Frequency counter and sorted list for lower_bound behavior
+        intervalCnt = Counter(gaps)
+        sorted_gaps = sorted(intervalCnt.keys())
+
+        def remove_gap(gap):
+            intervalCnt[gap] -= 1
+            if intervalCnt[gap] == 0:
+                del intervalCnt[gap]
+                idx = bisect.bisect_left(sorted_gaps, gap)
+                if idx < len(sorted_gaps) and sorted_gaps[idx] == gap:
+                    sorted_gaps.pop(idx)
+
+        def add_gap(gap):
+            if gap not in intervalCnt:
+                bisect.insort(sorted_gaps, gap)
+            intervalCnt[gap] += 1
+
+        ans = 0
+        for i in range(n):
+            prev = 0 if i == 0 else end[i - 1]
+            next = eventTime if i == n - 1 else start[i + 1]
+
+            prevInterval = start[i] - prev
+            nextInterval = next - end[i]
+            currInterval = end[i] - start[i]
+
+            remove_gap(prevInterval)
+            remove_gap(nextInterval)
+
+            # Check if there is any gap >= current interval
+            idx = bisect.bisect_left(sorted_gaps, currInterval)
+            if idx < len(sorted_gaps):
+                ans = max(ans, next - prev)
+            else:
+                ans = max(ans, next - prev - currInterval)
+
+            add_gap(prevInterval)
+            add_gap(nextInterval)
+
+        return ans
