@@ -667,3 +667,136 @@ class Solution:
             add_gap(nextInterval)
 
         return ans
+
+#############################################################
+# 1900. The Earliest and Latest Rounds Where Players Compete
+# 12JUL25
+##############################################################
+#TLE
+class Solution:
+    def __init__(self):
+        self.min_r = float('inf')
+        self.max_r = float('-inf')
+
+    def dfs(self, mask: int, round: int, i: int, j: int, first: int, second: int):
+        if i >= j:
+            self.dfs(mask, round + 1, 0, 27, first, second)
+        elif (mask & (1 << i)) == 0:
+            self.dfs(mask, round, i + 1, j, first, second)
+        elif (mask & (1 << j)) == 0:
+            self.dfs(mask, round, i, j - 1, first, second)
+        elif i == first and j == second:
+            self.min_r = min(self.min_r, round)
+            self.max_r = max(self.max_r, round)
+        else:
+            if i != first and i != second:
+                self.dfs(mask ^ (1 << i), round, i + 1, j - 1, first, second)
+            if j != first and j != second:
+                self.dfs(mask ^ (1 << j), round, i + 1, j - 1, first, second)
+
+    def earliestAndLatest(self, n: int, first: int, second: int) -> list[int]:
+        self.dfs((1 << n) - 1, 1, 0, 27, first - 1, second - 1)
+        return [self.min_r, self.max_r]
+
+class Solution:
+    def earliestAndLatest(self, n: int, first: int, second: int) -> List[int]:
+        '''
+        this part is important:
+            when num players is odd for a run, middle goes on
+            after a round, the players are lined up in original ordering
+        we are given the two best players who can beat anyone
+        for any two players not competing against each other, choose a winner of this round
+        bit masks on each state, then try each state
+        n is at most 28, positions should fit in 32 bit integer
+        and round so states are (row as bit, and num_rounds), then call dp function twice, one for min and one for max
+        base cases are:
+            bits left are firstPlayer pos and secondPlayer pos, and there are only two
+            bits left are firstPlayer pos and secondPlayer pos, and is only one player in the middle
+        the problem is we need to finish the round
+        bin(num)[2:]
+
+        '''
+        first -= 1  # convert to 0-based
+        second -= 1
+
+        @lru_cache(maxsize=None)
+        def dfs(mask: int, round: int, i: int, j: int) -> tuple[int, int]:
+            if i >= j:
+                return dfs(mask, round + 1, 0, n - 1)
+
+            if not (mask & (1 << i)):
+                return dfs(mask, round, i + 1, j)
+            if not (mask & (1 << j)):
+                return dfs(mask, round, i, j - 1)
+
+            if i == first and j == second:
+                return round, round
+
+            res = []
+            if i != first and i != second:
+                res.append(dfs(mask ^ (1 << i), round, i + 1, j - 1))
+            if j != first and j != second:
+                res.append(dfs(mask ^ (1 << j), round, i + 1, j - 1))
+
+            min_r = float('inf')
+            max_r = float('-inf')
+            for r1, r2 in res:
+                min_r = min(min_r, r1)
+                max_r = max(max_r, r2)
+
+            return min_r, max_r
+
+        result = dfs((1 << n) - 1, 1, 0, n - 1)
+        return list(result)
+    
+class Solution:
+    def earliestAndLatest(self, n: int, first: int, second: int) -> List[int]:
+        '''
+        this part is important:
+            when num players is odd for a run, middle goes on
+            after a round, the players are lined up in original ordering
+        we are given the two best players who can beat anyone
+        for any two players not competing against each other, choose a winner of this round
+        bit masks on each state, then try each state
+        states are (mask,round,i,j)  advance i and j and push states
+
+        '''
+        #convert to 0 base
+        first -= 1
+        second -= 1
+        memo = {}
+
+        def dp(mask,round,i,j):
+            key = (mask,round,i,j)
+            if key in memo:
+                return memo[key]
+            #round completed
+            if i >= j:
+                return dp(mask,round + 1,0,n-1)
+            if not mask & (1 << i):
+                return dp(mask,round,i+1,j)
+            if not mask & (1 << j):
+                return dp(mask,round,i,j-1)
+            if i == first and j == second:
+                return round, round
+            
+            #possible round answers
+            res = []
+            if i not in (first,second):
+                lose_i = mask ^ (1 << i) #or win_j
+                res.append(dp(lose_i,round,i+1,j-1))
+            if j not in (first,second):
+                lose_j = mask ^ (1 << j) #or win_i
+                res.append(dp(lose_j,round,i+1,j-1))
+            
+            min_round = float('inf')
+            max_round = float('-inf')
+            for r1,r2 in res:
+                min_round = min(min_round,r1)
+                max_round = max(max_round,r2)
+            ans = [min_round,max_round]
+            memo[key] = ans
+            return ans
+        
+        start_mask = 2**n - 1
+        return dp(start_mask,1,0,n-1)
