@@ -800,3 +800,169 @@ class Solution:
         
         start_mask = 2**n - 1
         return dp(start_mask,1,0,n-1)
+    
+###########################################################
+# 3178. Find the Child Who Has the Ball After K Seconds
+# 14JUL25
+###########################################################
+class Solution:
+    def numberOfChild(self, n: int, k: int) -> int:
+        '''
+        simulation
+        '''
+        dirr = -1
+        curr = 0
+
+        while k:
+            if curr == 0 or curr == n-1:
+                dirr *= -1
+            curr += dirr
+            k -= 1
+        
+        return curr
+
+class Solution:
+    def numberOfChild(self, n: int, k: int) -> int:
+        '''
+        if there are even rounds, its just num steps from the start
+        otherwise its num steps from the right
+        '''
+        n -= 1
+        rounds = k // n
+
+        if rounds % 2 == 0:
+            return k % n
+        return n - (k % n)
+    
+###########################################
+# 3136. Valid Word
+# 15JUL25
+############################################
+class Solution:
+    def isValid(self, word: str) -> bool:
+        '''
+        rulezzz
+        '''
+        if len(word) < 3:
+            return False
+        vowel_count = 0
+        consonant_count = 0
+        for ch in word:
+            if not (ch.isalnum() and ch.isascii()):
+                return False
+            if ch in 'aeiouAEIOU':
+                vowel_count += 1
+            if ch.isalpha() and ch.lower() not in 'aeiou':
+                consonant_count += 1
+        return vowel_count >= 1 and consonant_count >= 1
+
+#cleaner
+class Solution:
+    def isValid(self, word: str) -> bool:
+        if len(word) < 3:
+            return False
+
+        has_vowel = False
+        has_consonant = False
+
+        for c in word:
+            if c.isalpha():
+                if c.lower() in "aeiou":
+                    has_vowel = True
+                else:
+                    has_consonant = True
+            elif not c.isdigit():
+                return False
+
+        return has_vowel and has_consonant
+    
+#############################################
+# 893. Groups of Special-Equivalent Strings
+# 15JUL25
+#############################################
+class Solution:
+    def numSpecialEquivGroups(self, words: List[str]) -> int:
+        '''
+        move is:
+            swap any two even indexed chars or any two odd index chars
+        example:
+            zzxy is equivalent to xyzz
+        we can do
+            zzxy -> (0,2) -> xzzy -> (1,3) -> xyzz
+
+        we can make a group such that the group is largest as possible  
+        for each word, try all pair swapping, the mapp, 
+        kinda like an advent of code problem!
+
+        say we have word
+        [a,b,c,d]
+        even indices can be permuted, and odd indices can be permuted
+        get chars at even indices and sort them, then chars at odd indices and sort them, then weave
+        this is the signature string
+        '''
+        mapp = Counter()
+        for word in words:
+            sig = self.get_sig(word)
+            mapp[sig] += 1
+        
+        return len(mapp)
+    
+    def get_sig(self,word):
+        even_chars = []
+        odd_chars = []
+        n = len(word)
+        for i in range(n):
+            if i % 2 == 0:
+                even_chars.append(word[i])
+            else:
+                odd_chars.append(word[i])
+        #sort
+        even_chars.sort()
+        odd_chars.sort()
+        #weave
+        sig = ['']*n
+        idx = 0
+        for ch in even_chars:
+            sig[idx] = ch
+            idx += 2
+        idx = 1
+        for ch in odd_chars:
+            sig[idx] = ch
+            idx += 2
+        return "".join(sig)
+
+class Solution:
+    def numSpecialEquivGroups(self, words: List[str]) -> int:
+        '''
+        instead of sorting, use count arrays for odd,even inidces
+        '''
+        mapp = Counter()
+        for word in words:
+            sig = self.get_sig(word)
+            mapp[sig] += 1
+        
+        return len(mapp)
+    
+    def get_sig(self,word):
+        even_chars = [0]*26
+        odd_chars = [0]*26
+        n = len(word)
+        for i,ch in enumerate(word):
+            idx = ord(ch) - ord('a')
+            if i % 2 == 0:
+                even_chars[idx] += 1
+            else:
+                odd_chars[idx] += 1
+        
+        return (tuple(even_chars),tuple(odd_chars))
+
+#cheeky one array using modtrick
+class Solution(object):
+    def numSpecialEquivGroups(self, A):
+        def count(A):
+            ans = [0] * 52
+            for i, letter in enumerate(A):
+                ans[ord(letter) - ord('a') + 26 * (i%2)] += 1
+            return tuple(ans)
+
+        return len({count(word) for word in A})
