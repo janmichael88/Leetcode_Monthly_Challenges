@@ -966,3 +966,88 @@ class Solution(object):
             return tuple(ans)
 
         return len({count(word) for word in A})
+    
+######################################################
+# 3201. Find the Maximum Length of Valid Subsequence I
+# 16JJUL25
+######################################################
+class Solution:
+    def maximumLength(self, nums: List[int]) -> int:
+        '''
+        for a subsequence, we need pairwise sum parities to be equal
+        odd + odd = even
+        even + even = even
+        odd + even = odd
+        even + odd = odd
+        try all,
+            all odd, all even, alternave even odd, alternate odd even
+        '''
+        ans = 0
+        curr = 0
+        #try all odds
+        for num in nums:
+            if num % 2 == 1:
+                curr += 1
+        ans = max(ans,curr)
+        #try all evens
+        curr = 0
+        for num in nums:
+            if num % 2 == 0:
+                curr += 1
+        ans = max(ans,curr)
+        
+        #alternate odd,even
+        curr_parity = 0
+        curr = 0
+        for num in nums:
+            if num % 2 != curr_parity:
+                curr += 1
+                curr_parity = 1 - curr_parity
+        ans = max(ans,curr)
+        #alternate even odd
+        curr_parity = 1
+        curr = 0
+        for num in nums:
+            if num % 2 != curr_parity:
+                curr += 1
+                curr_parity = 1 - curr_parity
+        ans = max(ans,curr)
+        return ans
+    
+#just check all patterns
+class Solution:
+    def maximumLength(self, nums: List[int]) -> int:
+        res = 0
+        for pattern in [[0, 0], [0, 1], [1, 0], [1, 1]]:
+            cnt = 0
+            for num in nums:
+                #count of element mod 2 gives parity at position (odd,evenlee)
+                if num % 2 == pattern[cnt % 2]:
+                    cnt += 1
+            res = max(res, cnt)
+        return res
+    
+class Solution:
+    def maximumLength(self, nums: List[int]) -> int:
+        '''
+        another way is to track count of all odds, evens, or longest alternating chain
+        priortize starting with left most
+        '''
+        evens = 0
+        odds = 0
+        alternating = 0
+        parity = -1
+
+        for num in nums:
+            if num % 2 == 0:
+                evens += 1
+                if parity == -1 or parity == 1:
+                    alternating += 1
+            else:
+                odds += 1
+                if parity == -1 or parity == 0:
+                    alternating += 1
+            
+            parity = num % 2
+        
+        return max(evens,odds,alternating)
