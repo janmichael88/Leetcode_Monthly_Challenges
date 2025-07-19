@@ -1051,3 +1051,155 @@ class Solution:
             parity = num % 2
         
         return max(evens,odds,alternating)
+    
+########################################################
+# 3202. Find the Maximum Length of Valid Subsequence II
+# 17JUL25
+#########################################################
+#fuck it....
+class Solution:
+    def maximumLength(self, nums: List[int], k: int) -> int:
+        '''
+        every pairwise sum in the longest subsequence must have the same % k
+        keep states i and last % k value
+        say we have subsequence [a,b] and we want to add in c
+        it must be that (a + b) % k = (b + c) % k
+        we can do this:
+        (a + b - b) % k = (b + c - b) % k
+        so a %k = c % k
+        so we can have (a,b) and add c only if c % k == a % k
+        fix start and end, then check every c after that
+        '''
+        n = len(nums)
+        left = 0
+        ans = 0
+        for right in range(1,n):
+            first = nums[left]
+            second = nums[right]
+            dp = defaultdict()
+            last_k = (first + second) % k
+            dp[(right,last_k)] = 2
+            for c in range(right+1,n):
+                if c % k == start_k:
+                    dp[c] = max(dp[right] + 1,dp[right])
+                else:
+                    dp[c] = dp[right]
+            print(dp)
+
+        return ans
+
+
+#############################################################
+# 2163. Minimum Difference in Sums After Removal of Elements
+# 18JUL25
+#############################################################
+class Solution:
+    def minimumDifference(self, nums: List[int]) -> int:
+        '''
+        we are given 3 n elements
+        need to remove subseqence of n elements
+        such that the sum(first n element) - sum(second n element) is as small as possible
+        to make small is possible make second sum large and first sum small
+        nums in array are always positive
+        for each index i consider how can we find the min possible sum of n elements with indices <= i
+        '''
+        n = len(nums)
+        def dp_less(i,count,memo):
+            if i >= n:
+                if count == 0:
+                    return 0
+                return float('inf')
+            if count < 0:
+                return float('inf')
+            if (i,count) in memo:
+                return memo[(i,count)]
+            take = nums[i] + dp_less(i+1,count-1,memo)
+            no_take = dp_less(i+1,count,memo)
+            ans = min(take,no_take)
+            memo[(i,count)] = ans
+            return ans
+
+        def dp_greater(i,count,memo):
+            if i >= n:
+                if count == 0:
+                    return 0
+                return float('-inf')
+            if count < 0:
+                return float('-inf')
+            if (i,count) in memo:
+                return memo[(i,count)]
+            take = nums[i] + dp_greater(i+1,count-1,memo)
+            no_take = dp_greater(i+1,count,memo)
+            ans = max(take,no_take)
+            memo[(i,count)] = ans
+            return ans
+
+        
+        memo_less = {}
+        memo_greater = {}
+        SUM = sum(nums)
+        dp_less(0,n//3,memo_less)
+        dp_greater(0,n//3,memo_greater)
+
+        for i in range(n):
+            min_ = dp_less(0,n//3,memo_less)
+            max_ = dp_greater(0,n//3,memo_greater)
+            print(SUM - min_,SUM - max_)
+
+
+#finally
+class Solution:
+    def minimumDifference(self, nums: List[int]) -> int:
+        '''
+        need to space n indices to remove within nums
+        such that the first n nums are as small as possible
+        and the last n nums are as large as possible
+        hint says for every index i, find min possible sum of n elements with indices <= i
+        let k be n//3
+        since we need to remove n//3 numbers
+        we check k to k*2
+        going left to right we find smallest sum for each index i from (k to k*2) - max heap to store the n smallest
+        then going right to left we find the largest sum for each index i from k*2 to k - min heap to store the n largest
+        then find smallest differ
+
+        Where i ranges over the valid middle section (k - 1 ≤ i < 2k), and i + 1 marks the start of the right portion — ensuring no overlap between the k elements chosen on the left and the k on the right.
+        '''
+        n = len(nums)
+        k = n // 3 #need to pick k nums to remove, so that first part is as small as possible and second part is as large as possible
+        # min-heap (by negating values) to keep track of k largest nums on left
+        max_heap = []
+        left_sums = [0] * n
+        curr_sum = sum(nums[:k])
+        for i in range(k):
+            heapq.heappush(max_heap, -nums[i])
+        left_sums[k - 1] = curr_sum
+        
+        for i in range(k, 2 * k):
+            heapq.heappush(max_heap, -nums[i])
+            curr_sum += nums[i]
+            curr_sum += heapq.heappop(max_heap)  # subtract largest negative = remove smallest actual value
+            left_sums[i] = curr_sum
+        
+        # min-heap to keep track of k smallest nums on right
+        min_heap = []
+        right_sums = [0] * n
+        curr_sum = sum(nums[-k:])
+        for i in range(n - 1, n - k - 1, -1):
+            heapq.heappush(min_heap, nums[i])
+        right_sums[2 * k] = curr_sum
+        
+        for i in range(2 * k - 1, k - 1, -1):
+            heapq.heappush(min_heap, nums[i])
+            curr_sum += nums[i]
+            curr_sum -= heapq.heappop(min_heap)
+            right_sums[i] = curr_sum
+        
+        # now compute the minimum difference
+        res = float('inf')
+        for i in range(k - 1, 2 * k):
+            #its not left_sums[i] - right_sums[i]
+            #we need to make sure we dont intersect indices
+            res = min(res, left_sums[i] - right_sums[i + 1])
+        
+        return res
+
