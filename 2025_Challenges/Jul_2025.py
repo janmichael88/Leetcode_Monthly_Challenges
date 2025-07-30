@@ -1088,6 +1088,16 @@ class Solution:
 
         return ans
 
+class Solution:
+    def maximumLength(self, nums: List[int], k: int) -> int:
+        dp = [[0] * k for _ in range(k)]
+        res = 0
+        for num in nums:
+            num %= k
+            for prev in range(k):
+                dp[prev][num] = dp[num][prev] + 1
+                res = max(res, dp[prev][num])
+        return res
 
 #############################################################
 # 2163. Minimum Difference in Sums After Removal of Elements
@@ -1203,3 +1213,256 @@ class Solution:
         
         return res
 
+###############################################
+# 2210. Count Hills and Valleys in an Array
+# 27JUL25
+###############################################
+class Solution:
+    def countHillValley(self, nums: List[int]) -> int:
+        '''
+        start and end points can neither be a hill nor valley
+        for each index, finds its closes non-equal neighbor
+        cannot reduse index omg, you need to keep going 
+        keep track of the last guard
+        need to keep to ensure that we haven't use these indices yet,
+        since we go from left to right we can check the rightmodt guard
+        cool trick, keepig track of the rightmost edges
+        '''
+        ans = 0
+        n = len(nums)
+        last_right = -1  # rightmost index of previous counted region
+
+        for i in range(1, n - 1):
+            if i <= last_right:
+                continue
+
+            left = i - 1
+            right = i + 1
+
+            # find closest different on the left
+            while left >= 0 and nums[left] == nums[i]:
+                left -= 1
+
+            # find closest different on the right
+            while right < n and nums[right] == nums[i]:
+                right += 1
+
+            if left >= 0 and right < n:
+                if nums[i] > nums[left] and nums[i] > nums[right]:
+                    ans += 1
+                    last_right = right - 1  # mark the range used
+                elif nums[i] < nums[left] and nums[i] < nums[right]:
+                    ans += 1
+                    last_right = right - 1
+
+        return ans
+    
+class Solution:
+    def countHillValley(self, nums: List[int]) -> int:
+        '''
+        preporcess to clear dupliacates
+        '''
+        # remove duplicates
+        cleaned = [nums[0]]
+        for num in nums[1:]:
+            if num != cleaned[-1]:
+                cleaned.append(num)
+
+        # check hills and valleys
+        ans = 0
+        for i in range(1, len(cleaned) - 1):
+            if cleaned[i] > cleaned[i - 1] and cleaned[i] > cleaned[i + 1]:
+                ans += 1  # hill
+            elif cleaned[i] < cleaned[i - 1] and cleaned[i] < cleaned[i + 1]:
+                ans += 1  # valley
+
+        return ans
+    
+##############################################
+# 2322. Minimum Score After Removals on a Tree
+# 28JUL25
+##############################################
+#close one, gahhhh
+class Solution:
+    def minimumScore(self, nums: List[int], edges: List[List[int]]) -> int:
+        '''
+        unidrected tree, we are given node values and edges
+        we need to remove a pair of edges to come three connected components
+        for each comopoenents, XOR all nodes in each comp
+        score = largest_xor = smallest_xor
+        need min score
+        brute force is to try all pairs of edges, then get componenents and find xor
+        xoring the whole nums array gives us something
+        its a tree, so dropping an edge will make 2 comps, dropping 2 edges will make three comps
+        a tree with n nodes has n-1 eddges, removing n-1 edges makes n comps
+        find the xor for each subtree, first assume we know the xor of each subtree
+
+        '''
+        graph = defaultdict(list)
+        n = len(nums)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        for node in graph:
+            graph[node] = sorted(graph[node])
+        
+        subtree_xors = [0]*n
+        #compute subtree xors, assumption that tree is rooted at 0
+        def dp(curr,parent):
+            xor = nums[curr]
+            for neigh in graph[curr]:
+                if neigh != parent:
+                    xor = xor ^ dp(neigh,curr)
+            subtree_xors[curr] = xor
+            return xor
+        
+        k = len(edges)
+        for i in range(k):
+            for j in range(i+1,k):
+                u1,v1 = edges[i]
+                u2,v2 = edges[j]
+                
+#dfs inside dfs N*N
+class Solution:
+    def minimumScore(self, nums: List[int], edges: List[List[int]]) -> int:
+        '''
+        first we start be doing dfs on the whole tree
+        now imagine we have arrived to ode x,
+            after deleting the edge between x and its parent node f, the subtree at x becaomse one of the three final parts
+            we treat f as root run another DFS on the remaining part
+            in this remaining part, we can try deleting another edges and obtrain three parts
+        
+        1. we compute the first part of x during the first DFS
+        2. on the second dfs (with f as root), we traverse down to the node x'
+            the xor of the subtree rooted at x' can also be compute while backtracking
+        3. thir parts is just total_xor ^ part1 ^ part2
+        '''
+        #graph as usual
+        graph = defaultdict(list)
+        n = len(nums)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        total_xor = 0
+        for num in nums:
+            total_xor ^= num
+        
+        self.ans = float('inf')
+
+        def dfs_second(curr,parent,first_part,anc):
+            curr_xor = nums[curr]
+            for neigh in graph[curr]:
+                if neigh == parent:
+                    continue
+                curr_xor ^= dfs_second(neigh,curr,first_part,anc)
+            
+            if curr == anc:
+                return curr_xor
+            #its not really backtracking, more like global update for recursion
+            self.ans = min(self.ans,self.calc(first_part, total_xor ^ first_part ^ curr_xor,curr_xor))
+            return curr_xor
+        def dfs_first(curr,parent):
+            #this part gets the curr xor for rooting at x
+            curr_xor = nums[curr]
+            for neigh in graph[curr]:
+                if neigh == parent:
+                    continue
+                curr_xor ^= dfs_first(neigh,curr)
+            
+            #dfs again from curr, to get the second part
+            for neigh in graph[curr]:
+                if neigh == parent:
+                    continue
+                dfs_second(neigh,curr,curr_xor,curr)
+            
+            return curr_xor
+        
+        dfs_first(0,-1)
+        return self.ans
+    
+    def calc(self,p1,p2,p3):
+        return max(p1,p2,p3) - min(p1,p2,p3)
+    
+#wtf is this times shit....
+
+####################################################
+# 2411. Smallest Subarrays With Maximum Bitwise OR
+# 29JUL25
+###################################################
+
+
+class Solution:
+    def smallestSubarrays(self, nums: List[int]) -> List[int]:
+        '''
+        property of OR, is that it sets a bit if either 0,1 
+        or can only increase as move through the array
+        if we have a subarray, adding to it using an XOR can only increase it
+        try consindering for each bit position
+        for the subarray it needs to include the numbers at nums[i]
+        since xoring a number only increases it, once we get to the max number we are done
+        '''
+        #mapp to store bit position from 0 to 31
+        #to set this bit use this number
+        n = len(nums)
+        mapp = defaultdict(list)
+        for i in range(32):
+            for j,num in enumerate(nums):
+                if num & (1 << i):
+                    mapp[i].append(j)
+        
+        ans = []
+        #why do we need the right mo
+        for i,num in enumerate(nums):
+            #init to i
+            largest_index = i
+            for bit in range(32):
+                #check if bit is present in array
+                if bit in mapp:
+                    indices = mapp[bit]
+                    #look for the index just after i to keep it minimum
+                    idx = self.bin_search(indices,i)
+                    if idx != -1:
+                        #but we need the largest for all of them
+                        largest_index = max(largest_index, indices[idx])
+            ans.append(largest_index - i + 1)
+        
+        return ans
+    def bin_search(self,arr,target):
+        left = 0
+        right = len(arr) - 1
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if arr[mid] >= target:
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+        
+        return ans
+    
+class Solution:
+    def smallestSubarrays(self, nums: List[int]) -> List[int]:
+        '''
+        the idea is to traverse the array in reverse in descending order of index
+        and for each bit position record the last index we have seen it
+        '''
+        last_seen = [-1]*32
+        n = len(nums)
+        ans = [1]*n
+
+        for i in range(n-1,-1,-1):
+            #check all bits for each number
+            for bit in range(32):
+                if nums[i] & (1 << bit):
+                    last_seen[bit] = i
+            max_idx = i
+            for pos in last_seen:
+                if pos != -1:
+                    max_idx = max(max_idx,pos)
+            
+            ans[i] = max_idx - i + 1
+        
+        return ans
