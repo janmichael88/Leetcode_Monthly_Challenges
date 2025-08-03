@@ -1466,3 +1466,76 @@ class Solution:
             ans[i] = max_idx - i + 1
         
         return ans
+    
+#############################################
+# 898. Bitwise ORs of Subarrays
+# 31JUL25
+#############################################
+#close one
+class Solution:
+    def subarrayBitwiseORs(self, arr: List[int]) -> int:
+        '''
+        return number of distict bitwise ORs for all non emty subarrays
+        OR of a a subarray would result in an integer
+        just check if we can set a bit
+        if we have a subarray with bits already set, then OR'ing another number with it where it has 1's won't make a difference
+        but OR'ing with a number that has 1s where the subarray bits aren't set will make it distinct
+        for each bit position store if there's a number where that position is set
+        then we can use dp on bits, if there's a bit set it contributes a count, if not skip it
+        '''
+        bits = [False]*32
+        for i in range(32):
+            for num in arr:
+                if num & (1 << i):
+                    bits[i] = True
+        
+        memo = {}
+        def dp(i):
+            if i >= len(bits):
+                return 0
+            if i in memo:
+                return memo[i]
+            if bits[i] == True:
+                take = 1 + dp(i+1)
+            else:
+                take = 0
+            no_take = dp(i+1)
+            ways = take + no_take
+            memo[i] = ways
+            return ways
+        
+        return max(dp(0),1)
+    
+#enumeration, bfs
+class Solution:
+    def subarrayBitwiseORs(self, arr: List[int]) -> int:
+        '''
+        we need to use enumeraton
+        for integer in nums, OR that num with all the previous integers in that set
+        '''
+        ans = set()
+        prev = set()
+        for num in arr:
+            curr = {num}
+            for p in prev:
+                curr.add(p | num)
+            ans.update(curr)
+            prev = curr
+        
+        return len(ans)
+    
+class Solution:
+    def subarrayBitwiseORs(self, arr: List[int]) -> int:
+        '''
+        using comprehension
+        the number of unque values in this set is at most 32
+        O(Nlog(max(arr)))
+        '''
+        ans = set()
+        curr = {0}
+        for num in arr:
+            curr = {num | prev for prev in curr} | {num}
+            ans = ans | curr
+        
+        return len(ans)
+        
