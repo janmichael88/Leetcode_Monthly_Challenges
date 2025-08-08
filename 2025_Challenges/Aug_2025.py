@@ -128,3 +128,247 @@ class Solution:
 
         return res
         
+#can also do binary search
+class Solution:
+    def maxTotalFruits(
+        self, fruits: List[List[int]], startPos: int, k: int) -> int:
+        n = len(fruits)
+        #pref sum by index, not x position
+        sum_ = [0] * (n + 1)
+        #list of increasing indices
+        indices = [0] * n
+
+        for i in range(n):
+            sum_[i + 1] = sum_[i] + fruits[i][1]
+            indices[i] = fruits[i][0]
+
+        ans = 0
+        #could also have donw k//2 floored
+        for x in range(k +1):
+            # move left x steps, then right (k - 2x) steps
+            y = k - 2 * x
+            left = startPos - x
+            right = startPos + y
+            #largest right >=
+            start = bisect_left(indices, left)
+            #smallest right <
+            end = bisect_right(indices, right)
+            ans = max(ans, sum_[end] - sum_[start])
+
+            # move right x steps, then left (k - 2x) steps
+            y = k - 2 * x
+            left = startPos - y
+            right = startPos + x
+            start = bisect_left(indices, left)
+            end = bisect_right(indices, right)
+            ans = max(ans, sum_[end] - sum_[start])
+
+        return ans
+    
+############################################
+# 794. Valid Tic-Tac-Toe State
+# 04AUG25
+############################################
+class Solution:
+    def validTicTacToe(self, board: List[str]) -> bool:
+        '''
+        since x starts first: count(x) >= count(o)
+        since players take turns, return false of count(x) - count(o) > 1
+        if win(o), then win(x) cannot be true
+        '''
+        x_count,o_count = 0,0
+        for row in board:
+            for ch in row:
+                x_count += ch == 'X'
+                o_count += ch == 'O'
+        
+        if o_count > x_count or x_count-o_count>1:
+            return False
+        
+        if self.can_win(board, 'O'):
+            if self.can_win(board, 'X'):
+                return False
+            return o_count == x_count
+        
+        if self.can_win(board, 'X') and x_count!=o_count+1:
+            return False
+
+        return True
+
+    
+    def can_win(self,board,player):
+        #check rows
+        for i in range(len(board)):
+            if board[i][0] == board[i][1] == board[i][2] == player:
+                return True
+            
+        #check cols
+        for i in range(len(board)):
+            if board[0][i] == board[1][i] == board[2][i] == player:
+                return True
+        
+        #check diags
+        if board[0][0] == board[1][1] == board[2][2] or  \
+            board[0][2] == board[1][1] == board[2][0] == player:
+            return True
+        return False
+    
+#################################################
+# 3477. Fruits Into Baskets II
+# 05AUG25
+##################################################
+class Solution:
+    def numOfUnplacedFruits(self, fruits: List[int], baskets: List[int]) -> int:
+        '''
+        iterate fruits and look for the leftmost basket >= fruits for the current i
+        '''
+        n = len(fruits)
+        used = [False]*n
+        for i in range(n):
+            for j in range(n):
+                if not used[j] and baskets[j] >= fruits[i]:
+                    used[j] = True
+                    break
+        
+        #cout false
+        return n - sum(used)
+    
+#no boolean array, count unused
+class Solution:
+    def numOfUnplacedFruits(self, fruits: List[int], baskets: List[int]) -> int:
+        count = 0
+        n = len(baskets)
+        for fruit in fruits:
+            unused = 1
+            for i in range(n):
+                if fruit <= baskets[i]:
+                    baskets[i] = 0
+                    unused = 0
+                    break
+            count += unused
+        return count
+    
+################################################
+# 3479. Fruits Into Baskets III
+# 06AUG25
+#################################################
+#sqrt decomp
+class Solution:
+    def numOfUnplacedFruits(self, fruits: List[int], baskets: List[int]) -> int:
+        '''
+        the problem is the we need to take the left most, not just the the basket that is just >= the current fruit
+        if sort and binary search for the first index where baskets[i] >= fruit we get an index
+        but is there another index to the left that we could have chosen?
+        square root decomposition with updates
+        https://cp-algorithms.com/data_structures/sqrt_decomposition.html
+        review, decompose array in root(n) blocks, where each block represents a group operator sum,product,max,min..etc
+        for a query l,r, it should span some blocks, but with heads and tails (maybe) going into partial blocks
+        so we can get sum by doing sum(head block) + curr_block + sum(tail block) in root(n) time
+        we can also do updates by going into the block
+        '''
+        n = len(baskets)
+        m = int(math.sqrt(n))
+        sections = (n + m - 1) // m
+        count = 0
+        blocks = [0]*sections #store max for each block
+
+        #stor max for each block
+        for i in range(n):
+            blocks[i//m] = max(blocks[i//m],baskets[i])
+        
+        #queries against fruit
+        for fruit in fruits:
+            unset = 1
+            #seach block, still n*root(n)
+            for sec in range(sections):
+                #skip block if we cant put in fruit
+                if blocks[sec] < fruit:
+                    continue
+                #otherwise we have a block that has basket >= fruit
+                choose = False
+                blocks[sec] = 0 #need to update new max after taking
+                #scan block
+                for i in range(m):
+                    #index into baskets array
+                    pos = sec*m + i
+                    #valid basket, change to 0 to mark as unavailable
+                    if pos < n and baskets[pos] >= fruit and not choose:
+                        choose = True
+                        baskets[pos] = 0
+                    #update section
+                    if pos < n:
+                        blocks[sec] = max(blocks[sec],baskets[pos]) 
+                #if we got here, we were able to place fruit successfully
+                #we only want to use one basket for one fruit
+                unset = 0
+                break
+            count += unset
+        
+        return count
+    
+#segment tree is littlre more confusing :(
+
+##################################################
+# 3363. Find the Maximum Number of Fruits Collected
+# 07AUG25
+###################################################
+#yessss
+class Solution:
+    def maxCollectedFruits(self, fruits: List[List[int]]) -> int:
+        '''
+        well theyve given us the (i,j) transitions already
+        child at (0,0) can only down/right
+        child at (0,n-1) can only go down/(left,right)
+        child at (n-1,0) can only go (up,down)/right,
+
+        kicker is that they only have n-1 moves
+        so child 1 MUST walk the diagonal
+        now how about the other2?
+            they can go straight down or across, and they aren't allowed to cross the diagonal
+        
+        we can handle the 0,0 case indepdently
+        '''
+        n = len(fruits)
+        ans = 0
+        for i in range(n):
+            ans += fruits[i][i]
+
+        #dp for child at (0,n-1), remember they can't cross the main diagonal
+        #make new fruits for only top half
+        memo1 = {}
+        fruits1 = [[0]*n for _ in range(n)]
+        for i in range(n):
+            for j in range(i+1,n):
+                fruits1[i][j] = fruits[i][j]
+        #now do dp
+        def dp1(i,j,fruits,memo):
+            if i < 0 or i >= n or j < 0 or j >= n:
+                return float('-inf')
+            if (i,j) == (n-1,n-1):
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = fruits[i][j] + max(dp1(i+1,j-1,fruits,memo),dp1(i+1,j,fruits,memo),dp1(i+1,j+1,fruits,memo))
+            memo[(i,j)] = ans
+            return ans
+        #print(dp1(0,n-1,fruits1,memo1))
+        #child 2
+        memo2 = {}
+        fruits2 = [[0]*n for _ in range(n)]
+        for i in range(n):
+            for j in range(0,i):
+                fruits2[i][j] = fruits[i][j]
+        
+        def dp2(i,j,fruits,memo):
+            if i < 0 or i >= n or j < 0 or j >= n:
+                return float('-inf')
+            if (i,j) == (n-1,n-1):
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = fruits[i][j] + max(dp2(i-1,j+1,fruits,memo),dp2(i,j+1,fruits,memo),dp2(i+1,j+1,fruits,memo))
+            memo[(i,j)] = ans
+            return ans
+
+        #print(dp2(n-1,0,fruits2,memo2))
+        return ans + dp1(0,n-1,fruits1,memo1) + dp2(n-1,0,fruits2,memo2)
