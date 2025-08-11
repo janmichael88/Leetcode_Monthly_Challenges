@@ -308,6 +308,7 @@ class Solution:
     
 #segment tree is littlre more confusing :(
 
+
 ##################################################
 # 3363. Find the Maximum Number of Fruits Collected
 # 07AUG25
@@ -372,3 +373,103 @@ class Solution:
 
         #print(dp2(n-1,0,fruits2,memo2))
         return ans + dp1(0,n-1,fruits1,memo1) + dp2(n-1,0,fruits2,memo2)
+    
+###############################################
+# 808. Soup Servings
+# 08AUG25
+###############################################
+import math
+class Solution:
+    def soupServings(self, n: int) -> float:
+        '''
+        notice the pours are:
+        A   |   B
+        100 |   0
+        75  |   25
+        50  |   50
+        25  |   75
+        n is very high in this case
+        we want the probability that A is used before B + half the probability that both soupds are used up in the same turn
+        both A and B are equal starting off
+        each is a multiple of 25, so we can treat at n/25 servings, rounded up
+        then we can use dp(i,j), we need full prob a is used up + half prob they run out in the same turn
+        need to come with trivial n*n dp solution and examine what happens to the answe as n increases
+        it eventuall approahes 1 when n is high enough
+        '''
+        memo = {}
+        #n = math.ceil(n/25)
+        dirrs = [(100,0),(75,25),(50,50),(25,75)]
+
+        #could also do without ceiling
+        #n = math.ceil(n/25)
+        #dirrs = [(100,0),(75,25),(50,50),(25,75)]
+
+        def dp(a,b):
+            if a <= 0 and b <= 0:
+                return 0.5
+            if a <= 0:
+                return 1.0
+            if b <= 0:
+                return 0.0
+            
+            if (a,b) in memo:
+                return memo[(a,b)]
+            
+            ans = 0
+            for aa,bb in dirrs:
+                ans += dp(a-aa,b-bb)
+            ans /= 4.0
+            memo[(a,b)] = ans
+            return ans
+        
+        for k in range(1,n+1):
+            if dp(k,k) > 1 - 1e-5:
+                return 1.0
+        
+        return dp(n,n)
+
+###########################################
+# 869. Reordered Power of 2
+# 10AUG25
+###########################################
+#sorting signature
+class Solution:
+    def reorderedPowerOf2(self, n: int) -> bool:
+        '''
+        for example, digits are 61, re order to 16
+        how many powers of two are there up to
+        biggest number would be 9999999
+        generate all powers of 2, and see if we can make any of them, and put them in sorted digit order, then see if sorted(n) is in ther
+        '''
+        temp = set()
+        for i in range(30):
+            num = "".join(sorted(str(2**i)))
+            temp.add(num)
+        
+        n = "".join(sorted(str(n)))
+        return n in temp
+
+########################################
+# 2497. Maximum Star Sum of a Graph
+# 11AUG25
+#######################################
+class Solution:
+    def maxStarSum(self, vals: List[int], edges: List[List[int]], k: int) -> int:
+        '''
+        just check all nodes for k edges
+        and sort neighbors and tkae k max
+        '''
+        graph = defaultdict(set)
+        for i,j in edges:
+            if vals[i] > 0 : 
+                graph[j].add(i)
+            if vals[j] > 0 : 
+                graph[i].add(j)
+            
+        stars = []
+        for i,v in enumerate(vals):
+            vv = [vals[j] for j in graph[i]]
+            vv.sort(reverse=True)
+            stars.append(v + sum(vv[0:k]))
+            
+        return max(stars)
