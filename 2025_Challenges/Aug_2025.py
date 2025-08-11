@@ -473,3 +473,61 @@ class Solution:
             stars.append(v + sum(vv[0:k]))
             
         return max(stars)
+    
+############################################
+# 2438. Range Product Queries of Powers
+# 11AUG25
+#############################################
+class Solution:
+    def productQueries(self, n: int, queries: List[List[int]]) -> List[int]:
+        '''
+        powers array can be made use the binary represntation of n
+        which means powers array cannot be more than 32
+        answers array can be taken using brute force
+        hint gave it away
+        '''
+        powers = []
+        for i in range(32):
+            if n & (1 << i):
+                powers.append(1 << i)
+        
+        ans = []
+        mod = 10**9 + 7
+        for l,r in queries:
+            product = 1
+            for j in range(l,r+1):
+                product *= powers[j]
+                product %= mod
+            ans.append(product)
+        return ans
+    
+#using prefix product and mod mult inverse
+class Solution:
+    def productQueries(self, n: int, queries: List[List[int]]) -> List[int]:
+        '''
+        powers array can be made use the binary represntation of n
+        which means powers array cannot be more than 32
+        answers array can be taken using brute force
+        hint gave it away
+        in modular arithmetic, division by x is multiplacation by x^(-1) ,mod m
+        since m = 10**9 + 7, we can compute x^(-1) as x^(m-2) mod m
+        could have just accumulated products without mod, only in python because there's no limit in integer size
+        binary decomp of n, gives the smallest powers of 2 that sum to n
+        '''
+        powers = []
+        for i in range(32):
+            if n & (1 << i):
+                powers.append(1 << i)
+        
+        ans = []
+        mod = 10**9 + 7
+        pref_prod = [1]
+        for p in powers:
+            pref_prod.append((p*pref_prod[-1]) % mod)
+        
+        for l,r in queries:
+            #need modular multiplactive inverse, only when using module
+            inv = pow(pref_prod[l], mod - 2, mod)  # Fermat's little theorem
+            product = (pref_prod[r + 1] * inv) % mod
+            ans.append(product % mod)
+        return ans
