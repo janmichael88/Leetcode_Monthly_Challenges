@@ -513,6 +513,7 @@ class Solution:
         since m = 10**9 + 7, we can compute x^(-1) as x^(m-2) mod m
         could have just accumulated products without mod, only in python because there's no limit in integer size
         binary decomp of n, gives the smallest powers of 2 that sum to n
+        if a bit is set in that position, i need to use that power of 2 at least
         '''
         powers = []
         for i in range(32):
