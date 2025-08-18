@@ -532,3 +532,91 @@ class Solution:
             product = (pref_prod[r + 1] * inv) % mod
             ans.append(product % mod)
         return ans
+    
+##########################################
+# 1006. Clumsy Factorial
+# 15AUG25
+##########################################
+#cheeze is real
+import operator
+class Solution:
+    def clumsy(self, n: int) -> int:
+        '''
+        we just cycle through operations in order
+        ['*',//,+,-]
+        eval function?
+        '''
+        digits = [num for num in range(n,0,-1)]
+        ops = ["*","//","+","-"]
+        idx = 0
+        ans = 1
+        temp = []
+        for i in range(len(digits)):
+            temp.append(str(digits[i]))
+            temp.append(ops[idx])
+            idx += 1
+            idx %= 4
+        eval_string = "".join(temp[:-1])
+        return eval(eval_string)
+    
+#############################################
+# 837. New 21 Game (REVISITED)
+#17AUG25
+#############################################
+#TLE
+#need to go thorugh bottom up n*n
+#then sliding window bottom up n
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        dp solution is similar to the soup servigins problem
+        base case return full probvalue 
+        then sum up probs and divie by number of events
+        '''
+        memo = {}
+        def dp(points):
+            if k <= points <= n:
+                return 1.0
+            if points > n:
+                return 0.0
+            if points in memo:
+                return memo[points]
+            
+            ans = 0
+            for num in range(1,maxPts+1):
+                ans += dp(points+num)
+            
+            ans = ans / maxPts
+            memo[points] = ans
+            return ans
+        
+        return dp(0)
+    
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        '''
+        converting to bottom up
+        '''
+        dp = [0]*(n+1)
+        dp[0] = 1.0
+
+        for i in range(1,n+1):
+            for p in range(1,maxPts+1):
+                if i - p >= 0 and i - p < k:
+                    dp[i] += dp[i-p] / maxPts
+        
+        return sum(dp[k:])
+    
+#sligind window
+class Solution:
+    def new21Game(self, n: int, k: int, maxPts: int) -> float:
+        dp = [0] * (n + 1)
+        dp[0] = 1
+        s = 1 if k > 0 else 0
+        for i in range(1, n + 1):
+            dp[i] = s / maxPts
+            if i < k:
+                s += dp[i]
+            if i - maxPts >= 0 and i - maxPts < k:
+                s -= dp[i - maxPts]
+        return sum(dp[k:])
