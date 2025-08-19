@@ -620,3 +620,80 @@ class Solution:
             if i - maxPts >= 0 and i - maxPts < k:
                 s -= dp[i - maxPts]
         return sum(dp[k:])
+    
+########################################
+# 679. 24 Game
+# 18AUG25
+########################################
+#stupid parantheses
+class Solution:
+    def judgePoint24(self, cards: List[int]) -> bool:
+        '''
+        need to use the cards array and operations to make 24
+        division is real division
+        unary operator only works on 1 operand and op cannot be unary
+        cannot concat numbers
+        intelligently try all, ughh
+        there are 4! permutations of cards
+        i cant just place a single op between two cards, becaue i could have parantheses before and after
+        i could have (a)op(b)op(c)op(d)
+        what if we just used cards and ops first
+        there are 3 spots, and for each spot we can use 4, so its
+        4^3*(4!) = (4**3)*(4*3*2*1) = 1536
+        now we can weave parentheses in here 
+        because of () we don't need to consider order of operations
+        recall a + b == b + a, same thing a*b = b*a
+        but need a - b and b - a
+
+        '''
+        def rec(nums):
+            if len(nums) == 1:
+                return abs(nums[0] - 24) <= 1e-6
+
+            for i in range(len(nums)):
+                for j in range(i):  # j < i
+                    a, b = nums[i], nums[j]
+                    # all possible results of combining a and b
+                    vals = [a + b, a - b, b - a, a * b]
+                    #guarding againt divsion by 0, need to make sure for float points being near zero
+                    if abs(b) > 1e-6:
+                        vals.append(a / b)
+                    if abs(a) > 1e-6:
+                        vals.append(b / a)
+
+                    # build next state without nums[i] and nums[j]
+                    # we applied the operator to nums[i] and nums[j]
+                    # just passing in states and return true not
+                    next_nums = [nums[k] for k in range(len(nums)) if k != i and k != j]
+
+                    for v in vals:
+                        if rec(next_nums + [v]):
+                            return True
+            return False
+
+        return rec(cards)
+    
+######################################################
+# 2526. Find Consecutive Integers from a Data Stream
+# 18AUG25
+##################################################
+class DataStream:
+
+    def __init__(self, value: int, k: int):
+        self.k = k
+        self.value = value
+        self.stream = Counter()
+
+
+    def consec(self, num: int) -> bool:
+        if num != self.value:
+            self.stream = Counter()
+            return False
+        else:
+            self.stream[num] += 1
+            return self.stream[num] >= self.k
+
+
+# Your DataStream object will be instantiated and called as such:
+# obj = DataStream(value, k)
+# param_1 = obj.consec(num)
