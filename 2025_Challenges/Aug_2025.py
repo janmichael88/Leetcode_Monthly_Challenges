@@ -307,6 +307,61 @@ class Solution:
         return count
     
 #segment tree is littlre more confusing :(
+class SegTree:
+    def __init__(self, arr):
+        '''
+        this is a 1 index tree, if you want zero index tree
+        left_child = 2 * idx + 1
+        right_child = 2 * idx + 2
+        then we can binary search on the segment tree
+            - if max value in left interval is > fruits, lok left
+            - if max value in left < fruits and max value in right >= fruits continue right
+            - else no interval that meets the condition
+        '''
+        self.n = len(arr)
+        self.tree = [0] * (4 * self.n)
+        self.build(arr, 1, 0, self.n - 1)  # start at index 1
+
+    def build(self, arr, idx, left, right):
+        if left == right:
+            self.tree[idx] = arr[left]
+            return
+        mid = (left + right) // 2
+        self.build(arr, 2 * idx, left, mid)          # left child at 2 * idx
+        self.build(arr, 2 * idx + 1, mid + 1, right) # right child at 2 * idx + 1
+        self.tree[idx] = max(self.tree[2 * idx], self.tree[2 * idx + 1])
+    
+    def find_first_and_update(self,o,l,r,x):
+        if self.tree[o] < x:
+            return -1
+        if l == r:
+            self.tree[o] = -1
+            return l
+        m = l + (r - l) // 2
+        i = self.find_first_and_update(o*2,l,m,x)
+        if i == -1:
+            i = self.find_first_and_update(o*2 + 1, m + 1,r,x)
+        self.tree[o] = max(self.tree[2 * o], self.tree[2 * o + 1])
+        return i
+
+
+class Solution:
+    def numOfUnplacedFruits(self, fruits: List[int], baskets: List[int]) -> int:
+        '''
+        first make segment tree, just use 4*n space for array
+        sum of geometric series: 1 + 2 + 4....+2**(log(n))
+        sum_{i=0}^{i=log(n)} 2**i < 2n - 1 < 4n
+        '''
+        m = len(baskets)
+        if m == 0:
+            return len(fruits) #can't fit them
+        seg_tree = SegTree(baskets)
+        count = 0
+        for fruit in fruits:
+            if seg_tree.find_first_and_update(1,0,m-1,fruit) == -1:
+                count += 1
+        
+        return count
 
 
 ##################################################
@@ -697,3 +752,79 @@ class DataStream:
 # Your DataStream object will be instantiated and called as such:
 # obj = DataStream(value, k)
 # param_1 = obj.consec(num)
+
+######################################################
+# 2087. Minimum Cost Homecoming of a Robot in a Grid
+# 20AUG25
+#####################################################
+#TLE
+class Solution:
+    def minCost(self, startPos: List[int], homePos: List[int], rowCosts: List[int], colCosts: List[int]) -> int:
+        '''
+        this is just dp(i,j), backtracking solution taking too long :(
+        '''
+        rows = len(rowCosts)
+        cols = len(colCosts)
+        memo = {}
+        seen = set()
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+
+
+        def dp(i,j):
+            if i < 0 or i >= rows or j < 0 or j >= cols:
+                return float('inf')
+            if [i,j] == homePos:
+                return 0
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = float('inf')
+            for di,dj in dirrs:
+                ii = i + di
+                jj = j + dj
+                if (ii,jj) not in seen and 0 <= ii < rows and 0 <= jj < cols:
+                    seen.add((ii,jj))
+                    #up/down
+                    if dj == 0:
+                        ans = min(ans, dp(ii,jj) + rowCosts[ii])
+                    #left/right
+                    elif di == 0:
+                        ans = min(ans, dp(ii,jj) + colCosts[jj])
+                    seen.remove((ii,jj))
+
+            memo[(i,j)] = ans
+            return ans
+
+        seen.add((startPos[0],startPos[1]))
+        return dp(startPos[0],startPos[1])
+
+class Solution:
+    def minCost(self, startPos: List[int], homePos: List[int], rowCosts: List[int], colCosts: List[int]) -> int:
+        '''
+        path only has one turn, walk down/up to homePos row
+        then walk left/right to homePos col
+        '''
+        sr, sc = startPos
+        hr, hc = homePos
+        ans = 0
+
+        # move along rows
+        if sr < hr:
+            #walk down
+            for r in range(sr + 1, hr + 1):
+                ans += rowCosts[r]   # pay cost of the row we enter
+        else:
+            #walk up
+            for r in range(sr - 1, hr - 1, -1):
+                ans += rowCosts[r]
+
+        # move along columns
+        if sc < hc:
+            #walk right
+            for c in range(sc + 1, hc + 1):
+                ans += colCosts[c]   # pay cost of the column we enter
+        else:
+            #walk left
+            for c in range(sc - 1, hc - 1, -1):
+                ans += colCosts[c]
+
+        return ans
