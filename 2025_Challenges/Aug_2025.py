@@ -828,3 +828,39 @@ class Solution:
                 ans += colCosts[c]
 
         return ans
+    
+###############################################
+# 1504. Count Submatrices With All Ones (REVISTED)
+# 21AUG25
+###############################################
+class Solution:
+    def numSubmat(self, mat: List[List[int]]) -> int:
+        '''
+        follow hints
+        for all each row i, look at all submatrices whose bottom edge is row i
+        then we expan
+        '''
+        rows, cols = len(mat), len(mat[0])
+        ans = 0
+        heights = [0]*cols
+        for i in range(rows):
+            for j in range(cols):
+                if mat[i][j] == 0:
+                    heights[j] = 0
+                else:
+                    heights[j] += 1
+            #print(heights)
+            #consecutive stack of 1
+            #now for each column, count submatrices ending at row i
+            #or rather enumerate subrectangles where the bottom right cornner is (i,j)
+            for j in range(cols):
+                min_h = heights[j]
+                k = j
+                while k >= 0 and heights[j] != 0:
+                    min_h = min(min_h,heights[k])
+                    ans += min_h
+                    k -= 1
+        
+        return ans
+    
+#bottom portion can be done with monostack
