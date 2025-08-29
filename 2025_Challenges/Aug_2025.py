@@ -864,3 +864,413 @@ class Solution:
         return ans
     
 #bottom portion can be done with monostack
+class Solution:
+    def numSubmat(self, mat: List[List[int]]) -> int:
+        rows, cols = len(mat), len(mat[0])
+        ans = 0
+        heights = [0] * cols
+
+        for i in range(rows):
+            # build histogram for row i
+            for j in range(cols):
+                if mat[i][j] == 0:
+                    heights[j] = 0
+                else:
+                    heights[j] += 1
+
+            # monotone stack to count submatrices
+            stack = []
+            sum_ = [0] * cols
+            for j in range(cols):
+                # maintain increasing heights
+                while stack and heights[stack[-1]] >= heights[j]:
+                    stack.pop()
+
+                if stack:
+                    prev = stack[-1]
+                    sum_[j] = sum_[prev] + heights[j] * (j - prev)
+                else:
+                    sum_[j] = heights[j] * (j + 1)
+
+                ans += sum_[j]
+                stack.append(j)
+
+        return ans
+
+
+
+################################################
+# 1504. Count Submatrices With All Ones (REVISTED)
+# 22AUG25
+################################################
+class Solution:
+    def minimumArea(self, grid: List[List[int]]) -> int:
+        '''
+        -___-
+        need largest bounds for 4 corners in the grid, we need to bound all the ones anyway
+        for the upper left corner, get min(row),min(col)
+        for upper right, min(row),max(col)
+        for bottom left, max(row),min(col)
+        for bottom right, max(row),max(col)
+        '''
+        rows,cols = len(grid),len(grid[0])
+        min_row = rows
+        max_row = -1
+        min_col = cols
+        max_col = -1
+
+        for i in range(rows):
+            for j in range(cols):
+                #update
+                if grid[i][j] == 1:
+                    min_row = min(min_row,i)
+                    max_row = max(max_row,i)
+                    min_col = min(min_col,j)
+                    max_col = max(max_col,j)
+
+        ul = [min_row,min_col]
+        ur = [min_row,max_col]
+        bl = [max_row,min_col]
+        br = [max_row,max_col]
+
+        return (ur[1] - ul[1] + 1)*(br[0] - ur[0] + 1)
+    
+#################################################
+# 3197. Find the Minimum Area to Cover All Ones II
+# 24AUG25
+#################################################
+class Solution:
+    def minimumSum(self, A: List[List[int]]) -> int:
+        '''
+        need to bound all ones minimally using only three rectangles
+        the rectangles can touch
+        this is an intelligent enumeration problem, look at the contraints
+        qudratic time works
+        for each i,j, i can check all if rectangles
+        start with two rectangles, if i buid one, ther other one must be vertically/horitonally next to it
+        what if if had all possible rectangles with characteristic starting (i,j) as upper left
+        then you could try all of them from a subset of 3 -> take too long
+        divide area into threee sections, then treat each area as a seperate instance of the problem LC 3195
+        of which there are 6 types, 
+        we need to split into three recangular regions, and use minimumArea on each of the rectangles
+        after we can just rotate matrix
+        '''
+        def minimumArea(grid):
+            rows,cols = len(grid),len(grid[0])
+            min_row = rows
+            max_row = -1
+            min_col = cols
+            max_col = -1
+
+            for i in range(rows):
+                for j in range(cols):
+                    #update
+                    if grid[i][j] == 1:
+                        min_row = min(min_row,i)
+                        max_row = max(max_row,i)
+                        min_col = min(min_col,j)
+                        max_col = max(max_col,j)
+
+            ul = [min_row,min_col]
+            ur = [min_row,max_col]
+            bl = [max_row,min_col]
+            br = [max_row,max_col]
+
+            return (ur[1] - ul[1] + 1)*(br[0] - ur[0] + 1)
+        
+        def rotate(grid):
+            grid = list(zip(*grid[::-1]))
+            return grid
+
+        res = float('inf')
+        for _ in range(4):
+            n, m = len(A), len(A[0])
+            for i in range(1, n):
+                #split horizontal top,bottom
+                top = A[:i]
+                bottom = A[i:]
+                a1 = minimumArea(top)
+                for j in range(1, m):
+                    #split, vertically (left/right)
+                    left = [r[:j] for r in bottom]
+                    right = [r[j:] for r in bottom]
+                    a2 = minimumArea(left)
+                    a3 = minimumArea(right) 
+                    res = min(res, a1 + a2 + a3)
+                for i2 in range(i + 1, n):
+                    #split horizontally, up/down
+                    up = A[i:i2] #dont forget, you can slice an 2d array
+                    down = A[i2:]
+                    a2 = minimumArea(up)
+                    a3 = minimumArea(down)
+                    res = min(res, a1 + a2 + a3)
+            #rotate
+            A = rotate(A)
+        return res
+    
+########################################
+# 2075. Decode the Slanted Ciphertext
+# 25AUG25
+########################################
+class Solution:
+    def decodeCiphertext(self, encodedText: str, rows: int) -> str:
+        '''
+        if we get encodedText as 2d array,we can just walk the diags down
+        how to convert encodedText as 2d array
+        problem is the spaces could be part of the originls string
+        '''
+        n = len(encodedText)
+        cols = n // rows
+        matrix = [[""]*cols for _ in range(rows)]
+
+        for i in range(n):
+            r = i // cols
+            c = i % cols
+            matrix[r][c] = encodedText[i]
+        
+        #now walk diag down for each column
+        ans = []
+        for col in range(cols):
+            i,j = 0,col
+            curr_diag = []
+            while 0 <= i < rows and 0 <= j < cols:
+                curr_diag.append(matrix[i][j])
+                i += 1
+                j += 1
+            curr_diag = "".join(curr_diag)
+            ans.append(curr_diag)
+        return "".join(ans).rstrip()
+
+###################################################
+# 3000. Maximum Area of Longest Diagonal Rectangle
+# 26AUG25
+###################################################
+import math
+class Solution:
+    def areaOfMaxDiagonal(self, dimensions: List[List[int]]) -> int:
+        '''
+        we can use a*a + b*b = c*c, where c is the lenght of the digonal
+        take the the max
+        '''
+        max_area = 0
+        longest_diag = 0
+
+        for l,w in dimensions:
+            d = math.sqrt(l*l + w*w)
+            if d > longest_diag:
+                longest_diag = d
+                max_area = l*w
+            elif abs(d - longest_diag) < 1e-9:
+                max_area = max(max_area,l*w)
+        
+        return max_area
+    
+####################################################
+# 3459. Length of Longest V-Shaped Diagonal Segment
+# 27AUG25
+###################################################
+#almost
+class Solution:
+    def lenOfVDiagonal(self, grid: List[List[int]]) -> int:
+        '''
+        segment starts with 1 and goes 2,0,2,0,2,0
+        can only go in diag directions and can only make at at most a turn
+        dp states are (row,col,curr_dirr,turn)
+        this is just a nightmare for dp transitions
+        if we enter a 1, we can go in any of the 4 directions
+        '''
+        rows,cols = len(grid),len(grid[0])
+        memo = {}
+        #up/right, down/right, up/left,down/left
+        diags = {'UR': [-1,1],
+                'DR': [1,1],
+                'UL': [-1,-1],
+                'DL': [1,-1]}
+        possible = set([(1,2),(2,0),(0,2)])
+
+
+        def dp(i,j,curr_d,made_turn):
+            key = (i,j,curr_d,made_turn)
+            if key in memo:
+                return memo[key]
+            ans = 0
+            #we can continue going along this diag, or turn
+            d = diags[curr_d]
+            ii,jj = i + d[0], j + d[1]
+            if 0 <= ii < rows and 0 <= jj < cols:
+                if (grid[i][j],grid[ii][jj]) in possible:
+                    ans = 1 + max(ans,dp(ii,jj,curr_d,made_turn))
+            #try making a turn
+            for other_d in diags:
+                if other_d != curr_d:
+                    d = diags[other_d]
+                    ii,jj = i + d[0], j + d[1]
+                    if 0 <= ii < rows and 0 <= jj < cols:
+                        if (grid[i][j],grid[ii][jj]) in possible and not made_turn:
+                            ans = 1 + max(ans,dp(ii,jj,other_d,True))
+            memo[key] = ans
+            return ans
+
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    for d in diags:
+                        ans = max(ans, dp(i,j,d,False))
+        return ans
+    
+#whoops, cant do all turns, only a clockwise turn
+#and cant chain 1s, wooohoooo
+#ughhhh
+class Solution:
+    def lenOfVDiagonal(self, grid: List[List[int]]) -> int:
+        '''
+        cans just do 
+        possible = set([(1,2),(2,0),(0,2)]) becaue it this can chain 1s
+        and we are only allowed one clockwise turn
+        '''
+        rows, cols = len(grid), len(grid[0])
+        memo = {}
+
+        diags = {
+            'UR': (-1, 1),
+            'DR': (1, 1),
+            'UL': (-1, -1),
+            'DL': (1, -1),
+        }
+        allowed_turns = {
+            'UR': 'DR',
+            'UL': 'UR',
+            'DR': 'DL',
+            'DL': 'UL'
+        }
+
+        # explicit next-value mapping
+        nxt = {1: 2, 2: 0, 0: 2}
+
+        def dp(i, j, curr_d, made_turn):
+            key = (i, j, curr_d, made_turn)
+            if key in memo:
+                return memo[key]
+
+            best = 1  # count current cell
+            dx, dy = diags[curr_d]
+            ii, jj = i + dx, j + dy
+
+            # continue straight
+            if 0 <= ii < rows and 0 <= jj < cols:
+                if grid[ii][jj] == nxt[grid[i][j]]:
+                    best = max(best, 1 + dp(ii, jj, curr_d, made_turn))
+
+            # try a single 90° turn
+            if not made_turn:
+                nd = allowed_turns[curr_d]
+                dx, dy = diags[nd]
+                ii, jj = i + dx, j + dy
+                if 0 <= ii < rows and 0 <= jj < cols:
+                    if grid[ii][jj] == nxt[grid[i][j]]:
+                        best = max(best, 1 + dp(ii, jj, nd, True))
+
+            memo[key] = best
+            return best
+
+        ans = 0
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1:
+                    for d in diags:
+                        ans = max(ans, dp(i, j, d, False))
+        return ans
+    
+#################################################
+# 3446. Sort Matrix by Diagonals
+# 28AUG25
+#################################################
+class Solution:
+    def sortMatrix(self, grid: List[List[int]]) -> List[List[int]]:
+        '''
+        matrix is square
+        easiet way is to decode the diagaonsl into hasmap
+        ezzzz
+        '''
+        n = len(grid)
+        diags = defaultdict(list)
+        for i in range(n):
+            for j in range(n):
+                diags[(i-j)].append(grid[i][j])
+        ans = [[0]*n for _ in range(n)]
+
+        for d in diags:
+            arr = diags[d]
+            #sort based on sector
+            temp = []
+            if d >= 0:
+                temp = sorted(arr, key = lambda x: -x)
+            else:
+                temp = sorted(arr, key = lambda x: x)
+            diags[d] = temp
+        
+        #pass again and pop left
+        for i in range(n):
+            for j in range(n):
+                ans[i][j] = diags[i-j].pop(0)
+        return ans
+    
+class Solution:
+    def sortMatrix(self, grid: List[List[int]]) -> List[List[int]]:
+        '''
+        we dont need to use hashmap to get diagobal elements
+        go down rows and get diags, walk them, then reverse
+        '''
+        n = len(grid)
+        #bottom left sorted decreasing
+        for i in range(n):
+            diag = []
+            ii,jj = i,0
+            while 0 <= ii < n and 0 <= jj < n:
+                diag.append(grid[ii][jj])
+                ii += 1
+                jj += 1
+            diag.sort(reverse = True)
+            ii,jj = i,0
+            while 0 <= ii < n and 0 <= jj < n:
+                grid[ii][jj] = diag[jj]
+                ii += 1
+                jj += 1
+
+        #go along columns
+        for j in range(1,n):
+            diag = []
+            ii,jj = 0,j
+            while 0 <= ii < n and 0 <= jj < n:
+                diag.append(grid[ii][jj])
+                ii += 1
+                jj += 1
+            diag.sort()
+            ii,jj = 0,j
+            while 0 <= ii < n and 0 <= jj < n:
+                grid[ii][jj] = diag[ii]
+                ii += 1
+                jj += 1
+
+        return grid
+    
+#less lines.....
+#cool way to walk diags
+class Solution:
+    def sortMatrix(self, grid: List[List[int]]) -> List[List[int]]:
+        n = len(grid)
+
+        for i in range(n):
+            tmp = [grid[i + j][j] for j in range(n - i)]
+            tmp.sort(reverse=True)
+            for j in range(n - i):
+                grid[i + j][j] = tmp[j]
+
+        for j in range(1, n):
+            tmp = [grid[i][j + i] for i in range(n - j)]
+            tmp.sort()
+            for i in range(n - j):
+                grid[i][j + i] = tmp[i]
+
+        return grid
