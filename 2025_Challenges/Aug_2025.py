@@ -1274,3 +1274,61 @@ class Solution:
                 grid[i][j + i] = tmp[i]
 
         return grid
+    
+#########################################
+# 3021. Alice and Bob Playing Flower Game
+# 29AUG25
+#########################################
+#TLE
+class Solution:
+    def flowerGame(self, n: int, m: int) -> int:
+        '''
+        in order for alice to win the game there needs to be no flowers left
+        sum of flowers is n + m
+        if theres an even number of lowers
+        x | x
+        turns are alice,bob, -> bob wins
+        if there are odd number of flowers
+        x | x
+        X |
+
+        turns are alice,bob,alice, alice wins
+        alice only wins of n + m is odd
+        '''
+        #brute force
+        pairs = 0
+        for i in range(1,n+1):
+            for j in range(1,m+1):
+                if (i + j) % 2 == 1:
+                    pairs += 1
+            
+        return pairs
+    
+class Solution:
+    def flowerGame(self, n: int, m: int) -> int:
+        '''
+        in order for alice to win the game there needs to be no flowers left
+        sum of flowers is n + m
+        if theres an even number of lowers
+        x | x
+        turns are alice,bob, -> bob wins
+        if there are odd number of flowers
+        x | x
+        X |
+
+        turns are alice,bob,alice, alice wins
+        alice only wins of n + m is odd
+        between numbers 1 and n, count how many evens and odds there are
+        ways to get odd sum
+        even + odd = odd
+        odd + even = even
+        '''
+        #brute force
+        pairs = 0
+        n_evens = n // 2
+        n_odds = n - n_evens
+
+        m_evens = m // 2
+        m_odds = m - m_evens
+        
+        return n_evens*m_odds + n_odds*m_evens 
