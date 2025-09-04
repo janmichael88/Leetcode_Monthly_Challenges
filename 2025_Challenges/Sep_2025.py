@@ -45,6 +45,10 @@ class Solution:
         '''
         two pointers
         if take at nums[i], then we can take the last numbers from nums[i+m-1] to nums[n-1]
+        the middle m-2 elements can be any
+        for any pair (i,j), such that j - i + 1 >= m
+            pick nums[i] as first
+            pick nums[j] as last
         '''
         MAX = float('-inf')
         MIN = float('inf')
@@ -52,10 +56,11 @@ class Solution:
         n = len(nums)
         for i in range(m-1,n):
             MAX = max(MAX,nums[i - m + 1])
-            MIN = min(MIN,nums[i-m+1])
+            MIN = min(MIN,nums[i - m + 1])
             ans = max(ans, nums[i]*MIN, nums[i]*MAX)
         
         return ans
+
 
 ######################################################
 # 3025. Find the Number of Ways to Place People I
@@ -96,5 +101,45 @@ class Solution:
                 if is_valid:
                     # print(ul, br)  # debug
                     count += 1
+
+        return count
+    
+###################################################
+# 3027. Find the Number of Ways to Place People II
+# 04SEP25
+###################################################
+class Solution:
+    def numberOfPairs(self, points: List[List[int]]) -> int:
+        '''
+        alice must be upper left corner
+        bob must be lower right corner
+        need to count number of (alice, bob) pairs of points such that they form a rectangle
+        and no other points are in there
+        we obvie cant fix ul and br corners to check
+        so we need an effcient way to check if there are any points in between
+        we can sort along x and along y and check for intersection
+        track max y
+        double sort and count
+        '''
+        #sort increasing on x, and decreasing on way
+        #since we're sorted in increasing x, we know that next i+1, is bigger, so x is satified
+        #now check
+        n = len(points)
+        points.sort(key = lambda x: (x[0],-x[1]))
+        print(points)
+        count = 0
+        #this part is the same still
+        for i in range(n):
+            max_y = float('-inf')
+            x1,y1 = points[i]
+            #we know x2 is >= x1, so that's satisfied
+            for j in range(i+1, n):
+                x2,y2 = points[j]
+                #y2 must be between the current max_y and y1
+                #uptdate max_y to the current y2, since we sorted decreasling
+                if max_y < y2 <= y1:
+                    #valid pair with the current i
+                    count += 1
+                    max_y = y2
 
         return count
