@@ -143,3 +143,179 @@ class Solution:
                     max_y = y2
 
         return count
+    
+########################################
+# 3516. Find Closest Person
+# 04SEP25
+########################################
+class Solution:
+    def findClosest(self, x: int, y: int, z: int) -> int:
+        '''
+        x and y move to z, we're on a number line
+        
+        '''
+        if abs(x - z) < abs(y-z):
+            return 1
+        elif abs(x - z) > abs(y-z):
+            return 2
+        
+        return 0
+    
+################################################################
+# 2749. Minimum Operations to Make the Integer Zero (REVISTED)
+# 06SEP25
+################################################################
+class Solution:
+    def makeTheIntegerZero(self, num1: int, num2: int) -> int:
+        '''
+        hints
+        1. if we want to make n == 0 by using only pwoers of 2 from n, we need at least the number of bits in binary rep of 2 and at most -n
+        2. if its possible to make num1 == 0, then we need at most 60 opeations
+        
+        i.e if i can only subtract powers of 2, the mininum number of operations is just the number of set bit in num1
+        the issue is that we are subtracting a power of 2 + num2
+        say we have 3 and -2
+        smallest value we can subtract depends on the sign
+        if i == 0, we just subtract num2, but if we subtract a negative we move away
+        
+        if num2 is positive then we are always subtracting a postivie number
+        if num2 is negative, then it depends when 2**i > abs(num2), for use to subtract
+        
+        get diff between steps
+        (num1 - (2**(i+1) + num2)) - (num1 - (2**i + num2)) = diff
+        num1 -(2**(i+1)) - num2 - num1 + 2**i + num2 = diff
+            -(2**(i+1)) + 2**i = diff
+            diff = -2**i
+
+        think of it like this: if use steps in total we really are doing the subtraction part is:
+        (num2 + 2^i1) + (num2 + 2^i2) ... + (num2 +2^ik)
+        so we want num1 - (steps*num2 + sum(2^(i for each i up to k))) = 0
+        we can rearrange to get
+        num1 - steps*num2 = sum(2^(i for each i up to k))
+        really is sum of powers of 2 used, this is just a binary rep of some number
+        this means that:
+            diff = num1 - steps*num2
+            the diff must be represented as the smallest power of two!
+
+        ie.
+            Any integer diff can be written in binary.
+            The minimum number of powers of two needed is the number of set bits (countBits(diff)).
+            The maximum number of powers of two you can use is diff itself (worst case, use 1 a bunch of times).
+            so condition is
+            countBits(diff) <= steps <= diff
+        
+        for the sum of powers of two, i could use 2^1 + 2^1 + 2^1 = 6, using three steps
+        or i could hae used 2^2 + 2^1 = 6 for two steps, 
+        it's not worth repeating an ith power multiple times if i can get to another power of two in smaller steps
+        '''
+        #can't do it
+        if num1 < num2:
+            return -1
+        #couting set bits
+        def countBits(num):
+            count = 0
+            while num > 0:
+                count += num & 1
+                num >>= 1
+            return count
+        
+        for steps in range(61):
+            #this is diff using steps only
+            diff = num1 - num2 * steps
+            bits = countBits(diff)
+            #need to make bits less then actual steps, and steps <= bits
+            if bits <= steps <= diff:
+                return steps
+
+        return -1
+
+#########################################################
+# 3495. Minimum Operations to Make Array Elements Zero
+# 06SEP25
+##########################################################
+#couldn't get it....
+#sadness 
+import math
+class Solution:
+    def minOperations(self, queries: List[List[int]]) -> int:
+        '''
+        each query is range from numers [l....r]
+        in one operation we can pick two integers in that range and replace them with floor(a/4) and floor(b/4)
+        return min operations to reduce each query range to the zeros vector
+        hint, for a number x, the number of floor operations to change to zero is floor(log4(x) + 1)
+        always pair 2 numbers with maximuim /4 operations needed
+        i cant expand the queries, because that take too long
+        given this:
+        test = [2,3,4,5,6]
+        steps arrays is 
+        [1,1,2,2,2]
+        now this is pick two numbers (a,b) and reduce by min(a,b)
+        keep going until all are zero
+        '''
+        ans = 0
+
+        for l,r in queries:
+            steps_l = math.floor(math.log(l,4)) + 1
+            steps_r = math.floor(math.log(r,4)) + 1
+            print(steps_l,steps_r)
+            
+        return ans
+
+class Solution:
+    def minOperations(self, queries: List[List[int]]) -> int:
+        '''
+        to reduce some number by zero we need to use log4 + 1 divisions
+        [1,3] -> 1 division
+        [4,15] -> 2 division
+        [16,63] -> 3 visions
+        code the check
+        for num in range(1,64):
+            #count divisions
+            temp = num
+            divisions = 0
+            while temp > 0:
+                divisions += 1
+                temp = temp >> 2
+            print(num,divisions)
+        digit dp paradigm
+
+        '''
+        ans = 0
+        for l,r in queries:
+            divisions = 0
+            prev = 1
+            #Then, we slide the interval (prev = cur) --> d = 1 : [1, 3] -> d = 2 : [4, 15] -> d = 3 : [16, 63]...
+            #check overlap in range
+            for divisions in range(1,17):
+                curr = prev*4
+                start = max(l,prev)
+                end = min(r,curr - 1)
+                #complete overlap
+                if end >= start:
+                    divisions += (end - start + 1)*divisions
+                #slide range
+                prev = curr
+            #ceiling would also work here too
+            ans += (divisions + 1) // 2
+        
+        return ans
+
+#################################################
+# 3032. Count Numbers With Unique Digits II
+# 08SEP25
+#################################################
+class Solution:
+    def numberCount(self, a: int, b: int) -> int:
+        '''
+        brute force with hashset
+        digit dip
+        count nums that have unique digits less then some num, call it dp(num)
+        we want
+        dp(b) - do(a)
+        '''
+        ans = 0
+        for num in range(a,b+1):
+            digits = set(str(num))
+            if len(digits) == len(str(num)):
+                ans += 1
+        return ans
