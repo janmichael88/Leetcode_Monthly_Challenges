@@ -235,31 +235,24 @@ class Solution:
 ##########################################################
 #couldn't get it....
 #sadness 
+#at least for brute force
 import math
 class Solution:
     def minOperations(self, queries: List[List[int]]) -> int:
         '''
-        each query is range from numers [l....r]
-        in one operation we can pick two integers in that range and replace them with floor(a/4) and floor(b/4)
-        return min operations to reduce each query range to the zeros vector
-        hint, for a number x, the number of floor operations to change to zero is floor(log4(x) + 1)
-        always pair 2 numbers with maximuim /4 operations needed
-        i cant expand the queries, because that take too long
-        given this:
-        test = [2,3,4,5,6]
-        steps arrays is 
-        [1,1,2,2,2]
-        now this is pick two numbers (a,b) and reduce by min(a,b)
-        keep going until all are zero
+        brute force
         '''
         ans = 0
-
         for l,r in queries:
-            steps_l = math.floor(math.log(l,4)) + 1
-            steps_r = math.floor(math.log(r,4)) + 1
-            print(steps_l,steps_r)
+            divisions = 0
+            for num in range(l,r+1):
+                divisions += math.floor(math.log(num,4)) + 1
             
+            ans += (divisions + 1) // 2
+        
         return ans
+    
+#we can speed this up using prefix sums actually!
 
 class Solution:
     def minOperations(self, queries: List[List[int]]) -> int:
@@ -319,3 +312,143 @@ class Solution:
             if len(digits) == len(str(num)):
                 ans += 1
         return ans
+    
+class Solution:
+    def numberCount(self, a: int, b: int) -> int:
+        '''
+        brute force with hashset
+        digit dip
+        count nums that have unique digits less then some num, call it dp(num)
+        we want
+        dp(b) - do(a)
+        tight means if were' still follogin wht prefix of the upper bound num
+            * tight = True → we can only place digits up to digits[pos] (the current digit of num).
+            * tight = False → we’re already below num somewhere to the left, so we can freely place any digit 0–9.
+            exmple if num = 325, and at pos = 0
+                if we choose 3 where still tight
+                if we choose 0,1,2 we are no longer right
+        started keeps track of whether weve place a non leading zero digits yet
+            started = True → we’ve already placed at least one digit that counts toward the number.
+            started = False → we’re still in the leading zeros
+        '''
+        def count_unique_digits(num: int) -> int:
+            digits = list(map(int, str(num)))
+
+            @lru_cache(None)
+            def dp(pos: int, mask: int, tight: bool, started: bool) -> int:
+                # Base case: reached end
+                if pos == len(digits):
+                    return 1 if started else 0  # valid if we placed something
+                
+                limit = digits[pos] if tight else 9
+                total = 0
+                
+                for d in range(0, limit + 1):
+                    # skip if digit already used
+                    if started and (mask >> d) & 1:
+                        continue
+                    
+                    new_mask = mask
+                    new_started = started
+                    #leading zero or placing a zero
+                    if started or d != 0:
+                        new_started = True
+                        new_mask = mask | (1 << d)
+                    
+                    total += dp(
+                        pos + 1,
+                        new_mask,
+                        tight and (d == limit),
+                        new_started
+                    )
+                
+                return total
+            #initially tight is tru and started is false because we haven't place anything yet
+            return dp(0, 0, True, False)
+        
+        return count_unique_digits(b) - count_unique_digits(a-1)
+
+##################################################
+# 2327. Number of People Aware of a Secret
+# 09SEP25
+###################################################
+#top down 
+class Solution:
+    def peopleAwareOfSecret(self, n: int, delay: int, forget: int) -> int:
+        '''
+        top down, easier question is to frame and find number of people who remember the secret at day n
+        so its just dp(n) - dp(n-forget)
+        '''
+        memo = {}
+        mod = 10**9 + 7
+        def dp(i):
+            mod = 10**9 + 7
+            if i == 0:
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = 1
+            for j in range(i-forget+1,i-delay+1):
+                if j >= 0:
+                    ans += dp(j)
+                    ans %= mod
+            ans %= mod
+            memo[i] = ans
+            return ans
+        
+        return (dp(n) - dp(n-forget)) % mod
+
+#dp, bottom up
+class Solution:
+    def peopleAwareOfSecret(self, n: int, delay: int, forget: int) -> int:
+        '''
+        day 1 person has secret
+        each person that knows a secret will share the secret with a person, delay days after discovering it
+        each person will forget the secret forget days after discovering it
+        a person cannot share the secret on the same day they forgot it or any day aftewords
+            after forgetting, they can't share it
+
+        dp(i) mean the number of people wo knows the secret at day i
+        people who knew secret from day i-forget+1 to i - delay can only share the secret
+        '''
+        dp = [0]*n
+        dp[0] = 1
+        for i in range(n):
+            for j in range(i-forget+1,i-delay+1):
+                if j >= 0:
+                    dp[i] += dp[j]
+        
+        mod = 10**9 + 7
+        ans = 0
+        #now add up in from n - forget to n
+        for d in range(n-forget,n):
+            ans += dp[d] % mod
+        return ans % mod
+    
+#double queue solution
+class Solution:
+    def peopleAwareOfSecret(self, n: int, delay: int, forget: int) -> int:
+        '''
+        two queue solution with rolling sums
+        share and know, and entries are (day,count)
+        initially know is [(1,1)]
+        then for from day 2 to day n
+            on the i-delay day, people who know secret now share it
+            on i - forget delay, peole we knew secret forget it
+            everyone in share teaches the secret to new people
+        '''
+        know, share = deque([(1, 1)]), deque([])
+        know_cnt, share_cnt = 1, 0
+        for i in range(2, n + 1):
+            if know and know[0][0] == i - delay:
+                know_cnt -= know[0][1]
+                share_cnt += know[0][1]
+                share.append(know[0])
+                know.popleft()
+            if share and share[0][0] == i - forget:
+                share_cnt -= share[0][1]
+                share.popleft()
+            if share:
+                know_cnt += share_cnt
+                know.append((i, share_cnt))
+        return (know_cnt + share_cnt) % (10**9 + 7)
