@@ -452,3 +452,257 @@ class Solution:
                 know_cnt += share_cnt
                 know.append((i, share_cnt))
         return (know_cnt + share_cnt) % (10**9 + 7)
+
+
+#############################################
+# 1733. Minimum Number of People to Teach (REVISTED)
+# 10SEP25
+#############################################
+#close one this time
+class Solution:
+    def minimumTeachings(self, n: int, languages: List[List[int]], friendships: List[List[int]]) -> int:
+        '''
+        need to choose one languaed to teach so that all friends can comm with each other
+        return minimum
+        try all languages
+        see if we can complete traversal of the friendships arrays
+        '''
+        m = len(languages)
+        languages = [set(l) for l in languages]
+
+        
+        ans = m
+        for lang in range(1,n+1):
+            add_langs = []
+            users_taught = 0
+            for l in languages:
+                if lang not in l:
+                    users_taught += 1
+                l.add(lang)
+                add_langs.append(l)
+            can_unite = True
+            for u,v in friendships:
+                u_lang = add_langs[u-1]
+                v_lang = add_langs[v-1]
+                if u_lang & v_lang:
+                    continue
+                else:
+                    can_unite = False
+                    break
+            if can_unite:
+                ans = min(ans,users_taught)
+
+        return ans
+    
+#yesss
+class Solution:
+    def minimumTeachings(self, n: int, languages: List[List[int]], friendships: List[List[int]]) -> int:
+        '''
+        need to choose one languaed to teach so that all friends can comm with each other
+        return minimum
+        try all languages
+        see if we can complete traversal of the friendships arrays
+        '''
+        m = len(languages)
+        languages = [set(l) for l in languages]
+
+        # Find which friendships are blocked (no common language)
+        blocked = []
+        for u, v in friendships:
+            if languages[u-1] & languages[v-1]:
+                continue
+            blocked.append((u-1, v-1))
+
+        # If no blocked friendships, no teaching needed
+        if not blocked:
+            return 0
+
+        ans = m  # upper bound
+        # Try each language as the "teaching" language
+        for lang in range(1, n+1):
+            to_teach = set()
+            for u, v in blocked:
+                if lang not in languages[u]:
+                    to_teach.add(u)
+                if lang not in languages[v]:
+                    to_teach.add(v)
+            #need to teach this lang to u and v
+            ans = min(ans, len(to_teach))
+
+        return ans
+    
+##############################################
+# 2506. Count Pairs Of Similar Strings
+# 10SEP25
+##############################################
+class Solution:
+    def similarPairs(self, words: List[str]) -> int:
+        '''
+        mask signature on words
+        accumlate with freq count to reduce time
+        '''
+        sigs = []
+        for w in words:
+            mask = 0
+            for ch in w:
+                i = ord(ch) - ord('a')
+                mask = mask | (1 << i)
+            sigs.append(mask)
+        
+        n = len(sigs)
+        ans = 0
+        for i in range(n):
+            for j in range(i+1,n):
+                if sigs[i] == sigs[j]:
+                    ans += 1
+        
+        return ans
+    
+#counting pairs hashmap paradigm
+class Solution:
+    def similarPairs(self, words: List[str]) -> int:
+        '''
+        mask signature on words
+        accumlate with freq count to reduce time
+        '''
+        counts = Counter()
+        ans = 0
+        for w in words:
+            mask = 0
+            for ch in w:
+                i = ord(ch) - ord('a')
+                mask = mask | (1 << i)
+            #if we've seen this mask before, we can pair it with the current mask
+            ans += counts[mask]
+            counts[mask] += 1
+        
+        return ans
+    
+############################################################
+# 2086. Minimum Number of Food Buckets to Feed the Hamsters
+# 11SEP25
+##############################################################
+#dammmit
+class Solution:
+    def minimumBuckets(self, hamsters: str) -> int:
+        '''
+        fun problem!
+        if there are n hamsters, we need to place n donuts
+        hamsters can always eat at index i or i-1
+        a donut in between hamsters can feed both of them
+        '''
+        n = len(hamsters)
+        count_h = 0
+        for ch in hamsters:
+            count_h += ch == 'H'
+        
+        if count_h > n - count_h:
+            return -1
+        
+        feed = list(hamsters)
+        #now attemp to feed hamsters
+        for i in range(n):
+            if i == 0 and feed[i] == 'H':
+                feed[i+1] = 'D'
+            elif i == n-1 and feed[i] == 'H':
+                if feed[i-1] == 'D':
+                    continue
+                else:
+                    feed[i-1] = 'D'
+            elif feed[i] == 'H':
+                if feed[i-1] == 'D':
+                    continue
+                elif i + 1 < n:
+                    feed[i+1] = 'D'
+
+        ans = 0
+        for ch in feed:
+            ans += ch == 'D'
+        return ans
+    
+class Solution:
+    def minimumBuckets(self, hamsters: str) -> int:
+        '''
+        fun problem!
+        if there are n hamsters, we need to place n donuts
+        hamsters can always eat at index i or i-1
+        a donut in between hamsters can feed both of them
+        '''
+        ans = 0
+        hamsters =list(hamsters)
+        n = len(hamsters)
+        for i in range(n):
+            if hamsters[i] == "H":
+                #already fed!
+                if i > 0 and hamsters[i-1] == "B":
+                    continue
+                #priortize i + 1
+                if i + 1 < n and hamsters[i + 1] == ".":
+                    hamsters[i + 1] = "B"
+                    ans += 1
+                #if we can't feed at i+1, feed at i-1
+                elif hamsters[i - 1] == "." and i - 1 >= 0:
+                    hamsters[i - 1] = "B"
+                    ans += 1
+                #if we can't feed at i-1, we can't do it
+                else:
+                    return -1
+        return ans
+    
+#########################################
+# 3227. Vowels Game in a String
+# 12SEP25
+#########################################
+class Solution:
+    def doesAliceWin(self, s: str) -> bool:
+        '''
+        all that matters in the substring is that
+            alice's substring contains odd
+            bob's substring contains even
+        
+        alice will win the game is there is an odd number of vowels in the string
+        if there is an even number of vowels, what can alice do to screw over bob?
+            take an odd number!
+            if there are 8 vowels starting, alice can take 3, leaving 5
+        
+        '''
+        count_vowels = 0
+        vowels = "aeiou"
+        for ch in s:
+            if ch in vowels:
+                count_vowels += 1
+        
+        if count_vowels == 0:
+            return False
+        
+        return True
+    
+class Solution:
+    def doesAliceWin(self, s: str) -> bool:
+        '''
+        just check for the first vowel
+        '''
+        for ch in s:
+            if ch in "aeiou":
+                return True
+        return False
+    
+################################################
+# 3541. Find Most Frequent Vowel and Consonant
+# 13SEP25
+################################################
+class Solution:
+    def maxFreqSum(self, s: str) -> int:
+        '''
+        count up
+        '''
+        counts = Counter(s)
+        vowels = "aeiou"
+        max_vowel, max_cons = 0,0
+        for k,v in counts.items():
+            if k in vowels:
+                max_vowel = max(max_vowel,v)
+            else:
+                max_cons = max(max_cons,v)
+        
+        return max_vowel + max_cons
