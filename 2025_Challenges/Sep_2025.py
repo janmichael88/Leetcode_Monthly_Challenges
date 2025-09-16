@@ -706,3 +706,22 @@ class Solution:
                 max_cons = max(max_cons,v)
         
         return max_vowel + max_cons
+    
+#############################################
+# 1935. Maximum Number of Words You Can Type
+# 15SEP25
+##############################################
+class Solution:
+    def canBeTypedWords(self, text: str, brokenLetters: str) -> int:
+        '''
+        just check brokenLetters against each word
+        '''
+        ans = 0
+        words = 0
+        for w in text.split(" "):
+            words += 1
+            for ch in w:
+                if ch in brokenLetters:
+                    ans += 1
+                    break
+        return words - ans
