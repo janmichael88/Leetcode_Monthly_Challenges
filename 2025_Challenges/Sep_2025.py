@@ -1044,3 +1044,53 @@ class MovieRentingSystem:
     def report(self) -> List[List[int]]:
         # return up to 5 cheapest rented movies
         return [[shop, movie] for price, shop, movie in self.cheapest_rented[:5]]
+
+#########################################
+# 3508. Implement Router
+# 21SEP25
+##########################################
+class Router:
+
+    def __init__(self, memoryLimit: int):
+        self.n = memoryLimit
+        self.packets = deque([])
+        self.router = defaultdict(deque)
+        self.seen = set() #duplicate packets
+
+    def addPacket(self, source: int, destination: int, timestamp: int) -> bool:
+        #need to check for duplicate packets
+        entry = (source,destination,timestamp)
+        if entry in self.seen:
+            return False
+        self.packets.append(entry)
+        self.seen.add(entry)
+        self.router[destination].append(timestamp)
+        #clear
+        if len(self.packets) > self.n:
+            self.forwardPacket()
+
+        return True
+
+    def forwardPacket(self) -> List[int]:
+        #these are for the packets that have not been forwarded
+        if len(self.packets) == 0:
+            return []
+        source,destination,timestamp = self.packets.popleft()
+        self.seen.remove((source,destination,timestamp))
+        self.router[destination].popleft()
+        return [source,destination,timestamp]
+
+
+    def getCount(self, destination: int, startTime: int, endTime: int) -> int:
+        #binary search
+        times = self.router[destination]
+        left = bisect.bisect_left(times,startTime)
+        right = bisect.bisect_right(times,endTime)
+        return right - left
+
+
+# Your Router object will be instantiated and called as such:
+# obj = Router(memoryLimit)
+# param_1 = obj.addPacket(source,destination,timestamp)
+# param_2 = obj.forwardPacket()
+# param_3 = obj.getCount(destination,startTime,endTime)
