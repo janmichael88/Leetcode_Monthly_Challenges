@@ -725,3 +725,322 @@ class Solution:
                     ans += 1
                     break
         return words - ans
+    
+###########################################
+# 2197. Replace Non-Coprime Numbers in Array
+# 15SEP25
+############################################
+#cheese
+class Solution:
+    def replaceNonCoprimes(self, nums: List[int]) -> List[int]:
+        '''
+        non coprime is when gcd(x,y) > 1
+        find two adjacent numbers that are non-coprime and replace them with LCM
+        so need GCD and LCM
+        keep going until we can't do it
+        return final array
+        use stack and keep merging left
+        '''
+        ans = [nums[0]]
+
+        for num in nums[1:]:
+            ans.append(num)
+            while len(ans) >= 2 and self.gcd(ans[-1],ans[-2]) > 1:
+                b = ans.pop()
+                a = ans.pop()
+                ans.append(self.lcm(a,b))
+        return ans
+
+    def gcd(self,a,b):
+        if b == 0:
+            return a
+        return self.gcd(b,a % b)
+    
+    def lcm(self,a,b):
+        return (a*b) // self.gcd(a,b)
+    
+################################################
+# 2353. Design a Food Rating System (REVISTED)
+# 17SEP25
+################################################
+#garbage heap
+class FoodRatings:
+
+    def __init__(self, foods: List[str], cuisines: List[str], ratings: List[int]):
+        '''
+        i could map each type of cuisine to its rating
+        heap, each one, but then how would ith changeRating
+        garbage heap, we update food
+        then when retreiving, if it doesn't match whats in the hashmap, we know its not that one
+        '''
+        self.food_to_rating = {}
+        self.highest_rated = defaultdict(list)
+        for f,c,r in zip(foods,cuisines,ratings):
+            self.food_to_rating[f] = (r,c)
+            heapq.heappush(self.highest_rated[c], (-r,f))
+
+    def changeRating(self, food: str, newRating: int) -> None:
+        #update hashmap for food
+        curr_rating,curr_cuisine = self.food_to_rating[food]
+        self.food_to_rating[food] = (newRating,curr_cuisine)
+        #push into other hashmapp
+        heapq.heappush(self.highest_rated[curr_cuisine], (-newRating,food))
+        
+
+    def highestRated(self, cuisine: str) -> str:
+        #remove stale values when trying to get highestRated
+        while True:
+            curr_rating,curr_food = self.highest_rated[cuisine][0]
+            #validate
+            if curr_rating == -self.food_to_rating[curr_food][0]:
+                return curr_food
+            else:
+                heapq.heappop(self.highest_rated[cuisine])
+
+
+# Your FoodRatings object will be instantiated and called as such:
+# obj = FoodRatings(foods, cuisines, ratings)
+# obj.changeRating(food,newRating)
+# param_2 = obj.highestRated(cuisine)
+
+##########################################
+# 3408. Design Task Manager
+# 18SEP25
+#########################################
+'''
+very similar to the last problem, we can cheese it and use python sorted set
+
+'''
+from sortedcontainers import SortedSet
+
+class TaskManager:
+
+    def __init__(self, tasks: List[List[int]]):
+        self.taskId_to_userId = {}
+        self.taskId_to_priority = {}
+        self.highest_tasks = SortedSet()
+        for user,task,rating in tasks:
+            self.add(user,task,rating)
+
+    def add(self, userId: int, taskId: int, priority: int) -> None:
+        #taskId does not exsist in the system
+        self.taskId_to_userId[taskId] = userId
+        self.taskId_to_priority[taskId] = priority
+        self.highest_tasks.add((-priority, -taskId, userId))
+
+    def edit(self, taskId: int, newPriority: int) -> None:
+        #we also need to map taskId to userID
+        #guaranteed to have taskId
+        curr_user = self.taskId_to_userId[taskId]
+        curr_priority = self.taskId_to_priority[taskId]
+        #updating priority
+        self.taskId_to_priority[taskId] = newPriority
+        #remove old entry
+        old_entry = (-curr_priority,-taskId,curr_user)
+        self.highest_tasks.remove(old_entry)
+        new_entry = (-newPriority,-taskId,curr_user)
+        self.highest_tasks.add(new_entry)
+
+
+    def rmv(self, taskId: int) -> None:
+        #taskID is in the system
+        curr_user = self.taskId_to_userId[taskId]
+        curr_priority = self.taskId_to_priority[taskId]
+        old_entry = (-curr_priority,-taskId,curr_user)
+        self.highest_tasks.remove(old_entry)
+        del self.taskId_to_userId[taskId]
+        del self.taskId_to_priority[taskId]
+
+
+    def execTop(self) -> int:
+        #return highest rated taskID across all users, tiebreak is the largerTask id (-rating,-taskID,userID)
+        #so we need a container of all (-rating,-taskID,userID)
+        if len(self.highest_tasks) == 0:
+            return -1
+        
+        highest_entry = self.highest_tasks[0]
+        self.highest_tasks.remove(highest_entry)
+        return highest_entry[2]
+
+
+# Your TaskManager object will be instantiated and called as such:
+# obj = TaskManager(tasks)
+# obj.add(userId,taskId,priority)
+# obj.edit(taskId,newPriority)
+# obj.rmv(taskId)
+# param_4 = obj.execTop()
+
+####################################################
+# 3484. Design Spreadsheet
+# 19SEP25
+####################################################
+class Spreadsheet:
+
+    def __init__(self, rows: int):
+        '''
+        init hashmap for valuea A to Z each one follower by row number
+        i don't need to init
+        '''
+        self.cells = defaultdict()
+        for i in range(26):
+            letter = chr(ord('A') + i)
+            for row in range(rows):
+                r_idx = row + 1
+                cell = letter+str(r_idx)
+                self.cells[cell] = 0
+    def setCell(self, cell: str, value: int) -> None:
+        self.cells[cell] = value
+        
+
+    def resetCell(self, cell: str) -> None:
+        self.cells[cell] = 0
+
+    def getValue(self, formula: str) -> int:
+        right = formula[1:]
+        right = right.split("+")
+        x,y = right[0],right[1]
+
+        #try retrieing
+        if x in self.cells:
+            x = self.cells[x]
+        else:
+            x = int(x)
+        if y in self.cells:
+            y = self.cells[y]
+        else:
+            y = int(y)
+        return x + y
+
+
+
+# Your Spreadsheet object will be instantiated and called as such:
+# obj = Spreadsheet(rows)
+# obj.setCell(cell,value)
+# obj.resetCell(cell)
+# param_3 = obj.getValue(formula)
+
+#################################################
+# 1912. Design Movie Rental System
+# 21SEP25
+#################################################
+from sortedcontainers import SortedList
+class MovieRentingSystem:
+
+    def __init__(self, n: int, entries: List[List[int]]):
+        '''
+        if i had map like (shop_id,move_id), i can support rent and drop in constant ime
+        for search, we need the 5 cheaptest shops for unrented_moves
+        so we need table for rented and unrented
+        sorted list for rented and unrented
+        caveat,
+            each shopw carries "AT MOST ONE" copy of movie
+        '''
+
+        self.unrented = defaultdict(SortedList)
+        self.rented = defaultdict(SortedList)
+        self.movie_shop_to_price = defaultdict()
+        #i need another one for cheapest rentedmovies
+        self.cheapest_rented = SortedList([])
+        for i in range(len(entries)):
+            shop,movie,price = entries[i]
+            #all are unrented initally
+            self.unrented[movie].add((price,shop))
+            self.movie_shop_to_price[(movie,shop)] = price
+        print(self.movie_shop_to_price)
+
+    def search(self, movie: int) -> List[int]:
+        #need to find the 5 cheapest shops that have unrented copy of movie
+        candidates = self.unrented[movie]
+        if len(candidates) <= 5:
+            ans = []
+            for i in range(len(candidates)):
+                ans.append(candidates[i][1])
+            return ans
+        return [] #empty list
+         
+
+    def rent(self, shop: int, movie: int) -> None:
+        #get current movie price
+        price = self.movie_shop_to_price[(movie,shop)]
+        #remove from unrented
+        self.unrented[movie].remove((price,shop))
+        #add to current cheapest rented and curr rented
+        self.rented[movie].add((price,shop))
+        self.cheapest_rented.add((price,shop,movie))
+
+    def drop(self, shop: int, movie: int) -> None:
+        #get current price
+        price = self.movie_shop_to_price[(movie,shop)]
+        #remove from rente
+        self.rented[movie].remove((price,shop))
+        self.unrented[movie].add((price,shop))
+        self.cheapest_rented.remove((price,shop,movie))
+        
+    def report(self) -> List[List[int]]:
+        #look through cheapest rented top 5
+        n = len(self.cheapest_rented)
+        if n < 5:
+            ans = []
+            for i in range(n):
+                price,shop,movie = self.cheapest_rented[i]
+                ans.append([shop,movie])
+            return ans
+        return []
+        
+
+
+# Your MovieRentingSystem object will be instantiated and called as such:
+# obj = MovieRentingSystem(n, entries)
+# param_1 = obj.search(movie)
+# obj.rent(shop,movie)
+# obj.drop(shop,movie)
+# param_4 = obj.report()
+
+#jesus, finally
+from typing import List
+from collections import defaultdict
+from sortedcontainers import SortedList
+
+class MovieRentingSystem:
+
+    def __init__(self, n: int, entries: List[List[int]]):
+        '''
+        unrented[movie] -> SortedList of (price, shop)
+        rented[movie] -> SortedList of (price, shop)
+        cheapest_rented -> SortedList of (price, shop, movie)
+        movie_shop_to_price[(movie,shop)] -> price
+        '''
+        self.unrented = defaultdict(SortedList)
+        self.rented = defaultdict(SortedList)
+        self.movie_shop_to_price = {}
+        self.cheapest_rented = SortedList()
+
+        for shop, movie, price in entries:
+            # all are initially unrented
+            self.unrented[movie].add((price, shop))
+            self.movie_shop_to_price[(movie, shop)] = price
+
+    def search(self, movie: int) -> List[int]:
+        # return up to 5 cheapest shops that have this movie unrented
+        candidates = self.unrented[movie]
+        return [shop for price, shop in candidates[:5]]
+
+    def rent(self, shop: int, movie: int) -> None:
+        price = self.movie_shop_to_price[(movie, shop)]
+        # remove from unrented
+        self.unrented[movie].remove((price, shop))
+        # add to rented
+        self.rented[movie].add((price, shop))
+        self.cheapest_rented.add((price, shop, movie))
+
+    def drop(self, shop: int, movie: int) -> None:
+        price = self.movie_shop_to_price[(movie, shop)]
+        # remove from rented
+        self.rented[movie].remove((price, shop))
+        self.cheapest_rented.remove((price, shop, movie))
+        # add back to unrented
+        self.unrented[movie].add((price, shop))
+
+    def report(self) -> List[List[int]]:
+        # return up to 5 cheapest rented movies
+        return [[shop, movie] for price, shop, movie in self.cheapest_rented[:5]]
