@@ -1094,3 +1094,157 @@ class Router:
 # param_1 = obj.addPacket(source,destination,timestamp)
 # param_2 = obj.forwardPacket()
 # param_3 = obj.getCount(destination,startTime,endTime)
+
+
+############################################
+# 1540. Can Convert String in K Moves
+# 24SEP25
+############################################
+class Solution:
+    def canConvertString(self, s: str, t: str, k: int) -> bool:
+        '''
+        add up the shiifts delta and make sure they dont exceed k
+        the 1 index thing is so stupid
+        we can only ever positive shift
+        to go from a to b, we could use +1
+        or +27 
+        '''
+        #cannot do unneveen lengths
+        if len(s) != len(t):
+            return False
+        
+        counts = Counter()
+        for u,v in zip(s,t):
+            if u != v:
+                u_idx = ord(u) - ord('a')
+                v_idx = ord(v) - ord('a')
+                delta = v_idx - u_idx #we need to go from u to v, so its just v_idx - u_idx (python can just do % 26,)
+                #modulo works with negative numbers in python
+                delta += 26
+                delta %= 26
+                counts[delta] += 1
+        #need to make sure k can cover all the counts
+        for delta,c in counts.items():
+            if c == 1:
+                #can't it in this round
+                if k < delta:
+                    return False
+            else:
+                #if delta is repeated, we need try using + 26
+                #its really just delta + 26*c, where c in the count
+                #i can use delta + 26*0, delta + 26*1, delta + 26*2 .... delta + 26*c
+                if delta + 26*(c-1) > k:
+                    return False
+        return True
+    
+#one pass
+class Solution:
+    def canConvertString(self, s: str, t: str, k: int) -> bool:
+        '''
+        add up the shiifts delta and make sure they dont exceed k
+        the 1 index thing is so stupid
+        we can only ever positive shift
+        to go from a to b, we could use +1
+        or +27 
+
+        you can also do this in one pass, count and check on the fly
+        '''
+        #cannot do unneveen lengths
+        if len(s) != len(t):
+            return False
+        
+        counts = Counter()
+        for u,v in zip(s,t):
+            if u != v:
+                u_idx = ord(u) - ord('a')
+                v_idx = ord(v) - ord('a')
+                delta = v_idx - u_idx #we need to go from u to v, so its just v_idx - u_idx (python can just do % 26,)
+                #modulo works with negative numbers in python
+                delta += 26
+                delta %= 26
+                if counts[delta]*26 + delta > k:
+                    return False
+                counts[delta] += 1
+        
+        return True
+    
+#############################################
+# 812. Largest Triangle Area (REVISTED)
+# 27SEP25
+###############################################
+class Solution:
+    def largestTriangleArea(self, points: List[List[int]]) -> float:
+        '''
+        first need to check if three points can make a triangle
+        if so, compute area using shoelace forumala
+        shoelace formula for n points:
+        (1/2)*sum_{i=0}^{i = n - 1} (y_{i} + y_{i+1})*(x_{i} - x+{i+1})
+        '''
+        ans = 0
+        n = len(points)
+        for i in range(n):
+            for j in range(i+1,n):
+                for k in range(j+1,n):
+                    a = points[i]
+                    b = points[j]
+                    c = points[k]
+                    area = self.shoelace([a,b,c])
+                    ans = max(ans,area)
+        return ans
+
+    def triangle_area(self,x1, y1, x2, y2, x3, y3):
+        return abs(x1*(y2 - y3) + x2*(y3 - y1) + x3*(y1 - y2)) / 2.0
+
+    def shoelace(self, points):
+        ans = 0
+        n = len(points)
+        for i in range(n):
+            x1, y1 = points[i]
+            x2, y2 = points[(i + 1) % n]
+            ans += x1 * y2 - x2 * y1
+        return abs(ans) / 2.0
+
+###############################################
+# 1152. Analyze User Website Visit Pattern
+# 28SEP25
+###############################################
+class Solution:
+    def mostVisitedPattern(self, username: List[str], timestamp: List[int], website: List[str]) -> List[str]:
+        '''
+        for each time stamp store it as t : (word,username)
+        then fix all (i,j,k) and see if there is a user that visited i,j,k websites in order
+        the thing is i'm not sure if there can be repeated times
+        there can be
+        do it by user and in order
+        '''
+        #mapp time to (word,person)
+        mapp = defaultdict(list)
+        n = len(username)
+        for i in range(n):
+            user,time,web = username[i],timestamp[i],website[i]
+            mapp[user].append((time,web))
+        print(mapp)
+        
+        #sort
+        for k in mapp:
+            mapp[k] = sorted(mapp[k], key = lambda x: x[0])
+        
+        count_patterns = Counter()
+        for k in mapp:
+            webs = mapp[k]
+            n = len(webs)
+            #need to ensure we only count each (a,b,c) once per user
+            seen = set()
+            for i in range(n):
+                for j in range(i+1,n):
+                    for k in range(j+1,n):
+                        a,b,c = webs[i][1],webs[j][1],webs[k][1]
+                        seq = (a,b,c)
+                        if seq not in seen:
+                            count_patterns[seq] += 1
+                            seen.add(seq)
+        #find max count
+        max_count = max(count_patterns.values())
+        #return the minimum
+        candidates = [seq for seq, cnt in count_patterns.items() if cnt == max_count]
+        return list(min(candidates))
