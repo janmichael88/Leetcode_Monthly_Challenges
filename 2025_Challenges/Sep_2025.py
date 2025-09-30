@@ -1248,3 +1248,103 @@ class Solution:
         #return the minimum
         candidates = [seq for seq, cnt in count_patterns.items() if cnt == max_count]
         return list(min(candidates))
+    
+###############################################
+# 1039. Minimum Score Triangulation of Polygon
+# 29SEP25
+###############################################
+#can't just go around the polygon in stpes of three
+class Solution:
+    def minScoreTriangulation(self, values: List[int]) -> int:
+        '''
+        if we have n polygon, we can triangulate to get n-2 triangle
+        for each triangle in the triangulated polygoan, the weight is the product of the values at its vertices
+        return min posible score
+        say we are given [a,b,c,d]
+        i can start each each vertex and choose the next two
+            * (a,b,c)
+            * (b,c,d)
+        iterate values and keep going until we make n-2 triangles
+        we can just rotate along the polygon!
+        if we fix some edge a, this edge will always be part of the current triangle
+        '''
+        ans = float('inf')
+        n = len(values)
+        triangles = n - 2
+        for i in range(n):
+            needed = 0
+            score = 0
+            j = i
+            while needed < triangles:
+                weight = values[j % n]*values[(j + 1) % n]*values[(j+2) % n]
+                print(values[j % n], values[(j + 1) % n], values[(j+2) % n])
+                score += weight
+                j += 2
+                needed += 1
+            print(score)
+        return 0
+    
+#can't do this either
+class Solution:
+    def minScoreTriangulation(self, values: List[int]) -> int:
+        '''
+        if we have n polygon, we can triangulate to get n-2 triangle
+        for each triangle in the triangulated polygoan, the weight is the product of the values at its vertices
+        return min posible score
+        say we are given [a,b,c,d]
+        i can start each each vertex and choose the next two
+            * (a,b,c)
+            * (b,c,d)
+        iterate values and keep going until we make n-2 triangles
+        we can just rotate along the polygon!
+        if we fix some edge a, this edge will always be part of the current triangle
+        '''
+        ans = float('inf')
+        n = len(values)
+        triangles = n - 2
+        for i in range(n):
+            needed = 0
+            score = 0
+            j = i + 1
+            while needed < triangles:
+                weight = values[i]*(values[j % n])*(values[(j+1) % n])
+                score += weight
+                j += 1
+                needed += 1
+            print(score)
+        return 0
+    
+#dp, matrix chain
+class Solution:
+    def minScoreTriangulation(self, values: List[int]) -> int:
+        '''
+        let dp(i,j) be the min triangulation for polyon with vertices i to j
+        if j - i == 2, we have a triangle, so return it
+        other wise find min triagnles for each subproblem
+        dp(i,j) = {
+            ans = curr_triangle
+            for k in range(i+1,j):
+                ans = min(ans, dp(sub))
+        }
+        '''
+        memo = {}
+        n = len(values)
+
+        def dp(i,j):
+            if j - i < 2:
+                return 0
+            if j - i == 2:
+                return values[i]*values[i+1]*values[i+2]
+            if (i,j) in memo:
+                return memo[(i,j)]
+            ans = float('inf')
+            for k in range(i+1,j):
+                left = dp(i,k)
+                right = dp(k,j)
+                curr_triangle = values[i]*values[k]*values[j]
+                sub_triangle = left + right + curr_triangle
+                ans = min(ans,sub_triangle)
+            memo[(i,j)] = ans
+            return ans
+        
+        return dp(0,n-1)
