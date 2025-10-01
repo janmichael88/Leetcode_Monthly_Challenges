@@ -1348,3 +1348,56 @@ class Solution:
             return ans
         
         return dp(0,n-1)
+
+#########################################
+# 2221. Find Triangular Sum of an Array
+# 30SEP25
+#########################################
+#ezzzz
+class Solution:
+    def triangularSum(self, nums: List[int]) -> int:
+        '''
+        this is just divide and conquer
+        dp(i,j) gives the triangular number
+        we can do this iteratively
+        '''
+        n = len(nums)
+        curr = nums[:]
+        dp = []
+        for _ in range(n-1):
+            for i in range(len(curr)-1):
+                curr_sum = (curr[i] + curr[i+1]) % 10
+                dp.append(curr_sum)
+            curr = dp[:]
+            dp = []
+            n -= 1
+        return curr[0]
+    
+class Solution:
+    def triangularSum(self, nums: List[int]) -> int:
+        while len(nums) > 1:
+            new_nums = list()
+            for i in range(len(nums) - 1):
+                new_nums.append((nums[i] + nums[i + 1]) % 10)
+            nums = new_nums
+        return nums[0]
+
+###############################################
+# 1121. Divide Array Into Increasing Sequences
+# 30SEP25
+###############################################
+class Solution:
+    def canDivideIntoSubsequences(self, nums: List[int], k: int) -> bool:
+        '''
+        non-decreasing does not mean increasing
+        think greedy, we need to make subsequences as short as possible
+        but each subsequcne should be at least k
+        and we need at least one of them
+        numer of sequences need is max freq of element
+        keep making subsequence until i cant?
+        '''
+        counts = Counter(nums)
+        n = len(nums)
+        max_freq = max(counts.values())
+
+        return n >= k*max_freq
