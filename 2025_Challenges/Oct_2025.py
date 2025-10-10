@@ -324,3 +324,83 @@ class Solution:
             print(done)
             print('-------------------')
         return done[n]
+    
+class Solution:
+    def minTime(self, skill: List[int], mana: List[int]) -> int:
+        '''
+        using hints
+        transition in the hint isn't quite right
+        '''
+        n, m = len(skill), len(mana)
+        times = [0] * n
+        for j in range(m):
+            now = 0
+            for i in range(n):
+                now = max(now,times[i]) + skill[i]*mana[j]
+            times[n - 1] = now
+            for i in range(n - 2, -1, -1):
+                times[i] = times[i + 1] - skill[i + 1] * mana[j]
+        return times[n - 1]
+    
+
+class Solution:
+    def minTime(self, skill: List[int], mana: List[int]) -> int:
+        '''
+        using hints directyl
+        '''
+        n, m = len(skill), len(mana)
+        done = [0]*n
+
+        for j in range(m):
+            x = mana[j]
+            now = done[0]
+            for i in range(1,n):
+                now = max(now + skill[i-1]*x,done[i])
+            done[n-1] = now + skill[n-1]*x
+
+            for i in range(n-2,-1,-1):
+                done[i] = done[i+1] - skill[i+1]*x
+        
+        return done[n-1]
+    
+#######################################################
+# 3147. Taking Maximum Energy From the Mystic Dungeon
+# 10OCT25
+######################################################
+#TLE
+class Solution:
+    def maximumEnergy(self, energy: List[int], k: int) -> int:
+        '''
+        dp[i] enery we gain starting at index i
+        brute force will TLE
+        '''
+        n = len(energy)
+        ans = float('-inf')
+        for i in range(n):
+            curr_energy = energy[i]
+            while i + k < n:
+                curr_energy += energy[i+k]
+                i += k
+            ans = max(ans,curr_energy)
+        
+        return ans
+
+#finally
+class Solution:
+    def maximumEnergy(self, energy: List[int], k: int) -> int:
+        '''
+        dp[i] enery we gain starting at index i
+        brute force will TLE, because k can be as big as the array
+        prefix sum, but accumulate at intervals of k
+        go backwards and just accumulate
+        '''
+        n = len(energy)
+        dp = energy[:]
+        for i in range(n-1,-1,-1):
+            if i + k < n:
+                dp[i] += dp[i+k]
+        
+        return max(dp)
+
+
+
