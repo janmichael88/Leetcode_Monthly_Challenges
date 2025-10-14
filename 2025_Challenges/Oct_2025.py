@@ -402,5 +402,311 @@ class Solution:
         
         return max(dp)
 
+###############################################
+# 3186. Maximum Total Damage With Spell Casting
+# 11OCT25
+###############################################
+#nice try T.T
+class Solution:
+    def maximumTotalDamage(self, power: List[int]) -> int:
+        '''
+        if i cast spell power[i]
+        i cannot cast another spell with power[i] - 2, power[i] - 1, power[i] + 1, powe[i+2]
+        but i cant cast multiple spells with same damage value
+        casting a new spell with a different power means the i cant cast spell with a high power in range [+1,+2]
+        if i want to cast power[i], i need to make sure i havent cast power[i] - 2, and power[i] - 1
+        what if i sort and and keep counts, then iterate in order and when taking make sure i haven't taken power[i] -2 or power[i]- 1
+        '''
+        counts = Counter(power)
+        used = set()
+        ans = 0
+        for k in sorted(counts):
+            if k - 2 not in used and k-1 not in used:
+                ans += k*counts[k]
+                used.add(k)
+        
+        return ans
+    
+#gahhh, nice try again
+class Solution:
+    def maximumTotalDamage(self, power: List[int]) -> int:
+        '''
+        if i cast spell power[i]
+        i cannot cast another spell with power[i] - 2, power[i] - 1, power[i] + 1, powe[i+2]
+        but i cant cast multiple spells with same damage value
+        casting a new spell with a different power means the i cant cast spell with a high power in range [+1,+2]
+        if i want to cast power[i], i need to make sure i havent cast power[i] - 2, and power[i] - 1
+        what if i sort and and keep counts, then iterate in order and when taking make sure i haven't taken power[i] -2 or power[i]- 1
+        need to use dp, but go in order
+        '''
+        counts = Counter(power)
+        used = set()
+        ans1 = 0
+        for k in reversed(sorted(counts)):
+            if k + 2 not in used and k + 1 not in used:
+                ans1 += k*counts[k]
+                used.add(k)
+        #check the other way
+        used = set()
+        ans2 = 0
+        for k in sorted(counts):
+            if k - 2 not in used and k - 1 not in used:
+                ans2 += k*counts[k]
+                used.add(k)
+
+        return max(ans1,ans2)
+    
+class Solution:
+    def maximumTotalDamage(self, power: List[int]) -> int:
+        '''
+        if i cast spell power[i]
+        i cannot cast another spell with power[i] - 2, power[i] - 1, power[i] + 1, powe[i+2]
+        but i cant cast multiple spells with same damage value
+        casting a new spell with a different power means the i cant cast spell with a high power in range [+1,+2]
+        if i want to cast power[i], i need to make sure i havent cast power[i] - 2, and power[i] - 1
+        what if i sort and and keep counts, then iterate in order and when taking make sure i haven't taken power[i] -2 or power[i]- 1
+        need to use dp, but go in order
+        '''
+        counts = Counter(power)
+        arr = []
+        for k in sorted(counts):
+            arr.append((k,counts[k]))
+        #i know i need to do dp on this array
+        n = len(arr)
+        memo = {}
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            take = arr[i][0]*arr[i][1]
+            no_take = dp(i+1)
+            j = i + 1
+            #if take, skip
+            while j < n and arr[j][0] - 2 <= arr[i][0]:
+                take += dp(j)
+                j += 1
+            ans = max(take,no_take)
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+    
+#finally!
+class Solution:
+    def maximumTotalDamage(self, power: List[int]) -> int:
+        '''
+        if i cast spell power[i]
+        i cannot cast another spell with power[i] - 2, power[i] - 1, power[i] + 1, powe[i+2]
+        but i cant cast multiple spells with same damage value
+        casting a new spell with a different power means the i cant cast spell with a high power in range [+1,+2]
+        if i want to cast power[i], i need to make sure i havent cast power[i] - 2, and power[i] - 1
+        what if i sort and and keep counts, then iterate in order and when taking make sure i haven't taken power[i] -2 or power[i]- 1
+        need to use dp, but go in order
+        '''
+        counts = Counter(power)
+        arr = sorted(counts.items())  # [(power, count), ...]
+        n = len(arr)
+        memo = {}
+
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            skip = dp(i + 1)
+            #take it
+            damage = arr[i][0] * arr[i][1]
+            j = i + 1
+            # find next valid allowed index
+            while j < n and arr[j][0] <= arr[i][0] + 2:
+                j += 1
+            take = damage + dp(j)
+
+            memo[i] = max(skip, take)
+            return memo[i]
+
+        return dp(0)
+    
+#######################################################
+# 3539. Find Sum of Array Product of Magical Sequences
+# 12OCT25
+######################################################
+#ughh
+MOD = 10**9 + 7
+from functools import lru_cache
+import math
+from typing import List
+class Solution:
+    def magicalSum(self, m: int, k: int, nums: List[int]) -> int:
+        '''
+        seq is magigal if it has
+        size m, and its binary rep 2^(i) + ... 2^{m-1} has k set bits
+        we define array product as:
+        prod(seq) = (nums[seq[0]] * nums[seq[1]] * ... * nums[seq[m - 1]])
+        dp, states are (i,j,bitmask)
+        dp on subsets
+        m could have repeated numbers in them
+        for the binary rep portion, so we have indices [a,b,c,d]
+        its rep will always be the same, no matter what the order
+        2^a + 2 ^b + 2 ^c + 2^d
+        flipping and b does nothing
+        2^b + 2^a + 2^c + 2^d, so really we only care about subsets
+        same thing with prod(seq)
+        prod([a,b,c,d]) = nums[a]*nums[b]*nums[c]*nums[d] = prd([b,a,c,d])
+        '''
+        @lru_cache(None)
+        def dfs(remaining, odd_needed, index, carry):
+            if remaining < 0 or odd_needed < 0 or remaining + carry.bit_count() < odd_needed:
+                return 0
+            if remaining == 0:
+                return 1 if odd_needed == carry.bit_count() else 0
+            if index >= len(nums):
+                return 0
+            
+            ans = 0
+            for take in range(remaining + 1):
+                ways = math.comb(remaining, take) * pow(nums[index], take, MOD) % MOD
+                new_carry = carry + take
+                ans += ways * dfs(remaining - take, odd_needed - (new_carry & 1), index + 1, new_carry >> 1)
+                ans %= MOD
+            return ans
+        
+        return dfs(m, k, 0, 0)
 
 
+        
+#brute force
+class Solution:
+    def magicalSum(self, m: int, k: int, nums: List[int]) -> int:
+        '''
+        just try doing brute force, pick and index i 
+        '''
+        n = len(nums)
+        mod = 10**9 + 7
+        ans = [0]
+
+        def rec(i,mask_so_far,prod_so_far):
+            #reached m picks
+            if i == m:
+                #check binary rep of picks
+                if mask_so_far.bit_count() == k:
+                    #add the products
+                    ans[0] = (ans[0] + prod_so_far) % mod
+                return
+
+            for j in range(n):
+                #use up a pick, add to make and prod
+                rec(i + 1 ,mask_so_far + 2**j, (prod_so_far*nums[j]) % mod)
+        
+        rec(0,0,1)
+        return ans[0] % mod
+    
+import math
+mod = 10**9 + 7
+class Solution:
+    def magicalSum(self, m: int, k: int, nums: List[int]) -> int:
+        '''
+        just try doing brute force, pick and index i 
+        '''
+        n = len(nums)
+        memo = {}
+
+        def dp(m,k,i,flag):
+            if m < 0 or k < 0 or m + flag.bit_count() < k:
+                return 0
+            if m == 0:
+                if flag.bit_count() == k:
+                    return 1
+                return 0
+            
+            if i >= n:
+                return 0
+            
+            key = (m,k,i,flag)
+            if key in memo:
+                return memo[key]
+            ans = 0
+            #try picking c copies of nums[i]
+            for c in range(m+1):
+                #mCc
+                ways = math.comb(m,c)*pow(nums[i],c,mod) % mod
+                new_flag = flag + c
+                next_flag = new_flag >> 1 #divide by 2
+                bit_contribution = new_flag & 1 #check odd
+                ans += ways * dp(m - c, k - bit_contribution, i + 1, next_flag)
+                ans %= mod
+            
+            memo[key] = ans
+            return ans
+        
+        return dp(m,k,0,0)
+
+#######################################################
+# 3349. Adjacent Increasing Subarrays Detection I
+# 14OCT25
+########################################################
+class Solution:
+    def hasIncreasingSubarrays(self, nums: List[int], k: int) -> bool:
+        '''
+        conditions allow for checking all subarrays
+        do this first
+        but you can do it linearly
+        if they are adjacent, then check the first k/2 and then the second k/2
+        '''
+        n = len(nums)
+        for i in range(n-2*k+1):
+            left,right = nums[i:i+k], nums[i+k:i+2*k]
+            if self.check(left) and self.check(right):
+                return True
+        return False
+
+    def check(self,arr):
+        for i in range(1,len(arr)):
+            if arr[i-1] >= arr[i]:
+                return False
+        return True
+
+#check streaks
+class Solution:
+    def hasIncreasingSubarrays(self, nums: List[int], k: int) -> bool:
+        '''
+        we can record streak length at each index i
+        '''
+        streaks = [1]
+        n = len(nums)
+        for i in range(1,n):
+            if nums[i-1] < nums[i]:
+                streaks.append(streaks[-1] + 1)
+            else:
+                streaks.append(1)
+        
+        #check streaks and steaks[i+1]
+        for i in range(len(streaks)-k):
+            if streaks[i] >= k and streaks[i+k] >= k:
+                return True
+        return False
+
+class Solution:
+    def hasIncreasingSubarrays(self, nums: List[int], k: int) -> bool:
+        '''
+        conditions allow for checking all subarrays
+        do this first
+        but you can do it linearly
+        if they are adjacent, then check the first k/2 and then the second k/2
+        '''
+        pre, curr = 0, 1
+        
+        for i in range(1, len(nums)): 
+            if nums[i] > nums[i - 1]: 
+                curr += 1 
+            
+            else: 
+                pre = curr 
+                curr = 1 
+            
+            if curr >= k and pre >= k or curr >= 2*k: 
+                return True
+        
+        return False 
