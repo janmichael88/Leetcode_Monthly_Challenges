@@ -710,3 +710,141 @@ class Solution:
                 return True
         
         return False 
+    
+####################################################
+# 3350. Adjacent Increasing Subarrays Detection II
+# 15OCT25
+#####################################################
+#binary search
+class Solution:
+    def maxIncreasingSubarrays(self, nums: List[int]) -> int:
+        '''
+        binary search on answer
+        '''
+        left,right = 1,len(nums) - 1
+        ans = 1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if self.can_do(nums,mid):
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+        
+        return ans
+    def can_do(self,nums,k):
+        streaks = [1]
+        n = len(nums)
+        for i in range(1,n):
+            if nums[i-1] < nums[i]:
+                streaks.append(streaks[-1] + 1)
+            else:
+                streaks.append(1)
+        
+        #check streaks and steaks[i+1]
+        for i in range(len(streaks)-k):
+            if streaks[i] >= k and streaks[i+k] >= k:
+                return True
+        return False
+
+#linear time
+class Solution:
+    def maxIncreasingSubarrays(self, nums: List[int]) -> int:
+        '''
+        linear time
+        same solution as before, but just save the max lengths
+        '''
+        pre, curr = 0, 1
+        ans = 1
+        
+        for i in range(1, len(nums)): 
+            if nums[i] > nums[i - 1]: 
+                curr += 1 
+            
+            else: 
+                pre = curr 
+                curr = 1 
+            ans = max(ans, min(pre,curr), curr // 2)
+        
+        return ans
+
+###############################################################
+# 2598. Smallest Missing Non-negative Integer After Operations
+# 16OCT25
+################################################################
+class Solution:
+    def findSmallestInteger(self, nums: List[int], value: int) -> int:
+        '''
+        we dont need to apply across the whole array, just a single element
+        MEX of an array is the smallest missing non-negative integer in it
+        say we have a number a, and we repeatedly add a + x, a + 2x,....
+        if we do (a + x) % n,.... the pattern repeats
+        we can do a + x, a + 2*x, .. a + n*x
+        we can do a - x, a - 2*x, .. a - n*x
+
+        these numbers are all reachable, and if we do the inc/dec numbers % x that number if unique
+        and we know what that number a +/- x*n was, its % x is the same 
+        and so all numbers in that num % val are reachable,
+        we need to maximize the MEX, so start from 0, if if mex % value is in mapp, keep going
+        '''
+        #any num % value in mapp, is reachable by adding some number of n*value steps
+        #we cant the the right most one that isn't in there
+        mp = Counter([x % value for x in nums])
+        mex = 0
+        print(mp)
+        while mp[mex % value] > 0:
+            mp[mex % value] -= 1
+            mex += 1
+        return mex
+    
+#tip, when repeatedly adding something, think modular arithmetic
+class Solution:
+    def findSmallestInteger(self, nums: List[int], value: int) -> int:
+        '''
+        for some elment num, we can get ghet minimum non-nogetaive n % value
+        we can also transofrm n to n % value + k*value
+        get counts of all num % value for num in nums,
+        then check 0 to len(nums)
+        '''
+        counts = Counter([num % value for num in nums])
+        n = len(nums)
+        for mex in range(n):
+            if counts[mex % value] == 0:
+                return mex
+            counts[mex % value] -= 1
+        
+        return n
+    
+class Solution:
+    def findSmallestInteger(self, nums: List[int], value: int) -> int:
+        '''
+        this tidbit is insightful
+        assume r = a % b
+        this means i can change r to r + b, r + 2*b, r + 3b.... r + n*b
+        next free number will come from the remainder who's count is samllest
+        idea is to group numbers base on their remainder
+        we then pick the one with the least frequent remainder,
+        to find the mex, its going to be
+        least_frequetn_remainder + count[least_frequent_remainder]*value
+        example with lanes:
+           Remainder lanes (mod 4):
+
+            0 → 0, 4, 8, 12, ...
+            1 → 1, 5, 9, 13, ...
+            2 → 2, 6, 10, 14, ...
+            3 → 3, 7, 11, 15, ...
+
+        After placing A’s elements, find the lane with the fewest fills.
+        Return k * fills + remainder.
+        each nums[i] % k uses up a slot in the lane
+        '''
+        counts = Counter([num % value for num in nums])
+        mex = 0
+        #look for least frequent remainder
+        #if there are ties for the least frequent remainder, pick the smaller one first
+        for i in range(value):
+            if counts[i] < counts[mex]:
+                mex = i
+        
+        #if remainder isn't found at all, this should default to 0
+        return mex + value*counts[mex]
