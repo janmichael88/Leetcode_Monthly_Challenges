@@ -848,3 +848,140 @@ class Solution:
         
         #if remainder isn't found at all, this should default to 0
         return mex + value*counts[mex]
+    
+############################################################
+# 3003. Maximize the Number of Partitions After Operations
+# 17OCT25
+##############################################################
+#almost
+class Solution:
+    def maxPartitionsAfterOperations(self, s: str, k: int) -> int:
+        '''
+        brute force would be to switch each s[i] to each character and
+        do the operations on s until empty, then find maximum overall
+        from the hint, i dont even know how to solve the pref and suff array problems :(
+        for 'accca'
+        pref = [0,1,1,1,1]
+        we can do this with dp
+        states are (index,can_change,mask)
+        would be O(N*2*2**26)
+        oh the mask can't exceed k set bits
+        '''
+        memo = {}
+        n = len(s)
+        def dp(i,can_change,mask):
+            if i >= n:
+                return 0
+            key = (i,can_change,mask)
+            if key in memo:
+                return memo[key]
+            #if we can't change at this index we need to move up
+            ans = 0
+            if not can_change:
+                ch_idx = ord(s[i]) - ord('a')
+                #try taking
+                next_mask = mask | (1 << ch_idx)
+                if next_mask.bit_count() > k:
+                    #if we're over, we need to partition
+                    ans = 1 + dp(i+1,can_change, 1 << ch_idx) # new mask should include only that char
+                else:
+                    ans = dp(i+1,can_change,next_mask)
+            #if we can change at this index, try all 26 spots, and take max
+            if can_change:
+                for j in range(26):
+                    next_mask = mask | (1 << j)
+                    if next_mask.bit_count() > k:
+                        #if we're over, we need to partition
+                        ans = max(ans, 1 + dp(i+1,False, 1 << ch_idx)) # new mask should include only that char
+                    else:
+                        ans = max(ans, dp(i+1,False,next_mask))
+            memo[key] = ans
+            return ans
+        
+        return dp(0,True,False) + 1
+    
+class Solution:
+    def maxPartitionsAfterOperations(self, s: str, k: int) -> int:
+        @cache
+        def dp(index, current_set, can_change):
+            if index == len(s):
+                return 0
+            character_index = ord(s[index]) - ord('a')
+            
+            current_set_updated = current_set | (1 << character_index)
+            distinct_count = current_set_updated.bit_count()
+
+            if distinct_count > k:
+                res = 1 + dp(index + 1, 1 << character_index, can_change)
+            else:
+                res = dp(index + 1, current_set_updated, can_change)
+
+            if can_change:
+                for new_char_index in range(26):
+                    new_set = current_set | (1 << new_char_index)
+                    new_distinct_count = new_set.bit_count()
+
+                    if new_distinct_count > k:
+                        res = max(res, 1 + dp(index + 1, 1 << new_char_index, False))
+                    else:
+                        res = max(res, dp(index + 1, new_set, False))
+            return res
+
+        return dp(0, 0, True) + 1
+
+############################################################
+# 3397. Maximum Number of Distinct Elements After Operations
+# 19OCT25
+##########################################################
+class Solution:
+    def maxDistinctElements(self, nums: List[int], k: int) -> int:
+        '''
+        find last minimum element not used
+        [1,2,2,3,3,4], k = 2
+        index 0: 1 - 2 = -1
+        index 1: 
+        range of values could be [min(nums) - k, max(nums) + k]
+        pick the smallest available value for each elemenet
+        '''
+        nums.sort()
+        ans = 0
+        min_element = float('-inf')
+        for num in nums:
+            next_min = min(max(num - k, min_element + 1),num + k)
+            if next_min > min_element:
+                ans += 1
+                min_element = next_min
+        
+        return ans
+
+###################################################################
+# 1625. Lexicographically Smallest String After Applying Operations
+# 19OCT25
+###################################################################
+class Solution:
+    def findLexSmallestString(self, s: str, a: int, b: int) -> str:
+        '''
+        its possible to brute force all of them
+        there are only 10*10*len(s) positions
+        '''
+        seen = set()
+        n = len(s)
+
+        def rec(s):
+            seen.add(s)
+            #add to digits
+            add_s = [int(n) for n in s]
+            #add to digits
+            for i in range(n):
+                if i % 2 == 1:
+                    add_s[i] = (add_s[i] + a) % 10
+            add_s = "".join([str(n) for n in add_s])
+            if add_s not in seen:
+                rec(add_s)
+            #rotate
+            rotate_s = s[n-b:] + s[:n-b]
+            if rotate_s not in seen:
+                rec(rotate_s)
+        
+        rec(s)
+        return min(seen)
