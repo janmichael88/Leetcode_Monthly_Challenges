@@ -985,3 +985,81 @@ class Solution:
         
         rec(s)
         return min(seen)
+    
+#####################################################
+# 656. Coin Path
+# 20OCT25
+######################################################
+class Solution:
+    def cheapestJump(self, coins: List[int], maxJump: int) -> List[int]:
+        '''
+        djikstra ssp, but need lexographically smallest path
+        can also just dp, and update when there is a shorter path or if the the next paths if lexographically smaller
+        let dp[i] be the min cost to arrive at i
+        take care of i indexing after
+        '''
+        #check we can't reach it
+        if coins[-1] == -1:
+            return []
+        n = len(coins)
+        memo = {}
+        def dp(i):
+            if i >=  n-1:
+                return [coins[i],[n-1]]
+            if coins[i] == -1:
+                return [float("inf"), []] #empty path
+            if i in memo:
+                return memo[i]
+
+            min_cost,min_path = float('inf'), [i]
+            
+            for j in range(i+1, min(n,i+maxJump+1)):
+                child_cost,child_path = dp(j)
+                if coins[i] + child_cost < min_cost:
+                    min_cost = child_cost + coins[i]
+                    min_path = [i] + child_path
+            ans = [min_cost,min_path]
+            memo[i] = ans
+            return ans
+        min_cost,min_path = dp(0)
+        if min_cost == float('inf'):
+            return []
+        return [num + 1 for num in min_path]
+
+#converting to bottom up
+
+########################################################################
+# 3346. Maximum Frequency of an Element After Performing Operations I
+# 22OCT25
+#########################################################################
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int, numOperations: int) -> int:
+        '''
+        if i have the array [1,4,5]
+        i can chose to expand its range with +- k
+        this becomes[
+            [-1,3],
+            [2,6],
+            [-1,3]
+        ]
+        im thinking like sorting and sliding window
+        where ever there is an interection, that number can be shared
+        but we can only do this numOperations times
+        sort the array and try each num as candidate
+
+        '''
+        nums.sort()
+        counts = Counter(nums)
+        
+        ans = 0
+        for i in range(1,max(nums) + 1):
+            left = bisect.bisect_left(nums,i-k)
+            right = bisect.bisect_left(nums,i+k+1)
+            #there are right - left numbers in the range [target - k, target + k]
+            #but we dont need to user operations for counts[target] 
+            options = right - left - counts[i]
+            #ans would be min of two options + counts[target]
+            candidate_ans = min(options,numOperations) + counts[i]
+            ans = max(ans, candidate_ans)
+        
+        return ans
