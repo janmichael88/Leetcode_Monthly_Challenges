@@ -1063,3 +1063,35 @@ class Solution:
             ans = max(ans, candidate_ans)
         
         return ans
+    
+########################################################################
+# 3347. Maximum Frequency of an Element After Performing Operations II
+# 23OCT25
+##########################################################################
+#same as first, we just prune search space
+class Solution:
+    def maxFrequency(self, nums: List[int], k: int, numOperations: int) -> int:
+        '''
+        same problem as the first one, except that nums[i] and k can be as large as  10**9
+        only thing is now we can check nums[i], and nums[i] - k, and nums[i] + k
+        '''
+        nums.sort()
+        counts = Counter(nums)
+        candidates = set()
+        for num in nums:
+            candidates.add(num)
+            candidates.add(num - k)
+            candidates.add(num + k)
+        
+        ans = 0
+        for i in candidates:
+            left = bisect.bisect_left(nums,i-k)
+            right = bisect.bisect_left(nums,i+k+1)
+            #there are right - left numbers in the range [target - k, target + k]
+            #but we dont need to user operations for counts[target] 
+            options = right - left - counts[i]
+            #ans would be min of two options + counts[target]
+            candidate_ans = min(options,numOperations) + counts[i]
+            ans = max(ans, candidate_ans)
+        
+        return ans
