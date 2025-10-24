@@ -1027,7 +1027,48 @@ class Solution:
         return [num + 1 for num in min_path]
 
 #converting to bottom up
+class Solution:
+    def cheapestJump(self, coins: List[int], maxJump: int) -> List[int]:
+        '''
+        djikstra ssp, but need lexographically smallest path
+        can also just dp, and update when there is a shorter path or if the the next paths if lexographically smaller
+        let dp[i] be the min cost to arrive at i
+        '''
+        n = len(coins)
+        if coins[-1] == -1:
+            return []
 
+        dp = [float('inf')] * n
+        path = [[] for _ in range(n)]
+
+        # base case: at the last index
+        dp[-1] = coins[-1]
+        path[-1] = [n - 1]
+
+        for i in range(n - 2, -1, -1):
+            if coins[i] == -1:
+                continue
+
+            for j in range(i + 1, min(n, i + maxJump + 1)):  # +1 here is important
+                if coins[j] == -1 or dp[j] == float('inf'):
+                    continue
+
+                cost = coins[i] + dp[j]
+
+                # standard min check, then lexicographic tie-breaker
+                if cost < dp[i]:
+                    dp[i] = cost
+                    path[i] = [i] + path[j]
+                #some min cost, upate min path
+                elif cost == dp[i]:
+                    path[i] = min(path[i], [i] + path[j])
+
+        # if start is unreachable
+        if dp[0] == float('inf'):
+            return []
+
+        return [x + 1 for x in path[0]]
+    
 ########################################################################
 # 3346. Maximum Frequency of an Element After Performing Operations I
 # 22OCT25
@@ -1094,4 +1135,102 @@ class Solution:
             candidate_ans = min(options,numOperations) + counts[i]
             ans = max(ans, candidate_ans)
         
+        return ans
+    
+#############################################
+# 1562. Find Latest Group of Size M
+# 23OCT25
+#############################################
+#close one
+class Solution:
+    def findLatestStep(self, arr: List[int], m: int) -> int:
+        '''
+        at the end of arr, all bits should be set
+        try going backwards in the array
+        now the hard part is effeciently trying to find a group of ones of length m
+        '''
+        mapp = set()
+        #initally all are in one group
+        n = len(arr)
+        first = [i for i in range(1,n+1)]
+        mapp.add(tuple(first))
+        for i in range(n-1,-1,-1):
+            curr = arr[i]
+            #check
+            for group in mapp:
+                if curr in group and len(group) == m:
+                    return i + 2
+            #update
+            for group in mapp:
+                if curr in group:
+                    group = list(group)
+                    #binary search and split
+                    idx = bisect.bisect_left(group,curr)
+                    left =  group[:idx]
+                    right = group[idx+1:]
+                    mapp.remove(tuple(group))
+                    mapp.add(tuple(left))
+                    mapp.add(tuple(right))
+                    break
+
+
+        return -1
+
+#UF
+class DSU:
+    def __init__(self,n):
+        #no pointers and no size initially
+        self.rank = [0]*n
+        self.parent = [i for i in range(n)]
+    
+    def find(self,x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])
+        return self.parent[x]
+    
+    def union(self,x,y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        if x_par == y_par:
+            return False
+        #try doing union
+        if self.rank[x_par] > self.rank[y_par]:
+            self.rank[x_par] += self.rank[y_par]
+            self.rank[y_par] = 0
+            self.parent[y_par] = x_par
+        else:
+            self.rank[y_par] += self.rank[x_par]
+            self.rank[x_par] = 0
+            self.parent[x_par] = y_par
+        return True 
+
+
+class Solution:
+    def findLatestStep(self, arr: List[int], m: int) -> int:
+        '''
+        at the end of arr, all bits should be set
+        try going backwards in the array
+        now the hard part is effeciently trying to find a group of ones of length m
+        other way is to use UnionFind
+        keep doing steps until the final step, then stop
+        it doesn't really fit the UnionFind paradigm though
+        '''
+        if m == len(arr):
+            return m
+        n = len(arr)
+        uf = DSU(n)
+
+        ans = -1
+        for step,i in enumerate(arr):
+            #make zero index
+            i -= 1
+            uf.rank[i] = 1
+            for neigh in [i-1,i+1]:
+                if 0 <= neigh < n:
+                    neigh_par = uf.find(neigh)
+                    #if any of the niehgbors have m
+                    if uf.rank[neigh_par] == m:
+                        ans = step
+                    if uf.rank[neigh_par] > 0:
+                        uf.union(i,neigh)
         return ans
