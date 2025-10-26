@@ -1310,6 +1310,76 @@ class Solution:
         idx = bisect.bisect_right(balanced,n)
         return balanced[idx]
 
+################################################
+# 2043. Simple Bank System
+# 26OCT25
+################################################
+class Bank:
+
+    def __init__(self, balance: List[int]):
+        self.accounts = balance
+        self.n = len(self.accounts) 
+
+    def transfer(self, account1: int, account2: int, money: int) -> bool:
+        account1 -= 1
+        account2 -= 1
+        if not self.check(account1) or not self.check(account2):
+            return False
+        if money > self.accounts[account1]:
+            return False
+        self.accounts[account1] -= money
+        self.accounts[account2] += money
+        return True
+
+    def deposit(self, account: int, money: int) -> bool:
+        account -=1 
+        if not self.check(account):
+            return False
+        
+        self.accounts[account] += money
+        return True
+        
+    def withdraw(self, account: int, money: int) -> bool:
+        account -= 1
+        if not self.check(account):
+            return False
+        if money > self.accounts[account]:
+            return False
+        self.accounts[account] -= money
+        return True
+    
+    def check(self, account : int) -> bool:
+        if not 0 <= account < self.n:
+            return False
+        return True
+
         
 
 
+# Your Bank object will be instantiated and called as such:
+# obj = Bank(balance)
+# param_1 = obj.transfer(account1,account2,money)
+# param_2 = obj.deposit(account,money)
+# param_3 = obj.withdraw(account,money)
+
+################################################
+# 2591. Distribute Money to Maximum Children
+# 26OCT25
+#################################################
+class Solution:
+    def distMoney(self, money: int, children: int) -> int:
+        '''
+        try to give k children exactly 8 dollars
+        '''
+        if money < children:
+            return -1
+        money -= children
+        res = 0
+        for i in range(1, children + 1):
+            rem = money - i * 7
+            remchildren = children - i
+            if rem > 0 and remchildren == 0:
+                continue
+            if rem >= 0 and (rem != 3 or remchildren != 1):
+                res = i
+        return res
