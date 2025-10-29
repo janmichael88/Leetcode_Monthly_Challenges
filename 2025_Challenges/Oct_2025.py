@@ -1354,8 +1354,6 @@ class Bank:
         return True
 
         
-
-
 # Your Bank object will be instantiated and called as such:
 # obj = Bank(balance)
 # param_1 = obj.transfer(account1,account2,money)
@@ -1383,3 +1381,108 @@ class Solution:
             if rem >= 0 and (rem != 3 or remchildren != 1):
                 res = i
         return res
+    
+###################################################
+# 2125. Number of Laser Beams in a Bank
+# 27OCT25
+###################################################
+class Solution:
+    def numberOfBeams(self, bank: List[str]) -> int:
+        '''
+        there need to be gap between rows i and j in order for there to be beams
+        count number of ones in each rows
+        the get count of beams
+        '''
+        beams = [r.count("1") for r in bank if r.count("1") > 0]
+        ans = 0
+        n = len(beams)
+        for i in range(1,n):
+            ans += beams[i-1]*beams[i]
+        return ans
+    
+###################################################
+# 3354. Make Array Elements Equal to Zero
+# 28OCT25
+###################################################
+#simulate
+class Solution:
+    def countValidSelections(self, nums: List[int]) -> int:
+        '''
+        simulate
+        '''
+        valid = 0
+        n = len(nums)
+        for i in range(n):
+            if nums[i] == 0:
+                if self.sim(nums,i,1):
+                    valid += 1
+                if self.sim(nums,i,-1):
+                    valid += 1
+        return valid
+    
+    def sim(self,nums,curr,dirr):
+        #first copy
+        arr = nums[:]
+        n = len(arr)
+        #then simulate
+        while 0 <= curr < n:
+            if arr[curr] == 0:
+                curr += dirr
+            else:
+                arr[curr] -= 1
+                dirr *= -1
+                curr += dirr
+        
+        return sum(arr) == 0
+
+class Solution:
+    def countValidSelections(self, nums: List[int]) -> int:
+        '''
+        imagine a ball bouncing between two non zero numbers
+        if we have [1,0,2]
+        starting left or right would not work
+        '''
+        curr_sum = 0
+        total_sum = sum(nums)
+        valid = 0
+        n = len(nums)
+        for i in range(n):
+            curr_sum += nums[i]
+            total_sum -= nums[i]
+            
+            if nums[i] != 0:
+                continue
+            if curr_sum == total_sum:
+                valid += 2
+            if abs(curr_sum - total_sum) == 1:
+                valid += 1
+        
+        return valid
+    
+#its more inuitive with prefix/suffix sums
+class Solution:
+    def countValidSelections(self, nums: List[int]) -> int:
+        '''
+        using pref/suff sums
+        '''
+        n = len(nums)
+        pref_sum = [0]*n
+        pref_sum[0] = nums[0]
+        for i in range(1,n):
+            pref_sum[i] = pref_sum[i-1] + nums[i]
+        
+        suff_sum = [0]*n
+        suff_sum[-1] = nums[-1]
+        for i in range(n-2,-1,-1):
+            suff_sum[i] = suff_sum[i+1] + nums[i]
+        
+        count = 0
+        for i in range(n):
+            if nums[i] == 0:
+                if pref_sum[i] == suff_sum[i]:
+                    count += 2
+                elif abs(pref_sum[i] - suff_sum[i]) == 1:
+                    count += 1
+        
+        return count
+            
