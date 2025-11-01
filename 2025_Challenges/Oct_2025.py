@@ -1486,3 +1486,101 @@ class Solution:
         
         return count
             
+#############################################
+# 3370. Smallest Number With All Set Bits
+# 29OCT25
+##############################################
+class Solution:
+    def smallestNumber(self, n: int) -> int:
+        '''
+        all set bits are just a power of 2 - 1, check them all, up to 2**10
+        '''
+        ans = -1
+        for power in range(1,11):
+            all_bits = 2**power - 1
+            if all_bits >= n:
+                return all_bits
+
+#pattern is prev*2 + 1
+class Solution:
+    def smallestNumber(self, n: int) -> int:
+        x = 1
+        while x < n:
+            x = x * 2 + 1
+        return x
+    
+##################################################
+# 2464. Minimum Subarrays in a Valid Split
+# 29OCT25
+###################################################
+import math
+class Solution:
+    def validSubarraySplit(self, nums: List[int]) -> int:
+        '''
+        split or dont split the array
+        let dp(i) be min ways to split nums[:i]
+        '''
+        n = len(nums)
+        memo = {}
+
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            
+            ans = float('inf')
+            for j in range(i,n):
+                curr_gcd = math.gcd(nums[i],nums[j])
+                if curr_gcd > 1:
+                    ans = min(ans, 1 + dp(j+1))
+                    print(ans)
+            memo[i] = ans
+            return ans
+        
+        res = dp(0)
+        return res if res != float('inf') else -1
+
+###########################################################################
+# 1526. Minimum Number of Increments on Subarrays to Form a Target Array
+# 31OCT25
+############################################################################
+class Solution:
+    def minNumberOperations(self, target: List[int]) -> int:
+        '''
+        what if the array was sorted
+        [1,1,2,2,3]
+        its just 1,2,3 steps
+        [1,1,2,3]
+        its just positive conectutive difference
+        array is recoverable from difference array if you know the first number
+        '''
+        ans = target[0]
+        n = len(target)
+        for i in range(1,n):
+            if target[i] > target[i-1]:
+                ans += target[i] - target[i-1]
+            
+        return ans
+    
+class Solution:
+    def getSneakyNumbers(self, nums: List[int]) -> List[int]:
+        n = len(nums) - 2
+        y = 0
+        for x in nums:
+            y ^= x
+        for i in range(n):
+            y ^= i
+        lowBit = y & -y
+        x1 = x2 = 0
+        for x in nums:
+            if x & lowBit:
+                x1 ^= x
+            else:
+                x2 ^= x
+        for i in range(n):
+            if i & lowBit:
+                x1 ^= i
+            else:
+                x2 ^= i
+        return [x1, x2]
