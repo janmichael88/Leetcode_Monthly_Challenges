@@ -219,3 +219,119 @@ class Solution:
             else:
                 hi = mid - 1
         return res
+    
+
+###########################################
+# 2169. Count Operations to Obtain Zero
+# 09NOV25
+###########################################
+class Solution:
+    def countOperations(self, num1: int, num2: int) -> int:
+        '''
+        need to do either num1 - num2 or num2 - num1
+        need operations to make num1 or num2 0
+        '''
+        ops = 0
+        while num1 > 0 and num2 > 0:
+            if num1 >= num2:
+                num1 -= num2
+            else:
+                num2 -= num1
+            ops += 1
+        
+        return ops
+    
+##########################################################
+# 3542. Minimum Operations to Convert All Elements to Zero
+# 10NOV24
+##########################################################
+#dammit
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        we can pick any subarray nums[i:j], and set all the those numbers to 0
+        say we have array, [3,1,2,1]
+        process in order, except 0
+        starting with 1, we have range with indices [1,3]
+            set to zero
+        next with 2, we have range with indicies [2,2]
+            set to zero
+        next with 3, we have range with indices [0,0]
+            set to zero
+        we can only set the occurences to zero, not that whole subarray :(
+             [1,2,1,2,1,2]
+        for 1, it spans range [0,5]
+        for 2 it spans [2,5], in fat 
+        pick the whole thing, and make them all zero
+        becomes [0,2,0,2,0,2]
+        but now the original contig sequence has changed, [1,5] no longer has 2 as the minimum
+        in fact it didn't before!
+        mono stack
+        say we have [3,1,2,1]
+        [], load 3, [3]
+        [3], 1 is smaller, need to use op on 3, op +1, and load [1]
+        [1], load 2, [1,2],
+        if we dont and an increasing array, need to use its length
+        '''
+        stack = []
+        counts = Counter()
+        ops = 0
+        for num in nums:
+            if not stack:
+                stack.append(num)
+                counts[num] += 1
+            elif stack and stack[-1] <= num:
+                stack.append(num)
+                counts[num] += 1
+            else:
+                print(stack)
+                stack = [num]
+        print(stack)
+        return ops
+
+#aye yai yai
+class Solution:
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        we only have to process each new increasing step
+        say we have [1,2,3,4]
+        [1], ops + 1
+        [1,2] ops += 1
+        when we see a number num < the top of thes tack, we can go back and deal with using a new operation
+        when we see a number num larger than stack[-1], it means we must use a new opertaion to remove a because all smmaler numbers would have been cleared
+        '''
+        stack = []
+        ops = 0
+        for num in nums:
+            while stack and stack[-1] > num:
+                stack.pop()
+            if num == 0:
+                continue
+            if not stack or stack[-1] < num:
+                ops += 1
+                stack.append(num)
+        
+        return ops
+    
+##########################################################################
+# 2654. Minimum Number of Operations to Make All Array Elements Equal to 1
+# 12NOV25
+##########################################################################
+import math
+class Solution:
+    def minOperations(self, nums):
+        n = len(nums)
+        c = nums.count(1)  # if there's at least one '1'
+        if c != 0:
+            return n - c
+        
+        res = float('inf')
+        for i in range(n):
+            g = nums[i]
+            for j in range(i + 1, n):
+                g = math.gcd(g, nums[j])
+                if g == 1:
+                    res = min(res, j - i + (n - 1))
+                    
+        
+        return -1 if res == float('inf') else res
