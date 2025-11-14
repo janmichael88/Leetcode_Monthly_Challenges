@@ -317,13 +317,23 @@ class Solution:
 # 2654. Minimum Number of Operations to Make All Array Elements Equal to 1
 # 12NOV25
 ##########################################################################
-import math
 class Solution:
-    def minOperations(self, nums):
+    def minOperations(self, nums: List[int]) -> int:
+        '''
+        when the gcd of two numbers is 1, the gcd of 1 and any other number is always 1 itself
+        find the number of operations required to make any element as 1 and then the remaining n-1 elements can be made 1 in just n-1 steps
+        if i'm at index i, with nums[i] = 1
+        i can make nums[i-1] = gcd(nums[i], nums[i-1])
+        then we peform the same at i-2,i-3...., which is just n-1 times
+        now how can we get the minimum number of operations to make any of the elements 1?
+            for any element i, traverse through all elements i+1 to n and find gcd
+            as soon ad gcd becomes 1, we can inlcude that taking the gcd in the reverse direction (from j to i) would make nums[i] == 1
+        if there are any ones already present in the array, we can just use them without trying to make an extta 1
+        '''
         n = len(nums)
-        c = nums.count(1)  # if there's at least one '1'
+        ones = nums.count(1)  # if there's at least one '1'
         if c != 0:
-            return n - c
+            return n - ones
         
         res = float('inf')
         for i in range(n):
@@ -331,7 +341,53 @@ class Solution:
             for j in range(i + 1, n):
                 g = math.gcd(g, nums[j])
                 if g == 1:
+                    #everything in between
                     res = min(res, j - i + (n - 1))
                     
         
         return -1 if res == float('inf') else res
+
+#######################################################
+# 3228. Maximum Number of Operations to Move Ones to the End
+# 14NOV25
+#######################################################
+class Solution:
+    def maxOperations(self, s: str) -> int:
+        '''
+        need to pick valid indices i and i + 1 both < len(s)
+        and its of the form '10'
+        move i to the right until it reaches end of string or another 1
+        [1,0,0,1,1,0,1]
+        two pointers?
+        if its 1, increment ones count
+        if it 0 then we need ones op to move it to this zero
+        '''
+        res = ones = 0
+        for v, l in groupby(s):
+            print(v,[ch for ch in l])
+            if v == '1':
+                ones += len(list(l))
+            else:
+                res += ones
+        return res
+    
+class Solution:
+    def maxOperations(self, s: str) -> int:
+        '''
+        need to pick valid indices i and i + 1 both < len(s)
+        and its of the form '10'
+        move i to the right until it reaches end of string or another 1
+        [1,0,0,1,1,0,1]
+        two pointers?
+        if its 1, increment ones count
+        if it 0 then we need ones op to move it to this zero
+        '''
+        res = ones = 0
+        n = len(s)
+        for i,ch in enumerate(s):
+            if ch == '1':
+                ones += 1
+            elif (i + 1 < n and s[i+1] == '1') or i+1 == n:
+                res += ones
+        
+        return res
