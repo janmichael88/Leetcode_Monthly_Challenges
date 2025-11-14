@@ -391,3 +391,36 @@ class Solution:
                 res += ones
         
         return res
+    
+################################################
+# 2536. Increment Submatrices by One
+# 14NOV25
+################################################
+class Solution:
+    def rangeAddQueries(self, n: int, queries: List[List[int]]) -> List[List[int]]:
+        '''
+        imagine the case we have 1d array and updates across range
+        we can use prefix sums
+        1d prefix sum
+        In 1D, if you want to add +1 to all elements in a range [l, r], you can do:
+        arr[l] += 1
+        arr[r+1] -= 1
+        In 2D pref sum its:
+        pref_sum[r][col1] += 1 → mark the start of the horizontal range in row r.
+        pref_sum[r][col2 + 1] -= 1 → mark the end of the horizontal range in row r.
+
+        '''
+        pref_sum = [[0]*(n+1) for _ in range(n+1)]
+
+        #this is similar to line sweep
+        #where we do +1 at l and -1 at r
+        for row1,col1,row2,col2 in queries:
+            for r in range(row1,row2+1):
+                pref_sum[r][col1] += 1
+                pref_sum[r][col2 + 1] -= 1
+        
+        for i in range(n+1):
+            for j in range(1,n+1):
+                pref_sum[i][j] += pref_sum[i][j-1]
+        
+        return [r[:n] for r in pref_sum[:-1]]
