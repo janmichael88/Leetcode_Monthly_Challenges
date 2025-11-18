@@ -424,3 +424,141 @@ class Solution:
                 pref_sum[i][j] += pref_sum[i][j-1]
         
         return [r[:n] for r in pref_sum[:-1]]
+    
+
+##########################################################
+# 3234. Count the Number of Substrings With Dominant Ones
+# 15NOV25
+#########################################################
+#effecient N**2, passes in C++ and Java but not in python
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        n = len(s)
+
+        # prefix[i] = number of 1's in s[0..i]
+        prefix = [0] * n
+        prefix[0] = int(s[0])
+
+        for i in range(1, n):
+            prefix[i] = prefix[i-1] + int(s[i])
+
+        ans = 0
+
+        for i in range(n):
+            o = 0
+            z = 0
+
+            j = i
+            while j < n:
+                o = prefix[j] - (0 if i == 0 else prefix[i-1])
+                z = (j - i + 1) - o
+
+                if (z * z) > o:
+                    # jump ahead
+                    j += (z*z - o - 1)
+
+                elif (z * z) == o:
+                    ans += 1
+
+                else:  # (z*z < o)
+                    ans += 1
+                    skipNum = int(o**0.5) - z
+                    jumpj = j + skipNum
+
+                    if jumpj >= n:
+                        ans += (n - j - 1)
+                    else:
+                        ans += skipNum
+
+                    j = jumpj
+
+                j += 1
+
+        return ans
+
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        '''
+        store prefix sum of array to count ones in a range [i:j]
+        conditions:
+            if count_zeros**2 > ones, we need more ones, so we need to traverse the pref_sum array (intelligently)
+            by moving pointer forward, or you can say we skip ucesscary indexs
+        
+            if count_zeros **2 == cont ones, valid substring
+            if count_zeros**2 < ones, we have excess ones, so we can skip some indices by moving j pointer
+            sqrt(ones - zeros)
+
+            if j pointer exceedds length of string, simply add all
+        '''
+        n = len(s)
+        #pref_sum to countones
+        pref_sum = [0]*n
+        pref_sum[0] = 0 + (s[0] == '1')
+        for i in range(1,n):
+            pref_sum[i] += pref_sum[i-1] + (s[i] == '1')
+        
+        ans = 0
+        for i in range(n):
+            ones = 0
+            zeros = 0
+            j = i
+            while j < n:
+                ones = pref_sum[j] - (0 if i == 0 else pref_sum[i-1])
+                zeros = (j - i + 1) - ones
+                #not enough ones
+                if (zeros * zeros) > ones:
+                    gap = zeros**2 - ones - 1
+                    j += gap
+                #valid dominant substring
+                elif zeros**2 == ones:
+                    ans += 1
+                
+                #more than enough ones
+                elif zeros**2 < ones:
+                    ans += 1
+                    skipnum = int(ones**0.5) - zeros #gap
+                    jump = j + skipnum
+                    if jump >= n:
+                        ans += (n - j - 1) #the any substring from j to end works
+                    else:
+                        ans += skipnum
+                    j = jump
+                j += 1
+            
+        return ans
+    
+############################################
+# 717. 1-bit and 2-bit Characters (REVISTED)
+# 18NOV25
+############################################
+#dp
+class Solution:
+    def isOneBitCharacter(self, bits: List[int]) -> bool:
+        '''
+        recursively
+        '''
+        n = len(bits)
+        memo = {}
+
+        def dp(i):
+            if i >= n:
+                return False
+            if i == n-1:
+                return True
+            if i in memo:
+                return memo[i]
+            one_bit = False
+            two_bit = False
+            if bits[i] == 0:
+                one_bit = dp(i+1)
+            elif i + 1 < n:
+                if bits[i] == 1 and bits[i+1] == 0:
+                    two_bit = dp(i+2)
+                elif bits[i] == 1 and bits[i+1] == 1:
+                    two_bit = dp(i+2)
+            ans = one_bit or two_bit
+            memo[i] = ans
+            return ans
+        
+        return dp(0)
+                
