@@ -562,3 +562,37 @@ class Solution:
         
         return dp(0)
                 
+
+################################################
+# 3109. Find the Index of Permutation
+# 18NOV25
+################################################
+class Solution:
+    def getPermutationIndex(self, perm: List[int]) -> int:
+        '''
+        ans should be 0 indexed
+        there are n! perms
+        say are are given [3,1,2]
+        perms starting with 1 are indexed
+        1 to 2 or [1...(n-1)!]
+        starting with 2 it would [(n-1)! + 1 ...()]
+        if perm[0] is x there are at least (x-1)*(n-1)! perms before it
+        say we have len(prem) == 4
+        if i place a 1 at the first spot, we can permute [2,3,4], which is 3! = 6 perms with a 1 at the first spot
+        if we started with 2, we can permute [1,3,4], which is 3! = 6 perms again
+
+        '''
+        MOD = 10**9+7
+        n = len(perm)
+        res = 0
+        pool = SortedList([i for i in range(1,n+1)])
+        factorial = [1]
+        for i in range(1, n):
+            factorial.append((factorial[-1] * i) % MOD)
+        factorial.reverse()
+
+        for i in range(n):
+            idx = pool.index(perm[i])
+            res += (idx * factorial[i]) % MOD
+            pool.remove(perm[i])
+        return res % MOD
