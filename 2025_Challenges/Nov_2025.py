@@ -527,6 +527,168 @@ class Solution:
             
         return ans
     
+#naive approach, TLE
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        '''
+        naive approach using pref zeros and pref ones
+        '''
+        n = len(s)
+
+        # prefix sums
+        pref0 = [0] * n
+        pref1 = [0] * n
+        pref0[0] = 1 if s[0] == '0' else 0
+        pref1[0] = 1 if s[0] == '1' else 0
+
+        for i in range(1, n):
+            pref0[i] = pref0[i - 1] + (1 if s[i] == '0' else 0)
+            pref1[i] = pref1[i - 1] + (1 if s[i] == '1' else 0)
+
+        count = 0
+
+        # brute-force substring enumeration
+        for i in range(n):
+            for j in range(i, n):
+                zeros = pref0[j] - (pref0[i - 1] if i > 0 else 0)
+                ones  = pref1[j] - (pref1[i - 1] if i > 0 else 0)
+
+                if ones >= zeros * zeros:
+                    count += 1
+
+        return count
+
+#inteligent skipping
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        '''
+        naive approach using pref zeros and pref ones
+        but what if we can skip j by the difference = zeros**2 - ones
+        substrings between that diff are obviously invalid
+        to amke sure we found the i,j where zeros**2 at elast ones, if we overshoot j, move on to next i
+        '''
+        n = len(s)
+
+        # prefix sums
+        pref0 = [0] * n
+        pref1 = [0] * n
+        pref0[0] = 1 if s[0] == '0' else 0
+        pref1[0] = 1 if s[0] == '1' else 0
+
+        for i in range(1, n):
+            pref0[i] = pref0[i - 1] + (1 if s[i] == '0' else 0)
+            pref1[i] = pref1[i - 1] + (1 if s[i] == '1' else 0)
+
+        count = 0
+
+        # brute-force substring enumeration
+        for i in range(n):
+            j = i
+            while j < n:
+                zeros = pref0[j] - (pref0[i - 1] if i > 0 else 0)
+                ones  = pref1[j] - (pref1[i - 1] if i > 0 else 0)
+
+                skip = zeros**2 - ones
+                if ones >= zeros**2:
+                    count += 1
+                j += skip
+
+        return count
+
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        '''
+        naive approach using pref zeros and pref ones
+        but what if we can skip j by the difference = zeros**2 - ones
+        substrings between that diff are obviously invalid
+        to amke sure we found the i,j where zeros**2 at elast ones, if we overshoot j, move on to next i
+        '''
+        n = len(s)
+
+        # prefix sums
+        pref0 = [0] * n
+        pref1 = [0] * n
+        pref0[0] = 1 if s[0] == '0' else 0
+        pref1[0] = 1 if s[0] == '1' else 0
+
+        for i in range(1, n):
+            pref0[i] = pref0[i - 1] + (1 if s[i] == '0' else 0)
+            pref1[i] = pref1[i - 1] + (1 if s[i] == '1' else 0)
+
+        count = 0
+
+        for i in range(n):
+            j = i
+            while j < n:
+                zeros = pref0[j] - (pref0[i - 1] if i > 0 else 0)
+                ones  = pref1[j] - (pref1[i - 1] if i > 0 else 0)
+
+                if ones >= zeros * zeros:
+                    count += 1
+                    # use the intended skip logic:
+                    # skip = max(floor(sqrt(ones)) - zeros, 1)
+                    skip = max(int((ones)**0.5) - zeros, 1)
+                else:
+                    skip = zeros * zeros - ones  # positive by definition
+                    # but we MUST ensure skip >= 1
+                    skip = max(skip, 1)
+
+                j += skip
+
+        return count
+
+#this is the true solution in C++ and java, it won't pass in python
+class Solution:
+    def numberOfSubstrings(self, s: str) -> int:
+        '''
+        naive approach using pref zeros and pref ones
+        but what if we can skip j by the difference = zeros**2 - ones
+        substrings between that diff are obviously invalid
+        to amke sure we found the i,j where zeros**2 at elast ones, if we overshoot j, move on to next i
+
+        ones >= zeros**2
+        if we extend j by k chars that are all ones
+        ones + k >= zeros**2
+        k ~ sqrt(ones) - zeros
+
+        this gives an estimate of how many more substrings satisfy the conditions
+        jump over multiple substrings that are guaranteed to be valid
+        we can also jump up the counting of valid substring by skip cound 
+        clamp it with min/max to stay within bounds
+        '''
+        n = len(s)
+
+        # prefix sums
+        pref0 = [0] * n
+        pref1 = [0] * n
+        pref0[0] = 1 if s[0] == '0' else 0
+        pref1[0] = 1 if s[0] == '1' else 0
+
+        for i in range(1, n):
+            pref0[i] = pref0[i - 1] + (1 if s[i] == '0' else 0)
+            pref1[i] = pref1[i - 1] + (1 if s[i] == '1' else 0)
+
+        count = 0
+
+        for i in range(n):
+            j = i
+            while j < n:
+
+                zeros = pref0[j] - (pref0[i - 1] if i > 0 else 0)
+                ones  = pref1[j] - (pref1[i - 1] if i > 0 else 0)
+
+                skip = zeros * zeros - ones   # initial skip
+
+                if ones >= zeros * zeros:
+                    # same as (int)sqrt(ones) - zeros in C++
+                    skip = max(int(math.sqrt(ones)) - zeros, 1)
+                    count += min(skip, n - j)
+
+                # skipping forward
+                j += skip
+
+        return count
+
 ############################################
 # 717. 1-bit and 2-bit Characters (REVISTED)
 # 18NOV25
@@ -596,3 +758,36 @@ class Solution:
             res += (idx * factorial[i]) % MOD
             pool.remove(perm[i])
         return res % MOD
+    
+##############################################
+# 757. Set Intersection Size At Least Two
+# 21NOV25
+#############################################
+class Solution:
+    def intersectionSizeTwo(self, intervals: List[List[int]]) -> int:
+        '''
+        i need to return the minimum array nums, each interval in intervals has at least two integers in nums
+        what if i find overlap first 
+        [[1,3],[3,7],[8,9]]
+        [1,2,3,4,5,6,7,8,9]
+        there could be multiple answers
+        re use the two right most points whevenr possible
+        '''
+        #sort by end, tie break with start
+        intervals.sort(key = lambda x : (x[1],-x[0]))
+        #print(intervals)
+        res = 0
+        cur = []
+        for start,end in intervals:
+            #if we don't have a current ending interval increase by 2, and make a new one with end-1 and end
+            if not cur or start>cur[1]:
+                res += 2
+                cur = [end-1, end]
+            #update the current end and start
+            elif start > cur[0]:
+                #current end becomes curr start, and current end becoems end
+                #increment by 1
+                res += 1
+                cur = [cur[1], end]
+            #print(cur)
+        return res
