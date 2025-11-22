@@ -791,3 +791,50 @@ class Solution:
                 cur = [cur[1], end]
             #print(cur)
         return res
+    
+#################################################
+# 2512. Reward Top K Students
+# 21NOV25
+##################################################
+class Solution:
+    def topStudents(self, positive_feedback: List[str], negative_feedback: List[str], report: List[str], student_id: List[int], k: int) -> List[int]:
+        '''
+        hashmap problem
+        '''
+        good = set(positive_feedback)
+        bad = set(negative_feedback)
+        scores = Counter()
+        n = len(report)
+        for i in range(n):
+            words = report[i].split(" ")
+            stud_id = student_id[i]
+            scores[stud_id] = 0
+            for w in words:
+                if w in good:
+                    scores[stud_id] += 3
+                elif w in bad:
+                    scores[stud_id] -= 1
+
+        
+        #sort
+        temp = sorted([(stud_id,score) for stud_id,score in scores.items()], key = lambda x : (-x[1], x[0]))
+        ans = []
+        for i in range(k):
+            ans.append(temp[i][0])
+        
+        return ans
+    
+########################################################################
+# 3190. Find Minimum Operations to Make All Elements Divisible by Three
+# 22NOV25
+#########################################################################
+class Solution:
+    def minimumOperations(self, nums: List[int]) -> int:
+        '''
+        just check how far for each num, how far it is from its closest multiple of 3
+        '''
+        ans = 0
+        for num in nums:
+            if num % 3 != 0:
+                ans += min(num % 3, 3 - (num % 3))
+        return ans
