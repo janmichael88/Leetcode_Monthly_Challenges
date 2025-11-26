@@ -835,6 +835,5 @@ class Solution:
         '''
         ans = 0
         for num in nums:
-            if num % 3 != 0:
-                ans += min(num % 3, 3 - (num % 3))
+            ans += min(num % 3, 3 - (num % 3))
         return ans
