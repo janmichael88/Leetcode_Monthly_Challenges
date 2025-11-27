@@ -837,3 +837,223 @@ class Solution:
         for num in nums:
             ans += min(num % 3, 3 - (num % 3))
         return ans
+    
+############################################
+# 1262. Greatest Sum Divisible by Three
+# 23NOV25
+############################################
+#TLE
+class Solution:
+    def maxSumDivThree(self, nums: List[int]) -> int:
+        '''
+        sort nums
+        dp state (i,mod)
+        then i can stake this nums[i] or not
+        first try with index i and carry sum
+        '''
+        nums.sort()
+        n = len(nums)
+        memo = {}
+
+        def dp(i,curr_sum):
+            if i >= n:
+                if curr_sum % 3 == 0:
+                    return curr_sum
+                return 0
+            
+            if (i,curr_sum) in memo:
+                return memo[(i,curr_sum)]
+            
+            take = dp(i+1,curr_sum + nums[i])
+            no_take = dp(i+1,curr_sum)
+            ans = max(take,no_take)
+            memo[(i,curr_sum)] = ans
+            return ans
+        
+        return dp(0,0)
+
+#what if i just track mod, and add nums[i] every time?
+#good thought process for state reduction, don't need sums, just need sums mod 3
+class Solution:
+    def maxSumDivThree(self, nums: List[int]) -> int:
+        '''
+        sort nums
+        dp state (i,mod)
+        then i can stake this nums[i] or not
+        first try with index i and carry sum
+        '''
+        #nums.sort()
+        #no need to sort too
+        n = len(nums)
+        memo = {}
+
+        def dp(i,curr_sum):
+            if i >= n:
+                if curr_sum % 3 == 0:
+                    return 0
+                return float('-inf')
+            
+            if (i,curr_sum) in memo:
+                return memo[(i,curr_sum)]
+            
+            take = nums[i] + dp(i+1,(curr_sum + nums[i]) % 3)
+            no_take = dp(i+1,curr_sum)
+            ans = max(take,no_take)
+            memo[(i,curr_sum)] = ans
+            return ans
+        
+        return dp(0,0)
+    
+#greedy is kinda funky...
+
+
+############################################
+# 3583. Count Special Triplets
+# 25NOV25
+############################################
+class Solution:
+    def specialTriplets(self, nums: List[int]) -> int:
+        '''
+        need triplet (i,j,k)
+        that followes (nums[j] * 2, nums[j], nums[j] * 2)
+        fix j, and check that we have nums[j]*2 to the left and nums[j]*2 to the right
+        call them counts_left and counts_right,
+        ans goes up by counts_left*counts_right
+        i cant keep making a new counter object on each append
+        count before hand!
+        '''
+        n = len(nums)
+        counts_left = Counter()
+        counts_right = Counter(nums)
+        ans = 0
+        mod = 10**9 + 7
+        for num in nums:
+            counts_right[num] -= 1
+            left,right = counts_left[num*2],counts_right[num*2]
+            ans += left*right
+            ans %= mod
+            counts_left[num] += 1
+        
+        return ans % mod
+
+####################################################
+# 2435. Paths in Matrix Whose Sum Is Divisible by K
+# 26NOV25
+###################################################
+#tooo ezzzzz
+class Solution:
+    def numberOfPaths(self, grid: List[List[int]], k: int) -> int:
+        '''
+        we can only go down and to the right
+        states (i,j) work and keep some % k
+        so (i,j,k) should work
+        '''
+        rows,cols = len(grid),len(grid[0])
+        memo = {}
+
+        def dp(i,j,mod):
+            if (i,j) == (rows-1,cols-1):
+                if (mod + grid[i][j]) % k == 0:
+                    return 1
+                return 0
+            
+            if (i,j,mod) in memo:
+                return memo[(i,j,mod)]
+            
+            down = 0
+            right = 0
+            if i + 1 < rows:
+                down = dp(i+1,j, (mod + grid[i][j]) % k)
+            if j + 1 < cols:
+                right = dp(i,j+1, (mod + grid[i][j]) % k)
+            ans = down + right
+            ans %= 10**9 + 7
+            memo[(i,j,mod)] = ans
+            return ans
+        
+        return dp(0,0,0) % (10**9 + 7)
+    
+#bottom up
+class Solution:
+    def numberOfPaths(self, grid: List[List[int]], k: int) -> int:
+        '''
+        we can only go down and to the right
+        states (i,j) work and keep some % k
+        so (i,j,k) should work
+        '''
+        rows, cols = len(grid), len(grid[0])
+        MOD = 10**9 + 7
+
+        # dp[i][j][m] = number of ways from (i,j) to end if current sum before (i,j) % k == m
+        dp = [[[0] * k for _ in range(cols)] for _ in range(rows)]
+
+        # base (bottom-right): dp[last][last][m] = 1 if (m + grid[last]) % k == 0 else 0
+        last_val = grid[rows-1][cols-1] % k
+        for m in range(k):
+            if (m + last_val) % k == 0:
+                dp[rows-1][cols-1][m] = 1
+
+        # fill from bottom-right back to (0,0)
+        for i in range(rows-1, -1, -1):
+            for j in range(cols-1, -1, -1):
+                if i == rows-1 and j == cols-1:
+                    continue  # base already set
+                for m in range(k):
+                    new_mod = (m + grid[i][j]) % k
+                    val = 0
+                    if i + 1 < rows:
+                        val += dp[i+1][j][new_mod]
+                    if j + 1 < cols:
+                        val += dp[i][j+1][new_mod]
+                    dp[i][j][m] = val % MOD
+
+        return dp[0][0][0] % MOD
+    
+########################################################
+# 3381. Maximum Subarray Sum With Length Divisible by K
+# 27NOV25
+########################################################
+class Solution:
+    def maxSubarraySum(self, nums: List[int], k: int) -> int:
+        '''
+        say we have some subarray [i:j] such that (j - i ) % k == 0, and curr_sum
+        we can extend to this [i:j] if there is another subarray j to j+k, who's sum make curr_sum bigger
+        this is the same as i % k = j % k
+            this means that for any (i,j) index pair, its length will be divisible by k
+            if we store the minimum pref_sum for each i % k, we can maximuze the its sum
+        store the minimum pref_sum
+        keep track of prefsum and store pref_sum % 
+        also don't forget sys.maxsize too
+
+        '''
+        curr_sum = 0
+        ans = float('-inf')
+        min_pref_sum = [float('inf')]*k
+        #no sum for k-1
+        min_pref_sum[k-1] = 0
+        for i,num in enumerate(nums):
+            curr_sum += num
+            ans = max(ans, curr_sum - min_pref_sum[i % k])
+            min_pref_sum[i % k] = min(min_pref_sum[i % k], curr_sum)
+        
+        return ans
+    
+class Solution:
+    def maxSubarraySum(self, nums: List[int], k: int) -> int:
+        '''
+        just another way, but formalized by dp
+        '''
+        n = len(nums)
+        ans = float('-inf')
+        curr_sum = 0
+        dp = [float('inf')]*k
+        dp[0] = 0
+        #using one indexing
+
+        for i in range(1,n+1):
+            curr_sum += nums[i-1]
+            ans = max(ans, curr_sum - dp[i % k])
+            dp[i % k] = min(dp[i % k], curr_sum)
+        
+        return ans
+        
