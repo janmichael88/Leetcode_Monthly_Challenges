@@ -1057,3 +1057,43 @@ class Solution:
         
         return ans
         
+################################################
+# 2872. Maximum Number of K-Divisible Components
+# 28NOV25
+################################################
+class Solution:
+    def maxKDivisibleComponents(self, n: int, edges: List[List[int]], values: List[int], k: int) -> int:
+        '''
+        we have undirected tree
+        hints are very helpful, 
+        root node at zero and keep mergeing leaf nodes
+             if a leaf node is not % k == 0, merger to parent
+             if it is, it will be on its own
+        what if we can't split anything
+            example, the tree can't be split
+            then there would be no components, i think the whole tree itself would not be a component
+        
+        if sum for a node is divible by k, we can split
+        if we split we need to be careful not to pass its sum back up
+        dp, but pass up [node_sum,split_count]
+        '''
+        graph = defaultdict(list)
+        for u,v in edges:
+            graph[u].append(v)
+            graph[v].append(u)
+        
+        def dfs(parent,curr):
+            node_sum = values[curr]
+            splits = 0
+            for neigh in graph[curr]:
+                if neigh != parent:
+                    child_sum,child_splits = dfs(curr,neigh)
+                    node_sum += child_sum
+                    splits += child_splits
+            if node_sum % k == 0:
+                return [0,splits + 1]
+            else:
+                return [node_sum,splits]
+        
+        a,b = dfs(-1,0)
+        return b
