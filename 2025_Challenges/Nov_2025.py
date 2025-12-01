@@ -1097,3 +1097,107 @@ class Solution:
         
         a,b = dfs(-1,0)
         return b
+    
+##############################################
+# 2032. Two Out of Three
+# 28NOV25
+##############################################
+class Solution:
+    def twoOutOfThree(self, nums1: List[int], nums2: List[int], nums3: List[int]) -> List[int]:
+        '''
+        hashet problem
+        '''
+        nums1 = set(nums1)
+        nums2 = set(nums2)
+        nums3 = set(nums3)
+        ans = []
+        for n in nums1:
+            if n in nums2:
+                ans.append(n)
+            if n in nums3:
+                ans.append(n)
+
+        for n in nums2:
+            if n in nums1:
+                ans.append(n)
+            if n in nums3:
+                ans.append(n)        
+        
+        for n in nums3:
+            if n in nums2:
+                ans.append(n)
+            if n in nums1:
+                ans.append(n)        
+        
+        return list(set(ans))
+    
+class Solution:
+    def twoOutOfThree(self, nums1: List[int], nums2: List[int], nums3: List[int]) -> List[int]:
+        '''
+        hashet problem
+        '''
+        counts = Counter()
+        n = 3
+        for index,arr in zip(range(n),[set(nums1),set(nums2),set(nums3)]):
+            for num in arr:
+                counts[(num,index)] += 1
+        ans = []
+        for num in range(100):
+            temp = 0
+            for i in range(n):
+                temp += counts[(num,i)]
+            if temp > 1:
+                ans.append(num)
+        
+        return ans
+    
+##############################################################
+# 3512. Minimum Operations to Make Array Sum Divisible by K
+# 29NOV25
+###############################################################
+class Solution:
+    def minOperations(self, nums: List[int], k: int) -> int:
+        '''
+        we can decrement any nums[i] by 1 in on operatrion
+        need minumum operations to make sum divisibl by k
+        '''
+        curr_sum = sum(nums)
+        return curr_sum % k
+    
+#####################################################
+# 370. Range Addition (REVISTED)
+# 29NOV25
+#####################################################
+class Solution:
+    def getModifiedArray(self, length: int, updates: List[List[int]]) -> List[int]:
+        '''
+        line sweep
+        '''
+        updates.sort()
+        ans = [0]*(length + 1)
+        for l,r,inc in updates:
+            ans[l] += inc
+            ans[r+1] -= inc
+        
+        for i in range(1,length+1):
+            ans[i] += ans[i-1]
+        
+        return ans[:-1]
+        
+class Solution:
+    def getModifiedArray(self, length: int, updates: List[List[int]]) -> List[int]:
+        starts = [0] * length
+        ends   = [0] * length
+
+        for l, r, inc in updates:
+            starts[l] += inc
+            ends[r] += inc
+
+        ans = [0] * length
+        cur = 0
+        for i in range(length):
+            cur += starts[i]
+            ans[i] = cur
+            cur -= ends[i]
+
+        return ans
