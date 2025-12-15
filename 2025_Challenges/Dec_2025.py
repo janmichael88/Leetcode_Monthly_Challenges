@@ -200,3 +200,265 @@ class Solution:
         '''
         directions = directions.lstrip("L").rstrip("R")
         return len(directions) - directions.count("S")
+    
+#####################################################
+# 3432. Count Partitions with Even Sum Difference
+# 05DEC25
+#######################################################
+class Solution:
+    def countPartitions(self, nums: List[int]) -> int:
+        '''
+        '''
+        left_sum = 0
+        right_sum = sum(nums)
+        ans = 0
+        for num in nums[:-1]:
+            left_sum += num
+            right_sum -= num
+            print(left_sum,right_sum)
+            if (left_sum - right_sum) % 2 == 0:
+                ans += 1
+        
+        return ans
+
+class Solution:
+    def countPartitions(self, nums: List[int]) -> int:
+        '''
+        just check total sum
+        if total sum is even, then any partition works, which there are n - 1
+        '''
+        sum_ = sum(nums)
+        n = len(nums)
+        if sum_ % 2 == 0:
+            return n-1
+        return 0
+    
+##############################################################
+# 3578. Count Partitions With Max-Min Difference at Most K
+# 06NOV25
+#############################################################
+#TLE, n*n, recursively
+class Solution:
+    def countPartitions(self, nums: List[int], k: int) -> int:
+        '''
+        need to partition nums into on or more contiguous segments
+        such that in each segment, the dif between its min and max is at most k 
+        oh each segment it must be <= k, not among all segments
+        [9,4,1,3,7], k = 4
+        if we did the whole array, it would not work
+        9-1 > 4
+        if there are n nums, there arr n-1 possible partition spots
+        there's always at least 1 possible partition scheme
+        try n*n recursive solution first
+        '''
+        n = len(nums)
+        memo = {}
+        mod = 10**9 + 7
+        def dp(i):
+            if i == n:
+                return 1   # one valid partitioning completed
+            if i in memo:
+                return memo[i]
+
+            ways = 0
+            curr_min = curr_max = nums[i]
+
+            for j in range(i, n):
+                curr_min = min(curr_min, nums[j])
+                curr_max = max(curr_max, nums[j])
+
+                if curr_max - curr_min <= k:
+                    ways += dp(j + 1)
+                    ways %= mod
+                else:
+                    break
+            ways %= mod
+            memo[i] = ways
+            return ways
+        
+        return dp(0)
+
+################################################################
+# 3577. Count the Number of Computer Unlocking Permutations
+# 10DEC25
+###############################################################
+import math
+class Solution:
+    def countPermutations(self, complexity: List[int]) -> int:
+        '''
+        count number of valid ways such that i can unlock computers
+        each way is a permutation
+        if im at j, i can go to any i, such that j < i and complexity[j] < complexity[i]
+        but j must have been unlocked first
+        0 starts unlocked
+        '''
+        #ensure we can start at 0
+        start = complexity[0]
+        for n in complexity[1:]:
+            if n <= start:
+                return 0
+        
+        n = len(complexity)
+        return math.factorial(n-1) % (10**9 + 7)
+    
+################################################
+# 3531. Count Covered Buildings
+# 12DEC25
+################################################
+class Solution:
+    def countCoveredBuildings(self, n: int, buildings: List[List[int]]) -> int:
+        '''
+        sort by x and y then check
+        for each y store the xvalues sorted
+        for each x, store the y values sorted
+        another way is just to store the mins and maxes without sorting
+        '''
+        x_map = defaultdict(list)
+        y_map = defaultdict(list)
+        for x,y in buildings:
+            y_map[y].append(x)
+            x_map[x].append(y)
+        
+        #sort
+        for k in x_map:
+            x_map[k] = sorted(x_map[k])
+        for k in y_map:
+            y_map[k] = sorted(y_map[k])
+        
+        ans = 0
+        for x,y in buildings:
+            x_axis = y_map[y]
+            y_axis = x_map[x]
+            if (x_axis[0] < x < x_axis[-1]) and (y_axis[0] < y < y_axis[-1]): 
+                ans += 1
+        
+        return ans
+    
+###################################################
+# 3433. Count Mentions Per User
+# 12DEC25
+##################################################
+#close one
+class Solution:
+    def countMentions(self, n: int, events: List[List[str]]) -> List[int]:
+        '''
+        MESSAGE, can be one where a mentions b, could message all, here mentions all online users
+        OFFLINE, perons goes away at timestamp and becomes available at timestamp + 60
+        '''
+        counts = [0]*n
+        #need to check offline before messaging
+        offline = deque([]) #store as (time,id)
+        online = set()
+        #all online
+        for i in range(n):
+            online.add(i)
+        sorted_events = []
+        for mess,time,string in events:
+            entry = [mess,int(time),string]
+            sorted_events.append(entry)
+        
+        sorted_events.sort(key = lambda x: x[1])
+
+        for mess,time,string in sorted_events:
+            #return all offline back online if possible
+            while offline and offline[0][0] + 60 >= time:
+                a,b = offline.popleft()
+                online.add(b)
+            if mess == "MESSAGE":
+                if string == "ALL":
+                    for i in range(n):
+                        counts[i] += 1
+                elif string == "HERE":
+                    for i in online:
+                        counts[i] += 1
+                else:
+                    string = string.split(" ")
+                    for m in string:
+                        ID = int(m[2:])
+                        counts[ID] += 1
+            #user goes offline
+            else:
+                offline.append((time,int(string)))
+                online.remove(int(string))
+        return counts
+    
+#just mark next on line time for user
+class Solution:
+    def countMentions(
+        self, numberOfUsers: int, events: List[List[str]]) -> List[int]:
+        '''
+        '''
+        events.sort(key=lambda e: (int(e[1]), e[0] == "MESSAGE"))
+        count = [0] * numberOfUsers
+        next_online_time = [0] * numberOfUsers
+        for event in events:
+            cur_time = int(event[1])
+            if event[0] == "MESSAGE":
+                if event[2] == "ALL":
+                    for i in range(numberOfUsers):
+                        count[i] += 1
+                elif event[2] == "HERE":
+                    for i, t in enumerate(next_online_time):
+                        if t <= cur_time:
+                            count[i] += 1
+                else:
+                    for idx in event[2].split():
+                        count[int(idx[2:])] += 1
+            else:
+                next_online_time[int(event[2])] = cur_time + 60
+        return count
+    
+############################################
+# 3606. Coupon Code Validator
+# 13DEC25
+############################################
+import re
+class Solution:
+    def validateCoupons(self, code: List[str], businessLine: List[str], isActive: List[bool]) -> List[str]:
+        '''
+        follow the rules
+        '''
+
+        def is_valid(s):
+            return bool(re.fullmatch(r"[A-Za-z0-9_]+", s))
+        
+        mapp = defaultdict(list)
+        n = len(code)
+        for i in range(n):
+            c = code[i]
+            if is_valid(c) and isActive[i]:
+                mapp[businessLine[i]].append(c)
+        
+        print(mapp)
+        needed = ["electronics", "grocery", "pharmacy", "restaurant"]
+        ans = []
+        for n in needed:
+            ans.extend(sorted(mapp[n]))
+        
+        return ans
+
+###################################################
+# 2110. Number of Smooth Descent Periods of a Stock
+# 15DEC25
+###################################################
+class Solution:
+    def getDescentPeriods(self, prices: List[int]) -> int:
+        '''
+        if we have a decreasing array streak, keep going
+        if its length is k, we can can k! to it
+        '''
+        ans = 0
+        streak = prices[0]
+        size = 1
+        for p in prices[1:]:
+            #extend streak
+            if streak - p == 1:
+                size += 1
+                streak = p
+            else:
+                ans += (size*(size + 1)) //2
+                streak = p
+                size = 1
+
+        ans += (size*(size + 1)) //2
+        return ans
