@@ -462,3 +462,304 @@ class Solution:
 
         ans += (size*(size + 1)) //2
         return ans
+    
+class Solution:
+    def getDescentPeriods(self, prices: List[int]) -> int:
+        '''
+        if we have a decreasing array streak, keep going
+        if its length is k, we can can k! to it
+        '''
+        ans = 1
+        streak = prices[0]
+        size = 1
+        for p in prices[1:]:
+            #extend streak
+            if streak - p == 1:
+                size += 1
+                streak = p
+            else:
+                streak = p
+                size = 1
+            ans += size
+
+        return ans
+    
+
+##########################################################
+# 3562. Maximum Profit from Trading Stocks with Discounts
+# 16DEC25
+########################################################
+#ehhhh
+import math
+class Solution:
+    def maxProfit(self, n: int, present: List[int], future: List[int], hierarchy: List[List[int]], budget: int) -> int:
+        '''
+        if there isn't a discount
+        the profixt is future[i] - present[i], if we didn't go over budget
+        if a boss purchases stock, then all their employees get the discount
+        there are no duplicate edges, and its DAG, no cycles
+        discount is for employee's direct boss
+        keep in mind, index 1 is the CEO
+        if im at index i, he gets discount if boss j has bought
+        states (boss_bought,curr,budget)
+        given the test conditions, if n nodes, there can be at most n-1 edges
+        '''
+        graph = defaultdict(list)
+        for boss,emp in hierarchy:
+            graph[boss].append(emp)
+        
+        memo = {}
+        def dp(boss_bought,curr,budget):
+            if budget < 0:
+                return float('-inf')
+            key = (boss_bought,curr,budget)
+            if key in memo:
+                return memo[key]
+
+            ans = 0
+            for emp in graph[curr]:
+                if boss_bought:
+                    cost_to_buy = present[curr-1] // 2
+                else:
+                    cost_to_buy = present[curr-1]
+                
+                profit = future[curr-1] - cost_to_buy
+                buy = profit + dp(True,emp,budget - profit)
+                no_buy = dp(False,emp,budget)
+                ans = max(ans,buy,no_buy)
+            memo[key] = ans
+            return ans
+        
+        return dp(False,1,budget)
+
+#almost
+import math
+class Solution:
+    def maxProfit(self, n: int, present: List[int], future: List[int], hierarchy: List[List[int]], budget: int) -> int:
+        '''
+        if there isn't a discount
+        the profixt is future[i] - present[i], if we didn't go over budget
+        if a boss purchases stock, then all their employees get the discount
+        there are no duplicate edges, and its DAG, no cycles
+        discount is for employee's direct boss
+        keep in mind, index 1 is the CEO
+        if im at index i, he gets discount if boss j has bought
+        states (boss_bought,curr,budget)
+        given the test conditions, if n nodes, there can be at most n-1 edges
+        '''
+        graph = defaultdict(list)
+        for boss, emp in hierarchy:
+            graph[boss].append(emp)
+
+        memo = {}
+
+        def dp(curr: int, boss_bought: bool, budget: int) -> int:
+            if budget < 0:
+                return float('-inf')
+
+            key = (curr, boss_bought, budget)
+            if key in memo:
+                return memo[key]
+
+            # ---------- OPTION 1: do NOT buy curr ----------
+            profit_no_buy = 0
+            for emp in graph[curr]:
+                profit_no_buy += dp(emp, False, budget)
+
+            # ---------- OPTION 2: buy curr ----------
+            cost = present[curr - 1] // 2 if boss_bought else present[curr - 1]
+
+            profit_buy = float('-inf')
+            if budget >= cost:
+                profit_buy = future[curr - 1] - cost
+                for emp in graph[curr]:
+                    profit_buy += dp(emp, True, budget - cost)
+
+            ans = max(profit_no_buy, profit_buy)
+            memo[key] = ans
+            return ans
+
+        return dp(1, False, budget)
+    
+
+################################################
+# 3573. Best Time to Buy and Sell Stock V
+# 17DEC25
+###############################################
+#aww man
+#MLE
+class Solution:
+    def maximumProfit(self, prices: List[int], k: int) -> int:
+        '''
+        states should be (i,k,holding)
+        then we have options 
+        0: not holding
+        1: holding
+        2: in shortselling
+        '''
+        memo = {}
+        n = len(prices)
+
+        def dp(i, k, holding):
+            if k < 0:
+                return float('-inf')
+            if i == n:
+                return 0 if holding == 0 else float('-inf')
+
+            key = (i, k, holding)
+            if key in memo:
+                return memo[key]
+
+            if holding == 0:
+                buy = -prices[i] + dp(i + 1, k, 1)
+                skip = dp(i + 1, k, 0)
+
+                #FIX: short consumes a transaction on OPEN
+                short = prices[i] + dp(i + 1, k - 1, 2)
+
+                ans = max(buy, skip, short)
+
+            elif holding == 1:
+                sell = prices[i] + dp(i + 1, k - 1, 0)
+                skip = dp(i + 1, k, 1)
+                ans = max(sell, skip)
+
+            else:  # holding == 2 (short)
+                cover = -prices[i] + dp(i + 1, k, 0)
+                skip = dp(i + 1, k, 2)
+                ans = max(cover, skip)
+
+            memo[key] = ans
+            return ans
+
+        return dp(0, k, 0)
+
+#need to use 2d array for memo or just cache decorator
+#nopeee
+class Solution:
+    def maximumProfit(self, prices: List[int], k: int) -> int:
+        '''
+        states should be (i,k,holding)
+        then we have options 
+        0: not holding
+        1: holding
+        2: in shortselling
+        '''
+        memo = {}
+        n = len(prices)
+
+        @cache
+        def dp(i, k, holding):
+            if k < 0:
+                return float('-inf')
+            if i == n:
+                return 0 if holding == 0 else float('-inf') #need to complete a transaction
+            
+            #key = (i, k, holding)
+            #if key in memo:
+            #    return memo[key]
+            
+            if holding == 0:
+                buy = -prices[i] + dp(i + 1, k, 1)
+                skip = dp(i + 1, k, 0)
+
+                #FIX: short consumes a transaction on OPEN
+                short = prices[i] + dp(i + 1, k - 1, 2)
+
+                ans = max(buy, skip, short)
+
+            elif holding == 1:
+                sell = prices[i] + dp(i + 1, k - 1, 0)
+                skip = dp(i + 1, k, 1)
+                ans = max(sell, skip)
+
+            else:  # holding == 2 (short)
+                cover = -prices[i] + dp(i + 1, k, 0)
+                skip = dp(i + 1, k, 2)
+                ans = max(cover, skip)
+
+            #memo[key] = ans
+            return ans
+
+        return dp(0, k, 0)
+
+#bottom up
+class Solution:
+    def maximumProfit(self, prices: List[int], k: int) -> int:
+        n = len(prices)
+        NEG_INF = float('-inf')
+
+        # dp[i][t][h]
+        dp = [[[NEG_INF] * 3 for _ in range(k + 1)] for _ in range(n + 1)]
+
+        # ---- base case ----
+        for t in range(k + 1):
+            dp[n][t][0] = 0
+            dp[n][t][1] = NEG_INF
+            dp[n][t][2] = NEG_INF
+
+        # ---- fill table ----
+        for i in range(n - 1, -1, -1):
+            for t in range(k + 1):
+
+                # flat
+                dp[i][t][0] = max(
+                    dp[i + 1][t][0],                    # skip
+                    -prices[i] + dp[i + 1][t][1],       # buy
+                    prices[i] + dp[i + 1][t][2]         # short
+                )
+
+                # long
+                dp[i][t][1] = dp[i + 1][t][1]           # hold
+                if t > 0:
+                    dp[i][t][1] = max(
+                        dp[i][t][1],
+                        prices[i] + dp[i + 1][t - 1][0] # sell
+                    )
+
+                # short
+                dp[i][t][2] = dp[i + 1][t][2]           # hold short
+                if t > 0:
+                    dp[i][t][2] = max(
+                        dp[i][t][2],
+                        -prices[i] + dp[i + 1][t - 1][0] # cover
+                    )
+
+        return dp[0][k][0]
+
+##############################################
+# 955. Delete Columns to Make Sorted II
+# 21DEC25
+##############################################
+class Solution:
+    def minDeletionSize(self, strs: List[str]) -> int:
+        '''
+        need the minimum possible deletion indexes to delete from strs to make them equal
+        we can delete alll indices to make them ordered (null strings)
+        so at most n deletions, maybe at least 0
+        ca
+        bb
+        ac
+        go in order, if col is ordered we keep it, otherwise we need to delete it
+        '''
+        def inorder(arr):
+            n = len(arr)
+            for i in range(1,n):
+                if arr[i-1] > arr[i]:
+                    return False
+            return True
+        transposed = list(zip(*strs))
+        deletions = 0
+        n = len(transposed)
+        needed = [""]*len(strs)
+        for col in transposed:
+            curr = needed[:]
+            for i,ch in enumerate(col):
+                curr[i] += ch
+            if inorder(curr):
+                needed = curr
+            else:
+                deletions += 1
+        
+        return deletions
+
