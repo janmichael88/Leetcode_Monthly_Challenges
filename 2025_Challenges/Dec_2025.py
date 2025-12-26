@@ -763,3 +763,72 @@ class Solution:
         
         return deletions
 
+##########################################
+# 960. Delete Columns to Make Sorted III
+# 23DEC25
+#########################################
+class Solution:
+    def minDeletionSize(self, A: List[str]) -> int:
+        '''
+        treat like maximum increasing subsequence
+        '''
+        n = len(A[0])
+        dp = [1] * n
+        for j in range(1, n):
+            for i in range(j):
+                #for each str in strs, ensure strs[:i] is orderd
+                if all(a[i] <= a[j] for a in A):
+                    #if it is, we can extend the sequence (among all words)
+                    dp[j] = max(dp[j], dp[i] + 1)
+        #negative answer
+        return n - max(dp)
+    
+##########################################
+# 3074. Apple Redistribution into Boxes
+# 24DEC25
+##########################################
+class Solution:
+    def minimumBoxes(self, apple: List[int], capacity: List[int]) -> int:
+        '''
+        just use the largst boxes
+        '''
+        apples = sum(apple)
+        capacity.sort(reverse = True)
+        boxes = 0
+        for c in capacity:
+            apples -= c
+            boxes += 1
+            if apples <= 0:
+                return boxes
+        return boxes 
+    
+##############################################
+# 939. Minimum Area Rectangle
+# 26DEC25
+##############################################
+class Solution:
+    def minAreaRect(self, points: List[List[int]]) -> int:
+        '''
+        just pick two points and use as bottom left and upper right
+        make sure they are not colinear
+        '''
+        pointset = set(map(tuple, points))
+        ans = float('inf')
+
+        for i in range(len(points)):
+            x1, y1 = points[i]
+            for j in range(i + 1, len(points)):
+                x2, y2 = points[j]
+
+                # must form a diagonal
+                if x1 == x2 or y1 == y2:
+                    continue
+
+                # check the other 2 corners are in the pointSet
+                if (x1, y2) in pointset and (x2, y1) in pointset:
+                    area = abs(x2 - x1) * abs(y2 - y1)
+                    ans = min(ans, area)
+
+        return 0 if ans == float('inf') else ans
+
+
