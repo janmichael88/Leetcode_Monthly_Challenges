@@ -831,4 +831,60 @@ class Solution:
 
         return 0 if ans == float('inf') else ans
 
+###############################################
+# 756. Pyramid Transition Matrix
+# 29DEC25
+###############################################
+class Solution:
+    def pyramidTransition(self, bottom: str, allowed: List[str]) -> bool:
+        '''
+        should be a hardo problem, 
+        just call a peice three length tuple, (x,y,z)
+        bottom level only goes up to 6, so there are 6 levels
+        1
+        22
+        333
+        4444
+        55555
+        666666
+        which means there are 1 + 2 + 3 + 4 + 5 = 15, 3 block pieces
+        (i,j), start at (0,0) the top piece, every piece i use advances i + 1, and j + 2
+        if i get to the second to last row, i need to make sure the peices that i use match
+        i would also need the tip of the block
+        would be easier to start off with mapp children map to back to parent
+        '''
+        graph = defaultdict(list)  # (left,right) -> list of possible tops
+        for left, right, top in allowed:
+            graph[(left, right)].append(top)
 
+        def build(row, path, i, results):
+            # finished building row above
+            if i == len(row) - 1:
+                results.append("".join(path))
+                return
+
+            pair = (row[i], row[i+1])
+            if pair not in graph:
+                return
+
+            for top in graph[pair]:
+                path.append(top)
+                build(row, path, i + 1, results)
+                path.pop()
+
+        def all_rows_above(row):
+            results = []
+            build(row, [], 0, results)
+            return results
+
+        @lru_cache(None)
+        def rec(row):
+            if len(row) == 1:
+                return True
+
+            for cand in all_rows_above(row):
+                if rec(cand):
+                    return True
+            return False
+
+        return rec(bottom)
