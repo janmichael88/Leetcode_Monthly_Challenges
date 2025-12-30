@@ -888,3 +888,101 @@ class Solution:
             return False
 
         return rec(bottom)
+    
+########################################
+# 1895. Largest Magic Square
+# 30DEC25
+#########################################
+#barely passes
+class Solution:
+    def largestMagicSquare(self, grid: List[List[int]]) -> int:
+        '''
+        check all k sqaures
+        '''
+        rows,cols = len(grid),len(grid[0])
+        ans = 1
+        for k in range(min(rows,cols),1,-1):
+            for i in range(rows-k+1):
+                for j in range(cols-k+1):
+                    square = self.get_square(grid,i,j,k)
+                    if self.check_magic(square,k):
+                        return k
+        return ans
+
+    
+    def get_square(self,grid,i,j,k):
+        square = []
+        for ii in range(k):
+            row = []
+            for jj in range(k):
+                row.append(grid[i+ii][j+jj])
+
+            square.append(row)
+        
+        return square
+    def check_magic(self,square,k):
+        row_sums = [0]*k
+        col_sums = [0]*k
+        diag_sum = 0
+        anti_diag_sum = 0
+        
+        for i in range(k):
+            for j in range(k):
+                row_sums[i] += square[i][j]
+                col_sums[j] += square[i][j]
+                if i == j:
+                    diag_sum += square[i][j]
+                if i + j == k-1:
+                    anti_diag_sum += square[i][j]
+        check_sums = row_sums + col_sums + [diag_sum] + [anti_diag_sum]
+        return len(set(check_sums)) == 1
+    
+class Solution:
+    def largestMagicSquare(self, grid: List[List[int]]) -> int:
+        rows, cols = len(grid), len(grid[0])
+        ans = 1
+
+        # try largest k first
+        for k in range(min(rows, cols), 1, -1):
+            for i in range(rows - k + 1):
+                for j in range(cols - k + 1):
+                    if self.check_magic(grid, i, j, k):
+                        return k
+        return ans
+
+
+    def check_magic(self, grid, si, sj, k):
+        # target sum = first row sum
+        target = sum(grid[si][sj + x] for x in range(k))
+
+        # check all rows
+        for r in range(k):
+            s = 0
+            for c in range(k):
+                s += grid[si + r][sj + c]
+            if s != target:
+                return False
+
+        # check all cols
+        for c in range(k):
+            s = 0
+            for r in range(k):
+                s += grid[si + r][sj + c]
+            if s != target:
+                return False
+
+        # main diagonal
+        diag = 0
+        for d in range(k):
+            diag += grid[si + d][sj + d]
+        if diag != target:
+            return False
+
+        # anti-diagonal
+        anti = 0
+        for d in range(k):
+            anti += grid[si + d][sj + (k - 1 - d)]
+        if anti != target:
+            return False
+
+        return True
