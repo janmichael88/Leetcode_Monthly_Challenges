@@ -1,6 +1,6 @@
 ############################################
 # 1411. Number of Ways to Paint N × 3 Grid
-# 03JAN25
+# 03JAN26
 ############################################
 #this is actually a very beautfil problem
 class Solution:
@@ -100,7 +100,7 @@ class Solution:
 
 ############################################
 # 1390. Four Divisors
-# 04JAN25
+# 04JAN26
 ############################################
 class Solution:
     def sumFourDivisors(self, nums: List[int]) -> int:
@@ -151,3 +151,104 @@ class Solution:
             ans += counts[i] >= requirement[i]
         
         return ans
+    
+####################################################
+# 1458. Max Dot Product of Two Subsequences (REVISTED)
+# 08JAN26
+####################################################
+class Solution:
+    def maxDotProduct(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        i can use i,j as a state, but the problem is trying to make sure i have the same length
+        '''
+        memo = {}
+
+        def dp(i, j):
+            if i == len(nums1) or j == len(nums2):
+                return float('-inf')
+
+            if (i, j) in memo:
+                return memo[(i, j)]
+
+            # skip options
+            op1 = dp(i + 1, j)
+            op2 = dp(i, j + 1)
+
+            # take both: either start here, or extend
+            take = nums1[i] * nums2[j] #could be by itself without taking another part of a subsequence
+            op3 = max(
+                take,
+                take + dp(i + 1, j + 1)
+            )
+
+            ans = max(op1, op2, op3)
+            memo[(i, j)] = ans
+            return ans
+
+        return dp(0, 0)
+    
+class Solution:
+    def maxDotProduct(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        i can use i,j as a state, but the problem is trying to make sure i have the same length
+        '''
+        memo = {}
+        dp = [[0]*(len(nums2) + 1) for _ in range(len(nums1) + 1)]
+        #base case fill
+        for i in range(len(nums1) + 1):
+            for j in range(len(nums2) + 1):
+                if i == len(nums1) or j == len(nums2):
+                    dp[i][j] = float('-inf')
+        
+        for i in range(len(nums1)-1,-1,-1):
+            for j in range(len(nums2)-1,-1,-1):
+
+                # skip options
+                op1 = dp[i + 1][j]
+                op2 = dp[i][j + 1]
+
+                # take both: either start here, or extend
+                take = nums1[i] * nums2[j] #could be by itself without taking another part of a subsequence
+                op3 = max(
+                    take,
+                    take + dp[i + 1][j + 1]
+                )
+
+                ans = max(op1, op2, op3)
+                dp[i][j] = ans
+        return dp[0][0]
+    
+############################################
+# 2049. Count Nodes With the Highest Score
+# 08JAN25
+############################################
+class Solution:
+    def countHighestScoreNodes(self, parents: List[int]) -> int:
+        '''
+        make the graph
+        left is dfs(neigh)
+        right is dfs(neigh)
+        up is n - 1 - left - right
+        '''
+        graph = collections.defaultdict(list)
+        for node, parent in enumerate(parents):  
+            graph[parent].append(node)
+        n = len(parents)                         
+        d = Counter()
+        def count_nodes(node):                   
+            # number of children node + self
+            p, s = 1, 1                          
+            # p: product, s: size
+            for child in graph[node]:            
+                # for each child (only 2 at maximum)
+                res = count_nodes(child)         
+                # get its nodes count of each subtree sizes for the product
+                p *= res                         
+                #size increment
+                s += res 
+            #we need count from above (subtree from it parent)            
+            p *= max(1, n - s)              
+            d[p] += 1                           
+            return s                        
+        count_nodes(0)                              
+        return d[max(d.keys())]                 
