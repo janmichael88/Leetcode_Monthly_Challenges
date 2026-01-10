@@ -220,7 +220,7 @@ class Solution:
     
 ############################################
 # 2049. Count Nodes With the Highest Score
-# 08JAN25
+# 08JAN26
 ############################################
 class Solution:
     def countHighestScoreNodes(self, parents: List[int]) -> int:
@@ -252,3 +252,74 @@ class Solution:
             return s                        
         count_nodes(0)                              
         return d[max(d.keys())]                 
+
+#######################################
+# 1666. Change the Root of a Binary Tree
+# 09JAN26
+#######################################
+"""
+# Definition for a Node.
+class Node:
+    def __init__(self, val):
+        self.val = val
+        self.left = None
+        self.right = None
+        self.parent = None
+"""
+
+class Solution:
+    def flipBinaryTree(self, root: 'Node', leaf: 'Node') -> 'Node':
+        '''
+        recursion, we have access to parent via the node class
+        keep track of node, and where we came from
+        '''
+        def flip_recu(node, from_node):
+            # set and break pointers between node and from_node
+            p = node.parent
+            node.parent = from_node #came from
+            if node.left == from_node: 
+                node.left = None
+            if node.right == from_node: 
+                node.right = None
+                
+            # stopping condition
+            if node == root:
+                return node
+            
+            # set right child
+            if node.left: 
+                node.right = node.left
+            # set left child
+            node.left = flip_recu(p, node)
+            return node
+        
+        return flip_recu(leaf, None)
+    
+#########################################
+# 2826. Sorting Three Groups
+# 10JAN26
+########################################
+class Solution:
+    def minimumOperations(self, nums: List[int]) -> int:
+        '''
+        if we have the longest increasing subsequence, then we have the minimum operations
+        find LIS, then its just len(nums) - LIS
+        '''
+        memo = {}
+        n = len(nums)
+        def dp(i):
+            if i >= len(nums):
+                return 0
+            if i in memo:
+                return memo[i]
+            ans = 1
+            for j in range(i+1,n):
+                if nums[j] >= nums[i]:
+                    ans = max(ans, 1 + dp(j))
+            memo[i] = ans
+            return ans
+        lis = 1
+        for i in range(n):
+            lis = max(lis,dp(i))
+
+        return n - lis
