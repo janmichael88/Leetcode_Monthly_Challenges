@@ -323,3 +323,38 @@ class Solution:
             lis = max(lis,dp(i))
 
         return n - lis
+    
+###########################################
+# 3453. Separate Squares I
+# 12JAN26
+###########################################
+class Solution:
+    def separateSquares(self, squares: List[List[int]]) -> float:
+        '''
+        if total area of all squares = A
+        then we need to find a line, where the areas == A/2
+        binary search on answer, given a line, check if the area's are equal
+        they are all square
+        '''
+        left = 0
+        right = 0
+        for x, y, l in squares:
+            right = max(right, y + l)
+
+        def calc(line):
+            area_under = 0
+            total_area = 0
+            for x, y, l in squares:
+                total_area += l * l
+                height = max(0, min(l, line - y))
+                area_under += height * l
+            return area_under - total_area / 2
+
+        while right - left > 1e-5:
+            mid = (left + right) / 2
+            if calc(mid) >= 0:
+                right = mid
+            else:
+                left = mid
+
+        return left
