@@ -349,12 +349,155 @@ class Solution:
                 height = max(0, min(l, line - y))
                 area_under += height * l
             return area_under - total_area / 2
-
+        ans = 0
         while right - left > 1e-5:
             mid = (left + right) / 2
             if calc(mid) >= 0:
                 right = mid
             else:
+                ans = mid
                 left = mid
 
-        return left
+        return ans
+    
+############################################################
+# 2975. Maximum Square Area by Removing Fences From a Field
+# 16JAN26
+############################################################
+class Solution:
+    def maximizeSquareArea(self, m: int, n: int, hFences: List[int], vFences: List[int]) -> int:
+        '''
+        remove fences, either horizontal or vertical anre get maximum area
+        we want to make the maximum square
+
+        '''
+        #add in bounds to hfences
+        hs = hFences + [1] + [m]
+        vs = vFences + [1] + [n]
+        ans = -1
+        mod = 10**9 + 7
+        hs.sort()
+        vs.sort()
+        h_diffs = set()
+        for i in range(len(hs)):
+            for j in range(i+1,len(hs)):
+                h_diffs.add(hs[j] - hs[i])
+        
+        v_diffs = set()
+        for i in range(len(vs)):
+            for j in range(i+1,len(vs)):
+                v_diffs.add(vs[j] - vs[i])
+        
+        sides = h_diffs & v_diffs
+        max_edge = max(sides,default = 0)
+        return (max_edge**2 % mod) if max_edge else -1
+    
+
+################################################################
+# 3047. Find the Largest Area of Square Inside Two Rectangles
+# 18JAN26
+#################################################################
+class Solution:
+    def largestSquareArea(self, bottomLeft: List[List[int]], topRight: List[List[int]]) -> int:
+        '''
+        we have n rectangles id by there bottomLeft and topRight
+        need to find square of max area that can fit inside two rectnables
+        hint says to brute force area of each pair of rectangles
+        if there is an overlap between two rectangles
+        the square intersection is simpyll just the min of the intersecting areas width and height
+        '''
+        def rectangles_intersect(r1_bl, r1_tr, r2_bl, r2_tr):
+            x1_min, y1_min = r1_bl
+            x1_max, y1_max = r1_tr
+            x2_min, y2_min = r2_bl
+            x2_max, y2_max = r2_tr
+
+            # Check for separation
+            if x1_max <= x2_min:  # r1 is left of r2
+                return False
+            if x2_max <= x1_min:  # r2 is left of r1
+                return False
+            if y1_max <= y2_min:  # r1 is below r2
+                return False
+            if y2_max <= y1_min:  # r2 is below r1
+                return False
+
+            return True
+        
+        def intersection_square_area(r1_bl, r1_tr, r2_bl, r2_tr):
+            x1_min, y1_min = r1_bl
+            x1_max, y1_max = r1_tr
+            x2_min, y2_min = r2_bl
+            x2_max, y2_max = r2_tr
+
+            width = min(x1_max, x2_max) - max(x1_min, x2_min)
+            height = min(y1_max, y2_max) - max(y1_min, y2_min)
+
+            if width <= 0 or height <= 0:
+                return 0  # no intersection
+
+            side = min(width, height)
+            return side
+
+        n = len(bottomLeft)
+        ans = 0
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                x1_min, y1_min = bottomLeft[i]
+                x1_max, y1_max = topRight[i]
+                x2_min, y2_min = bottomLeft[j]
+                x2_max, y2_max = topRight[j]
+
+                width = min(x1_max, x2_max) - max(x1_min, x2_min)
+                height = min(y1_max, y2_max) - max(y1_min, y2_min)
+
+                if width <= 0 or height <= 0:
+                    continue
+
+                side = min(width, height)
+                ans = max(ans, side * side)
+
+        return ans
+    
+###################################################################################
+# 1292. Maximum Side Length of a Square with Sum Less than or Equal to Threshold
+# 19JAN26
+#####################################################################################
+class Solution:
+    def maxSideLength(self, mat: List[List[int]], threshold: int) -> int:
+        '''
+        need to use 2d presum
+        even if i the the 2d pref_sum, i still need to check all (i,j) starts
+        and then all lengths, which is still n^3 anyway
+        try all sums, don't forget pref sum
+        2d pref_sum
+        pref_sum[i][j] = mat[i-1][j-1] + pref_sum[i-1] + pref_sum[i][j-1] - pref_sum[i-1][j-1]
+        from 1 to rows and 1 to cols
+        '''
+        m, n = len(mat), len(mat[0])
+        pref = [[0] * (n + 1) for _ in range(m + 1)]
+
+        for i in range(1, m + 1):
+            for j in range(1, n + 1):
+                pref[i][j] = (
+                    mat[i-1][j-1]
+                    + pref[i-1][j]
+                    + pref[i][j-1]
+                    - pref[i-1][j-1]
+                )
+        
+        def square_sum(pref, r, c, k):
+            r2 = r + k
+            c2 = c + k
+            return pref[r2][c2] - pref[r][c2] - pref[r2][c] + pref[r][c]
+
+        ans = 0
+        for k in range(1, min(m, n) + 1):          # square size
+            for i in range(m - k + 1):             # row
+                for j in range(n - k + 1):         # col
+                    sq_sum = square_sum(pref, i, j, k)
+                    if sq_sum <= threshold:
+                        ans = max(ans,k)
+        
+        return ans
