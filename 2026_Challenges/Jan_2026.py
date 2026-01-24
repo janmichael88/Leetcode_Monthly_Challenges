@@ -501,3 +501,207 @@ class Solution:
                         ans = max(ans,k)
         
         return ans
+
+##############################################
+# 3314. Construct the Minimum Bitwise Array I
+# 20JAN26
+##############################################
+class Solution:
+    def minBitwiseArray(self, nums: List[int]) -> List[int]:
+        '''
+        need to make ans array such that
+        ans[i] | (ans[i] + 1) = nums[i]
+        and it must be a small as possible
+        '''
+        n = len(nums)
+        ans = [-1]*n
+
+        #do i only need to check up to nums[i]
+        for i in range(n):
+            for num in range(1,nums[i] + 1):
+                if num | (num + 1) == nums[i]:
+                    ans[i] = num
+                    break
+        
+        return ans
+    
+###############################################
+# 3315. Construct the Minimum Bitwise Array II
+# 20JAN26
+################################################
+class Solution:
+    def minBitwiseArray(self, nums: List[int]) -> List[int]:
+        '''
+        flip the lowest set bit before the frist zero bit, producing the smallest possible number
+        less than x that differes by exactly one bit
+        need the position of the first zero in nums[i], we need it to be as smallas possible,
+        so check bit positions to the left
+        ans + 1, sets the first zero bit to 1, and changes all lower bits from 1 to 0
+        so the effect of ans | (ans + 1) is taht the first 0 bit in ans becomes 1
+        '''
+        ans = []
+        for i in range(len(nums)):
+            res = -1
+            d = 1
+            while (nums[i] & d) != 0:
+                res = nums[i] ^ d #turn bit to zero
+                #flip each bit position as a result of adding + 1
+                #need nums[i] & d to be zero
+                d <<= 1
+            #when we encounter a 0 bit, it means there is no smaller number than the current ans
+            #shifting would only lead to a larger number
+            ans.append(res)
+        return ans
+    
+############################################
+# 3507. Minimum Pair Removal to Sort Array I
+# 22JAN26
+############################################
+class Solution:
+    def minimumPairRemoval(self, nums: List[int]) -> int:
+        '''
+        simulate, find min sum and check
+        '''
+
+        def check(arr):
+            n = len(arr)
+            for i in range(1,n):
+                if arr[i] < arr[i-1]:
+                    return False
+            
+            return True
+        
+        def find_min_sum(arr):
+            min_sum = float('inf')
+            idx = -1
+            n = len(arr)
+            for i in range(1,n):
+                curr_sum = arr[i] + arr[i-1]
+                if curr_sum < min_sum:
+                    min_sum = curr_sum
+                    idx = i - 1
+            return (min_sum,idx)
+
+        temp = nums[:]
+        ans = 0
+        while check(temp) == False:
+            min_sum,idx = find_min_sum(temp)
+            temp[idx] = min_sum
+            temp.pop(idx+1)
+            ans += 1
+        
+        return ans
+
+##################################################
+# 3510. Minimum Pair Removal to Sort Array II
+# 24JAN26
+###################################################
+class Node:
+    def __init__(self,value,left):
+        self.value = value
+        self.left = left #???? #index position
+        self.prev = None
+        self.next = None
+
+class PQItem:
+    def __init__(self,first,second,cost):
+        self.first = first
+        self.second = second
+        self.cost = cost
+    
+    #less than invariant
+    def __lt__(self,other):
+        if self.cost == other.cost:
+            return self.first.left < other.first.left
+        return self.cost < other.cost
+
+class Solution:
+    def minimumPairRemoval(self, nums: List[int]) -> int:
+        '''
+        need to simulate effeciently
+        i can used heap to store min nums with index
+        min_heap -> (min_sum,index)
+        when we remove the min_sum,
+        garbage heap/lazy deletion, remov entries when they become stale
+        store as double linked list for easy deletion
+        when merging adjacent elements in array this double linked list
+        important part here -> after removing pair (i,j), the original eleemnts located at i-1 and j+1 
+        will form two new adjcanet number pairs with the new merged element
+        at the same time, the other pairs, originally, (i-1,i) and (j,j+1) if they exsist become dirty data
+        we can delete lazily
+            i.e keep in heap, and remove stale indices when we can
+        
+        how to determine dirty data
+            assume we merge left, we check whetehre an index position has already been merged
+            only when both elements are not merger are their reference considered valid
+        
+        then we just need to check the motoncity of the array
+            we can just count decreasing states at each adjacent pair
+            when decreaseCount = 0, the array is nondecerasing
+        
+        merging elements in constant time can be done with a double linked list
+        '''
+        pq = []
+        head = Node(nums[0],0)
+        curr = head
+        n = len(nums)
+        merged = [False]*n
+        dec_count = 0
+        count = 0
+
+        for i in range(1,n):
+            new_node = Node(nums[i],i)
+            curr.next = new_node
+            new_node.prev = curr
+            pq_item = PQItem(curr,new_node,curr.value + new_node.value)
+            heapq.heappush(pq,pq_item)
+
+            #check
+            if nums[i-1] > nums[i]:
+                dec_count += 1
+            curr = new_node
+        
+        while dec_count > 0:
+            item = heapq.heappop(pq)
+            first, second, cost = item.first, item.second, item.cost
+
+            #check if we can merge, check if sum is unchanged
+            #this is the stale state check (dirty data)
+            if merged[first.left] or merged[second.left] or first.value + second.value != cost:
+                continue
+            count += 1
+
+            if first.value > second.value:
+                dec_count -= 1
+            
+            #deletion in DLL
+            prev_node = first.prev
+            next_node = second.next
+            first.next = next_node
+            if next_node:
+                next_node.prev = first
+
+            #motonicity check
+            if prev_node:
+                if prev_node.value > first.value and prev_node.value <= cost:
+                    dec_count -= 1
+                elif prev_node.value <= first.value and prev_node.value > cost:
+                    dec_count += 1
+
+                heapq.heappush(
+                    pq, PQItem(prev_node, first, prev_node.value + cost)
+                )
+
+            if next_node:
+                if second.value > next_node.value and cost <= next_node.value:
+                    dec_count -= 1
+                elif second.value <= next_node.value and cost > next_node.value:
+                    dec_count += 1
+                heapq.heappush(
+                    pq, PQItem(first, next_node, cost + next_node.value)
+                )
+
+            first.value = cost
+            merged[second.left] = True
+        
+        return count
