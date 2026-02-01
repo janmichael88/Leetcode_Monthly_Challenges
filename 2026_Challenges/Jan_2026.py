@@ -705,3 +705,235 @@ class Solution:
             merged[second.left] = True
         
         return count
+
+###############################################
+# 3650. Minimum Cost Path with Edge Reversals
+# 27JAN26
+###############################################
+class Solution:
+    def minCost(self, n: int, edges: List[List[int]]) -> int:
+        '''
+        we can go from u to v with cost k (u,v,k)
+        we can reverse the edge and go from (u,v,2*k)
+        we can only reverse it one time
+        when visiting a node check two things
+            1. usual neighbor search
+            2. and its incoming edges
+        we need two graphs
+        add edges {u, v, w} -> {v, u, 2 * w}, and use Dijkstra.
+        '''
+        graph = defaultdict(list)
+
+        # Build graph
+        for u, v, w in edges:
+            graph[u].append((v, w))
+            graph[v].append((u, 2 * w))
+
+        dists = [float('inf')] * n
+        dists[0] = 0
+
+        seen = set()
+        pq = [(0, 0)]  # (distance, node)
+
+        while pq:
+            curr_dist, curr = heapq.heappop(pq)
+
+            # If already finalized, skip
+            if curr in seen:
+                continue
+
+            # Now we are sure this is the shortest distance to curr
+            seen.add(curr)
+
+            for neigh, weight in graph[curr]:
+                if neigh in seen:
+                    continue
+
+                new_dist = curr_dist + weight
+                if new_dist < dists[neigh]:
+                    dists[neigh] = new_dist
+                    heapq.heappush(pq, (new_dist, neigh))
+
+        return dists[n - 1] if dists[n - 1] != float('inf') else -1
+    
+
+##################################################
+# 3651. Minimum Cost Path with Teleportations
+# 28JAN26
+###################################################
+#TLE
+class Solution:
+    def minCost(self, grid: List[List[int]], k: int) -> int:
+        '''
+        this is just dp
+        states are (i,j,k)
+        checking normal moves is just (i,j+1) or (i+1,j)
+        but checking for teleportaion means i need to check all (i,j)
+        this would be n*n*n*n*k
+        answer should be n*n*k
+        '''
+        #do top down first
+        rows,cols = len(grid),len(grid[0])
+        memo = {}
+
+        def dp(i,j,k):
+            if (i,j) == (rows-1,cols-1):
+                return 0
+            if k < 0:
+                return float('inf')
+            if i >= rows or j >= cols:
+                return float('inf')
+            
+            if (i,j,k) in memo:
+                return memo[(i,j,k)]
+            
+            ans = float('inf')
+            #check down
+            if i + 1 < rows:
+                ans = min(ans, grid[i+1][j] + dp(i+1,j,k))
+            #check right
+            if j + 1 < cols:
+                ans = min(ans, grid[i][j+1] + dp(i,j+1,k))
+            #teleport need to check all
+            if k > 0:
+                for ii in range(rows):
+                    for jj in range(cols):
+                        if (i,j) != (ii,jj) and grid[ii][jj] <= grid[i][j]:
+                            ans = min(ans, dp(ii,jj,k-1))
+            memo[(i,j,k)] = ans
+            return ans
+        
+        return dp(0,0,k)
+
+#bottom up
+#need to dp on dp
+
+############################################
+# 2977. Minimum Cost to Convert String II
+# 30JAN26
+###########################################
+#yes!
+#upddates
+class Solution:
+    def minimumCost(self, source: str, target: str, original: List[str], changed: List[str], cost: List[int]) -> int:
+        '''
+        same thing as the previous problem, but now we have substrings
+        first use djikstras to calculate the min cost from changing 
+        need to only check the lengths of all the other nodes in dp
+        not all i to j lengths!
+        '''
+        graph = defaultdict(list)
+        for u, v, w in zip(original, changed, cost):
+            graph[u].append((v, w))
+
+        all_nodes = set(original) | set(changed)
+        change_lengths = set(len(sub) for sub in original)
+
+        min_dists = {}
+        for node in all_nodes:
+            min_dists[node] = self.djikstras(graph, node, all_nodes)
+
+        memo = {}
+        n = len(source)
+
+        def dp(i):
+            if i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+
+            ans = float('inf')
+
+            # try substrig conversion with onl needed change lengths
+            for length in change_lengths:
+                u = source[i:i+length]
+                if u not in min_dists:
+                    continue
+                v = target[i:i+length]
+                min_cost = min_dists[u].get(v, float('inf'))
+                if min_cost != float('inf'):
+                    ans = min(ans, min_cost + dp(i+length))
+
+            # skip only if chars already match
+            if source[i] == target[i]:
+                ans = min(ans, dp(i + 1))
+
+            memo[i] = ans
+            return ans
+
+        ans = dp(0)
+        return ans if ans != float('inf') else -1
+
+    def djikstras(self, graph, start, all_nodes):
+        dists = {k: float('inf') for k in all_nodes}
+        dists[start] = 0
+        pq = [(0, start)]
+
+        while pq:
+            min_dist, node = heapq.heappop(pq)
+            if min_dist > dists[node]:
+                continue
+            for neigh, w in graph[node]:
+                new_dist = min_dist + w
+                if new_dist < dists[neigh]:
+                    dists[neigh] = new_dist
+                    heapq.heappush(pq, (new_dist, neigh))
+
+        return dists
+    
+#need to speed up the dp portion
+class Solution:
+    def minimumCost(self, source: str, target: str, original: List[str], changed: List[str], cost: List[int]) -> int:
+        
+        adj = defaultdict(lambda: defaultdict(int))
+        change_lengths = set(len(sub) for sub in original)
+        
+        for i, start in enumerate(original):
+            end = changed[i]
+            c = cost[i]
+            
+            if end in adj[start]:
+                adj[start][end] = min(adj[start][end], c)
+            else:
+                adj[start][end] = c
+        
+        
+        def dijkstra(start, end):
+            heap = [(0, start)]
+            costs = defaultdict(lambda: inf)
+            costs[start] = 0
+            while heap:
+                path_cost, curr = heapq.heappop(heap)
+                if curr == end:
+                    return path_cost
+                for nei in adj[curr]:
+                    nei_cost = adj[curr][nei]
+                    
+                    new_cost = nei_cost + path_cost
+                    
+                    if new_cost < costs[nei]:
+                        costs[nei] = new_cost
+                        heapq.heappush(heap, (new_cost, nei))
+            return inf
+        
+
+        @cache
+        def dfs(i):
+            #let dfs(i) be the cost of matching everything at i and onwards assuming everything before i is matched
+            if i >= len(target):
+                return 0
+           
+            c = inf if target[i] != source[i] else dfs(i+1) #if they match save default cost as just continue
+            for length in change_lengths:
+                t_sub = target[i:i+length]
+                s_sub = source[i:i+length]
+                trans_cost = dijkstra(s_sub, t_sub)
+
+                if trans_cost != inf:
+                    c = min(c, trans_cost + dfs(i+length))
+            return c
+        
+        ans = dfs(0)
+        
+        
+        return ans if ans != inf else -1
