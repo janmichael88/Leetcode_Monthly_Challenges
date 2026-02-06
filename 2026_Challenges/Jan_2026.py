@@ -807,6 +807,104 @@ class Solution:
 
 #bottom up
 #need to dp on dp
+from typing import List
+
+class Solution:
+    def minCost(self, grid: List[List[int]], k: int) -> int:
+        m, n = len(grid), len(grid[0])
+        inf = float('inf')
+
+        # Initialize DP table
+        dp = [[inf] * n for _ in range(m)]
+        dp[0][0] = 0
+
+        def propagate():
+            # Multiple passes to ensure all paths are considered
+            for _ in range(m + n):
+                for i in range(m):
+                    for j in range(n):
+                        cost = dp[i][j]
+                        if cost == inf:
+                            continue
+                        # Move down
+                        if i + 1 < m:
+                            dp[i + 1][j] = min(dp[i + 1][j], cost + grid[i + 1][j])
+                        # Move right
+                        if j + 1 < n:
+                            dp[i][j + 1] = min(dp[i][j + 1], cost + grid[i][j + 1])
+
+        # Initial propagation without teleportation
+        propagate()
+
+        # Apply teleportations
+        for _ in range(k):
+            # For each cell, find minimum cost among cells with value >= current cell
+            new_dp = [row[:] for row in dp]
+            for i in range(m):
+                for j in range(n):
+                    min_cost = dp[i][j]
+                    # Check all cells that could teleport here
+                    for x in range(m):
+                        for y in range(n):
+                            if grid[x][y] >= grid[i][j]:
+                                min_cost = min(min_cost, dp[x][y])
+                    new_dp[i][j] = min_cost
+            dp = new_dp
+            propagate()
+
+        return dp[m - 1][n - 1]
+    
+
+from typing import List
+from collections import defaultdict
+
+class Solution:
+    def minCost(self, grid: List[List[int]], k: int) -> int:
+        m, n = len(grid), len(grid[0])
+
+        # Group cells by their values
+        value_to_cells = defaultdict(list)
+        for i in range(m):
+            for j in range(n):
+                value_to_cells[grid[i][j]].append((i, j))
+
+        # Initialize DP table
+        inf = float('inf')
+        dp = [[inf] * n for _ in range(m)]
+        dp[0][0] = 0
+
+        def update():
+            # Propagate costs using normal moves
+            for i in range(m):
+                for j in range(n):
+                    cost = inf
+                    if i > 0:
+                        cost = min(cost, dp[i - 1][j] + grid[i][j])
+                    if j > 0:
+                        cost = min(cost, dp[i][j - 1] + grid[i][j])
+                    if cost < dp[i][j]:
+                        dp[i][j] = cost
+
+        # Initial pass without teleportation
+        update()
+
+        # Apply k teleportations
+        sorted_values = sorted(value_to_cells.keys(), reverse=True)
+        for _ in range(k):
+            # For each group of cells with the same value (in descending order)
+            # Find the minimum cost among all cells with higher or equal values
+            min_cost_so_far = inf
+            for value in sorted_values:
+                # Update min_cost_so_far with cells of this value
+                for i, j in value_to_cells[value]:
+                    min_cost_so_far = min(min_cost_so_far, dp[i][j])
+                # All cells of this value can be reached with min_cost_so_far via teleportation
+                for i, j in value_to_cells[value]:
+                    dp[i][j] = min(dp[i][j], min_cost_so_far)
+            # Propagate the teleportation benefits
+            update()
+
+        return dp[m - 1][n - 1]
 
 ############################################
 # 2977. Minimum Cost to Convert String II
