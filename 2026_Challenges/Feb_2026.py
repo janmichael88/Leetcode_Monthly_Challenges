@@ -241,6 +241,9 @@ class Solution:
         we need the max sum in this range left to right
         but it could be any subarray, we can solve that using kadanes
         hmmmm, just follow the hints and the transitions
+
+        (start)*  (+)+  (-)+  (+)+
+          dp0     dp1   dp2   dp3
         '''
         n = len(nums)
         NEG = float('-inf')
@@ -248,13 +251,14 @@ class Solution:
         dp0 = [NEG] * n
         dp1 = [NEG] * n
         dp2 = [NEG] * n
-        dp3 = [NEG] * n
+        dp3 = [NEG] * n #this representing the complete trionic array
 
         dp0[0] = nums[0]
 
         for i in range(1, n):
             diff = nums[i] - nums[i - 1]
             # Hint 6: dp0 carries on increasing
+            #this is just kadanes
             if diff > 0:
                 dp0[i] = max(dp0[i - 1] + nums[i], nums[i])
             else:
@@ -262,12 +266,12 @@ class Solution:
 
             # Hint 4: inc phase
             if diff > 0:
-                dp1[i] = max(dp1[i - 1] + nums[i],dp0[i - 1] + nums[i])
-                dp3[i] = max(dp3[i - 1] + nums[i],dp2[i - 1] + nums[i])
+                dp1[i] = max(dp1[i - 1] + nums[i],dp0[i - 1] + nums[i]) #continue increasing, or staart increasing
+                dp3[i] = max(dp3[i - 1] + nums[i],dp2[i - 1] + nums[i]) #final decreasing phase, continue final increase, or switch from dec to inc
 
             # Hint 5: dec phase
             if diff < 0:
-                dp2[i] = max(dp2[i - 1] + nums[i],dp1[i - 1] + nums[i])
+                dp2[i] = max(dp2[i - 1] + nums[i],dp1[i - 1] + nums[i]) #continue decreasing, or swithc from increasing to decreasing
 
         return max(dp3)
     
@@ -335,7 +339,45 @@ class Solution:
         for left in range(n):
             while right < n and nums[right] <= k*nums[left]:
                 right += 1
+            #right to left is balance, so the removls are n - (right - left)
+            #update min
             ans = min(ans, n - (right - left))
         
         return ans
             
+########################################################
+# 3157. Find the Level of Tree with Minimum Sum
+# 08FEB26
+#########################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def minimumLevel(self, root: Optional[TreeNode]) -> int:
+        '''
+        bfs all the way
+        '''
+        curr_level = 1
+        min_level = 1
+        min_sum = float('inf')
+        q = deque([root])
+
+        while q:
+            N = len(q)
+            curr_sum = 0
+            for _ in range(N):
+                curr = q.popleft()
+                curr_sum += curr.val
+                if curr.left:
+                    q.append(curr.left)
+                if curr.right:
+                    q.append(curr.right)
+            if curr_sum < min_sum:
+                min_sum = curr_sum
+                min_level = curr_level
+            curr_level += 1
+        
+        return min_level
