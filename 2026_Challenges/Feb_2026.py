@@ -381,3 +381,329 @@ class Solution:
             curr_level += 1
         
         return min_level
+    
+#######################################################
+# 3719. Longest Balanced Subarray I
+# 10FEB26
+#######################################################
+class Solution:
+    def longestBalanced(self, nums: List[int]) -> int:
+        '''
+        must use dictint odds and evens
+        '''
+        ans = 0
+        n = len(nums)
+        for i in range(n):
+            evens = set()
+            odds = set()
+            for j in range(i,n):
+                if nums[j] % 2 == 0:
+                    evens.add(nums[j])
+                else:
+                    odds.add(nums[j])
+                if len(evens) == len(odds):
+                    ans = max(ans, j - i +1)
+
+        return ans
+    
+#########################################
+# 3721. Longest Balanced Subarray II
+# 11FEB26
+###########################################
+#good review on segment tree
+#this problem is beautiful
+
+#brute force with balance sum
+class Solution:
+    def longestBalanced(self, nums: List[int]) -> int:
+        n = len(nums)
+        result = 0
+        for l in range(n):
+            seen, B = set(), 0
+            for r in range(l, n):
+                x = nums[r]
+                if x not in seen:
+                    seen.add(x)
+                    B += 1 if (x % 2) == 0 else -1
+                if B == 0:
+                    result = max(result, r - l + 1)
+        
+        return result
+
+#this is probably the better intution to understand
+#we can still use prefix sum, but we'd have to recompute prefsum after a new number comes in
+#need segment tree
+#no lazy propogation, updates are done on each value
+class Solution:
+    def longestBalanced(self, nums: List[int]) -> int:
+        '''
+        we can do better with balance array
+        B(l,r) = #distinct_even(l..r) − #distinct_odd(l..r)
+        the main idea is that for a fixed l a value affects b(l,r) only once at its first occurence between [l,r]
+        we can ecnode as this
+        balance[i] = 1, if first occurnece of even nums in [l,r]
+        balance[i] -= 1 if first occurence of odd nums in [l.r]
+        balance[i] = 0, otherwise
+        then balance(l,r) = sum(balance[i] for i in range(l,r+1))
+        we can also use balance whe moving l, from right to left
+        we just need to check if we have already seen nums[l] at some index i > l,
+            first update balance[i] = 0 and set balance[l] = +- 1
+        
+        we ccan fist initialize balance array to 0s and fill right to left
+        then we need to store first[val] => indices of first occurences of vals in this subarray
+        '''
+        n = len(nums)
+
+        balance = [0] * n  # first-occurrence markers for current l
+        first = dict()  # val -> first occurence idx for current l
+
+        result = 0
+        for l in reversed(range(n)):
+            x = nums[l]
+
+            # If x already had a first occurrence to the right, remove that old marker.
+            if x in first:
+                balance[first[x]] = 0
+
+            # Now x becomes first occurrence at l.
+            first[x] = l
+            if x % 2 == 0:
+                balance[l] = 1
+            else:
+                balance[l] = -1
+
+            # Find rightmost r >= l such that sum(balance[l..r]) == 0
+            s = 0
+            for r in range(l, n):
+                s += balance[r]
+                if s == 0:
+                    result = max(result, r - l + 1)
+        return result
+
+#segment tree solution
+class SegmentTree:
+    """Segment Tree over array of size n"""
+
+    def __init__(self, n: int):
+        self.n = n
+        self.size = 4 * n
+        self.sum = [0] * self.size
+        self.min = [0] * self.size
+        self.max = [0] * self.size
+
+    def _pull(self, node: int):
+        """Helper to recompute information of node by it's children"""
+
+        l, r = node * 2, node * 2 + 1
+
+        self.sum[node] = self.sum[l] + self.sum[r]
+        self.min[node] = min(self.min[l], self.sum[l] + self.min[r])
+        self.max[node] = max(self.max[l], self.sum[l] + self.max[r])
+
+    def update(self, idx: int, val: int):
+        """Update value by index idx in original array"""
+
+        def _update(node: int = 1, l: int = 0, r: int = self.n - 1):
+            if l == r:
+                self.sum[node] = val
+                self.min[node] = val
+                self.max[node] = val
+                return
+
+            m = l + (r - l) // 2
+            if idx <= m:
+                _update(node * 2, l, m)
+            else:
+                _update(node * 2 + 1, m + 1, r)
+
+            self._pull(node)
+
+        return _update()
+
+    def find_rightmost_prefix(self, target: int = 0) -> int:
+        """Find rightmost index r with prefixsum(r) = target"""
+
+        def _exist(node: int, sum_before: int):
+            return self.min[node] <= target - sum_before <= self.max[node]
+
+        def _find(node: int = 1, l: int = 0, r: int = self.n - 1, sum_before: int = 0):
+            if not _exist(node, sum_before):
+                return -1
+            if l == r:
+                return l
+
+            m = l + (r - l) // 2
+            lchild, rchild = node * 2, node * 2 + 1
+
+            # Check right half first
+            sum_before_right = self.sum[lchild] + sum_before
+            if _exist(rchild, sum_before_right):
+                return _find(rchild, m + 1, r, sum_before_right)
+
+            return _find(lchild, l, m, sum_before)
+
+        return _find()
+
+
+class Solution:
+    def longestBalanced(self, nums: List[int]) -> int:
+        n = len(nums)
+
+        stree = SegmentTree(n)  # SegmentTree over balance array for current l
+        first = dict()  # val -> first occurence idx for current l
+
+        result = 0
+        for l in reversed(range(n)):
+            num = nums[l]
+    
+            # If x already had a first occurrence to the right, remove that old marker.
+            if num in first:
+                stree.update(first[num], 0)
+
+            # Now x becomes first occurrence at l.
+            first[num] = l
+            if num % 2 == 0:
+                stree.update(l, 1)
+            else:
+                stree.update(l,-1)
+
+            # Find rightmost r >= l such that sum(w[l..r]) == 0
+            r = stree.find_rightmost_prefix(target=0)
+            if r >= l:
+                result = max(result, r - l + 1)
+
+        return result
+######################################################
+# 3713. Longest Balanced Substring I
+# 12FEB26
+######################################################
+class Solution:
+    def longestBalanced(self, s: str) -> int:
+        '''
+        just track counts 
+        '''
+        n = len(s)
+        ans = 0
+        for i in range(n):
+            window = Counter()
+            for j in range(i,n):
+                ch = s[j]
+                window[ch] += 1
+                #validate the window
+                counts = set(window.values())
+                if len(counts) == 1:
+                    if [window[ch]] == list(counts):
+                        ans = max(ans,j-i+1)
+        return ans
+    
+####################################################
+# 3714. Longest Balanced Substring II
+# 13FEB26
+#####################################################
+#like subarraysum == k
+#pref_sum, balance, first occurence trick
+class Solution:
+    def longestBalanced(self, s: str) -> int:
+        '''
+        we can check all substrings like the last problem
+        but now the alphabet is smaller
+        we need indices i,j
+        where 
+        * counts(a) == counts(b) == counts(c)
+        * counts(a) == counts(b)
+        * counts(a) == counts(c)
+        * counts(b) == counts(c)
+        then just the singletons
+        * counts(a) == len(substring)
+        * counts(b) == len(substring)
+        * counts(c) == len(substring)
+        this is a lot of pref sum, why not just make it a bunch of smaller problems????
+        '''
+        #count streaks
+        def case1(s,ch):
+            longest_streak = 0
+            curr_streak = 0
+            for letter in s:
+                if letter == ch:
+                    curr_streak += 1
+                else:
+                    longest_streak = max(longest_streak,curr_streak)
+                    curr_streak = 0
+            return max(longest_streak,curr_streak)
+        
+        def case2(s,ch1,ch2):
+            #this is just for pair counts, a char that isn't part of the pair would immediatlye break it
+            #balance and first occurence trick
+            balance = 0
+            ans = 0
+            
+            # stores first index where each balance occurred
+            first_seen = {0: -1}
+            
+            for i, ch in enumerate(s):
+                
+                if ch == ch1:
+                    balance += 1
+                elif ch == ch2:
+                    balance -= 1
+                else:
+                    # third character breaks the segment
+                    balance = 0
+                    first_seen = {0: i}
+                    continue
+                
+                if balance in first_seen:
+                    ans = max(ans, i - first_seen[balance])
+                else:
+                    first_seen[balance] = i
+                    
+            return ans
+        
+        def case3(s):
+            #same as case2, but now with all chars
+            count_a,count_b,count_c = 0,0,0
+            first_seen = {(0,0):-1}
+            ans = 0
+            for i,ch in enumerate(s):
+                if ch == 'a':
+                    count_a += 1
+                elif ch == 'b':
+                    count_b += 1
+                else:
+                    count_c += 1
+                if (count_b - count_a, count_c - count_a) in first_seen:
+                    ans = max(ans,i - first_seen[(count_b - count_a, count_c - count_a)])
+                else:
+                    first_seen[(count_b - count_a, count_c - count_a)] = i
+            
+            return ans
+
+        
+        ans = max([case1(s,ch) for ch in "abc"])
+        combs = [['a','b'],['a','c'],['b','c']]
+        for ch1,ch2 in combs:
+            ans = max(ans,case2(s,ch1,ch2))
+        
+        return max(ans,case3(s))
+
+##################################################
+# 2303. Calculate Amount Paid in Taxes
+# 16FEB26
+###################################################
+class Solution:
+    def calculateTax(self, brackets: List[List[int]], income: int) -> float:
+        '''
+        intervals
+        '''
+        prev = 0
+        tax = 0
+        
+        for upper, percent in brackets:
+            if income <= prev:
+                break
+            
+            taxable = min(income, upper) - prev
+            tax += taxable * (percent / 100)
+            prev = upper
+        
+        return tax
