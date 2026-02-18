@@ -707,3 +707,23 @@ class Solution:
             prev = upper
         
         return tax
+    
+
+###########################################
+# 2367. Number of Arithmetic Triplets
+# 18FEB26
+#########################################
+class Solution:
+    def arithmeticTriplets(self, nums: List[int], diff: int) -> int:
+        '''
+        we cab just do brute force here and check all (i,j,k) triples
+        check for num - diff and num - diff*2
+        '''
+        ans = 0
+        seen = set()
+        for num in nums:
+            if num - diff in seen and num - diff*2 in seen:
+                ans += 1
+            seen.add(num)
+        
+        return ans
