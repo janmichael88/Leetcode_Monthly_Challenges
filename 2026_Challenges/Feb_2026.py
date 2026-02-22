@@ -727,3 +727,141 @@ class Solution:
             seen.add(num)
         
         return ans
+    
+################################################
+# 308. Range Sum Query 2D - Mutable
+# 18FEB26
+###############################################
+#segree point update, no range update
+class NumMatrix:
+    def __init__(self, matrix: List[List[int]]):
+        if not matrix or not matrix[0]:
+            return
+        self.m = len(matrix)
+        self.n = len(matrix[0])
+        self.matrix = matrix
+        
+        # 2D segment tree
+        self.tree = [[0] * (4 * self.n) for _ in range(4 * self.m)]
+        self._build_y(1, 0, self.m - 1)
+
+    # Build column tree
+    def _build_x(self, vx, lx, rx, vy, ly, ry):
+        if ly == ry:
+            if lx == rx:
+                self.tree[vx][vy] = self.matrix[lx][ly]
+            else:
+                self.tree[vx][vy] = (self.tree[vx*2][vy] + self.tree[vx*2+1][vy])
+        else:
+            my = (ly + ry) // 2
+            self._build_x(vx, lx, rx, vy*2, ly, my)
+            self._build_x(vx, lx, rx, vy*2+1, my+1, ry)
+            self.tree[vx][vy] = (self.tree[vx][vy*2] +self.tree[vx][vy*2+1])
+
+    # Build row tree
+    def _build_y(self, vx, lx, rx):
+        if lx != rx:
+            mx = (lx + rx) // 2
+            self._build_y(vx*2, lx, mx)
+            self._build_y(vx*2+1, mx+1, rx)
+        
+        self._build_x(vx, lx, rx, 1, 0, self.n - 1)
+
+    # Update column tree
+    def _update_x(self, vx, lx, rx, vy, ly, ry, x, y, val):
+        if ly == ry:
+            if lx == rx:
+                self.tree[vx][vy] = val
+            else:
+                self.tree[vx][vy] = (self.tree[vx*2][vy] +self.tree[vx*2+1][vy])
+        else:
+            my = (ly + ry) // 2
+            if y <= my:
+                self._update_x(vx, lx, rx, vy*2, ly, my, x, y, val)
+            else:
+                self._update_x(vx, lx, rx, vy*2+1, my+1, ry, x, y, val)
+            
+            self.tree[vx][vy] = (self.tree[vx][vy*2] +self.tree[vx][vy*2+1])
+
+    # Update row tree
+    def _update_y(self, vx, lx, rx, x, y, val):
+        if lx != rx:
+            mx = (lx + rx) // 2
+            if x <= mx:
+                self._update_y(vx*2, lx, mx, x, y, val)
+            else:
+                self._update_y(vx*2+1, mx+1, rx, x, y, val)
+        
+        self._update_x(vx, lx, rx, 1, 0, self.n - 1, x, y, val)
+
+    def update(self, row: int, col: int, val: int) -> None:
+        self._update_y(1, 0, self.m - 1, row, col, val)
+
+    # Query column tree
+    def _sum_x(self, vx, vy, tly, try_, ly, ry):
+        if ly > ry:
+            return 0
+        if ly == tly and ry == try_:
+            return self.tree[vx][vy]
+        
+        tmy = (tly + try_) // 2
+        left = self._sum_x(vx, vy*2, tly, tmy, ly, min(ry, tmy))
+        right = self._sum_x(vx, vy*2+1, tmy+1, try_, max(ly, tmy+1), ry)
+        return left + right
+
+    # Query row tree
+    def _sum_y(self, vx, tlx, trx, lx, rx, ly, ry):
+        if lx > rx:
+            return 0
+        if lx == tlx and rx == trx:
+            return self._sum_x(vx, 1, 0, self.n - 1, ly, ry)
+        
+        tmx = (tlx + trx) // 2
+        left = self._sum_y(vx*2, tlx, tmx, lx, min(rx, tmx), ly, ry)
+        right = self._sum_y(vx*2+1, tmx+1, trx, max(lx, tmx+1), rx, ly, ry)
+        return left + right
+
+    def sumRegion(self, row1: int, col1: int, row2: int, col2: int) -> int:
+        return self._sum_y(1, 0, self.m - 1, row1, row2, col1, col2)
+
+# Your NumMatrix object will be instantiated and called as such:
+# obj = NumMatrix(matrix)
+# obj.update(row,col,val)
+# param_2 = obj.sumRegion(row1,col1,row2,col2)
+
+###########################################
+# 1781. Sum of Beauty of All Substrings
+# 16FEB26
+###########################################
+class Solution:
+    def beautySum(self, s: str) -> int:
+        '''
+        the beauty for a single char is always zero
+        brute force is possible
+        '''
+        ans = 0
+        n = len(s)
+        for i in range(n):
+            counts = Counter()
+            for j in range(i,n):
+                ch = s[j]
+                counts[ch] += 1
+                ans += max(counts.values()) - min(counts.values())
+
+        return ans
+    
+##################################################
+# 3064. Guess the Number Using Bitwise Questions I
+# 22FEB26
+##################################################
+# Definition of commonSetBits API.
+# def commonSetBits(num: int) -> int:
+
+class Solution:
+    def findNumber(self) -> int:
+        
+        ans = 0
+        for i in range(30,-1,-1):
+            if commonSetBits(2**i) > 0:
+                ans += 2**i
+        return ans
