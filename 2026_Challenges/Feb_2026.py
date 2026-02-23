@@ -865,3 +865,49 @@ class Solution:
             if commonSetBits(2**i) > 0:
                 ans += 2**i
         return ans
+    
+########################################################################
+# 1461. Check If a String Contains All Binary Codes of Size K (REVISTED)
+# 23FEB26
+#########################################################################
+class Solution:
+    def hasAllCodes(self, s: str, k: int) -> bool:
+        '''
+        check all substrings of size k and record unique
+        '''
+        n = len(s)
+        if n < k:
+            return False
+        seen = set()
+        curr_hash = 0
+        mask = (1 << k) - 1 #keeps last set of k bits
+        for i in range(n):
+            curr_hash = ((curr_hash << 1) & mask)  | int(s[i])
+            if i >= k - 1:
+                seen.add(curr_hash)
+                if len(seen) == 2**k:
+                    return True
+        return len(seen) == 2**k
+    
+#################################################################
+# 3137. Minimum Number of Operations to Make Word K-Periodic
+# 23FEB26
+##################################################################
+#count blocks
+class Solution:
+    def minimumOperationsToMakeKPeriodic(self, word: str, k: int) -> int:
+        '''
+        rolling hash
+        get hashes for each substring of length k, put into mapp
+        period of the final string by the the one with the highest count
+        karp rabin rolling hash
+        '''
+        n = len(word)
+        
+        counts = Counter()
+        
+        for i in range(0, n, k):
+            block = word[i:i+k]
+            counts[block] += 1
+        
+        return n // k - max(counts.values())
