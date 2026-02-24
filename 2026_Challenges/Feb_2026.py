@@ -911,3 +911,44 @@ class Solution:
             counts[block] += 1
         
         return n // k - max(counts.values())
+    
+####################################################
+# 1022. Sum of Root To Leaf Binary Numbers
+# 24FEB26
+####################################################
+# Definition for a binary tree node.
+# class TreeNode:
+#     def __init__(self, val=0, left=None, right=None):
+#         self.val = val
+#         self.left = left
+#         self.right = right
+class Solution:
+    def sumRootToLeaf(self, root: Optional[TreeNode]) -> int:
+        '''
+        pass paths while we descend, using bitwise operators to set bits
+        we set the least signigicant bit
+
+        [1,0,0] or "100" no string concat or array concat, we can use bit wise
+        
+        start with the empty mask 0, and follow path 1->0->1
+        0 | 1 = 1
+        1 << 1 = 2
+        but 2 in binary is 10
+        2 | 0 = 2
+        2 << 1 = 4
+        but 4 in binary is 100
+        4 | 1 = 5
+        but 5 in binary is 101
+        '''
+        def dfs(node,path):
+            if not node:
+                return 0
+            new_path = (path << 1) | node.val #set next LSB
+            #terminate if leaf
+            if not node.left and not node.right:
+                return new_path
+            left = dfs(node.left, new_path)
+            right = dfs(node.right, new_path)
+            return left + right
+        
+        return dfs(root,0)
