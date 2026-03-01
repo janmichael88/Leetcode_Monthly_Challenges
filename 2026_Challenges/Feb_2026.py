@@ -952,3 +952,120 @@ class Solution:
             return left + right
         
         return dfs(root,0)
+    
+#######################################
+# 2351. First Letter to Appear Twice
+# 25FEB26
+########################################
+class Solution:
+    def repeatedCharacter(self, s: str) -> str:
+        '''
+        hashset or int
+        '''
+        mask = 0
+        for ch in s:
+            pos = ord(ch) - ord('a')
+            if mask & (1 << pos) != 0:
+                return ch
+            mask = mask | (1 << pos)
+        
+
+##########################################
+# 2139. Minimum Moves to Reach Target Score
+# 26FEB26
+##########################################
+class Solution:
+    def minMoves(self, target: int, maxDoubles: int) -> int:
+        '''
+        start backwards
+        '''
+        steps = 0
+
+        if maxDoubles == 0:
+            return target - 1 #single steps
+
+        while maxDoubles > 0 and target > 1:
+            if target % 2 == 0:
+                target //= 2
+                maxDoubles -= 1
+            else:
+                target -= 1
+            steps += 1
+        
+        return steps + target - 1 #after expiring double operations, use single steps
+    
+####################################################
+# 3666. Minimum Operations to Equalize Binary String
+# 27FEB26
+#####################################################
+class Solution:
+    def minOperations(self, s: str, k: int) -> int:
+        '''
+        for problems like these think of constraints first
+        state definition is tough for this one....
+        each operation i need to pick k different indices and invert those bit positions
+        positions don't matter, for each operation we pick:
+        states are on counts
+        graph problem, we have z zeros, and we want 0 zeros
+        Transition logic is incorrect
+
+        You must choose exactly k distinct indices.
+
+        If you flip:
+
+        i zeros
+
+        k - i ones
+
+        Then the new number of zeros becomes:
+
+        z′=z−i+(k−i)=z+k−2i
+        z
+        ′
+        =z−i+(k−i)=z+k−2i
+        try this first
+        so try all k
+        * z zeros and k - z ones
+        but there are constraints
+        hint 1: 
+        * z = number of zeros
+        * flipping k picks fromi zeros (where i beteren max(0,k-(n-z))) and min(k,z)
+        *  z to z' = z + k - 2 * i, so z' lies in a contiguous range and has parity (z + k) % 2, this fucking part sheesh
+
+        hint 2:
+        * Build a graph on states 0..n and run BFS from initial z to reach 0
+        * each edge from z goes to all z' in that computed interval.
+
+        hint3:
+        For speed, keep two ordered sets of unvisited states by parity and erase ranges with lower_bound while BFSing to achieve near O(n log n) time.
+        '''
+        n = len(s)
+        start = s.count('0')
+        
+        if start == 0:
+            return 0
+        
+        visited = set([start])
+        q = deque([(start, 0)])  # (zeros, steps)
+        
+        while q:
+            z, steps = q.popleft()
+            
+            # range of zeros we can flip
+            min_i = max(0, k - (n - z))
+            max_i = min(k, z)
+            
+            for i in range(min_i, max_i + 1):
+                z_new = z + k - 2 * i
+                
+                if z_new == 0:
+                    return steps + 1
+                
+                if z_new not in visited:
+                    visited.add(z_new)
+                    q.append((z_new, steps + 1))
+        
+        return -1
+
+
+            
