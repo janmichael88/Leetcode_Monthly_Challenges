@@ -1067,5 +1067,93 @@ class Solution:
         
         return -1
 
+#state compression
+'''
+We optimize by:
+
+States = z (zeros count) in 0..n
+
+From a state z, all reachable z' form:
+
+z′ = z + k − 2i
+i∈[max(0,k−(n−z)),min(k,z)]
+
+That means:
+* z' lies in a contiguous interval
+* step size = 2
+* parity fixed:
+
+z′≡z+k(mod2)
+
+Keep two sorted sets:
+* one for even unvisited states
+* one for odd unvisited states
+
+When BFS expands from z, we:
+* compute the interval [L, R]
+* choose correct parity set
+* remove all elements in that interval
+* push them to BFS
+
+Each state is removed once → overall O(n log n).
+'''
+from collections import deque
+import bisect
+
+class Solution:
+    def minOperations(self, s: str, k: int) -> int:
+        n = len(s)
+        start = s.count('0')
+        
+        if start == 0:
+            return 0
+        
+        # All possible states except start
+        evens = []
+        odds = []
+        
+        for z in range(n + 1):
+            if z == start:
+                continue
+            if z % 2 == 0:
+                evens.append(z)
+            else:
+                odds.append(z)
+        
+        q = deque([(start, 0)])
+        
+        while q:
+            z, steps = q.popleft()
+            
+            # Compute valid i range
+            min_i = max(0, k - (n - z))
+            max_i = min(k, z)
+            
+            if min_i > max_i:
+                continue
+            
+            # Corresponding z' interval
+            L = z + k - 2 * max_i
+            R = z + k - 2 * min_i
+            
+            # Parity target
+            parity = (z + k) % 2
+            target = evens if parity == 0 else odds
+            
+            # Find indices in sorted list
+            left = bisect.bisect_left(target, L)
+            right = bisect.bisect_right(target, R)
+            
+            next_states = target[left:right]
+            
+            # Remove them from set
+            del target[left:right]
+            
+            for nz in next_states:
+                if nz == 0:
+                    return steps + 1
+                q.append((nz, steps + 1))
+        
+        return -1
 
             
