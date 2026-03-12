@@ -158,7 +158,90 @@ class Solution:
         return (dp(zero,one,0) + dp(zero,one,1)) % mod
             
 
+########################################################
+# 3600. Maximize Spanning Tree Stability with Upgrades
+# 12MAR26
+########################################################
+class DSU:
+    def __init__(self, n):
+        self.parent = list(range(n))
+        self.rank = [0] * n
+
+    def find(self, x):
+        if self.parent[x] != x:
+            self.parent[x] = self.find(self.parent[x])  # path compression
+        return self.parent[x]
+
+    def union(self, x, y):
+        px, py = self.find(x), self.find(y)
+        if px == py:
+            return False
+        
+        if self.rank[px] < self.rank[py]:
+            self.parent[px] = py
+        elif self.rank[px] > self.rank[py]:
+            self.parent[py] = px
+        else:
+            self.parent[py] = px
+            self.rank[px] += 1
+        
+        return True
+    
+class Solution:
+    def maxStability(self, n: int, edges: List[List[int]], k: int) -> int:
+        '''
+        sort and binary search on answer
+        need to use kruskal
+        so we try to build an MST with a bigger and bigger stability
+        '''
+        #sort edges on decreasing weight
+        edges.sort(key = lambda x: -x[2])
+
+        def check(mid):
+            dsu = DSU(n)
+            used = 0
+            extra = k
+
+            # mandatory edges
+            for u,v,w,must in edges:
+                if must == 1:
+                    if w < mid:
+                        return False
+                    if not dsu.union(u,v):
+                        return False
+                    used += 1
+
+            # optional edges
+            for u,v,w,must in edges:
+                if must == 0:
+                    if w >= mid:
+                        if dsu.union(u,v):
+                            used += 1
+                    elif extra > 0 and 2*w >= mid:
+                        if dsu.union(u,v):
+                            used += 1
+                            extra -= 1
+                    #if we already have enogh edges to make MST
+                    if used == n-1:
+                        return True
+
+            return used == n-1 #MST needs n-1 edges
+
+        #boundaries
+        left = 0
+        right = max(2*w for _,_,w,_ in edges)
+        ans = -1
+
+        while left <= right:
+            mid = (left + right) // 2
+            #can we build an MST with mid stability
+            if check(mid):
+                ans = mid
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        return ans
 
 
-            
 
