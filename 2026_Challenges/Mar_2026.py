@@ -243,5 +243,50 @@ class Solution:
 
         return ans
 
+##############################################################
+# 3296. Minimum Number of Seconds to Make Mountain Height Zero
+# 14MAR26
+###############################################################
+class Solution:
+    def minNumberOfSeconds(self, mountainHeight: int, workerTimes: List[int]) -> int:
+        '''
+        define reduce(x) as the amount of time to reduce height by x
+        worker_time[i]*(sum(1, to x + 1))
+        to get that sum we can use gauss trick
+        x*(x+1)/2
+        i need to check(x), it returns the amount of time to decrease mountainHeight to 0, in x seconds
+        if i can do check(x), i can do it in check(x+1) seconds
+        so given a time x check
+        for a worker[i] 
+        time = work*((x*(x+1)/2))
+        need to solve the qudratic
+        and sum for all workers, was on the righty track, and check if bigger than mountain height
+        x = (-1 + math.sqrt(1 + 8*time/work)) / 2
+        '''
+        #need positive root
+        def solve_x(time, work):
+            return (-1 + math.sqrt(1 + 8*time/work)) // 2 #floor division
 
+        def check(x):
+            total_height = 0
+            for w in workerTimes:
+                h = solve_x(x,w)
+                total_height += h
+            
+            return total_height
+        
+        left = 0
+        right = max(workerTimes) * mountainHeight * (mountainHeight + 1) // 2
+        ans = right
+
+        while left <= right:
+            mid = left + (right - left) // 2
+
+            if check(mid) >= mountainHeight:
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+
+        return ans
 
