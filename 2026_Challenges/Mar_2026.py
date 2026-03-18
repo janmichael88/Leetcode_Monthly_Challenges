@@ -290,3 +290,82 @@ class Solution:
 
         return ans
 
+#################################################
+# 1878. Get Biggest Three Rhombus Sums in a Grid
+# 16MAR25
+###################################################
+#need all the borders
+class Solution:
+    def getBiggestThree(self, grid: List[List[int]]) -> List[int]:
+        '''
+        enumerate all, say we have tip of rhombus at (i,j), 
+        for some k in range(0,n), we can find left, and right at
+        (i+k,j+k), (i+k,j-k) if in bounds
+        we can find the bottom be picking left and doing
+        (i+2k,j+2k)
+        careful with boundary checking, grid is not square
+        crap sum is the whole border
+        '''
+        rows,cols = len(grid),len(grid)
+        sums = []
+        for i in range(rows):
+            for j in range(cols):
+                sums.append(grid[i][j]) #single cell is rhombus
+                for k in range(1,max(rows,cols)):
+                    left = (i+k,j-k)
+                    right = (i+k,j+k)
+                    bottom = (left[0] + k, left[1] + k)
+                    #check corners for within bounds
+                    if 0 <= left[0] < rows and 0 <= left[1] < cols:
+                        if 0 <= right[0] < rows and 0 <= right[1] < cols:
+                            if 0 <= bottom[0] < rows and 0 <= bottom[1] < cols:
+                                curr_sum = grid[left[0]][left[1]] + grid[right[0]][right[1]] + grid[bottom[0]][bottom[1]] + grid[i][j]
+                                sums.append(curr_sum)
+        sums.sort(reverse = True)
+        return sums[:3]
+
+#walk borders CCW
+class Solution:
+    def getBiggestThree(self, grid):
+        '''
+        just walk the borders for each length k
+        '''
+        rows, cols = len(grid), len(grid[0])
+        s = set()
+
+        for i in range(rows):
+            for j in range(cols):
+
+                # size 0 rhombus
+                s.add(grid[i][j])
+
+                k = 1
+                while True:
+
+                    if not (0 <= i + 2*k < rows and 
+                            0 <= j - k and 
+                            j + k < cols):
+                        break
+
+                    total = 0
+
+                    # edge 1: top -> left
+                    for t in range(k):
+                        total += grid[i + t][j - t]
+
+                    # edge 2: left -> bottom
+                    for t in range(k):
+                        total += grid[i + k + t][j - k + t]
+
+                    # edge 3: bottom -> right
+                    for t in range(k):
+                        total += grid[i + 2*k - t][j + t]
+
+                    # edge 4: right -> top
+                    for t in range(k):
+                        total += grid[i + k - t][j + k - t]
+
+                    s.add(total)
+                    k += 1
+
+        return sorted(s, reverse=True)[:3]
