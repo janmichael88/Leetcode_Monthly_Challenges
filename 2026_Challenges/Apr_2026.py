@@ -103,3 +103,188 @@ class Solution:
 
      
         return dp[0][0][2]
+    
+
+########################################
+# 3661. Maximum Walls Destroyed by Robots
+# 03APR26
+#########################################
+#almost...
+#i need unique walls
+#in this case id need to track which walls get hit to prevent double counting
+import bisect
+class Solution:
+    def maxWalls(self, robots: List[int], distance: List[int], walls: List[int]) -> int:
+        '''
+        if we have a robot at robots[i]
+            its bullet can span (robots[i] - distance[i] or robots[i] + distance[i]) and destorys all walls
+            if another robot is between those two (it stops)
+        
+        this is dp with binary search
+        for each robot, try shooting left or right and take the most walls you can hit
+        binary search for the wall that it can hit, and binary search for the closest robot
+        
+        '''
+        walls.sort()
+        arr = [(r,d) for r,d in zip(robots,distance)]
+        arr.sort(key = lambda x: x[0])
+        robots = [r for r,_ in arr] #we now robots sorted ascending, walls sorted asceding, and the bullet dist for each robot
+        memo = {}
+
+        def dp(i):
+            n = len(robots)
+            if i >= len(robots):
+                return 0
+            if i in memo:
+                return memo[i]
+            r,d = arr[i]
+            
+            #left shoot
+            left_stop = robots[i-1] if i > 0 else float('-inf')
+            left_bound = max(r-d,left_stop)
+
+            left_count = bisect.bisect_left(walls,r) - bisect.bisect_left(walls,left_bound)
+            #right shoot
+            right_stop = robots[i+1] if i < n-1 else float('inf')
+            right_bound = min(r+d,right_stop)
+            
+            right_count = bisect.bisect_right(walls, right_bound) -bisect.bisect_right(walls, r)
+            ans = max(left_count,right_count) + dp(i+1)
+            memo[i] = ans
+            return ans
+
+        return dp(0)
+    
+##############################################
+# 2069. Walking Robot Simulation II
+# 06APR26
+##############################################
+#im off by one somwehre
+class Robot:
+
+    def __init__(self, width: int, height: int):
+        '''
+        #robot only moves along permieter
+        #if on bottom edge, its facing East
+        #if on right edge, its facing North
+        #if on top edge, its facing West
+        #if on left edge, its facing South
+        #but there's a small transition period, where if its on the corner, it coudl still be facing the same previous direction
+        think like this BBBBLLLLLLTTTTTRRR, and then this will repeat
+        put this into a coornidate set and we can advance by one
+        it turns and retires the step
+        '''
+        self.width,self.height = width,height
+        self.coords = []
+        #fill bottom
+        for x in range(width):
+            self.coords.append((x,0))
+        #fill right
+        for y in range(1,height):
+            self.coords.append((width-1,y))
+        #fill top
+        for x in range(width-2,-1,-1):
+            self.coords.append((x,height-1))
+        #fill left
+        for y in range(height-2,0,-1):
+            self.coords.append((y,0))
+        self.idx = 0
+        self.n = len(self.coords)
+
+
+    def step(self, num: int) -> None:
+        #the problem is the num can be very big, and it might be called alot
+        self.idx = (self.idx + num) % self.n
+
+    def getPos(self) -> List[int]:
+
+        return self.coords[self.idx]
+
+    def getDir(self) -> str:
+        x,y = self.coords[self.idx]
+        if y == 0:
+            return "East"
+        if x == self.width-1:
+            return "North"
+        if y == self.height-1:
+            return "West"
+        return "South"
+
+
+# Your Robot object will be instantiated and called as such:
+# obj = Robot(width, height)
+# obj.step(num)
+# param_2 = obj.getPos()
+# param_3 = obj.getDir()
+
+class Robot:
+
+    def __init__(self, width: int, height: int):
+        '''
+        #robot only moves along permieter
+        #if on bottom edge, its facing East
+        #if on right edge, its facing North
+        #if on top edge, its facing West
+        #if on left edge, its facing South
+        #but there's a small transition period, where if its on the corner, it coudl still be facing the same previous direction
+        think like this BBBBLLLLLLTTTTTRRR, and then this will repeat
+        put this into a coornidate set and we can advance by one
+        it turns and retires the step
+        '''
+        self.width,self.height = width,height
+        self.coords = []
+        self.dirs = []
+        #fill bottom
+        for x in range(width):
+            self.coords.append((x,0))
+            self.dirs.append("East")
+        #fill right
+        for y in range(1,height):
+            self.coords.append((width-1,y))
+            self.dirs.append("North")
+        #fill top
+        for x in range(width-2,-1,-1):
+            self.coords.append((x,height-1))
+            self.dirs.append("West")
+        #fill left
+        for y in range(height-2,0,-1):
+            self.coords.append((0,y))
+            self.dirs.append("South")
+        self.idx = 0
+        self.moved = False
+        self.n = len(self.coords)
+        self.dirs[0] = "South"
+
+
+    def step(self, num: int) -> None:
+        self.moved = True
+        #the problem is the num can be very big, and it might be called alot
+        self.idx = (self.idx + num) % self.n
+
+    def getPos(self) -> List[int]:
+
+        return self.coords[self.idx]
+
+    def getDir(self) -> str:
+        if not self.moved:
+            return "East"
+        return self.dirs[self.idx]
+
+###################################################
+# 1433. Check If a String Can Break Another String 
+# 07APR26
+###################################################
+class Solution:
+    def checkIfCanBreak(self, s1: str, s2: str) -> bool:
+        '''
+        we need to find a permutation of s1 or s2, wich that perm(s1) breaks s2 or perm(s2) breaks s1
+        '''
+        s1 = sorted(list(s1))
+        s2 = sorted(list(s2))
+
+        if all([u >= v for (u,v) in zip(s1,s2)]):
+            return True
+        if all([u >= v for (u,v) in zip(s2,s1)]):
+            return True
+        
+        return False
