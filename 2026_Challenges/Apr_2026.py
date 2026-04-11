@@ -288,3 +288,55 @@ class Solution:
             return True
         
         return False
+    
+##################################################
+# 3653. XOR After Range Multiplication Queries I
+# 08APR2026
+###################################################
+class Solution:
+    def xorAfterQueries(self, nums: List[int], queries: List[List[int]]) -> int:
+        '''
+        brute force first
+        '''
+        mod = 10**9 + 7
+        for l,r,k,v in queries:
+            for i in range(l,r+1,k):
+                nums[i] = (nums[i] * v) % mod
+
+        ans = nums[0]
+        for n in nums[1:]:
+            ans = ans ^ n
+        
+        return ans
+
+######################################################
+# Minimum Distance Between Three Equal Elements II
+# 11APR26
+######################################################
+class Solution:
+    def minimumDistance(self, nums: List[int]) -> int:
+        '''
+        put into hashmap the nums to a list of their indices
+        say we have (i,j,k)
+        evidently we have:
+            abs(i - j) + abs(j - k) + abs(k - i) simplifies to 2 * (max(i, j, k) - min(i, j, k)), but why?
+            if we order them its just
+            (j - i) + (k-j) +(k-i), after sorting of course
+
+            but (j-i) + (k-j) = (k-i)
+            so we have (k-i) + (k-i)
+            and this is just 2*max(i, j, k) - min(i, j, k)
+        '''
+        mapp = defaultdict(list)
+        ans = float('inf')
+        for i, num in enumerate(nums):
+            mapp[num].append(i)
+        
+        for k,v in mapp.items():
+            if len(v) >= 3:
+                v = sorted(v)
+                n = len(v)
+                for i in range(n-2):
+                    ans = min(ans, 2*(v[i+2] - v[i]))
+        
+        return ans if ans != float('inf') else -1
