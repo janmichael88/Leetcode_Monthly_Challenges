@@ -340,3 +340,91 @@ class Solution:
                     ans = min(ans, 2*(v[i+2] - v[i]))
         
         return ans if ans != float('inf') else -1
+    
+##########################################################
+# 1320. Minimum Distance to Type a Word Using Two Fingers
+# 12APR26
+##########################################################
+class Solution:
+    def minimumDistance(self, word: str) -> int:
+        '''
+        we have two fingers,
+        for each finger we can 
+        * press with no cost
+        * move from some letter with cost
+        states are this: 
+        (i,j,k)
+        smallest movements when you have one finger on i-th char and the other one on j-th char already having written k first characters from word.
+        if i have fingers on some (i,j)
+        then find min cost to new ii jj from (i,j)
+        the thing is how do i start since the first move doesn't cost
+        '''
+        #first generate dists matrix
+        cols = 6
+        rows = 5
+        chars_to_cell = {}
+        for i in range(26):
+            ch1 = chr(ord('A') + i)
+            i1,j1 = i // 6, i % 6
+            for j in range(26):
+                ch2 = chr(ord('A') + j)
+                i2,j2 = j // 6, j % 6
+                dist = abs(i1 - i2) + abs(j1 - j2)
+                chars_to_cell[(ch1,ch2)] = dist
+        
+        memo = {}
+
+        def dp(i, j, k):
+            if k == len(word):
+                return 0
+            if (i, j, k) in memo:
+                return memo[(i, j, k)]
+
+            target = word[k]
+
+            #first fingerr
+            cost1 = chars_to_cell.get((i, target),0) + dp(target, j, k + 1)
+            #second
+            cost2 = chars_to_cell.get((j, target),0) + dp(i, target, k + 1)
+
+            ans = min(cost1, cost2)
+            memo[(i, j, k)] = ans
+            return ans
+
+        return dp(None, None, 0)
+
+##############################################
+# 1559. Detect Cycles in 2D Grid
+# 13APR26
+###############################################
+class Solution:
+    def containsCycle(self, grid):
+        '''
+        dfs from each cell (i,j) and maintai its the same char
+        '''
+        rows, cols = len(grid), len(grid[0])
+        visited = set()
+
+        def dfs(i, j, pi, pj, ch):
+            if (i, j) in visited:
+                return True
+
+            visited.add((i, j))
+
+            for di, dj in [(0,1),(0,-1),(1,0),(-1,0)]:
+                ni, nj = i + di, j + dj
+                if 0 <= ni < rows and 0 <= nj < cols and grid[ni][nj] == ch:
+                    if (ni, nj) == (pi, pj):
+                        continue
+                    if dfs(ni, nj, i, j, ch):
+                        return True
+
+            return False
+
+        for i in range(rows):
+            for j in range(cols):
+                if (i, j) not in visited:
+                    if dfs(i, j, -1, -1, grid[i][j]):
+                        return True
+
+        return False
