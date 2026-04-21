@@ -428,3 +428,255 @@ class Solution:
                         return True
 
         return False
+    
+###############################################
+# 2585. Number of Ways to Earn Points
+# 14APR26
+################################################
+class Solution:
+    def waysToReachTarget(self, target: int, types: List[List[int]]) -> int:
+        '''
+        compress types array then knapsack
+        '''
+        memo = {}
+        mod = 10**9 + 7
+
+        def dp(i,score):
+            if score == target:
+                return 1
+            if i >= len(types):
+                if score == target:
+                    return 1
+                return 0
+            if score > target:
+                return 0
+            if (i,score) in memo:
+                return memo[(i,score)]
+            ways = 0
+            count,mark = types[i] 
+            for solved in range(count+1):
+                ways += dp(i+1,score + solved*mark)
+                ways %= mod
+            ways %= mod
+            memo[(i,score)] = ways
+            return ways
+
+        return dp(0,0)
+    
+###############################################################
+# 2515. Shortest Distance to Target String in a Circular Array
+# 15APR25
+###############################################################
+class Solution:
+    def closestTarget(self, words: List[str], target: str, startIndex: int) -> int:
+        '''
+        its either the distance going clockwise or counter clockwise
+        go left or go right
+        '''
+        n = len(words)
+        ans = float('inf')
+        for i,w in enumerate(words):
+            if w == target:
+                cw = (i - startIndex + n) % n
+                ccw = (startIndex - i + n) % n
+                ans = min(ans,cw,ccw)
+        
+        return ans if ans != float('inf') else -1
+
+#################################################
+# 3488. Closest Equal Element Queries
+# 16APR26
+#################################################
+class Solution:
+    def solveQueries(self, nums: List[int], queries: List[int]) -> List[int]:
+        '''
+        for each num, map to a list of indices
+        then for the query look into the bucket of indices and find the min dist
+        if i have a negative index, i just return it back to an index between 0 and n-1
+            its just + n then % n
+        '''
+        n = len(nums)
+        mapp = defaultdict(list)
+        
+        for i,num in enumerate(nums):
+            mapp[num].append(i)
+        
+        for num,idxs in mapp.items():
+            #add in aritifcal indices
+            idxs.insert(0, idxs[-1] - n)
+            idxs.append(idxs[1] + n)
+
+        ans = []
+        for i in range(len(queries)):
+            x = nums[queries[i]]
+            pos_list = mapp[x]
+            if len(pos_list) == 3:
+                ans.append(-1)
+                continue
+            pos = bisect.bisect_left(pos_list, queries[i])
+            ans.append(min(
+                pos_list[pos + 1] - pos_list[pos],
+                pos_list[pos] - pos_list[pos - 1],
+            ))
+
+        return ans
+    
+#######################################################
+# 3761. Minimum Absolute Distance Between Mirror Pairs
+# 17APR26
+#######################################################
+class Solution:
+    def minMirrorPairDistance(self, nums: List[int]) -> int:
+        '''
+        scan left to right and record last index in hashmap
+        we need to store the index of the reverse number, not the actual number
+            if a number was seen in this hashmap, it means its reverse was present!
+        trickyyyyyy
+        '''
+        def reverse(x):
+            revd = 0
+            while x:
+                revd *= 10
+                revd += x % 10
+                x //= 10
+            return revd
+        
+        ans = float('inf')
+        n = len(nums)
+        last_seen = defaultdict()
+        #left to right
+        for i,num in enumerate(nums):
+            revd = reverse(num)
+            if num in last_seen:
+                ans = min(ans,abs(i - last_seen[num]))
+            last_seen[revd] = i
+
+        return ans if ans != float('inf') else -1
+            
+##############################################
+# 3783. Mirror Distance of an Integer
+# 18APR26
+###############################################
+class Solution:
+    def mirrorDistance(self, n: int) -> int:
+        '''
+        blahhhh
+        '''
+        def reverse(x):
+            revd = 0
+            while x:
+                revd *= 10
+                revd += x % 10
+                x //= 10
+            return revd
+        
+        return abs(n - reverse(n))
+    
+#############################################
+# 1855. Maximum Distance Between a Pair of Values
+# 19APR26
+##############################################
+class Solution:
+    def maxDistance(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        fix and i in nums1, then binary search in nums2 from j, where j == i to the end
+        if we fix an i, we want the rightmost j, such that nums1[i] <= nums2[j]
+        '''
+        ans = 0
+        for i in range(len(nums1)):
+            cand_ans = -1
+            left = i
+            right = len(nums2) - 1
+            while left <= right:
+                mid = left + (right - left) // 2
+                if nums2[mid] >= nums1[i]:
+                    cand_ans = mid
+                    left = mid + 1
+                else:
+                    right = mid - 1
+            if cand_ans != -1:
+                ans = max(ans, cand_ans - i)
+        
+        return ans
+    
+class Solution:
+    def maxDistance(self, nums1: List[int], nums2: List[int]) -> int:
+        '''
+        we can use two pointers
+        '''
+        ans = 0
+        i,j = 0,0
+
+        while i < len(nums1) and j < len(nums2):
+            if nums1[i] <= nums2[j]:
+                ans = max(ans, j-i)
+                j += 1
+            else:
+                i += 1
+        
+        return ans
+    
+#########################################################
+# 1722. Minimize Hamming Distance After Swap Operations
+# 21APR26
+###########################################################
+class DSU:
+    def __init__(self, n):
+        self.parents = [i for i in range(n)]
+        self.rank = [1 for _ in range(n)]
+
+    def find(self, x):
+        if self.parents[x] != x:
+            self.parents[x] = self.find(self.parents[x])  # path compression
+        return self.parents[x]
+    
+    def union(self, x, y):
+        x_par = self.find(x)
+        y_par = self.find(y)
+        
+        if x_par == y_par:
+            return False
+        
+        if self.rank[x_par] >= self.rank[y_par]:
+            self.parents[y_par] = x_par
+            self.rank[x_par] += self.rank[y_par]
+        else:
+            self.parents[x_par] = y_par
+            self.rank[y_par] += self.rank[x_par]
+        
+        return True
+
+class Solution:
+    def minimumHammingDistance(self, source: List[int], target: List[int], allowedSwaps: List[List[int]]) -> int:
+        '''
+        we can only swap in the source array
+        if node indices are part of the same component, they can be freely swapped in any order
+        find connected components on indices
+        then for each component, find commone elements in taget
+        elements not in common will contribute to total hamming distance
+        can use dfs/bfs/union find
+        call find(i) to find parent root
+        parents array are just intermediate parents
+        '''
+        n = len(source)
+        dsu = DSU(n)
+        for u,v in allowedSwaps:
+            dsu.union(u,v)
+        
+        comps = defaultdict(list)
+        for i,v in enumerate(dsu.parents):
+            comps[dsu.find(i)].append(i)
+        #find common
+        uncommon = 0
+        for g in comps.values():
+            left,right = Counter(),Counter()
+            for i in g:
+                left[source[i]] += 1
+                right[target[i]] += 1
+            diff = left - right
+            if len(diff) == 0:
+                continue
+            for v in diff.values():
+                uncommon += v
+
+        return uncommon
