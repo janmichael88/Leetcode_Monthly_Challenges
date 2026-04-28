@@ -680,3 +680,431 @@ class Solution:
                 uncommon += v
 
         return uncommon
+    
+#############################################
+# 2452. Words Within Two Edits of Dictionary
+# 22APR26
+##############################################
+#TLE
+class Solution:
+    def twoEditWords(self, queries: List[str], dictionary: List[str]) -> List[str]:
+        '''
+        try one edit, and then two edits
+        then for each i,j pair change letter
+        '''
+        dictionary = set(dictionary)
+        ans = []
+
+        def helper(word):
+            n = len(word)
+            w = list(word)
+            for i in range(n):
+                for idx in range(26):
+                    ch = chr(ord('a') + idx)
+                    old = w[i]
+                    w[i] = ch
+                    yield "".join(w)
+                    w[i] = old
+            for i in range(n):
+                for idx1 in range(26):
+                    ch1 = chr(ord('a') + idx1)
+                    old1 = w[i]
+                    for j in range(i+1,n):
+                        for idx2 in range(26):
+                            ch2 = chr(ord('a') + idx2)
+                            old2 = w[j]
+                            w[i] = ch1
+                            w[j] = ch2
+                            yield "".join(w)
+                            w[i] = old1
+                            w[j] = old2
+
+        for word in queries:
+            #one edit
+            for neigh in helper(word):
+                if neigh in dictionary:
+                    ans.append(word)
+                    break            
+        return ans
+    
+class Solution:
+    def twoEditWords(self, queries: List[str], dictionary: List[str]) -> List[str]:
+        '''
+        compre each word in queries with each word in dictionary
+        if we are at <= 2 diff chagnes away, we can make it
+        '''
+        ans = []
+        for q in queries:
+            for d in dictionary:
+                diff = 0
+                #they are all euqal length
+                for ch1,ch2 in zip(q,d):
+                    if ch1 != ch2:
+                        diff += 1
+                        if diff > 2:
+                            break
+
+                if diff <= 2:
+                    ans.append(q)
+                    break
+        
+        return ans
+
+#############################################
+# 2615. Sum of Distances
+# 23APR26
+#############################################
+class Solution:
+    def distance(self, nums: List[int]) -> List[int]:
+        '''
+        we can store all indices for some num in nums
+        say we have indics a,b,c for some num x at a
+        what we want is
+        sum(abs(a-b),abs(b-c),abs(a-c))
+        for indices j < i (before i)
+        its: (arr[i] - arr[0]) + (arr[i] - arr[1]) + ... + (arr[i] - arr[i-1])
+        there are i elements on the left, and each contributes arr[i]
+        each contributes arr[i] i times
+        So total becomes:
+        i * arr[i] − (sum of all left elements)
+
+        That’s why:
+        left = i * arr[i] - pref[i-1]
+
+        pref[i-1] already stores:
+        (arr[0] + arr[1] + ... + arr[i-1])
+
+        for indices j > i, on the right
+        (arr[i+1] - arr[i]) + (arr[i+2] - arr[i]) + ...
+
+        Here:
+
+        Sum of right elements = (arr[i+1] + arr[i+2] + ...)
+        Number of elements = (siz - i - 1)
+        So:
+        total = (sum of right elements) − (count * arr[i])
+
+        That’s why:
+        right = (pref[last] - pref[i]) - (siz-i-1) * arr[i]
+
+        We just add both contributions:
+        res[arr[i]] = left + right
+
+        '''
+        mapp = defaultdict(list)
+        n = len(nums)
+        ans = [0]*n
+
+        for i,num in enumerate(nums):
+            mapp[num].append(i)
+        
+        for arr in mapp.values():
+            size = len(arr)
+            pref_sum = [0]*size
+            pref_sum[0] = arr[0]
+
+            for i in range(1,size):
+                pref_sum[i] = pref_sum[i-1] + arr[i]
+            
+            for i in range(size):
+                left,right = 0,0
+                
+                if i > 0:
+                    left = i*arr[i] - pref_sum[i-1]
+                if i < size - 1:
+                    right = (pref_sum[size-1] - pref_sum[i]) - (size - i -1)*arr[i]
+
+                ans[arr[i]] = left + right        
+        return ans
+
+#############################################
+# 2833. Furthest Point From Origin
+# 23APR26
+###############################################
+class Solution:
+    def furthestDistanceFromOrigin(self, moves: str) -> int:
+        '''
+        cant spaces and apply directions
+        '''
+        start = 0
+        spaces = 0
+        for ch in moves:
+            if ch == 'L':
+                start -= 1
+            elif ch == 'R':
+                start += 1
+            else:
+                spaces += 1
+        
+        return abs(start) + spaces
+
+####################################################
+# 3464. Maximize the Distance Between Points on a Square
+# 25APR26
+####################################################
+#close
+# :(
+class Solution:
+    def maxDistance(self, side: int, points: List[List[int]], k: int) -> int:
+        '''
+        points are all on the boundary of the square with length side and bottom left is (0,0)
+        pick k points such that the min manhat distance between anytwo points is maximum
+        binary search on for the manhat dist by seeing if can pick k points, imagine points are in order
+        if i pick a point i, i need to find another j such that manhat_dist(i,j) is a large is possible but i need k points
+        furthest two points will be axis unaligned
+        the set of k points, if there is one
+        '''
+        left = []
+        #x = 0, and increasing y
+        for x,y in points:
+            if x == 0:
+                left.append((x,y))
+        left.sort(key = lambda x: x[1])
+        #y = size and increasing x
+        top = []
+        for x,y in points:
+            if y == side:
+                top.append((x,y))
+        top.sort(key = lambda x: x[0])
+        #x = side, y going down
+        right = []
+        for x,y in points:
+            if x == side:
+                right.append((x,y))
+        right.sort(key = lambda x: -x[1])
+
+        #y = 0, x going down
+        bottom = []
+        for x,y in points:
+            if y == 0:
+                bottom.append((x,y))
+        bottom.sort(key = lambda x: -x[0])
+        combined = left + top + right + bottom
+        clockwise = [list(combined[0])]
+        for i in range(1,len(combined)):
+            x,y = combined[i]
+            if [x,y] != clockwise[-1]:
+                clockwise.append([x,y])
+        if clockwise[0] == clockwise[-1]:
+            clockwise.pop(-1)
+        n = len(clockwise)
+        arr = clockwise + clockwise
+        ans = float('-inf')
+        for i in range(n):
+            local_ans = float('inf')
+            for j in range(i+1,i+k):
+                p1,p2 = arr[j],arr[j-1]
+                dist = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+                local_ans = min(local_ans,dist)
+            print(local_ans)
+            ans = max(ans,local_ans)
+            #sub = arr[i:i+k]
+            #print(sub)
+        return ans
+        
+class Solution:
+    def maxDistance(self, side: int, points: List[List[int]], k: int) -> int:
+        arr = []
+        
+        for x, y in points:
+            if x == 0:
+                arr.append(y)
+            elif y == side:
+                arr.append(side + x)
+            elif x == side:
+                arr.append(side * 3 - y)
+            else:
+                arr.append(side * 4 - x)
+        
+        arr.sort()
+        
+        def check(limit: int) -> bool:
+            perimeter = side * 4
+            for start in arr:
+                end = start + perimeter - limit
+                cur = start
+                for _ in range(k - 1):
+                    idx = bisect_left(arr, cur + limit)
+                    if idx == len(arr) or arr[idx] > end:
+                        cur = -1
+                        break
+                    cur = arr[idx]
+                if cur >= 0:
+                    return True
+            return False
+        
+        lo, hi = 1, side
+        ans = 0
+        
+        while lo <= hi:
+            mid = (lo + hi) // 2
+            if check(mid):
+                lo = mid + 1
+                ans = mid
+            else:
+                hi = mid - 1
+                
+        return ans
+
+###############################################
+# 1391. Check if There is a Valid Path in a Grid
+# 27APR26
+#################################################
+#almost :(
+class Solution:
+    def hasValidPath(self, grid: List[List[int]]) -> bool:
+        '''
+        each type can only go into certain types
+        and each can only do into a direction
+        '''
+        dirrs = {
+            1: [(0, -1), (0, 1)],      # left, right
+            2: [(-1, 0), (1, 0)],      # up, down
+            3: [(0, -1), (1, 0)],      # left, down
+            4: [(0, 1), (1, 0)],       # right, down
+            5: [(0, -1), (-1, 0)],     # left, up
+            6: [(0, 1), (-1, 0)]       # right, up
+        }
+                
+        allowed = {
+            1: [1,3,4,5,6],
+            2: [2,3,4,5,6],
+            3: [1,2,4,5,6],
+            4: [1,2,3,5,6],
+            5: [1,2,3,4,6],
+            6: [1,2,3,4,5]
+        }
+
+        memo = {}
+        seen = set()
+        rows,cols = len(grid),len(grid[0])
+        def check(i,j,rows,cols,seen):
+            if 0 <= i < rows and 0 <= j < cols and (i,j) not in seen:
+                return True
+            return False
+
+        def can_do(i,j,seen):
+            rows,cols = len(grid),len(grid[0])
+            if (i,j) == (rows-1,cols-1):
+                return True
+            if (i,j) in memo:
+                return memo[(i,j)]
+            seen.add((i,j))
+            curr = grid[i][j]
+            possible_dirrs = dirrs[curr]
+            possible_neighs = allowed[curr]
+            for di,dj in possible_dirrs:
+                ii,jj = i + di, j + dj
+                if check(ii,jj,rows,cols,seen):
+                    if can_do(ii,jj,seen) and grid[ii][jj] in possible_neighs:
+                        memo[(ii,jj)] = True
+                        return True
+
+            seen.remove((i,j))
+            memo[(ii,jj)] = False
+            return False
+
+
+        return can_do(0,0,seen)
+    
+
+class Solution:
+    def hasValidPath(self, grid: List[List[int]]) -> bool:
+        '''
+        if i go from A to B, then B to A must be allowed in the reverse direction
+        its a valid neighbor if both are reachable from one another
+        i could have made a another graph (i,j) and check if all 4 direction neighbors are reachable
+        '''
+        dirrs = {
+            1: [(0, -1), (0, 1)],      # left, right
+            2: [(-1, 0), (1, 0)],      # up, down
+            3: [(0, -1), (1, 0)],      # left, down
+            4: [(0, 1), (1, 0)],       # right, down
+            5: [(0, -1), (-1, 0)],     # left, up
+            6: [(0, 1), (-1, 0)]       # right, up
+        }
+
+        rows, cols = len(grid), len(grid[0])
+        seen = set()
+
+        def dfs(i, j):
+            if (i, j) == (rows - 1, cols - 1):
+                return True
+
+            seen.add((i, j))
+
+            for di, dj in dirrs[grid[i][j]]:
+                ni, nj = i + di, j + dj
+
+                if 0 <= ni < rows and 0 <= nj < cols and (ni, nj) not in seen:
+                    if (-di, -dj) in dirrs[grid[ni][nj]]:
+                        if dfs(ni, nj):
+                            return True
+
+            return False
+
+        return dfs(0, 0)
+    
+class Solution:
+    def hasValidPath(self, grid: List[List[int]]) -> bool:
+        '''
+        if i go from A to B, then B to A must be allowed in the reverse direction
+        its a valid neighbor if both are reachable from one another
+        i could have made a another graph (i,j) and check if all 4 direction neighbors are reachable
+        '''
+        dirrs = {
+            1: [(0, -1), (0, 1)],      # left, right
+            2: [(-1, 0), (1, 0)],      # up, down
+            3: [(0, -1), (1, 0)],      # left, down
+            4: [(0, 1), (1, 0)],       # right, down
+            5: [(0, -1), (-1, 0)],     # left, up
+            6: [(0, 1), (-1, 0)]       # right, up
+        }
+
+        rows, cols = len(grid), len(grid[0])
+        seen = set()
+        q = deque([(0,0)])
+
+        while q:
+            i,j = q.popleft()
+
+            if (i, j) == (rows - 1, cols - 1):
+                return True
+
+            seen.add((i, j))
+
+            for di, dj in dirrs[grid[i][j]]:
+                ni, nj = i + di, j + dj
+
+                if 0 <= ni < rows and 0 <= nj < cols and (ni, nj) not in seen:
+                    if (-di, -dj) in dirrs[grid[ni][nj]]:
+                        q.append((ni,nj))
+            
+        return False
+    
+###############################################
+# 811. Subdomain Visit Count
+# 28APR26
+###############################################
+class Solution:
+    def subdomainVisits(self, cpdomains: List[str]) -> List[str]:
+        '''
+        hash map and add counts
+        split on empty space, then split on .
+        then we need suffixes of each
+        then add up counts
+        '''
+        hits = Counter()
+
+        for cp in cpdomains:
+            count,domain = cp.split(" ")
+            subs = domain.split(".")
+            n = len(subs)
+            for i in range(1,n+1):
+                temp = ".".join(subs[-i:])
+                hits[temp] += int(count)
+        ans = []
+        for k,v in hits.items():
+            temp = str(v)+" "+k
+            ans.append(temp)
+        return ans
