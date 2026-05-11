@@ -1108,3 +1108,224 @@ class Solution:
             temp = str(v)+" "+k
             ans.append(temp)
         return ans
+    
+#####################################################
+# 3225. Maximum Score From Grid Operations
+# 29APR26
+#####################################################
+#O(N^4)
+class Solution:
+    def maximumScore(self, grid: List[List[int]]) -> int:
+        '''
+        operations are pick any cell (i,j) and color it black upwards from the cell
+        we want to maximize the grid score
+        if i want a cell (i,j) to contribute to the score, then its neighboring cells at (i-1,j) and (i+1,j)
+        must be black
+        '''
+        n = len(grid)
+
+        # prefix sums per column
+        pref = [[0] * (n + 1) for _ in range(n)]
+
+        for c in range(n):
+            for r in range(n):
+                pref[c][r + 1] = pref[c][r] + grid[r][c]
+
+        @cache
+        def dp(i, h_curr, h_prev):
+            """
+            score up to column i
+            where:
+                column i has height h_curr
+                column i-1 has height h_prev
+            """
+            # first column special case
+            if i == 0:
+                return 0
+            ans = 0
+
+            # try all heights k for column i-2
+            for k in range(n + 1):
+                prev = dp(i - 1, h_prev, k)
+                if h_curr <= h_prev:
+                    gain = (pref[i][h_prev]- pref[i][h_curr])
+                else:
+                    gain = max(0,pref[i - 1][h_curr]- pref[i - 1][max(h_prev, k)])
+                ans = max(ans, prev + gain)
+            return ans
+
+        res = 0
+        # last column must be all white or all black
+        for h_last_minus_1 in range(n + 1):
+            # last column all white
+            res = max(res,dp(n - 1, 0, h_last_minus_1))
+            # last column all black
+            res = max(res,dp(n - 1, n, h_last_minus_1))
+
+        return res
+    
+#barely MLE
+from functools import cache
+
+class Solution:
+    def maximumScore(self, grid):
+        n = len(grid)
+
+        # pref[c][h] = sum of first h cells in column c
+        pref = [[0] * (n + 1) for _ in range(n)]
+
+        for c in range(n):
+            for r in range(n):
+                pref[c][r + 1] = pref[c][r] + grid[r][c]
+
+        @cache
+        def dp(i, h_curr, h_prev):
+            """
+            score up to column i
+            where:
+                col i has height h_curr
+                col i-1 has height h_prev
+            """
+
+            if i == 0:
+                return 0
+
+            # CASE 1:
+            # h_curr <= h_prev
+            if h_curr <= h_prev:
+                return (
+                    best1(i - 1, h_prev)
+                    + pref[i][h_prev]
+                    - pref[i][h_curr]
+                )
+
+            # CASE 2:
+            # h_curr > h_prev
+            return (pref[i - 1][h_curr]+ best2(i - 1, h_prev))
+
+        @cache
+        def best1(i, h_prev):
+            """
+            max_k dp[i][h_prev][k]
+            """
+            ans = 0
+
+            for k in range(n + 1):
+                ans = max(ans, dp(i, h_prev, k))
+
+            return ans
+
+        @cache
+        def best2(i, h_prev):
+            """
+            max_k (
+                dp[i][h_prev][k]
+                - pref[i][max(h_prev, k)]
+            )
+            """
+
+            ans = float('-inf')
+
+            for k in range(n + 1):
+                ans = max(ans,dp(i, h_prev, k)- pref[i][max(h_prev, k)])
+
+            return ans
+
+        res = 0
+        # last column must be all white or all black
+        for h in range(n + 1):
+            res = max(res,dp(n - 1, 0, h))
+            res = max(res,dp(n - 1, n, h))
+
+        return res
+
+#######################################################
+# 3742. Maximum Path Score in a Grid
+# 29APR26
+#######################################################
+#MLE
+class Solution:
+    def maxPathScore(self, grid: List[List[int]], k: int) -> int:
+        '''
+        states? (i,j,cost)?
+        we can only go right and down
+        as long as we aren't over k for cost, we can maximize anything
+        '''
+        rows,cols = len(grid),len(grid[0])
+        costs = {0:0,1:1,2:1}
+        memo = {}
+        @cache
+        def dp(i,j,cost):
+            if (i,j) == (rows-1,cols-1):
+                if cost + costs[grid[i][j]] <= k:
+                    return grid[i][j]
+                else:
+                    return float('-inf')
+            #if (i,j,cost) in memo:
+            #    return memo[(i,j,cost)]
+            
+            ans = float('-inf')
+            if i + 1 < rows:
+                down = grid[i][j] + dp(i+1,j,cost + costs[grid[i][j]])
+                ans = max(ans,down)
+            if j + 1 < cols:
+                right = grid[i][j] + dp(i,j+1,cost + costs[grid[i][j]])
+                ans = max(ans,right)
+            
+            #memo[(i,j,cost)] = ans
+            return ans
+        
+        ans = dp(0,0,0)
+        if ans == float('-inf'):
+            return -1
+        return ans
+    
+class Solution:
+    def maxPathScore(self, grid: List[List[int]], k: int) -> int:
+        rows, cols = len(grid), len(grid[0])
+
+        costs = {
+            0: 0,
+            1: 1,
+            2: 1
+        }
+
+        NEG = float('-inf')
+
+        # dp[i][j][c] =
+        # max score starting from (i,j)
+        # if we've already used c cost BEFORE entering (i,j)
+        dp = [[[NEG] * (k + 1) for _ in range(cols)] for _ in range(rows)]
+
+        # base case
+        for c in range(k + 1):
+            new_cost = c + costs[grid[rows - 1][cols - 1]]
+
+            if new_cost <= k:
+                dp[rows - 1][cols - 1][c] = grid[rows - 1][cols - 1]
+
+        # fill backwards
+        for i in range(rows - 1, -1, -1):
+            for j in range(cols - 1, -1, -1):
+
+                # already handled base case
+                if (i, j) == (rows - 1, cols - 1):
+                    continue
+
+                for c in range(k + 1):
+                    new_cost = c + costs[grid[i][j]]
+
+                    if new_cost > k:
+                        continue
+
+                    best = NEG
+
+                    if i + 1 < rows:
+                        best = max(best,grid[i][j] + dp[i + 1][j][new_cost])
+                    if j + 1 < cols:
+                        best = max(best,grid[i][j] + dp[i][j + 1][new_cost])
+
+                    dp[i][j][c] = best
+
+        ans = dp[0][0][0]
+        return -1 if ans == NEG else ans
