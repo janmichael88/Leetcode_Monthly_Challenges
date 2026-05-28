@@ -228,3 +228,414 @@ class Solution:
             ans.extend(digs[::-1])
         
         return ans
+
+##################################################
+# 759. Employee Free Time
+# 11MAY26
+###################################################
+"""
+# Definition for an Interval.
+class Interval:
+    def __init__(self, start: int = None, end: int = None):
+        self.start = start
+        self.end = end
+"""
+
+class Solution:
+    def employeeFreeTime(self, schedule: '[[Interval]]') -> '[Interval]':
+        ints = []
+        for sched in schedule:
+            for interval in sched:
+                ints.append([interval.start,interval.end])
+        ints.sort(key = lambda x: x[0])
+        mapp = Counter()
+        for start,end in  ints:
+            mapp[start] += 1
+            mapp[end] -= 1
+        arr = []
+        for k in sorted(mapp):
+            arr.append([k,mapp[k]])
+        n = len(arr)
+        for i in range(1,n):
+            arr[i][1] += arr[i-1][1]
+        common = []
+        for i in range(1,n-1):
+            if arr[i][1] == 0:
+                common.append([arr[i][0],arr[i+1][0]])
+        ans = []
+        for start,end in common:
+            ans.append(Interval(start,end))
+        return ans
+    
+#########################################
+# 1665. Minimum Initial Energy to Finish Tasks
+# 12MAY26
+#########################################
+#binary search on answer
+class Solution:
+    def minimumEffort(self, tasks: List[List[int]]) -> int:
+        '''
+        sort on tasks then binary search
+        minimum is bigger than actual
+        i dont know why though...
+        '''
+        new_tasks = []
+        for actual,minimum in tasks:
+            new_tasks.append([actual,minimum,minimum - actual])
+        
+
+        #sort decesding in minimum - acctual
+        new_tasks.sort(key = lambda x : -x[2])
+
+        def can_do(arr,initial):
+            energy = initial
+            for actual,minimum,diff in arr:
+                if energy < minimum:
+                    return False
+                energy -= actual
+            return True
+
+        left,right = 0,sum([minimum for _,minimum in tasks])
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if can_do(new_tasks,mid):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+
+        return ans
+    
+class Solution:
+    def minimumEffort(self, tasks: List[List[int]]) -> int:
+        '''
+        sort on tasks then binary search
+        minimum is bigger than actual
+        i dont know why though...
+        '''
+        #new_tasks = []
+        #for actual,minimum in tasks:
+        #    new_tasks.append([actual,minimum,minimum - actual])
+        
+
+        #sort decesding in minimum - acctual
+        tasks.sort(key = lambda x : -(x[1] - x[0]))
+
+        def can_do(arr,initial):
+            energy = initial
+            for actual,minimum in arr:
+                if energy < minimum:
+                    return False
+                energy -= actual
+            return True
+
+        left,right = 0,sum([minimum for _,minimum in tasks])
+        ans = -1
+        while left <= right:
+            mid = left + (right - left) // 2
+            if can_do(tasks,mid):
+                ans = mid
+                right = mid - 1
+            else:
+                left = mid + 1
+
+        return ans
+    
+#sort in increasing diff
+#then just add energy, if the min enery is bigger than the energy we have used so far
+#then we need to set that one as the new energy
+class Solution:
+    def minimumEffort(self, tasks: List[List[int]]) -> int:
+        tasks.sort(key=lambda x: x[1] - x[0])
+        ans = 0
+        for task in tasks:
+            ans = max(ans + task[0], task[1])
+        return ans
+    
+####################################################
+# 1674. Minimum Moves to Make Array Complementary
+# 13MAY26
+####################################################
+class Solution:
+    def minMoves(self, nums: List[int], limit: int) -> int:
+        '''
+        we are allowed to replace any num in nums with another number between 1 and limit + 1
+        say we have array
+        [a,b,c,d]
+        we need a + d = b + c
+        same as:
+            a + d - b - c = 0
+        [1,2,3,4]
+            1 + 4 - 2 - 3 = 0
+            0 = 0
+        say we have [1,2,4,3]
+            1 + 3 - 2 - 4 = 0
+            -2 != 0
+        
+        1 + 3 ?= 2 + 4
+        4 or 6, try 4 or 6?
+        [1,2,2,1]
+        1 + 1 = 2 + 2
+        2 or 4
+        if pairs are already equal, we need no change
+        we either need to change i, or n-i-1, or change both
+        each pair then requires 0,1,2 modifications
+        notice that the numbers can only be from 1 to limit + 1
+        '''
+        n = len(nums)
+        diff = [0]*(2*limit + 2)
+        for i in range(n//2):
+            left,right = nums[i],nums[n-i-1]
+            a = min(left,right)
+            b = max(left,right)
+
+            diff[2] += 2
+            diff[a + 1] -= 1
+            diff[a + b] -= 1
+            diff[a + b + 1] += 1
+            diff[b + limit + 1] += 1
+        
+        min_ops = n
+        curr_ops = 0
+        for c in range(2,2*limit + 1):
+            curr_ops += diff[c]
+            min_ops = min(min_ops,curr_ops)
+        return min_ops
+    
+###########################################
+# 2784. Check if Array is Good
+# 14MAY26
+###########################################
+class Solution:
+    def isGood(self, nums: List[int]) -> bool:
+        '''
+        just check if it contains 1 to n+1 and has two occurnces of n+1
+        '''
+        n = len(nums)
+        max_ = max(nums)
+        mapp = Counter(nums)
+        if max_ >= n:
+            return False
+        for i in range(1,n):
+            if i == n-1:
+                if mapp[i] != 2:
+                    return False
+            else:
+                if mapp[i] != 1:
+                    return False
+        return True
+    
+#sort, and check the first n-1 elements
+#then check the ends for the same
+class Solution:
+    def isGood(self, nums: List[int]) -> bool:
+        nums.sort()
+        n = len(nums) - 1
+        for i in range(n):
+            if nums[i] != i + 1:
+                return False
+        return nums[n] == n
+    
+class Solution:
+    def isGood(self, nums: List[int]) -> bool:
+        '''
+        count and check on fly
+        '''
+        n = len(nums)
+        counts = Counter()
+        for num in nums:
+            if num >= n:
+                return False
+            if num < n - 1 and counts[num] > 0:
+                return False
+            if num == n-1 and counts[num] > 1:
+                return False
+            counts[num] += 1
+        
+        return True
+    
+################################################
+# 2856. Minimum Array Length After Pair Removals
+# 16MAY26
+#################################################
+#cheeky
+class Solution:
+    def minLengthAfterRemovals(self, nums: List[int]) -> int:
+        '''
+        if the max(count) of nums is <= len(nums) // 2, we can clear them all out based on parity
+        if even, they all go away, if odd there is 1 remaining
+        now if the count is bigger than len(nums) // 2
+        we need to clear out the rest instead
+        '''
+        n = len(nums)
+        counts = Counter(nums)
+        max_count = max(counts.values())
+        if max_count <= n // 2:
+            if n % 2:
+                return 1
+            else:
+                return 0
+        
+        remaining = n - max_count
+        return max_count - remaining
+    
+###############################################
+# 1340. Jump Game V
+# 24MAY26
+################################################
+class Solution:
+    def maxJumps(self, arr: List[int], d: int) -> int:
+        '''
+        from any index i, i can jump to (i + ii) or (i - ii) for ii in range(d+1) so long as i am in bounds
+        not only that arr[i + ii] or arr[i-ii] both must be smaller than arr[i] and all indicies k
+        i.e min (i,j) < k max(i,j), i,e all must be smaller than the current arr[i] i am on
+        dp on all i
+        '''
+        n = len(arr)
+        memo = {}
+
+        def dp(i):
+            if i < 0 or i >= n:
+                return 0
+            if i in memo:
+                return memo[i]
+            count = 1
+            curr_max = arr[i]
+            #try going to the right first
+            for ii in range(1,d+1):
+                if i + ii < n:
+                    if arr[i + ii] < curr_max:
+                        count = max(count, 1 + dp(i+ii))
+                    else:
+                        break
+            #now left
+            for ii in range(1,d+1):
+                if i - ii >= 0:
+                    if arr[i - ii] < curr_max:
+                        count = max(count, 1 + dp(i-ii))
+                    else:
+                        break
+            memo[i] = count
+            return count
+        
+        ans = 0
+        for i in range(n):
+            ans = max(ans,dp(i))
+            print(ans)
+        
+        return ans
+
+##################################################
+# 3121. Count the Number of Special Characters II
+# 27MAY26
+##################################################
+class Solution:
+    def numberOfSpecialChars(self, word: str) -> int:
+        '''
+        hash the characters and check if its lowercase appears before the first
+        all lower case muse appear before uppercase
+        there cannot be more than 26 speical chars
+        '''
+        mapp = defaultdict(list)
+        for i,ch in enumerate(word):
+            if ch not in mapp:
+                mapp[ch] = i
+            elif ch.islower():
+                mapp[ch] = max(mapp[ch],i)
+            elif ch.isupper():
+                mapp[ch] = min(mapp[ch],i)
+        
+        special = 0
+        #validate
+        for i in range(26):
+            ch = chr(ord('a') + i)
+            if ch.lower() in mapp and ch.upper() in mapp:
+                if mapp[ch.lower()] < mapp[ch.upper()]:
+                    special += 1
+        return special
+
+###############################################
+# 3093. Longest Common Suffix Queries
+# 28MAY26
+#################################################
+#fucking ezzzzz dawggg
+from collections import defaultdict
+
+
+class Node:
+    def __init__(self):
+        self.children = {}
+        self.length = float('inf')
+        self.idx = float('inf')
+        self.is_end = False
+
+
+class Trie:
+    def __init__(self):
+        self.root = Node()
+
+    def insert(self, word, idx):
+        curr = self.root
+        n = len(word)
+
+        for ch in word:
+            if ch not in curr.children:
+                curr.children[ch] = Node()
+
+            curr = curr.children[ch]
+
+            # update criteria
+            if n < curr.length:
+                curr.length = n
+                curr.idx = idx
+
+            elif n == curr.length:
+                curr.idx = min(curr.idx, idx)
+
+        curr.is_end = True
+    
+    def search(self,word):
+        curr = self.root
+
+        for ch in word:
+            if ch not in curr.children:
+                return curr.idx
+            curr = curr.children[ch]
+        
+        return curr.idx
+
+class Solution:
+    def stringIndices(self, wordsContainer: List[str], wordsQuery: List[str]) -> List[int]:
+        '''
+        notice the longest common suffix, if there isnt one is the empty string ""
+        build trie on reverse strings, then
+        for each node, store the smallest length
+                and its index earliest index in the
+        the hard part is updating the nodes as we are desceding
+        '''
+        trie = Trie()
+        n = len(wordsContainer)
+        for i,word in enumerate(wordsContainer):
+            trie.insert(word[::-1],i)
+        
+        #find index of shortest word that comes the earliest
+        shortest = min([len(word) for word in wordsContainer])
+        idx_shortest = 0
+        for i,word in enumerate(wordsContainer):
+            if len(word) == shortest:
+                idx_shortest = i
+                break
+            
+        ans = []
+        for word in wordsQuery:
+            idx = trie.search(word[::-1])
+            if idx == float('inf'):
+                ans.append(idx_shortest)
+            else:
+                ans.append(idx)
+ 
+        return ans
+
+
+
