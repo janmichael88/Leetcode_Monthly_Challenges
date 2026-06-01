@@ -636,6 +636,22 @@ class Solution:
                 ans.append(idx)
  
         return ans
-
+    
+####################################################
+# 2126. Destroying Asteroids
+# 31MAY26
+####################################################
+class Solution:
+    def asteroidsDestroyed(self, mass: int, asteroids: List[int]) -> bool:
+        '''
+        we only stand to gain mass, try sorting in order and check
+        '''
+        asteroids.sort()
+        for a in asteroids:
+            if a > mass:
+                return False
+            mass += a
+        
+        return True
 
 
