@@ -1092,3 +1092,79 @@ class Solution:
             ans = (ans + state_1[i][0]) % MOD
 
         return ans
+    
+##################################################
+# 3737. Count Subarrays With Majority Element I
+# 25JUN26
+##################################################
+class Solution:
+    def countMajoritySubarrays(self, nums: List[int], target: int) -> int:
+        '''
+        pref_sum counting target, 
+        then check all l,r for all subarrays
+        majoriyt must be strictly more than halve
+        '''
+        n = len(nums)
+        counts = [0]*(n+1)
+
+        for i in range(n):
+            counts[i+1] = counts[i] + (nums[i] == target)
+        
+        ans = 0
+        for l in range(n):
+            for r in range(l,n):
+                curr_count = counts[r+1] - counts[l]
+                length = r - l + 1
+                if 2*curr_count > length:
+                    #better than curr_count > length / 2
+                    #because of floating points
+                    ans += 1
+        
+        return ans
+
+
+#we can also just count on the fly
+class Solution:
+    def countMajoritySubarrays(self, nums: List[int], target: int) -> int:
+        '''
+        count on the fly
+        '''
+        n = len(nums)
+        ans = 0
+        for i in range(n):
+            count = 0
+            for j in range(i,n):
+                count += 1 if nums[j] == target else -1
+                if count > 0:
+                    ans += 1
+    
+        return ans
+    
+#############################################
+# Count Subarrays With Majority Element II
+# 26JUN26
+###############################################
+#ezzzz
+from sortedcontainers import SortedList
+class Solution:
+    def countMajoritySubarrays(self, nums: List[int], target: int) -> int:
+        '''
+        looking for positive sum subarrays on pref_sum
+        where nums[i] == target else -1
+        for any subarray on interals (i,j)
+        we need pref[j] - pref[i] > 0
+        so for eery pref[j], how previous pref sums are smaller
+        store pref_sums in sortedlist and for each prefsum, count how many smaller presums are before it
+        '''
+        pref = [0]
+
+        for x in nums:
+            pref.append(pref[-1] + (1 if x == target else -1))
+        
+        sl = SortedList([0])
+        ans = 0
+        for p in pref[1:]:
+            ans += sl.bisect_left(p)
+            sl.add(p)
+        
+        return ans
