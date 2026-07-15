@@ -604,7 +604,8 @@ class Solution:
         
         @cache
         def rec(i, prod, empty):
-            if i == N: return not empty
+            if i == N: 
+                return not empty
             
             # not pick
             cnt = rec(i + 1, prod, empty)
@@ -651,3 +652,79 @@ class Solution:
             return ans
         
         return dp(0,0,0) - 1 #the null set
+    
+###################################################
+# 3658. GCD of Odd and Even Sums
+# 14JUL26
+####################################################
+import math
+class Solution:
+    def gcdOfOddEvenSums(self, n: int) -> int:
+        '''
+        use sum of arithmetic series
+        for odd its
+        n*(1 + 2n - 1) // 2
+        n + 2n^2 - n
+        2n^2 // 2 = n
+
+        for even its
+
+        (2n + 2n^2) // 2
+        n + n^2 = n(1 + n)
+
+
+        euclidean gcd is
+        gcd(a,b) = gcd(b, a % b)
+        if b == 0 return a
+
+        trick for remembering, we form pairs
+        say we want sum a + b + c + d
+        we can do (a + b) + (b + c) + (c + b) + (d + a)
+        then divide by two 
+
+        properties of gcd
+        gcd(n*a,n*b) = n*gcd(a,b)
+        gcd(a,b) = gcd(a, b-a) = gcd(b-k*a) 
+        '''
+        #recursive gcd
+        def gcd(a,b):
+            if b == 0:
+                return a
+            return gcd(b, a % b)
+        sumOdd = n*(1 +2*n-1) // 2
+        sumEven = n*(2 + 2*n) // 2
+
+        return math.gcd(sumOdd,sumEven)
+    
+#################################################
+# 2521. Distinct Prime Factors of Product of Array
+# 15JUL26
+#################################################
+class Solution:
+    def distinctPrimeFactors(self, nums: List[int]) -> int:
+        '''
+        for each number get the prime factorizaion and put into set
+        '''
+        prime_factors = Counter()
+
+        def get_pf(n):
+            factors = Counter()
+
+            d = 2
+            while d * d <= n:
+                while n % d == 0:
+                    factors[d] += 1
+                    n //= d
+                d += 1
+
+            if n > 1:
+                factors[n] += 1
+
+            return factors
+
+        for num in nums:
+            facts = get_pf(num)
+            prime_factors |= facts
+
+        return len(prime_factors)
+            
