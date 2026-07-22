@@ -728,3 +728,178 @@ class Solution:
 
         return len(prime_factors)
             
+###########################################
+# 3867. Sum of GCD of Formed Pairs
+# 15JUL26
+##########################################
+#cheese is realllll
+class Solution:
+    def gcdSum(self, nums: list[int]) -> int:
+        '''
+        follow the rules
+        '''
+        def gcd(a,b):
+            if b == 0:
+                return a
+            
+            return gcd(b, a % b)
+        
+        n = len(nums)
+        max_i = [0]*n
+        max_i[0] = nums[0]
+        for i in range(n):
+            max_i[i] = max(max_i[i-1],nums[i])
+        
+        prefGcd = [0]*n
+        for i in range(n):
+            prefGcd[i] = gcd(nums[i],max_i[i])
+        
+        #sort
+        prefGcd.sort()
+        ans = 0
+        left,right = 0,n-1
+        
+        while left < right:
+            ans += gcd(prefGcd[left],prefGcd[right])
+            left += 1
+            right -= 1
+        
+        return ans
+    
+#################################################
+# 3312. Sorted GCD Pair Queries
+# 17JUL26
+#################################################
+class Solution:
+    def gcdValues(self, nums: List[int], queries: List[int]) -> List[int]:
+        '''
+        If there are n numbers, there are
+
+            n * (n - 1) // 2
+
+        unordered pairs (i < j).
+        '''
+
+        counts = Counter(nums)
+        m = max(nums)
+
+        # -------------------------------------------------------------
+        # Step 1: Count how many numbers are divisible by every g.
+        #
+        # counts[x] = frequency of the value x.
+        #
+        # gcd_counts[g] = number of elements in nums divisible by g.
+        #
+        # Example:
+        # nums = [2,4,6,8]
+        #
+        # gcd_counts[2] = 4
+        # because every number is divisible by 2.
+        #
+        # This DOES NOT count pairs yet.
+        #
+        # We do this because if gcd(a,b)=g, then both a and b must be
+        # divisible by g.
+        # -------------------------------------------------------------
+        gcd_counts = Counter()
+        for g in range(1, m + 1):
+            for multiple in range(g, m + 1, g):
+                gcd_counts[g] += counts[multiple]
+
+        # -------------------------------------------------------------
+        # Step 2: Compute the number of pairs whose gcd is EXACTLY g.
+        #
+        # If gcd_counts[g] = k, then
+        #
+        #     C(k,2)
+        #
+        # is the number of pairs whose gcd is a MULTIPLE of g.
+        #
+        # Those pairs are mixed together:
+        #
+        # gcd = g
+        # gcd = 2g
+        # gcd = 3g
+        # ...
+        #
+        # Therefore,
+        #
+        # exact[g] = C(k,2)
+        #
+        # initially overcounts.
+        #
+        # Process g from largest to smallest. Since larger multiples
+        # have already been computed, subtract them away:
+        #
+        # exact[g]
+        #     = pairs divisible by g
+        #       - pairs with gcd = 2g
+        #       - pairs with gcd = 3g
+        #       - ...
+        #
+        # After subtracting every multiple, exact[g] is the number of
+        # pairs whose gcd is exactly g.
+        # -------------------------------------------------------------
+        exact = [0] * (m + 1)
+
+        for g in range(m, 0, -1):
+            exact[g] = gcd_counts[g] * (gcd_counts[g] - 1) // 2
+
+            for multiple in range(2 * g, m + 1, g):
+                exact[g] -= exact[multiple]
+
+        # -------------------------------------------------------------
+        # Step 3:
+        # Convert exact[] into a prefix sum.
+        #
+        # exact[g] now stores the number of pairs with gcd <= g.
+        #
+        # This makes it possible to binary search for the gcd
+        # corresponding to the q-th pair in sorted order.
+        # -------------------------------------------------------------
+        for i in range(1, m + 1):
+            exact[i] += exact[i - 1]
+
+        ans = []
+        for q in queries:
+            idx = bisect.bisect_left(exact, q + 1)
+            ans.append(idx)
+
+        return ans
+    
+#############################################
+# 3499. Maximize Active Section with Trade I
+# 20JUL26
+#############################################
+class Solution:
+    def maxActiveSectionsAfterTrade(self, s: str) -> int:
+        '''
+        in one operation we can
+            convert a contiguous block of 1s (surrouned by 0s to all 0s)
+            then conver the blocks os that is surrounded by 1s to all 1s
+        
+        problem is misleading, its telling us to remove the middles ones, convert to zeros
+        then covnert all back to ones
+        we really only go up by the left and right parts' lengths if they are zero
+        '''
+        counts = Counter(s)
+        ans = counts['1']
+
+        #aguemtn
+        s = "1" + s + "1"
+        #parition into blocks of ones
+        parts = []
+        for k,g in groupby(s):
+            parts.append(list(g))
+        n = len(parts)
+        for i in range(1,n-1):
+            p = parts[i]
+            if p[0] == "1":
+                left,right = parts[i-1],parts[i+1]
+                gain = len(left) + len(right)
+                #the ones in the center block are already included in the original count
+                #so we just go up by the left and right blocks, which should be zeros
+                ans = max(ans,counts['1'] + gain)
+                
+        
+        return ans
