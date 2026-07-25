@@ -903,3 +903,182 @@ class Solution:
                 
         
         return ans
+    
+###############################################
+# 3501. Maximize Active Section with Trade II
+# 22JUL26
+###############################################
+class SegmentTree:
+    def __init__(self, arr):
+        self.n = len(arr)
+        self.arr = arr
+        self.seg = [0] * (self.n * 4)
+
+        if self.n:
+            self.build(1, 0, self.n - 1)
+
+    def build(self, p: int, l: int, r: int) -> None:
+        if l == r:
+            self.seg[p] = self.arr[l]
+            return
+
+        mid = (l + r) // 2
+
+        self.build(p * 2, l, mid)
+        self.build(p * 2 + 1, mid + 1, r)
+
+        self.seg[p] = max(self.seg[p * 2], self.seg[p * 2 + 1])
+
+    def query(self, p: int, l: int, r: int, L: int, R: int) -> int:
+        # no overlap
+        if L > r or R < l:
+            return 0
+
+        # complete overlap
+        if L <= l and r <= R:
+            return self.seg[p]
+
+        mid = (l + r) // 2
+
+        # entirely in left child
+        if R <= mid:
+            return self.query(p * 2, l, mid, L, R)
+
+        # entirely in right child
+        if L > mid:
+            return self.query(p * 2 + 1, mid + 1, r, L, R)
+
+        # spans both children
+        left = self.query(p * 2, l, mid, L, mid)
+        right = self.query(p * 2 + 1, mid + 1, r, mid + 1, R)
+
+        return max(left, right)
+
+class Solution:
+    def maxActiveSectionsAfterTrade(self, s: str, queries: List[List[int]]) -> List[int]:
+        n = len(s)
+        cnt1 = s.count("1")
+
+        zeroBlocks,blockLeft,blockRight = [],[],[]
+
+        i = 0
+        while i < n:
+            st = i
+            while i < n and s[i] == s[st]:
+                i += 1
+            if s[st] == "0":
+                zeroBlocks.append(i - st)
+                blockLeft.append(st)
+                blockRight.append(i - 1)
+
+        m = len(zeroBlocks)
+        if m < 2:  # continuous 0 blocks less than 2 segments, return the answer directly
+            return [cnt1] * len(queries)
+
+        tmpSum = [zeroBlocks[i] + zeroBlocks[i + 1] for i in range(m - 1)]
+        seg = SegmentTree(tmpSum)
+        ans = []
+
+        for l, r in queries:
+            i = bisect_left(blockRight, l)
+            j = bisect_right(blockLeft, r) - 1
+
+            # at most 1 continuous block of 0s within the substring
+            if i > m - 1 or j < 0 or i >= j:
+                ans.append(cnt1)
+                continue
+
+            firstLen = (blockRight[i] - max(blockLeft[i], l) + 1)  # actual length of the first consecutive block of 0s in the substring
+            lastLen = (min(blockRight[j], r) - blockLeft[j] + 1)  # actual length of the last consecutive block of 0s in the substring
+
+            # exactly 2 consecutive 0 blocks within the substring
+            if i + 1 == j:
+                bestGain = firstLen + lastLen
+                ans.append(cnt1 + bestGain)
+                continue
+
+            val1 = firstLen + zeroBlocks[i + 1]
+            val2 = zeroBlocks[j - 1] + lastLen
+            val3 = seg.query(1,0,len(tmpSum) - 1,i + 1, j - 2)
+            bestGain = max(val1, val2, val3)
+            ans.append(cnt1 + bestGain)
+
+        return ans
+
+
+
+#######################################
+# 3513. Number of Unique XOR Triplets I
+# 22JUL26
+#######################################
+class Solution:
+    def uniqueXorTriplets(self, nums: List[int]) -> int:
+        '''
+        XOR just sets a bit
+        nums is just a permutation of 1 to len(nums)
+        find the msb of n
+        we can make 2**(msb + 1) different numbers using triplets
+        since we have n numbers are we are free to make any triplets, and since we have all numbers 1 to n
+        we can set any of the bits in n's binary rep
+        this is just 2**(msb + 1)
+        '''
+        n = len(nums)
+        if n <= 2:
+            return n
+        
+        #check msb
+        msb = 0
+        for i in range(32):
+            mask = 1 << i
+            if n & mask != 0:
+                msb = i
+
+        return 2**(msb + 1)
+    
+#############################################
+# 3514. Number of Unique XOR Triplets II
+# 24JUL26
+#############################################
+class Solution:
+    def uniqueXorTriplets(self, nums: List[int]) -> int:
+        '''
+        last question was that we are given a permutation of nums from [1,n]
+        not the array could just be anything....
+        and not only that, we can take repeated indices (i,i,i) as a triplet
+        '''
+        jk_possibles = set()
+        n = len(nums)
+        for j in range(n):
+            for k in range(n):
+                jk_possibles.add(nums[j] ^ nums[k])
+        
+        ans = set()
+        for num in nums:
+            for p in jk_possibles:
+                ans.add(num ^ p)
+            
+        return len(ans)
+    
+######################################
+# 3536. Maximum Product of Two Digits
+# 24JUL26
+#######################################
+class Solution:
+    def maxProduct(self, n: int) -> int:
+        '''
+        find the two maxes
+        '''
+        first_max = 0
+        second_max = 0
+
+        while n:
+            digit = n % 10
+            if digit > first_max:
+                second_max = first_max
+                first_max = digit
+            elif digit > second_max:
+                second_max = digit
+            
+            n = n // 10
+        
+        return first_max*second_max
