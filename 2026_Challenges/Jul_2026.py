@@ -1082,3 +1082,340 @@ class Solution:
             n = n // 10
         
         return first_max*second_max
+    
+############################################
+# 758. Bold Words in String
+# 26JUL26
+############################################
+class Solution:
+    def boldWords(self, words: List[str], s: str) -> str:
+        '''
+        just mark indeices
+        '''
+        n = len(s)
+        bold = [False] * n
+
+        for word in words:
+            for i in range(len(s) - len(word) + 1):
+                if s[i:i + len(word)] == word:
+                    for j in range(i, i + len(word)):
+                        bold[j] = True
+        
+        ans = []
+        i = 0
+
+        while i < n:
+            if not bold[i]:
+                ans.append(s[i])
+                i += 1
+            else:
+                ans.append("<b>")
+                while i < n and bold[i]:
+                    ans.append(s[i])
+                    i += 1
+                ans.append("</b>")
+
+
+        return "".join(ans)
+    
+#############################################
+# 3517. Smallest Palindromic Rearrangement I
+# 27JUL26
+#############################################
+#edge cases, can't always go in order...
+class Solution:
+    def smallestPalindrome(self, s: str) -> str:
+        '''
+        intelligently build it, start with the smallest
+        and fix the smallest and left and right, then shrink
+        if len(s) is even, there can be two middles which must be the same
+        otherwise take only the odd count
+        '''
+        n = len(s)
+        ans = [""]*n
+        left,right = 0,n-1
+        counts = Counter(s)
+        for ch in sorted(counts):
+            curr_count = counts[ch]
+            while curr_count > 0:
+                ans[left] = ch
+                ans[right] = ch
+                left += 1
+                right -= 1
+                curr_count -= 2
+        
+        return "".join(ans)
+    
+#dammit
+class Solution:
+    def smallestPalindrome(self, s: str) -> str:
+        '''
+        intelligently build it, start with the smallest
+        and fix the smallest and left and right, then shrink
+        if len(s) is even, there can be two middles which must be the same
+        otherwise take only the odd count
+        '''
+        n = len(s)
+        ans = [""]*n
+        left,right = 0,n-1
+        counts = Counter(s)
+        #evens first, sorted lexgrpahically
+        #then odds lost
+        evens = []
+        odds = []
+        for ch in sorted(counts):
+            count = counts[ch]
+            if count % 2 == 0:
+                evens.append((ch,count))
+            else:
+                odds.append((ch,count))
+        arr = evens+ odds
+        for ch,count in arr:
+            while count > 0:
+                ans[left] = ch
+                ans[right] = ch
+                left += 1
+                right -= 1
+                count -= 2
+        
+        return "".join(ans)
+
+#make left greedily and copy
+class Solution:
+    def smallestPalindrome(self, s: str) -> str:
+        '''
+        construct one half using s
+        then copy
+        '''
+        counts = Counter(s)
+        left = []
+        mid = ""
+
+        for ch in sorted(counts):
+            left.append(ch * (counts[ch] // 2))
+            if counts[ch] % 2:
+                mid = ch
+
+        left = "".join(left)
+        return left + mid + left[::-1]
+    
+###############################################
+# 3518. Smallest Palindromic Rearrangement II
+# 29JUL26
+###############################################
+#close TLE
+from collections import Counter
+from math import factorial
+class Solution:
+    def smallestPalindrome(self, s: str, k: int) -> str:
+        '''
+        only generate half the string first
+        after generating half, how many valid arrangments are there
+        rather, after fixing a characer in the left half, how many valid arrangements would result if that character is chosen at the current index
+        count distinct permutation of a multiset
+        general formula is (n!) / (c1!*c2! ...ck!)
+        n is total number of characters
+        ci is the frequence of each character
+
+        given a multiset of characters, finds its k-th lexographically smallest permutation
+        '''
+        #this is utility, dont forget this on future problems!
+        def count_permutations(cnt):
+            total = sum(cnt.values())
+
+            ans = factorial(total)
+            for v in cnt.values():
+                ans //= factorial(v)
+
+            return ans
+        
+        cnt = Counter(s)
+
+        half = []
+        middle = ""
+
+        for ch in sorted(cnt):
+            if cnt[ch] % 2:
+                middle = ch
+            half.extend(ch * (cnt[ch] // 2))
+
+        cnt = Counter(half)
+
+        # Total number of distinct palindromes
+        if k > count_permutations(cnt):
+            return ""
+
+        ans = []
+
+        while cnt:
+            for ch in sorted(cnt):
+
+                # Try fixing ch here
+                cnt[ch] -= 1
+                if cnt[ch] == 0:
+                    del cnt[ch]
+
+                ways = count_permutations(cnt)
+
+                if k > ways:
+                    # Skip all palindromes beginning with this prefix
+                    k -= ways
+
+                    # Undo
+                    cnt[ch] = cnt.get(ch, 0) + 1
+                else:
+                    # This is the correct character
+                    ans.append(ch)
+                    break
+
+        left = "".join(ans)
+        return left + middle + left[::-1]
+    
+
+#actual solution with O(1) update instead of recompute factorials
+from collections import Counter
+from math import factorial
+
+class Solution:
+    def smallestPalindrome(self, s: str, k: int) -> str:
+        '''
+        Only generate the first half.
+        Greedily build the k-th lexicographically smallest half.
+        '''
+
+        def count_permutations(cnt):
+            total = sum(cnt.values())
+
+            ans = factorial(total)
+            for v in cnt.values():
+                ans //= factorial(v)
+
+            return ans
+
+        cnt = Counter(s)
+
+        half = []
+        middle = ""
+
+        for ch in sorted(cnt):
+            if cnt[ch] % 2:
+                middle = ch
+            half.extend(ch * (cnt[ch] // 2))
+
+        cnt = Counter(half)
+
+        # Initial number of distinct halves
+        ways = count_permutations(cnt)
+
+        if k > ways:
+            return ""
+
+        ans = []
+        remaining = len(half)
+
+        while remaining:
+            for ch in sorted(cnt):
+
+                # Number of permutations if we choose ch here
+                next_ways = ways * cnt[ch] // remaining
+
+                if k > next_ways:
+                    k -= next_ways
+                else:
+                    ans.append(ch)
+
+                    ways = next_ways
+
+                    cnt[ch] -= 1
+                    if cnt[ch] == 0:
+                        del cnt[ch]
+
+                    remaining -= 1
+                    break
+
+        left = "".join(ans)
+        return left + middle + left[::-1]
+    
+
+###################################################
+# 3014. Minimum Number of Pushes to Type Word I
+# 30JUL26
+###################################################
+class Solution:
+    def minimumPushes(self, word: str) -> int:
+        '''
+        we're allowed to map any letter to any number on the key pad
+        word only has distinct chars
+        map the first 9 chars to the first poisition
+        then the next nine to the second posistion
+        the the next nine to the third position
+        '''
+        ans = 0
+        press = 1
+        n = len(word)
+
+        for i in range(n):
+            if i >= 24:
+                press = 4
+            elif i >= 16:
+                press = 3
+            elif i >= 8:
+                press = 2
+
+            ans += press
+
+        return ans
+    
+class Solution:
+    def minimumPushes(self, word: str) -> int:
+        '''
+        just use mod
+        '''
+        n = len(word)
+        ans = 0
+        for i in range(n):
+            ans += i // 8 + 1
+        return ans
+    
+class Solution:
+    def minimumPushes(self, word: str) -> int:
+        '''
+        just use mod
+        let q be the number of groups
+        q = n // 8
+        let r be the ones outside the qth group
+        r = n % 8
+        fir q compeltes groups have
+        pushes = 8*(1+2+3...q)
+        = 8*q(q+1) // 2
+        = 4q*(q+1)
+
+        remaining is
+        r*(q+1)
+
+        ans is 4q*(q+1) + r*(q+1)
+        '''
+        n = len(word)
+        q,r = divmod(n,8)
+
+        return ((q << 2) + r) * (q + 1)
+
+################################################
+# 3016. Minimum Number of Pushes to Type Word II
+# 31JUL26
+#################################################
+class Solution:
+    def minimumPushes(self, word: str) -> int:
+        '''
+        the letters that appear the most, chould be assigned to the leftmost position of a number
+        '''
+        counts = Counter(word)
+        ans = 0
+        sorted_counts = sorted([(v,k) for (k,v) in counts.items()], key = lambda x: -x[0])
+
+        for i,(count,ch) in enumerate(sorted_counts):
+            ans += (i // 8 + 1)*count
+        return ans
+
+
+
