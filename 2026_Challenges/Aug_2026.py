@@ -350,3 +350,138 @@ class Solution:
         if rem % 2:
             ans += flipCost
         return ans
+    
+########################################
+# 1563. Stone Game V
+# 16AUG26
+########################################
+#close one
+class Solution:
+    def stoneGameV(self, stoneValue: List[int]) -> int:
+        '''
+        we want to maximize the Alices score,
+        at each step, split rows into two [left],[right]
+        bob throws are the partitions with max value and alice goes up by minimum
+        [arr] -> [left],[right]
+        alice += min(left,right)
+        arr = min(left,right)
+        dp(i,j), then try splitting on all k between i and j paradigm
+            gives the max score i can get for that range
+        '''
+        #try recursion on the array first
+        #then think of states
+        def rec(arr):
+            if not arr:
+                return 0
+            n = len(arr)
+            ans = 0
+            for i in range(n):
+                left,right = arr[:i+1],arr[i+1:]
+                sum_left,sum_right = sum(left),sum(right)
+                if sum_left > sum_right:
+                    ans = max(ans, sum_right + rec(right))
+                elif sum_right > sum_left:
+                    ans = max(ans, sum_left + rec(left))
+                #equal case, try both
+                else:
+                    both = max(sum_right + rec(right),sum_left + rec(left))
+                    ans = max(ans,both)
+            
+            return ans
+        
+        return rec(stoneValue)
+                    
+
+#dp(i,j) but with pref_sums now
+#TLE
+class Solution:
+    def stoneGameV(self, stoneValue: List[int]) -> int:
+        '''
+        we want to maximize the Alices score,
+        at each step, split rows into two [left],[right]
+        bob throws are the partitions with max value and alice goes up by minimum
+        [arr] -> [left],[right]
+        alice += min(left,right)
+        arr = min(left,right)
+        dp(i,j), then try splitting on all k between i and j paradigm
+            gives the max score i can get for that range
+        prefsum
+        '''
+        n = len(stoneValue)
+        pref_sum = [0]
+        for s in stoneValue:
+            pref_sum.append(pref_sum[-1] + s)
+
+        #memo = {}
+
+        @cache
+        def dp(i,j):
+            if i >= j:
+                return 0
+            #if (i,j) in memo:
+            #    return memo[(i,j)]
+            
+            ans = 0
+            for k in range(i,j):
+                sum_left = pref_sum[k+1] - pref_sum[i]
+                sum_right = pref_sum[j+1] - pref_sum[k+1]
+                if sum_left > sum_right:
+                    ans = max(ans, sum_right + dp(k+1,j))
+                elif sum_right > sum_left:
+                    ans = max(ans, sum_left + dp(i,k))
+                #equal case, try both
+                else:
+                    both = max(sum_right + dp(k+1,j),sum_left + dp(i,k))
+                    ans = max(ans,both)
+            
+            #memo[(i,j)] = ans
+            return ans
+
+        return dp(0,n-1)
+
+#make it pass, just take sum one before searching on all k ietween (i,j)
+class Solution:
+    def stoneGameV(self, stoneValue: List[int]) -> int:
+        '''
+        we want to maximize the Alices score,
+        at each step, split rows into two [left],[right]
+        bob throws are the partitions with max value and alice goes up by minimum
+        [arr] -> [left],[right]
+        alice += min(left,right)
+        arr = min(left,right)
+        dp(i,j), then try splitting on all k between i and j paradigm
+            gives the max score i can get for that range
+        prefsum
+        '''
+        memo = {}
+        n = len(stoneValue)
+        @lru_cache(None)
+        def dp(i,j):
+            if i >= j:
+                return 0
+            #if (i,j) in memo:
+            #    return memo[(i,j)]
+            
+            ans = 0
+            total_sum = sum(stoneValue[i:j+1])
+            sum_left = 0
+            sum_right = 0
+            for k in range(i,j):
+                sum_left += stoneValue[k]
+                sum_right = total_sum - sum_left
+                if sum_left > sum_right:
+                    ans = max(ans, sum_right + dp(k+1,j))
+                elif sum_right > sum_left:
+                    ans = max(ans, sum_left + dp(i,k))
+                #equal case, try both
+                else:
+                    both = max(sum_right + dp(k+1,j),sum_left + dp(i,k))
+                    ans = max(ans,both)
+            
+            #memo[(i,j)] = ans
+            return ans
+
+        return dp(0,n-1)
+
+                
+
