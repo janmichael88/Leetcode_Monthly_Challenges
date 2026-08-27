@@ -483,5 +483,253 @@ class Solution:
 
         return dp(0,n-1)
 
-                
+################################################
+# 3471. Find the Largest Almost Missing Integer
+# 18AUG26
+################################################
+class Solution:
+    def largestInteger(self, nums: List[int], k: int) -> int:
+        '''
+        brute force it
+        it can appear only in one subarray
+        but can it have multiple repeats of it, yes its allowed
+        '''
+        ans = -1
+        n = len(nums)
+        counts = Counter()
 
+        for i in range(0,n-k+1):
+            arr = set(nums[i:i+k])
+            for num in arr:
+                counts[num] += 1
+        
+        for k,v in counts.items():
+            if v == 1:
+                ans = max(ans,k)
+        
+        return ans
+    
+#########################################
+# 1386. Cinema Seat Allocation
+# 20AUG26
+##########################################
+class Solution:
+    def maxNumberOfFamilies(self, n: int, reservedSeats: List[List[int]]) -> int:
+        '''
+        n rows and 10 columns
+        brute force would be to count the gaps in each of the rows, but n can be very big
+        oh check onl rows the appear in 
+        no matter what i can fit at most two 4 groups in a row
+        we can add the reminain later
+        '''
+        mapp = defaultdict(set)
+
+        for r, c in reservedSeats:
+            mapp[r].add(c)
+
+        ans = 2 * (n - len(mapp))
+
+        for seats in mapp.values():
+            left = all(c not in seats for c in range(2, 6))   # 2-5
+            middle = all(c not in seats for c in range(4, 8)) # 4-7
+            right = all(c not in seats for c in range(6, 10))  # 6-9
+
+            if left and right:
+                ans += 2
+            elif left or middle or right:
+                ans += 1
+
+        return ans
+    
+###############################################
+# 3069. Distribute Elements Into Two Arrays I
+# 20AUG26
+###############################################
+class Solution:
+    def resultArray(self, nums: List[int]) -> List[int]:
+        '''
+        follow the rules
+        '''
+        arr1,arr2 = [nums[0]],[nums[1]]
+        n = len(nums)
+
+        op = 2
+        while op < n:
+            if arr1[-1] > arr2[-1]:
+                arr1.append(nums[op])
+            else:
+                arr2.append(nums[op])
+            
+            op += 1
+        
+        return arr1 + arr2
+    
+#####################################################
+# 3622. Check Divisibility by Digit Sum and Product
+# 23AUG26
+####################################################
+class Solution:
+    def checkDivisibility(self, n: int) -> bool:
+        '''
+        check rules
+        '''
+        curr_sum = 0
+        curr_prod = 1
+        for d in str(n):
+            curr_sum += int(d)
+            curr_prod *= int(d)
+        
+        return (n % (curr_sum + curr_prod) == 0)
+    
+
+#################################################
+# 1927. Sum Game
+# 24AUG26
+###################################################
+class Solution:
+    def sumGame(self, num: str) -> bool:
+        '''
+        alice/bob, alice stars first
+        on each turn, chose index i where num[i] == "?"
+        replace with any digit
+        game ends when there are no more '?'
+        for bob to win, first half of num == second half of num
+        for alice to win first half !? second half
+        look at this example 25??
+        left sum is 7, and right sum is zero
+        if alice picks a number less than the diff, which is 7, bob and pick (1 - wtv_number_alice_picks) to make it equal
+        in fact any number greater than 7, would allow alice to win
+        if i pair a ? on the left with a ? on the right
+        then a player can chose x, then the opposing player can pick 9 - x, and we can get x + (9-x) = 0
+        if left qs == righ qs, bob can always respond to alice, and of sums are equal, bob can win
+        if there are unequal qs, alice can chose a digit that does not allow bob to make the sums equal
+
+        '''
+        #first find left sum and right sum, and left qs and right qs
+        n = len(num)
+        left_sum, left_qs = 0,0
+        for l in num[:n//2]:
+            if l == "?":
+                left_qs += 1
+            else:
+                left_sum += int(l)
+
+        right_sum, right_qs = 0,0
+        for r in num[n//2:]:
+            if r == "?":
+                right_qs += 1
+            else:
+                right_sum += int(r)
+        
+        # Difference in existing sums
+        diff = left_sum - right_sum
+
+        # Difference in number of '?'s
+        qdiff = left_qs - right_qs
+
+        # Alice wins iff the existing difference cannot be
+        # compensated by the unmatched '?'s.
+        return diff * 2 + 9 * qdiff != 0
+    
+###################################################
+# 1872. Stone Game VIII
+# 24AUG26
+###################################################
+class Solution:
+    def stoneGameVIII(self, stones: List[int]) -> int:
+        '''
+        alice and bob again, alice goes first
+        on each turn choose an integer x > 1, and remove the leftmost x stones
+        increment the players score by their sum, add new stone back to left which == sum
+        game stops when only one stone left
+        need max diff between alice and bob score
+        n is to big to do states on (i,j) must be on i only
+        if a player takes a stone at i, their score went up by sum(stones[:i]) + prev_sum_before
+        if they didn't it must have gone up by prev_sum_before
+        '''
+        n = len(stones)
+
+        pref = [0] * n
+        pref[0] = stones[0]
+
+        for i in range(1, n):
+            pref[i] = pref[i - 1] + stones[i]
+
+        @lru_cache(None)
+        def dp(i):
+            #the only move here is to take the whole array
+            if i == n - 1:
+                return pref[i]
+            take = pref[i] - dp(i+1)
+            no_take = dp(i+1)
+            return max(take,no_take)
+        return dp(1)
+    
+#############################################
+# 3718. Smallest Missing Multiple of K
+# 25AUG26
+##############################################
+class Solution:
+    def missingMultiple(self, nums: List[int], k: int) -> int:
+        '''
+        turn nums into set and skip by k
+        '''
+        nums = set(nums)
+        ans = k
+        while ans in nums:
+            ans += k
+        
+        return ans
+    
+#################################################################
+# 2904. Shortest and Lexicographically Smallest Beautiful String
+# 26AUG26
+#################################################################
+class Solution:
+    def shortestBeautifulSubstring(self, s: str, k: int) -> str:
+        '''
+        try brute force first
+        '''
+        smallest_length = float('inf')
+        ans = ""
+        n = len(s)
+        for i in range(n):
+            for j in range(i+1,n+1):
+                sub = s[i:j]
+                if sub.count("1") == k:
+                    if len(sub) < smallest_length:
+                        smallest_length = len(sub)
+                        ans = sub
+                    elif len(sub) == smallest_length:
+                        ans = min(ans,sub)
+        return ans
+    
+#sliding window
+class Solution:
+    def shortestBeautifulSubstring(self, s: str, k: int) -> str:
+        '''
+        we can also do sliding window
+        '''
+        smallest_length = float('inf')
+        ans = ""
+        n = len(s)
+        window = Counter()
+        left = 0
+        for right,ch in enumerate(s):
+            window[ch] += 1
+            while window["1"] > k:
+                window[s[left]] -= 1
+                left += 1
+            
+            while window["1"] == k:
+                sub = s[left:right + 1]
+                if len(sub) < smallest_length:
+                    smallest_length = len(sub)
+                    ans = sub
+                elif len(sub) == smallest_length:
+                    ans = min(ans, sub)
+
+                window[s[left]] -= 1
+                left += 1
+        
+        return ans
