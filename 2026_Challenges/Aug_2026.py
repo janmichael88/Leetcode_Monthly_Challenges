@@ -733,3 +733,95 @@ class Solution:
                 left += 1
         
         return ans
+    
+#####################################################################
+# 3720. Lexicographically Smallest Permutation Greater Than Target
+# 27AUG26
+######################################################################
+class Solution:
+    def lexGreaterPermutation(self, s: str, target: str) -> str:
+        '''
+        try intelligently building the string just greater than target
+        if we can match at target[i], take it
+        if we can't match at target[i], take the char that is just greater 
+        now what if we can't match at target[i] or find somethat that is greater?
+            that means we could have used this smaller char at an earlier spot
+
+        rather the first i characters are identical to those of target
+        the ith character is > target[i]
+        all characters after the ith position are arrange in smallest lexographical order
+        at each position i we try to match target[i], 
+        if we can't then we try to place a larger char at this i and then everything after i, i.e i+1 is made in ascedning order
+        '''
+        counts = Counter(s)
+        n = len(target)
+
+        ans = []
+
+        for i in range(n):
+            ch = target[i]
+
+            # Try placing the same character as target[i]
+            if counts[ch] > 0:
+                counts[ch] -= 1
+
+                # Can the remaining characters eventually
+                # make us lexicographically greater?
+                if self.can_make(counts, target[i + 1:]):
+                    ans.append(ch)
+                    continue
+
+                # Undo our choice
+                counts[ch] += 1
+
+            # Try the smallest character greater than target[i]
+            for larger in sorted(counts):
+                if larger > ch and counts[larger] > 0:
+                    counts[larger] -= 1
+                    ans.append(larger)
+
+                    # Put everything remaining in smallest order
+                    for c in sorted(counts):
+                        ans.append(c * counts[c])
+
+                    return ''.join(ans)
+
+            # Couldn't match target[i] and couldn't make it larger
+            return ""
+
+        return ""
+
+    def can_make(self, counts, suffix):
+        # Largest possible permutation of remaining characters
+        max_str = ""
+
+        for ch in sorted(counts, reverse=True):
+            max_str += ch * counts[ch]
+
+        return max_str > suffix
+    
+###########################################################
+# 2091. Removing Minimum and Maximum From Array
+# 31AUG26
+#############################################################
+class Solution:
+    def minimumDeletions(self, nums: List[int]) -> int:
+        '''
+        find min/max element indices 
+        than get dist from left and from right
+        there are a few cases for deletion
+        '''
+        n = len(nums)
+        min_ = min(nums)
+        max_ = max(nums)
+        min_idx,max_idx = -1,-1
+        for i,num in enumerate(nums):
+            if num == min_:
+                min_idx = i
+            elif num == max_:
+                max_idx = i
+
+        #need left and right distances for both min/max idxs
+        left = min(min_idx,max_idx)
+        right = max(min_idx,max_idx)
+        return min(right + 1, n - left, left + 1 + n - right)
