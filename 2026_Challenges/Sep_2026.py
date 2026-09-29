@@ -765,3 +765,262 @@ class Solution:
                 ans.append(s[l:r+1])
                 end = r
         return ans
+
+#####################################################
+# 1401. Circle and Rectangle Overlapping
+# 20SEP26
+######################################################
+class Solution:
+    def checkOverlap(self, radius: int, xCenter: int, yCenter: int, x1: int, y1: int, x2: int, y2: int) -> bool:
+        '''
+        locate closest point of square to center of the circle?, then calc distane and check <= radius
+        if the closest point to the perimeter of a circle from a square also the closest to its center?
+            it must be!
+        find an axis aligned point from center to square, then check dist
+        remember clamping for range!
+        if wa have range [2,8] and a point p
+        p_clamped = max(2,min(p,8))
+        '''
+        #find axis aligned point from center to square
+        #let center point be called O
+        #we have to clamp the nearest axis aligned point on the square
+        closest_x = max(x1,min(xCenter,x2))
+        closest_y = max(y1,min(yCenter,y2))
+        sq_dist = (xCenter - closest_x)**2 + (yCenter - closest_y)**2
+        return sq_dist <= radius**2
+        
+##########################################
+# 3498. Reverse Degree of a String
+# 20SEP26
+##########################################
+class Solution:
+    def reverseDegree(self, s: str) -> int:
+        '''
+        cheese
+        '''
+        ans = 0
+        for i,ch in enumerate(s):
+            left = ord(ch) - ord('a')
+            right = 26 - left
+            ans += right*(i+1)
+        
+        return ans
+
+###########################################
+# 3524. Find X Value of Array I
+# 21SEP26
+###########################################
+class Solution:
+    def resultArray(self, nums: List[int], k: int) -> List[int]:
+        '''
+        we are allowed to remove any non-overlappng pref and suffix from nums such that it remains non-empty
+        x-value is number of way to perform operation so that product of remaining elements leaves a remainder of x
+        when divided by k
+        so how many subarrays exists such for each product % k in range(1,k)
+        '''
+        memo = {}
+        n = len(nums)
+        #dp function, index i and current modulo
+        def dp(i,r):
+            if i == n:
+                return [0]*k
+            if (i,r) in memo:
+                return memo[(i,r)]
+            
+            ans = [0]*k
+            next_r = r*nums[i] % k
+            ans[next_r] += 1
+            next_counts = dp(i+1,next_r)
+            for x in range(k):
+                ans[x] += next_counts[x]
+            
+            memo[(i,r)] = ans
+            return ans
+        
+        ans = [0]*k
+        for i in range(n):
+            counts = dp(i,1)
+            for x in range(k):
+                ans[x] += counts[x]
+        
+        return ans
+
+#iterative, roll up the counts
+class Solution:
+    def resultArray(self, nums: List[int], k: int) -> List[int]:
+        '''
+        iterative
+        '''
+        n = len(nums)
+        dp = [0]*k
+        ans = [0]*k
+        for i in range(n):
+            next_dp = [0]*k
+            next_r = nums[i] % k
+            next_dp[next_r] += 1
+            for x in range(k):
+                next_dp[(next_r)*x % k] += dp[x]
+            
+            dp = next_dp[:]
+            for x in range(k):
+                ans[x] += dp[x]
+        
+        return ans
+
+################################################
+# 3550. Smallest Index With Digit Sum Equal to Index
+# 24SEP26
+#################################################
+class Solution:
+    def smallestIndex(self, nums: List[int]) -> int:
+        '''
+
+        '''
+        for i,num in enumerate(nums):
+            digit_sum = sum([int(ch) for ch in str(num)])
+            if digit_sum == i:
+                return i
+        
+        return -1
+
+#####################################################
+# 1807. Evaluate the Bracket Pairs of a String
+# 26SEP26
+#######################################################
+class Solution:
+    def evaluate(self, s: str, knowledge: list[list[str]]) -> str:
+        '''
+        no nested brackets in s
+        '''
+        mapp = {}
+        for k, v in knowledge:
+            mapp[k] = v
+        
+        ans = []
+        n = len(s)
+        i = 0
+
+        while i < n:
+            # process opening
+            if s[i] == "(":
+                i += 1
+                curr = ""
+
+                while i < n and s[i] != ")":
+                    curr += s[i]
+                    i += 1
+
+                if curr in mapp:
+                    ans.append(mapp[curr])
+                else:
+                    ans.append("?")
+
+                i += 1   # move past ')'
+
+            else:
+                curr = ""
+
+                while i < n and s[i].isalpha():
+                    curr += s[i]
+                    i += 1
+
+                ans.append(curr)
+
+        return "".join(ans)
+
+####################################################
+# 1096. Brace Expansion II 
+# 28SEP26
+#####################################################
+class Solution:
+    def braceExpansionII(self, expression: str) -> list[str]:
+        '''
+        whenever we have {}{}, we need to multiply them out
+        when we have {},{}, its just the union
+        need to process in chunks
+        R("a{b,c}{d,e}f{g,h}")
+        {ab,ac}{d,e}f{g,h}
+        {abd,abe,acd,ace}f{g,h}
+        {abdf,abef,acdf,acef}{g,h}
+         {"abdfg", "abdfh", "abefg", "abefh", "acdfg", "acdfh", "acefg", "acefh"}
+         we can just process left to right
+         can we do it recursively?
+        '''
+        def multiply(A, B):
+            return {a + b for a in A for b in B}
+
+        def parse(i):
+            current = {""}
+            result = set()
+
+            while i < len(expression):
+
+                if expression[i] == '{':
+                    inside, i = parse(i + 1)
+                    current = multiply(current, inside)
+
+                elif expression[i] == ',':
+                    result.update(current)
+                    current = {""}
+                    i += 1
+
+                elif expression[i] == '}':
+                    result.update(current)
+                    return result, i + 1
+
+                else:
+                    current = multiply(current,{expression[i]})
+                    i += 1
+
+            result.update(current)
+
+            return result, i
+
+        return sorted(parse(0)[0])
+
+########################################################
+# 2267. Check if There Is a Valid Parentheses String Path
+# 28SEP26
+########################################################
+class Solution:
+    def hasValidPath(self, grid: list[list[str]]) -> bool:
+        '''
+        states should be (i,j,balance)
+        '''
+        rows,cols = len(grid),len(grid[0])
+        memo = {}
+        dirrs = [(0,1),(1,0)]
+        def dp(i,j,bal):
+            if bal < 0:
+                return False
+            if (i,j) == (rows-1,cols-1):
+                if bal == 0:
+                    return True
+                return False
+            
+            if (i,j,bal) in memo:
+                return memo[(i,j,bal)]
+            
+            ans = False
+            for di,dj in dirrs:
+                ii,jj = i + di, j + dj
+                if 0 <= ii < rows and 0 <= jj < cols:
+                    next_bal = bal
+                    if grid[ii][jj] == '(':
+                        next_bal += 1
+                    else:
+                        next_bal -= 1
+                    
+                    if dp(ii,jj,next_bal) == True:
+                        memo[(i,j,bal)] = True
+                        return True
+            memo[(i,j,bal)] = ans
+            return ans
+        
+        curr_bal = 0
+        if grid[0][0] == '(':
+            curr_bal += 1
+        else:
+            curr_bal -= 1
+        
+        return dp(0,0,curr_bal)
