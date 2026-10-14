@@ -1024,3 +1024,29 @@ class Solution:
             curr_bal -= 1
         
         return dp(0,0,curr_bal)
+
+###############################################################
+# 1111. Maximum Nesting Depth of Two Valid Parentheses Strings
+# 03OCT26
+##################################################################
+class Solution:
+    def maxDepthAfterSplit(self, seq: str) -> list[int]:
+        '''
+        we need to minimize the nestinh depth
+        we can split seq into two subseqgs A and B
+        so we need to two subsequences such that th nesting depth is as small as possible
+        wil scanning left to right keep track of current nesting depth
+            and put odd depths in one group and even depths in another
+        '''
+        depth = 0
+        ans = []
+
+        for ch in seq:
+            if ch == '(':
+                depth += 1
+                ans.append(depth % 2)
+            else:
+                ans.append(depth % 2)
+                depth -= 1
+
+        return ans
