@@ -158,3 +158,43 @@ class Solution:
             nums[i] *= nums[i]
         nums.sort()
         return -sum(nums[: n // 2]) + sum(nums[n // 2 :])
+
+##################################################
+# 3723. Maximize Sum of Squares of Digits
+# 14OCT26
+#################################################
+class Solution:
+    def maxSumOfSquares(self, num: int, SUM: int) -> str:
+        '''
+        a good digit needs num digits in it
+        and the sum of its digits == sum
+        the score is the sum of the squares of its digits
+        return the maximim on
+        construct the num greedily
+        fill leftmost with nines as much as possible
+        '''
+        ans = [0]*num
+        curr_sum = 0
+        for i in range(num):
+            for dig in range(9,-1,-1):
+                if curr_sum + dig <= SUM:
+                    ans[i] = dig
+                    curr_sum += dig
+                    break
+        
+
+        if sum(ans) == SUM:
+            return "".join([str(n) for n in ans])
+        return ""
+
+#fill left most with nines, then the rest is just the remainder
+class Solution:
+    def maxSumOfSquares(self, num: int, sum: int) -> str:
+        if sum > 9 * num:
+            return ""
+        q, r = divmod(sum, 9)
+        ans = "9" * q
+        if r > 0:
+            ans += str(r)
+        ans += "0" * (num - len(ans))
+        return ans
