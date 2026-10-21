@@ -198,3 +198,200 @@ class Solution:
             ans += str(r)
         ans += "0" * (num - len(ans))
         return ans
+
+####################################################
+# 2913. Subarrays Distinct Element Sum of Squares I
+# 15OCT26
+#####################################################
+class Solution:
+    def sumCounts(self, nums: List[int]) -> int:
+        '''
+        for each subarray, count distinct
+        '''
+        ans = 0
+        n = len(nums)
+        for i in range(n):
+            curr = set()
+            for j in range(i,n):
+                curr.add(nums[j])
+                ans += len(curr)**2
+        
+        return ans
+
+#################################################
+# 3551. Minimum Swaps to Sort by Digit Sum
+# 18OCT26
+#################################################
+class Solution:
+    def minSwaps(self, nums: List[int]) -> int:
+        '''
+        i can sort by criteria:
+            (sum(dig for dig in num), num) 
+            sort increasingly
+        but we need to count swaps to get in sorted array
+        problem now is how to find min swaps
+        classic min swaps to sort a permutation
+        each permutation cycle of length k takes k-1 swaps
+        '''
+        arr = []
+        n = len(nums)
+        mapp = {}
+        for i,num in enumerate(nums):
+            mapp[num] = i
+            digits = [int(dig) for dig in str(num)]
+            arr.append((sum(digits),num))
+        
+        arr.sort()
+        new_sorted = [num for _,num in arr]
+        target_indices = [mapp[num] for num in new_sorted]
+
+        swaps = 0
+        seen = set()
+        for i in range(n):
+            if i in seen:
+                continue
+            cycle_length = 0
+            j = i
+            while j not in seen:
+                seen.add(j)
+                cycle_length += 1
+                j = target_indices[j]
+            if cycle_length > 1:
+                swaps += cycle_length - 1
+
+        return swaps
+
+###################################################
+# 3886. Sum of Sortable Integers
+# 19OCT26
+###################################################
+#TLE
+class Solution:
+    def sortableIntegers(self, nums: list[int]) -> int:
+        '''
+        if n = len(nums)
+        the candidate k's are ones the divide n
+        for each candidate among k, partition into subarrays of length k
+            there must be subarrays if length k
+        so this limits our search on k
+        we can only rotate a block
+        we can just concat! and check if it exsists at all for each block
+        '''
+
+        def is_rotation(block,target):
+            doubled = block + block
+            k = len(block)
+            return any(doubled[i:i+k] == target for i in range(k))
+
+        n = len(nums)
+        arr = sorted(nums)
+        ans = 0
+        for size in range(1,n+1):
+            if n % size == 0:
+                valid = True
+                for i in range(0,n,size):
+                    block = nums[i:i+size]
+                    target = arr[i:i+size]
+                    if not is_rotation(block,target):
+                        valid = False
+                        break
+                
+                if valid:
+                    ans += size
+        
+        return ans
+
+#couting peaks
+class Solution:
+    def sortableIntegers(self, nums: list[int]) -> int:
+        '''
+        if n = len(nums)
+        the candidate k's are ones the divide n
+        for each candidate among k, partition into subarrays of length k
+            there must be subarrays if length k
+        so this limits our search on k
+        we can only rotate a block
+        we can just concat! and check if it exsists at all for each block
+        '''
+
+        n = len(nums)
+        arr = sorted(nums)
+        ans = 0
+
+        #check they contain same elements, including duplicates
+        #block has at most on cylic decsnse
+        def is_rotation(block, target):
+            k = len(block)
+            
+            if Counter(block) != Counter(target):
+                return False
+
+            #count peaks in block
+            descents = sum(block[i] > block[(i + 1) % k] for i in range(k))
+            
+            return descents <= 1
+
+        for size in range(1, n + 1):
+            if n % size != 0:
+                continue
+
+            valid = True
+
+            for i in range(0, n, size):
+                block = nums[i:i + size]
+                target = arr[i:i + size]
+
+                if not is_rotation(block, target):
+                    valid = False
+                    break
+
+            if valid:
+                ans += size
+
+        return ans
+
+################################################
+# 3863. Minimum Operations to Sort a String
+# 21OCT26
+################################################
+class Solution:
+    def minOperations(self, s: str) -> int:
+        '''
+        we are only allowed to pick a substring that isn't the whole string and sort it
+        we need min ops of these 
+        strict edge casing i gues....
+
+        if the string is already sorted, return 0
+        if the fist char is min or the last char is max
+            sort the inner part between 0 and n-1 for 1 one opertaion
+        if we dont have an anchor, we need to move at least on min char to the front or one max char to the end
+        Case	Condition	                                        Return
+        0	    s is sorted	                                        0
+        1	    First character is min, or last character is max	1
+        2	    No anchor, (an inner min or max exists)	            2
+        3	    Reversed extrema, (no inner min or max exists)	    3
+        E	    len=2, and s is not sorted	                       -1
+        '''
+        n = len(s)
+        mn = mx = s[0]
+        isSorted = 1
+
+        for i in range(1, n):
+            if s[i] < s[i - 1]:
+                isSorted = 0
+            mn = min(mn, s[i])
+            mx = max(mx, s[i])
+
+        if isSorted: 
+            return 0
+        if n == 2: 
+            return -1
+        
+        if s[0] == mn or s[-1] == mx:
+            return 1
+
+        for i in range(1, n - 1):
+            if s[i] == mn or s[i] == mx:
+                return 2
+
+        return 3
