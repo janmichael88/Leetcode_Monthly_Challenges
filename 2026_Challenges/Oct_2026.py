@@ -395,3 +395,338 @@ class Solution:
                 return 2
 
         return 3
+
+#################################################
+# 3644. Maximum K to Sort a Permutation
+# 24OCT26
+#################################################
+class Solution:
+    def sortPermutation(self, nums: List[int]) -> int:
+        '''
+        we can swap indices (i,j) if nums[i] & nums[j] == k
+        return the maximum k value that can sort the array in non decreasing order using 'any' number of swaps
+        if a number is out of place, we need to swap it, so we need that bit position
+            take bitwise AND of all lement snot in there correct position
+        '''
+
+        sorted_nums = sorted(nums)
+        ans = None
+        for i,num in enumerate(nums):
+            if num != sorted_nums[i]:
+                if ans is None:
+                    ans = num
+                else:
+                    ans = ans & num
+        
+        
+        return ans if ans is not None else 0 
+
+########################################################
+# 2409. Count Days Spent Together
+# 24OCT26
+###########################################################
+class Solution:
+    def countDaysTogether(self, arriveAlice: str, leaveAlice: str, arriveBob: str, leaveBob: str) -> int:
+        '''
+        hash of common, return size
+        arrival days are earlier than leave days
+        '''
+        limits = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+        def get_dates(start,end):
+            a,b = start.split("-")
+            c,d = end.split("-")
+
+            in_rome = set()
+
+            a,b,c,d = int(a),int(b),int(c),int(d)
+            while True:
+                #log in day
+                in_rome.add((a,b))
+                if [a,b] == [c,d]:
+                    break
+                #check we reach end of month
+                if b == limits[a-1]:
+                    b = 1
+                    a += 1
+                else:
+                    b += 1
+            
+            return in_rome
+        alice_rome = get_dates(arriveAlice,leaveAlice)
+        bob_rome = get_dates(arriveBob,leaveBob)
+        both_rome = alice_rome & bob_rome
+        return len(both_rome)
+
+
+
+#convert to day of year, then its just diff
+class Solution:
+    def countDaysTogether(
+        self, arriveAlice: str, leaveAlice: str, arriveBob: str, leaveBob: str
+    ) -> int:
+        datesOfMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        prefixSum = [0]
+        for date in datesOfMonths:
+            prefixSum.append(prefixSum[-1] + date)
+
+        arriveAliceDay = self.calculateDayOfYear(arriveAlice, prefixSum)
+        leaveAliceDay = self.calculateDayOfYear(leaveAlice, prefixSum)
+        arriveBobDay = self.calculateDayOfYear(arriveBob, prefixSum)
+        leaveBobDay = self.calculateDayOfYear(leaveBob, prefixSum)
+        return max(
+            0,
+            min(leaveAliceDay, leaveBobDay)
+            - max(arriveAliceDay, arriveBobDay)
+            + 1,
+        )
+
+    def calculateDayOfYear(self, day: str, prefixSum: List[int]) -> int:
+        month = int(day[:2])
+        date = int(day[3:])
+        return prefixSum[month - 1] + date
+
+#################################################
+# 3619. Count Islands With Total Value Divisible by K
+# 26OCT26
+#################################################
+class Solution:
+    def countIslands(self, grid: List[List[int]], k: int) -> int:
+        '''
+        looks like we need to check all islands
+        find all componenets
+        '''
+        rows,cols = len(grid),len(grid[0])
+        seen = set()
+        dirrs = [(1,0),(-1,0),(0,1),(0,-1)]
+
+        def dfs(i,j,seen,comp):
+            seen.add((i,j))
+            comp.append((i,j))
+            for dx,dy in dirrs:
+                neigh_x = i + dx
+                neigh_y = j + dy
+                #bounds
+                if 0 <= neigh_x < rows and 0 <= neigh_y < cols:
+                    if grid[neigh_x][neigh_y] > 0 and (neigh_x,neigh_y) not in seen:
+                        dfs(neigh_x,neigh_y,seen,comp)
+        
+        comps = []
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] > 0 and (i,j) not in seen:
+                    comp = []
+                    dfs(i,j,seen,comp)
+                    comps.append(comp)
+        ans = 0
+
+        for c in comps:
+            curr_sum = 0
+            for i,j in c:
+                curr_sum += grid[i][j]
+            if curr_sum % k == 0:
+                ans += 1
+        
+        return ans
+
+#return sum
+#while dfsing, make grid[i][j] = 0
+class Solution:
+    def countIslands(self, grid: List[List[int]], k: int) -> int:
+        m, n = len(grid), len(grid[0])
+        dirs = (-1, 0, 1, 0, -1)
+
+        def dfs(i: int, j: int) -> int:
+            total = grid[i][j]
+            grid[i][j] = 0
+            for d in range(4):
+                x, y = i + dirs[d], j + dirs[d + 1]
+                if 0 <= x < m and 0 <= y < n and grid[x][y] > 0:
+                    total += dfs(x, y)
+            return total
+
+        return sum(grid[i][j] > 0 and dfs(i, j) % k == 0 for i in range(m) for j in range(n))
+
+################################################
+# 3963. Create Grid With Exactly One Path
+# 26OCT26
+################################################
+class Solution:
+    def createGrid(self, m: int, n: int) -> list[str]:
+        '''
+        need to make onl on path
+        '''
+        ans = [["#"]*n for _ in range(m)]
+
+        for j in range(n):
+            ans[0][j] = "."
+        
+        for i in range(m):
+            ans[i][n-1] = "."
+        
+        return ["".join(r) for r in ans]
+
+#############################################
+# 3882. Minimum XOR Path in a Grid
+# 29OCT26
+#############################################
+class Solution:
+    def minCost(self, grid: list[list[int]]) -> int:
+        '''
+        dfs, can't just xor each state, 
+        i could xor with another cell that would make it smaller
+            i.e storing a local minimum doen't result in a global minimum
+            notice how each grid[i][j] is between [0,1023]
+        '''
+        rows, cols = len(grid), len(grid[0])
+        dp = [[set() for _ in range(cols)] for _ in range(rows)]
+        dp[0][0].add(grid[0][0])
+
+        for i in range(rows):
+            for j in range(cols):
+                if i == 0 and j == 0:
+                    continue
+
+                if i > 0:
+                    for x in dp[i-1][j]:
+                        dp[i][j].add(x ^ grid[i][j])
+
+                if j > 0:
+                    for x in dp[i][j-1]:
+                        dp[i][j].add(x ^ grid[i][j])
+
+        return min(dp[rows-1][cols-1])
+        
+######################################################################
+# 3970. Shortest Path With At Most K Consecutive Identical Characters
+# 30OCT26
+######################################################################
+#almost
+class Solution:
+    def shortestPath(self, n: int, edges: List[List[int]], labels: str, k: int) -> int:
+        '''
+        djikstras
+        path can only have k consectuive identical labels
+        '''
+        graph = defaultdict(list)
+        for u,v,w in edges:
+            graph[u].append((v,w))
+
+        dists = [float('inf')]*n
+        visited = set()
+        dists[0] = 0
+        visited.add(0)
+        pq = [(0,1,0)] #(curr_dist,count,node)
+
+        while pq:
+            curr_dist,count,node = heapq.heappop(pq)
+            if dists[node] < curr_dist:
+                continue
+            visited.add(node)
+
+            for neigh,dist_to in graph[node]:
+                if neigh in visited:
+                    continue
+                new_dist = dists[node] + dist_to
+                if labels[node] == labels[neigh]:
+                    new_count = count + 1
+                else:
+                    new_count = 1
+
+                if new_count > k:
+                    continue
+                if new_dist < dists[neigh]:
+                    dists[neigh] = new_dist
+                    heapq.heappush(pq, (new_dist,new_count,neigh))
+        ans = dists[n-1]
+        if ans == float('inf'):
+            return -1
+        return ans
+
+#need states (node,count), then minimume over that
+class Solution:
+    def shortestPath(self, n: int, edges: List[List[int]], labels: str, k: int) -> int:
+        graph = defaultdict(list)
+        for u, v, w in edges:
+            graph[u].append((v, w))
+
+        dists = [[float('inf')] * (k + 1) for _ in range(n)]
+        dists[0][1] = 0
+
+        pq = [(0, 1, 0)]
+
+        while pq:
+            curr_dist, count, node = heapq.heappop(pq)
+
+            if curr_dist > dists[node][count]:
+                continue
+
+            if node == n - 1:
+                return curr_dist
+
+            for neigh, dist_to in graph[node]:
+                new_dist = curr_dist + dist_to
+                new_count = count + 1 if labels[node] == labels[neigh] else 1
+
+                if new_count > k:
+                    continue
+
+                if new_dist < dists[neigh][new_count]:
+                    dists[neigh][new_count] = new_dist
+                    heapq.heappush(pq, (new_dist, new_count, neigh))
+
+        return -1
+
+###########################################
+# 3665. Twisted Mirror Path Count
+# 01NOV26
+###########################################
+class Solution:
+    def uniquePaths(self, grid: List[List[int]]) -> int:
+        MOD = 10**9 + 7
+        rows, cols = len(grid), len(grid[0])
+        memo = {}
+
+        def resolve(i, j, moving_right):
+            # Follow reflections until we reach an empty cell
+            while 0 <= i < rows and 0 <= j < cols and grid[i][j] == 1:
+
+                if moving_right:
+                    # Entered mirror while moving right:
+                    # reflect down
+                    i += 1
+                else:
+                    # Entered mirror while moving down:
+                    # reflect right
+                    j += 1
+
+                moving_right = not moving_right
+
+            if i >= rows or j >= cols:
+                return None
+
+            return (i, j)
+
+        def dp(i, j):
+            if (i, j) == (rows - 1, cols - 1):
+                return 1
+
+            if (i, j) in memo:
+                return memo[(i, j)]
+
+            ways = 0
+
+            # Try moving right
+            nxt = resolve(i, j + 1, True)
+            if nxt is not None:
+                ways += dp(*nxt)
+
+            # Try moving down
+            nxt = resolve(i + 1, j, False)
+            if nxt is not None:
+                ways += dp(*nxt)
+
+            memo[(i, j)] = ways % MOD
+            return memo[(i, j)]
+
+        return dp(0, 0)

@@ -101,11 +101,15 @@
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202608.gif" width="100"></td>
     <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202609.gif" width="100"></td>
   </tr>
+
+  <tr>
+    <td><img src="https://github.com/janmichael88/Leetcode_Monthly_Challenges/blob/master/Badges/202610.gif" width="100"></td>
+  </tr>
 </table>
 
 
 In Progress:
-* Oct 2026
+* Nov 2026
 
 ### Completed:
 Column 1 | Column 2 | Column 3
@@ -134,4 +138,5 @@ Jul 2025 | Aug 2025 | Sep 2025
 Oct 2025 | Nov 2025 | Dec 2025
 Jan 2026 | Feb 2026 | Mar 2026
 Apr 2026 | May 2026 | Jun 2026
-Jul 2026 | Aug 2026 | Oct 2026
+Jul 2026 | Aug 2026 | Sep 2026
+Oct 2026 |          |
