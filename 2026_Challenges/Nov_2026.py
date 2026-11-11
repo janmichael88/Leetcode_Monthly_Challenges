@@ -599,3 +599,32 @@ class Solution:
             )
 
         return prev_one
+
+#####################################################
+# 3789. Minimum Cost to Acquire Required Items
+# 11NOV26
+####################################################
+class Solution:
+    def minimumCost(self, cost1: int, cost2: int, costBoth: int, need1: int, need2: int) -> int:
+        '''
+        we need at least need1 and need2
+        return min possible total cost to achvie
+        type1, costs cost1 and increments item1 by 1
+        type2, costs cost2 and icnrement item2 by 1
+        type3, costs costBoth and increments item1 and item2 by 1
+
+        '''
+        ans = 0
+        #first cost
+        first = min(costBoth, cost1 + cost2)
+        amount1 = min(need1,need2)
+        ans += first*amount1
+        need1 -= amount1
+        need2 -= amount1
+        #one of these should at least be zero
+
+        if need1:
+            ans += need1*min(costBoth,cost1)
+        if need2:
+            ans += need2*min(costBoth,cost2)
+        return ans
